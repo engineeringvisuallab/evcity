@@ -1,0 +1,51 @@
+{
+  "name": "engineering-visual-city",
+  "private": true,
+  "version": "0.9.0",
+  "description": "ইঞ্জিনিয়ারিং ভিজ্যুয়াল সিটি - খেলতে খেলতে সিভিল, মেকানিক্যাল ও ইলেকট্রিক্যাল ইঞ্জিনিয়ারিং শেখার বাংলা ওপেন-ওয়ার্ল্ড গেম (Engineering Visual City: Bangla open-world engineering learning game)",
+  "license": "SEE LICENSE IN LICENSE",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "game",
+    "three.js",
+    "rapier",
+    "bangla",
+    "engineering",
+    "open-world",
+    "education"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test:roads": "tsx scripts/road-test.ts",
+    "test:drive": "tsx scripts/drive-test.ts",
+    "test:rivers": "tsx scripts/river-block.ts",
+    "test:pads": "tsx scripts/pad-stat.ts",
+    "test:people": "tsx scripts/people-test.ts",
+    "test:city": "tsx scripts/city-plan-test.ts",
+    "test:zones": "tsx scripts/world-zones-test.ts",
+    "test:rail": "tsx scripts/rail-plan-test.ts",
+    "test:local-roads": "tsx scripts/local-roads-test.ts",
+    "test:trees": "tsx scripts/tree-test.ts",
+    "test:tree-physics": "tsx scripts/tree-physics-test.ts",
+    "test:grass-rocks": "tsx scripts/grass-rock-test.ts",
+    "test:combat": "tsx scripts/combat-test.ts",
+    "test:ammo": "tsx scripts/ammo-test.ts"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "^0.21.0",
+    "@fontsource/noto-sans-bengali": "^5.3.0",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@types/three": "^0.186.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
+  }
+}
