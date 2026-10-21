@@ -5,6 +5,7 @@ import { Noise2D } from '../terrain/Noise';
 import type { TerrainSample } from '../terrain/Lakes';
 import { chunkOriginX, chunkOriginZ } from '../world/WorldGrid';
 import { hash2D, mulberry32 } from '../world/Seed';
+import { placementContains } from '../buildings/Placements';
 import { TREE_KIND_COUNT, TreeKind, type TreeChunkData } from './TreeTypes';
 
 /**
@@ -71,6 +72,8 @@ export class TreePlacer {
     if (this.gen.mall.contains(x, z, 4)) return true; // City Mall plot
     if (this.gen.evlab.contains(x, z, 4)) return true; // EVLab campus plot
     if (this.gen.library.contains(x, z, 4)) return true; // City Library plot
+    if (this.gen.protoBuilding.contains(x, z, 4)) return true; // prototype building plot
+    if (placementContains(x, z, 4)) return true; // placed buildings
     if (this.gen.agro.contains(x, z, 4)) return true; // Agro institute pad
     for (const s of this.gen.infra) if (s.contains(x, z, 6)) return true; // SWTP / STP plot
     const r = this.gen.roads;

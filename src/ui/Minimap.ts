@@ -35,6 +35,10 @@ export interface MapState {
   mall?: { x: number; z: number };
   /** City Library (world x, z): always shown. */
   library?: { x: number; z: number };
+  /** Prototype building (police station) (world x, z): always shown. */
+  building?: { x: number; z: number };
+  /** All placed building models (world x, z + dot colour): small dots, always shown. */
+  buildings?: { x: number; z: number; color: string }[];
   /** EV Agro Research Institute (world x, z): always shown. */
   agro?: { x: number; z: number };
   /** SWTP / STP plants (world x, z): always shown. */
@@ -351,6 +355,51 @@ export class Minimap {
         c.fillStyle = '#fff';
         c.fillRect(lx - r * 0.62, lz - r * 0.4, r * 0.56, r * 0.8); // left page
         c.fillRect(lx + r * 0.06, lz - r * 0.4, r * 0.56, r * 0.8); // right page
+      }
+    }
+
+    // placed building models: small coloured dots (always visible, every zoom level)
+    if (s.buildings) {
+      const d = this.dpr;
+      const r = (this.zoom === 0 ? 3.2 : 2.6) * d;
+      c.lineWidth = 1 * d;
+      c.strokeStyle = '#0f172a';
+      for (const b of s.buildings) {
+        const bx = X(b.x);
+        const bz = Z(b.z);
+        if (bx < -r || bz < -r || bx > S + r || bz > S + r) continue;
+        c.fillStyle = b.color;
+        c.beginPath();
+        c.arc(bx, bz, r, 0, Math.PI * 2);
+        c.fill();
+        c.stroke();
+      }
+    }
+
+    // Prototype building (police station): blue square with a white star (always visible, every zoom level)
+    if (s.building) {
+      const d = this.dpr;
+      const r = (this.zoom === 0 ? 7.5 : this.zoom === 1 ? 6 : 5) * d;
+      const bx = X(s.building.x);
+      const bz = Z(s.building.z);
+      if (bx > -r && bz > -r && bx < S + r && bz < S + r) {
+        c.fillStyle = '#1d4ed8';
+        c.strokeStyle = '#fff';
+        c.lineWidth = 1.6 * d;
+        c.beginPath();
+        c.roundRect(bx - r, bz - r, 2 * r, 2 * r, 3 * d);
+        c.fill();
+        c.stroke();
+        c.fillStyle = '#fff';
+        c.beginPath();
+        for (let i = 0; i < 10; i++) {
+          const a = -Math.PI / 2 + (i * Math.PI) / 5;
+          const rr = i % 2 === 0 ? r * 0.72 : r * 0.3;
+          if (i === 0) c.moveTo(bx + Math.cos(a) * rr, bz + Math.sin(a) * rr);
+          else c.lineTo(bx + Math.cos(a) * rr, bz + Math.sin(a) * rr);
+        }
+        c.closePath();
+        c.fill();
       }
     }
 

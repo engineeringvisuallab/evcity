@@ -13,6 +13,7 @@ import { PortFormation } from '../port/PortFormation';
 import { MallSite, MALL_PLOT } from '../mall/MallSite';
 import { EVLabSite } from '../evlab/EVLabSite';
 import { LibrarySite, LIBRARY_PLOT } from '../library/LibrarySite';
+import { ProtoSite, PROTO_PLOT } from '../buildings/ProtoSite';
 import { InfraSite, INFRA_PLACEMENTS } from '../engineering/InfraSites';
 
 const smoothstep = (a: number, b: number, x: number): number => {
@@ -62,6 +63,9 @@ export class TerrainGenerator {
   /** City Library: a level building pad south of the F7 road, west of the railway viaduct (applied last in sample(), same in every chunk, worker and collider). */
   readonly library = new LibrarySite();
   private libraryMask = new Float32Array(2);
+  /** Prototype building (police station) on the field south of F6, west of F5: a level pad (applied last in sample(), same in every chunk, worker and collider). */
+  readonly protoBuilding = new ProtoSite();
+  private protoMask = new Float32Array(2);
   /** Airport (north-east): only its own pad + skirt is levelled (applied late in sample(), same in every chunk, worker and collider). */
   readonly airport = new AirportSite();
   private airportMask = new Float32Array(2);
@@ -121,6 +125,16 @@ export class TerrainGenerator {
     }
     lh.sort((a, b) => a - b);
     this.library.floorY = lh[lh.length >> 1];
+    // the prototype building floor = the MEDIAN natural ground over its plot
+    {
+      const ph: number[] = [];
+      for (let i = 0; i <= 8; i++) for (let j = 0; j <= 8; j++) {
+        this.sampleGround(PROTO_PLOT.x0 + ((PROTO_PLOT.x1 - PROTO_PLOT.x0) * i) / 8, PROTO_PLOT.z0 + ((PROTO_PLOT.z1 - PROTO_PLOT.z0) * j) / 8, this.scratch);
+        ph.push(this.scratch.h);
+      }
+      ph.sort((a, b) => a - b);
+      this.protoBuilding.floorY = ph[ph.length >> 1];
+    }
     // the plants' floor = the MEDIAN natural ground over the pad (the pad is nearly level, a few metres of cut and fill at most)
     for (const site of this.infra) {
       const fh: number[] = [];
@@ -191,6 +205,12 @@ export class TerrainGenerator {
       this.roads.maskAt(x, z, 1, this.libraryMask);
       const k = 1 - this.libraryMask[1];
       if (k > 0) out.h = this.library.height(x, z, out.h, k);
+    }
+    // Prototype building pad: also gives way to roads / junction pads
+    if (this.padsReady && this.protoBuilding.near(x, z)) {
+      this.roads.maskAt(x, z, 1, this.protoMask);
+      const k = 1 - this.protoMask[1];
+      if (k > 0) out.h = this.protoBuilding.height(x, z, out.h, k);
     }
     // Airport pad: gives way to roads and to the railway corridor (the airport branch runs just south of it)
     if (this.padsReady && this.airport.near(x, z) && !this.railForm.inCorridor(x, z, 6)) {

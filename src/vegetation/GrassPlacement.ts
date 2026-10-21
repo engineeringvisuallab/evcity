@@ -5,6 +5,7 @@ import type { TerrainSample } from '../terrain/Lakes';
 import { Noise2D } from '../terrain/Noise';
 import { hash2D, mulberry32 } from '../world/Seed';
 import type { TreePlacer } from './TreePlacement';
+import { placementContains } from '../buildings/Placements';
 
 
 const V = Config.vegetation;
@@ -101,6 +102,8 @@ export class GrassPlacer {
         if (this.gen.mall.contains(x, z, 1)) continue; // City Mall plot
         if (this.gen.evlab.contains(x, z, 1)) continue; // EVLab campus plot
         if (this.gen.library.contains(x, z, 1)) continue; // City Library plot
+        if (this.gen.protoBuilding.contains(x, z, 1)) continue; // prototype building plot
+        if (placementContains(x, z, 1)) continue; // placed buildings
         if (this.gen.agro.contains(x, z, 1)) continue; // Agro institute pad
         if (this.gen.infra.some((s) => s.contains(x, z, 1))) continue; // SWTP / STP plot
 
