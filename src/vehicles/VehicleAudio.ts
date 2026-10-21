@@ -417,7 +417,7 @@ class Voice {
     this.hornPrev = hornOn;
 
     // ---------------- fire ----------------
-    this.set(this.fireGain.gain, st.state === 'burning' ? 0.05 + Math.random() * 0.12 : 0, 0.03);
+    this.set(this.fireGain.gain, 0, 0.03); // fire sound comes from VehicleFire
 
     // ---------------- one-shots ----------------
     if (near) {

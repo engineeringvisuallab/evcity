@@ -240,7 +240,8 @@ export class Vehicle implements OrbitTarget {
         .setRotation({ x: q.x, y: q.y, z: q.z, w: q.w })
         .setLinearDamping(0.02)
         .setAngularDamping(0.5)
-        .setCanSleep(false),
+        .setCanSleep(false)
+        .setCcdEnabled(true), // fast vehicles must not tunnel through walls
     );
     // Collider has no density of its own: mass and centre of mass are set explicitly (low COM = stable car).
     this.collider = d.physics.world.createCollider(
@@ -911,6 +912,7 @@ export class Vehicle implements OrbitTarget {
   }
 
   private emit(dt: number, every: number, strength: number): void {
+    if (this.d.fx?.managesFire) return; // VehicleFire simulates the flames and smoke
     this.smokeT -= dt;
     if (this.smokeT > 0 || !this.d.fx) return;
     this.smokeT = every * (0.7 + Math.random() * 0.6);
