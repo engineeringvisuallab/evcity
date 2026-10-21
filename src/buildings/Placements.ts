@@ -15,7 +15,11 @@ export interface BuildingPlacement {
   W: number;
   D: number;
   zone: string;
+  /** Model variant seed (colours etc.). Only the city fill (PlacementsFill.ts) sets it; hand placed buildings use 0. */
+  seed?: number;
 }
+
+import { FILL_PLACEMENTS } from './PlacementsFill';
 
 export const BUILDING_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'mud-hut', x: -2300, z: -1520, yaw: 0, W: 9, D: 7, zone: 'village-west' },
@@ -77,14 +81,51 @@ export const BUILDING_PLACEMENTS: readonly BuildingPlacement[] = [
 /** Keep-out radius around a footprint centre (half diagonal). */
 const radius = (p: BuildingPlacement): number => Math.hypot(p.W, p.D) / 2;
 
+/** Is (x, y) inside the footprint (+ margin) of placement p? */
+function insideOf(p: BuildingPlacement, x: number, z: number, margin: number): boolean {
+  const dx = x - p.x, dz = z - p.z;
+  if (dx * dx + dz * dz > (radius(p) + margin) * (radius(p) + margin)) return false;
+  const c = Math.cos(p.yaw), s = Math.sin(p.yaw);
+  const lx = dx * c - dz * s, lz = dx * s + dz * c; // into the model's own frame
+  return Math.abs(lx) <= p.W / 2 + margin && Math.abs(lz) <= p.D / 2 + margin;
+}
+
+// The city fill has hundreds of buildings, so those are looked up through a grid (cells of 64 m) instead of a loop over all of them.
+const FILL_CELL = 64;
+let fillGrid: Map<number, BuildingPlacement[]> | null = null;
+const cellKey = (i: number, j: number): number => (i + 4096) * 8192 + (j + 4096);
+function getFillGrid(): Map<number, BuildingPlacement[]> {
+  if (fillGrid) return fillGrid;
+  const g = new Map<number, BuildingPlacement[]>();
+  for (const p of FILL_PLACEMENTS) {
+    const r = radius(p);
+    for (let i = Math.floor((p.x - r) / FILL_CELL); i <= Math.floor((p.x + r) / FILL_CELL); i++) {
+      for (let j = Math.floor((p.z - r) / FILL_CELL); j <= Math.floor((p.z + r) / FILL_CELL); j++) {
+        const k = cellKey(i, j);
+        const list = g.get(k);
+        if (list) list.push(p); else g.set(k, [p]);
+      }
+    }
+  }
+  fillGrid = g;
+  return g;
+}
+
 /** Is (x, z) on a placed building's footprint (+ margin)? Cheap: used by trees / rocks / grass so nothing grows through a building. */
 export function placementContains(x: number, z: number, margin = 0): boolean {
-  for (const p of BUILDING_PLACEMENTS) {
-    const dx = x - p.x, dz = z - p.z;
-    if (dx * dx + dz * dz > (radius(p) + margin) * (radius(p) + margin)) continue;
-    const c = Math.cos(p.yaw), s = Math.sin(p.yaw);
-    const lx = dx * c - dz * s, lz = dx * s + dz * c; // into the model's own frame
-    if (Math.abs(lx) <= p.W / 2 + margin && Math.abs(lz) <= p.D / 2 + margin) return true;
+  for (const p of BUILDING_PLACEMENTS) if (insideOf(p, x, z, margin)) return true;
+  if (FILL_PLACEMENTS.length === 0) return false;
+  // a footprint reaches at most ~ 130 m from its centre and cells list every footprint that touches them (radius is already in the cells)
+  const list = getFillGrid().get(cellKey(Math.floor(x / FILL_CELL), Math.floor(z / FILL_CELL)));
+  if (list) for (const p of list) if (insideOf(p, x, z, margin)) return true;
+  // a margin can reach into the neighbour cell
+  if (margin > 0) {
+    const i = Math.floor(x / FILL_CELL), j = Math.floor(z / FILL_CELL);
+    for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) {
+      if (di === 0 && dj === 0) continue;
+      const l2 = getFillGrid().get(cellKey(i + di, j + dj));
+      if (l2) for (const p of l2) if (insideOf(p, x, z, margin)) return true;
+    }
   }
   return false;
 }

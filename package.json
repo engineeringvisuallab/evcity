@@ -35,6 +35,8 @@
     "test:eng-zones": "tsx scripts/eng-zones-test.ts",
     "test:proto-building": "tsx scripts/proto-building-test.ts",
     "test:placements": "tsx scripts/placements-test.ts",
+    "fill:city": "tsx scripts/fill-city.ts",
+    "test:fill": "tsx scripts/fill-test.ts",
     "test:signals": "tsx scripts/traffic-signal-test.ts",
     "test:rail": "tsx scripts/rail-plan-test.ts",
     "test:rail-mesh": "tsx scripts/rail-mesh-test.ts",
