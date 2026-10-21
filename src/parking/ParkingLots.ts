@@ -70,6 +70,14 @@ class DrapedBuilder {
   }
 
   build(): THREE.BufferGeometry {
+    // Make every triangle wound so it faces UP. A down-wound quad is back-face culled and the whole lot is invisible from above
+    // (flipping the normals below only fixes the lighting, not the culling).
+    const P = this.pos, I = this.idx;
+    for (let t = 0; t < I.length; t += 3) {
+      const a = I[t] * 3, b = I[t + 1] * 3, c = I[t + 2] * 3;
+      const ny = (P[b + 2] - P[a + 2]) * (P[c] - P[a]) - (P[b] - P[a]) * (P[c + 2] - P[a + 2]);
+      if (ny < 0) { const k = I[t + 1]; I[t + 1] = I[t + 2]; I[t + 2] = k; }
+    }
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(this.pos, 3));
     g.setIndex(this.idx);
