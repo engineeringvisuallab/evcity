@@ -70,6 +70,11 @@ export class VehicleManager {
     this.d.vehicle.fx = fx;
   }
 
+  /** Called whenever any vehicle has a crash (net velocity change dv m/s, speed before the crash): the Gold economy uses it for traffic accidents. */
+  setCrashHook(fn: VehicleDeps['onCrash']): void {
+    this.d.vehicle.onCrash = fn;
+  }
+
   /** People are needed for run-overs and for throwing the occupants out of a wrecked vehicle. */
   setPeople(p: PeopleManager): void {
     this.people = p;
@@ -443,6 +448,9 @@ export class VehicleManager {
     this.trees.destroyInBox(this.tmp3.x, this.tmp3.z, this.tmp4.x / l, this.tmp4.z / l, v.spec.half.z + 2.4, v.spec.half.x + 0.9);
   }
 
+  /** The player's vehicle hit a person (civilian / police): who, did he die. Used by the Gold economy. */
+  onPersonHit: ((p: Person, died: boolean) => void) | null = null;
+
   /** Vehicles run people over (the tank too). */
   private runOver(v: Vehicle): void {
     const people = this.people;
@@ -460,7 +468,8 @@ export class VehicleManager {
       const along = rx * fx + rz * fz;
       const lat = rx * fz - rz * fx;
       if (Math.abs(along) < s.half.z + 0.25 && Math.abs(lat) < s.half.x + 0.25) {
-        people.damage(p, Math.abs(v.forwardSpeed) * Math.sqrt(s.mass) * 0.12, false, v === this.driver);
+        const died = people.damage(p, Math.abs(v.forwardSpeed) * Math.sqrt(s.mass) * 0.12, false, v === this.driver);
+        if (v === this.driver && p.role !== 'thug') this.onPersonHit?.(p, died);
       }
     }
   }

@@ -38,10 +38,12 @@ import { BuildingManager, PlacedBuildings, setBuildingTextureQuality } from '../
 import { InfraManager } from '../engineering/InfraManager';
 import { Minimap, type MapMarker, type MapState } from '../ui/Minimap';
 import { VehicleHUD } from '../ui/VehicleHUD';
-import { VehicleManager, SEDAN, JEEP, HYPERCAR, EVHYPAR, EVBIKE, BIKE, RICKSHAW, AUTO, BUS, SPECS } from '../vehicles';
+import { type Vehicle, VehicleManager, SEDAN, JEEP, HYPERCAR, EVHYPAR, EVBIKE, BIKE, RICKSHAW, AUTO, BUS, SPECS } from '../vehicles';
 import { VehicleModel } from '../vehicles/VehicleModel';
 import { PeopleManager, PersonModel, ENGINEER_LOOK } from '../people';
-import { RoadGraph, TrafficManager } from '../traffic';
+import { RoadGraph, TrafficLightLayer, TrafficManager, TrafficSignals } from '../traffic';
+import { Economy } from '../economy/Economy';
+import { GoldConfig } from '../economy/Gold';
 import { InputManager } from '../input/InputManager';
 import { VoiceManager } from '../audio/VoiceManager';
 import { Environment } from '../environment';
@@ -95,6 +97,16 @@ export class Engine {
   /** STAGE 9: people on foot, AI traffic (every vehicle has a driver). */
   readonly people: PeopleManager;
   readonly traffic: TrafficManager;
+  /** Traffic signals on every road junction (AI cars stop at red; the player is fined Gold for running a red light). */
+  readonly trafficSignals: TrafficSignals;
+  private trafficLights: TrafficLightLayer;
+  /** Gold: 10,000 at the start; fines for red lights and traffic accidents, a gift for killing a criminal. */
+  readonly economy: Economy;
+  private redLightPrev = { x: 0, z: 0, ok: false };
+  private redLightP = new THREE.Vector3();
+  private redLightF = new THREE.Vector3();
+  private crashA = new THREE.Vector3();
+  private crashB = new THREE.Vector3();
   /** Bus stops along the city streets (shelters, minimap markers, buses halt there). */
   readonly busStops: BusStops;
   /** Explosions, fire, smoke, flying vehicle parts. */
@@ -366,8 +378,15 @@ export class Engine {
     const graph = new RoadGraph(roads);
     this.people = new PeopleManager({ scene: this.scene, terrain: this.world.terrain, origin: this.world.origin, graph, vehicles: this.vehicles, player: this.player });
     this.busStops = new BusStops({ scene: this.scene, origin: this.world.origin, terrain: this.world.terrain, graph, sites: this.world.terrain.sites });
-    this.traffic = new TrafficManager({ graph, plan: new CityPlan(this.world.terrain.sites), vehicles: this.vehicles, people: this.people, player: this.player, terrainPhysics: this.world.terrainPhysics, stops: this.busStops });
+    this.trafficSignals = new TrafficSignals(graph);
+    this.trafficLights = new TrafficLightLayer(this.world.root, this.trafficSignals);
+    this.traffic = new TrafficManager({ graph, plan: new CityPlan(this.world.terrain.sites), vehicles: this.vehicles, people: this.people, player: this.player, terrainPhysics: this.world.terrainPhysics, stops: this.busStops, signals: this.trafficSignals });
     this.vehicles.setPeople(this.people);
+    // --- Gold economy: accidents (vehicle crash / run over people) are fined, killing a criminal is rewarded ---
+    this.economy = new Economy(container);
+    this.vehicles.onPersonHit = (p, died) => this.economy.personHit(p, died);
+    this.vehicles.setCrashHook((v, dv, speed) => this.onVehicleCrash(v, dv, speed));
+    this.people.onCriminalKilled = () => this.economy.criminalKilled();
     this.mapStops = this.busStops.stops.filter((b) => b.dir === 1);
 
     // --- guns (left mouse = shoot, right mouse = aim, Q = next weapon) ---
@@ -604,6 +623,10 @@ export class Engine {
     this.treeDestruction.update(dt);
     this.busStops.update(dt, this.world.playerWorld);
     this.busStops.place();
+    this.trafficSignals.now = this.time.elapsed;
+    this.trafficLights.update();
+    this.checkRedLight();
+    this.economy.update(this.time.elapsed);
     this.people.update(dt, this.world.playerWorld);
     this.traffic.update(dt, this.world.playerWorld);
     this.helis.update(dt, alpha, this.world.playerWorld);
@@ -780,6 +803,53 @@ export class Engine {
     return { me, viewHeading: view, others, stops: this.mapStops, mall: this.mall.position, library: this.library.position, building: this.protoBuilding.position, buildings: this.placedBuildings.markers, agro: this.agro.position, infra: this.infra.plants.map((pl) => ({ x: pl.site.x, z: pl.site.z, id: pl.site.id })) };
   }
 
+  /** The player's vehicle crossed a stop line while its light was red: a Gold fine (no police case). */
+  private checkRedLight(): void {
+    const v = this.vehicles.driver;
+    const prev = this.redLightPrev;
+    if (!v || v.state === 'wrecked') {
+      prev.ok = false;
+      return;
+    }
+    v.physWorld(this.redLightP);
+    v.forwardVector(this.redLightF);
+    const l = Math.hypot(this.redLightF.x, this.redLightF.z) || 1;
+    const x = this.redLightP.x + (this.redLightF.x / l) * v.spec.half.z; // the front bumper
+    const z = this.redLightP.z + (this.redLightF.z / l) * v.spec.half.z;
+    if (prev.ok && Math.hypot(x - prev.x, z - prev.z) < 15) {
+      const hit = this.trafficSignals.redLightCrossing(prev.x, prev.z, x, z, v.forwardSpeed);
+      if (hit) this.economy.redLight();
+    }
+    prev.x = x;
+    prev.z = z;
+    prev.ok = true;
+  }
+
+  /**
+   * Any vehicle had a crash. If it is the PLAYER'S vehicle (moving, not just parked and hit) and the crash was hard enough, look for the
+   * other vehicle it hit: the nearest one that touches it. The Gold fine depends on the TYPE of that vehicle. A crash against a wall or a tree
+   * (no vehicle next to it) is not a traffic accident and costs nothing.
+   */
+  private onVehicleCrash(v: Vehicle, dv: number, speed: number): void {
+    if (v !== this.vehicles.driver) return;
+    if (dv < GoldConfig.accidentMinDv || speed < GoldConfig.accidentMinSpeed) return;
+    v.physWorld(this.crashA);
+    const reachA = Math.max(v.spec.half.x, v.spec.half.z);
+    let best: Vehicle | null = null;
+    let bestGap = 2.2; // metres between the two hulls
+    for (const o of this.vehicles.vehicles) {
+      if (o === v) continue;
+      o.physWorld(this.crashB);
+      if (Math.abs(this.crashB.y - this.crashA.y) > 4) continue;
+      const gap = Math.hypot(this.crashB.x - this.crashA.x, this.crashB.z - this.crashA.z) - reachA - Math.max(o.spec.half.x, o.spec.half.z);
+      if (gap < bestGap) {
+        bestGap = gap;
+        best = o;
+      }
+    }
+    if (best) this.economy.vehicleHit(best);
+  }
+
   /** HUD chip: railway station area > planned city area > airport / seaport part > the world zone (the whole map has one). */
   private updateAreaLabel(): void {
     const p = this.world.playerWorld;
@@ -898,6 +968,8 @@ export class Engine {
     this.explosions.dispose();
     this.treeDestruction.dispose();
     this.busStops.dispose();
+    this.trafficLights.dispose();
+    this.economy.dispose();
     this.birds.dispose();
     this.animals.dispose();
     this.police.dispose();

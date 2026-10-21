@@ -401,6 +401,17 @@ export const bn = {
     culvert: 'কালভার্ট (ছোট নদীর নিচ দিয়ে পানি যাওয়ার নালা)',
   },
 
+  /** Gold অর্থনীতি: জরিমানা ও উপহার। */
+  gold: {
+    unit: 'গোল্ড',
+    fine: 'সিগন্যাল ভাঙার জরিমানা',
+    accident: 'দুর্ঘটনার জরিমানা',
+    killed: 'জন মৃত',
+    hurt: 'জন আহত',
+    fineShort: 'জরিমানা দেওয়ার মতো গোল্ড নেই',
+    criminal: 'অপরাধী ধরার উপহার',
+  },
+
   /** অস্ত্র ও লড়াই। */
   combat: {
     weapon: { pistol: 'পিস্তল', combatPistol: 'কমব্যাট পিস্তল', heavyPistol: 'হেভি পিস্তল', revolver: 'রিভলভার', microSmg: 'মাইক্রো এসএমজি', smg: 'এসএমজি', ak47: 'AK-47 অ্যাসল্ট রাইফেল', carbineRifle: 'কারবাইন রাইফেল', shotgun: 'শটগান', sniperRifle: 'স্নাইপার রাইফেল' } as Record<string, string>,

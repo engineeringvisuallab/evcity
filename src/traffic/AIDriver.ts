@@ -3,6 +3,7 @@ import type { DriveInput, Vehicle } from '../vehicles/Vehicle';
 import { clamp } from '../utils/math';
 import { RouteBuilder } from './Route';
 import type { BusStop } from './BusStops';
+import type { TrafficSignals } from './TrafficSignals';
 
 /** Something a driver must not hit (WORLD coordinates, metres, m/s). */
 export interface Obstacle {
@@ -32,6 +33,8 @@ export class AIDriver {
   dead = false;
   /** Seconds the car has been parked at the end of its route. */
   finishedFor = 0;
+  /** Set true for a driver that must not obey traffic lights. */
+  ignoreSignals = false;
   /** Buses: the bus stop being approached, the ones already served, and how long the bus has waited there. */
   stop: BusStop | null = null;
   readonly served = new Set<number>();
@@ -44,6 +47,8 @@ export class AIDriver {
   constructor(
     private veh: Vehicle,
     readonly route: RouteBuilder,
+    /** Traffic lights: the driver stops at the stop line of a red (or late yellow) light. */
+    private signals?: TrafficSignals,
   ) {}
 
   update(dt: number, obstacles: Obstacle[]): void {
@@ -119,6 +124,12 @@ export class AIDriver {
     if (this.route.terminal && this.head >= pts.length - 1) {
       const end = pts[pts.length - 1];
       if ((end.x - P.x) * fx + (end.z - P.z) * fz < 1.5) vt = 0;
+    }
+
+    // a red (or late yellow) traffic light ahead: stop behind its stop line (nothing to do once the car is past the line)
+    if (this.signals && !this.ignoreSignals) {
+      const sl = this.signals.brakeLimit(P.x, P.z, fx, fz, speed, spec.half.z);
+      if (sl < vt) vt = sl;
     }
 
     // ---- things in front of the bumper ----

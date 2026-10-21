@@ -90,6 +90,8 @@ export interface VehicleDeps {
   bus: Bus;
   /** Explosions / debris / smoke (set by the Engine after creation; vehicles work without it). */
   fx?: VehicleFx | null;
+  /** A crash happened to `v`: the net velocity change `dv` (m/s) and the speed (m/s) it had before. Used by the Gold economy (traffic accidents). */
+  onCrash?: ((v: Vehicle, dv: number, speed: number) => void) | null;
 }
 
 /** What happened to a vehicle; VehicleManager handles these (people, wanted level, ejecting the player). */
@@ -211,6 +213,7 @@ export class Vehicle implements OrbitTarget {
   private crashT = 0;
   private crashQuiet = 0;
   private crashV0 = new THREE.Vector3();
+  private crashSpeed = 0;
   private stageDone = 0;
   private smokeT = 0;
   private lostWheel: boolean[] = [];
@@ -571,6 +574,7 @@ export class Vehicle implements OrbitTarget {
         // a crash can not take away more speed than the vehicle had (x1.6 for the bounce back): a car that stands still against a wall
         // (spring / solver jitter while the driver keeps the throttle down) is not a crash and must not be damaged again and again
         const v0 = Math.hypot(this.crashV0.x, this.crashV0.y, this.crashV0.z);
+        this.crashSpeed = v0;
         this.impact(Math.min(dv, 45, v0 * 1.6 + 0.5));
       }
     }
@@ -757,6 +761,7 @@ export class Vehicle implements OrbitTarget {
       this.d.fx?.crash(this.tmpV2, dv); // sparks and a bang, even when nothing is damaged
     }
     this.impactGrace = 0.3;
+    this.d.onCrash?.(this, dv, this.crashSpeed);
     if (dv <= CRASH_DV) return; // a light bump: no damage at all
     this.hurt((dv - CRASH_DV) * CRASH_DAMAGE * this.spec.fragile, false, 'crash');
     // a very hard hit on a car that is already in a bad way can start a fuel-leak fire: it burns, but it does not explode

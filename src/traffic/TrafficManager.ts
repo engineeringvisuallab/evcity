@@ -12,6 +12,7 @@ import type { BusStops } from './BusStops';
 import { AIDriver, type Obstacle } from './AIDriver';
 import { RoadGraph, type RoadPoint } from './RoadGraph';
 import { RouteBuilder } from './Route';
+import type { TrafficSignals } from './TrafficSignals';
 
 export interface TrafficDeps {
   graph: RoadGraph;
@@ -23,6 +24,8 @@ export interface TrafficDeps {
   terrainPhysics: TerrainPhysics;
   /** Buses halt at these. */
   stops?: BusStops;
+  /** Traffic lights: AI drivers obey them. */
+  signals?: TrafficSignals;
 }
 
 const tmpPt: RoadPoint = { x: 0, z: 0, y: 0, hx: 0, hz: 0 };
@@ -158,7 +161,7 @@ export class TrafficManager {
       const [lo, hi] = spec.pax ?? [0, 0];
       const pax = lo + Math.floor(Math.random() * (hi - lo + 1));
       for (let i = 0; i < pax; i++) if (!car.seatPassenger(this.d.people.createPerson())) break;
-      car.ai = new AIDriver(car, route);
+      car.ai = new AIDriver(car, route, this.d.signals);
       car.setEnabled(true);
       return;
     }

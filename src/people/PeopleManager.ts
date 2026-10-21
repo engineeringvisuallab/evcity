@@ -541,6 +541,9 @@ export class PeopleManager {
     return best;
   }
 
+  /** The player killed a criminal (a 'thug'). Used by the Gold economy (reward). */
+  onCriminalKilled: ((p: Person) => void) | null = null;
+
   /** The player (or anybody) hurts a person. Returns true if the person died. */
   damage(p: Person, amount: number, head: boolean, byPlayer: boolean): boolean {
     if (p.dead) return false;
@@ -549,6 +552,7 @@ export class PeopleManager {
     const w = this.combat?.wanted;
     if (p.health <= 0) {
       this.kill(p);
+      if (byPlayer && p.role === 'thug') this.onCriminalKilled?.(p);
       if (byPlayer && w) w.add(p.role === 'police' ? C.wanted.killPolice : p.role === 'thug' ? 0 : C.wanted.killCivilian);
       this.alarm(p.world, p);
       return true;
