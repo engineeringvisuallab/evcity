@@ -255,7 +255,7 @@ export class VehicleManager {
         this.handleEvents(v);
         this.runOver(v);
         if (v.spec.look.kind === 'tank' && v.state !== 'wrecked') this.crushTrees(v);
-      }
+      } else v.tickOffline(dt); // far away: fire and wreck timers keep running
     }
     for (const v of this.vehicles) {
       v.getWorldPosition(this.tmp);

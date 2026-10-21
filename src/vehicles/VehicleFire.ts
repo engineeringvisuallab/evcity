@@ -848,7 +848,20 @@ export class VehicleFire {
     if (v && !this.d.vehicles.vehicles.includes(v)) rec.v = null; // removed from the world: the fire stays where it was
     if (rec.v) {
       const w = rec.v;
-      if (!w.enabled) return;
+      if (!w.enabled) {
+        // far from the player (physics off): no particles, but the fire keeps burning down in the background
+        rec.smolder = false;
+        rec.age += dt;
+        if (w.state === 'wrecked') rec.fuel -= dt / rec.prof.burn;
+        else if (w.state === 'ok') rec.fuel -= dt / 8; // recovered / repaired
+        rec.lvl *= Math.exp(-dt * 0.5);
+        if (w.state === 'burning') rec.lvl = Math.max(rec.lvl, 0.5);
+        if (rec.fuel <= 0 && w.state !== 'burning') {
+          rec.sound?.retire();
+          this.recs.delete(key);
+        }
+        return;
+      }
       const root = w.model.root;
       rec.wpos.set(root.position.x + o.x, root.position.y, root.position.z + o.z);
       rec.q.copy(root.quaternion);
@@ -1091,7 +1104,7 @@ export class VehicleFire {
     // ---- fire glow (a soft halo around each big fire: it lights up the surroundings at night)
     this.glowSprites.begin();
     for (const rec of this.recs.values()) {
-      if (rec.lvl < 0.1 || rec.smolder) continue;
+      if (rec.lvl < 0.1 || rec.smolder || (rec.v && !rec.v.enabled)) continue;
       const flick = 0.75 + 0.25 * Math.sin(t * 17 + rec.sf * 5) * Math.sin(t * 7.3 + 1.7);
       this.glowSprites.push(rec.wpos.x - o.x, rec.wpos.y + 1.3, rec.wpos.z - o.z, (7 + 11 * rec.sf) * (0.6 + 0.4 * rec.lvl), 0, 1, 0.45, 0.13, 0.2 * rec.lvl * flick);
     }

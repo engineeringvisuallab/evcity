@@ -895,6 +895,19 @@ export class Vehicle implements OrbitTarget {
     this.model.setDoor(t * t * (3 - 2 * t)); // ease in / out
   }
 
+  /**
+   * Far away from the player (physics off): the fire / wreck clocks must still run, otherwise a burning vehicle stays frozen
+   * and is still burning when the player comes back minutes later. Nobody is near, so a burning car just burns out (no blast).
+   */
+  tickOffline(dt: number): void {
+    if (this.state === 'burning') {
+      this.fuse -= dt;
+      if (this.fuse <= 0) this.burnOut();
+    } else if (this.state === 'wrecked') {
+      this.wreckedFor += dt;
+    }
+  }
+
   /** Every frame (render side): fire, smoke, fuse, wreck timer. `dt` in seconds. */
   tick(dt: number): void {
     this.animateDoor(dt);

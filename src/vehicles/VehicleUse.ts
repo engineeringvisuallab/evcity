@@ -21,7 +21,15 @@ export interface VehicleUse {
   areas: readonly ZoneKind[] | 'any';
 }
 
+/**
+ * MASTER SWITCH. true = every AI-traffic vehicle (car, bike, rickshaw, auto, bus, truck, shuttle, buggy) may drive on every road kind in every
+ * place, by its `weight`. false = the per-vehicle rules of each preset below (road kinds / zones / areas) apply again.
+ * Vehicles with weight 0 (military, special) never appear in traffic either way.
+ */
+export const ALL_VEHICLES_EVERYWHERE = true;
+
 export function canUseRoad(u: VehicleUse, road: RoadKind): boolean {
+  if (ALL_VEHICLES_EVERYWHERE) return true;
   return u.roads.includes(road);
 }
 
@@ -30,6 +38,7 @@ export function canUseRoad(u: VehicleUse, road: RoadKind): boolean {
  * everywhere else the world ZONE (farmland, village, industrial ...).
  */
 export function canUsePlace(u: VehicleUse, zone: WorldZoneKind, area: ZoneKind | null): boolean {
+  if (ALL_VEHICLES_EVERYWHERE) return true;
   if (area) return u.areas === 'any' || u.areas.includes(area);
   return u.zones === 'any' || u.zones.includes(zone);
 }

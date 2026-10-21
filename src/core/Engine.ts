@@ -76,6 +76,9 @@ function mapSize(kind: string): { len?: number; wide?: number } {
  * Engine bootstrap: creates every system and wires them together.
  * Systems talk through the EventBus; the Engine only decides the update ORDER.
  */
+/** The same vehicle can be called from the N menu only once per minute. */
+const SUMMON_COOLDOWN_MS = 60_000;
+
 export class Engine {
   readonly time = new Time();
   readonly renderer: THREE.WebGLRenderer;
@@ -937,6 +940,10 @@ export class Engine {
     const heli = id === 'heli';
     const spec = heli ? null : SPECS[id as keyof typeof SPECS];
     if (!heli && !spec) return null;
+    // the same vehicle cannot be called again within a minute (it would otherwise be teleported to the player again and again)
+    const now = performance.now();
+    const wait = SUMMON_COOLDOWN_MS - (now - (this.lastSummon.get(id) ?? -Infinity));
+    if (wait > 0) return `${m.cooldown} (${Math.ceil(wait / 1000)} ${m.seconds})`;
     const T = this.world.terrain;
     const pw = this.player.getWorldPosition(new THREE.Vector3());
     const yaw = this.orbit.yaw;
@@ -958,8 +965,12 @@ export class Engine {
     const nose = Math.atan2(fx, fz);
     if (heli) this.helis.summon(new THREE.Vector3(x, T.heightAt(x, z) + 1.5, z), nose);
     else this.vehicles.summon(spec!, x, z, nose);
+    this.lastSummon.set(id, now);
     return null;
   }
+
+  /** When each vehicle id was last called from the N menu (performance.now()). */
+  private lastSummon = new Map<string, number>();
 
   /** A spot on the parking lots (lot coordinates s, n) with the yaw of a vehicle whose nose points along lot direction (ds, dn). */
   private slot(s: number, n: number, ds: number, dn: number): { x: number; z: number; yaw: number } {
