@@ -1,0 +1,461 @@
+import { chunkKey, chunkOriginX, chunkOriginZ, worldToChunkCoord } from '../world/WorldGrid';
+import { RAIL_DESIGN as D } from './RailPlan';
+import type { RailEdge, RailNetwork } from './RailNetwork';
+import type { RailDiamond, RailSwitch } from './RailSwitches';
+
+/** Railway geometry of one chunk (chunk-local coordinates, vertex colours). Built inside the worker. */
+export interface RailMeshData {
+  positions: Float32Array;
+  normals: Float32Array;
+  colors: Float32Array;
+  indices: Uint16Array | Uint32Array;
+}
+
+type V = [number, number, number];
+
+const C = {
+  ballast: [0.4, 0.38, 0.36] as V,
+  sleeper: [0.55, 0.54, 0.52] as V,
+  rail: [0.52, 0.54, 0.58] as V,
+  concrete: [0.64, 0.63, 0.6] as V,
+  concreteDark: [0.5, 0.49, 0.47] as V,
+  steel: [0.34, 0.4, 0.47] as V,
+  mast: [0.52, 0.53, 0.55] as V,
+  wire: [0.08, 0.08, 0.09] as V,
+  platform: [0.72, 0.71, 0.68] as V,
+  canopy: [0.86, 0.88, 0.92] as V,
+  dark: [0.02, 0.02, 0.025] as V,
+  stop: [0.75, 0.15, 0.1] as V,
+  subst: [0.7, 0.66, 0.55] as V,
+  yellow: [0.9, 0.78, 0.15] as V,
+  blade: [0.8, 0.8, 0.76] as V,
+  frog: [0.2, 0.22, 0.26] as V,
+};
+
+/** Geometry collector: flat-coloured quads with their own normals. */
+class Emit {
+  pos: number[] = [];
+  nrm: number[] = [];
+  col: number[] = [];
+  idx: number[] = [];
+  constructor(private ox: number, private oz: number) {}
+
+  quad(a: V, b: V, c: V, d: V, n: V, col: V): void {
+    // wind counter-clockwise seen from the side the normal points to
+    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
+    const vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+    const dot = (uy * vz - uz * vy) * n[0] + (uz * vx - ux * vz) * n[1] + (ux * vy - uy * vx) * n[2];
+    const q = dot >= 0 ? [a, b, c, d] : [a, d, c, b];
+    const base = this.pos.length / 3;
+    for (const p of q) {
+      this.pos.push(p[0] - this.ox, p[1], p[2] - this.oz);
+      this.nrm.push(n[0], n[1], n[2]);
+      this.col.push(col[0], col[1], col[2]);
+    }
+    this.idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+  }
+
+  /** Box centred at (cx, cy, cz); `a` = unit direction along (x, z), half sizes along / up / across. */
+  box(cx: number, cy: number, cz: number, ax: number, az: number, hl: number, hh: number, hw: number, col: V, bottom = true): void {
+    const wx = -az, wz = ax;
+    const P = (l: number, h: number, w: number): V => [cx + ax * l + wx * w, cy + h, cz + az * l + wz * w];
+    const lo = P(-hl, -hh, -hw), a1 = P(hl, -hh, -hw), a2 = P(hl, -hh, hw), a3 = P(-hl, -hh, hw);
+    const b0 = P(-hl, hh, -hw), b1 = P(hl, hh, -hw), b2 = P(hl, hh, hw), b3 = P(-hl, hh, hw);
+    this.quad(b0, b1, b2, b3, [0, 1, 0], col);
+    if (bottom) this.quad(lo, a1, a2, a3, [0, -1, 0], col);
+    this.quad(lo, a1, b1, b0, [-wx, 0, -wz], col);
+    this.quad(a3, a2, b2, b3, [wx, 0, wz], col);
+    this.quad(lo, a3, b3, b0, [-ax, 0, -az], col);
+    this.quad(a1, a2, b2, b1, [ax, 0, az], col);
+  }
+
+  /** Beam from node A to node B (each: position + across unit vector). Section: across half width `hw`, from y offset `y0` to `y0 + h`. */
+  beam(A: Node, B: Node, off: number, hw: number, y0: number, h: number, col: V, sides = true): void {
+    const P = (n: Node, w: number, y: number): V => [n.x + n.wx * (off + w), n.y + y, n.z + n.wz * (off + w)];
+    const t0 = P(A, -hw, y0 + h), t1 = P(A, hw, y0 + h), t2 = P(B, hw, y0 + h), t3 = P(B, -hw, y0 + h);
+    this.quad(t0, t1, t2, t3, [0, 1, 0], col);
+    if (!sides) return;
+    const b0 = P(A, -hw, y0), b1 = P(A, hw, y0), b2 = P(B, hw, y0), b3 = P(B, -hw, y0);
+    this.quad(b0, b3, t3, t0, [-A.wx, 0, -A.wz], col);
+    this.quad(b1, b2, t2, t1, [A.wx, 0, A.wz], col);
+    this.quad(b0, b1, t1, t0, [-A.tx, 0, -A.tz], col);
+    this.quad(b3, b2, t2, t3, [A.tx, 0, A.tz], col);
+    this.quad(b0, b1, b2, b3, [0, -1, 0], col);
+  }
+
+  data(): RailMeshData | null {
+    if (this.idx.length === 0) return null;
+    const n = this.pos.length / 3;
+    return {
+      positions: Float32Array.from(this.pos),
+      normals: Float32Array.from(this.nrm),
+      colors: Float32Array.from(this.col),
+      indices: n > 65535 ? Uint32Array.from(this.idx) : Uint16Array.from(this.idx),
+    };
+  }
+}
+
+/** A point of a line with its frame (tangent t, across w = left of the direction of travel) and the design height. */
+interface Node {
+  x: number;
+  y: number;
+  z: number;
+  tx: number;
+  tz: number;
+  wx: number;
+  wz: number;
+}
+
+function nodeAt(e: RailEdge, i: number): Node {
+  const n = e.xs.length;
+  const a = Math.max(0, i - 1);
+  const b = Math.min(n - 1, i + 1);
+  let tx = e.xs[b] - e.xs[a];
+  let tz = e.zs[b] - e.zs[a];
+  const l = Math.hypot(tx, tz) || 1;
+  tx /= l;
+  tz /= l;
+  return { x: e.xs[i], y: e.design[i], z: e.zs[i], tx, tz, wx: -tz, wz: tx };
+}
+
+function lerpNode(A: Node, B: Node, t: number): Node {
+  let tx = A.tx + (B.tx - A.tx) * t;
+  let tz = A.tz + (B.tz - A.tz) * t;
+  const l = Math.hypot(tx, tz) || 1;
+  tx /= l;
+  tz /= l;
+  return { x: A.x + (B.x - A.x) * t, y: A.y + (B.y - A.y) * t, z: A.z + (B.z - A.z) * t, tx, tz, wx: -tz, wz: tx };
+}
+
+/** Everything of the railway that one chunk owns (an element is built by the chunk that holds its reference point). */
+interface Owned {
+  intervals: { e: number; i: number }[];
+  piers: number[];
+  steel: number[];
+  ends: { e: number; s: number; out: number; kind: 'tunnel' | 'cutcover' | 'abutment' }[];
+  stations: { st: number; arr: number }[];
+  switches: number[];
+  diamonds: number[];
+}
+const index = new WeakMap<RailNetwork, Map<string, Owned>>();
+
+/** Every track the mesh draws: the lines, then the station links (indices of `intervals` / `ends` point into this list). */
+function trackEdges(rail: RailNetwork): RailEdge[] {
+  return [...rail.edges, ...rail.links.map((l) => l.edge)];
+}
+
+function ownerIndex(rail: RailNetwork): Map<string, Owned> {
+  const hit = index.get(rail);
+  if (hit) return hit;
+  const m = new Map<string, Owned>();
+  const slot = (x: number, z: number): Owned => {
+    const c = worldToChunkCoord(x, z);
+    const k = chunkKey(c.cx, c.cz);
+    let o = m.get(k);
+    if (!o) {
+      o = { intervals: [], piers: [], steel: [], ends: [], stations: [], switches: [], diamonds: [] };
+      m.set(k, o);
+    }
+    return o;
+  };
+  trackEdges(rail).forEach((e, ei) => {
+    for (let i = 0; i < e.xs.length - 1; i++) slot((e.xs[i] + e.xs[i + 1]) / 2, (e.zs[i] + e.zs[i + 1]) / 2).intervals.push({ e: ei, i });
+    e.segments.forEach((sg, k) => {
+      if (sg.kind === 'ground') return;
+      const prev = e.segments[k - 1];
+      const next = e.segments[k + 1];
+      for (const [s, out, nb] of [[sg.s0, -1, prev], [sg.s1, 1, next]] as const) {
+        if (!nb) continue; // the end of the line itself
+        const p = rail.pointAt(e, s);
+        if (sg.kind === 'bridge') {
+          if (nb.kind === 'ground') slot(p.x, p.z).ends.push({ e: ei, s, out, kind: 'abutment' });
+        } else slot(p.x, p.z).ends.push({ e: ei, s, out, kind: sg.kind });
+      }
+    });
+  });
+  rail.piers.forEach((p, k) => slot(p.x, p.z).piers.push(k));
+  rail.steelSpans.forEach((sp, k) => {
+    const e = rail.edges.find((q) => q.id === sp.edgeId)!;
+    const p = rail.pointAt(e, (sp.s0 + sp.s1) / 2);
+    slot(p.x, p.z).steel.push(k);
+  });
+  rail.stations.forEach((st, si) => {
+    st.arrivals.forEach((ar, ai) => {
+      const e = rail.edges.find((q) => q.id === ar.edgeId)!;
+      const p = rail.pointAt(e, ar.end === 'a' ? D.platform / 2 + 12 : e.length - D.platform / 2 - 12);
+      slot(p.x, p.z).stations.push({ st: si, arr: ai });
+    });
+  });
+  rail.switches.forEach((sw, k) => slot(sw.x, sw.z).switches.push(k));
+  rail.diamonds.forEach((d, k) => slot(d.x, d.z).diamonds.push(k));
+  index.set(rail, m);
+  return m;
+}
+
+/** Is this railway chunk empty? (cheap test for the worker) */
+export function railOwnsChunk(rail: RailNetwork, cx: number, cz: number): boolean {
+  return ownerIndex(rail).has(chunkKey(cx, cz));
+}
+
+/**
+ * Railway mesh of chunk (cx, cz): ballast, sleepers, rails, 25 kV overhead line (LOD0), viaduct decks, piers, steel spans, abutments,
+ * tunnel / box portals, platforms with canopies, buffer stops and a traction substation per ground station.
+ * LOD0 gets everything, LOD1 the track bed and structures, LOD2 only structures (so viaducts show from far away).
+ */
+export function buildRailMesh(rail: RailNetwork, cx: number, cz: number, lod: number, groundAt: (x: number, z: number) => number): RailMeshData | null {
+  if (lod > 2) return null;
+  const own = ownerIndex(rail).get(chunkKey(cx, cz));
+  if (!own) return null;
+  const em = new Emit(chunkOriginX(cx), chunkOriginZ(cz));
+  const half = D.trackSpacing / 2;
+  const tracks = trackEdges(rail);
+  const kindAt = (e: RailEdge, m: number): string => e.segments.find((g) => m >= g.s0 && m <= g.s1)?.kind ?? 'ground';
+
+  for (const { e: ei, i } of own.intervals) {
+    const e = tracks[ei];
+    const mid = (e.cum[i] + e.cum[i + 1]) / 2;
+    const kind = kindAt(e, mid);
+    if (kind === 'tunnel' || kind === 'cutcover') continue;
+    const inA = e.cum[i + 1] <= e.zoneA + 1e-6;
+    const inB = e.cum[i] >= e.length - e.zoneB - 1e-6;
+    const st = inA || inB;
+    const A = nodeAt(e, i);
+    const B = nodeAt(e, i + 1);
+    const len = e.cum[i + 1] - e.cum[i];
+    const lift = lod === 0 ? 0 : 0.15;
+    const bed = (n: Node): Node => ({ ...n, y: n.y + lift });
+    const a = bed(A);
+    const b = bed(B);
+    if (kind === 'bridge') {
+      const dh = st ? 9.6 : D.deckHalf;
+      if (lod <= 2) {
+        em.beam(A, B, 0, dh, -D.ballast - D.deckThick, D.deckThick, C.concrete); // girder
+        if (lod <= 1) {
+          for (const sg of [-1, 1]) em.beam(A, B, sg * (dh - 0.15), 0.15, -D.ballast, 1.0, C.concreteDark); // parapets
+        }
+      }
+    }
+    if (lod > 1) continue;
+    // ballast bed (trapezoid on the ground, vertical skirt down to the formation so coarse terrain never shows a gap)
+    em.beam(a, b, 0, D.ballastTop, -D.ballast, D.ballast, C.ballast, false);
+    for (const sg of [-1, 1]) {
+      const P = (n: Node, w: number, y: number): V => [n.x + n.wx * sg * w, n.y + y, n.z + n.wz * sg * w];
+      const foot = kind === 'bridge' ? D.ballastTop : D.ballastFoot;
+      const q = [P(a, D.ballastTop, 0), P(b, D.ballastTop, 0), P(b, foot, -D.ballast), P(a, foot, -D.ballast)] as const;
+      em.quad(q[0], q[1], q[2], q[3], [sg * a.wx, 0.6, sg * a.wz], C.ballast);
+      if (kind !== 'bridge') {
+        const d = [P(a, foot, -D.ballast), P(b, foot, -D.ballast), P(b, foot, -D.ballast - 1.6), P(a, foot, -D.ballast - 1.6)] as const;
+        em.quad(d[0], d[1], d[2], d[3], [sg * a.wx, 0, sg * a.wz], C.ballast);
+      }
+    }
+    for (const tr of [-half, half]) {
+      for (const rs of [-D.gauge / 2, D.gauge / 2]) em.beam(a, b, tr + rs, 0.036, 0.04, 0.17, C.rail);
+    }
+    if (lod > 0) continue;
+    // sleepers every 0.65 m
+    const n = Math.max(1, Math.round(len / 0.65));
+    for (let k = 0; k < n; k++) {
+      const t = (k + 0.5) / n;
+      const f = lerpNode(A, B, t);
+      for (const tr of [-half, half]) em.box(f.x + f.wx * tr, f.y - 0.1, f.z + f.wz * tr, f.tx, f.tz, 0.13, 0.14, 1.3, C.sleeper, false);
+    }
+    // overhead line: contact wire + messenger wire over each track (25 kV 50 Hz AC)
+    for (const tr of [-half, half]) {
+      em.beam(A, B, tr, 0.02, D.contactHeight, 0.04, C.wire);
+      em.beam(A, B, tr, 0.02, D.messengerHeight, 0.04, C.wire);
+    }
+    // masts every 50 m on both sides (+ a portal gantry over both tracks every 100 m)
+    for (let s = Math.ceil(e.cum[i] / D.mastSpacing) * D.mastSpacing; s < e.cum[i + 1]; s += D.mastSpacing) {
+      const f = lerpNode(A, B, (s - e.cum[i]) / (len || 1));
+      const gantry = Math.round(s / D.mastSpacing) % 2 === 0;
+      for (const sg of [-1, 1]) {
+        const off = sg * (st ? 9.0 : 5.0);
+        em.box(f.x + f.wx * off, f.y + 4.2, f.z + f.wz * off, f.tx, f.tz, 0.15, 4.4, 0.15, C.mast, false);
+        if (!gantry) em.box(f.x + f.wx * sg * (half + (off * sg - half) / 2), f.y + D.messengerHeight + 0.4, f.z + f.wz * sg * (half + (off * sg - half) / 2), f.tx, f.tz, 0.09, 0.09, Math.abs(off - sg * half) / 2, C.mast, false);
+      }
+      if (gantry) em.box(f.x, f.y + D.messengerHeight + 0.5, f.z, f.tx, f.tz, 0.12, 0.2, st ? 9.2 : 5.2, C.mast, false);
+    }
+  }
+
+  // viaduct piers: column + hammer-head cap under the deck
+  for (const k of own.piers) {
+    const p = rail.piers[k];
+    const deckBottom = p.deckY - D.ballast - D.deckThick;
+    const capH = 1.5;
+    const st = rail.stations.some((s) => Math.hypot(s.x - p.x, s.z - p.z) < D.stationFlat + 40);
+    const across = st ? 9.2 : 5.0;
+    const colTop = deckBottom - capH;
+    if (colTop - p.baseY > 0.2) em.box(p.x, (colTop + p.baseY - 1.2) / 2, p.z, p.dx, p.dz, 1.3, (colTop - p.baseY + 1.2) / 2, 2.2, C.concreteDark, false);
+    em.box(p.x, deckBottom - capH / 2, p.z, p.dx, p.dz, 1.6, capH / 2, across, C.concrete);
+  }
+
+  // steel through-girder spans (over a big junction / wide street / road bridge, no pier possible)
+  for (const k of own.steel) {
+    const sp = rail.steelSpans[k];
+    const e = rail.edges.find((q) => q.id === sp.edgeId)!;
+    const n = Math.max(2, Math.ceil((sp.s1 - sp.s0) / 8));
+    const dh = rail.stations.some((s) => Math.hypot(s.x - rail.pointAt(e, sp.s0).x, s.z - rail.pointAt(e, sp.s0).z) < D.stationFlat + 40) ? 9.6 : D.deckHalf;
+    const frame = (s: number): Node => {
+      const p = rail.pointAt(e, s);
+      const t = (s - e.cum[p.i]) / (e.cum[p.i + 1] - e.cum[p.i] || 1);
+      return { x: p.x, y: e.design[p.i] + (e.design[p.i + 1] - e.design[p.i]) * t, z: p.z, tx: p.dx, tz: p.dz, wx: -p.dz, wz: p.dx };
+    };
+    for (let q = 0; q < n; q++) {
+      const A = frame(sp.s0 + ((sp.s1 - sp.s0) * q) / n);
+      const B = frame(sp.s0 + ((sp.s1 - sp.s0) * (q + 1)) / n);
+      for (const sg of [-1, 1]) em.beam(A, B, sg * (dh - 0.3), 0.25, -D.ballast, 3.6, C.steel);
+      if (q % 2 === 0) em.beam(A, B, 0, dh, -D.ballast - D.deckThick - 0.5, 0.5, C.steel); // lower deck plate
+    }
+  }
+
+  // abutments (viaduct meets embankment) and portals (tunnel / box)
+  for (const en of own.ends) {
+    const e = tracks[en.e];
+    const p = rail.pointAt(e, en.s);
+    const t = (en.s - e.cum[p.i]) / (e.cum[p.i + 1] - e.cum[p.i] || 1);
+    const y = e.design[p.i] + (e.design[p.i + 1] - e.design[p.i]) * t;
+    const gnd = e.ground[p.i] + (e.ground[p.i + 1] - e.ground[p.i]) * t;
+    const tx = p.dx * en.out;
+    const tz = p.dz * en.out;
+    if (en.kind === 'abutment') {
+      const bottom = Math.min(gnd, y - D.ballast - D.deckThick) - 1.5;
+      const top = y - D.ballast - 0.05;
+      em.box(p.x - tx * 1.2, (top + bottom) / 2, p.z - tz * 1.2, p.dx, p.dz, 1.2, (top - bottom) / 2, D.deckHalf + 0.4, C.concrete);
+    } else {
+      // portal face: two side walls + lintel around the opening (9.4 m wide, 6.6 m high), dark tunnel mouth behind
+      const open = 4.7;
+      const base = y - D.ballast - 0.6;
+      const h = 8.8;
+      const wallHalf = 4.2;
+      const cxp = p.x - tx * 0.8;
+      const czp = p.z - tz * 0.8;
+      for (const sg of [-1, 1]) {
+        em.box(cxp - p.dz * sg * (open + wallHalf), base + h / 2, czp + p.dx * sg * (open + wallHalf), p.dx, p.dz, 0.8, h / 2, wallHalf, C.concrete);
+      }
+      em.box(cxp, base + 7.35 + 0.7, czp, p.dx, p.dz, 0.8, 0.75, open, C.concrete);
+      em.box(p.x - tx * 2.4, y + 3.0, p.z - tz * 2.4, p.dx, p.dz, 0.3, 3.5, open, C.dark);
+    }
+  }
+
+  // stations: platforms, canopies, buffer stops, traction substation
+  for (const { st: si, arr: ai } of own.stations) {
+    const st = rail.stations[si];
+    const ar = st.arrivals[ai];
+    const e = rail.edges.find((q) => q.id === ar.edgeId)!;
+    const sgn = ar.end === 'a' ? 1 : -1;
+    const s0 = ar.end === 'a' ? 0 : e.length;
+    const mid = s0 + sgn * (12 + D.platform / 2);
+    const p = rail.pointAt(e, mid);
+    const y = st.level;
+    const tx = p.dx;
+    const tz = p.dz;
+    const wx = -tz;
+    const wz = tx;
+    for (const sg of [-1, 1]) {
+      const lat = sg * (half + 1.7 + 2.25);
+      if (lod <= 1) {
+        em.box(p.x + wx * lat, y + 0.2 + (0.76 - 1.2) / 2, p.z + wz * lat, tx, tz, D.platform / 2, 0.5 + 0.38 + 0.08, 2.25, C.platform);
+        // canopy over the platform
+        const clat = sg * (half + 1.7 + 2.9);
+        if (lod === 0) {
+          em.box(p.x + wx * clat, y + 4.8, p.z + wz * clat, tx, tz, D.platform / 2 - 15, 0.14, 3.2, C.canopy);
+          for (let q = -D.platform / 2 + 20; q <= D.platform / 2 - 20; q += 15) {
+            em.box(p.x + tx * q + wx * sg * (half + 1.7 + 4.1), y + 2.5, p.z + tz * q + wz * sg * (half + 1.7 + 4.1), tx, tz, 0.18, 2.3, 0.18, C.mast, false);
+          }
+          // yellow safety line
+          em.box(p.x + wx * sg * (half + 1.7 + 0.25), y + 0.97, p.z + wz * sg * (half + 1.7 + 0.25), tx, tz, D.platform / 2, 0.01, 0.12, C.yellow, false);
+        }
+      }
+    }
+    // buffer stops: the line ends 70 m from the station centre
+    // (an end that a station link continues has no buffer stop)
+    const linked = rail.links.some((l) => (l.a.edgeId === ar.edgeId && l.a.end === ar.end) || (l.b.edgeId === ar.edgeId && l.b.end === ar.end));
+    if (lod === 0 && !linked) {
+      const eP = rail.pointAt(e, ar.end === 'a' ? 0.3 : e.length - 0.3);
+      for (const tr of [-half, half]) em.box(eP.x - eP.dz * tr - eP.dx * sgn * -1.2, y + 0.6, eP.z + eP.dx * tr - eP.dz * sgn * -1.2, eP.dx, eP.dz, 0.5, 0.8, 0.9, C.stop);
+    }
+    // traction substation (25 kV) beside the first arrival of a ground station
+    if (ai === 0 && !st.elevated && lod <= 1) {
+      const sp = rail.pointAt(e, s0 + sgn * 60);
+      const sx = sp.x + -sp.dz * 17.5;
+      const sz = sp.z + sp.dx * 17.5;
+      if (!rail.roadBlockedAt(sx, sz) && !rail.roadBlockedAt(sx + 6, sz + 6)) {
+        const gy = groundAt(sx, sz);
+        em.box(sx, gy + 2.0, sz, sp.dx, sp.dz, 4.0, 3.2, 2.5, C.subst);
+        em.box(sx + sp.dx * 7, gy + 1.4, sz + sp.dz * 7, sp.dx, sp.dz, 1.2, 2.6, 1.2, C.steel);
+      }
+    }
+  }
+  // STEP 4: turnouts (switch blades, frog, check rails, long bearers, point machine) and diamond crossings of the station links
+  if (lod === 0) {
+    for (const k of own.switches) emitSwitch(em, rail.switches[k]);
+    for (const k of own.diamonds) emitDiamond(em, rail.diamonds[k]);
+  }
+  return em.data();
+}
+
+/** Point of a switch route (x, z pairs, one per metre) at distance s from the toe, with the unit direction of travel. */
+function routePoint(a: Float64Array, s: number): { x: number; z: number; tx: number; tz: number } {
+  const n = a.length / 2;
+  const i = Math.max(0, Math.min(n - 2, Math.floor(s)));
+  const t = Math.max(0, Math.min(1, s - i));
+  let tx = a[(i + 1) * 2] - a[i * 2], tz = a[(i + 1) * 2 + 1] - a[i * 2 + 1];
+  const l = Math.hypot(tx, tz) || 1;
+  tx /= l;
+  tz /= l;
+  return { x: a[i * 2] + (a[(i + 1) * 2] - a[i * 2]) * t, z: a[i * 2 + 1] + (a[(i + 1) * 2 + 1] - a[i * 2 + 1]) * t, tx, tz };
+}
+
+function routeNode(a: Float64Array, s: number, y: number): Node {
+  const p = routePoint(a, s);
+  return { x: p.x, y, z: p.z, tx: p.tx, tz: p.tz, wx: -p.tz, wz: p.tx };
+}
+
+function emitSwitch(em: Emit, sw: RailSwitch): void {
+  const y = sw.level;
+  const g2 = D.gauge / 2;
+  const reach = Math.min(sw.stock.length / 2 - 1, sw.frogS + 3);
+  // long bearers under both routes (a little higher / lower than the normal sleepers so nothing is coplanar)
+  for (let s = 0.65; s <= reach; s += 0.65) {
+    const a = routeNode(sw.stock, s, y), b = routeNode(sw.div, s, y);
+    const sep = Math.hypot(a.x - b.x, a.z - b.z);
+    em.box((a.x + b.x) / 2, y - 0.1, (a.z + b.z) / 2, a.tx, a.tz, 0.13, 0.145, 1.3 + sep / 2, C.sleeper, false);
+  }
+  // switch blades: tapered rails of the diverging route, tip at the toe, a tiny gap to the stock rail at the tip
+  const nb = Math.max(2, Math.round(sw.bladeLen));
+  for (const rs of [-1, 1]) {
+    for (let q = 0; q < nb; q++) {
+      const s0 = 0.3 + (sw.bladeLen * q) / nb, s1 = 0.3 + (sw.bladeLen * (q + 1)) / nb;
+      const A = routeNode(sw.div, s0, y), B = routeNode(sw.div, s1, y);
+      const hw = 0.012 + (0.036 - 0.012) * ((q + 1) / nb);
+      em.beam(A, B, rs * g2, hw, 0.05, 0.17, C.blade);
+    }
+  }
+  // point machine (yellow box) beside the toe on the outer side of the track, and a thin throw rod across the bearers
+  const T = routeNode(sw.stock, 2.5, y);
+  em.box(T.x + T.wx * sw.track * 2.2, y + 0.3, T.z + T.wz * sw.track * 2.2, T.tx, T.tz, 0.45, 0.4, 0.3, C.yellow, false);
+  em.box(T.x + T.wx * sw.track * 1.2, y + 0.06, T.z + T.wz * sw.track * 1.2, T.wx * sw.track, T.wz * sw.track, 1.0, 0.02, 0.03, C.steel, false);
+  // frog: where the inner rails of the two routes meet (middle between both centre lines), with check rails opposite
+  const fa = routeNode(sw.stock, sw.frogS, y), fb = routeNode(sw.div, sw.frogS, y);
+  const fx = (fa.x + fb.x) / 2, fz = (fa.z + fb.z) / 2;
+  em.box(fx, y + 0.11, fz, fa.tx, fa.tz, 1.5, 0.1, 0.12, C.frog, false);
+  em.box(fx + fa.tx * 1.6, y + 0.11, fz + fa.tz * 1.6, fa.tx, fa.tz, 0.9, 0.1, 0.07, C.frog, false);
+  for (const [A0, B0, side] of [[routeNode(sw.stock, sw.frogS - 2, y), routeNode(sw.stock, sw.frogS + 2, y), -sw.turn], [routeNode(sw.div, sw.frogS - 2, y), routeNode(sw.div, sw.frogS + 2, y), sw.turn]] as const) {
+    em.beam(A0, B0, side * (g2 - 0.09), 0.03, 0.04, 0.12, C.rail);
+  }
+}
+
+function emitDiamond(em: Emit, d: RailDiamond): void {
+  const y = d.level;
+  // crossing slab covering the diamond of the four rail crossings
+  const nax = -d.az, naz = d.ax;
+  let hl = 0, hw = 0;
+  for (let k = 0; k < 4; k++) {
+    const rx = d.corners[k * 2] - d.x, rz = d.corners[k * 2 + 1] - d.z;
+    hl = Math.max(hl, Math.abs(rx * d.ax + rz * d.az));
+    hw = Math.max(hw, Math.abs(rx * nax + rz * naz));
+  }
+  em.box(d.x, y + 0.03, d.z, d.ax, d.az, hl + 0.9, 0.03, hw + 0.5, C.frog, false);
+  // raised crossing noses where a rail of one track crosses a rail of the other
+  for (let k = 0; k < 4; k++) em.box(d.corners[k * 2], y + 0.11, d.corners[k * 2 + 1], d.ax, d.az, 0.7, 0.1, 0.13, C.frog, false);
+}

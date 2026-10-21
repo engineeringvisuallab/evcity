@@ -1,0 +1,18 @@
+/**
+ * Public entry of the engineering module. The game (or the preview) only imports from here.
+ * To add a new infrastructure: create its folder, export an InfrastructureDef, and add ONE line below.
+ */
+import { registerInfrastructure } from './core/registry';
+import { swtpDef } from './civil/water-supply/swtp';
+import { stpDef } from './civil/wastewater/stp';
+
+export * from './core/types';
+export { InfraTour, estimateSpeech } from './core/InfraTour';
+export { PIPE_COLORS } from './core/materials';
+export { getInfrastructureDef, listInfrastructure, registerInfrastructure } from './core/registry';
+
+export function registerBuiltinInfrastructure(): void {
+  registerInfrastructure(swtpDef);
+  registerInfrastructure(stpDef);
+  // registerInfrastructure(wtpGroundwaterDef);  // later ...
+}
