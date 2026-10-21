@@ -1,2 +1,3 @@
 export { AnimalManager } from './AnimalManager';
-export type { Species } from './AnimalModel';
+export type { Species } from './Species';
+export { SPECIES, ALL_SPECIES } from './Species';
