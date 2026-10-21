@@ -123,7 +123,7 @@ export class Engine {
   readonly startPoint: { x: number; z: number; ux: number; uz: number };
   /** City Mall next to the spawn point: walk in and shop (products open the live shop in a new tab). */
   readonly mall: MallManager;
-  /** MALL PARKING (across F4 from the mall's west door) + EVLAB PARKING beside the EVLAB fence. */
+  /** All the parking around the mall: angled lot + entry road/start apron + EVLAB fleet lot across F4, the front row and the side lot on the mall side. No signboards. */
   readonly parking: ParkingLots;
   /** EVLab research campus (fenced, always standing on its big level plot west of the F4 road). */
   readonly evlab: EVLabManager;
@@ -241,9 +241,9 @@ export class Engine {
     this.trainBoard = new StationBoard(this.trains.fleet, this.rail);
 
     // --- player (third-person) ---
-    // START POINT = MALL PARKING, on the apron right across the F4 road from the City Mall's west door: the player stands there, the camera
+    // START POINT = the apron (entry road) between the two start-side lots, across the F4 road from the City Mall's west door: the player stands there, the camera
     // behind him, and looks over the road at the mall entrance. (ux, uz) = the view direction (towards the door). The parked start fleet
-    // waits in the EVLAB PARKING lot beside it (see below).
+    // waits in the big EVLAB lot beside it (see below).
     {
       const door = MALL_DOORS.filter((dr) => dr.side === -1)[0] ?? MALL_DOORS[0];
       const p = lotToWorld(START_LOT_POS.s, START_LOT_POS.n);
@@ -268,10 +268,10 @@ export class Engine {
     this.cameraController.setOrbit(this.orbit);
     this.cameraController.useOrbit();
     this.cameraController.setDriverCamera(new DriverCamera(this.camera, this.input, () => this.vehicles.driver));
-    // START VIEW: the camera stands behind the player in MALL PARKING and looks over F4 at the mall's west door
+    // START VIEW: the camera stands behind the player on the apron and looks over F4 at the mall's west door
     this.orbit.yaw = Math.atan2(-this.startPoint.ux, -this.startPoint.uz);
 
-    // --- parking lots (asphalt, bay lines, signboards) ---
+    // --- parking lots (asphalt, bay lines; no signboards) ---
     this.parking = new ParkingLots({ root: this.world.root, terrain: this.world.terrain });
 
     // --- City Mall (always standing there when the game starts) ---

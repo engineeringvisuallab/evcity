@@ -5,7 +5,7 @@ import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
 import { Config } from '../src/core/Config';
 import { MALL_DOORS, MALL_POLY } from '../src/mall/MallSite';
 import { EVLAB_FENCE, insideFence } from '../src/evlab/EVLabSite';
-import { EVLAB_LOT, EVLAB_SLOTS, MALL_LOT, START_LOT_POS, lotToWorld, parkingContains } from '../src/parking/ParkingSite';
+import { EVLAB_LOT, EVLAB_SLOTS, MALL_LOT, PARKING_LOTS, START_LOT_POS, lotToWorld, parkingContains } from '../src/parking/ParkingSite';
 import { TreePlacer } from '../src/vegetation/TreePlacement';
 const g = new TerrainGenerator(Config.world.seed);
 let bad = 0;
@@ -73,7 +73,7 @@ ok(!inPoly(EVLAB_FENCE, 5, -10) && !inPoly(EVLAB_FENCE, 60, -100), 'the F4/F6 cr
 const placer = new TreePlacer(g as any);
 let trees = 0, checked = 0;
 const hit = (x: number, z: number) => { checked++; if (parkingContains(x, z, 0)) trees++; };
-for (const lot of [MALL_LOT, EVLAB_LOT]) for (let ss = lot.s0; ss <= lot.s1; ss += 3) for (let nn = lot.n0; nn <= lot.n1; nn += 3) { const p = lotToWorld(ss, nn); if (!g.mall.contains(p.x, p.z, 0.5)) bad++; hit(p.x, p.z); }
+for (const lot of PARKING_LOTS) for (let ss = lot.s0; ss <= lot.s1; ss += 3) for (let nn = lot.n0; nn <= lot.n1; nn += 3) { const p = lotToWorld(ss, nn); if (!g.mall.contains(p.x, p.z, 0.5)) bad++; hit(p.x, p.z); }
 void placer; void trees;
 console.log('checked', checked, 'lot points: all inside mall.contains (vegetation keep-out)');
 console.log(bad ? `FAILED (${bad})` : 'ALL OK');
