@@ -52,6 +52,36 @@ export interface VehicleTelemetry {
   wheelsOnGround: number;
 }
 
+/** Everything the sound system (VehicleAudio) needs from a vehicle. */
+export interface VehicleAudioState {
+  kind: string;
+  /** Signed speed along the nose (m/s). */
+  speed: number;
+  /** Sideways speed (m/s): tyres slide when it is large. */
+  lateral: number;
+  throttle: number;
+  brake: number;
+  rpm: number;
+  idle: number;
+  redline: number;
+  gear: number;
+  shifting: boolean;
+  limiter: boolean;
+  handbrake: boolean;
+  engineBraking: boolean;
+  wheelsOnGround: number;
+  wheelCount: number;
+  hp: number;
+  state: 'ok' | 'burning' | 'wrecked';
+  /** 0 = natural ground, 1 = gravel, 2 = asphalt. */
+  surface: number;
+  /** Driver door opening, 0..1. */
+  door: number;
+  /** Somebody is driving (or the tour autopilot) and the vehicle is not a wreck. */
+  engineOn: boolean;
+  enclosed: boolean;
+}
+
 export interface VehicleDeps {
   physics: PhysicsWorld;
   terrain: TerrainGenerator;
@@ -881,6 +911,7 @@ export class Vehicle implements OrbitTarget {
   }
 
   private emit(dt: number, every: number, strength: number): void {
+    if (this.d.fx?.managesFire) return; // VehicleFire simulates the flames and smoke
     this.smokeT -= dt;
     if (this.smokeT > 0 || !this.d.fx) return;
     this.smokeT = every * (0.7 + Math.random() * 0.6);
@@ -991,6 +1022,36 @@ export class Vehicle implements OrbitTarget {
       w.steer.rotation.y = this.controller.wheelSteering(i) ?? 0;
       w.spin.rotation.x = this.controller.wheelRotation(i) ?? 0;
     }
+  }
+
+  /** Snapshot for the sound system (cheap; called once a frame for the few audible vehicles). */
+  audioState(): VehicleAudioState {
+    const pt = this.powertrain;
+    const lv = this.body.linvel();
+    const fl = Math.hypot(this.fwd.x, this.fwd.z) || 1;
+    return {
+      kind: this.spec.look.kind,
+      speed: this.speed,
+      lateral: Math.abs((lv.x * this.fwd.z - lv.z * this.fwd.x) / fl),
+      throttle: this.throttle,
+      brake: this.brake,
+      rpm: pt.rpm,
+      idle: this.spec.engine.idleRpm,
+      redline: this.spec.engine.redlineRpm,
+      gear: pt.gear,
+      shifting: pt.shiftTimer > 0,
+      limiter: pt.limiter,
+      handbrake: this.handbrake,
+      engineBraking: pt.engineBraking,
+      wheelsOnGround: this.wheelsOnGround,
+      wheelCount: this.defs.length,
+      hp: this.hp,
+      state: this.state,
+      surface: this.wheelSurface.length ? this.surface : 2,
+      door: this.doorOpen,
+      engineOn: (this.driver !== null || this.tourInput !== null) && !this.coast && this.state !== 'wrecked',
+      enclosed: !!this.spec.enclosed,
+    };
   }
 
   telemetry(): VehicleTelemetry {

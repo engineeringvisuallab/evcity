@@ -661,3 +661,47 @@ export const EVHYPAR: VehicleSpec = finish({
 }, 0.2, 0.7, [0.7], undefined, 1.2);
 
 export const SPECS: Record<VehicleId, VehicleSpec> = { sedan: SEDAN, jeep: JEEP, hypercar: HYPERCAR, evhypar: EVHYPAR, bike: BIKE, evbike: EVBIKE, rickshaw: RICKSHAW, auto: AUTO, bus: BUS, tank: TANK };
+
+
+/**
+ * Top-speed multiplier per vehicle (2 = twice as fast). Set one to 1 to leave that vehicle as it was.
+ * AI traffic keeps its own cruising speeds (VehicleUse / `cruiseMax`), so the roads stay sensible: this is what YOU can do with the vehicle.
+ */
+export const SPEED_BOOST: Record<VehicleId, number> = {
+  sedan: 2,
+  jeep: 2,
+  hypercar: 2,
+  evhypar: 2,
+  bike: 2,
+  evbike: 2,
+  rickshaw: 2,
+  auto: 2,
+  bus: 2,
+  tank: 2,
+};
+
+/**
+ * k times the top speed, with the same feel:
+ *  - gearing / k  -> the same rpm gives k times the speed
+ *  - torque x k^2 -> the wheel force per rpm grows by k (so it accelerates k times as hard and reaches every gear's limit in the same time),
+ *                    and the power grows by k^2 (drag power grows with v^3, so this is what a k-times-faster car really needs)
+ *  - drag / k     -> air drag (~ cd v^2) at k times the speed is only k times as big, so the top speed is really reached
+ *  - a bit more grip and brake force so the faster car can still turn and stop
+ */
+function boostSpeed(s: VehicleSpec, k: number): void {
+  if (k === 1) return;
+  s.finalDrive /= k;
+  s.engine = {
+    ...s.engine,
+    torque: s.engine.torque.map(([r, t]): [number, number] => [r, t * k * k]),
+    engineBraking: s.engine.engineBraking * k * k,
+  };
+  s.cd /= k;
+  if (s.downforce) s.downforce /= k;
+  const grip = 1 + 0.35 * (k - 1);
+  s.frictionSlip *= grip;
+  s.sideFriction *= 1 + 0.2 * (k - 1);
+  s.brakeMax *= grip;
+}
+
+for (const id of Object.keys(SPECS) as VehicleId[]) boostSpeed(SPECS[id], SPEED_BOOST[id]);

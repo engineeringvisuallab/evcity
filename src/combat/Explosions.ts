@@ -3,23 +3,10 @@ import type { PeopleManager } from '../people';
 import type { TerrainGenerator } from '../terrain';
 import type { Vehicle, VehicleManager } from '../vehicles';
 import type { VehicleFx } from '../vehicles/VehicleFx';
+import { VehicleFire } from '../vehicles/VehicleFire';
 import type { TreeDestruction } from '../vegetation/TreeDestruction';
 import type { FloatingOrigin } from '../world/FloatingOrigin';
 import type { CombatEffects } from './CombatEffects';
-
-interface Puff {
-  mesh: THREE.Mesh;
-  mat: THREE.MeshBasicMaterial;
-  alive: boolean;
-  w: THREE.Vector3;
-  v: THREE.Vector3;
-  life: number;
-  max: number;
-  s0: number;
-  s1: number;
-  alpha: number;
-  rise: number;
-}
 
 interface Piece {
   obj: THREE.Object3D;
@@ -31,7 +18,6 @@ interface Piece {
   rest: boolean;
 }
 
-const SPHERE = new THREE.SphereGeometry(1, 7, 5);
 const LOCAL = new THREE.Vector3();
 const SCR = new THREE.Vector3();
 
@@ -54,10 +40,10 @@ export interface ExplosionDeps {
  * Pooled: nothing is created while playing except the objects handed in as pieces.
  */
 export class Explosions implements VehicleFx {
-  private smokes: Puff[] = [];
-  private fires: Puff[] = [];
-  private nextSmoke = 0;
-  private nextFire = 0;
+  /** Realistic flames, smoke, embers and burning-vehicle fire (see VehicleFire). */
+  private vfire: VehicleFire;
+  /** Tells the vehicles that burning (smoke / flames) is simulated here, not by the vehicle itself. */
+  readonly managesFire = true;
   private pieces: Piece[] = [];
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
@@ -66,18 +52,15 @@ export class Explosions implements VehicleFx {
   private lastBang = 0;
 
   constructor(private d: ExplosionDeps) {
-    const make = (n: number, color: number, out: Puff[]) => {
-      for (let i = 0; i < n; i++) {
-        const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, depthWrite: false, fog: true });
-        const mesh = new THREE.Mesh(SPHERE, mat);
-        mesh.visible = false;
-        mesh.frustumCulled = false;
-        d.scene.add(mesh);
-        out.push({ mesh, mat, alive: false, w: new THREE.Vector3(), v: new THREE.Vector3(), life: 0, max: 1, s0: 1, s1: 1, alpha: 1, rise: 0 });
-      }
-    };
-    make(110, 0x2b2b2b, this.smokes);
-    make(70, 0xff8a1f, this.fires);
+    this.vfire = new VehicleFire({
+      scene: d.scene,
+      origin: d.origin,
+      terrain: d.terrain,
+      people: d.people,
+      vehicles: d.vehicles,
+      audio: () => (this.ensureAudio() && this.ctx && this.master && this.noise ? { ctx: this.ctx, master: this.master, noise: this.noise } : null),
+      muted: () => this.muted,
+    });
   }
 
   setMuted(m: boolean): void {
@@ -90,18 +73,7 @@ export class Explosions implements VehicleFx {
     const { people, vehicles, effects, origin } = this.d;
     origin.toLocal(at, LOCAL);
     effects.impact(LOCAL, 0xff8b28, 24);
-    const big = Math.min(2.2, radius / 6);
-    for (let i = 0; i < 16; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const up = Math.random();
-      const sp = (3 + Math.random() * 7) * big;
-      this.puff(this.fires, at, Math.cos(a) * sp, 2 + up * 7 * big, Math.sin(a) * sp, 0.45 + Math.random() * 0.4, (0.8 + Math.random()) * big, (2.2 + Math.random() * 1.6) * big, 0.95, 1.5);
-    }
-    for (let i = 0; i < 14; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const sp = (1 + Math.random() * 4) * big;
-      this.puff(this.smokes, at, Math.cos(a) * sp, 2 + Math.random() * 5, Math.sin(a) * sp, 1.8 + Math.random() * 1.6, (1 + Math.random()) * big, (3.5 + Math.random() * 2.5) * big, 0.7, 1.5);
-    }
+    this.vfire.fireball(at, Math.min(2.2, radius / 6) + 0.3);
     this.bang(at, Math.min(2.2, 0.8 + radius / 8));
     if (radius >= 4) this.d.trees?.destroyInRadius(at.x, at.z, radius * 0.9, at.x, at.z);
 
@@ -132,11 +104,11 @@ export class Explosions implements VehicleFx {
 
   // ------------------------------------------------------------------ VehicleFx
   smoke(at: THREE.Vector3, strength: number): void {
-    this.puff(this.smokes, at, (Math.random() - 0.5) * 0.8, 1.6 + strength, (Math.random() - 0.5) * 0.8, 1.6 + Math.random() * strength, 0.35, 1.3 + strength * 0.5, strength > 1 ? 0.75 : 0.5, 0.6);
+    this.vfire.smoke(at, strength);
   }
 
   fire(at: THREE.Vector3): void {
-    this.puff(this.fires, at, (Math.random() - 0.5) * 1.2, 1.5 + Math.random() * 1.5, (Math.random() - 0.5) * 1.2, 0.35 + Math.random() * 0.25, 0.45, 0.15, 0.9, 0.4);
+    this.vfire.flame(at);
   }
 
   crash(at: THREE.Vector3, dv: number): void {
@@ -159,19 +131,6 @@ export class Explosions implements VehicleFx {
   }
 
   // ------------------------------------------------------------------ internals
-  private puff(pool: Puff[], at: THREE.Vector3, vx: number, vy: number, vz: number, life: number, s0: number, s1: number, alpha: number, rise: number): void {
-    const p = pool[(pool === this.smokes ? this.nextSmoke++ : this.nextFire++) % pool.length];
-    p.alive = true;
-    p.w.copy(at);
-    p.v.set(vx, vy, vz);
-    p.life = p.max = life;
-    p.s0 = s0;
-    p.s1 = s1;
-    p.alpha = alpha;
-    p.rise = rise;
-    p.mesh.visible = true;
-  }
-
   private ensureAudio(): boolean {
     if (typeof AudioContext === 'undefined') return false;
     if (!this.ctx) {
@@ -229,24 +188,7 @@ export class Explosions implements VehicleFx {
 
   update(dt: number): void {
     const o = this.d.origin.origin;
-    for (const pool of [this.smokes, this.fires]) {
-      for (const p of pool) {
-        if (!p.alive) continue;
-        p.life -= dt;
-        if (p.life <= 0) {
-          p.alive = false;
-          p.mesh.visible = false;
-          continue;
-        }
-        p.v.y += p.rise * dt;
-        p.v.multiplyScalar(Math.max(0, 1 - 1.3 * dt));
-        p.w.addScaledVector(p.v, dt);
-        const k = 1 - p.life / p.max;
-        p.mesh.position.set(p.w.x - o.x, p.w.y, p.w.z - o.z);
-        p.mesh.scale.setScalar(p.s0 + (p.s1 - p.s0) * k);
-        p.mat.opacity = p.alpha * (1 - k) * (pool === this.fires ? 1 : Math.min(1, (1 - k) * 1.6));
-      }
-    }
+    this.vfire.update(dt);
     for (let i = this.pieces.length - 1; i >= 0; i--) {
       const p = this.pieces[i];
       p.age += dt;
@@ -285,10 +227,7 @@ export class Explosions implements VehicleFx {
   }
 
   dispose(): void {
-    for (const p of [...this.smokes, ...this.fires]) {
-      p.mesh.removeFromParent();
-      p.mat.dispose();
-    }
+    this.vfire.dispose();
     for (const p of this.pieces) p.obj.removeFromParent();
     this.pieces.length = 0;
     void this.ctx?.close();

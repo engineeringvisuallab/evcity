@@ -6,6 +6,8 @@ import type { Vehicle } from './Vehicle';
  * Kept as an interface so vehicles/ does not import combat/. All positions are WORLD coordinates.
  */
 export interface VehicleFx {
+  /** True when the fx system itself simulates the fire / smoke of burning vehicles (VehicleFire); the vehicle then emits nothing. */
+  readonly managesFire?: boolean;
   /** Area explosion: hurts people and vehicles (except `ignore`), pushes vehicles, shows fire + smoke + sound. */
   explode(at: THREE.Vector3, radius: number, power: number, byPlayer: boolean, ignore?: Vehicle | null): void;
   /** A broken-off part flies away on its own: the object keeps its current world transform and is then driven by the debris system. */
