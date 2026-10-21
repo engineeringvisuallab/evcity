@@ -48,6 +48,23 @@ export class HelicopterManager {
     return h;
   }
 
+  private summoned: Helicopter[] = [];
+
+  /** The N menu: a parked helicopter at `world`. Only the last two are kept (the oldest unused one is removed). */
+  summon(world: THREE.Vector3, yaw: number): Helicopter {
+    const h = this.spawn(world, yaw);
+    this.summoned = this.summoned.filter((s) => this.helis.includes(s));
+    this.summoned.push(h);
+    while (this.summoned.length > 2) {
+      const old = this.summoned.shift()!;
+      if (old === this.pilot) continue;
+      this.tourTargets.delete(old);
+      const i = this.helis.indexOf(old);
+      if (i >= 0) { this.helis.splice(i, 1); old.dispose(); }
+    }
+    return h;
+  }
+
   /** Spawn the marked service aircraft used by Tour mode. */
   spawnTour(world: THREE.Vector3, yaw: number): Helicopter {
     const h = this.spawn(world, yaw);

@@ -53,7 +53,7 @@ const ZOOM_SPANS = [2400, 6000, 10600]; // metres across: close / medium / whole
 
 /**
  * The site map: always on screen (top-right), north is up, centred on you.
- * The terrain picture is painted once in a Web Worker. The N key cycles close / medium / whole world.
+ * The terrain picture is painted once in a Web Worker. The U key cycles close / medium / whole world.
  * Shows rivers, lakes, sea, the city zones, you (with view cone) and the parked vehicles.
  */
 export class Minimap {
@@ -122,7 +122,7 @@ export class Minimap {
     return c;
   }
 
-  /** N key: close -> medium -> whole world. */
+  /** U key: close -> medium -> whole world. */
   cycleZoom(): void {
     this.zoom = (this.zoom + 1) % ZOOM_SPANS.length;
   }

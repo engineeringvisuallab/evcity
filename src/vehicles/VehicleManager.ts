@@ -131,6 +131,25 @@ export class VehicleManager {
     }
   }
 
+  /** Vehicles brought by the N menu (oldest first): only the last few are kept, so summoning does not pile up cars for ever. */
+  private summoned: Vehicle[] = [];
+
+  /** The N menu: a driverless copy of `spec` stands at (x, z), nose along `yaw`. The player gets in with F, like at the start fleet. */
+  summon(spec: VehicleSpec, x: number, z: number, yaw: number): Vehicle {
+    const y = this.d.vehicle.terrain.heightAt(x, z) + 1.4;
+    const v = new Vehicle(this.d.vehicle, spec, this.tmp3.set(x, y, z), yaw);
+    v.persistent = true; // traffic must not clear it while the player is away
+    this.vehicles.push(v);
+    this.byHandle.set(v.collider.handle, v);
+    this.summoned = this.summoned.filter((s) => this.vehicles.includes(s));
+    this.summoned.push(v);
+    while (this.summoned.length > 6) {
+      const old = this.summoned.shift()!;
+      if (old !== this.driver && !old.occupied) this.remove(old);
+    }
+    return v;
+  }
+
   /** Create a vehicle WITH its driver (no empty vehicles). `body` overrides the paint colour. */
   spawn(spec: VehicleSpec, world: THREE.Vector3, yaw: number, driver: Driver, body?: number): Vehicle {
     const s = body === undefined ? spec : { ...spec, look: { ...spec.look, body } };

@@ -3,7 +3,7 @@ import { CameraController } from '../camera/CameraController';
 import { OrbitCamera } from '../camera/OrbitCamera';
 import { DriverCamera } from '../camera/DriverCamera';
 import { Player } from '../characters';
-import { HelicopterManager } from '../aircraft';
+import { HELI, HelicopterManager } from '../aircraft';
 import { BoatManager, findWaterSpot } from '../boats';
 import { PolicePursuitManager } from '../people/PolicePursuitManager';
 import { TourManager } from '../tour/TourManager';
@@ -37,6 +37,7 @@ import { LibraryManager } from '../library';
 import { BuildingManager, PlacedBuildings, setBuildingTextureQuality } from '../buildings';
 import { InfraManager } from '../engineering/InfraManager';
 import { Minimap, type MapMarker, type MapState } from '../ui/Minimap';
+import { VehicleMenu } from '../ui/VehicleMenu';
 import { VehicleHUD } from '../ui/VehicleHUD';
 import { type Vehicle, VehicleManager, SEDAN, JEEP, HYPERCAR, EVHYPAR, EVBIKE, BIKE, RICKSHAW, AUTO, BUS, SPECS } from '../vehicles';
 import { VehicleModel } from '../vehicles/VehicleModel';
@@ -140,6 +141,8 @@ export class Engine {
   private infraFreeFly = false;
   private mapStops: { x: number; z: number }[] = [];
   private minimap: Minimap;
+  /** N key: pick any vehicle and it is brought next to the player. */
+  private vehicleMenu: VehicleMenu;
   /** STAGE 10A: which area of the city is for what (data only, no buildings yet). */
   readonly cityPlan: CityPlan;
   /** Guns: shooting, wanted level, police. The player cannot die. */
@@ -439,6 +442,18 @@ export class Engine {
       project: this.project,
     });
 
+    // --- N menu: every vehicle (incl. the tank and the helicopter), brought next to the player ---
+    this.vehicleMenu = new VehicleMenu(
+      container,
+      [
+        { id: 'bike', icon: '🏍️' }, { id: 'evbike', icon: '🛵' }, { id: 'rickshaw', icon: '🚲' }, { id: 'auto', icon: '🛺' },
+        { id: 'sedan', icon: '🚗' }, { id: 'jeep', icon: '🚙' }, { id: 'hypercar', icon: '🏎️' }, { id: 'evhypar', icon: '🚘' },
+        { id: 'bus', icon: '🚌' }, { id: 'tank', icon: '🪖' },
+      ].map((v) => ({ ...v, label: SPECS[v.id as keyof typeof SPECS].nameBn })).concat([{ id: 'heli', icon: '🚁', label: HELI.nameBn }]),
+      (id) => this.summonVehicle(id),
+      this.renderer.domElement,
+    );
+
     // --- the always-on site map (top-right) ---
     this.cityPlan = new CityPlan(this.world.terrain.sites);
     this.minimap = new Minimap(container, this.world.seed.value, this.world.terrain.sites, this.cityPlan, this.rail);
@@ -651,7 +666,7 @@ export class Engine {
     this.world.update(dt, this.time.elapsed, this.camera, this.cameraController.isFreeFly);
     this.birds.update(dt, this.time.elapsed, this.world.playerWorld);
     this.animals.update(dt, this.time.elapsed, this.world.playerWorld);
-    if (this.input.wasPressed('KeyN')) this.minimap.cycleZoom();
+    if (this.input.wasPressed('KeyU')) this.minimap.cycleZoom(); // (N = the vehicle menu)
     this.minimap.update(dt, this.mapState());
     this.updateAreaLabel();
     this.bridgePhysics.update(dt, this.world.playerWorld.x, this.world.playerWorld.z);
@@ -909,6 +924,43 @@ export class Engine {
   }
 
   /** Put the boats on water: the nearest deep water to the spawn point, and the first big lake (if it is a different place). */
+  /**
+   * N menu: bring vehicle `id` (a road vehicle, the tank or 'heli') next to the player, nose the way the player faces. Returns a Bangla message
+   * when it cannot be done (inside a building, driving, swimming...), null when the vehicle now stands there.
+   */
+  private summonVehicle(id: string): string | null {
+    const m = bn.vehicleMenu;
+    if (!this.player.ready) return m.notReady;
+    if (this.player.inVehicle || this.helis.pilot || this.boats.skipper) return m.busyDriving;
+    if (this.player.swimming) return m.busySwimming;
+    if (this.mall.inside || this.agro.inside) return m.busyInside;
+    const heli = id === 'heli';
+    const spec = heli ? null : SPECS[id as keyof typeof SPECS];
+    if (!heli && !spec) return null;
+    const T = this.world.terrain;
+    const pw = this.player.getWorldPosition(new THREE.Vector3());
+    const yaw = this.orbit.yaw;
+    const fx = -Math.sin(yaw), fz = -Math.cos(yaw); // the way the camera / player looks
+    const rx = -fz, rz = fx; // to the player's right
+    const hx = spec ? spec.half.x : 2.2, hz = spec ? spec.half.z : 4.5;
+    const side = heli ? 9 : hx + 2.6;
+    const ahead = heli ? 4 : hz * 0.4;
+    // five candidate spots (right, left, a bit further forward on each side, straight ahead): take the flattest one
+    const cand: [number, number][] = [[side, ahead], [-side, ahead], [side, ahead + hz + 2], [-side, ahead + hz + 2], [0, hz + 4]];
+    const hp = T.heightAt(pw.x, pw.z);
+    let best = cand[0], bd = Infinity;
+    for (const [k, f] of cand) {
+      const x = pw.x + rx * k + fx * f, z = pw.z + rz * k + fz * f;
+      const d = Math.abs(T.heightAt(x, z) - hp) + Math.abs(T.heightAt(x + fx * hz, z + fz * hz) - hp) + Math.abs(T.heightAt(x - fx * hz, z - fz * hz) - hp);
+      if (d < bd) { bd = d; best = [k, f]; }
+    }
+    const x = pw.x + rx * best[0] + fx * best[1], z = pw.z + rz * best[0] + fz * best[1];
+    const nose = Math.atan2(fx, fz);
+    if (heli) this.helis.summon(new THREE.Vector3(x, T.heightAt(x, z) + 1.5, z), nose);
+    else this.vehicles.summon(spec!, x, z, nose);
+    return null;
+  }
+
   /** A spot on the parking lots (lot coordinates s, n) with the yaw of a vehicle whose nose points along lot direction (ds, dn). */
   private slot(s: number, n: number, ds: number, dn: number): { x: number; z: number; yaw: number } {
     const p = lotToWorld(s, n);
@@ -954,6 +1006,7 @@ export class Engine {
     this.loop.stop();
     window.removeEventListener('resize', this.onResize);
     this.tour.dispose();
+    this.vehicleMenu.dispose();
     this.parking.dispose();
     this.mall.dispose();
     this.evlab.dispose();
