@@ -911,7 +911,6 @@ export class Vehicle implements OrbitTarget {
   }
 
   private emit(dt: number, every: number, strength: number): void {
-    if (this.d.fx?.managesFire) return; // VehicleFire simulates the flames and smoke
     this.smokeT -= dt;
     if (this.smokeT > 0 || !this.d.fx) return;
     this.smokeT = every * (0.7 + Math.random() * 0.6);

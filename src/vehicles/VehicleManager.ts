@@ -15,6 +15,7 @@ import type { TreeDestruction } from '../vegetation/TreeDestruction';
 import { TANK } from './VehicleSpec';
 import { Vehicle, type DriveInput, type Driver, type VehicleDeps } from './Vehicle';
 import type { VehicleSpec } from './VehicleSpec';
+import { VehicleAudio } from './VehicleAudio';
 
 export interface VehicleManagerDeps {
   vehicle: VehicleDeps;
@@ -55,7 +56,14 @@ export class VehicleManager {
   private tmp3 = new THREE.Vector3();
   private tmp4 = new THREE.Vector3();
 
+  /** Engine / tyre / horn / door sounds of every vehicle. */
+  private audio = new VehicleAudio();
+
   constructor(private d: VehicleManagerDeps) {}
+
+  setMuted(m: boolean): void {
+    this.audio.setMuted(m);
+  }
 
   /** Explosions / debris / smoke (the Engine hands them over after creating them). */
   setFx(fx: VehicleFx): void {
@@ -233,6 +241,7 @@ export class VehicleManager {
       else if (dist > PhysicsConfig.activeRadius * 1.1) v.setEnabled(false);
       v.update(alpha);
     }
+    this.audio.update(dt, this.vehicles, this.driver, focus, this.d.project, this.d.input.isDown('KeyH')); // H = horn / bell
 
     const hud = this.d.hud;
     if (this.driver) {

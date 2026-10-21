@@ -34,6 +34,7 @@ import { MallManager, loadCatalog, type Catalog } from '../mall';
 import { EVLabManager } from '../evlab';
 import { EngineeringBoundary } from '../zones';
 import { LibraryManager } from '../library';
+import { BuildingManager, PlacedBuildings, setBuildingTextureQuality } from '../buildings';
 import { InfraManager } from '../engineering/InfraManager';
 import { Minimap, type MapMarker, type MapState } from '../ui/Minimap';
 import { VehicleHUD } from '../ui/VehicleHUD';
@@ -118,6 +119,10 @@ export class Engine {
   readonly engBoundary: EngineeringBoundary;
   /** City Library south of the F7 road (the open field next to the spawn crossing, west of the railway viaduct): walk in and look around. */
   readonly library: LibraryManager;
+  /** PROTOTYPE building: the police station (thana) on the field south of F6, west of F5 (west of the spawn crossing). */
+  readonly protoBuilding: BuildingManager;
+  /** All the other building models, each at its spot (position only for now, see src/buildings/Placements.ts). */
+  readonly placedBuildings: PlacedBuildings;
   /** SWTP (water treatment) + STP (sewage treatment) plants with their narrated tour (Y). */
   readonly infra: InfraManager;
   private infraFreeFly = false;
@@ -298,6 +303,22 @@ export class Engine {
       terrain: this.world.terrain,
       playerWorld: (out) => this.player.getWorldPosition(out),
       onFoot: () => this.player.active && !this.player.inVehicle && !this.cameraController.isFreeFly && !this.helis.pilot && !this.boats.skipper,
+    });
+
+    // --- Prototype building: police station (always standing there when the game starts) ---
+    setBuildingTextureQuality(this.renderer);
+    this.protoBuilding = new BuildingManager({
+      root: this.world.root,
+      physics,
+      origin: this.world.origin,
+      terrain: this.world.terrain,
+      playerWorld: (out) => this.player.getWorldPosition(out),
+    });
+
+    this.placedBuildings = new PlacedBuildings({
+      root: this.world.root,
+      terrain: this.world.terrain,
+      playerWorld: (out) => this.player.getWorldPosition(out),
     });
 
     // --- Airport (north-east; the model is hidden when the player is far away) ---
@@ -538,6 +559,7 @@ export class Engine {
       this.voice.toggleMute();
       this.helis.setMuted(this.voice.isMuted);
       this.boats.setMuted(this.voice.isMuted);
+      this.vehicles.setMuted(this.voice.isMuted);
       this.combat.setMuted(this.voice.isMuted);
       this.explosions.setMuted(this.voice.isMuted);
     }
@@ -592,6 +614,8 @@ export class Engine {
     this.evlab.update(this.time.elapsed);
     this.engBoundary.update();
     this.library.update(this.time.elapsed);
+    this.protoBuilding.update();
+    this.placedBuildings.update();
     this.airport.update();
     this.agro.update(dt);
     this.infra.update();
@@ -753,7 +777,7 @@ export class Engine {
       others.push({ x: t.x, z: t.z, heading: t.heading, kind: 'boat' });
     }
     for (const t of this.trains.markers()) others.push({ x: t.x, z: t.z, heading: t.heading, kind: 'train' });
-    return { me, viewHeading: view, others, stops: this.mapStops, mall: this.mall.position, library: this.library.position, agro: this.agro.position, infra: this.infra.plants.map((pl) => ({ x: pl.site.x, z: pl.site.z, id: pl.site.id })) };
+    return { me, viewHeading: view, others, stops: this.mapStops, mall: this.mall.position, library: this.library.position, building: this.protoBuilding.position, buildings: this.placedBuildings.markers, agro: this.agro.position, infra: this.infra.plants.map((pl) => ({ x: pl.site.x, z: pl.site.z, id: pl.site.id })) };
   }
 
   /** HUD chip: railway station area > planned city area > airport / seaport part > the world zone (the whole map has one). */
@@ -766,6 +790,10 @@ export class Engine {
     if (this.library.inside) {
       const sec = this.library.section;
       this.hud.setArea({ key: `city-library-${sec ?? ''}`, name: 'সিটি লাইব্রেরি', kind: sec ? `বইয়ের বিভাগ · ${sec}` : 'পাঠাগার', color: '#a16207' });
+      return;
+    }
+    if (this.protoBuilding.inside) {
+      this.hud.setArea({ key: 'proto-thana', name: 'থানা (প্রোটোটাইপ)', kind: 'পুলিশ স্টেশন', color: '#1d4ed8' });
       return;
     }
     if (this.agro.inside) {
@@ -861,6 +889,8 @@ export class Engine {
     this.evlab.dispose();
     this.engBoundary.dispose();
     this.library.dispose();
+    this.protoBuilding.dispose();
+    this.placedBuildings.dispose();
     this.airport.dispose();
     this.agro.dispose();
     this.infra.dispose();
