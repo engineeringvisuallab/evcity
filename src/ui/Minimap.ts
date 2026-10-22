@@ -301,11 +301,11 @@ export class Minimap {
         };
         c.lineJoin = 'round';
         c.strokeStyle = '#111';
-        c.lineWidth = 3.4 * this.dpr;
+        c.lineWidth = 1.7 * this.dpr;
         line();
         c.strokeStyle = '#fff';
-        c.lineWidth = 1.6 * this.dpr;
-        c.setLineDash([5 * this.dpr, 5 * this.dpr]);
+        c.lineWidth = 0.8 * this.dpr;
+        c.setLineDash([4 * this.dpr, 4 * this.dpr]);
         line();
         c.setLineDash([]);
         c.font = `700 ${10 * this.dpr}px ${UI_FONT}`;
@@ -317,7 +317,7 @@ export class Minimap {
           c.fillStyle = 'rgba(255,255,255,0.25)';
           c.fill();
           c.strokeStyle = '#fff';
-          c.lineWidth = 1.8 * this.dpr;
+          c.lineWidth = 1.1 * this.dpr;
           c.stroke();
           if (MAP_CLUTTER && this.zoom >= 1) {
             const name = bn.rail.station[st.id] ?? st.id;
