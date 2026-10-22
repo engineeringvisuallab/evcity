@@ -327,6 +327,17 @@ export const Config = {
     fogDensity: 0.00046,
     shadowExtent: 350,
     shadowMapSize: 4096,
+    /** Day / night cycle (see src/environment/DayNight.ts). Night can be switched off in the game with the \ key. */
+    dayNight: {
+      /** Minutes from sunrise to sunset. */
+      dayMinutes: 8,
+      /** Minutes from sunset to sunrise (the dusk and dawn colour changes happen inside these times, never as a sudden jump). */
+      nightMinutes: 3,
+      /** The game starts at this fraction of the day (0 = sunrise, 1 = sunset): mid-morning. */
+      startFraction: 0.21,
+      /** Seconds the sky needs to fade to full day when the night mode is switched off (and back when it is switched on). */
+      switchSeconds: 6,
+    },
   },
 
   player: {

@@ -69,6 +69,12 @@ export class PlacedBuildings {
     }
   }
 
+  /** Position + floor height of the first hand placed building with this model id (null if there is none): lets other systems (the lighthouse light) stand on it. */
+  anchorOf(id: string): { x: number; z: number; floorY: number } | null {
+    const sl = this.slots.find((s) => !s.fill && s.p.id === id);
+    return sl ? { x: sl.p.x, z: sl.p.z, floorY: sl.floorY } : null;
+  }
+
   /** Minimap dots (world x, z + colour of the building group). */
   get markers(): { x: number; z: number; color: string }[] {
     return this.slots.filter((sl) => !sl.fill).map((sl) => ({ x: sl.p.x, z: sl.p.z, color: GROUP_COLOR[BUILDING_MODEL_BY_ID[sl.p.id]!.group] ?? '#fff' }));

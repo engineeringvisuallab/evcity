@@ -47,7 +47,8 @@ import { Economy } from '../economy/Economy';
 import { GoldConfig } from '../economy/Gold';
 import { InputManager } from '../input/InputManager';
 import { VoiceManager } from '../audio/VoiceManager';
-import { Environment } from '../environment';
+import { Environment, LighthouseLight, StreetLights } from '../environment';
+import { Toast } from '../ui/Toast';
 import { PhysicsWorld } from '../physics/PhysicsWorld';
 import { DebugPanel } from '../ui/DebugPanel';
 import { HUD } from '../ui/HUD';
@@ -104,6 +105,10 @@ export class Engine {
   /** Traffic signals on every road junction (AI cars stop at red; the player is fined Gold for running a red light). */
   readonly trafficSignals: TrafficSignals;
   private trafficLights: TrafficLightLayer;
+  /** Day / night: street lights on every road + the lighthouse lantern (both follow environment.lampOn). */
+  private streetLights: StreetLights;
+  private lighthouseLight: LighthouseLight | null = null;
+  private toast: Toast;
   /** Gold: 10,000 at the start; fines for red lights and traffic accidents, a gift for killing a criminal. */
   readonly economy: Economy;
   private redLightPrev = { x: 0, z: 0, ok: false };
@@ -233,6 +238,7 @@ export class Engine {
     this.world.root.add(this.bridgeVisuals.group);
     this.bridgePhysics = new BridgePhysics(physics, this.world.origin, roads.bridges, roads.roads);
     this.roadDebug = new RoadDebug(roads);
+    this.streetLights = new StreetLights(this.world.root, roads);
     this.world.root.add(this.roadDebug.group);
     this.rail = this.world.terrain.rail;
     this.railDebug = new RailDebug(this.rail);
@@ -339,6 +345,10 @@ export class Engine {
       playerWorld: (out) => this.player.getWorldPosition(out),
     });
 
+    // lighthouse in the sea: its lantern shines at night (stands on its own, so it is visible from far away)
+    const lh = this.placedBuildings.anchorOf('lighthouse');
+    if (lh) this.lighthouseLight = new LighthouseLight(this.world.root, lh.x, lh.floorY, lh.z);
+
     // --- Airport (north-east; the model is hidden when the player is far away) ---
     this.airport = new AirportManager({
       root: this.world.root,
@@ -365,6 +375,7 @@ export class Engine {
 
     this.debug = new DebugPanel(container);
     this.hud = new HUD(container);
+    this.toast = new Toast(container);
     this.hud.setLocked(this.input.gameplayActive);
 
     // --- vehicles: none are placed by hand any more. Every vehicle is created by TrafficManager WITH a driver. ---
@@ -604,6 +615,10 @@ export class Engine {
     if (this.input.wasPressed('Digit2')) this.world.terrainMaterials.setLodColors(!this.world.terrainMaterials.isLodColors);
     if (this.input.wasPressed('Digit3')) this.roadDebug.toggle();
     if (this.input.wasPressed('Digit4')) this.railDebug.toggle();
+    // \ : night mode on / off (off = it stays day; the sky fades back to daylight, the street lights and the lighthouse go out)
+    if (this.input.wasPressed('Backslash')) {
+      this.toast.show(this.environment.toggleNight() ? '🌙 রাত মোড চালু — দিন-রাত চলবে' : '☀️ রাত মোড বন্ধ — সবসময় দিন');
+    }
 
     // V: switch between the player camera and the free-fly debug camera. T (free-fly): bring the player here.
     if (!this.boats.handleKeys() && !this.helis.handleKeys()) this.vehicles.handleKeys();
@@ -678,7 +693,14 @@ export class Engine {
     this.trains.update(this.world.playerWorld.x, this.world.playerWorld.z);
     this.updateTrainSignalsUi(this.world.playerWorld.x, this.world.playerWorld.z);
     this.hud.setLoading(this.player.active && !this.player.inVehicle && !this.player.ready);
-    this.environment.update(this.camera);
+    this.environment.update(this.camera, dt);
+    {
+      const lamp = this.environment.lampOn;
+      const fov = this.camera.fov;
+      const px = this.renderer.domElement.height;
+      this.streetLights.update(lamp, fov, px);
+      this.lighthouseLight?.update(lamp, this.time.elapsed, fov, px);
+    }
 
     this.debug.update(dt, () => ({
       fps: this.time.fps,
@@ -1033,6 +1055,9 @@ export class Engine {
     this.treeDestruction.dispose();
     this.busStops.dispose();
     this.trafficLights.dispose();
+    this.streetLights.dispose();
+    this.lighthouseLight?.dispose();
+    this.toast.dispose();
     this.economy.dispose();
     this.birds.dispose();
     this.animals.dispose();

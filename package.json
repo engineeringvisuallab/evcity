@@ -64,7 +64,8 @@
     "test:agro": "tsx scripts/agro-site-test.ts",
     "test:animals": "tsx scripts/animals-test.ts",
     "test:wanted": "tsx scripts/wanted-test.ts",
-    "test:start": "tsx scripts/start-test.ts"
+    "test:start": "tsx scripts/start-test.ts",
+    "test:daynight": "tsx scripts/daynight-test.ts"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.21.0",
