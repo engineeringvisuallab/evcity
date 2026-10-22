@@ -99,6 +99,7 @@ export class GrassPlacer {
         if (this.gen.railForm.inCorridor(x, z, 0)) continue;
         if (this.gen.portForm.inFootprint(x, z, 0)) continue; // STAGE 14: sea port
         if (this.gen.airport.contains(x, z, 1)) continue; // airport pad
+        if (this.gen.army.contains(x, z, 1)) continue; // army camp
         if (this.gen.mall.contains(x, z, 1)) continue; // City Mall plot
         if (this.gen.evlab.contains(x, z, 1)) continue; // EVLab campus plot
         if (this.gen.library.contains(x, z, 1)) continue; // City Library plot

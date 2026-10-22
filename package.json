@@ -62,6 +62,8 @@
     "test:boats": "tsx scripts/boat-test.ts",
     "test:mall": "tsx scripts/mall-test.ts",
     "test:library": "tsx scripts/library-test.ts",
+    "test:army": "tsx scripts/army-site-test.ts",
+    "test:airplane": "tsx scripts/airplane-test.ts",
     "test:agro": "tsx scripts/agro-site-test.ts",
     "test:animals": "tsx scripts/animals-test.ts",
     "test:wanted": "tsx scripts/wanted-test.ts",

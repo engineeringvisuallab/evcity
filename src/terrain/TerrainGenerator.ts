@@ -8,6 +8,7 @@ import { RailNetwork } from '../rail/RailNetwork';
 import { RailFormation } from '../rail/RailFormation';
 import { islandHeight } from './Island';
 import { AirportSite } from '../airport/AirportSite';
+import { ArmySite } from '../army/ArmySite';
 import { AgroSite } from '../agro/AgroSite';
 import { PortFormation } from '../port/PortFormation';
 import { MallSite, MALL_PLOT } from '../mall/MallSite';
@@ -69,6 +70,9 @@ export class TerrainGenerator {
   /** Airport (north-east): only its own pad + skirt is levelled (applied late in sample(), same in every chunk, worker and collider). */
   readonly airport = new AirportSite();
   private airportMask = new Float32Array(2);
+  /** Army camp (north-west, on the low flat land at the foot of the big hill): only its own pad + skirt is levelled, same rules as the airport. */
+  readonly army = new ArmySite();
+  private armyMask = new Float32Array(2);
   /** EV Agro Research Institute (west farmland): a level pad for the building and the research field (applied late in sample(), same in every chunk, worker and collider). */
   readonly agro = new AgroSite();
   private agroMask = new Float32Array(2);
@@ -160,6 +164,16 @@ export class TerrainGenerator {
       ah.sort((a, b) => a - b);
       this.airport.floorY = ah[ah.length >> 1];
     }
+    // the army camp floor = the MEDIAN natural ground over its pad
+    {
+      const R = this.army.rect, ah: number[] = [];
+      for (let i = 0; i <= 30; i++) for (let j = 0; j <= 12; j++) {
+        this.sampleGround(R.x0 + ((R.x1 - R.x0) * i) / 30, R.z0 + ((R.z1 - R.z0) * j) / 12, this.scratch);
+        ah.push(this.scratch.h);
+      }
+      ah.sort((a, b) => a - b);
+      this.army.floorY = ah[ah.length >> 1];
+    }
     // the Agro institute floor = the MEDIAN natural ground over its pad (farmland: a few metres of cut and fill)
     {
       const R = this.agro.rect, gh: number[] = [];
@@ -217,6 +231,12 @@ export class TerrainGenerator {
       this.roads.maskAt(x, z, 1, this.airportMask);
       const k = 1 - this.airportMask[1];
       if (k > 0) out.h = this.airport.height(x, z, out.h, k);
+    }
+    // Army camp pad: gives way to roads and to the railway corridor, like the airport
+    if (this.padsReady && this.army.near(x, z) && !this.railForm.inCorridor(x, z, 6)) {
+      this.roads.maskAt(x, z, 1, this.armyMask);
+      const k = 1 - this.armyMask[1];
+      if (k > 0) out.h = this.army.height(x, z, out.h, k);
     }
     // Agro institute pad: gives way to roads / junction pads, like the library
     if (this.padsReady && this.agro.near(x, z)) {

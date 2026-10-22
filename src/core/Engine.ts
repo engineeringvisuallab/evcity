@@ -24,6 +24,7 @@ import { ENGINEERING_BY_ID } from '../city/EngineeringZones';
 import { RailDebug, RailPhysics, type RailNetwork } from '../rail';
 import { PortPhysics } from '../port';
 import { AirportManager } from '../airport';
+import { ArmyManager } from '../army';
 import { AgroManager } from '../agro/AgroManager';
 import { SignalLayer, StationBoard, TrainAnnouncer, TrainContacts, TrainLayer, TrainManager, TrainPhysics, formatBoard, playerObb, vehicleObb, type TrainEntity } from '../trains';
 import { bn } from '../i18n';
@@ -171,6 +172,8 @@ export class Engine {
   private portPhysics: PortPhysics;
   /** Airport in the north-east (runway, terminal, hangars, tower) on its own levelled pad. */
   readonly airport: AirportManager;
+  /** Army camp in the north-west, on the low flat land at the foot of the big hill: gate, HQ, barracks, tents, depot, motor pool, helipad. */
+  readonly army: ArmyManager;
   /** EV Agro Research Institute (west farmland, ~3 km from the spawn): 2-floor institute + research field. K = go there. */
   readonly agro: AgroManager;
 
@@ -365,6 +368,15 @@ export class Engine {
 
     // --- Airport (north-east; the model is hidden when the player is far away) ---
     this.airport = new AirportManager({
+      root: this.world.root,
+      physics,
+      origin: this.world.origin,
+      terrain: this.world.terrain,
+      playerWorld: (out) => this.player.getWorldPosition(out),
+    });
+
+    // --- Army camp (north-west, at the foot of the hill; hidden when the player is far away) ---
+    this.army = new ArmyManager({
       root: this.world.root,
       physics,
       origin: this.world.origin,
@@ -663,6 +675,12 @@ export class Engine {
       this.toggleFreeFly();
     }
 
+    // ; (semicolon): go to the army camp (on foot only): you stand just inside the main gate
+    if (this.input.wasPressed('Semicolon') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.cameraController.isFreeFly) {
+      const g = this.army.spawns.gate;
+      this.player.teleportTo(this.tmpVec.set(g.x, this.world.terrain.army.floorY + 3, g.z));
+    }
+
     // J: go to the airport (on foot only): stand next to the helipad, the terminal and the runway are right there
     if (this.input.wasPressed('KeyJ') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.cameraController.isFreeFly) {
       const h = this.airport.spawns.helipad;
@@ -705,6 +723,7 @@ export class Engine {
     this.placedBuildings.update();
     this.fillBuildings.update();
     this.airport.update();
+    this.army.update();
     this.agro.update(dt);
     this.infra.update();
     this.combat.update(dt, canShoot && !this.vehicles.playerTank && !this.mall.inside && !this.agro.inside); // in the tank the left mouse button fires the cannon instead
@@ -1116,6 +1135,7 @@ export class Engine {
     this.placedBuildings.dispose();
     this.fillBuildings.dispose();
     this.airport.dispose();
+    this.army.dispose();
     this.agro.dispose();
     this.infra.dispose();
     this.tankCannon.dispose();

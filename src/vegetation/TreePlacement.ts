@@ -69,6 +69,7 @@ export class TreePlacer {
     if (this.gen.railForm.inCorridor(x, z, 3)) return true;
     if (this.gen.portForm.inFootprint(x, z, 4)) return true; // STAGE 14: sea port
     if (this.gen.airport.contains(x, z, 4)) return true; // airport pad
+    if (this.gen.army.contains(x, z, 4)) return true; // army camp
     if (this.gen.mall.contains(x, z, 4)) return true; // City Mall plot
     if (this.gen.evlab.contains(x, z, 4)) return true; // EVLab campus plot
     if (this.gen.library.contains(x, z, 4)) return true; // City Library plot

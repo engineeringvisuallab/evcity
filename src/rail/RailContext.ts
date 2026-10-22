@@ -1,7 +1,7 @@
 import type { TerrainSample } from '../terrain/Lakes';
 import type { RoadNetwork } from '../roads/RoadNetwork';
 import type { RoadSpec } from '../roads/RoadTypes';
-import { FACILITIES } from '../city/WorldZones';
+import { RAIL_FACILITIES } from '../city/WorldZones';
 
 /** What the railway needs from the terrain: natural ground + water (no roads, no rail) and the finished road network. */
 export interface RailTerrain {
@@ -252,7 +252,7 @@ export class RailContext {
 
   /** The airport / seaport whose grounds (+ margin m) contain (x, z), or null. */
   facilityAt(x: number, z: number, margin: number): string | null {
-    for (const f of FACILITIES) if (x > f.x0 - margin && x < f.x1 + margin && z > f.z0 - margin && z < f.z1 + margin) return f.id;
+    for (const f of RAIL_FACILITIES) if (x > f.x0 - margin && x < f.x1 + margin && z > f.z0 - margin && z < f.z1 + margin) return f.id;
     return null;
   }
 }
