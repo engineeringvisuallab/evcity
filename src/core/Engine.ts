@@ -19,6 +19,7 @@ import { BoatHUD } from '../ui/BoatHUD';
 import { OxygenHUD } from '../ui/OxygenHUD';
 import { WaterFX } from '../water';
 import { BridgeBuilder, BridgePhysics, RoadDebug } from '../roads';
+import { ExpresswayBuilder, ExpresswayNetwork, ExpresswayPhysics, expresswayAvoid } from '../expressway';
 import { CombatSystem } from '../combat';
 import { CityPlan, ZONE_COLOR } from '../city/CityPlan';
 import { getWorldZoneAt, worldZoneHitColor } from '../city/WorldZones';
@@ -174,6 +175,10 @@ export class Engine {
   /** STAGE 6 */
   private bridgeVisuals: BridgeBuilder;
   private bridgePhysics: BridgePhysics;
+  /** Elevated 8-lane cargo expressway (ring + port spur + city diameters + ramps): plan, visuals, colliders. */
+  readonly expressway: ExpresswayNetwork;
+  private expresswayVisuals: ExpresswayBuilder;
+  private expresswayPhysics: ExpresswayPhysics;
   private roadDebug: RoadDebug;
   private railPhysics: RailPhysics;
   /** STAGE 14: colliders of the sea port structures (cranes, containers, ships, tanks ...). */
@@ -260,6 +265,10 @@ export class Engine {
     this.bridgeVisuals = new BridgeBuilder(roads.bridges, roads.roads, this.world.terrain);
     this.world.root.add(this.bridgeVisuals.group);
     this.bridgePhysics = new BridgePhysics(physics, this.world.origin, roads.bridges, roads.roads);
+    this.expressway = new ExpresswayNetwork(this.world.terrain, roads.roads, expresswayAvoid());
+    this.expresswayVisuals = new ExpresswayBuilder(this.expressway);
+    this.world.root.add(this.expresswayVisuals.group);
+    this.expresswayPhysics = new ExpresswayPhysics(physics, this.world.origin, this.expressway);
     this.roadDebug = new RoadDebug(roads);
     this.streetLights = new StreetLights(this.world.root, roads);
     this.world.root.add(this.roadDebug.group);
@@ -529,7 +538,7 @@ export class Engine {
 
     // --- the always-on site map (top-right) ---
     this.cityPlan = new CityPlan(this.world.terrain.sites);
-    this.minimap = new Minimap(container, this.world.seed.value, this.world.terrain.sites, this.cityPlan, this.rail);
+    this.minimap = new Minimap(container, this.world.seed.value, this.world.terrain.sites, this.cityPlan, this.rail, this.expressway);
     // the parked fleet (see EVLAB_SLOTS): the helicopter stands on its pad in the EVLAB parking lot
     {
       const h = this.slot(EVLAB_SLOTS.heli.s, EVLAB_SLOTS.heli.n, 0, -1);
@@ -787,6 +796,7 @@ export class Engine {
     this.minimap.update(dt, this.mapState());
     this.updateAreaLabel();
     this.bridgePhysics.update(dt, this.world.playerWorld.x, this.world.playerWorld.z);
+    this.expresswayPhysics.update(dt, this.world.playerWorld.x, this.world.playerWorld.z);
     this.railPhysics.update(dt, this.world.playerWorld.x, this.world.playerWorld.z);
     this.portPhysics.update(dt, this.world.playerWorld.x, this.world.playerWorld.z);
     this.trains.update(this.world.playerWorld.x, this.world.playerWorld.z);
@@ -1228,6 +1238,8 @@ export class Engine {
     this.boats.dispose();
     this.player.dispose();
     this.bridgePhysics.dispose();
+    this.expresswayPhysics.dispose();
+    this.expresswayVisuals.dispose();
     this.railPhysics.dispose();
     this.portPhysics.dispose();
     this.bridgeVisuals.dispose();
