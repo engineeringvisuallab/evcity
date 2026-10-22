@@ -30,7 +30,7 @@ export class ExpresswayRouter {
 
   constructor(
     private ground: XGround,
-    private avoid: readonly XAvoid[],
+    avoid: readonly XAvoid[],
   ) {
     this.H = new Float32Array(N * N);
     this.blocked = new Uint8Array(N * N);
