@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Config } from '../core/Config';
 import type { SkyUniforms } from '../water';
-import { DayNight } from './DayNight';
+import { DayNight, type TimeMode } from './DayNight';
 
 const SKY_VERT = /* glsl */ `
 varying vec3 vDir;
@@ -138,6 +138,20 @@ export class Environment {
   /** Night mode on / off (returns the new setting). */
   toggleNight(): boolean {
     return this.dayNight.toggle();
+  }
+
+  /** The time mode: the normal day / night cycle, always night or always day (settings menu). */
+  get timeMode(): TimeMode {
+    return this.dayNight.mode;
+  }
+
+  setTimeMode(mode: TimeMode): void {
+    this.dayNight.setMode(mode);
+  }
+
+  /** Time of day in hours (0 .. 24) for the clock next to the minimap. */
+  get hours(): number {
+    return this.dayNight.hours;
   }
 
   /** Copy the day/night state into the sky, the lights and the fog. */

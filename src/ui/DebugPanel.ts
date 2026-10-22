@@ -85,7 +85,15 @@ export class DebugPanel {
   }
 
   toggle(): void {
-    this.visible = !this.visible;
+    this.setVisible(!this.visible);
+  }
+
+  get isVisible(): boolean {
+    return this.visible;
+  }
+
+  setVisible(on: boolean): void {
+    this.visible = on;
     this.root.style.display = this.visible ? 'grid' : 'none';
   }
 

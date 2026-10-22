@@ -34,6 +34,11 @@ export class GoldHUD {
     this.toast.remove();
   }
 
+  /** The balance chip at the top (the fine / income messages are always shown). */
+  setChipVisible(on: boolean): void {
+    this.chip.style.display = on ? 'flex' : 'none';
+  }
+
   setBalance(n: number): void {
     this.amount.textContent = fmt(n);
   }

@@ -1,5 +1,6 @@
 import { UI_FONT } from './theme';
 import { bn } from '../i18n';
+import { getToolbar } from './Toolbar';
 
 export interface TourDestinationChoice {
   id: string;
@@ -36,7 +37,7 @@ export class TourUI {
     this.button.type = 'button';
     this.button.textContent = `🧭 ${bn.tour.button}`;
     Object.assign(this.button.style, {
-      position: 'fixed', left: '14px', top: '14px', zIndex: '45', border: '1px solid rgba(255,255,255,.48)',
+      order: '0', height: '46px', border: '1px solid rgba(255,255,255,.48)',
       borderRadius: '12px', padding: '10px 16px', background: 'linear-gradient(135deg,#126b4b,#184735)', color: '#fff',
       font: `700 16px ${UI_FONT}`, boxShadow: '0 4px 16px rgba(0,0,0,.28)', cursor: 'pointer', pointerEvents: 'auto',
       transition: 'transform .15s ease,filter .15s ease',
@@ -44,7 +45,7 @@ export class TourUI {
     this.button.addEventListener('click', onRequest);
 
     Object.assign(this.status.style, {
-      position: 'fixed', left: '14px', top: '62px', zIndex: '44', display: 'none', maxWidth: 'min(420px,85vw)',
+      position: 'fixed', left: '14px', top: '70px', zIndex: '44', display: 'none', maxWidth: 'min(420px,85vw)',
       padding: '8px 12px', borderRadius: '10px', background: 'rgba(9,22,25,.88)', border: '1px solid rgba(255,255,255,.22)',
       color: '#fff', font: `500 14px/1.55 ${UI_FONT}`, boxShadow: '0 4px 16px rgba(0,0,0,.24)', pointerEvents: 'none',
     });
@@ -73,7 +74,8 @@ export class TourUI {
     this.overlay.addEventListener('click', (event) => {
       if (event.target === this.overlay) this.hideDestinations();
     });
-    parent.append(this.button, this.status, this.overlay);
+    getToolbar(parent).appendChild(this.button); // top-left row, next to the settings button
+    parent.append(this.status, this.overlay);
     this.showStatus(bn.tour.startHint);
   }
 

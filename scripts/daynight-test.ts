@@ -57,6 +57,51 @@ for (let i = 0; i < 40; i++) dn.update(0.25);
 ok(dn.state.night > 0.9, 'night on again: back in the night');
 dn.setEnabled(true);
 
+// ---- three modes: cycle / always night / always day ----
+{
+  const m = new DayNight();
+  m.setMode('cycle');
+  m.setClock(100);
+  m.update(100); // settle the blend
+  m.setClock(100);
+  ok(m.mode === 'cycle' && m.enabled, 'mode: cycle');
+  // hours: sunrise 06:00, sunset 18:00, midnight 00:00
+  ok(Math.abs(m.clockHours(0) - 6) < 1e-9, 'hours: sunrise = 06:00');
+  ok(Math.abs(m.clockHours(C.dayMinutes * 60) - 18) < 1e-9, 'hours: sunset = 18:00');
+  ok(Math.abs(m.clockHours(C.dayMinutes * 60 + (C.nightMinutes * 60) / 2) - 24 % 24) < 1e-9 || Math.abs(m.clockHours(C.dayMinutes * 60 + (C.nightMinutes * 60) / 2)) < 1e-9, 'hours: middle of the night = 00:00');
+  ok(Math.abs(m.clockHours(m.cycleSeconds - 1e-6) - 6) < 1e-3 || m.clockHours(m.cycleSeconds - 1e-6) > 5.99, 'hours: end of the night = 06:00');
+  // always night: from the middle of the day the sky fades to deep night and stays there, the clock stands still
+  m.setClock(C.dayMinutes * 60 * 0.4);
+  m.update(0.01);
+  const clockBefore = m.clock;
+  m.setMode('night');
+  for (let i = 0; i < 80; i++) m.update(0.25);
+  ok(m.clock === clockBefore, 'always night: the clock stands still');
+  ok(m.state.night > 0.99 && m.state.lampOn > 0.99 && m.state.sunY < -0.5, `always night: deep night (night ${m.state.night.toFixed(2)}, sunY ${m.state.sunY.toFixed(2)})`);
+  ok(Math.abs(m.hours) < 1e-9, 'always night: clock shows 00:00');
+  // straight from always night to always day: fades, no jump
+  m.setMode('day');
+  let jump = 0;
+  let prevNight = m.state.night;
+  for (let i = 0; i < 80; i++) {
+    m.update(0.25);
+    jump = Math.max(jump, Math.abs(m.state.night - prevNight));
+    prevNight = m.state.night;
+  }
+  ok(jump < 0.15, `night -> day: smooth (max step ${jump.toFixed(3)})`);
+  ok(m.state.night < 0.01 && m.state.lampOn < 0.01 && m.state.sunY > 0.4, 'always day: full daylight, lamps off');
+  ok(m.hours > 6 && m.hours < 18, `always day: clock shows daytime (${m.hours.toFixed(2)} h)`);
+  // back to the cycle: it continues from where it stopped
+  m.setMode('cycle');
+  for (let i = 0; i < 40; i++) m.update(0.25);
+  ok(m.clock > clockBefore && m.clock < clockBefore + 15, 'cycle again: continues from the old time');
+  // the mode is remembered by cycleMode(): cycle -> night -> day -> cycle
+  m.setMode('cycle');
+  const seq = [m.cycleMode(), m.cycleMode(), m.cycleMode()];
+  ok(seq.join() === 'night,day,cycle', `cycleMode order: ${seq.join(' > ')}`);
+  m.setMode('cycle');
+}
+
 // ---- street lights on the real road network ----
 const g = new TerrainGenerator(Config.world.seed);
 const R = g.roads;

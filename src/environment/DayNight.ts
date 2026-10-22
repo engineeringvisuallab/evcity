@@ -3,14 +3,20 @@
 //   - one full cycle = dayMinutes (sunrise -> sunset, default 8) + nightMinutes (sunset -> sunrise, default 3)
 //   - the sun moves on a smooth arc, and EVERYTHING (sky colours, sun colour / strength, ambient light, fog, lamps, stars) is a smooth
 //     function of the sun's height, so dusk and dawn take about a minute each: night never "switches on" suddenly
-//   - night can be switched off: the clock stops and the sky fades back to full daylight in `switchSeconds`; switching it on again fades back
-//   - the setting is remembered (localStorage) between visits
+//   - three modes (settings menu): 'cycle' = the normal day / night cycle, 'night' = it stays night all the time, 'day' = it stays day all the time.
+//     Switching fades the sky smoothly in `switchSeconds`; in 'night' / 'day' the clock stands still (the cycle continues from where it was)
+//   - the mode is remembered (localStorage) between visits
 //
 // Used by Environment (applies `state` to the sky, the sun, the ambient light and the fog) and by the street lights / lighthouse (read `state.lampOn`).
 import * as THREE from 'three';
 import { Config } from '../core/Config';
 
-const STORAGE_KEY = 'evcity.nightEnabled';
+const STORAGE_KEY = 'evcity.nightEnabled'; // old setting: '0' = night off (= always day)
+const MODE_KEY = 'evcity.timeMode';
+
+/** 'cycle' = day and night follow the clock, 'night' = always night, 'day' = always day. */
+export type TimeMode = 'cycle' | 'night' | 'day';
+export const TIME_MODES: readonly TimeMode[] = ['cycle', 'night', 'day'];
 const TAU = Math.PI * 2;
 
 /** Everything the renderer needs for one moment of the day. Reused every frame (no allocations). */
@@ -110,15 +116,21 @@ const _v = new THREE.Vector3();
 
 export class DayNight {
   readonly state = new LightState();
-  /** Night mode switched on (the clock runs and the sun sets). */
-  enabled = true;
+  /** The time mode: the normal cycle, night all the time or day all the time. */
+  mode: TimeMode = 'cycle';
   /** Seconds into the current cycle (0 = sunrise). */
   clock: number;
-  /** 0 = following the clock, 1 = fixed full daylight (night mode off). Fades between the two. */
+  /** 0 = following the clock, 1 = a fixed look (always day / always night). Fades between the two. */
   private offBlend = 0;
+  /** Inside the fixed look: 0 = full daylight, 1 = deep night. Fades when you switch straight between always-day and always-night. */
+  private fixedNight = 0;
   private readonly dayS: number;
   private readonly nightS: number;
+  private readonly startFraction: number;
+  /** The two fixed looks (always day: the look the game starts with; always night: the middle of the night). */
   private readonly fixed = new LightState();
+  private readonly fixedDark = new LightState();
+  private readonly fixedMix = new LightState();
   /** Horizontal direction (unit, x z) of the original fixed sun: the sun's arc leans that way, so the look at noon stays as it was. */
   private readonly lean = new THREE.Vector2(0.55, 0.45).normalize();
   private readonly east = new THREE.Vector3();
@@ -129,15 +141,40 @@ export class DayNight {
     this.dayS = C.dayMinutes * 60;
     this.nightS = C.nightMinutes * 60;
     this.east.set(-this.lean.y, 0, this.lean.x);
+    this.startFraction = C.startFraction;
     this.clock = this.dayS * C.startFraction;
     try {
-      if (typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_KEY) === '0') this.enabled = false;
+      if (typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem(MODE_KEY);
+        if (saved === 'cycle' || saved === 'night' || saved === 'day') this.mode = saved;
+        else if (localStorage.getItem(STORAGE_KEY) === '0') this.mode = 'day'; // the old "night off" setting
+      }
     } catch {
       /* storage blocked: keep the default */
     }
-    this.offBlend = this.enabled ? 0 : 1;
+    this.offBlend = this.mode === 'cycle' ? 0 : 1;
+    this.fixedNight = this.mode === 'night' ? 1 : 0;
     this.compute(this.dayAngle(C.startFraction * this.dayS), this.fixed);
+    this.compute(1.5 * Math.PI, this.fixedDark); // the sun straight below us: the middle of the night
     this.refresh();
+  }
+
+  /** Night cycle is running (old name: "night mode on"). */
+  get enabled(): boolean {
+    return this.mode === 'cycle';
+  }
+
+  /** Time of day in hours (0 .. 24): sunrise 06:00, sunset 18:00, midnight 00:00. In the fixed modes: the hour that goes with that look. */
+  get hours(): number {
+    if (this.mode === 'night') return 0;
+    if (this.mode === 'day') return 6 + 12 * this.startFraction;
+    return this.clockHours(this.clock);
+  }
+
+  /** Hour (0 .. 24) for a clock value: the day part fills 06:00 - 18:00, the night part 18:00 - 06:00. */
+  clockHours(clock: number): number {
+    if (clock < this.dayS) return 6 + (12 * clock) / this.dayS;
+    return (18 + (12 * (clock - this.dayS)) / this.nightS) % 24;
   }
 
   get cycleSeconds(): number {
@@ -153,26 +190,44 @@ export class DayNight {
     return rising ? 'dawn' : 'dusk';
   }
 
-  setEnabled(on: boolean): void {
-    this.enabled = on;
+  setMode(mode: TimeMode): void {
+    this.mode = mode;
     try {
-      if (typeof localStorage !== 'undefined') localStorage.setItem(STORAGE_KEY, on ? '1' : '0');
+      if (typeof localStorage !== 'undefined') localStorage.setItem(MODE_KEY, mode);
     } catch {
       /* ignore */
     }
   }
 
+  /** Old API: true = the normal cycle, false = always day. */
+  setEnabled(on: boolean): void {
+    this.setMode(on ? 'cycle' : 'day');
+  }
+
+  /** Old API: cycle <-> always day. Returns true when the cycle runs. */
   toggle(): boolean {
     this.setEnabled(!this.enabled);
     return this.enabled;
   }
 
+  /** Next mode in the order cycle -> night -> day (the backslash key). Returns the new mode. */
+  cycleMode(): TimeMode {
+    this.setMode(TIME_MODES[(TIME_MODES.indexOf(this.mode) + 1) % TIME_MODES.length]);
+    return this.mode;
+  }
+
   /** Advance the clock (only while night mode is on) and recompute `state`. */
   update(dt: number): void {
-    if (this.enabled) this.clock = (this.clock + dt) % this.cycleSeconds;
+    if (this.mode === 'cycle') this.clock = (this.clock + dt) % this.cycleSeconds;
     const step = dt / Math.max(0.1, Config.environment.dayNight.switchSeconds);
-    const target = this.enabled ? 0 : 1;
+    const target = this.mode === 'cycle' ? 0 : 1;
     this.offBlend += Math.max(-step, Math.min(step, target - this.offBlend));
+    if (this.mode !== 'cycle') {
+      // not looking at the fixed look yet: pick day / night at once; already looking at it: fade from one to the other
+      const nt = this.mode === 'night' ? 1 : 0;
+      if (this.offBlend < 0.0001) this.fixedNight = nt;
+      else this.fixedNight += Math.max(-step, Math.min(step, nt - this.fixedNight));
+    }
     this.refresh();
   }
 
@@ -186,7 +241,10 @@ export class DayNight {
     this.compute(this.angleAt(this.clock), this.state);
     if (this.offBlend > 0.0001) {
       const t = this.offBlend * this.offBlend * (3 - 2 * this.offBlend);
-      this.state.mix(this.fixed, t);
+      const n = this.fixedNight * this.fixedNight * (3 - 2 * this.fixedNight);
+      this.fixedMix.copy(this.fixed);
+      if (n > 0.0001) this.fixedMix.mix(this.fixedDark, n);
+      this.state.mix(this.fixedMix, t);
     }
   }
 

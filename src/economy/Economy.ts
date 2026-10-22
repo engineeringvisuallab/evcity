@@ -35,6 +35,15 @@ export class Economy {
     this.gold.onChange((b) => this.hud.setBalance(b));
   }
 
+  get balance(): number {
+    return this.gold.balance;
+  }
+
+  /** Show / hide the balance chip (settings menu); fines and gifts still pop up as messages. */
+  setBalanceVisible(on: boolean): void {
+    this.hud.setChipVisible(on);
+  }
+
   /** The player's vehicle crossed a stop line on a red light. */
   redLight(): void {
     if (this.now - this.lastSignalFine < GoldConfig.signalCooldown) return;

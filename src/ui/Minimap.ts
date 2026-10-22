@@ -4,7 +4,7 @@ import { ZONE_COLOR, type CityPlan } from '../city/CityPlan';
 import { AIRPORT, SEAPORT, WORLD_ZONE_COLOR, rasterizeWorldZones } from '../city/WorldZones';
 import { ENGINEERING_AREAS, ENGINEERING_GROUP_COLOR } from '../city/EngineeringZones';
 import type { RailNetwork } from '../rail';
-import { bn } from '../i18n';
+import { bn, bnDigits, bnSigned } from '../i18n';
 import type { MinimapRequest, MinimapResult } from '../workers/minimap.worker';
 import { UI_FONT } from './theme';
 
@@ -43,6 +43,22 @@ export interface MapState {
   agro?: { x: number; z: number };
   /** SWTP / STP plants (world x, z): always shown. */
   infra?: { x: number; z: number; id: string }[];
+  /** The camera's world position: shown as numbers under the map. */
+  camera?: { x: number; y: number; z: number };
+  /** Time of day in hours (0 .. 24): shown as a faint clock next to the map. */
+  hours?: number;
+}
+
+const PERIODS: [number, string][] = [[4, 'রাত'], [6, 'ভোর'], [12, 'সকাল'], [15, 'দুপুর'], [17, 'বিকেল'], [19, 'সন্ধ্যা'], [24, 'রাত']];
+
+/** 8.52 -> { time: '০৮:৩১', period: 'সকাল' } (12-hour clock with the Bangla part of the day). */
+export function formatClock(hours: number): { time: string; period: string } {
+  const total = Math.floor(((hours % 24) + 24) % 24 * 60);
+  const h24 = Math.floor(total / 60);
+  const m = total % 60;
+  const h12 = h24 % 12 || 12;
+  const period = PERIODS.find(([end]) => h24 < end)![1];
+  return { time: bnDigits(`${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')}`), period };
 }
 
 /** false = clean map: terrain, zones, railway (no names), trains and you. true = also bus stops, parked vehicles, station names, city-core circles. */
@@ -67,6 +83,13 @@ export class Minimap {
   private t = 0;
   /** STAGE 11A: the whole-map zones (residential, industrial, airport, seaport ...) as one small picture, 100 m per pixel. */
   private zoneLayer: HTMLCanvasElement;
+  /** Camera coordinates under the map, and the time of day as a faint watermark beside it. */
+  private coords = document.createElement('div');
+  private clock = document.createElement('div');
+  private clockTime = document.createElement('div');
+  private clockPeriod = document.createElement('div');
+  private coordText = '';
+  private clockText = '';
 
   constructor(
     parent: HTMLElement,
@@ -91,6 +114,22 @@ export class Minimap {
     });
     parent.appendChild(c);
     this.ctx = c.getContext('2d')!;
+    // camera coordinates: a small chip right under the map
+    Object.assign(this.coords.style, {
+      position: 'fixed', right: '14px', textAlign: 'center', boxSizing: 'border-box', padding: '4px 8px', borderRadius: '9px',
+      background: 'rgba(14,22,34,0.66)', border: '1px solid rgba(255,255,255,0.25)', color: '#d8ecff',
+      font: `600 12px/1.4 ${UI_FONT}`, whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: '11',
+    } satisfies Partial<CSSStyleDeclaration>);
+    // time of day: big, faint, no box: a watermark on the left side of the map
+    Object.assign(this.clock.style, {
+      position: 'fixed', top: '14px', textAlign: 'right', color: '#ffffff', opacity: '0.62', pointerEvents: 'none', zIndex: '10',
+      textShadow: '0 2px 8px rgba(0,0,0,0.65)', fontFamily: UI_FONT, userSelect: 'none',
+    } satisfies Partial<CSSStyleDeclaration>);
+    Object.assign(this.clockTime.style, { font: `800 34px/1.1 ${UI_FONT}`, letterSpacing: '1px' });
+    Object.assign(this.clockPeriod.style, { font: `600 15px/1.3 ${UI_FONT}` });
+    this.clock.append(this.clockTime, this.clockPeriod);
+    parent.append(this.coords, this.clock);
+    this.layoutInfo();
     window.addEventListener('resize', () => this.setSize());
 
     this.worker = new Worker(new URL('../workers/minimap.worker.ts', import.meta.url), { type: 'module' });
@@ -122,9 +161,25 @@ export class Minimap {
     return c;
   }
 
-  /** U key: close -> medium -> whole world. */
-  cycleZoom(): void {
+  /** U key: close -> medium -> whole world. Returns the new zoom (0 .. 2). */
+  cycleZoom(): number {
     this.zoom = (this.zoom + 1) % ZOOM_SPANS.length;
+    return this.zoom;
+  }
+
+  get zoomLevel(): number {
+    return this.zoom;
+  }
+
+  setZoom(z: number): void {
+    this.zoom = Math.max(0, Math.min(ZOOM_SPANS.length - 1, Math.round(z)));
+  }
+
+  /** Put the coordinate chip under the map and the clock beside it (the map size depends on the window). */
+  private layoutInfo(): void {
+    this.coords.style.top = `${14 + this.px + 8}px`;
+    this.coords.style.width = `${this.px}px`;
+    this.clock.style.right = `${14 + this.px + 14}px`;
   }
 
   private setSize(): void {
@@ -133,10 +188,24 @@ export class Minimap {
     this.canvas.height = this.px * this.dpr;
     this.canvas.style.width = `${this.px}px`;
     this.canvas.style.height = `${this.px}px`;
+    this.layoutInfo();
   }
 
   update(dt: number, s: MapState): void {
     this.t += dt;
+    if (s.camera) {
+      const txt = `📷 X ${bnSigned(s.camera.x, 0)} · Y ${bnSigned(s.camera.y, 0)} · Z ${bnSigned(s.camera.z, 0)}`;
+      if (txt !== this.coordText) this.coords.textContent = this.coordText = txt;
+    }
+    if (s.hours !== undefined) {
+      const c = formatClock(s.hours);
+      const key = `${c.time}|${c.period}|${s.hours >= 6 && s.hours < 18}`;
+      if (key !== this.clockText) {
+        this.clockText = key;
+        this.clockTime.textContent = c.time;
+        this.clockPeriod.textContent = `${s.hours >= 6 && s.hours < 18 ? '☀️' : '🌙'} ${c.period}`;
+      }
+    }
     const c = this.ctx;
     const S = this.canvas.width;
     const span = ZOOM_SPANS[this.zoom];

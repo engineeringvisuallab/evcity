@@ -51,6 +51,15 @@ export class HUD {
   private ring = document.createElement('div');
   private starsShown = -1;
   private hitTimer = 0;
+  /** Settings menu: what stays on the screen all the time (see HudSettings). */
+  private showCross = true;
+  private showWeapon = false;
+  private areaAlways = false;
+  private locked = false;
+  private aimOn = false;
+  private weaponId: string | null = null;
+  private starsFlash = 0;
+  private areaTimer = 0;
 
   constructor(parent: HTMLElement) {
     const style = document.createElement('style');
@@ -137,6 +146,7 @@ export class HUD {
       fontFamily: UI_FONT,
       pointerEvents: 'none',
       zIndex: '11',
+      transition: 'opacity 0.6s ease',
     });
     Object.assign(this.board.style, {
       position: 'fixed',
@@ -201,8 +211,41 @@ export class HUD {
 
   /** Weapon in hand (null = hidden). */
   setWeapon(id: string | null): void {
-    this.weaponChip.style.display = id ? 'block' : 'none';
+    this.weaponId = id;
     if (id) this.chipName.textContent = bn.combat.weapon[id] ?? id;
+    this.applyWeapon();
+  }
+
+  /** Settings menu: crosshair, weapon chip + wanted stars, area name that stays (or only shows for a few seconds). */
+  setOptions(o: { crosshair: boolean; weapon: boolean; areaAlways: boolean }): void {
+    this.showCross = o.crosshair;
+    this.showWeapon = o.weapon;
+    this.areaAlways = o.areaAlways;
+    this.applyCross();
+    this.applyWeapon();
+    this.applyStars();
+    this.areaFlash();
+  }
+
+  private applyCross(): void {
+    this.cross.style.display = this.locked && this.showCross ? 'block' : 'none';
+    this.cross.style.opacity = this.aimOn ? '0' : '1';
+    this.ring.style.display = this.aimOn && this.showCross ? 'block' : 'none';
+  }
+
+  private applyWeapon(): void {
+    this.weaponChip.style.display = this.weaponId && this.showWeapon ? 'block' : 'none';
+  }
+
+  private applyStars(): void {
+    this.stars.style.display = this.starsShown > 0 && (this.showWeapon || performance.now() < this.starsFlash) ? 'flex' : 'none';
+  }
+
+  /** The area chip shows now; unless it is set to stay, it fades away after a few seconds. */
+  private areaFlash(): void {
+    window.clearTimeout(this.areaTimer);
+    this.area.style.opacity = '1';
+    if (!this.areaAlways) this.areaTimer = window.setTimeout(() => (this.area.style.opacity = '0'), 6000);
   }
 
   /** Bullets in the magazine / spare bullets. `reload` = 0..1 while reloading, -1 otherwise. */
@@ -221,15 +264,17 @@ export class HUD {
 
   /** Gun drawn: ring crosshair instead of the dot. */
   setAimMode(on: boolean): void {
-    this.ring.style.display = on ? 'block' : 'none';
-    this.cross.style.opacity = on ? '0' : '1';
+    this.aimOn = on;
+    this.applyCross();
   }
 
   /** 0-5 wanted stars (0 hides them). */
   setWanted(n: number): void {
     if (n === this.starsShown) return;
     this.starsShown = n;
-    this.stars.style.display = n > 0 ? 'flex' : 'none';
+    this.starsFlash = performance.now() + 4500; // even when the stars are switched off: a change of the level shows for a few seconds
+    window.setTimeout(() => this.applyStars(), 4600);
+    this.applyStars();
     let h = `<span style="font-size:13px;letter-spacing:0;margin-right:6px;opacity:.9">${bn.combat.wanted}</span>`;
     for (let i = 0; i < 5; i++) h += `<span style="color:${i < n ? '#ffd21f' : 'rgba(255,255,255,0.25)'}">★</span>`;
     this.stars.innerHTML = h;
@@ -247,6 +292,7 @@ export class HUD {
 
   /** Little X on the crosshair when your bullet hits somebody (red = kill). */
   hitMarker(kill: boolean): void {
+    if (!this.showCross) return;
     this.hitMark.style.color = kill ? '#ff3b30' : '#ffffff';
     this.hitMark.style.display = 'block';
     window.clearTimeout(this.hitTimer);
@@ -265,6 +311,7 @@ export class HUD {
       this.areaName.textContent = info.name;
       this.areaKind.textContent = info.kind;
       this.areaDot.style.background = info.color;
+      this.areaFlash(); // a new area: show its name for a few seconds
     }
     this.area.style.display = 'flex';
   }
@@ -288,8 +335,9 @@ export class HUD {
 
   /** Mouse captured: crosshair; not captured: play icon. */
   setLocked(locked: boolean): void {
+    this.locked = locked;
     this.play.style.display = locked ? 'none' : 'block';
-    this.cross.style.display = locked ? 'block' : 'none';
+    this.applyCross();
   }
 
   setLoading(on: boolean): void {

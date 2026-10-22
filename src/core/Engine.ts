@@ -49,6 +49,9 @@ import { InputManager } from '../input/InputManager';
 import { VoiceManager } from '../audio/VoiceManager';
 import { Environment, LighthouseLight, StreetLights } from '../environment';
 import { Toast } from '../ui/Toast';
+import { SettingsMenu } from '../ui/SettingsMenu';
+import { HudSettings } from '../ui/HudSettings';
+import type { TimeMode } from '../environment/DayNight';
 import { PhysicsWorld } from '../physics/PhysicsWorld';
 import { DebugPanel } from '../ui/DebugPanel';
 import { HUD } from '../ui/HUD';
@@ -109,6 +112,9 @@ export class Engine {
   private streetLights: StreetLights;
   private lighthouseLight: LighthouseLight | null = null;
   private toast: Toast;
+  /** Settings menu (gear button / Tab): day-night mode, what the screen shows, sound, minimap zoom, key help. */
+  private hudSettings = new HudSettings();
+  private settingsMenu!: SettingsMenu;
   /** Gold: 10,000 at the start; fines for red lights and traffic accidents, a gift for killing a criminal. */
   readonly economy: Economy;
   private redLightPrev = { x: 0, z: 0, ok: false };
@@ -547,6 +553,28 @@ export class Engine {
     });
     bus.on('camera:locked', ({ locked }) => this.hud.setLocked(locked));
 
+    // --- settings menu: everything that used to clutter the screen can be switched on here ---
+    this.settingsMenu = new SettingsMenu(
+      container,
+      {
+        getTimeMode: () => this.environment.timeMode,
+        setTimeMode: (m) => this.setTimeMode(m),
+        getMuted: () => this.voice.isMuted,
+        setMuted: (m) => this.setMuted(m),
+        getMapZoom: () => this.minimap.zoomLevel,
+        setMapZoom: (z) => this.setMapZoom(z),
+        getDebug: () => this.debug.isVisible,
+        setDebug: (on) => this.debug.setVisible(on),
+        getGold: () => this.economy.balance,
+      },
+      this.hudSettings,
+      this.renderer.domElement,
+    );
+    this.hudSettings.onChange(() => this.applyHudOptions());
+    this.applyHudOptions();
+    this.minimap.setZoom(this.hudSettings.values.mapZoom);
+    if (this.hudSettings.values.muted) this.setMuted(true);
+
     window.addEventListener('resize', this.onResize);
     this.loop = new GameLoop(this.time, this.fixedUpdate, this.render);
   }
@@ -603,21 +631,16 @@ export class Engine {
   /** Once per rendered frame. Order matters: input -> camera -> world streaming -> draw. */
   private render = (dt: number, alpha: number): void => {
     if (this.input.wasPressed('F3')) this.debug.toggle();
-    if (this.input.wasPressed('KeyM')) {
-      this.voice.toggleMute();
-      this.helis.setMuted(this.voice.isMuted);
-      this.boats.setMuted(this.voice.isMuted);
-      this.vehicles.setMuted(this.voice.isMuted);
-      this.combat.setMuted(this.voice.isMuted);
-      this.explosions.setMuted(this.voice.isMuted);
-    }
+    if (this.input.wasPressed('KeyM')) this.setMuted(!this.voice.isMuted);
+    if (this.input.wasPressed('Tab')) this.settingsMenu.toggle(); // the settings menu (the gear button does the same)
     if (this.input.wasPressed('Digit1')) this.world.terrainMaterials.setWireframe(!this.world.terrainMaterials.isWireframe);
     if (this.input.wasPressed('Digit2')) this.world.terrainMaterials.setLodColors(!this.world.terrainMaterials.isLodColors);
     if (this.input.wasPressed('Digit3')) this.roadDebug.toggle();
     if (this.input.wasPressed('Digit4')) this.railDebug.toggle();
-    // \ : night mode on / off (off = it stays day; the sky fades back to daylight, the street lights and the lighthouse go out)
+    // \ : time mode: day-night cycle -> always night -> always day (the settings menu has buttons for the same)
     if (this.input.wasPressed('Backslash')) {
-      this.toast.show(this.environment.toggleNight() ? '🌙 রাত মোড চালু — দিন-রাত চলবে' : '☀️ রাত মোড বন্ধ — সবসময় দিন');
+      const order: TimeMode[] = ['cycle', 'night', 'day'];
+      this.setTimeMode(order[(order.indexOf(this.environment.timeMode) + 1) % order.length]);
     }
 
     // V: switch between the player camera and the free-fly debug camera. T (free-fly): bring the player here.
@@ -684,7 +707,7 @@ export class Engine {
     this.world.update(dt, this.time.elapsed, this.camera, this.cameraController.isFreeFly);
     this.birds.update(dt, this.time.elapsed, this.world.playerWorld);
     this.animals.update(dt, this.time.elapsed, this.world.playerWorld);
-    if (this.input.wasPressed('KeyU')) this.minimap.cycleZoom(); // (N = the vehicle menu)
+    if (this.input.wasPressed('KeyU')) this.setMapZoom((this.minimap.zoomLevel + 1) % 3); // (N = the vehicle menu)
     this.minimap.update(dt, this.mapState());
     this.updateAreaLabel();
     this.bridgePhysics.update(dt, this.world.playerWorld.x, this.world.playerWorld.z);
@@ -840,7 +863,9 @@ export class Engine {
       others.push({ x: t.x, z: t.z, heading: t.heading, kind: 'boat' });
     }
     for (const t of this.trains.markers()) others.push({ x: t.x, z: t.z, heading: t.heading, kind: 'train' });
-    return { me, viewHeading: view, others, stops: this.mapStops, mall: this.mall.position, library: this.library.position, building: this.protoBuilding.position, buildings: this.placedBuildings.markers, agro: this.agro.position, infra: this.infra.plants.map((pl) => ({ x: pl.site.x, z: pl.site.z, id: pl.site.id })) };
+    this.world.origin.toWorld(this.camera.position, this.tmpVec);
+    const camera = { x: this.tmpVec.x, y: this.tmpVec.y, z: this.tmpVec.z };
+    return { me, camera, hours: this.environment.hours, viewHeading: view, others, stops: this.mapStops, mall: this.mall.position, library: this.library.position, building: this.protoBuilding.position, buildings: this.placedBuildings.markers, agro: this.agro.position, infra: this.infra.plants.map((pl) => ({ x: pl.site.x, z: pl.site.z, id: pl.site.id })) };
   }
 
   /** The player's vehicle crossed a stop line while its light was red: a Gold fine (no police case). */
@@ -994,6 +1019,38 @@ export class Engine {
   /** When each vehicle id was last called from the N menu (performance.now()). */
   private lastSummon = new Map<string, number>();
 
+  /** Day-night cycle / always night / always day (settings menu or the backslash key). */
+  private setTimeMode(mode: TimeMode): void {
+    this.environment.setTimeMode(mode);
+    this.toast.show(mode === 'cycle' ? '🔄 দিন-রাত চলবে' : mode === 'night' ? '🌙 সবসময় রাত' : '☀️ সবসময় দিন');
+    this.settingsMenu?.refresh();
+  }
+
+  /** Sound and voice on / off: one switch for every sound maker (M key or the settings menu). */
+  private setMuted(muted: boolean): void {
+    if (this.voice.isMuted !== muted) this.voice.toggleMute();
+    this.helis.setMuted(muted);
+    this.boats.setMuted(muted);
+    this.vehicles.setMuted(muted);
+    this.combat.setMuted(muted);
+    this.explosions.setMuted(muted);
+    this.hudSettings.set('muted', muted);
+    this.settingsMenu?.refresh();
+  }
+
+  private setMapZoom(zoom: number): void {
+    this.minimap.setZoom(zoom);
+    this.hudSettings.set('mapZoom', this.minimap.zoomLevel);
+    this.settingsMenu?.refresh();
+  }
+
+  /** What stays on the screen (crosshair, Gold chip, weapon chip + stars, area name) follows the settings. */
+  private applyHudOptions(): void {
+    const v = this.hudSettings.values;
+    this.hud.setOptions({ crosshair: v.crosshair, weapon: v.weapon, areaAlways: v.areaAlways });
+    this.economy.setBalanceVisible(v.gold);
+  }
+
   /** A spot on the parking lots (lot coordinates s, n) with the yaw of a vehicle whose nose points along lot direction (ds, dn). */
   private slot(s: number, n: number, ds: number, dn: number): { x: number; z: number; yaw: number } {
     const p = lotToWorld(s, n);
@@ -1039,6 +1096,7 @@ export class Engine {
     this.loop.stop();
     window.removeEventListener('resize', this.onResize);
     this.tour.dispose();
+    this.settingsMenu.dispose();
     this.vehicleMenu.dispose();
     this.parking.dispose();
     this.mall.dispose();
