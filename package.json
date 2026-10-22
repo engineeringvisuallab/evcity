@@ -37,6 +37,7 @@
     "test:placements": "tsx scripts/placements-test.ts",
     "fill:city": "tsx scripts/fill-city.ts",
     "test:fill": "tsx scripts/fill-test.ts",
+    "test:fill-runtime": "esbuild scripts/fill-runtime-test.ts --bundle --platform=node --format=esm --loader:.jpg=dataurl --loader:.png=dataurl --outfile=node_modules/.fill-runtime.mjs --log-level=error && node node_modules/.fill-runtime.mjs",
     "test:signals": "tsx scripts/traffic-signal-test.ts",
     "test:rail": "tsx scripts/rail-plan-test.ts",
     "test:rail-mesh": "tsx scripts/rail-mesh-test.ts",

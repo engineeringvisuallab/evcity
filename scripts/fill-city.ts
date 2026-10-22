@@ -25,7 +25,8 @@ import { protoKeepout } from '../src/buildings/ProtoSite';
 import { infraKeepout } from '../src/engineering/InfraSites';
 import { airportKeepout } from '../src/airport/AirportSite';
 import { agroKeepout } from '../src/agro/AgroSite';
-import { SIZES } from './_sizes-data';
+import { SIZES as BASE_SIZES, FILL_SIZES } from './_sizes-data';
+const SIZES: Record<string, [number, number]> = { ...BASE_SIZES, ...FILL_SIZES };
 
 const DRY = process.argv.includes('--dry');
 
@@ -38,7 +39,7 @@ const SETBACK: Record<number, [number, number]> = { 1: [10, 20], 2: [7, 14], 3: 
 /** Gap between neighbours along the street (m), by density. */
 const GAP: Record<number, [number, number]> = { 1: [18, 40], 2: [10, 22], 3: [5, 12], 4: [2.5, 6], 5: [2, 4] };
 /** Min clear distance between two buildings (m), by density (also used by the fill pass). */
-const MINSEP: Record<number, number> = { 1: 8, 2: 5, 3: 3.5, 4: 2.5, 5: 2 };
+const MINSEP: Record<number, number> = { 1: 8, 2: 5, 3: 3.5, 4: 2.2, 5: 1.5 };
 /** Chance of a fill-pass building per 14 m grid cell, by density. */
 const FILL_P: Record<number, number> = { 1: 0.03, 2: 0.14, 3: 0.4, 4: 0.75, 5: 0.95 };
 const FILL_STEP = 14;
@@ -59,12 +60,17 @@ const MODELS: M[] = [
   { id: 'hospital', cityId: 'hospital', floors: 8 }, { id: 'clinic', cityId: 'clinic', floors: 2 }, { id: 'diagnostic', cityId: 'diagnostic', floors: 4 },
   { id: 'mosque', cityId: 'mosque', floors: 2 }, { id: 'temple', cityId: 'temple', floors: 2 }, { id: 'church', cityId: 'church', floors: 3 }, { id: 'eidgah', cityId: 'eidgah', floors: 1 },
   { id: 'fire_station', cityId: 'fire-station', floors: 2 }, { id: 'post_office', cityId: 'post-office', floors: 2 },
+  // compact models (src/buildings/models/compact.ts): small footprint, many floors - they fill the blocks the big models leave empty
+  { id: 'slim-tower-20', cityId: 'office-tower', floors: 20 }, { id: 'slim-tower-30', cityId: 'office-tower', floors: 30 }, { id: 'office-slim-12', cityId: 'office-mid', floors: 12 },
+  { id: 'mixed-use-6', cityId: 'office-mid', floors: 6 }, { id: 'hotel-boutique', cityId: 'hotel', floors: 12 }, { id: 'bank-compact', cityId: 'bank', floors: 3 },
+  { id: 'apt-slim-9', cityId: 'apartment-mid', floors: 9 }, { id: 'apt-slim-14', cityId: 'apartment-high', floors: 14 }, { id: 'townhouse-3', cityId: 'house-brick', floors: 3 },
+  { id: 'shop-house-3', cityId: 'shop-row', floors: 3 }, { id: 'shop-house-4', cityId: 'shop-row', floors: 4 },
 ];
 /** Max copies of a model in the fill (institutions are rare / unique: the hand placed one already exists, or the game has its own: City Mall, police prototype ...). */
 const CAP: Record<string, number> = {
   mall: 0, hospital: 2, 'hotel-5star': 2, 'university-building': 2, college: 1, 'engineering-lab': 1, 'high-school': 2, 'primary-school': 3, eidgah: 0,
   mosque: 5, temple: 2, church: 2, cinema: 2, supermarket: 5, 'petrol-pump': 4, fire_station: 1, post_office: 1, bank: 6, diagnostic: 3, clinic: 4, dormitory: 3,
-  'labor-quarters': 0, 'tower-residential': 14, pharmacy: 8, restaurant: 10, 'office-tower': 10,
+  'labor-quarters': 0, 'tower-residential': 14, pharmacy: 14, restaurant: 14, 'office-tower': 14, bank: 10,
 };
 const byCity = new Map<string, M[]>();
 for (const m of MODELS) if (m.cityId) { if (!byCity.has(m.cityId)) byCity.set(m.cityId, []); byCity.get(m.cityId)!.push(m); }
@@ -185,7 +191,9 @@ function chooseModel(area: Area, W_MAX = 1e9): M | null {
     if (Math.max(W, D) > W_MAX) continue;
     const [lo, hi] = area.floors;
     let w = m.floors >= lo - 1 && m.floors <= hi + 3 ? 1 : 0.12;
-    if (area.density >= 4) w *= 1 + m.floors / 18; // dense areas lean towards taller buildings
+    if (area.density >= 4) w *= 1 + m.floors / (area.kind === 'commercial' && area.density === 5 ? 9 : 18); // dense areas lean towards taller buildings (CBD: much more)
+    if (area.kind === 'mixed' && m.floors <= 3 && m.id !== 'petrol-pump') w *= 1.6; // Step 5: shop strips = shop-row / restaurant / bank / pharmacy
+    if (area.kind === 'residential' && area.density >= 4 && m.floors >= 7) w *= 1.8; // Step 4: flats zone = apartment blocks
     if (m.id === 'house-tin') w *= 0.35; // tin sheds only sparsely (suburb edge)
     if (W * D < 150) w *= 0.5; // tiny buildings fit everywhere: do not let them dominate
     list.push({ m, w });
@@ -238,18 +246,23 @@ for (const r of order) {
       if (r.bridgeOf[i] >= 0 || r.bridgeOf[i + 1] >= 0 || Math.hypot(rx - hub.x, rz - hub.z) > REGION_R) { d += 14; continue; }
       const probe = plan.areaAt(rx + nx * 18, rz + nz * 18);
       if (!probe || probe.site !== 0) { d += 12; continue; }
-      const m = chooseModel(probe);
-      if (!m) { d += 12; continue; }
-      const [W, D] = SIZES[m.id];
-      const setback = between(SETBACK[probe.density]);
-      const off = r.halfWidth + r.shoulder + setback + D / 2;
-      const cx = rx + nx * off + (-nz) * (W / 2) * 0, cz = rz + nz * off; // centre at the cursor, W/2 added below along the road
-      const yaw = Math.atan2(-nx, -nz);
-      // along-road axis of the building (local x) = (cos yaw, -sin yaw)
-      const ax = Math.cos(yaw), az = -Math.sin(yaw);
-      const sgn = ax * (r.xs[Math.min(i + 1, r.xs.length - 1)] - r.xs[i]) + az * (r.zs[Math.min(i + 1, r.zs.length - 1)] - r.zs[i]) >= 0 ? 1 : -1;
-      const px = cx + ax * sgn * (W / 2), pz = cz + az * sgn * (W / 2);
-      if (tryPlace(m, probe, px, pz, yaw)) { frontage++; d += W + between(GAP[probe.density]); }
+      // up to 3 models per spot: a big one first, then smaller ones if it does not fit (overlap / slope / road)
+      let placedW = 0;
+      for (let t = 0; t < 3 && !placedW; t++) {
+        const m = chooseModel(probe, t === 0 ? 90 : t === 1 ? 40 : 28);
+        if (!m) break;
+        const [W, D] = SIZES[m.id];
+        const setback = between(SETBACK[probe.density]);
+        const off = r.halfWidth + r.shoulder + setback + D / 2;
+        const cx = rx + nx * off, cz = rz + nz * off;
+        const yaw = Math.atan2(-nx, -nz);
+        // along-road axis of the building (local x) = (cos yaw, -sin yaw); put its edge at the cursor
+        const ax = Math.cos(yaw), az = -Math.sin(yaw);
+        const sgn = ax * (r.xs[Math.min(i + 1, r.xs.length - 1)] - r.xs[i]) + az * (r.zs[Math.min(i + 1, r.zs.length - 1)] - r.zs[i]) >= 0 ? 1 : -1;
+        const px = cx + ax * sgn * (W / 2), pz = cz + az * sgn * (W / 2);
+        if (tryPlace(m, probe, px, pz, yaw)) { frontage++; placedW = W; }
+      }
+      if (placedW) d += placedW + between(GAP[probe.density]);
       else d += 6 + rnd() * 4;
     }
   }

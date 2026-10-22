@@ -34,7 +34,7 @@ import { MallManager, loadCatalog, type Catalog } from '../mall';
 import { EVLabManager } from '../evlab';
 import { EngineeringBoundary } from '../zones';
 import { LibraryManager } from '../library';
-import { BuildingManager, PlacedBuildings, setBuildingTextureQuality } from '../buildings';
+import { BuildingManager, FillBuildings, PlacedBuildings, setBuildingTextureQuality } from '../buildings';
 import { InfraManager } from '../engineering/InfraManager';
 import { Minimap, type MapMarker, type MapState } from '../ui/Minimap';
 import { VehicleMenu } from '../ui/VehicleMenu';
@@ -150,6 +150,7 @@ export class Engine {
   readonly protoBuilding: BuildingManager;
   /** All the other building models, each at its spot (position only for now, see src/buildings/Placements.ts). */
   readonly placedBuildings: PlacedBuildings;
+  readonly fillBuildings: FillBuildings;
   /** SWTP (water treatment) + STP (sewage treatment) plants with their narrated tour (Y). */
   readonly infra: InfraManager;
   private infraFreeFly = false;
@@ -346,6 +347,13 @@ export class Engine {
     });
 
     this.placedBuildings = new PlacedBuildings({
+      root: this.world.root,
+      terrain: this.world.terrain,
+      playerWorld: (out) => this.player.getWorldPosition(out),
+    });
+
+    // City fill (Step 1+2): hundreds of buildings along the streets of site 0, drawn instanced with chunk LOD
+    this.fillBuildings = new FillBuildings({
       root: this.world.root,
       terrain: this.world.terrain,
       playerWorld: (out) => this.player.getWorldPosition(out),
@@ -695,6 +703,7 @@ export class Engine {
     this.library.update(this.time.elapsed);
     this.protoBuilding.update();
     this.placedBuildings.update();
+    this.fillBuildings.update();
     this.airport.update();
     this.agro.update(dt);
     this.infra.update();
@@ -1105,6 +1114,7 @@ export class Engine {
     this.library.dispose();
     this.protoBuilding.dispose();
     this.placedBuildings.dispose();
+    this.fillBuildings.dispose();
     this.airport.dispose();
     this.agro.dispose();
     this.infra.dispose();

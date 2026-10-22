@@ -10,3 +10,9 @@ export const SIZES: Record<string, [number, number]> = {
   village_farm: [124, 108], hill_farm: [104, 112], union_parishad: [44, 40], upazila_complex: [90, 70], fire_station: [54, 46], post_office: [38, 34],
   district_court: [80, 66], dc_office: [96, 76], city_hall: [100, 84],
 };
+
+/** Compact models (FILL_BUILDING_MODELS, src/buildings/models/compact.ts): ceil of BuiltBuilding.width / depth. Separate from SIZES: placements-test expects SIZES = the 55 hand placed models. */
+export const FILL_SIZES: Record<string, [number, number]> = {
+  'slim-tower-20': [20, 21], 'slim-tower-30': [21, 22], 'office-slim-12': [21, 20], 'mixed-use-6': [19, 16], 'hotel-boutique': [17, 18], 'bank-compact': [16, 18],
+  'apt-slim-9': [15, 14], 'apt-slim-14': [16, 15], 'townhouse-3': [10, 12], 'shop-house-3': [13, 12], 'shop-house-4': [11, 11],
+};

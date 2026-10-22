@@ -7,7 +7,6 @@ import type { TerrainGenerator } from '../terrain/TerrainGenerator';
 import { BUILDING_MODEL_BY_ID } from './models/registry';
 import type { BuiltBuilding } from './models/BuildingKit';
 import { BUILDING_PLACEMENTS, type BuildingPlacement } from './Placements';
-import { FILL_PLACEMENTS } from './PlacementsFill';
 
 export interface PlacedBuildingsDeps {
   root: THREE.Object3D; // world.root: children use ABSOLUTE world coordinates
@@ -20,14 +19,8 @@ export interface PlacedBuildingsDeps {
 // the fog thins them out but the shape stays visible from far away.
 const BUILD_DIST = 2000;
 const HIDE_DIST = 2300;
-/** The city fill (PlacementsFill.ts, hundreds of buildings) is built / shown only closer, to keep memory and draw calls in check. */
-const FILL_BUILD_DIST = 1300;
-const FILL_HIDE_DIST = 1500;
-/** Big models are heavy to build: at least 1 is built per frame (nearest first), more while the frame still has this many ms of build time left. */
+/** Big models are heavy to build: at most this many are built per frame (nearest first), so the game never stalls. */
 const MAX_BUILDS_PER_FRAME = 1;
-const BUILD_BUDGET_MS = 5;
-/** A plinth under a model is only needed when the ground under the footprint is not (almost) level. */
-const FILL_PLINTH_MIN_RANGE = 0.25;
 /** Minimap dot colour per model group. */
 const GROUP_COLOR: Record<string, string> = {
   residential: '#facc15', commercial: '#fb923c', industrial: '#a78bfa', civic: '#60a5fa', education: '#2dd4bf',
@@ -41,8 +34,6 @@ interface Slot {
   built: BuiltBuilding | null;
   plinth: THREE.Mesh | null;
   shown: boolean;
-  /** Part of the city fill (not one of the hand placed buildings). */
-  fill: boolean;
 }
 
 export class PlacedBuildings {
@@ -51,11 +42,7 @@ export class PlacedBuildings {
   private p = new THREE.Vector3();
 
   constructor(private d: PlacedBuildingsDeps) {
-    const all: { p: BuildingPlacement; fill: boolean }[] = [
-      ...BUILDING_PLACEMENTS.map((p) => ({ p, fill: false })),
-      ...FILL_PLACEMENTS.map((p) => ({ p, fill: true })),
-    ];
-    for (const { p, fill } of all) {
+    for (const p of BUILDING_PLACEMENTS) {
       if (!BUILDING_MODEL_BY_ID[p.id]) continue;
       // ground range under the (rotated) footprint
       const c = Math.cos(p.yaw), s = Math.sin(p.yaw);
@@ -65,19 +52,20 @@ export class PlacedBuildings {
         const h = d.terrain.heightAt(p.x + lx * c + lz * s, p.z - lx * s + lz * c);
         mn = Math.min(mn, h); mx = Math.max(mx, h);
       }
-      this.slots.push({ p, floorY: mx + 0.02, minY: mn, built: null, plinth: null, shown: false, fill });
+      this.slots.push({ p, floorY: mx + 0.02, minY: mn, built: null, plinth: null, shown: false });
     }
   }
 
+  /** Minimap dots (world x, z + colour of the building group). */
   /** Position + floor height of the first hand placed building with this model id (null if there is none): lets other systems (the lighthouse light) stand on it. */
   anchorOf(id: string): { x: number; z: number; floorY: number } | null {
-    const sl = this.slots.find((s) => !s.fill && s.p.id === id);
+    const sl = this.slots.find((s) => s.p.id === id);
     return sl ? { x: sl.p.x, z: sl.p.z, floorY: sl.floorY } : null;
   }
 
   /** Minimap dots (world x, z + colour of the building group). */
   get markers(): { x: number; z: number; color: string }[] {
-    return this.slots.filter((sl) => !sl.fill).map((sl) => ({ x: sl.p.x, z: sl.p.z, color: GROUP_COLOR[BUILDING_MODEL_BY_ID[sl.p.id]!.group] ?? '#fff' }));
+    return this.slots.map((sl) => ({ x: sl.p.x, z: sl.p.z, color: GROUP_COLOR[BUILDING_MODEL_BY_ID[sl.p.id]!.group] ?? '#fff' }));
   }
 
   private show(sl: Slot): void {
@@ -89,17 +77,15 @@ export class PlacedBuildings {
       this.d.root.add(b.root);
       sl.built = b;
       // plinth: from the lowest ground point up to just under the model's own ground slab (6 cm thick)
-      if (!sl.fill || sl.floorY - sl.minY > FILL_PLINTH_MIN_RANGE) {
-        const h = sl.floorY - sl.minY + 0.5;
-        const m = new THREE.Mesh(new THREE.BoxGeometry(p.W, h, p.D), this.plinthMat);
-        m.position.set(p.x, sl.floorY - h / 2 - 0.005, p.z);
-        m.rotation.y = p.yaw;
-        this.d.root.add(m);
-        sl.plinth = m;
-      }
+      const h = sl.floorY - sl.minY + 0.5;
+      const m = new THREE.Mesh(new THREE.BoxGeometry(p.W, h, p.D), this.plinthMat);
+      m.position.set(p.x, sl.floorY - h / 2 - 0.005, p.z);
+      m.rotation.y = p.yaw;
+      this.d.root.add(m);
+      sl.plinth = m;
     }
     sl.built.root.visible = true;
-    if (sl.plinth) sl.plinth.visible = true;
+    sl.plinth!.visible = true;
     sl.shown = true;
   }
 
@@ -117,18 +103,15 @@ export class PlacedBuildings {
     const pending: { sl: Slot; dist: number }[] = [];
     for (const sl of this.slots) {
       const dist = Math.hypot(this.p.x - sl.p.x, this.p.z - sl.p.z);
-      const buildDist = sl.fill ? FILL_BUILD_DIST : BUILD_DIST;
-      const hideDist = sl.fill ? FILL_HIDE_DIST : HIDE_DIST;
-      if (dist < buildDist) {
+      if (dist < BUILD_DIST) {
         if (sl.built) {
           if (!sl.shown) this.show(sl); // already built once: showing it again is cheap
         } else pending.push({ sl, dist });
-      } else if (sl.shown && dist > hideDist) this.hide(sl);
+      } else if (sl.shown && dist > HIDE_DIST) this.hide(sl);
     }
     if (pending.length > 1) pending.sort((a, b) => a.dist - b.dist);
-    const t0 = performance.now();
     for (const { sl } of pending) {
-      if (builds >= MAX_BUILDS_PER_FRAME && performance.now() - t0 > BUILD_BUDGET_MS) break;
+      if (builds >= MAX_BUILDS_PER_FRAME) break;
       this.show(sl);
       builds++;
     }

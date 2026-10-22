@@ -13,7 +13,8 @@ import { protoKeepout } from '../src/buildings/ProtoSite';
 import { infraKeepout } from '../src/engineering/InfraSites';
 import { airportKeepout } from '../src/airport/AirportSite';
 import { agroKeepout } from '../src/agro/AgroSite';
-import { SIZES } from './_sizes-data';
+import { SIZES as BASE_SIZES, FILL_SIZES } from './_sizes-data';
+const SIZES: Record<string, [number, number]> = { ...BASE_SIZES, ...FILL_SIZES };
 
 let fails = 0;
 const ok = (c: boolean, m: string) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++; };
