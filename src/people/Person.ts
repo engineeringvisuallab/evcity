@@ -3,6 +3,7 @@ import { PersonModel, randomAppearance, type Appearance, type PersonMode } from 
 import type { Vehicle } from '../vehicles/Vehicle';
 import type { WeaponId } from '../combat/Weapons';
 import { Config } from '../core/Config';
+import type { StationAccess } from '../rail/StationAccess';
 
 /** civilian = normal person, thug = armed civilian who wants to kill the player, police = comes when the player is wanted. */
 export type PersonRole = 'civilian' | 'thug' | 'police';
@@ -11,6 +12,7 @@ export type PersonRole = 'civilian' | 'thug' | 'police';
 export type PersonTask =
   | 'sidewalk' // walking along the edge of a road
   | 'wander' // walking to random spots in the open
+  | 'station' // walking to a railway station: to the foot of the stair, up, along the platform, waiting for a train (or the way back down)
   | 'idle' // standing for a while
   | 'flee' // running away (a vehicle came too close / was thrown out of a car / gunfire)
   | 'attack' // armed: walks towards the player and shoots
@@ -43,6 +45,10 @@ export class Person {
   dir: 1 | -1 = 1;
   /** +1 = left edge of the road, -1 = right edge (relative to point order). */
   side: 1 | -1 = 1;
+  // station state (task 'station'): the stair this person uses, where in the trip they are, the step they are on
+  access: StationAccess | null = null;
+  stPhase: 'toFoot' | 'climb' | 'platform' | 'wait' | 'toTop' | 'down' = 'toFoot';
+  stIdx = 0;
   // wander state
   goalX = 0;
   goalZ = 0;

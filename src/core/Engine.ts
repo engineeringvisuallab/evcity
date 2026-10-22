@@ -28,7 +28,8 @@ import { PortPhysics } from '../port';
 import { AirportManager } from '../airport';
 import { ArmyManager } from '../army';
 import { AgroManager } from '../agro/AgroManager';
-import { SignalLayer, StationBoard, TrainAnnouncer, TrainContacts, TrainLayer, TrainManager, TrainPhysics, formatBoard, playerObb, vehicleObb, type TrainEntity } from '../trains';
+import { SignalLayer, StationBoard, TrainAnnouncer, TrainContacts, TrainLayer, TrainManager, TrainPhysics, TrainRider, formatBoard, playerObb, vehicleObb, type TrainEntity } from '../trains';
+import { RidePrompt } from '../ui/RidePrompt';
 import { bn } from '../i18n';
 import { MALL_DOORS } from '../mall/MallSite';
 import { ParkingLots } from '../parking/ParkingLots';
@@ -197,6 +198,9 @@ export class Engine {
   private signalLayer: SignalLayer;
   private trainBoard: StationBoard;
   private trainAnnouncer: TrainAnnouncer;
+  /** The player as a train passenger (F at a platform next to a standing train; F again at a station to get off). */
+  private trainRider!: TrainRider;
+  private ridePrompt!: RidePrompt;
   private vehicleIds = new WeakMap<object, number>();
   private nextVehicleId = 1;
   private tmpA = new THREE.Vector3();
@@ -258,7 +262,7 @@ export class Engine {
     this.world.root.add(this.roadDebug.group);
     this.rail = this.world.terrain.rail;
     this.railDebug = new RailDebug(this.rail);
-    this.railPhysics = new RailPhysics(physics, this.world.origin, this.rail);
+    this.railPhysics = new RailPhysics(physics, this.world.origin, this.rail, (x, z) => this.world.terrain.heightAt(x, z));
     this.portPhysics = new PortPhysics(physics, this.world.origin);
     this.world.root.add(this.railDebug.group);
     this.trainLayer = new TrainLayer(this.world.root);
@@ -412,6 +416,18 @@ export class Engine {
     this.debug = new DebugPanel(container);
     this.hud = new HUD(container);
     this.toast = new Toast(container);
+    this.ridePrompt = new RidePrompt(container);
+    this.trainRider = new TrainRider({
+      trains: this.trains,
+      rail: this.rail,
+      groundAt: (x, z) => this.world.terrain.heightAt(x, z),
+      player: this.player,
+      pressedF: () => this.input.wasPressed('KeyF'),
+      canBoard: () => this.player.active && !this.player.inVehicle && !this.cameraController.isFreeFly && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper,
+      prompt: (t) => this.ridePrompt.set(t),
+      toast: (t) => this.toast.show(t, 3400),
+      onRide: (on) => (on ? this.orbit.setTarget(this.player, 16, 6, 40) : this.orbit.setTarget(this.player, Config.orbit.distance, Config.orbit.minDistance, Config.orbit.maxDistance)),
+    });
     this.hud.setLocked(this.input.gameplayActive);
 
     // --- vehicles: none are placed by hand any more. Every vehicle is created by TrafficManager WITH a driver. ---
@@ -430,6 +446,7 @@ export class Engine {
     // --- people + traffic (STAGE 9) ---
     const graph = new RoadGraph(roads);
     this.people = new PeopleManager({ scene: this.scene, terrain: this.world.terrain, origin: this.world.origin, graph, vehicles: this.vehicles, player: this.player });
+    this.people.setStations(this.rail, this.trains); // people walk to the stations, climb the stairs and board / leave the trains
     this.busStops = new BusStops({ scene: this.scene, origin: this.world.origin, terrain: this.world.terrain, graph, sites: this.world.terrain.sites });
     this.trafficSignals = new TrafficSignals(graph);
     this.trafficLights = new TrafficLightLayer(this.world.root, this.trafficSignals);
@@ -686,11 +703,11 @@ export class Engine {
     }
 
     // V: switch between the player camera and the free-fly debug camera. T (free-fly): bring the player here.
-    if (!this.boats.handleKeys() && !this.helis.handleKeys()) this.vehicles.handleKeys();
+    if (!this.trainRider.handleKeys() && !this.boats.handleKeys() && !this.helis.handleKeys()) this.vehicles.handleKeys();
     // P (while driving): camera at the driver's real eye position, P again: back to the chase camera
     if (this.input.wasPressed('KeyP')) this.setDriverView(!this.cameraController.isDriverView);
     if (this.cameraController.isDriverView && (!this.vehicles.driver || this.cameraController.isFreeFly || this.helis.pilot || this.boats.skipper)) this.setDriverView(false);
-    if (this.input.wasPressed('KeyV') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper) this.toggleFreeFly();
+    if (this.input.wasPressed('KeyV') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding) this.toggleFreeFly();
     if (this.cameraController.isFreeFly && this.input.wasPressed('KeyT')) {
       this.world.origin.toWorld(this.camera.position, this.tmpVec);
       this.player.teleportTo(this.tmpVec);
@@ -698,30 +715,31 @@ export class Engine {
     }
 
     // ; (semicolon): go to the army camp (on foot only): you stand just inside the main gate
-    if (this.input.wasPressed('Semicolon') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.cameraController.isFreeFly) {
+    if (this.input.wasPressed('Semicolon') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.cameraController.isFreeFly) {
       const g = this.army.spawns.gate;
       this.player.teleportTo(this.tmpVec.set(g.x, this.world.terrain.army.floorY + 3, g.z));
     }
 
     // J: go to the airport (on foot only): stand next to the helipad, the terminal and the runway are right there
-    if (this.input.wasPressed('KeyJ') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.cameraController.isFreeFly) {
+    if (this.input.wasPressed('KeyJ') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.cameraController.isFreeFly) {
       const h = this.airport.spawns.helipad;
       this.player.teleportTo(this.tmpVec.set(h.x + 12, this.world.terrain.airport.floorY + 3, h.z));
     }
 
     // K: go to the EV Agro institute (on foot only): you stand on the driveway in front of the entrance
-    if (this.input.wasPressed('KeyK') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.cameraController.isFreeFly) {
+    if (this.input.wasPressed('KeyK') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.cameraController.isFreeFly) {
       const e = this.agro.entrance;
       this.player.teleportTo(this.tmpVec.set(e.x, this.world.terrain.agro.floorY + 3, e.z));
     }
 
     // L: go to the safari park (on foot only): deer herds, tigers and lions hunt there; fish live in every river, lake and the sea
-    if (this.input.wasPressed('KeyL') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.cameraController.isFreeFly) {
+    if (this.input.wasPressed('KeyL') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.cameraController.isFreeFly) {
       const sp = this.animals.safariPark;
       this.player.teleportTo(this.tmpVec.set(sp.x, this.world.terrain.heightAt(sp.x, sp.z) + 3, sp.z));
     }
 
     this.player.update(dt, alpha);
+    this.trainRider.update(dt); // a passenger moves with the seat of the train (after the trains moved, before the camera)
     this.vehicles.update(alpha, this.world.playerWorld, dt);
     this.explosions.update(dt);
     this.treeDestruction.update(dt);
@@ -1182,6 +1200,8 @@ export class Engine {
     this.trafficLights.dispose();
     this.streetLights.dispose();
     this.lighthouseLight?.dispose();
+    this.trainRider.dispose();
+    this.ridePrompt.dispose();
     this.toast.dispose();
     this.economy.dispose();
     this.birds.dispose();

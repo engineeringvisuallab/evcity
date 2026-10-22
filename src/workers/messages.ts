@@ -41,6 +41,8 @@ export interface ChunkResult {
   rail: RailMeshData | null;
   /** STAGE 14: sea port mesh for LOD0-2 (null = none in this chunk). */
   port: PortMeshData | null;
+  /** Terrain index buffer with the tunnel / box holes cut out (LOD0 chunks a tunnel passes), or null = the shared one. */
+  holeIndices: Uint16Array | Uint32Array | null;
   /** STAGE 7: tree placement per tree kind (chunk-local), or null for chunks too far away to have trees. */
   trees: TreeChunkData | null;
   /** STAGE 7: rock placement per rock kind (same layout as trees), or null for far chunks. */

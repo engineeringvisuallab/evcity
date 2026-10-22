@@ -1,13 +1,17 @@
+import { stationAccesses, type StationAccess } from './StationAccess';
 import { chunkKey, chunkOriginX, chunkOriginZ, worldToChunkCoord } from '../world/WorldGrid';
 import { RAIL_DESIGN as D } from './RailPlan';
 import type { RailEdge, RailNetwork } from './RailNetwork';
 import type { RailDiamond, RailSwitch } from './RailSwitches';
+import { OUTER_HALF, TUNNEL, isLined, portalTop, tunnelHeight } from './RailTunnel';
 
 /** Railway geometry of one chunk (chunk-local coordinates, vertex colours). Built inside the worker. */
 export interface RailMeshData {
   positions: Float32Array;
   normals: Float32Array;
   colors: Float32Array;
+  /** Per vertex: how much the surface lights itself (tunnel lining and lamps), 0 = only the scene light. */
+  glow: Float32Array;
   indices: Uint16Array | Uint32Array;
 }
 
@@ -30,6 +34,11 @@ const C = {
   yellow: [0.9, 0.78, 0.15] as V,
   blade: [0.8, 0.8, 0.76] as V,
   frog: [0.2, 0.22, 0.26] as V,
+  lining: [0.74, 0.73, 0.69] as V,
+  liningRoof: [0.66, 0.66, 0.64] as V,
+  lamp: [1.0, 0.93, 0.78] as V,
+  emerg: [0.55, 1.0, 0.7] as V,
+  sign: [0.1, 0.32, 0.75] as V,
 };
 
 /** Geometry collector: flat-coloured quads with their own normals. */
@@ -38,6 +47,9 @@ class Emit {
   nrm: number[] = [];
   col: number[] = [];
   idx: number[] = [];
+  glow: number[] = [];
+  /** When set, every vertex gets `glowFn(x, y, z)` (world coordinates) as its self-light. */
+  glowFn: ((x: number, y: number, z: number) => number) | null = null;
   constructor(private ox: number, private oz: number) {}
 
   quad(a: V, b: V, c: V, d: V, n: V, col: V): void {
@@ -51,6 +63,7 @@ class Emit {
       this.pos.push(p[0] - this.ox, p[1], p[2] - this.oz);
       this.nrm.push(n[0], n[1], n[2]);
       this.col.push(col[0], col[1], col[2]);
+      this.glow.push(this.glowFn ? this.glowFn(p[0], p[1], p[2]) : 0);
     }
     this.idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
   }
@@ -90,6 +103,7 @@ class Emit {
       positions: Float32Array.from(this.pos),
       normals: Float32Array.from(this.nrm),
       colors: Float32Array.from(this.col),
+      glow: Float32Array.from(this.glow),
       indices: n > 65535 ? Uint32Array.from(this.idx) : Uint16Array.from(this.idx),
     };
   }
@@ -169,7 +183,7 @@ function ownerIndex(rail: RailNetwork): Map<string, Owned> {
         const p = rail.pointAt(e, s);
         if (sg.kind === 'bridge') {
           if (nb.kind === 'ground') slot(p.x, p.z).ends.push({ e: ei, s, out, kind: 'abutment' });
-        } else slot(p.x, p.z).ends.push({ e: ei, s, out, kind: sg.kind });
+        } else if (!isLined(nb.kind)) slot(p.x, p.z).ends.push({ e: ei, s, out, kind: sg.kind }); // tunnel -> box etc. is one continuous tube: no head wall inside it
       }
     });
   });
@@ -215,7 +229,10 @@ export function buildRailMesh(rail: RailNetwork, cx: number, cz: number, lod: nu
     const e = tracks[ei];
     const mid = (e.cum[i] + e.cum[i + 1]) / 2;
     const kind = kindAt(e, mid);
-    if (kind === 'tunnel' || kind === 'cutcover') continue;
+    if (kind === 'tunnel' || kind === 'cutcover') {
+      if (lod <= 1) emitLined(em, e, i, kind, lod, half);
+      continue;
+    }
     const inA = e.cum[i + 1] <= e.zoneA + 1e-6;
     const inB = e.cum[i] >= e.length - e.zoneB - 1e-6;
     const st = inA || inB;
@@ -322,18 +339,25 @@ export function buildRailMesh(rail: RailNetwork, cx: number, cz: number, lod: nu
       const top = y - D.ballast - 0.05;
       em.box(p.x - tx * 1.2, (top + bottom) / 2, p.z - tz * 1.2, p.dx, p.dz, 1.2, (top - bottom) / 2, D.deckHalf + 0.4, C.concrete);
     } else {
-      // portal face: two side walls + lintel around the opening (9.4 m wide, 6.6 m high), dark tunnel mouth behind
-      const open = 4.7;
-      const base = y - D.ballast - 0.6;
-      const h = 8.8;
-      const wallHalf = 4.2;
-      const cxp = p.x - tx * 0.8;
-      const czp = p.z - tz * 0.8;
+      // PORTAL: a concrete head wall on the open-line side of the mouth. Two wings either side of the opening, a lintel over it and an
+      // approach slab; the opening is the full interior section (the terrain behind it is cut away - see RailTunnel / TerrainMeshData).
+      const L = TUNNEL.portalLen;
+      const H = tunnelHeight(en.kind === 'cutcover' ? 'cutcover' : 'tunnel');
+      const base = y - D.ballast - 0.8;
+      const top = portalTop(y, gnd, en.kind === 'cutcover' ? 'cutcover' : 'tunnel');
+      const wingHalf = (TUNNEL.portalHalf - TUNNEL.inHalf) / 2;
+      const cxp = p.x + tx * (L / 2);
+      const czp = p.z + tz * (L / 2);
       for (const sg of [-1, 1]) {
-        em.box(cxp - p.dz * sg * (open + wallHalf), base + h / 2, czp + p.dx * sg * (open + wallHalf), p.dx, p.dz, 0.8, h / 2, wallHalf, C.concrete);
+        em.box(cxp - p.dz * sg * (TUNNEL.inHalf + wingHalf), (base + top) / 2, czp + p.dx * sg * (TUNNEL.inHalf + wingHalf), p.dx, p.dz, L / 2, (top - base) / 2, wingHalf, C.concrete);
       }
-      em.box(cxp, base + 7.35 + 0.7, czp, p.dx, p.dz, 0.8, 0.75, open, C.concrete);
-      em.box(p.x - tx * 2.4, y + 3.0, p.z - tz * 2.4, p.dx, p.dz, 0.3, 3.5, open, C.dark);
+      if (top > y + H + 0.05) em.box(cxp, (y + H + top) / 2, czp, p.dx, p.dz, L / 2, (top - y - H) / 2, TUNNEL.inHalf, C.concrete);
+      // approach floor (concrete, just under the formation level so it does not fight with the ground)
+      em.box(cxp, y - D.ballast - TUNNEL.floorThick / 2 - 0.02, czp, p.dx, p.dz, L / 2, TUNNEL.floorThick / 2, TUNNEL.inHalf + 5, C.concreteDark);
+      // two lamps over the mouth, lit day and night
+      em.glowFn = () => 1;
+      for (const sg of [-1, 1]) em.box(p.x + tx * 0.6 - p.dz * sg * (TUNNEL.inHalf - 0.6), y + H + 0.5, p.z + tz * 0.6 + p.dx * sg * (TUNNEL.inHalf - 0.6), p.dx, p.dz, 0.2, 0.12, 0.5, C.lamp, false);
+      em.glowFn = null;
     }
   }
 
@@ -367,6 +391,8 @@ export function buildRailMesh(rail: RailNetwork, cx: number, cz: number, lod: nu
         }
       }
     }
+    // the way up to the platforms: stairs with walls, gate shelter, signs (StationAccess; the very boxes RailPhysics makes solid)
+    if (lod <= 1) for (const a of stationAccesses(rail, groundAt)) if (a.station === st.id && a.arrival === ai) emitAccess(em, a);
     // buffer stops: the line ends 70 m from the station centre
     // (an end that a station link continues has no buffer stop)
     const linked = rail.links.some((l) => (l.a.edgeId === ar.edgeId && l.a.end === ar.end) || (l.b.edgeId === ar.edgeId && l.b.end === ar.end));
@@ -392,6 +418,77 @@ export function buildRailMesh(rail: RailNetwork, cx: number, cz: number, lod: nu
     for (const k of own.diamonds) emitDiamond(em, rail.diamonds[k]);
   }
   return em.data();
+}
+
+/**
+ * Lining of one 20 m interval of a tunnel / box: concrete floor, ballast + rails + sleepers + contact wire, two walls, the roof, and the lamps.
+ * Cut into 3 m pieces so the self-light can change along the tube: a pool under every lamp, dim between (the lamps are lit day and night).
+ */
+function emitLined(em: Emit, e: RailEdge, i: number, kind: string, lod: number, half: number): void {
+  const A = nodeAt(e, i);
+  const B = nodeAt(e, i + 1);
+  const seg = e.segments.find((g) => (e.cum[i] + e.cum[i + 1]) / 2 >= g.s0 && (e.cum[i] + e.cum[i + 1]) / 2 <= g.s1);
+  const s0seg = seg ? seg.s0 : 0;
+  const H = tunnelHeight(kind === 'cutcover' ? 'cutcover' : 'tunnel');
+  const len = e.cum[i + 1] - e.cum[i];
+  const n = Math.max(1, Math.ceil(len / (lod === 0 ? 3 : 6)));
+  const thin = (e.ground[i] + e.ground[i + 1]) / 2 - (e.design[i] + e.design[i + 1]) / 2 < TUNNEL.thinCover;
+  const roofHalf = thin ? TUNNEL.thinHalf : OUTER_HALF;
+  const every = TUNNEL.lampEvery;
+  // self-light along the tube: base 0.3, up to 0.85 right under a lamp
+  const pool = (sRel: number): number => {
+    const d = Math.abs((((sRel + every / 2) % every) + every) % every - every / 2);
+    return 0.3 + 0.55 * Math.exp(-((d / 4) ** 2));
+  };
+  const W = TUNNEL.inHalf;
+  for (let q = 0; q < n; q++) {
+    const t0 = q / n, t1 = (q + 1) / n;
+    const a = lerpNode(A, B, t0), b = lerpNode(A, B, t1);
+    const sA = e.cum[i] + len * t0 - s0seg, sB = e.cum[i] + len * t1 - s0seg;
+    const gA = pool(sA), gB = pool(sB);
+    const tx = a.tx, tz = a.tz;
+    const plen = Math.hypot(b.x - a.x, b.z - a.z) || 1;
+    em.glowFn = (x, _y, z) => {
+      const t = Math.max(0, Math.min(1, ((x - a.x) * tx + (z - a.z) * tz) / plen));
+      return gA + (gB - gA) * t;
+    };
+    // floor slab: concrete, top at the formation level (what the open line stands on)
+    em.beam(a, b, 0, roofHalf, -D.ballast - TUNNEL.floorThick, TUNNEL.floorThick - 0.02, C.concreteDark);
+    // walls and roof (inner faces are the ones seen from the track)
+    for (const sg of [-1, 1]) em.beam(a, b, sg * (W + TUNNEL.wall / 2), TUNNEL.wall / 2, -D.ballast - 0.3, H + TUNNEL.roof + D.ballast + 0.3, C.lining);
+    em.beam(a, b, 0, roofHalf, H, TUNNEL.roof, C.liningRoof);
+    // track bed (same as the open line)
+    const lift = lod === 0 ? 0 : 0.15;
+    const ba: Node = { ...a, y: a.y + lift }, bb: Node = { ...b, y: b.y + lift };
+    em.beam(ba, bb, 0, D.ballastTop, -D.ballast, D.ballast, C.ballast, false);
+    for (const tr of [-half, half]) for (const rs of [-D.gauge / 2, D.gauge / 2]) em.beam(ba, bb, tr + rs, 0.036, 0.04, 0.17, C.rail);
+    if (lod > 0) continue;
+    const m = Math.max(1, Math.round(plen / 0.65));
+    for (let k = 0; k < m; k++) {
+      const f = lerpNode(a, b, (k + 0.5) / m);
+      for (const tr of [-half, half]) em.box(f.x + f.wx * tr, f.y - 0.1, f.z + f.wz * tr, f.tx, f.tz, 0.13, 0.14, 1.3, C.sleeper, false);
+    }
+    for (const tr of [-half, half]) {
+      em.beam(a, b, tr, 0.02, D.contactHeight, 0.04, C.wire);
+      if (H > D.messengerHeight + 0.4) em.beam(a, b, tr, 0.02, D.messengerHeight, 0.04, C.wire);
+    }
+    // lamps: a row of linear fixtures under the roof, alternating sides, and a small green marker light low on the walls every 6 m
+    em.glowFn = () => 1;
+    const kLamp = Math.ceil((sA - every / 2 + 1e-6) / every);
+    const sLamp = kLamp * every + every / 2;
+    if (sLamp >= sA - 1e-6 && sLamp < sB - 1e-6) {
+      const f = lerpNode(a, b, (sLamp - sA) / (sB - sA || 1));
+      const side = kLamp % 2 === 0 ? 1 : -1;
+      for (const lat of [side * 3.2, -side * 3.2]) em.box(f.x + f.wx * lat, f.y + H - 0.14, f.z + f.wz * lat, f.tx, f.tz, 0.9, 0.07, 0.22, C.lamp, false);
+    }
+    const kMark = Math.ceil((sA + 1e-6) / 6);
+    const sMark = kMark * 6;
+    if (sMark >= sA - 1e-6 && sMark < sB - 1e-6) {
+      const f = lerpNode(a, b, (sMark - sA) / (sB - sA || 1));
+      for (const sg of [-1, 1]) em.box(f.x + f.wx * sg * (W - 0.06), f.y + 1.25, f.z + f.wz * sg * (W - 0.06), f.tx, f.tz, 0.18, 0.06, 0.05, C.emerg, false);
+    }
+  }
+  em.glowFn = null;
 }
 
 /** Point of a switch route (x, z pairs, one per metre) at distance s from the toe, with the unit direction of travel. */
@@ -458,4 +555,14 @@ function emitDiamond(em: Emit, d: RailDiamond): void {
   em.box(d.x, y + 0.03, d.z, d.ax, d.az, hl + 0.9, 0.03, hw + 0.5, C.frog, false);
   // raised crossing noses where a rail of one track crosses a rail of the other
   for (let k = 0; k < 4; k++) em.box(d.corners[k * 2], y + 0.11, d.corners[k * 2 + 1], d.ax, d.az, 0.7, 0.1, 0.13, C.frog, false);
+}
+
+/** One station access: treads, side walls, the gate shelter (roof on posts + sign) and the entrance sign at the foot. */
+function emitAccess(em: Emit, a: StationAccess): void {
+  for (const b of a.boxes) {
+    const col = b.kind === 'tread' ? C.platform : b.kind === 'wall' ? C.concrete : b.kind === 'roof' ? C.canopy : b.kind === 'post' ? C.mast : C.sign;
+    em.glowFn = b.kind === 'sign' ? () => 0.8 : null;
+    em.box(b.x, b.y, b.z, b.ax, b.az, b.hl, b.hh, b.hw, col, b.kind !== 'tread');
+  }
+  em.glowFn = null;
 }

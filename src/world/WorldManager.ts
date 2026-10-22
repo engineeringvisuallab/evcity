@@ -3,6 +3,7 @@ import { Config } from '../core/Config';
 import type { Bus } from '../core/EventBus';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import { TerrainChunkBuilder, TerrainGenerator, TerrainMaterials, TerrainPhysics } from '../terrain';
+import { TunnelHoles } from '../rail/RailTunnel';
 import { RoadChunkBuilder, RoadMaterial } from '../roads';
 import { RailChunkBuilder, RailMaterial } from '../rail';
 import { PortChunkBuilder, PortMaterial } from '../port';
@@ -55,7 +56,7 @@ export class WorldManager {
     this.loader = new ChunkLoader(this.seed.value);
     this.chunks = new ChunkManager(this.root, this.loader, bus, new TerrainChunkBuilder(this.terrainMaterials), new WaterChunkBuilder(this.water), new RoadChunkBuilder(this.roadMaterial), new RailChunkBuilder(this.railMaterial), new PortChunkBuilder(this.portMaterial), new TreeChunkBuilder(this.treeAssets, this.rockAssets));
     this.grass = new GrassManager(this.root, this.loader, this.grassAssets);
-    this.terrainPhysics = new TerrainPhysics(physics, this.origin, bus);
+    this.terrainPhysics = new TerrainPhysics(physics, this.origin, bus, new TunnelHoles(this.terrain.rail));
     this.treePhysics = new TreePhysics(physics, this.origin, bus);
   }
 

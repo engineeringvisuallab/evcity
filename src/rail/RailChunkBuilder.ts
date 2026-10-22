@@ -6,6 +6,16 @@ export class RailMaterial extends THREE.MeshLambertMaterial {
   constructor() {
     super({ vertexColors: true });
     this.name = 'rail';
+    // Tunnel lining and lamps light themselves (per-vertex `glow`): a lit tube by day and by night, with no real light sources.
+    this.onBeforeCompile = (shader) => {
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nattribute float glow;\nvarying float vGlow;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvGlow = glow;');
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', '#include <common>\nvarying float vGlow;')
+        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * vGlow * 1.5;');
+    };
+    this.customProgramCacheKey = () => 'rail-glow';
   }
 }
 
@@ -18,6 +28,7 @@ export class RailChunkBuilder {
     geo.setAttribute('position', new THREE.BufferAttribute(data.positions, 3));
     geo.setAttribute('normal', new THREE.BufferAttribute(data.normals, 3));
     geo.setAttribute('color', new THREE.BufferAttribute(data.colors, 3));
+    geo.setAttribute('glow', new THREE.BufferAttribute(data.glow, 1));
     geo.setIndex(new THREE.BufferAttribute(data.indices, 1));
     geo.computeBoundingSphere();
     const mesh = new THREE.Mesh(geo, this.material);

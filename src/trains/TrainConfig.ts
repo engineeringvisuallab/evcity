@@ -8,6 +8,14 @@ import { RAIL_DESIGN as D } from '../rail/RailPlan';
 /** Rail head top above the top of ballast (m). Same numbers as RailMesh: the rail beam stands 0.04 .. 0.21 m above the ballast. */
 export const RAIL_HEAD = 0.21;
 
+/**
+ * SPEED: every train speed is SPEED_K (1.5) times the original design (120 km/h -> 180 km/h; station, link and crossover limits too).
+ * Accelerations and brakings are scaled by SPEED_K squared, so every DISTANCE stays exactly as designed (braking distance v^2 / 2a, curve speed sqrt(a * R),
+ * signal blocks, block horizon, platform approach): the whole simulation just runs SPEED_K times faster. Dwell times at the platforms stay as they were.
+ */
+export const SPEED_K = 1.5;
+const ACC_K = SPEED_K * SPEED_K;
+
 export type CarKind = 'loco' | 'coach' | 'cab';
 
 export interface CarSpec {
@@ -36,18 +44,18 @@ export const CAR_GAP = 0.8;
 export const TRAIN = {
   /** Trains keep to the left (like the road traffic of the country): each direction uses its own track of the double line. */
   keepLeft: true,
-  /** Top speed on the open line (m/s) = 120 km/h. */
-  maxSpeed: 120 / 3.6,
+  /** Top speed on the open line (m/s) = 120 km/h x SPEED_K = 180 km/h. */
+  maxSpeed: (120 * SPEED_K) / 3.6,
   /** Traction acceleration (m/s^2), service braking used to PLAN the speed envelope, strongest braking the controller may apply. */
-  accel: 0.7,
-  serviceBrake: 0.8,
-  maxBrake: 1.0,
+  accel: 0.7 * ACC_K,
+  serviceBrake: 0.8 * ACC_K,
+  maxBrake: 1.0 * ACC_K,
   /** Sideways acceleration the passengers may feel in a curve (m/s^2): v <= sqrt(latAccel * R). */
-  latAccel: 1.2,
+  latAccel: 1.2 * ACC_K,
   /** Speed limits (m/s): station throat links 40 km/h, crossover (change of track at a terminal) 36 km/h, station approach / departure 60 km/h. */
-  linkSpeed: 40 / 3.6,
-  crossoverSpeed: 36 / 3.6,
-  approachSpeed: 60 / 3.6,
+  linkSpeed: (40 * SPEED_K) / 3.6,
+  crossoverSpeed: (36 * SPEED_K) / 3.6,
+  approachSpeed: (60 * SPEED_K) / 3.6,
   /** The approach limit starts this far (m) before the stopping point; the departure limit ends this far (m) after the start. */
   approachDist: 350,
   departDist: 200,

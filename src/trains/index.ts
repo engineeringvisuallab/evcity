@@ -31,3 +31,8 @@ export type { TrainNotice, TrainNoticeKind } from './TrainSim';
 export { SignalLayer } from './SignalView';
 export { signalSpecs, MAST_OFFSET, HOME_BEFORE, STARTER_AHEAD } from './SignalSpecs';
 export type { SignalSpec } from './SignalSpecs';
+// Passenger ride: board a standing train at a platform, get off at the next station
+export { TrainRider } from './TrainRider';
+export type { RiderDeps } from './TrainRider';
+export { findBoardable, alightSpot, canAlight, pathIndex } from './TrainRide';
+export type { Boardable } from './TrainRide';

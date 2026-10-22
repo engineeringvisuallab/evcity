@@ -71,6 +71,7 @@ ctx.onmessage = (e: MessageEvent<ChunkRequest | GrassRequest>) => {
     road: m.road,
     rail: m.rail,
     port: m.port,
+    holeIndices: m.holeIndices,
     trees,
     rocks,
   };
@@ -80,8 +81,9 @@ ctx.onmessage = (e: MessageEvent<ChunkRequest | GrassRequest>) => {
     transfer.push(w.positions.buffer as ArrayBuffer, w.normals.buffer as ArrayBuffer, w.depth.buffer as ArrayBuffer, w.flow.buffer as ArrayBuffer, w.indices.buffer as ArrayBuffer);
   }
   if (m.roadMask) transfer.push(m.roadMask.buffer as ArrayBuffer);
+  if (m.holeIndices) transfer.push(m.holeIndices.buffer as ArrayBuffer);
   if (m.road) transfer.push(m.road.positions.buffer as ArrayBuffer, m.road.normals.buffer as ArrayBuffer, m.road.info.buffer as ArrayBuffer, m.road.indices.buffer as ArrayBuffer);
-  if (m.rail) transfer.push(m.rail.positions.buffer as ArrayBuffer, m.rail.normals.buffer as ArrayBuffer, m.rail.colors.buffer as ArrayBuffer, m.rail.indices.buffer as ArrayBuffer);
+  if (m.rail) transfer.push(m.rail.positions.buffer as ArrayBuffer, m.rail.normals.buffer as ArrayBuffer, m.rail.colors.buffer as ArrayBuffer, m.rail.glow.buffer as ArrayBuffer, m.rail.indices.buffer as ArrayBuffer);
   if (m.port) transfer.push(m.port.positions.buffer as ArrayBuffer, m.port.normals.buffer as ArrayBuffer, m.port.colors.buffer as ArrayBuffer, m.port.indices.buffer as ArrayBuffer);
   for (const list of [trees, rocks]) if (list) for (const t of list) if (t.length > 0) transfer.push(t.buffer as ArrayBuffer);
   ctx.postMessage(result, transfer);

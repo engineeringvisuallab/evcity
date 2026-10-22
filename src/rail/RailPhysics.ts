@@ -4,6 +4,8 @@ import { PhysicsConfig } from '../physics/PhysicsConfig';
 import type { FloatingOrigin } from '../world/FloatingOrigin';
 import { RAIL_DESIGN as D } from './RailPlan';
 import type { RailEdge, RailNetwork } from './RailNetwork';
+import { stationAccesses } from './StationAccess';
+import { linedSegments, portalBoxes, shellBoxes, trackEdgesOf, type ShellBox } from './RailTunnel';
 
 type Quat = { x: number; y: number; z: number; w: number };
 
@@ -89,7 +91,8 @@ interface Builder {
 }
 
 /**
- * Rapier colliders for the railway's raised structures: viaduct decks (with parapets and piers), the decks of elevated station links and station platforms.
+ * Rapier colliders for the railway's raised structures: viaduct decks (with parapets and piers), the decks of elevated station links and station platforms,
+ * and the lining of tunnels / boxes (floor, walls, roof) with their portal head walls (the terrain has a hole there).
  * Ground track needs none (the terrain collider already contains the embankment). Like the terrain and road-bridge colliders they
  * only exist near the player; bodies live in floating-origin local coordinates.
  */
@@ -98,7 +101,7 @@ export class RailPhysics {
   private active = new Map<number, RAPIER.RigidBody>();
   private timer = 1;
 
-  constructor(private physics: PhysicsWorld, private origin: FloatingOrigin, rail: RailNetwork) {
+  constructor(private physics: PhysicsWorld, private origin: FloatingOrigin, rail: RailNetwork, groundAt?: (x: number, z: number) => number) {
     let id = 0;
     // the lines, then the station links (a link in an elevated station stands on a viaduct deck of its own)
     for (const e of [...rail.edges, ...rail.links.map((l) => l.edge)]) {
@@ -114,6 +117,24 @@ export class RailPhysics {
         }
       });
     }
+    // tunnels and boxes: floor, walls and roof in ~120 m pieces, and a head wall (wings, lintel, approach slab) at every portal.
+    // The terrain collider has a hole here (TerrainPhysics), so these are what the car drives on and between.
+    const tracks = trackEdgesOf(rail);
+    for (const L of linedSegments(rail)) {
+      const e = tracks[L.edge];
+      const n = Math.max(1, Math.ceil((L.s1 - L.s0) / 120));
+      for (let k = 0; k < n; k++) {
+        const s0 = L.s0 + ((L.s1 - L.s0) * k) / n;
+        const s1 = L.s0 + ((L.s1 - L.s0) * (k + 1)) / n;
+        const mid = rail.pointAt(e, (s0 + s1) / 2);
+        this.items.push({ id: id++, x: mid.x, z: mid.z, radius: (s1 - s0) / 2 + 12, fill: (b) => this.boxes(b, shellBoxes(rail, e, L.kind, s0, s1), mid.x, mid.z) });
+      }
+      for (const [on, s, out] of [[L.portalA, L.s0, -1], [L.portalB, L.s1, 1]] as const) {
+        if (!on) continue;
+        const p = rail.pointAt(e, s);
+        this.items.push({ id: id++, x: p.x, z: p.z, radius: 24, fill: (b) => this.boxes(b, portalBoxes(rail, e, L.kind, s, out), p.x, p.z) });
+      }
+    }
     for (const st of rail.stations) {
       for (const ar of st.arrivals) {
         const e = rail.edges.find((q) => q.id === ar.edgeId)!;
@@ -121,6 +142,14 @@ export class RailPhysics {
         const s0 = ar.end === 'a' ? 0 : e.length;
         const p = rail.pointAt(e, s0 + sgn * (12 + D.platform / 2));
         this.items.push({ id: id++, x: p.x, z: p.z, radius: D.platform / 2 + 12, fill: (b) => this.platform(b, st.level, p) });
+      }
+    }
+    // station stairs and their side walls (solid boxes of StationAccess; the shelter and signs are only pictures). Needs the terrain height to match the mesh.
+    if (groundAt) {
+      for (const a of stationAccesses(rail, groundAt)) {
+        this.items.push({ id: id++, x: a.cx, z: a.cz, radius: a.radius, fill: (b) => {
+          for (const k of a.boxes) if (k.solid) b.box(k.x - a.cx, k.y, k.z - a.cz, k.hw, k.hh, k.hl, aim(k.ax, 0, k.az), 0.9);
+        } });
       }
     }
     // viaduct piers (columns) are added to the deck piece that contains them
@@ -131,6 +160,10 @@ export class RailPhysics {
 
   get activeCount(): number {
     return this.active.size;
+  }
+
+  private boxes(b: Builder, list: ShellBox[], ox: number, oz: number): void {
+    for (const k of list) b.box(k.x - ox, k.y, k.z - oz, k.hx, k.hy, k.hz, k.q, k.friction);
   }
 
   private deck(b: Builder, rail: RailNetwork, e: RailEdge, s0: number, s1: number, ox: number, oz: number): void {

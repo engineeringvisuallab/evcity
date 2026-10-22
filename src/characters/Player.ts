@@ -279,6 +279,14 @@ export class Player {
     this.state = 'idle';
   }
 
+  /** While riding a train (inVehicle): follow the moving seat. `world` is the world position of the capsule centre. */
+  carryTo(world: THREE.Vector3): void {
+    const local = this.d.origin.toLocal(world);
+    this.prev.copy(local);
+    this.curr.copy(local);
+    this.render.copy(local);
+  }
+
   /** Called every fixed step AFTER the physics world stepped. */
   afterStep(): void {
     if (this.inVehicle) return;

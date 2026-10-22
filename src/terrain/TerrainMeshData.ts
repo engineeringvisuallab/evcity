@@ -2,6 +2,7 @@ import { Config } from '../core/Config';
 import { chunkOriginX, chunkOriginZ } from '../world/WorldGrid';
 import { buildRoadMask, buildRoadMesh, type RoadMeshData } from '../roads/RoadMesh';
 import { buildRailMesh, type RailMeshData } from '../rail/RailMesh';
+import { TunnelHoles, terrainTrianglesWithHoles } from '../rail/RailTunnel';
 import { buildPortMesh, getPortLayout, type PortMeshData } from '../port';
 import type { TerrainGenerator } from './TerrainGenerator';
 
@@ -35,6 +36,18 @@ export interface ChunkMeshData {
   rail: RailMeshData | null;
   /** STAGE 14: sea port (quays, cranes, containers, ships, tanks ...) for LOD0-2, or null. */
   port: PortMeshData | null;
+  /** Index buffer without the triangles that cut through a railway tunnel / box (LOD0 only); null = use the shared one. */
+  holeIndices: Uint16Array | Uint32Array | null;
+}
+
+const holesOf = new WeakMap<TerrainGenerator, TunnelHoles>();
+function tunnelHoles(gen: TerrainGenerator): TunnelHoles {
+  let h = holesOf.get(gen);
+  if (!h) {
+    h = new TunnelHoles(gen.rail);
+    holesOf.set(gen, h);
+  }
+  return h;
 }
 
 /**
@@ -152,7 +165,20 @@ export function buildChunkMeshData(
     gen.sample(x, z, sc);
     return sc.h;
   });
-  return { heights, positions, normals, minHeight: minH, maxHeight: maxH, water, roadMask, road, rail, port };
+  // The earth must not fill the mouth of a tunnel: LOD0 chunks that a tunnel passes get their own index buffer without the cut triangles.
+  let holeIndices: Uint16Array | Uint32Array | null = null;
+  if (lod === 0) {
+    const kept = terrainTrianglesWithHoles(tunnelHoles(gen), ox, oz, step, n, heights);
+    if (kept) {
+      const shared = buildIndices(n);
+      const skirtStart = n * n * 6;
+      const all = vcount + 4 * vn > 65535 ? new Uint32Array(kept.length + shared.length - skirtStart) : new Uint16Array(kept.length + shared.length - skirtStart);
+      all.set(kept, 0);
+      all.set(shared.subarray(skirtStart), kept.length);
+      holeIndices = all;
+    }
+  }
+  return { heights, positions, normals, minHeight: minH, maxHeight: maxH, water, roadMask, road, rail, port, holeIndices };
 }
 
 /** Water exists where the ground is below the water level. Quads touching a wet vertex are emitted. */

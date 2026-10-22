@@ -7,6 +7,12 @@ import type { RoadGraph, RoadPoint } from '../traffic/RoadGraph';
 import type { VehicleManager } from '../vehicles';
 import { Config } from '../core/Config';
 import { Person } from './Person';
+import type { RailNetwork } from '../rail/RailNetwork';
+import { stationAccesses, type StationAccess } from '../rail/StationAccess';
+import { alightSpot } from '../trains/TrainRide';
+import { CONSIST } from '../trains/TrainConfig';
+import type { TrainManager } from '../trains/TrainManager';
+import type { Train } from '../trains/TrainSim';
 import { randomAppearance, type Appearance } from './PersonModel';
 import { rayVsPerson } from '../combat/Hit';
 import { weaponSpec, type WeaponId } from '../combat/Weapons';
@@ -27,6 +33,9 @@ export interface PeopleDeps {
 }
 
 const STATION_CLEAR = 16;
+/** Chance that somebody who has finished standing around goes to a railway station, how near (m) a station stair must be, and how many people may stand on one platform side. */
+const STATION_SHARE = 0.35;
+const STATION_RANGE = 450;
 const tmpPt: RoadPoint = { x: 0, z: 0, y: 0, hx: 0, hz: 0 };
 
 /**
@@ -46,9 +55,21 @@ export class PeopleManager {
   private tmpB = new THREE.Vector3();
   private sc;
   private tmpV = new THREE.Vector3();
+  /** Railway stations: the stairs people use, the trains they board / leave (null until the Engine calls setStations). */
+  private st: { rail: RailNetwork; trains: TrainManager; accesses: StationAccess[] } | null = null;
+  private focusX = 0;
+  private focusZ = 0;
 
   constructor(private d: PeopleDeps) {
     this.sc = d.terrain.makeSample();
+  }
+
+  /** People walk to the stations: up the stairs, wait on the platform and board the standing trains; people who step out of a train walk down. */
+  setStations(rail: RailNetwork, trains: TrainManager): void {
+    this.st = { rail, trains, accesses: stationAccesses(rail, (x, z) => this.d.terrain.heightAt(x, z)) };
+    trains.fleet.listeners.push((n) => {
+      if (n.kind === 'arrive') this.alight(n.train);
+    });
   }
 
   get count(): number {
@@ -81,7 +102,7 @@ export class PeopleManager {
   }
 
   /** Put a person on the ground at a world position (thrown out of a car, or freshly spawned). */
-  adopt(p: Person, world: THREE.Vector3, task: 'idle' | 'flee' | 'wander' | 'sidewalk'): void {
+  adopt(p: Person, world: THREE.Vector3, task: 'idle' | 'flee' | 'wander' | 'sidewalk' | 'station'): void {
     p.vehicle = null;
     p.world.copy(world);
     p.task = task;
@@ -116,6 +137,8 @@ export class PeopleManager {
 
   update(dt: number, focus: THREE.Vector3): void {
     const T = Config.people;
+    this.focusX = focus.x;
+    this.focusZ = focus.z;
     // ---- spawn / despawn around the player ----
     this.spawnTimer -= dt;
     if (this.spawnTimer <= 0 && this.aliveCount < T.target && this.d.player.active) {
@@ -153,6 +176,8 @@ export class PeopleManager {
   // ------------------------------------------------------------------ spawning
   private trySpawn(focus: THREE.Vector3): void {
     const T = Config.people;
+    // near a station: some people are already waiting on the platform
+    if (this.st && Math.random() < 0.3 && this.spawnOnPlatform(focus)) return;
     const g = this.d.graph;
     const inCity = this.d.terrain.sites.some((s) => Math.hypot(s.x - focus.x, s.z - focus.z) < s.coreRadius + 250);
     for (let attempt = 0; attempt < 8; attempt++) {
@@ -213,7 +238,7 @@ export class PeopleManager {
   // ------------------------------------------------------------------ behaviour
   private think(p: Person, dt: number): void {
     // a fast vehicle coming at us -> get out of its way
-    if (p.task !== 'flee' && p.task !== 'attack' && this.dodge(p)) p.task = 'flee';
+    if (p.task !== 'flee' && p.task !== 'attack' && !(p.task === 'station' && p.stPhase !== 'toFoot') && this.dodge(p)) p.task = 'flee';
     if (this.combat && p.role !== 'civilian' && p.task !== 'attack') this.checkAggro(p, dt);
 
     switch (p.task) {
@@ -238,6 +263,9 @@ export class PeopleManager {
         break;
       case 'wander':
         this.wander(p, dt);
+        break;
+      case 'station':
+        this.stationWalk(p, dt);
         break;
       case 'sidewalk':
         this.sidewalk(p, dt);
@@ -310,6 +338,17 @@ export class PeopleManager {
   }
 
   private startWander(p: Person): void {
+    // some people go to a railway station
+    if (this.st && p.role === 'civilian' && Math.random() < STATION_SHARE) {
+      const a = this.nearestAccess(p.world.x, p.world.z, STATION_RANGE);
+      if (a) {
+        p.access = a;
+        p.stPhase = 'toFoot';
+        p.task = 'station';
+        p.timer = 150;
+        return;
+      }
+    }
     // somebody standing at the roadside keeps walking the roadside; everybody else picks a spot nearby
     if (p.roadId >= 0 && p.world.y > -1e8 && p.vehicle === null && this.d.graph.roads[p.roadId] && p.task === 'idle' && p.timer <= 0 && this.onRoadEdge(p)) {
       p.task = 'sidewalk';
@@ -363,6 +402,192 @@ export class PeopleManager {
     p.world.x = nx;
     p.world.z = nz;
     p.world.y = this.d.terrain.heightAt(nx, nz);
+  }
+
+  // ------------------------------------------------------------------ railway stations
+  /** The stair whose foot is nearest to (x, z) within `range` m, or null. */
+  private nearestAccess(x: number, z: number, range: number): StationAccess | null {
+    let best: StationAccess | null = null;
+    let bd = range;
+    for (const a of this.st?.accesses ?? []) {
+      const d = Math.hypot(a.foot.x - x, a.foot.z - z);
+      if (d < bd) {
+        bd = d;
+        best = a;
+      }
+    }
+    return best;
+  }
+
+  /** A person already standing on a platform within sight range of the player (not closer than the normal spawn distance). */
+  private spawnOnPlatform(focus: THREE.Vector3): boolean {
+    const T = Config.people;
+    const a = this.nearestAccess(focus.x, focus.z, T.spawnMax + 60);
+    if (!a) return false;
+    const off = (Math.random() * 2 - 1) * 55;
+    const x = a.top.x + a.tx * off + (Math.random() - 0.5) * 2;
+    const z = a.top.z + a.tz * off + (Math.random() - 0.5) * 2;
+    const dist = Math.hypot(x - focus.x, z - focus.z);
+    if (dist < T.spawnMin || dist > T.spawnMax) return false;
+    const p = this.createPerson();
+    p.heading = Math.atan2(-a.ox, -a.oz);
+    this.tmpV.set(x, a.top.y, z);
+    this.adopt(p, this.tmpV, 'station');
+    p.access = a;
+    p.stPhase = 'wait';
+    p.timer = 15 + Math.random() * 45;
+    return true;
+  }
+
+  /** A train has stopped: a few passengers step out next to some of its cars and walk to the stair. */
+  private alight(t: Train): void {
+    const st = this.st;
+    if (!st || this.aliveCount >= Config.people.target + 6) return;
+    const fleet = st.trains.fleet;
+    const n = 1 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < n; i++) {
+      const spot = alightSpot(st.rail, fleet, (x, z) => this.d.terrain.heightAt(x, z), t, 1 + Math.floor(Math.random() * (CONSIST.length - 1)));
+      if (!spot) return;
+      if (Math.hypot(spot.x - this.focusX, spot.z - this.focusZ) > Config.people.spawnMax + 150) return;
+      const a = this.nearestAccessTo(spot.x, spot.z);
+      if (!a) return;
+      const p = this.createPerson();
+      p.heading = Math.random() * Math.PI * 2;
+      this.tmpV.set(spot.x + (Math.random() - 0.5) * 1.5, a.top.y, spot.z + (Math.random() - 0.5) * 1.5);
+      this.adopt(p, this.tmpV, 'station');
+      p.access = a;
+      p.stPhase = 'toTop';
+      p.timer = 150;
+    }
+  }
+
+  /** The stair whose head is nearest to a point on a platform. */
+  private nearestAccessTo(x: number, z: number): StationAccess | null {
+    let best: StationAccess | null = null;
+    let bd = 60;
+    for (const a of this.st?.accesses ?? []) {
+      const d = Math.hypot(a.top.x - x, a.top.z - z);
+      if (d < bd) {
+        bd = d;
+        best = a;
+      }
+    }
+    return best;
+  }
+
+  /** Walk towards (x, z) at `speed` m/s, face the way; returns the distance left. */
+  private walkTo(p: Person, x: number, z: number, speed: number, dt: number): number {
+    const dx = x - p.world.x;
+    const dz = z - p.world.z;
+    const d = Math.hypot(dx, dz);
+    if (d > 0.001) {
+      p.heading = Math.atan2(dx, dz);
+      const step = Math.min(d, speed * dt);
+      p.world.x += (dx / d) * step;
+      p.world.z += (dz / d) * step;
+    }
+    p.speed = speed;
+    p.mode = 'walk';
+    return d;
+  }
+
+  /** The whole trip: to the foot of the stair, up, along the platform, wait (board a standing train), or down and away. */
+  private stationWalk(p: Person, dt: number): void {
+    const a = p.access;
+    if (!a || !this.st) {
+      p.task = 'idle';
+      p.timer = 1;
+      return;
+    }
+    p.timer -= dt;
+    switch (p.stPhase) {
+      case 'toFoot': {
+        // the entrance sign stands 1.2 m beyond the last step: walk through it onto the first step
+        const d = this.walkTo(p, a.foot.x + a.ox * 1.2, a.foot.z + a.oz * 1.2, p.pace, dt);
+        p.world.y = this.d.terrain.heightAt(p.world.x, p.world.z);
+        if (d < 0.4) {
+          p.stPhase = 'climb';
+          p.stIdx = a.steps.length - 1;
+        } else if (p.timer <= 0) this.leaveStation(p);
+        break;
+      }
+      case 'climb': {
+        const s = a.steps[p.stIdx];
+        const d = this.walkTo(p, s.x, s.z, p.pace * 0.85, dt);
+        p.world.y += (s.y - p.world.y) * Math.min(1, dt * 8);
+        if (d < 0.15) {
+          p.world.y = s.y;
+          p.stIdx--;
+          if (p.stIdx < 0) {
+            p.stPhase = 'platform';
+            const off = (Math.random() * 2 - 1) * 55;
+            p.goalX = a.top.x + a.tx * off;
+            p.goalZ = a.top.z + a.tz * off;
+          }
+        }
+        break;
+      }
+      case 'platform': {
+        p.world.y = a.top.y;
+        const d = this.walkTo(p, p.goalX, p.goalZ, p.pace, dt);
+        if (d < 0.4) {
+          p.stPhase = 'wait';
+          p.timer = 15 + Math.random() * 45;
+        }
+        break;
+      }
+      case 'wait': {
+        p.world.y = a.top.y;
+        p.speed = 0;
+        p.mode = 'idle';
+        p.heading = Math.atan2(-a.ox, -a.oz);
+        // a train standing next to the platform: get on (the person leaves the world)
+        for (const t of this.st.trains.trains) {
+          if (t.state !== 'dwell') continue;
+          if (this.st.trains.distanceTo(t, p.world.x, p.world.z) < 22) {
+            this.dispose(p);
+            return;
+          }
+        }
+        if (p.timer <= 0) {
+          p.stPhase = 'down';
+          p.stIdx = 0;
+        }
+        break;
+      }
+      case 'toTop': {
+        p.world.y = a.top.y;
+        const d = this.walkTo(p, a.top.x, a.top.z, p.pace, dt);
+        if (d < 0.5) {
+          p.stPhase = 'down';
+          p.stIdx = 0;
+        }
+        break;
+      }
+      case 'down': {
+        const s = a.steps[p.stIdx];
+        const d = this.walkTo(p, s.x, s.z, p.pace * 0.85, dt);
+        p.world.y += (s.y - p.world.y) * Math.min(1, dt * 8);
+        if (d < 0.15) {
+          p.world.y = s.y;
+          p.stIdx++;
+          if (p.stIdx >= a.steps.length) {
+            p.world.y = this.d.terrain.heightAt(p.world.x, p.world.z);
+            this.leaveStation(p);
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  private leaveStation(p: Person): void {
+    p.access = null;
+    p.task = 'idle';
+    p.timer = 1 + Math.random() * 3;
+    p.speed = 0;
+    p.mode = 'idle';
+    p.world.y = this.d.terrain.heightAt(p.world.x, p.world.z);
   }
 
   // ------------------------------------------------------------------ guns

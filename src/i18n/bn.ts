@@ -4,6 +4,7 @@
  * (RULE: no player-facing text is hard-coded elsewhere. Code stays English, the game is 100 % Bangla.)
  * নতুন ধাপে নতুন লেখা যোগ করতে এই অবজেক্টে key যোগ করো।
  */
+const nl2 = '\n';
 export const bn = {
   title: 'ইঞ্জিনিয়ারিং ভিজ্যুয়াল সিটি',
   stage: 'ধাপ ১০খ · শহরের স্থানীয় সড়ক (কেন্দ্রীয় শহর)',
@@ -626,6 +627,16 @@ export const bn = {
       minute: 'মি',
       second: 'সে',
       count: 'টি',
+    },
+    /** যাত্রী হিসেবে ট্রেনে ওঠা-নামা (F চাপুন)। */
+    ride: {
+      board: (to: string, secs: string | null) => `F — ট্রেনে উঠুন${nl2}গন্তব্য: ${to}${secs === null ? '' : ` · ছাড়বে প্রায় ${secs} সে`}`,
+      onTrain: (to: string, secs: string | null) => `ট্রেনে আছেন${nl2}পরের স্টেশন: ${to}${secs === null ? '' : ` · প্রায় ${secs} সে`}`,
+      alight: (st: string, next: string, secs: string) => `F — এই স্টেশনে নামুন: ${st}${nl2}নইলে ট্রেন ${next}-এ যাবে · ছাড়বে প্রায় ${secs} সে`,
+      noExit: (st: string) => `${st}-এ যাত্রী নামার প্ল্যাটফর্ম নেই — পরের স্টেশনে নামুন`,
+      moving: 'চলন্ত ট্রেন থেকে নামা যাবে না — স্টেশনে থামলে F চাপুন',
+      boarded: (to: string) => `🚆 ট্রেনে উঠেছেন — গন্তব্য ${to}`,
+      left: (st: string) => `🚉 ${st}-এ নেমেছেন — সিঁড়ি দিয়ে নিচে নামা যাবে`,
     },
     /** ঘোষণা: স্টেশন-নাম বসিয়ে বাক্য তৈরি হয়। ফাইলের নাম: public/assets/voice/bn/train-<ধরন>-<স্টেশন-id>.mp3 */
     announce: {

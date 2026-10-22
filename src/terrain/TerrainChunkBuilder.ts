@@ -31,7 +31,7 @@ export class TerrainChunkBuilder {
       zeroMasks.set(vtotal, mask);
     }
     geo.setAttribute('aRoad', new THREE.BufferAttribute(mask, 2));
-    geo.setIndex(new THREE.BufferAttribute(buildIndices(data.vertsPerSide), 1));
+    geo.setIndex(new THREE.BufferAttribute(data.holeIndices ?? buildIndices(data.vertsPerSide), 1));
 
     // Bounds are known from the worker, no need to scan the vertices.
     const box = new THREE.Box3(new THREE.Vector3(0, data.minHeight, 0), new THREE.Vector3(S, data.maxHeight, S));
