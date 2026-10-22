@@ -9,7 +9,7 @@ const smoothstep = (a: number, b: number, x: number): number => {
 };
 
 export interface InfraPlacement {
-  id: 'swtp' | 'stp';
+  id: 'swtp' | 'stp' | 'thermal';
   nameBn: string;
   /** site origin (the local (0,0) of the plant) and yaw: local +x maps to world (cos yaw, -sin yaw) */
   x: number;
@@ -18,7 +18,10 @@ export interface InfraPlacement {
   /** the level pad in local metres (= the ground plate of the plant) */
   rect: { x0: number; x1: number; z0: number; z1: number };
   /** which local side faces the river */
-  riverSide: 'W' | 'E';
+  riverSide: 'W' | 'E' | 'none';
+  /** HUD / minimap colour and the one-letter minimap mark */
+  color: string;
+  mark: string;
   /** how deep (m) the ground under the pad is dug (the plant's tanks and wells are sunk into it) */
   deep: number;
   /** grading skirt width (m) from the pad back to natural ground, and on the river side (short: the river is close) */
@@ -30,8 +33,11 @@ export interface InfraPlacement {
 
 const d2r = Math.PI / 180;
 export const INFRA_PLACEMENTS: InfraPlacement[] = [
-  { id: 'swtp', nameBn: 'জল শোধনাগার (SWTP)', x: -180, z: 1260, yaw: 161.2 * d2r, rect: { x0: -168, x1: 158, z0: -113, z1: 113 }, riverSide: 'W', deep: 10, blend: 30, riverBlend: 22, lift: 2.5 },
-  { id: 'stp', nameBn: 'পয়ঃশোধনাগার (STP)', x: -240, z: 2040, yaw: 142.2 * d2r, rect: { x0: -153, x1: 153, z0: -103, z1: 103 }, riverSide: 'E', deep: 7.5, blend: 30, riverBlend: 10, lift: 0 },
+  { id: 'swtp', nameBn: 'জল শোধনাগার (SWTP)', x: -180, z: 1260, yaw: 161.2 * d2r, rect: { x0: -168, x1: 158, z0: -113, z1: 113 }, riverSide: 'W', color: '#0ea5e9', mark: 'W', deep: 10, blend: 30, riverBlend: 22, lift: 2.5 },
+  { id: 'stp', nameBn: 'পয়ঃশোধনাগার (STP)', x: -240, z: 2040, yaw: 142.2 * d2r, rect: { x0: -153, x1: 153, z0: -103, z1: 103 }, riverSide: 'E', color: '#92400e', mark: 'S', deep: 7.5, blend: 30, riverBlend: 10, lift: 0 },
+  // Thermal power plant: stands inside the engineering area 'eng-thermal-power' (x 700..1150, z -3150..-2850), no river needed.
+  // Pad 348 x 224 m: clear of the pond in the area's south-west corner and of the public road just east of it; entrance on the south side (local +z).
+  { id: 'thermal', nameBn: 'তাপ বিদ্যুৎ কেন্দ্র', x: 925, z: -3010, yaw: 0, rect: { x0: -165, x1: 183, z0: -112, z1: 112 }, riverSide: 'none', color: '#f59e0b', mark: 'T', deep: 3, blend: 28, riverBlend: 28, lift: 0 },
 ];
 
 /** Floor is cut slightly BELOW the plate so the plate never z-fights with the ground. */
@@ -49,6 +55,9 @@ export class InfraSite {
   readonly rect: InfraPlacement['rect'];
   readonly deep: number;
   readonly lift: number;
+  readonly riverSide: InfraPlacement['riverSide'];
+  readonly color: string;
+  readonly mark: string;
   /** Floor height (m). Set once from the natural ground (see TerrainGenerator). */
   floorY = 0;
   private readonly c: number;
@@ -66,9 +75,12 @@ export class InfraSite {
     this.rect = p.rect;
     this.deep = p.deep;
     this.lift = p.lift;
+    this.riverSide = p.riverSide;
+    this.color = p.color;
+    this.mark = p.mark;
     this.c = Math.cos(p.yaw);
     this.s = Math.sin(p.yaw);
-    this.side = p.riverSide === 'W' ? -1 : 1;
+    this.side = p.riverSide === 'W' ? -1 : p.riverSide === 'E' ? 1 : 0;
     this.blend = p.blend;
     this.riverBlend = p.riverBlend;
   }
@@ -95,7 +107,7 @@ export class InfraSite {
     const ex = Math.max(R.x0 - this.t.x, this.t.x - R.x1);
     const ez = Math.max(R.z0 - this.t.z, this.t.z - R.z1);
     const s = ex > 0 || ez > 0 ? Math.hypot(Math.max(ex, 0), Math.max(ez, 0)) : Math.max(ex, ez);
-    const past = this.side < 0 ? R.x0 - this.t.x : this.t.x - R.x1;
+    const past = this.side === 0 ? 0 : this.side < 0 ? R.x0 - this.t.x : this.t.x - R.x1;
     return { s, river: Math.max(past, 0) };
   }
 

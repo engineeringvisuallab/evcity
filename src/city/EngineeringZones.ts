@@ -92,6 +92,14 @@ export const ENGINEERING_AREAS: readonly EngineeringArea[] = [
   E('eng-rural', 'rural', 'land', ['rural', 'tubewell', 'low-cost-housing', 'rural-electrification'], -3000, -1350, -2700, -1100),
 ];
 
+/**
+ * ENTRANCE GATES: areas whose engineering site is built get one opening in the fence, so the player can walk / drive in.
+ * side = which edge ('S' = the +z edge), at = world coordinate along that edge, width = opening (m).
+ */
+export const ENGINEERING_GATES: Readonly<Record<string, { side: 'N' | 'S' | 'E' | 'W'; at: number; width: number }>> = {
+  'eng-thermal-power': { side: 'S', at: 925, width: 30 },
+};
+
 export const ENGINEERING_BY_ID: ReadonlyMap<string, EngineeringArea> = new Map(ENGINEERING_AREAS.map((a) => [a.id, a]));
 
 /** The engineering area that contains (x, z), or null. Areas never overlap. */

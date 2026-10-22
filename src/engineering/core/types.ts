@@ -61,6 +61,8 @@ export interface Infrastructure {
   solids(): SolidShape[];
   readonly footprint: { width: number; depth: number };
   setLabelsVisible(visible: boolean): void;
+  /** Optional: advance the plant's own animation (spinning rotors, flowing pipe dots, steam plumes). The game calls it only while the plant is near. */
+  update?(dt: number): void;
   dispose(): void;
 }
 

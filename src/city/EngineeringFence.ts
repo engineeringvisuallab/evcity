@@ -4,7 +4,7 @@
  * The fence only stops where a public road crosses it (otherwise the fence would cut the road): that is a gap in the fence, not an entrance.
  * The shape is a simple rectangle for now and will be refined later; only `buildFenceLayout` has to change then.
  */
-import type { EngineeringArea } from './EngineeringZones';
+import { ENGINEERING_GATES, type EngineeringArea } from './EngineeringZones';
 
 export const FENCE = {
   /** Length of one visible panel (m). */
@@ -68,6 +68,17 @@ export class RoadHash {
   }
 }
 
+/** Is the middle of this fence piece inside the area's entrance gate? */
+function inGate(a: EngineeringArea, mx: number, mz: number): boolean {
+  const g = ENGINEERING_GATES[a.id];
+  if (!g) return false;
+  const half = g.width / 2;
+  if (g.side === 'S') return Math.abs(mz - a.z1) < 1 && Math.abs(mx - g.at) <= half;
+  if (g.side === 'N') return Math.abs(mz - a.z0) < 1 && Math.abs(mx - g.at) <= half;
+  if (g.side === 'E') return Math.abs(mx - a.x1) < 1 && Math.abs(mz - g.at) <= half;
+  return Math.abs(mx - a.x0) < 1 && Math.abs(mz - g.at) <= half;
+}
+
 function cut(a: EngineeringArea, step: number, hash: RoadHash): { pieces: FencePiece[]; gap: number } {
   const c: [number, number][] = [[a.x0, a.z0], [a.x1, a.z0], [a.x1, a.z1], [a.x0, a.z1]];
   const pieces: FencePiece[] = [];
@@ -79,7 +90,7 @@ function cut(a: EngineeringArea, step: number, hash: RoadHash): { pieces: FenceP
     for (let k = 0; k < n; k++) {
       const ax = x0 + ((x1 - x0) * k) / n, az = z0 + ((z1 - z0) * k) / n;
       const bx = x0 + ((x1 - x0) * (k + 1)) / n, bz = z0 + ((z1 - z0) * (k + 1)) / n;
-      if (hash.near(ax, az) || hash.near(bx, bz) || hash.near((ax + bx) / 2, (az + bz) / 2)) { gap += len / n; continue; }
+      if (hash.near(ax, az) || hash.near(bx, bz) || hash.near((ax + bx) / 2, (az + bz) / 2) || inGate(a, (ax + bx) / 2, (az + bz) / 2)) { gap += len / n; continue; }
       pieces.push({ ax, az, bx, bz });
     }
   }

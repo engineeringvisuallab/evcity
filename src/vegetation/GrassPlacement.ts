@@ -6,6 +6,7 @@ import { Noise2D } from '../terrain/Noise';
 import { hash2D, mulberry32 } from '../world/Seed';
 import type { TreePlacer } from './TreePlacement';
 import { placementContains } from '../buildings/Placements';
+import { farmCovers } from '../farm/FarmFields';
 
 
 const V = Config.vegetation;
@@ -106,6 +107,7 @@ export class GrassPlacer {
         if (this.gen.protoBuilding.contains(x, z, 1)) continue; // prototype building plot
         if (placementContains(x, z, 1)) continue; // placed buildings
         if (this.gen.agro.contains(x, z, 1)) continue; // Agro institute pad
+        if (farmCovers(x, z, 0.5)) continue; // crop fields
         if (this.gen.infra.some((s) => s.contains(x, z, 1))) continue; // SWTP / STP plot
 
         const dry = Math.min(1, Math.max(0, smooth(G.dryFrom, G.dryTo, h) + (rDry - 0.5) * 0.2));

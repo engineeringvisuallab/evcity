@@ -131,7 +131,7 @@ export class InfraTour {
     if (stop.focus) {
       const f = stop.focus;
       box.set(new THREE.Vector3(f[0], f[1], f[2]), new THREE.Vector3(f[3], f[4], f[5])).applyMatrix4(root.matrixWorld);
-    } else if (part) box.setFromObject(part.group, true);
+    } else if (part) this.partBox(part.group, box);
     const target = new THREE.Vector3();
     if (stop.shot.target) target.set(...stop.shot.target).applyMatrix4(root.matrixWorld);
     else if (!box.isEmpty()) box.getCenter(target);
@@ -149,6 +149,24 @@ export class InfraTour {
       this.highlight.box.copy(local);
       this.highlight.visible = true;
     } else this.highlight.visible = false;
+  }
+
+  /** Bounding box of a part. Moving effects (flow dots, plumes: named 'fx') are left out, they would stretch the box. */
+  private partBox(group: THREE.Object3D, out: THREE.Box3): void {
+    let hasFx = false;
+    group.traverse((o) => {
+      if (o.name === 'fx') hasFx = true;
+    });
+    if (!hasFx) {
+      out.setFromObject(group, true);
+      return;
+    }
+    const v = new THREE.Vector3();
+    group.traverse((o) => {
+      if (o.name === 'fx' || !(o as THREE.Mesh).isMesh) return;
+      const pos = (o as THREE.Mesh).geometry.getAttribute('position');
+      for (let i = 0; i < pos.count; i++) out.expandByPoint(v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld));
+    });
   }
 
   private async narrate(stop: TourStop, token: number): Promise<void> {

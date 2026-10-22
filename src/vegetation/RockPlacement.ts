@@ -6,6 +6,7 @@ import { chunkOriginX, chunkOriginZ } from '../world/WorldGrid';
 import { hash2D, mulberry32 } from '../world/Seed';
 import type { TreePlacer } from './TreePlacement';
 import { placementContains } from '../buildings/Placements';
+import { farmCovers } from '../farm/FarmFields';
 import { ROCK_KIND_COUNT, RockKind, type TreeChunkData } from './TreeTypes';
 
 const V = Config.vegetation;
@@ -46,6 +47,7 @@ export class RockPlacer {
     if (this.gen.protoBuilding.contains(x, z, 3)) return true; // prototype building plot
     if (placementContains(x, z, 3)) return true; // placed buildings
     if (this.gen.agro.contains(x, z, 3)) return true; // Agro institute pad
+    if (farmCovers(x, z, 2)) return true; // crop fields
     for (const s of this.gen.infra) if (s.contains(x, z, 5)) return true; // SWTP / STP plot
     const r = this.gen.roads;
     const m = this.mask;

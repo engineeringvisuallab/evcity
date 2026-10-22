@@ -28,6 +28,7 @@ import { PortPhysics } from '../port';
 import { AirportManager } from '../airport';
 import { ArmyManager } from '../army';
 import { AgroManager } from '../agro/AgroManager';
+import { FarmManager } from '../farm/FarmManager';
 import { SignalLayer, StationBoard, TrainAnnouncer, TrainContacts, TrainLayer, TrainManager, TrainPhysics, TrainRider, formatBoard, playerObb, vehicleObb, type TrainEntity } from '../trains';
 import { RidePrompt } from '../ui/RidePrompt';
 import { bn } from '../i18n';
@@ -183,6 +184,8 @@ export class Engine {
   readonly army: ArmyManager;
   /** EV Agro Research Institute (west farmland, ~3 km from the spawn): 2-floor institute + research field. K = go there. */
   readonly agro: AgroManager;
+  /** Crop fields of the whole map (farmland, villages, hill orchards): rice / wheat / vegetables / fruit trees, tractors, combines, workers. */
+  readonly farm: FarmManager;
 
   /** STAGE 11B: railway paths + station areas (plan only). */
   readonly rail: RailNetwork;
@@ -412,6 +415,9 @@ export class Engine {
       teleport: (w) => this.player.teleportTo(w),
       onFoot: () => this.player.active && !this.player.inVehicle && !this.cameraController.isFreeFly && !this.helis.pilot && !this.boats.skipper,
     });
+
+    // --- Crop fields (table FarmFields.ts): crops, tractors, workers streamed around the player ---
+    this.farm = new FarmManager({ root: this.world.root, terrain: this.world.terrain, playerWorld: (out) => this.player.getWorldPosition(out) });
 
     this.debug = new DebugPanel(container);
     this.hud = new HUD(container);
@@ -765,7 +771,8 @@ export class Engine {
     this.airport.update();
     this.army.update();
     this.agro.update(dt);
-    this.infra.update();
+    this.farm.update(dt);
+    this.infra.update(dt);
     this.combat.update(dt, canShoot && !this.vehicles.playerTank && !this.mall.inside && !this.agro.inside); // in the tank the left mouse button fires the cannon instead
     this.tankCannon.update(dt, canShoot && !this.mall.inside && !this.agro.inside);
     this.police.update(dt, this.controlledWorld(this.tmpPoliceFocus), this.time.elapsed);
@@ -945,7 +952,7 @@ export class Engine {
     for (const t of this.trains.markers()) others.push({ x: t.x, z: t.z, heading: t.heading, kind: 'train' });
     this.world.origin.toWorld(this.camera.position, this.tmpVec);
     const camera = { x: this.tmpVec.x, y: this.tmpVec.y, z: this.tmpVec.z };
-    return { me, camera, hours: this.environment.hours, viewHeading: view, others, stops: this.mapStops, mall: this.mall.position, library: this.library.position, building: this.protoBuilding.position, buildings: this.placedBuildings.markers, agro: this.agro.position, infra: this.infra.plants.map((pl) => ({ x: pl.site.x, z: pl.site.z, id: pl.site.id })) };
+    return { me, camera, hours: this.environment.hours, viewHeading: view, others, stops: this.mapStops, mall: this.mall.position, library: this.library.position, building: this.protoBuilding.position, buildings: this.placedBuildings.markers, agro: this.agro.position, infra: this.infra.plants.map((pl) => ({ x: pl.site.x, z: pl.site.z, id: pl.site.id, color: pl.site.color, mark: pl.site.mark })) };
   }
 
   /** The player's vehicle crossed a stop line while its light was red: a Gold fine (no police case). */
@@ -1020,9 +1027,14 @@ export class Engine {
       this.hud.setArea({ key: 'agro-grounds', name: 'ইভি এগ্রো রিসার্চ ইনস্টিটিউট', kind: 'গবেষণা মাঠ ও প্রাঙ্গণ', color: '#22c55e' });
       return;
     }
+    const fld = this.farm.info(p.x, p.z);
+    if (fld) {
+      this.hud.setArea({ key: `farm-${fld.field.id}`, name: `কৃষি জমি — ${fld.crop}`, kind: fld.work ? `${fld.stage} · ${fld.work}` : fld.stage, color: '#84cc16' });
+      return;
+    }
     const plant = this.infra.nameAt(p.x, p.z);
     if (plant) {
-      this.hud.setArea({ key: plant.id, name: plant.name, kind: 'ইঞ্জিনিয়ারিং অবকাঠামো', color: plant.id === 'swtp' ? '#0ea5e9' : '#a16207' });
+      this.hud.setArea({ key: plant.id, name: plant.name, kind: 'ইঞ্জিনিয়ারিং অবকাঠামো', color: plant.color });
       return;
     }
     if (this.world.terrain.evlab.inside(p.x, p.z)) {
@@ -1192,6 +1204,7 @@ export class Engine {
     this.airport.dispose();
     this.army.dispose();
     this.agro.dispose();
+    this.farm.dispose();
     this.infra.dispose();
     this.tankCannon.dispose();
     this.explosions.dispose();

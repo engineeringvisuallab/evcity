@@ -19,6 +19,14 @@ for (const s of g.infra) {
   }
   console.log(`pad interior: ${n} samples, lowest ground ${hmin.toFixed(1)}, with water in the pit: ${wet}`);
   if (wet) fail(`${s.id}: water shows inside the dug-out pad`);
+  if (s.riverSide === 'none') {
+    // plants without a river: only the road check (5) matters
+    const mk = new Float32Array(4); let rk = 0;
+    for (let lx = R.x0 - 40; lx <= R.x1 + 40; lx += 8) for (let lz = R.z0 - 40; lz <= R.z1 + 40; lz += 8) { s.toWorld(lx, lz, pt); g.roads.maskAt(pt.x, pt.z, 1, mk); rk = Math.max(rk, mk[1]); }
+    console.log(`(no river side) road / junction mask max within pad + 40 m: ${rk.toFixed(2)}`);
+    if (rk > 0) fail(`${s.id}: a road touches the pad area`);
+    continue;
+  }
   // 2) river: march out from the river-side edge midpoint
   const side = s.id === 'swtp' ? -1 : 1;
   const ex = side < 0 ? R.x0 : R.x1;

@@ -5,6 +5,7 @@
 import { registerInfrastructure } from './core/registry';
 import { swtpDef } from './civil/water-supply/swtp';
 import { stpDef } from './civil/wastewater/stp';
+import { thermalDef } from './electrical';
 
 export * from './core/types';
 export { InfraTour, estimateSpeech } from './core/InfraTour';
@@ -14,5 +15,6 @@ export { getInfrastructureDef, listInfrastructure, registerInfrastructure } from
 export function registerBuiltinInfrastructure(): void {
   registerInfrastructure(swtpDef);
   registerInfrastructure(stpDef);
+  registerInfrastructure(thermalDef);
   // registerInfrastructure(wtpGroundwaterDef);  // later ...
 }

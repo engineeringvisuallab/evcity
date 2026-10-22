@@ -14,6 +14,7 @@ export default defineConfig({
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
         mall: fileURLToPath(new URL('./mall.html', import.meta.url)),
         agro: fileURLToPath(new URL('./agro.html', import.meta.url)),
+        farm: fileURLToPath(new URL('./farm.html', import.meta.url)),
       },
     },
   },

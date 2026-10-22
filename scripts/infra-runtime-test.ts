@@ -31,6 +31,7 @@ const o = g.makeSample();
 const pt = { x: 0, z: 0 };
 for (const pl of mgr.plants) {
   const s = pl.site;
+  if (s.riverSide === 'none') continue; // thermal plant: see thermal-test.ts
   console.log(`\n== ${s.id} floorY ${s.floorY.toFixed(2)} reach ${pl.riverReach} waterRel ${pl.waterRel.toFixed(2)}`);
   root.updateMatrixWorld(true);
   // 1) pipes reach the river: the lowest point of the river-side part, in world coordinates

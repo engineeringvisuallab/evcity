@@ -29,6 +29,12 @@ export const PIPE_COLORS = {
   effluent: 0x6fb7d6,
   air: 0xaab7c4,
   biogas: 0xe07a1f,
+  // thermal power plant
+  gas: 0xf4d35e,
+  steam: 0xd9dde3,
+  feedwater: 0x3a86c8,
+  cooling: 0x2ec4b6,
+  flue: 0x6b6b6b,
 } as const;
 export type PipeKind = keyof typeof PIPE_COLORS;
 

@@ -42,7 +42,7 @@ export interface MapState {
   /** EV Agro Research Institute (world x, z): always shown. */
   agro?: { x: number; z: number };
   /** SWTP / STP plants (world x, z): always shown. */
-  infra?: { x: number; z: number; id: string }[];
+  infra?: { x: number; z: number; id: string; color: string; mark: string }[];
   /** The camera's world position: shown as numbers under the map. */
   camera?: { x: number; y: number; z: number };
   /** Time of day in hours (0 .. 24): shown as a faint clock next to the map. */
@@ -391,7 +391,7 @@ export class Minimap {
       const iz = Z(pl.z);
       if (ix > -r && iz > -r && ix < S + r && iz < S + r) {
         c.save();
-        c.fillStyle = pl.id === 'swtp' ? '#0ea5e9' : '#92400e';
+        c.fillStyle = pl.color;
         c.strokeStyle = '#fff';
         c.lineWidth = 1.6 * d;
         c.beginPath();
@@ -402,7 +402,7 @@ export class Minimap {
         c.font = `700 ${Math.round(r * 1.25)}px sans-serif`;
         c.textAlign = 'center';
         c.textBaseline = 'middle';
-        c.fillText(pl.id === 'swtp' ? 'W' : 'S', ix, iz + r * 0.05);
+        c.fillText(pl.mark, ix, iz + r * 0.05);
         c.restore();
       }
     }

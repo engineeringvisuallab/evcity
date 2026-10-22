@@ -34,6 +34,7 @@ export interface Plant {
   waterRel: number;
 }
 
+const ANIM_DIST = 900; // plant animation (flow dots, rotors, plumes) runs only this close
 const SHOW_DIST = 2400; // a plant is drawn within this distance of the player
 const HINT_DIST = 450; // "press Y" hint within this distance
 const FONT = '"Noto Sans Bengali", "Nirmala UI", system-ui, sans-serif';
@@ -68,8 +69,8 @@ export class InfraManager {
   }
 
   /** Name of the plant whose fence the world point is in (+margin), or null. */
-  nameAt(x: number, z: number): { id: string; name: string } | null {
-    for (const pl of this.plants) if (pl.site.inside(x, z, 6)) return { id: pl.site.id, name: pl.site.nameBn };
+  nameAt(x: number, z: number): { id: string; name: string; color: string } | null {
+    for (const pl of this.plants) if (pl.site.inside(x, z, 6)) return { id: pl.site.id, name: pl.site.nameBn, color: pl.site.color };
     return null;
   }
 
@@ -85,11 +86,12 @@ export class InfraManager {
       return s.h - site.floorY;
     };
     // where is the river? march outwards from the middle of the river-side edge until there is water
-    const side = site.id === 'swtp' ? -1 : 1;
+    const side = site.riverSide === 'W' ? -1 : 1;
+    const hasRiver = site.riverSide !== 'none';
     const edge = side < 0 ? site.rect.x0 : site.rect.x1;
     let reach = 25;
     let waterRel = -3;
-    for (let dd = 0; dd <= 200; dd++) {
+    for (let dd = 0; hasRiver && dd <= 200; dd++) {
       site.toWorld(edge + side * dd, 0, pt);
       terrain.sample(pt.x, pt.z, s);
       if (!Number.isNaN(s.water) && s.h < s.water - 0.1) {
@@ -146,7 +148,7 @@ export class InfraManager {
   // ---------------------------------------------------------------------------------------------
 
   /** Every frame (before the camera controller). */
-  update(): void {
+  update(dt = 0): void {
     const { input } = this.d;
     const pw = this.d.playerWorld(this.p);
     let nearest: Plant | null = null;
@@ -154,6 +156,7 @@ export class InfraManager {
     for (const pl of this.plants) {
       const dist = Math.hypot(pw.x - pl.site.x, pw.z - pl.site.z);
       pl.infra.root.visible = dist < SHOW_DIST || this.active === pl;
+      if (pl.infra.root.visible && pl.infra.update && (dist < ANIM_DIST || this.active === pl)) pl.infra.update(dt); // spinning rotors, flowing dots, plumes
       if (dist < nd) {
         nd = dist;
         nearest = pl;
