@@ -128,7 +128,7 @@ ctx.onmessage = (e: MessageEvent<MinimapRequest>) => {
     for (const tier of [3, 2, 1]) {
       const core = tier === 1 ? 1.8 : tier === 2 ? 1.45 : 1.15;
       for (const r of gen.roads.roads) {
-        if (r.tier !== tier) continue;
+        if (r.tier !== tier || r.earth) continue;
         const n = r.xs.length;
         for (let a = 0; a < n - 1; a++) {
           const len = Math.hypot(r.xs[a + 1] - r.xs[a], r.zs[a + 1] - r.zs[a]);

@@ -23,6 +23,12 @@ const KIND = {
   collector: { halfWidth: 4.8, shoulder: 1.4, lanes: 2, speedKmh: 50, maxGrade: 0.1, step: 8 },
   roundabout: { halfWidth: 4.5, shoulder: 1.3, lanes: 1, speedKmh: 30, maxGrade: 0.1, step: 3 },
 } as const;
+/** Radius (m) around the city centre inside which roads are not re-shaped (see nearCity). */
+const NEAR_CITY = 0;
+/** Earthen tracks keep this far (m) from the city centre (the railway and the city fill are fitted around it). */
+const EARTH_MIN_CITY = 0;
+/** Earthen (kacha) farm / village track. */
+const KIND_EARTH = { halfWidth: 2.2, shoulder: 0.9, lanes: 1, speedKmh: 25, maxGrade: 0.12, step: 6 } as const;
 
 /** Site layout (all inside the flat 600 m core of a city site). */
 const CELL = 64;
@@ -54,6 +60,8 @@ interface RawRoad {
   knots?: number[][];
   /** Places where this road crosses another one (heights are matched there). */
   cross?: number[][];
+  /** Earthen track (see KIND_EARTH). */
+  earth?: boolean;
 }
 
 /**
@@ -112,6 +120,9 @@ export class RoadNetwork {
   private shw = new Float32Array(0);
   private score = new Float32Array(0);
   private sbridge = new Uint8Array(0);
+  private searth = new Uint8Array(0);
+  /** Number of earthen tracks (stats). */
+  earthTracks = 0;
   private cells = new Map<number, Int32Array>();
   private chunkSegs = new Map<string, number[]>();
 
@@ -129,7 +140,9 @@ export class RoadNetwork {
     for (let k = 0; k < Math.min(Config.roads.activeTier, tiers.length); k++) {
       const raws: RawRoad[] = [];
       tiers[k](raws);
-      for (const r of raws) this.addRoad(r);
+      // tier 2/3 roads are checked like the district links: a road that runs along another road, loops back onto it or crosses it
+      // at a different height is cut back and joined with a T junction (see addRepaired)
+      for (const r of raws) (k === 1 || k === 2 ? this.addRepaired(r) : this.addRoad(r));
       // the district links attach to the FINISHED roads of tiers 1-3, so they are planned after them
       if (k === 2) {
         this.layoutDistrictLinks();
@@ -151,6 +164,7 @@ export class RoadNetwork {
         }
       }
     }
+    this.layoutEarthen();
     this.buildSegments();
   }
 
@@ -241,7 +255,7 @@ export class RoadNetwork {
       const wp: number[][] = [a, ...e.via.map(([x, z]) => this.snapPoint(x, z, 420)), b];
       const poly: number[][] = [a];
       for (let k = 0; k < wp.length - 1; k++) poly.push(...this.route(wp[k][0], wp[k][1], wp[k + 1][0], wp[k + 1][1], done, nodePts).slice(1));
-      const pts = this.smoothRoute(poly);
+      const pts = this.smoothRoute(poly, false); // the main highways keep their original shape (the railway and the city plan are fitted to them)
       done.push(...pts);
       out.push({ tier: 1, kind: 'highway', name: e.name, closed: false, pts, endY: [this.nodeY.get(e.from)!, this.nodeY.get(e.to)!] });
     }
@@ -503,6 +517,14 @@ export class RoadNetwork {
           }
           this.addRoad({ tier: 3, kind: 'collector', name: `S${ci}`, closed: false, pts: cur, endY: [endA, endB], cross });
           const bad = this.firstConflict(this.roads[nr]);
+          if (!bad && this.endsMismatch(this.roads[nr], endA, endB)) {
+            // the grade limit could not reach the height of the road it joins (a cliff in the junction): skip this piece
+            this.roads.length = nr;
+            this.bridges.length = nb;
+            this.culverts.length = nc;
+            repaired = true;
+            break;
+          }
           if (!bad) {
             built = true;
             break;
@@ -745,6 +767,231 @@ export class RoadNetwork {
     return out;
   }
 
+  /** Surface heights of an earthen track: follows the (smoothed) ground, starts at the height of the road it leaves. */
+  private buildEarthProfile(r: RoadSpec, startY?: number): void {
+    const n = r.xs.length;
+    const h = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      this.natural(r.xs[i], r.zs[i], this.scratch);
+      r.hNat[i] = this.scratch.h;
+      h[i] = this.scratch.h;
+    }
+    const sm = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      let a = 0;
+      let c = 0;
+      for (let k = -4; k <= 4; k++) {
+        const q = Math.min(n - 1, Math.max(0, i + k));
+        a += h[q];
+        c++;
+      }
+      sm[i] = a / c;
+    }
+    const y0 = startY ?? sm[0];
+    const maxStep = 0.09 * r.step;
+    r.ys[0] = y0;
+    for (let i = 1; i < n; i++) {
+      const t = Math.min(1, r.cum[i] / 40);
+      const target = y0 + (sm[i] - y0) * t;
+      r.ys[i] = Math.min(r.ys[i - 1] + maxStep, Math.max(r.ys[i - 1] - maxStep, target));
+    }
+  }
+
+  /**
+   * Earthen (kacha) tracks: narrow dirt roads that leave the secondary / primary roads sideways into the countryside, to farms and
+   * villages. They run on dry, gentle ground, keep clear of every other road, junction and city site and are added after the
+   * junction pads (they get no pad: the track simply ends at the edge of the road it leaves).
+   */
+  private layoutEarthen(): void {
+    const CELL_E = 40;
+    const grid = new Map<number, { x: number; z: number; id: number }[]>();
+    const put = (x: number, z: number, id: number): void => {
+      const k = (Math.floor(x / CELL_E) + 1024) * 4096 + (Math.floor(z / CELL_E) + 1024);
+      let a = grid.get(k);
+      if (!a) grid.set(k, (a = []));
+      a.push({ x, z, id });
+    };
+    for (const r of this.roads) for (let i = 0; i < r.xs.length; i++) put(r.xs[i], r.zs[i], r.id);
+    const near = (x: number, z: number, rad: number, ignore: number, ignoreRad: number): boolean => {
+      const c = Math.ceil(rad / CELL_E);
+      const cx = Math.floor(x / CELL_E);
+      const cz = Math.floor(z / CELL_E);
+      for (let dz = -c; dz <= c; dz++) {
+        for (let dx = -c; dx <= c; dx++) {
+          const a = grid.get((cx + dx + 1024) * 4096 + (cz + dz + 1024));
+          if (!a) continue;
+          for (const p of a) {
+            const lim = p.id === ignore ? ignoreRad : rad;
+            if (Math.hypot(p.x - x, p.z - z) < lim) return true;
+          }
+        }
+      }
+      return false;
+    };
+    const rnd = (a: number, b: number): number => {
+      const v = Math.sin(a * 127.1 + b * 311.7 + 17.3) * 43758.5453;
+      return v - Math.floor(v);
+    };
+    const MAX_TRACKS = 400;
+    let made = 0;
+    const parents = this.roads.filter((r) => (r.tier === 2 || r.tier === 3) && !r.earth && r.kind !== 'roundabout');
+    for (const par of parents) {
+      const n = par.xs.length;
+      for (let i = 12; i < n - 12 && made < MAX_TRACKS; i += Math.max(10, Math.round(110 / par.step))) {
+        if (rnd(par.id + 1, i) > 0.9) continue;
+        if (par.cum[i] < 100 || par.length - par.cum[i] < 100) continue;
+        if (this.sites[0] && Math.hypot(par.xs[i] - this.sites[0].x, par.zs[i] - this.sites[0].z) < EARTH_MIN_CITY) continue;
+        let onBridge = false;
+        for (let k = i - 8; k <= i + 8; k++) if (par.bridgeOf[Math.min(n - 1, Math.max(0, k))] >= 0) onBridge = true;
+        if (onBridge) continue;
+        const firstSide = rnd(par.id + 7, i) < 0.5 ? -1 : 1;
+        for (const side of [firstSide, -firstSide]) {
+          const off = par.halfWidth + par.shoulder + 1.4;
+          const sx = par.xs[i] + par.nx[i] * side * off;
+          const sz = par.zs[i] + par.nz[i] * side * off;
+          if (this.pads.some((p) => Math.hypot(p.x - sx, p.z - sz) < p.rCore + 90)) continue;
+          if (this.sites.some((q) => Math.hypot(q.x - sx, q.z - sz) < q.blendRadius + 120)) continue;
+          if (!this.dry(sx, sz, 1.5)) continue;
+          // walk out sideways with a gentle wander
+          let heading = Math.atan2(par.nz[i] * side, par.nx[i] * side) + (rnd(par.id + 3, i) - 0.5) * 0.5;
+          const target = 140 + rnd(par.id + 5, i) * 420;
+          const pts: number[][] = [[sx, sz]];
+          let x = sx;
+          let z = sz;
+          this.natural(x, z, this.scratch);
+          let hPrev = this.scratch.h;
+          const hist: number[] = [hPrev];
+          let drift = (rnd(par.id + 9, i) - 0.5) * 0.02;
+          for (let d = 6; d <= target; d += 6) {
+            drift += (rnd(par.id + d, i) - 0.5) * 0.012;
+            drift = Math.max(-0.03, Math.min(0.03, drift));
+            heading += drift;
+            const nx2 = x + Math.cos(heading) * 6;
+            const nz2 = z + Math.sin(heading) * 6;
+            if (!this.dry(nx2, nz2, 1.5) || !this.dry(nx2 + Math.sin(heading) * 3.5, nz2 - Math.cos(heading) * 3.5, 1) || !this.dry(nx2 - Math.sin(heading) * 3.5, nz2 + Math.cos(heading) * 3.5, 1)) break;
+            if (this.sites.some((q) => Math.hypot(q.x - nx2, q.z - nz2) < q.blendRadius + 80)) break;
+            if (this.pads.some((p) => Math.hypot(p.x - nx2, p.z - nz2) < p.rCore + 40)) break;
+            if (near(nx2, nz2, 20, par.id, d < 45 ? 0 : 32)) break;
+            this.natural(nx2, nz2, this.scratch);
+            // slope over ~24 m (single steps may be rougher: the profile is smoothed)
+            hist.push(this.scratch.h);
+            const back = hist[Math.max(0, hist.length - 5)];
+            if (Math.abs(this.scratch.h - hPrev) / 6 > 0.2 || Math.abs(this.scratch.h - back) / (6 * Math.min(4, hist.length - 1)) > 0.09) break;
+            hPrev = this.scratch.h;
+            x = nx2;
+            z = nz2;
+            pts.push([x, z]);
+          }
+          if (pts.length < 16) continue; // shorter than ~90 m: not worth a road
+          const id = this.roads.length;
+          this.addRoad({ tier: 3, kind: 'local', name: `E${made + 1}`, closed: false, pts, earth: true, endY: [par.ys[i], par.ys[i]], lanes: 1 });
+          made++;
+          for (let q = 0; q < pts.length; q++) put(pts[q][0], pts[q][1], id);
+          break; // one track per spot
+        }
+      }
+    }
+    this.earthTracks = made;
+  }
+
+  /** True when the grade-limited profile could not reach the pinned end heights (a step / cliff where the road joins another). */
+  private endsMismatch(r: RoadSpec, endA: number, endB: number): boolean {
+    const n = r.ys.length;
+    return Math.abs(r.ys[0] - endA) > 0.8 || Math.abs(r.ys[n - 1] - endB) > 0.8;
+  }
+
+  /** Heights are matched where a new road touches / crosses an existing one: the crossing points of `cur` with the finished roads. */
+  private crossPoints(cur: number[][]): number[][] {
+    const cross: number[][] = [];
+    for (const o of this.roads) {
+      for (let j = 0; j < o.xs.length; j += 2) {
+        let hit = false;
+        for (let i = 0; i < cur.length; i += 2) {
+          if (Math.abs(cur[i][0] - o.xs[j]) < 9 && Math.abs(cur[i][1] - o.zs[j]) < 9) {
+            hit = true;
+            break;
+          }
+        }
+        if (hit && !cross.some((c) => Math.hypot(c[0] - o.xs[j], c[1] - o.zs[j]) < 45)) cross.push([o.xs[j], o.zs[j]]);
+      }
+    }
+    return cross;
+  }
+
+  /**
+   * addRoad + conflict repair (same idea as the district links): when the finished road runs along another road, loops back onto it
+   * or overlaps it at another height, it is built from the other end or cut ~65 m before the conflict and joined to the
+   * road in the way with a T junction. If nothing sensible is left, the road is added unchanged (other roads refer to it by name).
+   */
+  private addRepaired(raw: RawRoad): void {
+    if (!raw.endY || raw.closed || raw.loop || (raw.pts.some((q) => this.nearCity(q[0], q[1])) && !['P5', 'P6'].includes(raw.name))) {
+      this.addRoad(raw);
+      return;
+    }
+    const nr0 = this.roads.length;
+    const queue: { pts: number[][]; endA: number; endB: number; name: string }[] = [{ pts: raw.pts, endA: raw.endY[0], endB: raw.endY[1], name: raw.name }];
+    let parts = 0;
+    while (queue.length > 0) {
+      const piece = queue.shift()!;
+      let cur = piece.pts;
+      let endA = piece.endA;
+      let endB = piece.endB;
+      let reversed = false;
+      let built = false;
+      for (let attempt = 0; attempt < 5 && !built; attempt++) {
+        const nr = this.roads.length;
+        const nb = this.bridges.length;
+        const nc = this.culverts.length;
+        this.addRoad({ ...raw, name: piece.name, pts: cur, endY: [endA, endB], cross: this.crossPoints(cur) });
+        const bad = this.firstConflict(this.roads[nr]);
+        if (!bad && this.endsMismatch(this.roads[nr], endA, endB)) {
+          this.roads.length = nr;
+          this.bridges.length = nb;
+          this.culverts.length = nc;
+          break;
+        }
+        if (!bad) {
+          built = true;
+          break;
+        }
+        this.roads.length = nr;
+        this.bridges.length = nb;
+        this.culverts.length = nc;
+        if (bad.i < 30 && !reversed) {
+          cur = cur.slice().reverse();
+          [endA, endB] = [endB, endA];
+          reversed = true;
+          continue;
+        }
+        const keep = bad.i - 8;
+        if (!bad.other) break; // a hairpin on itself: handled by cutSelfCrossings, leave the rest to the fallback below
+        let bj = 0;
+        let bd = Infinity;
+        const last = cur[Math.max(0, keep)];
+        for (let j = 0; j < bad.other.xs.length; j++) {
+          const d = Math.hypot(bad.other.xs[j] - last[0], bad.other.zs[j] - last[1]);
+          if (d < bd) {
+            bd = d;
+            bj = j;
+          }
+        }
+        const jp = [bad.other.xs[bj], bad.other.zs[bj]];
+        let k = bad.i + 2;
+        while (k < cur.length && Math.hypot(cur[k][0] - jp[0], cur[k][1] - jp[1]) < 40) k++;
+        if (cur.length - k >= 25) queue.push({ pts: [jp, ...cur.slice(k)], endA: bad.other.ys[bj], endB, name: `${raw.name}${String.fromCharCode(97 + parts + queue.length)}` });
+        if (keep < 12) break;
+        cur = [...cur.slice(0, keep + 1), jp];
+        endB = bad.other.ys[bj];
+        this.junctions.push({ x: jp[0], z: jp[1], y: endB, type: 'T' });
+      }
+      if (built) parts++;
+    }
+    if (parts === 0) {
+      this.roads.length = nr0;
+      this.addRoad(raw);
+    }
+  }
+
   /** First place (point index) where road `r` overlaps itself (other = null) or another road at a different height. */
   private firstConflict(r: RoadSpec): { i: number; other: RoadSpec | null; j: number } | null {
     const n = r.xs.length;
@@ -758,10 +1005,38 @@ export class RoadNetwork {
       for (const o of this.roads) {
         if (o === r) continue;
         for (let j = 0; j < o.xs.length; j++) {
-          if (Math.abs(o.xs[j] - r.xs[i]) > 9 || Math.abs(o.zs[j] - r.zs[i]) > 9) continue;
+          if (Math.abs(o.xs[j] - r.xs[i]) > 14 || Math.abs(o.zs[j] - r.zs[i]) > 14) continue;
           const dd = Math.hypot(o.xs[j] - r.xs[i], o.zs[j] - r.zs[i]);
-          if (dd > 9) continue;
+          if (dd > 14) continue;
           if (r.bridgeOf[i] >= 0 || o.bridgeOf[j] >= 0) continue; // a bridge deck over a road is a real overpass
+          // two roads running ALONG each other (shallow angle) are not a junction: they would be ribbons stacked on each other
+          {
+            const i0 = Math.max(0, i - 1);
+            const i1 = Math.min(n - 1, i + 1);
+            const j0 = Math.max(0, j - 1);
+            const j1 = Math.min(o.xs.length - 1, j + 1);
+            const ax = r.xs[i1] - r.xs[i0];
+            const az = r.zs[i1] - r.zs[i0];
+            const bx = o.xs[j1] - o.xs[j0];
+            const bz = o.zs[j1] - o.zs[j0];
+            const al = Math.hypot(ax, az);
+            const bl = Math.hypot(bx, bz);
+            if ((!this.nearCity(r.xs[i], r.zs[i]) || r.name === 'P6') && o.tier >= r.tier && o.tier <= 3 && al > 0 && bl > 0 && Math.abs(ax * bx + az * bz) / (al * bl) > 0.82) {
+              // only a LONG common stretch (>= ~70 m: the next 8 points all stay within 14 m of the same road) is a duplicate road
+              let long = true;
+              for (let k = i + 1; k <= i + 8 && long; k++) {
+                if (k >= n) {
+                  long = false;
+                  break;
+                }
+                let dmin = Infinity;
+                for (let q = Math.max(0, j - 14); q < Math.min(o.xs.length, j + 14); q++) dmin = Math.min(dmin, Math.hypot(o.xs[q] - r.xs[k], o.zs[q] - r.zs[k]));
+                if (dmin > 14) long = false;
+              }
+              if (long) return { i, other: o, j };
+            } // (a road may approach a more important one at a shallow angle: that is its designed junction)
+          }
+          if (dd > 9) continue;
           // ignore the places where this road legitimately joins the other one (its own ends)
           // allowed height difference grows with the distance (10 % slope between the two centre lines, plus 0.8 m of tolerance)
           if (Math.abs(o.ys[j] - r.ys[i]) > 0.8 + 0.1 * dd) return { i, other: o, j };
@@ -990,7 +1265,84 @@ export class RoadNetwork {
   }
 
   /** Relax the grid-aligned A* zigzag into a smooth curve (Laplacian smoothing + Catmull-Rom), keep both ends fixed. */
-  private smoothRoute(poly: number[][]): number[][] {
+  /**
+   * Cuts out every self-crossing loop / hook of a polyline: where segment i crosses a later segment j, the vertices in between are
+   * replaced by the crossing point. A road that crosses itself would make a ribbon overlap (brown terrain patches, "why is there
+   * a loop?"), so no road may keep such a loop.
+   */
+  /** The planned city (site 0: buildings, local streets, railway) was fitted to the road network around it: roads near it keep their original shape. */
+  private nearCity(x: number, z: number): boolean {
+    const hub = this.sites[0];
+    return !!hub && Math.hypot(x - hub.x, z - hub.z) < NEAR_CITY;
+  }
+
+  private cutSelfCrossings(poly: number[][]): number[][] {
+    if (poly.some((q) => this.nearCity(q[0], q[1]))) return poly.map((v) => [v[0], v[1]]);
+    let out = poly.map((v) => [v[0], v[1]]);
+    // A bulb that exists only to CLIMB a hill gradually (a real switchback) is kept: cutting it would make the grade impossible.
+    const hAt = (x: number, z: number): number => {
+      this.natural(x, z, this.scratch);
+      return this.scratch.h;
+    };
+    const climbOk = (a: number[], b: number[]): boolean => Math.abs(hAt(a[0], a[1]) - hAt(b[0], b[1])) <= 0.04 * Math.max(30, Math.hypot(a[0] - b[0], a[1] - b[1]));
+    for (let guard = 0; guard < 40; guard++) {
+      let hit: { i: number; j: number; x: number; z: number } | null = null;
+      for (let i = 0; i < out.length - 1 && !hit; i++) {
+        const ax = out[i][0], az = out[i][1], bx = out[i + 1][0], bz = out[i + 1][1];
+        for (let j = i + 2; j < out.length - 1; j++) {
+          const cx = out[j][0], cz = out[j][1], dx = out[j + 1][0], dz = out[j + 1][1];
+          const d = (bx - ax) * (dz - cz) - (bz - az) * (dx - cx);
+          if (Math.abs(d) < 1e-9) continue;
+          const t = ((cx - ax) * (dz - cz) - (cz - az) * (dx - cx)) / d;
+          const u = ((cx - ax) * (bz - az) - (cz - az) * (bx - ax)) / d;
+          if (t < 0 || t > 1 || u < 0 || u > 1) continue;
+          if (!climbOk(out[i], out[j])) continue;
+          hit = { i, j, x: ax + (bx - ax) * t, z: az + (bz - az) * t };
+          break;
+        }
+      }
+      if (!hit) break;
+      out = [...out.slice(0, hit.i + 1), [hit.x, hit.z], ...out.slice(hit.j + 1)];
+    }
+    // hairpins / U-turn bulbs: the road leaves a point, wanders 150-700 m and comes back close to it (the plain of Bangladesh has no
+    // switchbacks). The bulb is replaced by the direct line.
+    for (let guard = 0; guard < 40; guard++) {
+      const cum: number[] = [0];
+      for (let i = 1; i < out.length; i++) cum.push(cum[i - 1] + Math.hypot(out[i][0] - out[i - 1][0], out[i][1] - out[i - 1][1]));
+      let cut: [number, number] | null = null;
+      for (let i = 0; i < out.length - 1 && !cut; i++) {
+        for (let j = out.length - 1; j > i + 1; j--) {
+          const along = cum[j] - cum[i];
+          if (along < 150) break;
+          if (along > 1500) continue;
+          const d = Math.hypot(out[j][0] - out[i][0], out[j][1] - out[i][1]);
+          if (d < Math.max(60, along * 0.22) && climbOk(out[i], out[j])) {
+            cut = [i, j];
+            break;
+          }
+          // a U-turn: the road turns back on itself (headings at i and j point against each other) and the straight line is much shorter
+          if (d < along * 0.38) {
+            const a0 = out[Math.max(0, i - 1)];
+            const a1 = out[Math.min(out.length - 1, i + 1)];
+            const b0 = out[Math.max(0, j - 1)];
+            const b1 = out[Math.min(out.length - 1, j + 1)];
+            const ax = a1[0] - a0[0], az = a1[1] - a0[1], bx = b1[0] - b0[0], bz = b1[1] - b0[1];
+            const al = Math.hypot(ax, az), bl = Math.hypot(bx, bz);
+            if (al > 0 && bl > 0 && (ax * bx + az * bz) / (al * bl) < 0 && climbOk(out[i], out[j])) {
+              cut = [i, j];
+              break;
+            }
+          }
+        }
+      }
+      if (!cut) break;
+      out = [...out.slice(0, cut[0] + 1), ...out.slice(cut[1])];
+    }
+    return out;
+  }
+
+  private smoothRoute(poly0: number[][], cut = true): number[][] {
+    const poly = cut ? this.cutSelfCrossings(poly0) : poly0;
     const p = poly.map((v) => [v[0], v[1]]);
     for (let it = 0; it < 10; it++) {
       for (let i = 2; i < p.length - 2; i++) {
@@ -1014,7 +1366,7 @@ export class RoadNetwork {
       }
     }
     dense.push(p[p.length - 1]);
-    return this.resample(dense, KIND.highway.step);
+    return this.resample(cut ? this.cutSelfCrossings(dense) : dense, KIND.highway.step);
   }
 
   /** Points every `step` metres along a polyline. */
@@ -1044,7 +1396,7 @@ export class RoadNetwork {
   // One road: arrays, height profile, bridges and culverts
   // =====================================================================================
   private addRoad(raw: RawRoad): void {
-    const K = KIND[raw.kind];
+    const K = raw.earth ? KIND_EARTH : KIND[raw.kind];
     const n = raw.pts.length;
     const id = this.roads.length;
     const xs = new Float64Array(n);
@@ -1074,6 +1426,7 @@ export class RoadNetwork {
       tier: raw.tier,
       kind: raw.kind,
       name: raw.name,
+      earth: raw.earth,
       closed: raw.closed,
       step: K.step,
       halfWidth: raw.halfWidth ?? K.halfWidth,
@@ -1093,6 +1446,10 @@ export class RoadNetwork {
       areaId: raw.areaId,
     };
     this.roads.push(road);
+    if (raw.earth) {
+      this.buildEarthProfile(road, raw.endY?.[0]);
+      return;
+    }
     if (raw.tier === 4 && raw.endY) {
       this.buildLocalProfile(road, raw.endY, raw.knots);
       return;
@@ -1458,6 +1815,7 @@ export class RoadNetwork {
     this.shw = new Float32Array(total);
     this.score = new Float32Array(total);
     this.sbridge = new Uint8Array(total);
+    this.searth = new Uint8Array(total);
 
     const temp = new Map<number, number[]>();
     const S = Config.world.chunkSize;
@@ -1479,6 +1837,7 @@ export class RoadNetwork {
         this.seb[s] = emb(r, j);
         this.shw[s] = r.halfWidth;
         this.score[s] = r.halfWidth + r.shoulder;
+        this.searth[s] = r.earth ? 1 : 0;
         this.sbridge[s] = r.bridgeOf[i] >= 0 && r.bridgeOf[i] === r.bridgeOf[j] ? 1 : 0;
 
         const reach = this.score[s] + Math.max(this.sea[s], this.seb[s]) + 2;
@@ -1634,7 +1993,7 @@ export class RoadNetwork {
     if (this.padAt(x, z)) return 1;
     const n = this.nearest(x, z, 0);
     if (!n) return 0;
-    return n.d <= this.shw[n.s] ? 1 : 2;
+    return n.d <= this.shw[n.s] && !this.searth[n.s] ? 1 : 2;
   }
 
   /** Engineering info card data for the road under (x, z), or null (Stage 11 will show this in the UI). */
@@ -1647,7 +2006,7 @@ export class RoadNetwork {
       roadId: r.id,
       name: r.name,
       kind: r.kind,
-      surface: n.d <= this.shw[n.s] ? 1 : 2,
+      surface: n.d <= this.shw[n.s] && !r.earth ? 1 : 2,
       widthM: r.halfWidth * 2,
       lanes: r.lanes,
       speedKmh: r.speedKmh,
@@ -1698,7 +2057,7 @@ export class RoadNetwork {
       const d = Math.hypot(x - (this.sax[s] + abx * t), z - (this.saz[s] + abz * t));
       const a = 1 - smoothstep(this.shw[s] * 0.9, this.shw[s] + soft, d);
       const b = 1 - smoothstep(this.score[s] * 0.95, this.score[s] + soft, d);
-      if (a > out[0]) out[0] = a;
+      if (a > out[0] && !this.searth[s]) out[0] = a; // an earthen track is not painted as asphalt in the far terrain
       if (b > out[1]) out[1] = b;
     }
   }

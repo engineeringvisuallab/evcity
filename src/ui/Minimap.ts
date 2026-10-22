@@ -123,10 +123,10 @@ export class Minimap {
     // time of day: big, faint, no box: a watermark on the left side of the map
     Object.assign(this.clock.style, {
       position: 'fixed', top: '14px', textAlign: 'right', color: '#ffffff', opacity: '0.62', pointerEvents: 'none', zIndex: '10',
-      textShadow: '0 2px 8px rgba(0,0,0,0.65)', fontFamily: UI_FONT, userSelect: 'none',
+      textShadow: '0 1px 4px rgba(0,0,0,0.65)', fontFamily: UI_FONT, userSelect: 'none',
     } satisfies Partial<CSSStyleDeclaration>);
-    Object.assign(this.clockTime.style, { font: `800 34px/1.1 ${UI_FONT}`, letterSpacing: '1px' });
-    Object.assign(this.clockPeriod.style, { font: `600 15px/1.3 ${UI_FONT}` });
+    Object.assign(this.clockTime.style, { font: `700 13px/1.1 ${UI_FONT}`, letterSpacing: '0.5px' });
+    Object.assign(this.clockPeriod.style, { font: `500 9px/1.3 ${UI_FONT}` });
     this.clock.append(this.clockTime, this.clockPeriod);
     parent.append(this.coords, this.clock);
     this.layoutInfo();

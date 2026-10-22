@@ -13,6 +13,8 @@ export interface RoadSpec {
   kind: RoadKind;
   /** Short code for UI / info cards, e.g. "H1", "L3", "R1". */
   name: string;
+  /** Earthen (kacha) track: dirt surface, no markings, no traffic, no junction pads. */
+  earth?: boolean;
   closed: boolean;
   /** Distance between centreline points (m). */
   step: number;

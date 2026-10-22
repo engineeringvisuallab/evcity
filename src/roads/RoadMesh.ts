@@ -117,7 +117,7 @@ export function buildRoadMesh(roads: RoadNetwork, cx: number, cz: number, lod: n
         info[v * 4] = u;
         info[v * 4 + 1] = sAlong;
         // local streets (tier 4) are flagged for the shader by +100: footpath + kerb instead of gravel shoulder, own markings
-        info[v * 4 + 2] = r.tier === 4 ? r.halfWidth + 100 : r.halfWidth;
+        info[v * 4 + 2] = r.earth ? r.halfWidth + 2000 : r.tier === 4 ? r.halfWidth + 100 : r.halfWidth;
         info[v * 4 + 3] = endD;
         v++;
       }

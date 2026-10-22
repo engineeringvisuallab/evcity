@@ -65,11 +65,12 @@ export class RoadGraph {
     let acc = 0;
     for (const r of this.roads) {
       this.cumLen.push(acc);
-      acc += r.length;
+      if (!r.earth) acc += r.length;
     }
     this.totalLength = acc;
     const p: RoadPoint = { x: 0, z: 0, y: 0, hx: 0, hz: 0 };
     for (let i = 0; i < this.roads.length; i++) {
+      if (this.roads[i].earth) continue;
       for (let s = 0; s <= this.roads[i].length; s += 30) {
         this.at(i, s, 1, 0, p);
         this.spotX.push(p.x);
@@ -169,8 +170,9 @@ export class RoadGraph {
   randomSpot(r: () => number): { roadId: number; s: number } {
     let t = r() * this.totalLength;
     for (let i = 0; i < this.roads.length; i++) {
-      if (t < this.roads[i].length) return { roadId: i, s: t };
-      t -= this.roads[i].length;
+      const len = this.roads[i].earth ? 0 : this.roads[i].length;
+      if (t < len) return { roadId: i, s: t };
+      t -= len;
     }
     const last = this.roads.length - 1;
     return { roadId: last, s: this.roads[last].length * r() };

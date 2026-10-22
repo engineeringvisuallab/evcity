@@ -32,8 +32,10 @@ const FRAG_COLOR = /* glsl */ `
   float s = vRd.y;
   // tier 4 (local streets): ribbon half width + 100, pads 1100 (see RoadMesh); everything else keeps the old coding
   float hwRaw = vRd.z;
-  bool isLocalRd = (hwRaw > 50.0 && hwRaw < 500.0) || hwRaw > 1050.0;
-  float hw = (hwRaw > 50.0 && hwRaw < 500.0) ? hwRaw - 100.0 : hwRaw;
+  // earthen (kacha) tracks: half width + 2000
+  bool isEarth = hwRaw > 1900.0 && hwRaw < 2500.0;
+  bool isLocalRd = !isEarth && ((hwRaw > 50.0 && hwRaw < 500.0) || hwRaw > 1050.0);
+  float hw = isEarth ? hwRaw - 2000.0 : ((hwRaw > 50.0 && hwRaw < 500.0) ? hwRaw - 100.0 : hwRaw);
   float au = abs(u);
   float n = evcRdNoise(vec2(u * 1.7, s * 0.9)) * 0.6 + evcRdNoise(vec2(u * 6.0, s * 3.5)) * 0.4;
   // ONE asphalt colour for every road type AND the junction pads (and the far-LOD terrain road, see TerrainMaterial): only the wear detail differs.
@@ -46,7 +48,21 @@ const FRAG_COLOR = /* glsl */ `
   float fadeEdge = smoothstep(2.0, 7.0, vRd.w);
   float fadeMid = smoothstep(7.0, 16.0, vRd.w);
   float dash = step(fract(s / 9.0), 0.55);
-  if (isLocalRd) {
+  if (isEarth) {
+    // ---- EARTHEN TRACK: packed brown earth, two darker wheel ruts, a thin grassy / dusty middle, ragged edges ----
+    float dn = evcRdNoise(vec2(u * 2.3 + 5.0, s * 0.8)) * 0.5 + evcRdNoise(vec2(u * 9.0, s * 4.0)) * 0.5;
+    vec3 earth = vec3(0.43, 0.33, 0.22) * (0.88 + dn * 0.24);
+    float rut = 1.0 - smoothstep(0.0, 0.26, abs(au - hw * 0.5));
+    earth *= 1.0 - rut * 0.16 * (0.6 + 0.4 * evcRdNoise(vec2(s * 0.5, u * 3.0)));
+    float mid = 1.0 - smoothstep(0.0, hw * 0.28, au);
+    vec3 grass = vec3(0.30, 0.36, 0.14) * (0.85 + dn * 0.3);
+    earth = mix(earth, grass, mid * smoothstep(0.35, 0.65, evcRdNoise(vec2(s * 0.35, 4.0))) * 0.55);
+    // dry puddle / pale dust patches
+    earth = mix(earth, vec3(0.55, 0.46, 0.34), smoothstep(0.66, 0.7, evcRdNoise(vec2(u * 0.5 + 8.0, s * 0.12))) * 0.35);
+    vec3 edgeCol = vec3(0.36, 0.34, 0.18) * (0.85 + dn * 0.3);
+    float ragged = hw + (dn - 0.5) * 0.7;
+    col = mix(earth, edgeCol, smoothstep(ragged - 0.25, ragged + 0.25, au));
+  } else if (isLocalRd) {
     // ---- LOCAL STREET: concrete carriageway, kerb, and lighter concrete footpath with joints ----
     float walk = smoothstep(hw - 0.12, hw + 0.12, au);
     vec3 asph = asphaltBase;
@@ -122,10 +138,10 @@ const FRAG_COLOR = /* glsl */ `
   float seamPos = fract(s / 8.0);
   float seamDist = min(seamPos, 1.0 - seamPos);
   float slabJoint = 1.0 - smoothstep(0.018, 0.055, seamDist);
-  col *= 1.0 - slabJoint * 0.055 * inRoad * fadeMid;
+  col *= 1.0 - slabJoint * 0.055 * inRoad * fadeMid * (isEarth ? 0.0 : 1.0);
 
   // Junction pads: same concrete colour as the road surface (no separate dark / light finish)
-  bool isJunctionPad = hwRaw >= 900.0;
+  bool isJunctionPad = hwRaw >= 900.0 && hwRaw < 1900.0;
   if (isJunctionPad && vRd.z > 0.0) {
     // the roads' wear (wheel paths, patches, cracks) darkens them by ~3 % on average: the flat pad gets the same average
     vec3 junctionConcrete = asphaltBase * 0.97;

@@ -4,6 +4,7 @@ import '@fontsource/noto-sans-bengali/700.css';
 import type { Engine } from './core/Engine';
 import { bn } from './i18n';
 import { Splash } from './ui/Splash';
+import { Watermark } from './ui/Watermark';
 
 const container = document.getElementById('app');
 if (!container) throw new Error('#app element not found');
@@ -19,6 +20,7 @@ splash.introDone
   .then(async (engine) => {
     await engine.warmUp().catch(() => undefined); // compile the vehicle / person shaders behind the splash
     engine.start();
+    new Watermark();
     void splash.finish();
     // Dev only: handy in the browser console, e.g. __engine.camera.position.set(0, 300, 0)
     if (import.meta.env.DEV) (window as unknown as { __engine: Engine }).__engine = engine;
