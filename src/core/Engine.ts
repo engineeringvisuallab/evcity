@@ -16,6 +16,8 @@ import { BirdManager } from '../birds';
 import { AnimalManager } from '../animals';
 import { HelicopterHUD } from '../ui/HelicopterHUD';
 import { BoatHUD } from '../ui/BoatHUD';
+import { OxygenHUD } from '../ui/OxygenHUD';
+import { WaterFX } from '../water';
 import { BridgeBuilder, BridgePhysics, RoadDebug } from '../roads';
 import { CombatSystem } from '../combat';
 import { CityPlan, ZONE_COLOR } from '../city/CityPlan';
@@ -116,6 +118,10 @@ export class Engine {
   /** Settings menu (gear button / Tab): day-night mode, what the screen shows, sound, minimap zoom, key help. */
   private hudSettings = new HudSettings();
   private settingsMenu!: SettingsMenu;
+  /** Waves' effects: under-water look, sea floor plants, fish / jellyfish / turtles, light beams, bubbles, splashes. */
+  private waterFx!: WaterFX;
+  private oxygenHud!: OxygenHUD;
+  private waterFocus = new THREE.Vector3();
   /** Gold: 10,000 at the start; fines for red lights and traffic accidents, a gift for killing a criminal. */
   readonly economy: Economy;
   private redLightPrev = { x: 0, z: 0, ok: false };
@@ -283,6 +289,10 @@ export class Engine {
         bus,
         input: this.input,
         getCameraYaw: () => this.orbit.yaw,
+        getCameraElevation: () => this.orbit.elevation,
+        isOxygenUnlimited: () => this.hudSettings.values.infiniteOxygen,
+        onSplash: (wx, wz, strength) => this.waterFx?.splash(wx, wz, strength),
+        onBlackout: () => this.toast?.show('😵 দম ফুরিয়ে অজ্ঞান হয়ে গিয়েছিলেন — পানির ওপরে তোলা হয়েছে', 3600),
       },
       spawn,
     );
@@ -574,6 +584,18 @@ export class Engine {
     bus.on('camera:locked', ({ locked }) => this.hud.setLocked(locked));
 
     // --- settings menu: everything that used to clutter the screen can be switched on here ---
+    this.waterFx = new WaterFX({
+      root: this.world.root,
+      camera: this.camera,
+      terrain: this.world.terrain,
+      terrainMaterials: this.world.terrainMaterials,
+      environment: this.environment,
+      water: this.world.water,
+      container,
+      pxHeight: () => this.renderer.domElement.height,
+    });
+    this.waterFx.setQuality(this.hudSettings.values.waterQuality);
+    this.oxygenHud = new OxygenHUD(container);
     this.settingsMenu = new SettingsMenu(
       container,
       {
@@ -730,6 +752,7 @@ export class Engine {
     this.tankCannon.update(dt, canShoot && !this.mall.inside && !this.agro.inside);
     this.police.update(dt, this.controlledWorld(this.tmpPoliceFocus), this.time.elapsed);
     this.tour.update(dt);
+    this.orbit.allowUnderwater = this.player.active && !this.player.inVehicle && this.player.swimming;
     this.cameraController.update(dt);
     this.infra.applyCamera(dt, this.camera); // a running plant tour owns the camera
     this.world.update(dt, this.time.elapsed, this.camera, this.cameraController.isFreeFly);
@@ -744,6 +767,17 @@ export class Engine {
     this.trains.update(this.world.playerWorld.x, this.world.playerWorld.z);
     this.updateTrainSignalsUi(this.world.playerWorld.x, this.world.playerWorld.z);
     this.hud.setLoading(this.player.active && !this.player.inVehicle && !this.player.ready);
+    {
+      // water: under-water look, sea floor and its life, bubbles, breath bar (BEFORE the environment applies fog / light)
+      const P = Config.player;
+      this.player.getWorldPosition(this.waterFocus);
+      this.waterFx.update(dt, this.time.elapsed, this.waterFocus);
+      if (this.player.headUnder) this.waterFx.diverBubbles(dt, this.waterFocus.x, this.waterFocus.y + 0.7, this.waterFocus.z, this.player.horizSpeed > 2 ? 1.6 : 1);
+      const unlimited = this.hudSettings.values.infiniteOxygen;
+      this.oxygenHud.update(this.player.oxygen, this.player.headUnder || this.player.oxygen < 0.995, unlimited);
+      const drown = unlimited ? 0 : this.player.oxygen <= 0 ? Math.min(1, this.player.drownTime / P.drownGrace) : this.player.headUnder && this.player.oxygen < 0.18 ? ((0.18 - this.player.oxygen) / 0.18) * 0.35 : 0;
+      this.waterFx.setDrowning(drown);
+    }
     this.environment.update(this.camera, dt);
     {
       const lamp = this.environment.lampOn;
@@ -1075,6 +1109,7 @@ export class Engine {
   /** What stays on the screen (crosshair, Gold chip, weapon chip + stars, area name) follows the settings. */
   private applyHudOptions(): void {
     const v = this.hudSettings.values;
+    if (this.waterFx && this.waterFx.qualityLevel !== v.waterQuality) this.waterFx.setQuality(v.waterQuality);
     this.hud.setOptions({ crosshair: v.crosshair, weapon: v.weapon, areaAlways: v.areaAlways });
     this.economy.setBalanceVisible(v.gold);
   }
@@ -1125,6 +1160,8 @@ export class Engine {
     window.removeEventListener('resize', this.onResize);
     this.tour.dispose();
     this.settingsMenu.dispose();
+    this.waterFx.dispose();
+    this.oxygenHud.dispose();
     this.vehicleMenu.dispose();
     this.parking.dispose();
     this.mall.dispose();

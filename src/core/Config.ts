@@ -352,6 +352,13 @@ export const Config = {
     /** Feet depth under water (m) to start / stop swimming (hysteresis). */
     swimEnter: 1.25,
     swimExit: 0.75,
+    /** Breath under water (seconds), how fast it refills at the surface (per second), seconds at zero before blacking out. */
+    oxygenSeconds: 45,
+    oxygenRefill: 0.7,
+    drownGrace: 5,
+    /** Dive speed (m/s) and with Shift. */
+    diveSpeed: 2.2,
+    diveSprint: 3.4,
     maxSlopeDeg: 55,
     stepHeight: 0.5,
     /** Invisible wall: the player cannot leave the playable area. */

@@ -7,6 +7,7 @@ import { PhysicsConfig } from '../physics/PhysicsConfig';
 import type { TerrainGenerator, TerrainPhysics } from '../terrain';
 import type { FloatingOrigin } from '../world/FloatingOrigin';
 import { clamp } from '../utils/math';
+import { waveHeight, waveScale } from '../water/WaterWaves';
 import { PlayerModel, type PlayerState } from './PlayerModel';
 
 export interface PlayerDeps {
@@ -19,6 +20,14 @@ export interface PlayerDeps {
   input: { isDown(code: string): boolean };
   /** Yaw of the orbit camera: "forward" for the player is where the camera looks. */
   getCameraYaw: () => number;
+  /** Elevation of the orbit camera (rad, + = camera above the player looking down): under water you swim where you look. */
+  getCameraElevation?: () => number;
+  /** true = the diver never runs out of breath (settings). */
+  isOxygenUnlimited?: () => boolean;
+  /** The body hits the water at absolute world (x, z); strength 0..1.5 (splash rings and spray). */
+  onSplash?: (wx: number, wz: number, strength: number) => void;
+  /** Out of breath for too long: the player passed out and was brought up to the surface. */
+  onBlackout?: () => void;
 }
 
 const HALF = Config.player.height / 2; // capsule centre is HALF above the feet
@@ -48,6 +57,14 @@ export class Player {
   swimming = false;
   /** Depth of the feet under the water surface (m), 0 on dry land. */
   waterDepth = 0;
+  /** Breath 0..1 (1 = full). */
+  oxygen = 1;
+  /** The eyes are under the water surface. */
+  headUnder = false;
+  /** Seconds at zero breath. */
+  drownTime = 0;
+  private prevSubmerge = -1;
+  private blackout = false;
   readonly vel = new THREE.Vector3();
   horizSpeed = 0;
   /** Over-the-shoulder camera offset (m), see OrbitCamera. */
@@ -118,8 +135,15 @@ export class Player {
     const feetY = t.y - HALF;
     terrain.sample(wx, wz, this.sc);
     const wet = !Number.isNaN(this.sc.water) && this.sc.h < this.sc.water;
-    const submerge = wet ? this.sc.water - feetY : -1;
+    // the real, wavy surface (sea swell; lakes a little; rivers flat)
+    const surface = wet ? this.sc.water + waveHeight(wx, wz, waveScale(this.sc.water, Math.hypot(this.sc.fx, this.sc.fz), this.sc.water - this.sc.h)) : NaN;
+    const submerge = wet ? surface - feetY : -1;
     this.waterDepth = Math.max(0, submerge);
+    // splash: the body enters the water (jump, fall or a run into it)
+    if (this.prevSubmerge <= 0.1 && submerge > 0.1 && (this.vel.y < -1.5 || this.horizSpeed > 4)) {
+      this.d.onSplash?.(wx, wz, clamp(-this.vel.y / 9 + this.horizSpeed / 22, 0.2, 1.5));
+    }
+    this.prevSubmerge = submerge;
     if (!this.swimming && submerge > P.swimEnter) this.swimming = true;
     else if (this.swimming && submerge < P.swimExit) this.swimming = false;
 
@@ -138,7 +162,16 @@ export class Player {
       wishZ /= wl;
     }
     const sprint = input.isDown('ShiftLeft') || input.isDown('ShiftRight');
-    let speed = this.swimming ? (sprint ? P.swimSprint : P.swim) : sprint ? P.run : P.walk;
+    // breath: the eyes under the surface use it up, the surface fills it again
+    this.headUnder = this.swimming && wet && feetY + P.height * 0.9 < surface - 0.05;
+    const unlimited = this.d.isOxygenUnlimited?.() ?? false;
+    if (this.headUnder && !unlimited) this.oxygen = Math.max(0, this.oxygen - (dt * (sprint ? 1.5 : 1)) / P.oxygenSeconds);
+    else if (!this.headUnder) this.oxygen = Math.min(1, this.oxygen + dt * P.oxygenRefill);
+    if (this.headUnder && this.oxygen <= 0 && !unlimited) {
+      this.drownTime += dt;
+      if (this.drownTime >= P.drownGrace) this.blackout = true;
+    } else this.drownTime = Math.max(0, this.drownTime - dt * 2);
+    let speed = this.swimming ? (sprint ? P.swimSprint : P.swim) * (this.headUnder ? 0.88 : 1) : sprint ? P.run : P.walk;
     if (!this.swimming && submerge > 0.2) speed *= 1 - 0.35 * Math.min(1, submerge / 1.1); // wading is slower
 
     // --- horizontal velocity ---
@@ -150,10 +183,19 @@ export class Player {
     // --- vertical velocity ---
     this.jumpCooldown -= dt;
     if (this.swimming) {
-      // buoyancy: float with the body centre at the water surface; Space = up, C = down
-      let vt = clamp((this.sc.water - HALF - feetY) * 2.5, -2, 2);
-      if (input.isDown('Space')) vt += 2.2;
-      if (input.isDown('KeyC')) vt -= 2.2;
+      // buoyancy: float with the body centre at the water surface. C = dive, Space = up; under water W swims where the camera looks,
+      // and from the surface W + the camera tilted steeply down dives too.
+      const buoy = clamp((surface - HALF - feetY) * 2.5, -2, 2);
+      const diveV = sprint ? P.diveSprint : P.diveSpeed;
+      const rel = (this.d.getCameraElevation?.() ?? 0.35) - 0.35; // 0 = the normal view
+      let vt = buoy;
+      if (input.isDown('KeyC')) vt = -diveV;
+      else if (input.isDown('Space')) vt = buoy + 2.2;
+      else if (iz > 0 && this.headUnder && Math.abs(rel) > 0.12) {
+        vt = -Math.sin(rel) * diveV * 1.15;
+        if (vt > 0) vt = Math.min(vt, Math.max(buoy, 0.6));
+      } else if (iz > 0 && !this.headUnder && rel > 0.4) vt = -diveV * 0.8;
+      else if (this.headUnder) vt = clamp(buoy, -2, 0.9); // gentle rise when you stop
       this.vel.y += (vt - this.vel.y) * (1 - Math.exp(-6 * dt));
     } else {
       this.vel.y = Math.max(this.vel.y + PhysicsConfig.gravity * dt, -45);
@@ -177,6 +219,15 @@ export class Player {
     // invisible wall at the edge of the playable area
     if (Math.abs(nx + origin.origin.x) > P.bound) nx = t.x;
     if (Math.abs(nz + origin.origin.z) > P.bound) nz = t.z;
+    // passed out: brought up to the surface with some breath back
+    if (this.blackout && wet) {
+      ny = surface;
+      this.vel.set(0, 0, 0);
+      this.oxygen = 0.4;
+      this.drownTime = 0;
+      this.blackout = false;
+      this.d.onBlackout?.();
+    }
     // safety net: never end up far below the analytic ground
     const ground = terrain.heightAt(nx + origin.origin.x, nz + origin.origin.z);
     if (ny - HALF < ground - 1.5) {

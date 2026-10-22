@@ -12,6 +12,7 @@ import { ENGINEER_LOOK, PersonModel } from '../people/PersonModel';
 import { BoatModel } from './BoatModel';
 import { BoatWake } from './BoatWake';
 import { BOAT } from './BoatSpec';
+import { waveHeight, waveScale } from '../water/WaterWaves';
 
 /** Helm controls. */
 export interface BoatInput {
@@ -240,6 +241,11 @@ export class Boat implements OrbitTarget {
     }
   }
 
+  /** Height (m) of the waves above the flat water level at absolute (x, z): sea swell, small on lakes, none on rivers. */
+  private waveAt(x: number, z: number, s: { h: number; water: number; fx: number; fz: number }): number {
+    return waveHeight(x, z, waveScale(s.water, Math.hypot(s.fx, s.fz), Math.max(0, s.water - s.h)));
+  }
+
   /** Level the boat again after a capsize, keeping position and heading; sits on the water surface. */
   reset(): void {
     this.forwardVector(this.fwd);
@@ -291,7 +297,7 @@ export class Boat implements OrbitTarget {
     const flowX = centreWet ? this.sc.fx : 0;
     const flowZ = centreWet ? this.sc.fz : 0;
     this.current = Math.hypot(flowX, flowZ);
-    if (centreWet) this.waterY = this.sc.water;
+    if (centreWet) this.waterY = this.sc.water + this.waveAt(t.x + ox, t.z + oz, this.sc);
     this.depth = centreWet ? Math.max(0, this.sc.water - this.sc.h) : 0;
 
     // ---- buoyancy (Archimedes) at every hull point ----
@@ -304,7 +310,7 @@ export class Boat implements OrbitTarget {
       const pz = t.z + this.off.z;
       this.d.terrain.sample(px + ox, pz + oz, this.sp);
       if (Number.isNaN(this.sp.water) || this.sp.h >= this.sp.water) continue; // dry land under this point
-      const sub = this.sp.water - py;
+      const sub = this.sp.water + this.waveAt(px + ox, pz + oz, this.sp) - py; // the hull rides the real waves
       if (sub <= 0) continue;
       wet += clamp(sub / 0.3, 0, 1);
       // velocity of this point (v + w x r) for the damper
@@ -335,7 +341,7 @@ export class Boat implements OrbitTarget {
     // is the propeller in the water?
     this.off.set(BOAT.stern.x, BOAT.propY, BOAT.stern.z).applyQuaternion(this.q);
     this.d.terrain.sample(t.x + this.off.x + ox, t.z + this.off.z + oz, this.sp);
-    const propSub = !Number.isNaN(this.sp.water) && this.sp.h < this.sp.water ? this.sp.water - (t.y + this.off.y) : -1;
+    const propSub = !Number.isNaN(this.sp.water) && this.sp.h < this.sp.water ? this.sp.water + this.waveAt(t.x + this.off.x + ox, t.z + this.off.z + oz, this.sp) - (t.y + this.off.y) : -1;
     this.propWet = propSub > 0.02;
     const propK = clamp(propSub / 0.25, 0, 1);
 

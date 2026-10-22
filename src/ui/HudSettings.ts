@@ -12,6 +12,10 @@ export interface HudOptions {
   muted: boolean;
   /** Minimap zoom: 0 close, 1 medium, 2 whole world. */
   mapZoom: number;
+  /** Water quality: 0 low, 1 medium, 2 high (waves, seabed plants, sea life, light beams, caustics). */
+  waterQuality: number;
+  /** true = the diver never runs out of breath. */
+  infiniteOxygen: boolean;
 }
 
 export const HUD_DEFAULTS: Readonly<HudOptions> = {
@@ -21,6 +25,8 @@ export const HUD_DEFAULTS: Readonly<HudOptions> = {
   areaAlways: false,
   muted: false,
   mapZoom: 1,
+  waterQuality: 1,
+  infiniteOxygen: false,
 };
 
 const KEY = 'evcity.settings';
@@ -35,6 +41,8 @@ export class HudSettings {
       if (raw) {
         const o = JSON.parse(raw) as Partial<Record<keyof HudOptions, unknown>>;
         for (const k of ['crosshair', 'gold', 'weapon', 'areaAlways', 'muted'] as const) if (typeof o[k] === 'boolean') this.values[k] = o[k] as boolean;
+        if (typeof o.infiniteOxygen === 'boolean') this.values.infiniteOxygen = o.infiniteOxygen;
+        if (typeof o.waterQuality === 'number' && o.waterQuality >= 0 && o.waterQuality <= 2) this.values.waterQuality = Math.round(o.waterQuality);
         if (typeof o.mapZoom === 'number' && o.mapZoom >= 0 && o.mapZoom <= 2) this.values.mapZoom = Math.round(o.mapZoom);
       }
     } catch {

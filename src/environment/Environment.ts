@@ -74,12 +74,19 @@ export class Environment {
   private right = new THREE.Vector3();
   private upv = new THREE.Vector3();
   private lightDir = new THREE.Vector3(0.55, 0.62, 0.45).normalize();
+  /** Scene background: follows the horizon colour above water and the water colour below it. */
+  private bg = new THREE.Color(0xbcd4ea);
+  /** UNDERWATER: 0 = camera in the air .. 1 = fully under the surface (set every frame by water/Underwater.ts). */
+  private underAmount = 0;
+  private underDepth = 0;
+  private underColorV = new THREE.Color(0.03, 0.3, 0.36);
+  private underFogV = 0.035;
 
   constructor(scene: THREE.Scene) {
     const horizon = this.horizon;
     const zenith = new THREE.Color(0x3d78c4);
 
-    scene.background = horizon;
+    scene.background = this.bg;
     this.fog = new THREE.FogExp2(horizon, Config.environment.fogDensity);
     scene.fog = this.fog;
 
@@ -149,6 +156,21 @@ export class Environment {
     this.dayNight.setMode(mode);
   }
 
+  /**
+   * The camera is under water: `amount` 0..1 (smooth), `depth` = metres under the surface. Fog, background, sky and light
+   * follow, so the world turns into a blue-green, shorter-sighted, darker place.
+   */
+  setUnderwater(amount: number, depth: number, fogDensity: number): void {
+    this.underAmount = amount;
+    this.underDepth = Math.max(0, depth);
+    this.underFogV = fogDensity;
+  }
+
+  /** The colour of the water body at the camera (the water shader uses it to paint the mirror under the surface). */
+  get underwaterColor(): THREE.Color {
+    return this.underColorV;
+  }
+
   /** Time of day in hours (0 .. 24) for the clock next to the minimap. */
   get hours(): number {
     return this.dayNight.hours;
@@ -172,10 +194,34 @@ export class Environment {
     this.lightDir.copy(s.lightDir);
   }
 
+  /** Mix the underwater look into fog, background, sky and light (nothing happens while the camera is in the air). */
+  private applyUnderwater(): void {
+    const s = this.dayNight.state;
+    const a = this.underAmount;
+    this.bg.copy(this.horizon);
+    // water colour: turquoise near the surface, deep blue below; darker at night
+    const deepK = 1 - Math.exp(-this.underDepth * 0.05);
+    const day = 0.1 + 0.9 * (1 - s.night);
+    this.underColorV.setRGB(0.05 + (0.012 - 0.05) * deepK, 0.42 + (0.07 - 0.42) * deepK, 0.5 + (0.16 - 0.5) * deepK).multiplyScalar(day);
+    if (a <= 0.001) {
+      this.sky.visible = true;
+      this.fog.density = Config.environment.fogDensity;
+      return;
+    }
+    this.fog.color.lerp(this.underColorV, a);
+    this.bg.lerp(this.underColorV, a);
+    this.fog.density = Config.environment.fogDensity + (this.underFogV - Config.environment.fogDensity) * a;
+    this.sky.visible = a < 0.98;
+    const dim = 1 - a * (0.3 + 0.4 * deepK);
+    this.hemi.intensity *= dim;
+    this.sun.intensity *= dim;
+  }
+
   /** Call every frame after the camera moved. */
   update(camera: THREE.Object3D, dt = 0): void {
     this.dayNight.update(dt);
     this.applyState();
+    this.applyUnderwater();
     const c = camera.position;
     this.sky.position.copy(c);
 

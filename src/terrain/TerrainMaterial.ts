@@ -43,6 +43,26 @@ uniform vec3 uGrassMean;
 uniform vec3 uDirtMean;
 uniform vec3 uRockMean;
 uniform vec3 uSandMean;
+uniform float uWaterY;      // water surface height near the player (sea level when there is no lake / river around)
+uniform float uCaustic;     // 0 = no caustics (quality low), 1 = full
+uniform float uCausticTime;
+uniform vec2 uWaterCam;     // camera x,z (local) - lakes only affect the ground close to the camera
+
+// Moving light net on the seabed: sun light focused by the waves (tileable, about 18 m per tile).
+float evcCaustic(vec2 uv, float t) {
+  vec2 p = mod(uv * 0.35, 6.2831853) - 250.0;
+  vec2 i = p;
+  float c = 1.0;
+  float inten = 0.005;
+  for (int n = 0; n < 4; n++) {
+    float tt = t * (1.0 - (3.5 / float(n + 1)));
+    i = p + vec2(cos(tt - i.x) + sin(tt + i.y), sin(tt - i.y) + cos(tt + i.x));
+    c += 1.0 / length(vec2(p.x / (sin(i.x + tt) / inten), p.y / (cos(i.y + tt) / inten)));
+  }
+  c /= 4.0;
+  c = 1.17 - pow(c, 1.4);
+  return clamp(pow(abs(c), 8.0), 0.0, 1.5);
+}
 
 // Texture DETAIL = texture colour / its average, sampled at two scales (so the tile repeat is not visible).
 vec3 evcDetail(sampler2D t, vec3 mean, vec2 p, float s1, float s2) {
@@ -129,7 +149,19 @@ const FRAG_COLOR = /* glsl */ `
   float snowAmtPre = smoothstep(340.0, 400.0, h + (nLow - 0.5) * 60.0) * (1.0 - smoothstep(0.30, 0.55, slope));
   float sandAmt = 1.0 - smoothstep(1.5, 7.0 + nMid * 3.0, h);
   col = mix(col, sand, sandAmt * (1.0 - rockAmt * 0.6));
-  col = mix(col, wet, clamp(0.5 - h * 0.25, 0.0, 1.0));
+  // SEABED (sea below sea level, lakes / rivers below the water level near the camera): rippled sand, dark algae patches,
+  // fading into blue-green gloom with depth - instead of a plain dark mud.
+  float inW = smoothstep(-0.1, 0.4, uWaterY - h);
+  float lakeGate = abs(uWaterY) < 0.5 ? 1.0 : 1.0 - smoothstep(110.0, 180.0, distance(vWPos.xz, uWaterCam));
+  float seaAmt = max(clamp(0.5 - h * 0.35, 0.0, 1.0), inW * lakeGate * 0.8);
+  float depthW = max(uWaterY - h, 0.0);
+  {
+    float ripple = sin(dot(ap, vec2(0.83, 0.56)) * 2.3 + nMid * 7.0 + nHi * 2.0) * 0.5 + 0.5;
+    vec3 seabed = mix(vec3(0.66, 0.58, 0.40), vec3(0.50, 0.43, 0.30), ripple * 0.6 + nHi * 0.4);
+    seabed = mix(seabed, vec3(0.28, 0.33, 0.24), smoothstep(0.62, 0.80, evcNoise(ap * 0.045 + 9.0)) * 0.7);
+    seabed = mix(seabed, vec3(0.09, 0.2, 0.25), 1.0 - exp(-depthW * 0.045));
+    col = mix(col, seabed, seaAmt * (1.0 - rockAmt * 0.5));
+  }
 
   // REAL TEXTURE DETAIL: grass blades, soil with pebbles, layered rock, rippled sand (fades out with distance: far land stays calm)
   {
@@ -152,6 +184,7 @@ const FRAG_COLOR = /* glsl */ `
     // the wet seabed stays dark and plain
     col = mix(col, col * 0.9, clamp(0.5 - h * 0.25, 0.0, 1.0));
   }
+  float causticAmt = uCaustic * inW * lakeGate * smoothstep(0.0, 0.6, depthW) * (1.0 - smoothstep(2.0, 20.0, depthW));
 
   float snowAmt = smoothstep(340.0, 400.0, h + (nLow - 0.5) * 60.0) * (1.0 - smoothstep(0.30, 0.55, slope));
   col = mix(col, snow, snowAmt);
@@ -161,6 +194,10 @@ const FRAG_COLOR = /* glsl */ `
   col = mix(col, vec3(0.46, 0.47, 0.48) * 0.97 + nHi * 0.025, vRoad.x);
 
   col = pow(col, vec3(2.2));              // authored in sRGB-ish values, shader works in linear
+  if (causticAmt > 0.002) {
+    float cz = evcCaustic(ap, uCausticTime);
+    col *= 1.0 + cz * causticAmt * 2.6 * clamp(nrm.y, 0.0, 1.0);
+  }
   diffuseColor.rgb = col;
 
   if (uDebugLod > 0.5) {
@@ -174,6 +211,10 @@ export class TerrainMaterials {
   /** Absolute world x,z of the floating origin (updated on origin:shift). */
   private uOrigin = { value: new THREE.Vector2() };
   private uDebugLod = { value: 0 };
+  private uWaterY = { value: 0 };
+  private uCaustic = { value: 0 };
+  private uCausticTime = { value: 0 };
+  private uWaterCam = { value: new THREE.Vector2() };
   private wireframe = false;
   private shared: THREE.MeshLambertMaterial[] = [];
   private all = new Set<THREE.MeshLambertMaterial>();
@@ -207,6 +248,14 @@ export class TerrainMaterials {
     for (const m of this.all) m.wireframe = on;
   }
 
+  /** Water the player is near: surface height, caustic strength 0..1, clock, camera local x / z (see water/Underwater.ts). */
+  setWater(waterY: number, caustic: number, time: number, camX: number, camZ: number): void {
+    this.uWaterY.value = waterY;
+    this.uCaustic.value = caustic;
+    this.uCausticTime.value = time * 0.8;
+    this.uWaterCam.value.set(camX, camZ);
+  }
+
   setLodColors(on: boolean): void {
     this.uDebugLod.value = on ? 1 : 0;
   }
@@ -229,6 +278,10 @@ export class TerrainMaterials {
     m.onBeforeCompile = (shader) => {
       shader.uniforms.uOrigin = this.uOrigin;
       shader.uniforms.uDebugLod = this.uDebugLod;
+      shader.uniforms.uWaterY = this.uWaterY;
+      shader.uniforms.uCaustic = this.uCaustic;
+      shader.uniforms.uCausticTime = this.uCausticTime;
+      shader.uniforms.uWaterCam = this.uWaterCam;
       shader.uniforms.uLod = uLod;
       shader.uniforms.uFade = uFade;
       const G = this.ground;
@@ -248,7 +301,7 @@ export class TerrainMaterials {
         .replace('void main() {', 'void main() {\n' + FRAG_FADE)
         .replace('#include <color_fragment>', '#include <color_fragment>\n' + FRAG_COLOR);
     };
-    m.customProgramCacheKey = () => 'evc-terrain-v7b-calm-grass';
+    m.customProgramCacheKey = () => 'evc-terrain-v8-seabed-caustics';
     this.all.add(m);
     return m;
   }

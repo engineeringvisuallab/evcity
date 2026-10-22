@@ -97,6 +97,7 @@ const KEYS: [string, string][] = [
   ['Y  (, .)', 'SWTP / STP ট্যুর চালু (আগের / পরের ধাপ)'],
   ['J · K · L · ;', 'বিমানবন্দর · এগ্রো ইনস্টিটিউট · সাফারি পার্ক · সেনা ক্যাম্পে যাওয়া'],
   ['V · T', 'ফ্রি ক্যামেরা · ক্যামেরার জায়গায় নেমে পড়া'],
+  ['C · Space (পানিতে)', 'ডুব দেওয়া · ওপরে ওঠা (W + ক্যামেরা নিচে দিলেও ডুবে যায়)'],
   ['U · M', 'মিনিম্যাপ জুম · শব্দ বন্ধ/চালু'],
   ['\\', 'দিন-রাত মোড বদল (চক্র → রাত → দিন)'],
   ['Tab', 'এই সেটিংস মেনু খোলা / বন্ধ'],
@@ -115,6 +116,7 @@ export class SettingsMenu {
   private modeNote = document.createElement('div');
   private switches = new Map<string, HTMLButtonElement>();
   private zoomButtons: HTMLButtonElement[] = [];
+  private waterButtons: HTMLButtonElement[] = [];
   private goldValue = document.createElement('span');
   private open_ = false;
   private relock = false;
@@ -188,6 +190,8 @@ export class SettingsMenu {
     const v = this.store.values;
     for (const t of TOGGLES) this.setSwitch(t.key, v[t.key]);
     this.setSwitch('sound', !this.hooks.getMuted());
+    this.setSwitch('oxygen', v.infiniteOxygen);
+    this.waterButtons.forEach((b, i) => b.classList.toggle('on', i === v.waterQuality));
     this.setSwitch('debug', this.hooks.getDebug());
     const z = this.hooks.getMapZoom();
     this.zoomButtons.forEach((b, i) => b.classList.toggle('on', i === z));
@@ -312,6 +316,34 @@ export class SettingsMenu {
       gl.textContent = '🪙 আপনার গোল্ড';
       gold.append(gl, this.goldValue);
       sec.appendChild(gold);
+      panel.appendChild(sec);
+    }
+
+    // --- water ---
+    {
+      const { sec } = this.section('🌊 পানি ও ডুব');
+      const grid = document.createElement('div');
+      grid.className = 'evs-zoom';
+      ['নিচু', 'মাঝারি', 'উঁচু'].forEach((label, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'evs-btn';
+        b.innerHTML = '<span></span><small></small>';
+        (b.children[0] as HTMLElement).textContent = label;
+        (b.children[1] as HTMLElement).textContent = ['কম ঢেউ, কম প্রাণী', 'ঢেউ, প্রবাল, মাছ', 'সব ঢেউ, আলোর রশ্মি, প্রচুর প্রাণী'][i];
+        b.addEventListener('click', () => {
+          this.store.set('waterQuality', i);
+          this.refresh();
+        });
+        this.waterButtons.push(b);
+        grid.appendChild(b);
+      });
+      sec.appendChild(grid);
+      sec.appendChild(this.row('অসীম অক্সিজেন', 'ডুব দিলে দম ফুরাবে না (বন্ধ থাকলে প্রায় ৪৫ সেকেন্ড দম থাকে)', this.makeSwitch('oxygen', () => this.store.set('infiniteOxygen', !this.store.values.infiniteOxygen))));
+      const note = document.createElement('div');
+      note.className = 'evs-note';
+      note.textContent = 'পানিতে নামলে C চেপে বা ক্যামেরা নিচের দিকে করে W চেপে ডুব দিন। Space চেপে ওপরে উঠুন।';
+      sec.appendChild(note);
       panel.appendChild(sec);
     }
 

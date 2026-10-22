@@ -30,6 +30,8 @@ export class OrbitCamera implements CameraMode {
   distance: number = Config.orbit.distance;
   /** 1 = normal; < 1 pulls the camera closer (aiming a gun). */
   aimFactor = 1;
+  /** true while the player swims: the camera may go under the water surface (and look up from below). */
+  allowUnderwater = false;
   private current: number = Config.orbit.distance;
   private minDistance: number = Config.orbit.minDistance;
   private maxDistance: number = Config.orbit.maxDistance;
@@ -65,7 +67,7 @@ export class OrbitCamera implements CameraMode {
     const O = Config.orbit;
     const m = this.input.consumeMouseDelta();
     this.yaw -= m.x * Config.camera.mouseSensitivity;
-    this.elevation = clamp(this.elevation + m.y * Config.camera.mouseSensitivity, O.minElevation, O.maxElevation);
+    this.elevation = clamp(this.elevation + m.y * Config.camera.mouseSensitivity, this.allowUnderwater ? -1.25 : O.minElevation, O.maxElevation);
     const wheel = this.input.consumeWheel();
     if (wheel !== 0) this.distance = clamp(this.distance * Math.exp(wheel * 0.0012), this.minDistance, this.maxDistance);
 
@@ -122,7 +124,7 @@ export class OrbitCamera implements CameraMode {
     const wz = this.camera.position.z + this.origin.origin.z;
     this.terrain.sample(wx, wz, this.sc);
     let minY = this.sc.h + 0.6;
-    if (!Number.isNaN(this.sc.water) && this.sc.h < this.sc.water) minY = Math.max(minY, this.sc.water + 0.35);
+    if (!this.allowUnderwater && !Number.isNaN(this.sc.water) && this.sc.h < this.sc.water) minY = Math.max(minY, this.sc.water + 0.35);
     if (this.camera.position.y < minY) this.camera.position.y = minY;
 
     this.camera.lookAt(this.target);

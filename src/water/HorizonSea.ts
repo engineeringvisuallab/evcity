@@ -31,6 +31,7 @@ export class HorizonSea {
     geo.setAttribute('normal', new THREE.Float32BufferAttribute(new Array(n * 3).fill(0).map((_, i) => (i % 3 === 1 ? 1 : 0)), 3));
     geo.setAttribute('aDepth', new THREE.Float32BufferAttribute(new Array(n).fill(100), 1));
     geo.setAttribute('aFlow', new THREE.Float32BufferAttribute(new Array(n * 2).fill(0), 2));
+    geo.setAttribute('aStep', new THREE.Float32BufferAttribute(new Array(n).fill(100000), 1)); // flat mesh: the waves only shape the shading here
     geo.setIndex(idx);
     this.mesh = new THREE.Mesh(geo, material.material);
     this.mesh.name = 'HorizonSea';
