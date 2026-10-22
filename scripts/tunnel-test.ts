@@ -64,9 +64,9 @@ function focus(x: number, z: number): void {
   rp.update(0.25, x, z);
   physics.step();
 }
-const ray = (ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, len: number): { t: number } | null => {
+const ray = (ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, len: number): { t: number; c?: any } | null => {
   const h = physics.world.castRay(new R.Ray({ x: ox, y: oy, z: oz }, { x: dx, y: dy, z: dz }), len, false);
-  return h ? { t: h.timeOfImpact } : null;
+  return h ? { t: h.timeOfImpact, c: h.collider } : null;
 };
 
 for (const L of segs) {
@@ -91,7 +91,7 @@ for (const L of segs) {
         const hit = ray(f.x + wx * lat, f.y - D.ballast + h, f.z + wz * lat, dx, dy, dz, len - 0.05);
         if (hit) {
           blocked++;
-          if (!firstBlock) firstBlock = `s=${s.toFixed(0)} lat=${lat} h=${h} hit at ${hit.t.toFixed(2)} m`;
+          if (!firstBlock) { const c = hit.c; const tr = c.translation(); const he = c.halfExtents?.(); firstBlock = `s=${s.toFixed(0)} lat=${lat} h=${h} hit at ${hit.t.toFixed(2)} m shape=${c.shape.type} pos=(${(tr.x + origin.origin.x).toFixed(1)},${tr.y.toFixed(1)},${(tr.z + origin.origin.z).toFixed(1)}) half=${he ? [he.x, he.y, he.z].map((v: number) => v.toFixed(1)).join(',') : '-'}`; }
         }
       }
     }
@@ -102,6 +102,9 @@ for (const L of segs) {
       if (!hit || Math.abs(f.y + 2.5 - hit.t - (f.y - D.ballast)) > (inside ? 0.15 : 0.5)) { floorOff++; console.log("  floor s", (s - L.s0).toFixed(1), (s - L.s1).toFixed(1), hit ? (f.y + 2.5 - hit.t - (f.y - D.ballast)).toFixed(2) : "none"); }
     }
     if (!inside || s < L.s0 + 4 || s > L.s1 - 4) continue;
+    // the player's ground safety-net must know it is inside
+    if (inside && s >= L.s0 + 2 && s <= L.s1 - 2 && !holes.contains(f.x, f.y + 1, f.z)) { fail(`${name}: holes.contains false inside at s=${s.toFixed(0)}`); }
+    if (inside && s >= L.s0 + 2 && s <= L.s1 - 2 && holes.contains(f.x, f.y + 40, f.z) && f.gnd - f.y > 60) { fail(`${name}: holes.contains true 40 m up on the hill`); }
     // 3. walls both sides and a closed roof
     for (const sg of [-1, 1]) {
       const hit = ray(f.x, f.y + 2, f.z, wx * sg, 0, wz * sg, 9);

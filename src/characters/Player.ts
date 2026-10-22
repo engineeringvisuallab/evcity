@@ -20,6 +20,8 @@ export interface PlayerDeps {
   input: { isDown(code: string): boolean };
   /** Yaw of the orbit camera: "forward" for the player is where the camera looks. */
   getCameraYaw: () => number;
+  /** True when the point (world metres) is inside a railway tunnel / box: the terrain above it is a hill, not the floor. */
+  inTunnel?: (x: number, y: number, z: number) => boolean;
   /** Elevation of the orbit camera (rad, + = camera above the player looking down): under water you swim where you look. */
   getCameraElevation?: () => number;
   /** true = the diver never runs out of breath (settings). */
@@ -230,7 +232,7 @@ export class Player {
     }
     // safety net: never end up far below the analytic ground
     const ground = terrain.heightAt(nx + origin.origin.x, nz + origin.origin.z);
-    if (ny - HALF < ground - 1.5) {
+    if (ny - HALF < ground - 1.5 && !this.d.inTunnel?.(nx + origin.origin.x, ny - HALF + 1, nz + origin.origin.z)) {
       ny = ground + HALF + 0.1;
       this.vel.y = 0;
     }

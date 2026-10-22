@@ -305,6 +305,7 @@ export class Engine {
         bus,
         input: this.input,
         getCameraYaw: () => this.orbit.yaw,
+        inTunnel: (x, y, z) => this.world.tunnelHoles.contains(x, y, z),
         getCameraElevation: () => this.orbit.elevation,
         isOxygenUnlimited: () => this.hudSettings.values.infiniteOxygen,
         onSplash: (wx, wz, strength) => this.waterFx?.splash(wx, wz, strength),

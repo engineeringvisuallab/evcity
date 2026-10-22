@@ -27,6 +27,8 @@ export class WorldManager {
   readonly treePhysics: TreePhysics;
   /** Same terrain function the workers use. Lets the main thread ask "how high is the ground at x,z?". */
   readonly terrain = new TerrainGenerator(this.seed.value);
+  /** Where the railway tunnels / boxes are (terrain holes; also tells the player it is inside one). */
+  readonly tunnelHoles = new TunnelHoles(this.terrain.rail);
 
   /** Player/camera position in true world coordinates (updated every frame). */
   readonly playerWorld = new THREE.Vector3();
@@ -56,7 +58,7 @@ export class WorldManager {
     this.loader = new ChunkLoader(this.seed.value);
     this.chunks = new ChunkManager(this.root, this.loader, bus, new TerrainChunkBuilder(this.terrainMaterials), new WaterChunkBuilder(this.water), new RoadChunkBuilder(this.roadMaterial), new RailChunkBuilder(this.railMaterial), new PortChunkBuilder(this.portMaterial), new TreeChunkBuilder(this.treeAssets, this.rockAssets));
     this.grass = new GrassManager(this.root, this.loader, this.grassAssets);
-    this.terrainPhysics = new TerrainPhysics(physics, this.origin, bus, new TunnelHoles(this.terrain.rail));
+    this.terrainPhysics = new TerrainPhysics(physics, this.origin, bus, this.tunnelHoles);
     this.treePhysics = new TreePhysics(physics, this.origin, bus);
   }
 

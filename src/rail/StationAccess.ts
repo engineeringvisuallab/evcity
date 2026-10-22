@@ -21,6 +21,8 @@ export const ACCESS = {
   maxSteps: 150,
   /** Platform top above `RailStation.level` (collider top; the picture is 0.02 lower). */
   platformTop: 0.96,
+  /** Flat landing between the platform edge and the first step (m): it carries the stair over the viaduct parapet (the parapet is 1.0 m high and stands 0.3 m inside the deck edge, a step 0.6 m under the platform top would walk into it). */
+  landing: 1.9,
   wall: 0.12,
   wallH: 1.1,
   /** Positions along the platform (m from its middle, + = away from the line end) between two canopy posts (posts stand at -55 + 15 k). */
@@ -91,7 +93,8 @@ export function stationAccesses(rail: RailNetwork, groundAt: (x: number, z: numb
       for (const side of [1, -1] as const) {
         const ox = wx * side, oz = wz * side;
         for (const q of ACCESS.along) {
-          const a = buildOne(rail, groundAt, st.id, ai, side, p.x + tx * q, p.z + tz * q, tx, tz, ox, oz, T, platLat, edgeLat);
+          // p is on the TRACK centre line: the base point of the stair lies on the PLATFORM centre line, platLat to the side
+          const a = buildOne(rail, groundAt, st.id, ai, side, p.x + tx * q + ox * platLat, p.z + tz * q + oz * platLat, tx, tz, ox, oz, T, platLat, edgeLat);
           if (a) {
             out.push(a);
             break;
@@ -114,7 +117,18 @@ function buildOne(
   const boxes: AccessBox[] = [];
   const steps: { x: number; y: number; z: number }[] = [];
   const { rise, run, width, wall, wallH } = ACCESS;
-  let lat = edgeLat;
+  // landing: a solid slab at platform height from the platform edge over the parapet to the first step
+  {
+    const c = at(edgeLat + ACCESS.landing / 2 - 0.2);
+    const bottom = T - 0.8;
+    boxes.push({ kind: 'tread', x: c.x, y: (T + bottom) / 2, z: c.z, ax: ox, az: oz, hl: ACCESS.landing / 2 + 0.1, hh: (T - bottom) / 2, hw: width / 2, solid: true });
+    for (const s of [-1, 1]) {
+      const off = s * (width / 2 + wall / 2);
+      boxes.push({ kind: 'wall', x: c.x + tx * off, y: (T + wallH + bottom) / 2, z: c.z + tz * off, ax: ox, az: oz, hl: ACCESS.landing / 2 + 0.1, hh: (T + wallH - bottom) / 2, hw: wall / 2, solid: true });
+    }
+  }
+  const stairLat = edgeLat + ACCESS.landing;
+  let lat = stairLat;
   let last = { x: 0, y: T, z: 0 };
   let done = false;
   for (let k = 1; k <= ACCESS.maxSteps; k++) {
@@ -142,7 +156,7 @@ function buildOne(
   if (!done && steps.length === 0) return null;
   const topP = at(platLat);
   // gate shelter at the head of the stair: roof on four posts over the first 5 m, blue sign on the platform side
-  const rl = edgeLat + 2.0; // roof centre (lateral)
+  const rl = stairLat + 0.1; // roof centre (lateral): over the landing and the first steps
   const rc = at(rl);
   const hwRoof = width / 2 + 0.5;
   boxes.push({ kind: 'roof', x: rc.x, y: T + 3.3, z: rc.z, ax: ox, az: oz, hl: 2.6, hh: 0.12, hw: hwRoof, solid: false });

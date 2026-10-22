@@ -243,6 +243,17 @@ export class TunnelHoles {
     return this.boxes.length === 0;
   }
 
+  /** Is the point (world metres) inside a tunnel / box (between the floor and the roof, over the full lining width)? */
+  contains(x: number, y: number, z: number): boolean {
+    for (const b of this.near(x - 1, z - 1, x + 1, z + 1)) {
+      const rx = x - b.x, rz = z - b.z;
+      const u = rx * b.dx + rz * b.dz;
+      const w = -rx * b.dz + rz * b.dx;
+      if (Math.abs(u) <= b.hl + 0.5 && Math.abs(w) <= b.hw && y >= b.yLo && y <= b.yHi + 0.3) return true;
+    }
+    return false;
+  }
+
   /** Boxes that may touch the rectangle [x0, x1] x [z0, z1] (world metres). */
   near(x0: number, z0: number, x1: number, z1: number): HoleBox[] {
     const seen = new Set<number>();
