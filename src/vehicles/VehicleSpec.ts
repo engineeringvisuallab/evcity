@@ -12,7 +12,7 @@ export interface EngineSpec {
   launchRpm?: number;
 }
 
-export type VehicleId = 'sedan' | 'jeep' | 'hypercar' | 'evhypar' | 'bike' | 'evbike' | 'rickshaw' | 'auto' | 'bus' | 'tank';
+export type VehicleId = 'sedan' | 'jeep' | 'hypercar' | 'evhypar' | 'bike' | 'evbike' | 'rickshaw' | 'auto' | 'bus' | 'tank' | 'tractor' | 'combine' | 'pickup';
 
 /** One wheel of the raycast vehicle. `drive` = share of the drive force, `side` = track side for skid steering (+1 left, -1 right). */
 export interface WheelDef {
@@ -660,7 +660,110 @@ export const EVHYPAR: VehicleSpec = finish({
   camera: { dist: 10, min: 5.5, max: 30 },
 }, 0.2, 0.7, [0.7], undefined, 1.2);
 
-export const SPECS: Record<VehicleId, VehicleSpec> = { sedan: SEDAN, jeep: JEEP, hypercar: HYPERCAR, evhypar: EVHYPAR, bike: BIKE, evbike: EVBIKE, rickshaw: RICKSHAW, auto: AUTO, bus: BUS, tank: TANK };
+
+/**
+ * FARM VEHICLES (never in AI traffic: FarmCrew puts a farmer at the wheel and drives them in the crop fields; you can take them over).
+ * Tractor: ~34 km/h, big knobby tyres, all-wheel drive, open seat. Combine harvester: ~27 km/h, mostly front-wheel drive, heavy. Pickup: the farm's light truck.
+ */
+export const TRACTOR: VehicleSpec = finish({
+  id: 'tractor',
+  nameBn: 'ট্রাক্টর',
+  mass: 2600,
+  half: { x: 0.95, y: 0.55, z: 1.9 },
+  comY: -0.45,
+  wheelRadius: 0.55,
+  wheelWidth: 0.36,
+  trackHalf: 0.95,
+  wheelbaseHalf: 1.3,
+  connY: -0.05,
+  susp: { rest: 0.5, travel: 0.35, stiffness: 20, compression: 2.2, relaxation: 2.8 },
+  frictionSlip: 12,
+  sideFriction: 1,
+  drive: 'awd',
+  frontShare: 0.35,
+  engine: {
+    idleRpm: 800,
+    redlineRpm: 2600,
+    torque: [[800, 260], [1400, 380], [2000, 400], [2600, 300]],
+    engineBraking: 90,
+  },
+  gears: [6.5, 4.2, 2.8, 1.9],
+  reverse: 6,
+  finalDrive: 8,
+  efficiency: 0.88,
+  brakeMax: 105,
+  maxSteer: 0.7,
+  cd: 0.8,
+  frontalArea: 3.4,
+  use: USE.none(),
+  look: { kind: 'tractor', body: 0x2e7d32, accent: 0xf2b705 },
+  seat: { x: 0, y: 0, z: -0.3, scale: 1 },
+  seats: [],
+  pax: [0, 0],
+  enclosed: false,
+  windowY: 0,
+  bulletsToKill: 25,
+  fragile: 0.4,
+  camera: { dist: 10, min: 6, max: 30 },
+}, 0.55, 1.5, [], undefined, 2.2);
+
+export const COMBINE: VehicleSpec = finish({
+  id: 'combine',
+  nameBn: 'কম্বাইন হারভেস্টার',
+  mass: 6500,
+  half: { x: 1.45, y: 0.9, z: 3.3 },
+  comY: -0.7,
+  wheelRadius: 0.75,
+  wheelWidth: 0.5,
+  trackHalf: 1.45,
+  wheelbaseHalf: 2.0,
+  connY: -0.05,
+  susp: { rest: 0.6, travel: 0.4, stiffness: 22, compression: 2.4, relaxation: 3.0 },
+  frictionSlip: 11,
+  sideFriction: 1,
+  drive: 'awd',
+  frontShare: 0.9,
+  engine: {
+    idleRpm: 800,
+    redlineRpm: 2400,
+    torque: [[800, 520], [1400, 760], [2000, 800], [2400, 640]],
+    engineBraking: 120,
+  },
+  gears: [9, 5.8, 3.6],
+  reverse: 8,
+  finalDrive: 7,
+  efficiency: 0.88,
+  brakeMax: 270,
+  maxSteer: 0.55,
+  cd: 0.9,
+  frontalArea: 7,
+  use: USE.none(),
+  look: { kind: 'combine', body: 0xc62828, accent: 0xf2b705 },
+  seat: { x: -0.2, y: 0, z: 1.55, scale: 1 },
+  seats: [],
+  pax: [0, 0],
+  enclosed: true,
+  windowY: 0,
+  bulletsToKill: 40,
+  fragile: 0.3,
+  camera: { dist: 14, min: 8, max: 36 },
+}, 0.6, 2.7, [], undefined, 3.2);
+
+export const PICKUP: VehicleSpec = {
+  ...JEEP,
+  id: 'pickup',
+  nameBn: 'পিকআপ (খামারের গাড়ি)',
+  mass: 1900,
+  half: { x: 0.95, y: 0.42, z: 2.5 },
+  wheelbaseHalf: 1.6,
+  use: USE.none(),
+  look: { kind: 'pickup', body: 0xf4f1ea, accent: 0x1b5e20 },
+  seats: [{ x: 0.45, y: 0.02, z: 0.2, scale: 0.95 }],
+  pax: [0, 1],
+};
+
+// the farm vehicles come LAST: scripts/vehicle-test.ts places every vehicle by its index in this object, so the older ones must keep their index
+export const SPECS: Record<VehicleId, VehicleSpec> = { sedan: SEDAN, jeep: JEEP, hypercar: HYPERCAR, evhypar: EVHYPAR, bike: BIKE, evbike: EVBIKE, rickshaw: RICKSHAW, auto: AUTO, bus: BUS, tank: TANK, tractor: TRACTOR, combine: COMBINE, pickup: PICKUP };
 
 
 /**
@@ -678,6 +781,9 @@ export const SPEED_BOOST: Record<VehicleId, number> = {
   auto: 2,
   bus: 2,
   tank: 2,
+  tractor: 1,
+  combine: 1,
+  pickup: 1,
 };
 
 /**

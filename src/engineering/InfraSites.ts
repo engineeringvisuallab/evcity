@@ -9,7 +9,7 @@ const smoothstep = (a: number, b: number, x: number): number => {
 };
 
 export interface InfraPlacement {
-  id: 'swtp' | 'stp' | 'thermal' | 'grid' | 'mech';
+  id: 'swtp' | 'stp' | 'thermal' | 'grid' | 'mech' | 'dam' | 'chem';
   nameBn: string;
   /** site origin (the local (0,0) of the plant) and yaw: local +x maps to world (cos yaw, -sin yaw) */
   x: number;
@@ -44,6 +44,13 @@ export const INFRA_PLACEMENTS: InfraPlacement[] = [
   // Mechanical works: inside the engineering area 'eng-mech-works' (x 1450..2050, z 200..650). A public road runs N-S through the east part of the
   // area (x ~1950) and hills rise in the south, so the pad sits in the flat north-west part; the plant's gate faces the road (east side).
   { id: 'mech', nameBn: 'Mechanical Works', x: 1690, z: 332, yaw: 0, rect: { x0: -205, x1: 175, z0: -107, z1: 100 }, riverSide: 'none', color: '#8b5cf6', mark: 'M', deep: 1.5, blend: 26, riverBlend: 26, lift: 0 },
+  // Dam & hydropower station: stands inside the engineering area 'eng-dam' (x 3150..3750, z 350..850), on dry ground south of its natural lake.
+  // Pad 300 x 210 m (centre 3450, 724). The reservoir (rock-walled) is on the north side (local -z), the river and the entrance (south edge) on the +z side.
+  // The ground there is rough, so the grading skirt is long (60 m) to blend the cut and fill back into the hills.
+  { id: 'dam', nameBn: 'Dam & Hydropower Station', x: 3450, z: 724, yaw: 0, rect: { x0: -150, x1: 150, z0: -105, z1: 105 }, riverSide: 'none', color: '#38bdf8', mark: 'D', deep: 7, blend: 60, riverBlend: 60, lift: 0 },
+  // Chemical process plant: inside the engineering area 'eng-chemical' (x 2100..2700, z 2050..2450). Main roads cut that area in several places, so the pad sits in the
+  // free, flat middle-east part (>= 12 m from every main road, ~3 m of relief); the gate faces south towards the nearest road.
+  { id: 'chem', nameBn: 'Chemical Process Plant', x: 2539, z: 2242, yaw: 0, rect: { x0: -133, x1: 133, z0: -75, z1: 75 }, riverSide: 'none', color: '#ff9100', mark: 'C', deep: 1.5, blend: 24, riverBlend: 24, lift: 0 },
 ];
 
 /** Floor is cut slightly BELOW the plate so the plate never z-fights with the ground. */

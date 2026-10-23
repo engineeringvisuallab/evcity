@@ -82,6 +82,9 @@ function mapSize(kind: string): { len?: number; wide?: number } {
     case 'auto': return { len: 0.8, wide: 0.8 };
     case 'bus': return { len: 1.8, wide: 1.1 };
     case 'tank': return { len: 1.4, wide: 1.4 };
+    case 'tractor': return { len: 1.2, wide: 1.0 };
+    case 'combine': return { len: 1.7, wide: 1.3 };
+    case 'pickup': return { len: 1.3, wide: 0.9 };
     default: return {};
   }
 }
@@ -458,9 +461,6 @@ export class Engine {
       onFoot: () => this.player.active && !this.player.inVehicle && !this.cameraController.isFreeFly && !this.helis.pilot && !this.boats.skipper,
     });
 
-    // --- Crop fields (table FarmFields.ts): crops, tractors, workers streamed around the player ---
-    this.farm = new FarmManager({ root: this.world.root, terrain: this.world.terrain, playerWorld: (out) => this.player.getWorldPosition(out) });
-
     this.debug = new DebugPanel(container);
     this.hud = new HUD(container);
     this.toast = new Toast(container);
@@ -513,6 +513,8 @@ export class Engine {
     const graph = new RoadGraph(roads);
     this.people = new PeopleManager({ scene: this.scene, terrain: this.world.terrain, origin: this.world.origin, graph, vehicles: this.vehicles, player: this.player });
     this.people.setStations(this.rail, this.trains); // people walk to the stations, climb the stairs and board / leave the trains
+    // --- Crop fields (table FarmFields.ts): crops, trees and props + REAL farmers (people) and machines (vehicles) at work, streamed around the player ---
+    this.farm = new FarmManager({ root: this.world.root, terrain: this.world.terrain, playerWorld: (out) => this.player.getWorldPosition(out), people: this.people, vehicles: this.vehicles });
     this.busStops = new BusStops({ scene: this.scene, origin: this.world.origin, terrain: this.world.terrain, graph, sites: this.world.terrain.sites });
     this.trafficSignals = new TrafficSignals(graph);
     this.trafficLights = new TrafficLightLayer(this.world.root, this.trafficSignals);
@@ -582,6 +584,7 @@ export class Engine {
         { id: 'bike', icon: '🏍️' }, { id: 'evbike', icon: '🛵' }, { id: 'rickshaw', icon: '🚲' }, { id: 'auto', icon: '🛺' },
         { id: 'sedan', icon: '🚗' }, { id: 'jeep', icon: '🚙' }, { id: 'hypercar', icon: '🏎️' }, { id: 'evhypar', icon: '🚘' },
         { id: 'bus', icon: '🚌' }, { id: 'tank', icon: '🪖' },
+        { id: 'tractor', icon: '🚜' }, { id: 'combine', icon: '🌾' }, { id: 'pickup', icon: '🛻' },
       ].map((v) => ({ ...v, label: SPECS[v.id as keyof typeof SPECS].nameBn })).concat([{ id: 'heli', icon: '🚁', label: HELI.nameBn }]),
       (id) => this.summonVehicle(id),
       this.renderer.domElement,

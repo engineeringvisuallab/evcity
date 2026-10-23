@@ -10,8 +10,8 @@ function ease(t: number): number {
   return t * t * (3 - 2 * t);
 }
 /** Rough speaking time of a Bangla line (seconds). */
-export function estimateSpeech(text: string): number {
-  return Math.max(6, 2 + text.length * 0.085);
+export function estimateSpeech(text: string, lang: 'bn' | 'en' = 'bn'): number {
+  return Math.max(6, 2 + text.length * (lang === 'en' ? 0.068 : 0.085));
 }
 
 /**
@@ -172,12 +172,12 @@ export class InfraTour {
   private async narrate(stop: TourStop, token: number): Promise<void> {
     const t0 = performance.now();
     try {
-      await this.narrator.speakText(stop.text, stop.voiceId);
+      await this.narrator.speakText(stop.text, stop.voiceId, this.infra.narrationLang ?? 'bn');
     } catch {
       /* subtitles only */
     }
     if (token !== this.token) return;
-    const left = estimateSpeech(stop.text) * 1000 - (performance.now() - t0);
+    const left = estimateSpeech(stop.text, this.infra.narrationLang ?? 'bn') * 1000 - (performance.now() - t0);
     this.timer = window.setTimeout(() => {
       if (token === this.token && this.state === 'playing') this.next();
     }, Math.max(1500, left));

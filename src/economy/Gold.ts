@@ -33,6 +33,9 @@ export const GoldConfig = {
     hypercar: 2.0,
     evhypar: 2.0,
     tank: 2.5,
+    tractor: 1.3,
+    pickup: 1.2,
+    combine: 2.0,
   } as Record<VehicleId, number>,
   /** A crash counts as an accident with a vehicle from this speed change (m/s, ~18 km/h); gentler bumps cost nothing. */
   accidentMinDv: 5,

@@ -24,6 +24,13 @@ export interface Appearance {
 
 export type PersonMode = 'idle' | 'walk' | 'run';
 
+/**
+ * Work poses (farm fields): an overlay on the idle / walk animation, driven by PersonModel.setWork.
+ * plant = bent over planting seedlings, weed = bent over scratching the soil, cut = bent, sickle in the right hand,
+ * hoe = digging / chopping, pick = reaching up to fruit, carry = basket on the head, spray = knapsack sprayer, sow = broadcasting seed, tend = spade.
+ */
+export type WorkPose = 'plant' | 'weed' | 'cut' | 'hoe' | 'pick' | 'carry' | 'spray' | 'sow' | 'tend';
+
 const SKIN = [0xc68e6b, 0xb87a56, 0xa86f4c, 0xd2a07c, 0x8d5a3c, 0x9a6642];
 const HAIR = [0x111111, 0x1b1410, 0x2a1d14, 0x3a2a1c];
 const SHIRT = [0xf1f1ec, 0x3b6ea8, 0x2f7d5b, 0x8c2f3a, 0x6b6f76, 0xd98b2b, 0x4a4a9a, 0xb5a642, 0x2b2f36, 0xc9c0a8];
@@ -164,6 +171,8 @@ export class PersonModel {
   private gun: THREE.Group | null = null;
   private aiming = false;
   private fall = 0; // 0 = standing ... 1 = lying on the ground
+  private work: WorkPose | null = null;
+  private workT = Math.random() * 6;
   private fallTarget = 0;
 
   constructor(readonly look: Appearance) {
@@ -199,6 +208,15 @@ export class PersonModel {
   /** Arm raised, pointing the gun forward. */
   setAiming(on: boolean): void {
     this.aiming = on;
+  }
+
+  /** A work pose (farm work) on top of the walk / idle animation; null = normal again. */
+  setWork(w: WorkPose | null): void {
+    this.work = w;
+  }
+
+  get working(): WorkPose | null {
+    return this.work;
   }
 
   /** Fall down (true) / stand up (false). Animated in update(). */
@@ -297,6 +315,8 @@ export class PersonModel {
       ease(this.foreL, ELBOW_REST);
       ease(this.foreR, this.gun ? -0.05 : ELBOW_REST);
     }
+    if (this.work) this.applyWork(dt);
+    else if (Math.abs(this.pivot.rotation.x) > 0.002) ease(this.pivot, 0);
     if (this.aiming) {
       ease(this.armR, -1.5);
       ease(this.armL, -1.25);
@@ -305,5 +325,53 @@ export class PersonModel {
     } else if (this.gun && mode === 'idle') {
       ease(this.armR, -0.35); // gun held low
     }
+  }
+
+  /** Farm work: tilts the body about the hips and moves the arms / legs of the current WorkPose (angles relative to the tipped body). */
+  private applyWork(dt: number): void {
+    const w = this.work!;
+    this.workT += dt;
+    const t = this.workT;
+    const k = Math.min(1, 9 * dt);
+    const to = (g: THREE.Object3D, v: number) => {
+      g.rotation.x += (v - g.rotation.x) * k;
+    };
+    let lean = 0;
+    let aL = 0;
+    let aR = 0;
+    let fL = ELBOW_REST;
+    let fR = ELBOW_REST;
+    let legs = false; // bent poses: legs stay upright (counter the lean) and stand still
+    switch (w) {
+      case 'plant':
+        lean = 1.12 + Math.sin(t * 1.3) * 0.06; aL = -0.35 - Math.sin(t * 2.4) * 0.4; aR = -0.35 + Math.sin(t * 2.4) * 0.4; fL = fR = -0.25; legs = true; break;
+      case 'weed':
+        lean = 1.0 + Math.sin(t * 1.1) * 0.05; aL = -0.4 + Math.sin(t * 3) * 0.3; aR = -0.4 - Math.sin(t * 3) * 0.3; fL = fR = -0.2; legs = true; break;
+      case 'cut':
+        lean = 0.95 + Math.sin(t * 1.6) * 0.07; aL = -0.85; fL = -0.5; aR = -0.45 + Math.sin(t * 3.2) * 0.65; fR = -0.9 + Math.sin(t * 3.2) * 0.35; legs = true; break;
+      case 'hoe':
+        lean = 0.35 + Math.max(0, Math.sin(t * 2.6)) * 0.35; aL = aR = -1.75 + Math.sin(t * 2.6) * 1.05; fL = fR = -0.35; break;
+      case 'pick':
+        lean = -0.06; aR = -2.55 + Math.sin(t * 1.7) * 0.3; fR = -0.25; aL = -0.7; fL = -1.3; break;
+      case 'carry':
+        aL = aR = -2.75; fL = fR = -1.35; break;
+      case 'spray':
+        lean = 0.1; aR = -1.35 + Math.sin(t * 3.1) * 0.25; fR = -0.3; aL = -0.2; break;
+      case 'sow':
+        lean = 0.18; aR = -0.5 + Math.sin(t * 2.2) * 0.95; fR = -0.55; aL = -0.35; fL = -0.9; break;
+      case 'tend':
+        lean = 0.3; aL = aR = -0.85 + Math.sin(t * 1.4) * 0.25; fL = fR = -0.55; break;
+    }
+    to(this.pivot, lean);
+    if (legs) {
+      to(this.legL, -lean);
+      to(this.legR, -lean);
+      to(this.shinL, 0);
+      to(this.shinR, 0);
+    }
+    to(this.armL, aL - lean);
+    to(this.armR, aR - lean);
+    to(this.foreL, fL);
+    to(this.foreR, fR);
   }
 }

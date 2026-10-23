@@ -35,6 +35,8 @@ export const PIPE_COLORS = {
   feedwater: 0x3a86c8,
   cooling: 0x2ec4b6,
   flue: 0x6b6b6b,
+  // hydropower station
+  penstock: 0x5f7f9f,
 } as const;
 export type PipeKind = keyof typeof PIPE_COLORS;
 

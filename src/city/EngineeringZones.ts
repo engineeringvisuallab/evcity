@@ -98,6 +98,7 @@ export const ENGINEERING_AREAS: readonly EngineeringArea[] = [
  */
 export const ENGINEERING_GATES: Readonly<Record<string, { side: 'N' | 'S' | 'E' | 'W'; at: number; width: number }>> = {
   'eng-thermal-power': { side: 'S', at: 925, width: 30 },
+  'eng-dam': { side: 'S', at: 3450, width: 30 },
 };
 
 export const ENGINEERING_BY_ID: ReadonlyMap<string, EngineeringArea> = new Map(ENGINEERING_AREAS.map((a) => [a.id, a]));

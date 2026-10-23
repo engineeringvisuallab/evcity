@@ -8,7 +8,7 @@ export type { InfraBuildOptions, SolidShape };
  * No Engine, no Config, no game imports. The game talks to an infrastructure through these types.
  * Units: metres. Local frame of `root`: x east, y up, z south, origin = site centre, ground y = 0.
  */
-export type InfraCategory = 'civil' | 'mechanical' | 'electrical';
+export type InfraCategory = 'civil' | 'mechanical' | 'electrical' | 'chemical';
 
 export interface InfraPart {
   id: string;
@@ -41,13 +41,18 @@ export interface TourStop {
  * The game's VoiceManager already satisfies this (speakText(text) + stop()), so it can be passed in directly.
  * The promise may resolve when speech STARTS or ENDS: the tour also waits an estimated reading time.
  */
+export type NarrationLang = 'bn' | 'en';
+
 export interface Narrator {
-  speakText(text: string, voiceId?: string): Promise<void>;
+  /** `lang` defaults to 'bn'. (The game's VoiceManager also picks the voice from the script of the text, so English text always gets an English voice.) */
+  speakText(text: string, voiceId?: string, lang?: NarrationLang): Promise<void>;
   stop(): void;
 }
 
 export interface Infrastructure {
   readonly id: string;
+  /** Language of the tour text and labels. Default 'bn'. */
+  readonly narrationLang?: NarrationLang;
   readonly nameBn: string;
   readonly category: InfraCategory;
   /** Add this to the scene. Move/rotate the root to place the site in the world. */

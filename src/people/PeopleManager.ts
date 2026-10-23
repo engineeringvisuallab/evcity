@@ -83,7 +83,7 @@ export class PeopleManager {
   /** People who are alive (bodies on the ground do not count). */
   private get aliveCount(): number {
     let n = 0;
-    for (const p of this.onFoot) if (p.role !== 'police' && !p.dead) n++;
+    for (const p of this.onFoot) if (p.role !== 'police' && !p.dead && !p.worker) n++;
     return n;
   }
 
@@ -102,7 +102,7 @@ export class PeopleManager {
   }
 
   /** Put a person on the ground at a world position (thrown out of a car, or freshly spawned). */
-  adopt(p: Person, world: THREE.Vector3, task: 'idle' | 'flee' | 'wander' | 'sidewalk' | 'station'): void {
+  adopt(p: Person, world: THREE.Vector3, task: 'idle' | 'flee' | 'wander' | 'sidewalk' | 'station' | 'work'): void {
     p.vehicle = null;
     p.world.copy(world);
     p.task = task;
@@ -263,6 +263,10 @@ export class PeopleManager {
         break;
       case 'wander':
         this.wander(p, dt);
+        break;
+      case 'work':
+        if (this.workHook) this.workHook(p, dt);
+        else p.task = 'idle';
         break;
       case 'station':
         this.stationWalk(p, dt);
@@ -768,6 +772,8 @@ export class PeopleManager {
 
   /** The player killed a criminal (a 'thug'). Used by the Gold economy (reward). */
   onCriminalKilled: ((p: Person) => void) | null = null;
+  /** Farm workers: called every frame for people whose task is 'work' (FarmCrew moves them and sets the pose). */
+  workHook: ((p: Person, dt: number) => void) | null = null;
 
   /** The player (or anybody) hurts a person. Returns true if the person died. */
   damage(p: Person, amount: number, head: boolean, byPlayer: boolean): boolean {

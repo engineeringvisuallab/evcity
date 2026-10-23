@@ -177,6 +177,9 @@ export class VehicleModel {
       case 'auto': this.auto(); break;
       case 'bus': this.bus(); break;
       case 'tank': this.tank(); break;
+      case 'tractor': this.tractor(); break;
+      case 'combine': this.combine(); break;
+      case 'pickup': this.pickup(); break;
     }
     this.wheelsAndSpare();
   }
@@ -1789,12 +1792,93 @@ export class VehicleModel {
   /** Builds the steering assembly into `g` (the steering group) - and, for a raked bike, `wheelFrame` (level axes, same origin). */
   private frontFork: ((g: THREE.Group, wheelFrame: THREE.Group) => void) | null = null;
 
+  /** Farm tractor (EVCity Agro): long bonnet, open seat under a canopy, big rear mudguards, exhaust stack. Nose = +Z. */
+  private tractor(): void {
+    const spec = this.spec;
+    const paint = this.carPaint(spec.look.body);
+    const trim = this.pbr(spec.look.accent, { metalness: 0.1, roughness: 0.5 });
+    const dark = this.pbr(0x23272b, { roughness: 0.6, metalness: 0.2 });
+    const steel = this.pbr(0x8b9298, { metalness: 0.9, roughness: 0.35 });
+    const seatM = this.mat(0x1c1c1c);
+    const lamp = this.pbr(0xfff3c4, { emissive: 0xffe08a, emissiveIntensity: 0.7, roughness: 0.1, metalness: 0 });
+    this.boxG(0.7, 0.55, 3.2, dark, 0, 0.9, -0.2); // chassis
+    this.boxG(0.95, 0.8, 1.9, paint, 0, 1.15, 1.05, 3); // bonnet
+    this.boxG(0.8, 0.55, 0.06, dark, 0, 1.0, 2.02, 1); // grille
+    for (const sx of [-1, 1]) this.boxG(0.2, 0.15, 0.06, lamp, sx * 0.35, 1.3, 2.02, 4);
+    this.boxG(1.6, 0.35, 0.7, dark, 0, 0.85, -1.3); // rear axle housing
+    for (const sx of [-1, 1]) {
+      this.boxG(0.55, 0.09, 1.45, paint, sx * 0.95, 1.28, -1.3, 3); // mudguard
+      this.boxG(0.07, 0.35, 1.45, paint, sx * 1.2, 1.1, -1.3, 3);
+    }
+    this.boxG(0.5, 0.12, 0.5, seatM, 0, 1.42, -0.3); // seat
+    this.boxG(0.5, 0.5, 0.1, seatM, 0, 1.72, -0.55);
+    this.boxG(0.08, 0.7, 0.08, steel, 0, 1.5, 0.35).rotation.x = -0.5; // steering column
+    this.mesh(new THREE.TorusGeometry(0.17, 0.025, 6, 16), dark, 0, this.gy + 1.95, 0.5).rotation.x = 1.0; // steering wheel
+    for (const sx of [-1, 1]) for (const sz of [-0.95, 0.35]) this.boxG(0.06, 1.2, 0.06, steel, sx * 0.65, 2.25, sz, 3); // canopy posts
+    this.boxG(1.6, 0.07, 1.6, trim, 0, 2.88, -0.3, 3); // canopy
+    this.mesh(new THREE.CylinderGeometry(0.045, 0.05, 1.0, 8), steel, 0.3, this.gy + 1.95, 1.3); // exhaust stack
+    this.boxG(1.0, 0.35, 0.3, dark, 0, 0.55, 2.15, 1); // front weight
+    this.boxG(0.6, 0.22, 0.4, steel, 0, 0.55, -2.05, 2); // rear hitch
+  }
+
+  /** Combine harvester: red body, glass cab at the front, grain tank + unloading tube on top, feeder housing and a wide header with a reel. */
+  private combine(): void {
+    const spec = this.spec;
+    const paint = this.carPaint(spec.look.body);
+    const trim = this.pbr(spec.look.accent, { metalness: 0.1, roughness: 0.5 });
+    const dark = this.pbr(0x2a2e33, { roughness: 0.6, metalness: 0.2 });
+    const steel = this.pbr(0x8b9298, { metalness: 0.9, roughness: 0.35 });
+    const glass = this.carGlass();
+    const lamp = this.pbr(0xfff3c4, { emissive: 0xffe08a, emissiveIntensity: 0.7, roughness: 0.1, metalness: 0 });
+    this.boxG(2.5, 1.5, 4.4, paint, 0, 1.75, -0.5); // threshing body
+    this.boxG(2.3, 1.0, 2.6, paint, 0, 3.0, -1.1, 3); // grain tank
+    this.boxG(0.3, 0.3, 2.8, trim, 0.95, 3.75, -1.2, 3); // unloading tube
+    this.boxG(1.8, 1.4, 1.6, paint, 0, 3.0, 1.75, 3); // cab frame
+    this.boxG(1.72, 1.0, 1.66, glass, 0, 3.1, 1.76, 4); // cab glass
+    this.boxG(1.95, 0.08, 1.8, trim, 0, 3.75, 1.75, 3); // cab roof
+    for (const sx of [-1, 1]) this.boxG(0.2, 0.14, 0.06, lamp, sx * 0.7, 3.6, 2.58, 4);
+    this.boxG(1.9, 1.1, 1.5, dark, 0, 1.3, 3.2); // feeder housing
+    this.boxG(5.0, 0.7, 1.0, trim, 0, 0.8, 4.3, 1); // cutter bar header
+    this.mesh(new THREE.CylinderGeometry(0.5, 0.5, 5.0, 10), paint, 0, this.gy + 1.45, 4.6).rotation.z = Math.PI / 2; // reel
+    this.boxG(2.6, 0.5, 0.5, dark, 0, 0.9, -2.9, 2); // rear
+    for (const sx of [-1, 1]) this.boxG(0.1, 0.9, 0.9, steel, sx * 1.3, 1.45, 2.4); // ladder rail
+    void steel;
+  }
+
+  /** Farm pickup: cab, glass, open cargo bed with side boards. Nose = +Z. */
+  private pickup(): void {
+    const spec = this.spec;
+    const paint = this.carPaint(spec.look.body);
+    const trim = this.pbr(spec.look.accent, { metalness: 0.1, roughness: 0.5 });
+    const dark = this.pbr(0x16191c, { roughness: 0.6, metalness: 0.1 });
+    const glass = this.carGlass();
+    const lamp = this.pbr(0xeef5ff, { emissive: 0xaecdff, emissiveIntensity: 0.6, roughness: 0.04, metalness: 0 });
+    const tail = this.pbr(0xd01414, { emissive: 0x8a0000, roughness: 0.15, metalness: 0 });
+    this.boxG(1.8, 0.45, 4.9, dark, 0, 0.75, 0); // chassis / sills
+    this.boxG(1.8, 0.5, 1.5, paint, 0, 1.15, 1.7, 3); // bonnet
+    this.boxG(1.8, 0.95, 1.5, paint, 0, 1.6, 0.35); // cab
+    this.boxG(1.84, 0.5, 1.2, glass, 0, 1.8, 0.35, 4); // windows
+    this.boxG(1.8, 0.07, 1.4, trim, 0, 2.1, 0.35, 3); // roof
+    this.boxG(1.8, 0.12, 2.3, trim, 0, 0.98, -1.55); // bed floor
+    for (const sx of [-1, 1]) this.boxG(0.08, 0.5, 2.3, paint, sx * 0.86, 1.28, -1.55);
+    this.boxG(1.8, 0.5, 0.08, paint, 0, 1.28, -0.42);
+    this.boxG(1.8, 0.5, 0.08, paint, 0, 1.28, -2.7, 2); // tailgate
+    this.boxG(1.9, 0.25, 0.2, dark, 0, 0.55, 2.55, 1); // front bumper
+    this.boxG(1.9, 0.25, 0.2, dark, 0, 0.55, -2.55, 2);
+    for (const sx of [-1, 1]) {
+      this.boxG(0.24, 0.14, 0.06, lamp, sx * 0.62, 1.2, 2.45, 4);
+      this.boxG(0.16, 0.14, 0.05, tail, sx * 0.8, 1.2, -2.75, 4);
+    }
+  }
+
   private wheelsAndSpare(): void {
     const spec = this.spec;
-    const isCar = spec.look.kind === 'sedan' || spec.look.kind === 'jeep' || spec.look.kind === 'hypercar' || spec.look.kind === 'evbike' || spec.look.kind === 'evhypar';
+    const isCar = spec.look.kind === 'sedan' || spec.look.kind === 'jeep' || spec.look.kind === 'hypercar' || spec.look.kind === 'evbike' || spec.look.kind === 'evhypar' || spec.look.kind === 'tractor' || spec.look.kind === 'combine' || spec.look.kind === 'pickup';
     const tireM = isCar ? this.pbr(0x131313, { roughness: 0.92, metalness: 0 }) : this.mat(spec.look.kind === 'tank' ? 0x1b1d17 : 0x161616);
     const rimM = isCar
-      ? spec.look.kind === 'jeep'
+      ? spec.look.kind === 'tractor' || spec.look.kind === 'combine'
+        ? this.pbr(spec.look.accent, { metalness: 0.5, roughness: 0.5 }) // painted farm-machine wheels
+        : spec.look.kind === 'jeep' || spec.look.kind === 'pickup'
         ? this.pbr(0x3a4047, { metalness: 0.85, roughness: 0.4 }) // gunmetal off-road wheels
         : spec.look.kind === 'hypercar' || spec.look.kind === 'evbike'
           ? this.pbr(0x2b3036, { metalness: 0.95, roughness: 0.25 }) // dark forged alloys
@@ -1807,7 +1891,7 @@ export class VehicleModel {
     const rf = spec.look.kind === 'hypercar' ? 0.76 : spec.look.kind === 'evbike' ? 0.7 : 0.62; // inner tyre radius / outer (a low-profile tyre has more rim)
     // sedan: rounded tyre profile (lathe) + alloy wheel; everything else keeps the simple cylinders
     let tireG: THREE.BufferGeometry;
-    if (car) tireG = this.makeTyre(r, w, spec.look.kind === 'jeep', rf);
+    if (car) tireG = this.makeTyre(r, w, spec.look.kind === 'jeep' || spec.look.kind === 'tractor' || spec.look.kind === 'combine' || spec.look.kind === 'pickup', spec.look.kind === 'tractor' || spec.look.kind === 'combine' ? 0.5 : rf);
     else if (kind === 'rickshaw') tireG = new THREE.TorusGeometry(r - 0.02, 0.022, 6, 28).rotateY(Math.PI / 2); // thin cycle tyre
     else if (kind === 'tank') tireG = new THREE.CylinderGeometry(r * 0.8, r * 0.8, w * 0.34, 18); // one of two rubber road-wheel tyres
     else tireG = new THREE.CylinderGeometry(r, r, w, 20);
@@ -1821,7 +1905,7 @@ export class VehicleModel {
     const dishG = new THREE.CylinderGeometry(r * (rf - 0.07), r * (rf - 0.07), w * 0.96, 20);
     const spokeLen = r * (rf - 0.12);
     const spokeC = spokeLen / 2 + r * 0.05; // spoke centre radius
-    const jeepW = spec.look.kind === 'jeep';
+    const jeepW = spec.look.kind === 'jeep' || spec.look.kind === 'tractor' || spec.look.kind === 'combine' || spec.look.kind === 'pickup';
     const singleSpoke = jeepW || kind === 'bus' || kind === 'auto';
     const spokeG = new THREE.BoxGeometry(spokeLen, 0.03, jeepW ? 0.075 : kind === 'bus' ? 0.09 : kind === 'auto' ? 0.055 : 0.038);
     const ringG = new THREE.TorusGeometry(r * (rf - 0.02), jeepW ? 0.014 : 0.01, 6, 28);

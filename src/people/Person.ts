@@ -14,6 +14,7 @@ export type PersonTask =
   | 'wander' // walking to random spots in the open
   | 'station' // walking to a railway station: to the foot of the stair, up, along the platform, waiting for a train (or the way back down)
   | 'idle' // standing for a while
+  | 'work' // farm work in a crop field (the pose + the movement come from FarmCrew through PeopleManager.workHook)
   | 'flee' // running away (a vehicle came too close / was thrown out of a car / gunfire)
   | 'attack' // armed: walks towards the player and shoots
   | 'dead' // lying on the ground
@@ -34,6 +35,8 @@ export class Person {
   speed = 0;
   mode: PersonMode = 'idle';
   task: PersonTask = 'idle';
+  /** A farm worker (or tractor driver): not counted as a passer-by, so the street crowd stays as big. */
+  worker = false;
   /** The vehicle this person is driving (null while on foot). */
   vehicle: Vehicle | null = null;
   /** Seconds left in the current task (idle / flee). */

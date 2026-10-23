@@ -7,6 +7,9 @@ import * as THREE from 'three';
 import type { TerrainGenerator } from '../terrain/TerrainGenerator';
 import { ACT_BN, STAGE_BN, cropById } from './CropDefs';
 import { buildActors, type Actor } from './FarmActors';
+import { FarmCrew } from './FarmCrew';
+import type { PeopleManager } from '../people/PeopleManager';
+import type { VehicleManager } from '../vehicles/VehicleManager';
 import { FARM_FIELDS, FARM_INDEX } from './FarmFields';
 import type { Field } from './FarmPlan';
 import { HeightGrid, buildGround, buildPlants, disposeField, windUniform } from './FarmRenderer';
@@ -16,6 +19,9 @@ export interface FarmDeps {
   terrain: TerrainGenerator;
   /** World position of the player (capsule centre). */
   playerWorld: (out: THREE.Vector3) => THREE.Vector3;
+  /** With these two the fields get REAL farmers and machines (FarmCrew); without them only the props. */
+  people?: PeopleManager;
+  vehicles?: VehicleManager;
 }
 
 const GROUND_R = 1300;
@@ -41,14 +47,18 @@ export class FarmManager {
   private readonly p = new THREE.Vector3();
   private readonly cand: { f: Field; d: number }[] = FARM_FIELDS.map((f) => ({ f, d: 0 }));
   private t = 0;
+  private disabled = false;
+  readonly crew: FarmCrew | null;
 
   constructor(private readonly deps: FarmDeps) {
     this.group.name = 'EVFarm';
     deps.root.add(this.group);
+    this.crew = deps.people && deps.vehicles ? new FarmCrew({ people: deps.people, vehicles: deps.vehicles, terrain: deps.terrain }) : null;
   }
 
   /** The field under world point (x, z), with Bangla names for the HUD, or null. */
   info(x: number, z: number): FieldInfo | null {
+    if (this.disabled) return null;
     if (!FARM_INDEX.covers(x, z, 0)) return null;
     const f = FARM_INDEX.at(x, z)!;
     const c = cropById(f.crop);
@@ -57,11 +67,24 @@ export class FarmManager {
 
   get liveCount(): number { return this.live.size; }
 
+  /** Fail-safe: an error in the farm code switches the farm off (fields removed, crew stopped) - the rest of the game keeps running. */
   update(dt: number): void {
+    if (this.disabled) return;
+    try {
+      this.step(dt);
+    } catch (e) {
+      console.error('[Farm] switched off after an error:', e);
+      this.disabled = true;
+      try { this.dispose(); } catch { /* ignore */ }
+    }
+  }
+
+  private step(dt: number): void {
     this.t += dt;
     windUniform.value = this.t;
     this.deps.playerWorld(this.p);
     const px = this.p.x, pz = this.p.z;
+    this.crew?.update(dt, px, pz);
     for (const c of this.cand) c.d = Math.hypot(c.f.cx - px, c.f.cz - pz);
     this.cand.sort((a, b) => a.d - b.d);
     let gb = 0, pb = 0, ab = 0;
@@ -124,6 +147,7 @@ export class FarmManager {
   }
 
   dispose(): void {
+    this.crew?.dispose();
     for (const id of [...this.live.keys()]) this.remove(id);
     this.deps.root.remove(this.group);
   }
