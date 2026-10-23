@@ -21,6 +21,8 @@ export class CameraController {
   private driverCam: CameraMode | null = null;
   /** Near plane of the normal cameras (m); the driver's eye sits right behind the dashboard, so it uses a closer one. */
   private normalNear: number;
+  private normalFov: number;
+  private trainCam: CameraMode | null = null;
   private tmpDir = new THREE.Vector3();
   private mode: CameraMode;
 
@@ -31,6 +33,35 @@ export class CameraController {
     this.freeFly = new FreeFlyCamera(camera, input);
     this.mode = this.freeFly;
     this.normalNear = camera.near;
+    this.normalFov = camera.fov;
+  }
+
+  setTrainCamera(cam: CameraMode): void {
+    this.trainCam = cam;
+  }
+
+  get isTrainView(): boolean {
+    return this.trainCam !== null && this.mode === this.trainCam;
+  }
+
+  /** Passenger camera of a train (the TrainCamera sets its own near plane and lens). */
+  enterTrainView(): boolean {
+    if (!this.trainCam || this.isFreeFly) return false;
+    this.input.consumeMouseDelta();
+    this.input.consumeWheel();
+    this.mode = this.trainCam;
+    return true;
+  }
+
+  /** Back to the chase camera with the normal lens. */
+  exitTrainView(): void {
+    if (!this.isTrainView) return;
+    this.input.consumeMouseDelta();
+    this.input.consumeWheel();
+    if (this.orbit) this.mode = this.orbit;
+    this.camera.near = this.normalNear;
+    this.camera.fov = this.normalFov;
+    this.camera.updateProjectionMatrix();
   }
 
   setOrbit(orbit: OrbitCamera): void {

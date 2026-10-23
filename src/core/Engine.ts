@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { CameraController } from '../camera/CameraController';
 import { OrbitCamera } from '../camera/OrbitCamera';
 import { DriverCamera } from '../camera/DriverCamera';
+import { TRAIN_VIEW_NAMES, TrainCamera } from '../camera/TrainCamera';
+import { TunnelProbe } from '../trains/TunnelProbe';
 import { Player } from '../characters';
 import { HELI, HelicopterManager } from '../aircraft';
 import { BoatManager, findWaterSpot } from '../boats';
@@ -213,6 +215,9 @@ export class Engine {
   private trainAnnouncer: TrainAnnouncer;
   /** The player as a train passenger (F at a platform next to a standing train; F again at a station to get off). */
   private trainRider!: TrainRider;
+  private trainCam!: TrainCamera;
+  /** Render quality: 0 normal, 1 high, 2 = 4K (Backquote cycles). */
+  private renderQuality = 0;
   private planeRider!: PlaneRider;
   private ridePrompt!: RidePrompt;
   private vehicleIds = new WeakMap<object, number>();
@@ -323,6 +328,9 @@ export class Engine {
     this.cameraController.setOrbit(this.orbit);
     this.cameraController.useOrbit();
     this.cameraController.setDriverCamera(new DriverCamera(this.camera, this.input, () => this.vehicles.driver));
+    // passenger camera of the trains: seat / aisle / driver's cab / outside / cinematic (C cycles while riding)
+    this.trainCam = new TrainCamera(this.camera, this.input, () => this.trainRider.ride, this.world.origin, this.world.terrain, new TunnelProbe(this.rail));
+    this.cameraController.setTrainCamera(this.trainCam);
     // START VIEW: the camera stands behind the player on the apron and looks over F4 at the mall's west door
     this.orbit.yaw = Math.atan2(-this.startPoint.ux, -this.startPoint.uz);
 
@@ -465,7 +473,16 @@ export class Engine {
       canBoard: () => this.player.active && !this.player.inVehicle && !this.cameraController.isFreeFly && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper,
       prompt: (t) => this.ridePrompt.set(t),
       toast: (t) => this.toast.show(t, 3400),
-      onRide: (on) => (on ? this.orbit.setTarget(this.player, 16, 6, 40) : this.orbit.setTarget(this.player, Config.orbit.distance, Config.orbit.minDistance, Config.orbit.maxDistance)),
+      onRide: (on) => {
+        if (on) {
+          this.trainCam.reset();
+          this.cameraController.enterTrainView();
+          this.toast.show('🚆 C চাপলে ক্যামেরা বদলাবে: সিট · দাঁড়িয়ে · ড্রাইভার কেবিন · বাইরে · সিনেমাটিক', 4200);
+        } else {
+          this.cameraController.exitTrainView();
+          this.orbit.setTarget(this.player, Config.orbit.distance, Config.orbit.minDistance, Config.orbit.maxDistance);
+        }
+      },
     });
     this.planeRider = new PlaneRider({
       planes: this.airplanes,
@@ -754,6 +771,9 @@ export class Engine {
     if (!this.trainRider.handleKeys() && !this.planeRider.handleKeys() && !this.boats.handleKeys() && !this.helis.handleKeys()) this.vehicles.handleKeys();
     // P (while driving): camera at the driver's real eye position, P again: back to the chase camera
     if (this.input.wasPressed('KeyP')) this.setDriverView(!this.cameraController.isDriverView);
+    // C (on a train): next passenger camera. ` (Backquote): render quality normal / high / 4K
+    if (this.trainRider.riding && this.cameraController.isTrainView && this.input.wasPressed('KeyC')) this.toast.show('🎥 ' + TRAIN_VIEW_NAMES[this.trainCam.next()], 2200);
+    if (this.input.wasPressed('Backquote')) this.cycleRenderQuality();
     if (this.cameraController.isDriverView && (!this.vehicles.driver || this.cameraController.isFreeFly || this.helis.pilot || this.boats.skipper)) this.setDriverView(false);
     if (this.input.wasPressed('KeyV') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.planeRider.riding) this.toggleFreeFly();
     if (this.cameraController.isFreeFly && this.input.wasPressed('KeyT')) {
@@ -1227,6 +1247,22 @@ export class Engine {
   private toggleFreeFly(): void {
     this.cameraController.toggle();
     this.player.active = !this.cameraController.isFreeFly;
+  }
+
+  /** Pixel ratio of the picture: normal (device, max 2), high, and 4K (the canvas is rendered with at least 3840 pixels across, max 3x). Heavy on weak GPUs. */
+  private applyRenderScale(): void {
+    const w = Math.max(1, this.container.clientWidth);
+    const dpr = window.devicePixelRatio || 1;
+    const ratio = this.renderQuality === 0 ? Math.min(dpr, 2) : this.renderQuality === 1 ? Math.min(Math.max(dpr, 1.5), 2) : Math.min(Math.max(dpr, 3840 / w), 3);
+    this.renderer.setPixelRatio(ratio);
+    this.renderer.setSize(w, this.container.clientHeight);
+  }
+
+  private cycleRenderQuality(): void {
+    this.renderQuality = (this.renderQuality + 1) % 3;
+    this.applyRenderScale();
+    const names = ['সাধারণ কোয়ালিটি', 'হাই কোয়ালিটি', '4K আল্ট্রা কোয়ালিটি (ভারী — পিসি ধীর হলে ` চেপে কমান)'];
+    this.toast.show('🖥️ ' + names[this.renderQuality] + ` · ${this.renderer.domElement.width}×${this.renderer.domElement.height}`, 3600);
   }
 
   private onResize = (): void => {

@@ -39,6 +39,13 @@ const C = {
   lamp: [1.0, 0.93, 0.78] as V,
   emerg: [0.55, 1.0, 0.7] as V,
   sign: [0.1, 0.32, 0.75] as V,
+  tactile: [0.85, 0.7, 0.12] as V,
+  coping: [0.82, 0.81, 0.78] as V,
+  joint: [0.58, 0.57, 0.55] as V,
+  fascia: [0.15, 0.25, 0.42] as V,
+  wood: [0.45, 0.3, 0.18] as V,
+  bin: [0.12, 0.4, 0.2] as V,
+  white: [0.95, 0.95, 0.95] as V,
 };
 
 /** Geometry collector: flat-coloured quads with their own normals. */
@@ -388,6 +395,7 @@ export function buildRailMesh(rail: RailNetwork, cx: number, cz: number, lod: nu
           }
           // yellow safety line
           em.box(p.x + wx * sg * (half + 1.7 + 0.25), y + 0.97, p.z + wz * sg * (half + 1.7 + 0.25), tx, tz, D.platform / 2, 0.01, 0.12, C.yellow, false);
+          emitPlatformDetail(em, p, tx, tz, wx, wz, sg, half, y);
         }
       }
     }
@@ -555,6 +563,53 @@ function emitDiamond(em: Emit, d: RailDiamond): void {
   em.box(d.x, y + 0.03, d.z, d.ax, d.az, hl + 0.9, 0.03, hw + 0.5, C.frog, false);
   // raised crossing noses where a rail of one track crosses a rail of the other
   for (let k = 0; k < 4; k++) em.box(d.corners[k * 2], y + 0.11, d.corners[k * 2 + 1], d.ax, d.az, 0.7, 0.1, 0.13, C.frog, false);
+}
+
+
+/**
+ * Platform furniture and finish for one side (sg) of a station, LOD 0 only: coping and tactile strip at the edge, tile joints, benches and bins,
+ * canopy fascia, steel cross beams, column base plates, lamps under the roof (self-lit) and hanging station boards. Pictures only (no colliders):
+ * everything stands at the back of the platform or above head height, away from the stairs and the edge.
+ */
+function emitPlatformDetail(em: Emit, p: { x: number; z: number }, tx: number, tz: number, wx: number, wz: number, sg: number, half: number, y: number): void {
+  const top = y + 0.94;
+  const e0 = half + 1.7;
+  const P = D.platform;
+  const at = (q: number, lat: number): [number, number] => [p.x + tx * q + wx * sg * lat, p.z + tz * q + wz * sg * lat];
+  const put = (q: number, lat: number, cy: number, hl: number, hh: number, hw: number, col: V, bottom = false): void => {
+    const [x, z] = at(q, lat);
+    em.box(x, cy, z, tx, tz, hl, hh, hw, col, bottom);
+  };
+  // edge coping and the yellow tactile strip
+  put(0, e0 + 0.12, top + 0.012, P / 2, 0.012, 0.12, C.coping);
+  put(0, e0 + 0.62, top + 0.008, P / 2, 0.008, 0.38, C.tactile);
+  // tile joints every 5 m
+  for (let q = -P / 2 + 2.5; q < P / 2; q += 5) put(q, e0 + 2.75, top + 0.004, 0.035, 0.004, 1.75, C.joint);
+  // columns: where the canopy posts are (every 15 m from 20 m inside the end)
+  for (let q = -P / 2 + 20; q <= P / 2 - 20; q += 15) {
+    put(q, e0 + 4.1, top + 0.05, 0.3, 0.05, 0.3, C.concrete);
+    put(q, e0 + 2.9, y + 4.58, 0.14, 0.14, 3.2, C.mast); // cross beam under the roof
+    if (q < P / 2 - 20) {
+      // bench between this column and the next one, bin at the column
+      const qc = q + 7.5;
+      put(qc, e0 + 3.4, top + 0.46, 0.9, 0.03, 0.22, C.wood);
+      put(qc, e0 + 3.62, top + 0.74, 0.9, 0.2, 0.03, C.wood);
+      for (const dq of [-0.7, 0.7]) put(qc + dq, e0 + 3.4, top + 0.23, 0.04, 0.23, 0.18, C.mast);
+      put(q + 1.2, e0 + 3.7, top + 0.4, 0.22, 0.4, 0.22, C.bin);
+    }
+  }
+  // canopy: dark fascia along both long edges (the roof slab is 6.4 m wide, 0.14 half thick)
+  for (const d of [-1, 1]) put(0, e0 + 2.9 + d * 3.2, y + 4.8 + 0.12, P / 2 - 15, 0.24, 0.06, C.fascia);
+  // lamps under the roof, self-lit
+  em.glowFn = () => 1;
+  for (let q = -P / 2 + 22.5; q <= P / 2 - 22; q += 7.5) put(q, e0 + 2.9, y + 4.64, 0.7, 0.025, 0.14, C.lamp);
+  // hanging station boards (blue board, white band) in the middle and near both ends
+  for (const q of [-P / 2 + 30, 0, P / 2 - 30]) {
+    put(q, e0 + 2.9, y + 3.85, 0.06, 0.34, 1.7, C.sign);
+    put(q, e0 + 2.9, y + 3.85, 0.065, 0.07, 1.4, C.white);
+  }
+  em.glowFn = null;
+  for (const q of [-P / 2 + 30, 0, P / 2 - 30]) for (const d of [-1.2, 1.2]) put(q, e0 + 2.9 + d, y + 4.42, 0.02, 0.45, 0.02, C.mast);
 }
 
 /** One station access: treads, side walls, the gate shelter (roof on posts + sign) and the entrance sign at the foot. */

@@ -52,6 +52,11 @@ export class TrainRider {
     return this.train !== null;
   }
 
+  /** The train and the car the player sits in (null when not riding): the passenger camera follows it. */
+  get ride(): { train: Train; car: number } | null {
+    return this.train ? { train: this.train, car: this.car } : null;
+  }
+
   /** Once per frame, before the vehicle keys. Returns true when F belongs to the train (so the vehicles do not also use it) or the player is riding. */
   handleKeys(): boolean {
     if (this.train) {

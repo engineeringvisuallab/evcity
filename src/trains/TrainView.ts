@@ -1,10 +1,10 @@
 import * as THREE from 'three';
-import { buildCarMesh } from './TrainMesh';
+import { buildCarParts, type CarParts, type TrainMeshData } from './TrainMesh';
 import { CONSIST, type CarKind } from './TrainConfig';
 import type { CarPose, Train } from './TrainSim';
 import type { TrainViewHost, TrainViewLike } from './TrainManager';
 
-/** One shared, lit, vertex-coloured material for all trains (same kind as the rail material). */
+/** One shared, lit, vertex-coloured material for all trains (same kind as the rail material): the outside of the cars. */
 export class TrainMaterial extends THREE.MeshLambertMaterial {
   constructor() {
     super({ vertexColors: true });
@@ -12,17 +12,51 @@ export class TrainMaterial extends THREE.MeshLambertMaterial {
   }
 }
 
-const geometries = new Map<CarKind, THREE.BufferGeometry>();
-function carGeometry(kind: CarKind): THREE.BufferGeometry {
+/** The inside of the cars (floor, seats, lining, lamps, head / tail lamps): UNLIT, the colours already carry a fake shading, so the saloon is bright by day and by night. */
+export class TrainInsideMaterial extends THREE.MeshBasicMaterial {
+  constructor() {
+    super({ vertexColors: true });
+    this.name = 'train-inside';
+  }
+}
+
+/** Window panes: see-through, so the saloon shows from outside and the world from the seat. */
+export class TrainGlassMaterial extends THREE.MeshBasicMaterial {
+  constructor() {
+    super({ vertexColors: true, transparent: true, opacity: 0.28, depthWrite: false, side: THREE.DoubleSide });
+    this.name = 'train-glass';
+  }
+}
+
+/** The three materials every train view uses. */
+export interface TrainMaterials {
+  body: TrainMaterial;
+  inside: TrainInsideMaterial;
+  glass: TrainGlassMaterial;
+}
+
+const toGeometry = (d: TrainMeshData): THREE.BufferGeometry => {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(d.positions, 3));
+  g.setAttribute('normal', new THREE.BufferAttribute(d.normals, 3));
+  g.setAttribute('color', new THREE.BufferAttribute(d.colors, 3));
+  g.setIndex(new THREE.BufferAttribute(d.indices, 1));
+  g.computeBoundingSphere();
+  return g;
+};
+
+interface CarGeometries {
+  body: THREE.BufferGeometry;
+  inside: THREE.BufferGeometry;
+  glass: THREE.BufferGeometry;
+}
+
+const geometries = new Map<CarKind, CarGeometries>();
+function carGeometry(kind: CarKind): CarGeometries {
   let g = geometries.get(kind);
   if (!g) {
-    const d = buildCarMesh(kind);
-    g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(d.positions, 3));
-    g.setAttribute('normal', new THREE.BufferAttribute(d.normals, 3));
-    g.setAttribute('color', new THREE.BufferAttribute(d.colors, 3));
-    g.setIndex(new THREE.BufferAttribute(d.indices, 1));
-    g.computeBoundingSphere();
+    const parts: CarParts = buildCarParts(kind);
+    g = { body: toGeometry(parts.body), inside: toGeometry(parts.inside), glass: toGeometry(parts.glass) };
     geometries.set(kind, g);
   }
   return g;
@@ -30,7 +64,11 @@ function carGeometry(kind: CarKind): THREE.BufferGeometry {
 
 /** Frees the shared car geometries (engine shutdown). */
 export function disposeTrainGeometries(): void {
-  for (const g of geometries.values()) g.dispose();
+  for (const g of geometries.values()) {
+    g.body.dispose();
+    g.inside.dispose();
+    g.glass.dispose();
+  }
   geometries.clear();
 }
 
@@ -47,12 +85,22 @@ export class TrainView {
   private side = new THREE.Vector3();
   private m = new THREE.Matrix4();
 
-  constructor(material: TrainMaterial) {
+  constructor(materials: TrainMaterials) {
     this.group.name = 'train';
     for (const c of CONSIST) {
-      const mesh = new THREE.Mesh(carGeometry(c.kind), material);
+      const g = carGeometry(c.kind);
+      const mesh = new THREE.Mesh(g.body, materials.body);
       mesh.castShadow = true;
       mesh.matrixAutoUpdate = false;
+      // the saloon and the windows ride on the car (children keep an identity matrix: they follow the body)
+      const inside = new THREE.Mesh(g.inside, materials.inside);
+      const glass = new THREE.Mesh(g.glass, materials.glass);
+      inside.matrixAutoUpdate = false;
+      glass.matrixAutoUpdate = false;
+      inside.updateMatrix();
+      glass.updateMatrix();
+      glass.renderOrder = 2;
+      mesh.add(inside, glass);
       this.cars.push(mesh);
       this.group.add(mesh);
     }
@@ -81,12 +129,12 @@ export class TrainView {
  * the bridge meshes), so `update(train, 0, 0)`.
  */
 export class TrainLayer implements TrainViewHost {
-  private material = new TrainMaterial();
+  private materials: TrainMaterials = { body: new TrainMaterial(), inside: new TrainInsideMaterial(), glass: new TrainGlassMaterial() };
 
   constructor(private root: THREE.Object3D) {}
 
   create(): TrainViewLike {
-    const view = new TrainView(this.material);
+    const view = new TrainView(this.materials);
     this.root.add(view.group);
     return {
       update: (train: Train) => view.update(train, 0, 0),
@@ -95,7 +143,9 @@ export class TrainLayer implements TrainViewHost {
   }
 
   dispose(): void {
-    this.material.dispose();
+    this.materials.body.dispose();
+    this.materials.inside.dispose();
+    this.materials.glass.dispose();
     disposeTrainGeometries();
   }
 }
