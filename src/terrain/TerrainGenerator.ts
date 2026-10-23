@@ -7,7 +7,7 @@ import { RoadNetwork } from '../roads/RoadNetwork';
 import { RailNetwork } from '../rail/RailNetwork';
 import { RailFormation } from '../rail/RailFormation';
 import { islandHeight } from './Island';
-import { AirportSite } from '../airport/AirportSite';
+import { AirportSite, SEA_AIRPORT_DEF } from '../airport/AirportSite';
 import { ArmySite } from '../army/ArmySite';
 import { AgroSite } from '../agro/AgroSite';
 import { PortFormation } from '../port/PortFormation';
@@ -69,6 +69,9 @@ export class TerrainGenerator {
   private protoMask = new Float32Array(2);
   /** Airport (north-east): only its own pad + skirt is levelled (applied late in sample(), same in every chunk, worker and collider). */
   readonly airport = new AirportSite();
+  /** The SEA AIRPORT (reclaimed land in the sea south of the coast): its own pad + skirt + causeway, filled up to SEA_AIRPORT_FLOOR. */
+  readonly airportSea = new AirportSite(SEA_AIRPORT_DEF);
+  private airportSeaMask = new Float32Array(2);
   private airportMask = new Float32Array(2);
   /** Army camp (north-west, on the low flat land at the foot of the big hill): only its own pad + skirt is levelled, same rules as the airport. */
   readonly army = new ArmySite();
@@ -164,6 +167,16 @@ export class TerrainGenerator {
       ah.sort((a, b) => a - b);
       this.airport.floorY = ah[ah.length >> 1];
     }
+    // the sea airport floor = the MEDIAN natural ground over its pad, but never below its fill height (the pad stands in the sea)
+    {
+      const R = this.airportSea.rect, ah: number[] = [];
+      for (let i = 0; i <= 30; i++) for (let j = 0; j <= 12; j++) {
+        this.sampleGround(R.x0 + ((R.x1 - R.x0) * i) / 30, R.z0 + ((R.z1 - R.z0) * j) / 12, this.scratch);
+        ah.push(this.scratch.h);
+      }
+      ah.sort((a, b) => a - b);
+      this.airportSea.floorY = Math.max(ah[ah.length >> 1], this.airportSea.def.minFloor ?? -1e9);
+    }
     // the army camp floor = the MEDIAN natural ground over its pad
     {
       const R = this.army.rect, ah: number[] = [];
@@ -231,6 +244,12 @@ export class TerrainGenerator {
       this.roads.maskAt(x, z, 1, this.airportMask);
       const k = 1 - this.airportMask[1];
       if (k > 0) out.h = this.airport.height(x, z, out.h, k);
+    }
+    // Sea airport pad + causeway: filled up out of the sea; gives way to roads (the causeway meets the coast road) and to the railway corridor
+    if (this.padsReady && this.airportSea.near(x, z) && !this.railForm.inCorridor(x, z, 6)) {
+      this.roads.maskAt(x, z, 1, this.airportSeaMask);
+      const k = 1 - this.airportSeaMask[1];
+      if (k > 0) out.h = this.airportSea.height(x, z, out.h, k);
     }
     // Army camp pad: gives way to roads and to the railway corridor, like the airport
     if (this.padsReady && this.army.near(x, z) && !this.railForm.inCorridor(x, z, 6)) {

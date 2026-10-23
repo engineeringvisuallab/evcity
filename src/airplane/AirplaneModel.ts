@@ -2,6 +2,7 @@
 // nose towards local +X. Use `place()` each frame with the state from AirplaneLogic (position, heading, pitch, roll, gear).
 import * as THREE from 'three';
 import { buildPlaneMesh } from './AirplaneMesh';
+import { buildFighterMesh } from './FighterMesh';
 import type { MeshArrays } from '../airport/MeshBuilder';
 
 export interface AirplaneModel {
@@ -22,8 +23,11 @@ function toGeometry(a: MeshArrays): THREE.BufferGeometry {
   return g;
 }
 
-export function createAirplaneModel(): AirplaneModel {
-  const data = buildPlaneMesh();
+/** 'airliner' (the passenger jet) or 'fighter' (a small military jet). */
+export type AirplaneKind = 'airliner' | 'fighter';
+
+export function createAirplaneModel(kind: AirplaneKind = 'airliner'): AirplaneModel {
+  const data = kind === 'fighter' ? buildFighterMesh() : buildPlaneMesh();
   const bodyGeo = toGeometry(data.body), gearGeo = toGeometry(data.gear);
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0.15 });
   const body = new THREE.Mesh(bodyGeo, mat), gear = new THREE.Mesh(gearGeo, mat);
@@ -31,7 +35,7 @@ export function createAirplaneModel(): AirplaneModel {
   body.name = 'airplane-body';
   gear.name = 'airplane-gear';
   const group = new THREE.Group();
-  group.name = 'airplane';
+  group.name = kind === 'fighter' ? 'fighter' : 'airplane';
   group.add(body, gear);
   group.rotation.order = 'YZX'; // yaw, then pitch (about the wing axis), then roll (about the fuselage axis)
   return {

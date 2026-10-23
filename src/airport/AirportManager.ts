@@ -8,6 +8,7 @@ import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import type { FloatingOrigin } from '../world/FloatingOrigin';
 import type { TerrainGenerator } from '../terrain/TerrainGenerator';
 import { createAirportModel, type AirportModel } from './AirportModel';
+import type { AirportSite } from './AirportSite';
 
 export interface AirportDeps {
   root: THREE.Object3D; // world.root: children use ABSOLUTE world coordinates
@@ -15,6 +16,8 @@ export interface AirportDeps {
   origin: FloatingOrigin;
   terrain: TerrainGenerator;
   playerWorld: (out: THREE.Vector3) => THREE.Vector3;
+  /** Which airport to build: default = the old one (terrain.airport); pass terrain.airportSea for the sea airport. */
+  site?: AirportSite;
 }
 
 const SHOW_DIST = 5200; // the airport is drawn within this distance (it is 1.5 km wide; the spawn is ~4.7 km away)
@@ -24,8 +27,13 @@ export class AirportManager {
   private body: RAPIER.RigidBody;
   private p = new THREE.Vector3();
 
+  /** The airport site this manager builds. */
+  private get site(): AirportSite {
+    return this.d.site ?? this.d.terrain.airport;
+  }
+
   constructor(private d: AirportDeps) {
-    const site = d.terrain.airport;
+    const site = this.site;
     this.model = createAirportModel(site.plan);
     this.model.group.position.set(site.plan.site.cx, site.floorY, site.plan.site.cz);
     this.model.group.rotation.y = site.plan.site.heading;
@@ -37,7 +45,7 @@ export class AirportManager {
   private createColliders(): RAPIER.RigidBody {
     const R = this.d.physics.RAPIER;
     const world = this.d.physics.world;
-    const site = this.d.terrain.airport;
+    const site = this.site;
     const plan = site.plan;
     const o = this.d.origin.origin;
     const yaw = plan.site.heading;
@@ -58,7 +66,7 @@ export class AirportManager {
 
   /** Where a helicopter / plane can start: world x, z of the helipad and the runway start. */
   get spawns(): { helipad: { x: number; z: number }; runwayStart: { x: number; z: number; yaw: number } } {
-    const plan = this.d.terrain.airport.plan;
+    const plan = this.site.plan;
     const c = Math.cos(plan.site.heading), s = Math.sin(plan.site.heading);
     const w = (lx: number, lz: number) => ({ x: plan.site.cx + lx * c + lz * s, z: plan.site.cz - lx * s + lz * c });
     const r = plan.spawns.runwayStart;
@@ -67,7 +75,7 @@ export class AirportManager {
 
   /** Once per rendered frame. `night` 0..1 dims / brightens the runway lights. */
   update(night = 0): void {
-    const site = this.d.terrain.airport.plan.site;
+    const site = this.site.plan.site;
     this.d.playerWorld(this.p);
     this.model.group.visible = Math.hypot(this.p.x - site.cx, this.p.z - site.cz) < SHOW_DIST;
     this.model.setNight(night);

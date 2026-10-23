@@ -27,6 +27,7 @@ import { ENGINEERING_BY_ID } from '../city/EngineeringZones';
 import { RailDebug, RailPhysics, type RailNetwork } from '../rail';
 import { PortPhysics } from '../port';
 import { AirportManager } from '../airport';
+import { AirplaneManager, PlaneRider } from '../airplane';
 import { ArmyManager } from '../army';
 import { AgroManager } from '../agro/AgroManager';
 import { FarmManager } from '../farm/FarmManager';
@@ -185,6 +186,10 @@ export class Engine {
   private portPhysics: PortPhysics;
   /** Airport in the north-east (runway, terminal, hangars, tower) on its own levelled pad. */
   readonly airport: AirportManager;
+  /** SEA AIRPORT (reclaimed land in the sea south of the coast): modern terminal, military apron, causeway road. */
+  readonly airportSea: AirportManager;
+  /** The aircraft: shuttle airliner between the two airports, flights from / to abroad, military fighters. */
+  readonly airplanes: AirplaneManager;
   /** Army camp in the north-west, on the low flat land at the foot of the big hill: gate, HQ, barracks, tents, depot, motor pool, helipad. */
   readonly army: ArmyManager;
   /** EV Agro Research Institute (west farmland, ~3 km from the spawn): 2-floor institute + research field. K = go there. */
@@ -208,6 +213,7 @@ export class Engine {
   private trainAnnouncer: TrainAnnouncer;
   /** The player as a train passenger (F at a platform next to a standing train; F again at a station to get off). */
   private trainRider!: TrainRider;
+  private planeRider!: PlaneRider;
   private ridePrompt!: RidePrompt;
   private vehicleIds = new WeakMap<object, number>();
   private nextVehicleId = 1;
@@ -402,6 +408,23 @@ export class Engine {
       playerWorld: (out) => this.player.getWorldPosition(out),
     });
 
+    // --- Sea airport (south coast, on filled land in the sea; the model is hidden when the player is far away) ---
+    this.airportSea = new AirportManager({
+      root: this.world.root,
+      physics,
+      origin: this.world.origin,
+      terrain: this.world.terrain,
+      playerWorld: (out) => this.player.getWorldPosition(out),
+      site: this.world.terrain.airportSea,
+    });
+
+    // --- Aircraft: shuttle airliner (old airport <-> sea airport), flights from / to abroad, military fighters ---
+    this.airplanes = new AirplaneManager({
+      root: this.world.root,
+      terrain: this.world.terrain,
+      playerWorld: (out) => this.player.getWorldPosition(out),
+    });
+
     // --- Army camp (north-west, at the foot of the hill; hidden when the player is far away) ---
     this.army = new ArmyManager({
       root: this.world.root,
@@ -443,6 +466,15 @@ export class Engine {
       prompt: (t) => this.ridePrompt.set(t),
       toast: (t) => this.toast.show(t, 3400),
       onRide: (on) => (on ? this.orbit.setTarget(this.player, 16, 6, 40) : this.orbit.setTarget(this.player, Config.orbit.distance, Config.orbit.minDistance, Config.orbit.maxDistance)),
+    });
+    this.planeRider = new PlaneRider({
+      planes: this.airplanes,
+      player: this.player,
+      pressedF: () => this.input.wasPressed('KeyF'),
+      canBoard: () => this.player.active && !this.player.inVehicle && !this.cameraController.isFreeFly && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding,
+      prompt: (t) => this.ridePrompt.set(t),
+      toast: (t) => this.toast.show(t, 3400),
+      onRide: (on) => (on ? this.orbit.setTarget(this.player, 70, 25, 220) : this.orbit.setTarget(this.player, Config.orbit.distance, Config.orbit.minDistance, Config.orbit.maxDistance)),
     });
     this.hud.setLocked(this.input.gameplayActive);
 
@@ -719,11 +751,11 @@ export class Engine {
     }
 
     // V: switch between the player camera and the free-fly debug camera. T (free-fly): bring the player here.
-    if (!this.trainRider.handleKeys() && !this.boats.handleKeys() && !this.helis.handleKeys()) this.vehicles.handleKeys();
+    if (!this.trainRider.handleKeys() && !this.planeRider.handleKeys() && !this.boats.handleKeys() && !this.helis.handleKeys()) this.vehicles.handleKeys();
     // P (while driving): camera at the driver's real eye position, P again: back to the chase camera
     if (this.input.wasPressed('KeyP')) this.setDriverView(!this.cameraController.isDriverView);
     if (this.cameraController.isDriverView && (!this.vehicles.driver || this.cameraController.isFreeFly || this.helis.pilot || this.boats.skipper)) this.setDriverView(false);
-    if (this.input.wasPressed('KeyV') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding) this.toggleFreeFly();
+    if (this.input.wasPressed('KeyV') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.planeRider.riding) this.toggleFreeFly();
     if (this.cameraController.isFreeFly && this.input.wasPressed('KeyT')) {
       this.world.origin.toWorld(this.camera.position, this.tmpVec);
       this.player.teleportTo(this.tmpVec);
@@ -731,31 +763,39 @@ export class Engine {
     }
 
     // ; (semicolon): go to the army camp (on foot only): you stand just inside the main gate
-    if (this.input.wasPressed('Semicolon') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.cameraController.isFreeFly) {
+    if (this.input.wasPressed('Semicolon') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.planeRider.riding && !this.cameraController.isFreeFly) {
       const g = this.army.spawns.gate;
       this.player.teleportTo(this.tmpVec.set(g.x, this.world.terrain.army.floorY + 3, g.z));
     }
 
     // J: go to the airport (on foot only): stand next to the helipad, the terminal and the runway are right there
-    if (this.input.wasPressed('KeyJ') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.cameraController.isFreeFly) {
+    if (this.input.wasPressed('KeyJ') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.planeRider.riding && !this.cameraController.isFreeFly) {
       const h = this.airport.spawns.helipad;
       this.player.teleportTo(this.tmpVec.set(h.x + 12, this.world.terrain.airport.floorY + 3, h.z));
     }
 
+    // ' (apostrophe): go to the SEA AIRPORT (on foot only): you stand in front of the terminal, the shuttle airliner and the fighters are right there
+    if (this.input.wasPressed('Quote') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.planeRider.riding && !this.cameraController.isFreeFly) {
+      const c = this.airplanes.airport('sea').curb;
+      this.player.teleportTo(this.tmpVec.set(c.x, this.world.terrain.airportSea.floorY + 3, c.z));
+    }
+
     // K: go to the EV Agro institute (on foot only): you stand on the driveway in front of the entrance
-    if (this.input.wasPressed('KeyK') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.cameraController.isFreeFly) {
+    if (this.input.wasPressed('KeyK') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.planeRider.riding && !this.cameraController.isFreeFly) {
       const e = this.agro.entrance;
       this.player.teleportTo(this.tmpVec.set(e.x, this.world.terrain.agro.floorY + 3, e.z));
     }
 
     // L: go to the safari park (on foot only): deer herds, tigers and lions hunt there; fish live in every river, lake and the sea
-    if (this.input.wasPressed('KeyL') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.cameraController.isFreeFly) {
+    if (this.input.wasPressed('KeyL') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.planeRider.riding && !this.cameraController.isFreeFly) {
       const sp = this.animals.safariPark;
       this.player.teleportTo(this.tmpVec.set(sp.x, this.world.terrain.heightAt(sp.x, sp.z) + 3, sp.z));
     }
 
     this.player.update(dt, alpha);
     this.trainRider.update(dt); // a passenger moves with the seat of the train (after the trains moved, before the camera)
+    this.airplanes.update(dt);
+    this.planeRider.update(); // a passenger moves with the seat of the plane (after the planes moved, before the camera)
     this.vehicles.update(alpha, this.world.playerWorld, dt);
     this.explosions.update(dt);
     this.treeDestruction.update(dt);
@@ -779,6 +819,7 @@ export class Engine {
     this.placedBuildings.update();
     this.fillBuildings.update();
     this.airport.update();
+    this.airportSea.update();
     this.army.update();
     this.agro.update(dt);
     this.farm.update(dt);
@@ -1213,6 +1254,9 @@ export class Engine {
     this.placedBuildings.dispose();
     this.fillBuildings.dispose();
     this.airport.dispose();
+    this.airportSea.dispose();
+    this.airplanes.dispose();
+    this.planeRider.dispose();
     this.army.dispose();
     this.agro.dispose();
     this.farm.dispose();

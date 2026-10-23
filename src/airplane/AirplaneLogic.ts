@@ -45,6 +45,22 @@ export const PLANE_PERF = {
   maxPitch: (12 * Math.PI) / 180,
 } as const;
 
+/** The numbers of a plane type (same fields as PLANE_PERF, but plain numbers so other types can be defined). */
+export type PlanePerf = { [K in keyof typeof PLANE_PERF]: number };
+
+/** A small military jet: shorter roll, steep climb, fast cruise, sharper turns. */
+export const FIGHTER_PERF: PlanePerf = {
+  accel: 6.5, vRotate: 78, vClimb: 135, vCruise: 190, vApproach: 78, vTouchdown: 70, brake: 6.5, vTaxi: 12,
+  climbSlope: (12 * Math.PI) / 180, glideSlope: (3.5 * Math.PI) / 180, cruiseAlt: 700, finalDist: 3600, flareAlt: 10,
+  maxBank: (45 * Math.PI) / 180, maxTurnRate: (9 * Math.PI) / 180, maxPitch: (18 * Math.PI) / 180,
+};
+
+/** Options of the flight plan builders. */
+export interface PlanOptions {
+  /** Cruise height above the runway (m); default = perf.cruiseAlt. Raise it to clear mountains. */
+  cruiseAlt?: number;
+}
+
 export interface Waypoint { x: number; z: number; /** height above SEA LEVEL (m) */ y: number; /** target speed on arriving here (m/s) */ v: number; phase: Phase }
 
 const dirOf = (h: number): { x: number; z: number } => ({ x: Math.cos(h), z: Math.sin(h) });
@@ -54,22 +70,22 @@ const dirOf = (h: number): { x: number; z: number } => ({ x: Math.cos(h), z: Mat
  * glide down 3 degrees, flare, touch down on `arr`'s threshold zone, roll out. `arr` is the end of the runway you LAND ON (you arrive from behind its threshold).
  * The plane is expected to be placed at dep threshold with speed 0.
  */
-export function buildFlightPlan(dep: RunwayEnd, arr: RunwayEnd): Waypoint[] {
-  const P = PLANE_PERF, d = dirOf(dep.heading), a = dirOf(arr.heading), wp: Waypoint[] = [];
+export function buildFlightPlan(dep: RunwayEnd, arr: RunwayEnd, P: PlanePerf = PLANE_PERF, opts: PlanOptions = {}): Waypoint[] {
+  const d = dirOf(dep.heading), a = dirOf(arr.heading), wp: Waypoint[] = [], cruiseAlt = opts.cruiseAlt ?? P.cruiseAlt;
   // 1. take-off roll: lift off at vRotate after v^2 / 2a metres (never more than 70 % of the runway)
   const roll = Math.min((P.vRotate * P.vRotate) / (2 * P.accel), dep.length * 0.7);
   const lift = { x: dep.x + d.x * roll, z: dep.z + d.z * roll };
   wp.push({ x: dep.x, z: dep.z, y: dep.y, v: 0, phase: 'takeoff-roll' });
   wp.push({ x: lift.x, z: lift.z, y: dep.y, v: P.vRotate, phase: 'rotate' });
   // 2. climb straight ahead (runway heading) to a safe height, then cruise level
-  const climbH = Math.min(P.cruiseAlt, 220), climbDist = climbH / Math.tan(P.climbSlope);
+  const climbH = Math.min(cruiseAlt, 220), climbDist = climbH / Math.tan(P.climbSlope);
   const c1 = { x: lift.x + d.x * climbDist, z: lift.z + d.z * climbDist };
   wp.push({ x: c1.x, z: c1.z, y: dep.y + climbH, v: P.vClimb, phase: 'climb' });
   // 3. final approach fix: finalDist before the arrival threshold, on the extended centre line
   const faf = { x: arr.x - a.x * P.finalDist, z: arr.z - a.z * P.finalDist };
   const fafY = arr.y + P.finalDist * Math.tan(P.glideSlope);
   // cruise leg: from the end of the climb to the top of the descent, height cruiseAlt (or whatever the glide path allows)
-  const topY = Math.min(arr.y + P.cruiseAlt, Math.max(fafY + 60, dep.y + P.cruiseAlt));
+  const topY = Math.min(arr.y + cruiseAlt, Math.max(fafY + 60, dep.y + cruiseAlt));
   const c2 = { x: c1.x + (faf.x - c1.x) * 0.3, z: c1.z + (faf.z - c1.z) * 0.3 };
   wp.push({ x: c2.x, z: c2.z, y: Math.max(topY, fafY + 40), v: P.vCruise, phase: 'cruise' });
   // descent: leave cruise level towards the final approach fix
@@ -84,6 +100,47 @@ export function buildFlightPlan(dep: RunwayEnd, arr: RunwayEnd): Waypoint[] {
   wp.push({ x: arr.x + a.x * td, z: arr.z + a.z * td, y: arr.y, v: P.vTouchdown, phase: 'flare' });
   const stop = Math.min(td + (P.vTouchdown * P.vTouchdown - P.vTaxi * P.vTaxi) / (2 * P.brake), arr.length - 40);
   wp.push({ x: arr.x + a.x * stop, z: arr.z + a.z * stop, y: arr.y, v: P.vTaxi, phase: 'landing-roll' });
+  return wp;
+}
+
+/**
+ * The landing part of a flight: from a point in the air (`from`, any height) to the final approach fix of `arr`, down the glide path, flare, touch down, roll out.
+ * Used for planes that come from abroad (they start at the edge of the map) and for the sorties of the military jets that are already in the air.
+ */
+export function buildArrivalPlan(arr: RunwayEnd, from: { x: number; z: number; y: number }, P: PlanePerf = PLANE_PERF, opts: PlanOptions = {}): Waypoint[] {
+  const a = dirOf(arr.heading), wp: Waypoint[] = [], cruiseAlt = opts.cruiseAlt ?? P.cruiseAlt;
+  const faf = { x: arr.x - a.x * P.finalDist, z: arr.z - a.z * P.finalDist };
+  const fafY = arr.y + P.finalDist * Math.tan(P.glideSlope);
+  const topY = Math.max(Math.min(from.y, arr.y + cruiseAlt), fafY + 40);
+  wp.push({ x: from.x, z: from.z, y: from.y, v: P.vCruise, phase: 'cruise' });
+  const c3 = { x: faf.x + (from.x - faf.x) * 0.35, z: faf.z + (from.z - faf.z) * 0.35 };
+  wp.push({ x: c3.x, z: c3.z, y: topY, v: P.vCruise, phase: 'cruise' });
+  wp.push({ x: faf.x, z: faf.z, y: fafY, v: P.vApproach + 6, phase: 'descent' });
+  const flareDist = P.flareAlt / Math.tan(P.glideSlope);
+  wp.push({ x: arr.x - a.x * flareDist, z: arr.z - a.z * flareDist, y: arr.y + P.flareAlt, v: P.vApproach, phase: 'final' });
+  const td = Math.min(300, arr.length * 0.25);
+  wp.push({ x: arr.x + a.x * td, z: arr.z + a.z * td, y: arr.y, v: P.vTouchdown, phase: 'flare' });
+  const stop = Math.min(td + (P.vTouchdown * P.vTouchdown - P.vTaxi * P.vTaxi) / (2 * P.brake), arr.length - 40);
+  wp.push({ x: arr.x + a.x * stop, z: arr.z + a.z * stop, y: arr.y, v: P.vTaxi, phase: 'landing-roll' });
+  return wp;
+}
+
+/**
+ * Take off from `dep`, climb straight ahead, then climb on to cruise height towards `to` (a point far away, e.g. beyond the edge of the map).
+ * The plan ends in the air: the flight is `done` when the plane reaches `to`.
+ */
+export function buildDeparturePlan(dep: RunwayEnd, to: { x: number; z: number }, P: PlanePerf = PLANE_PERF, opts: PlanOptions = {}): Waypoint[] {
+  const d = dirOf(dep.heading), wp: Waypoint[] = [], cruiseAlt = opts.cruiseAlt ?? P.cruiseAlt;
+  const roll = Math.min((P.vRotate * P.vRotate) / (2 * P.accel), dep.length * 0.7);
+  const lift = { x: dep.x + d.x * roll, z: dep.z + d.z * roll };
+  wp.push({ x: dep.x, z: dep.z, y: dep.y, v: 0, phase: 'takeoff-roll' });
+  wp.push({ x: lift.x, z: lift.z, y: dep.y, v: P.vRotate, phase: 'rotate' });
+  const climbH = Math.min(cruiseAlt, 220), climbDist = climbH / Math.tan(P.climbSlope);
+  const c1 = { x: lift.x + d.x * climbDist, z: lift.z + d.z * climbDist };
+  wp.push({ x: c1.x, z: c1.z, y: dep.y + climbH, v: P.vClimb, phase: 'climb' });
+  const mid = { x: c1.x + (to.x - c1.x) * 0.25, z: c1.z + (to.z - c1.z) * 0.25 };
+  wp.push({ x: mid.x, z: mid.z, y: dep.y + cruiseAlt, v: P.vCruise, phase: 'cruise' });
+  wp.push({ x: to.x, z: to.z, y: dep.y + cruiseAlt, v: P.vCruise, phase: 'cruise' });
   return wp;
 }
 
@@ -106,16 +163,20 @@ export class PlaneFlight {
   private along = 0; // distance flown along the current leg (m)
   private legLen: number;
 
-  constructor(readonly plan: Waypoint[], startHeading: number) {
+  /** True when the plan starts in the air (arrival plans): no take-off roll. */
+  readonly airborneStart: boolean;
+
+  constructor(readonly plan: Waypoint[], startHeading: number, private readonly perf: PlanePerf = PLANE_PERF) {
     const w = plan[0];
-    this.state = { x: w.x, y: w.y, z: w.z, heading: startHeading, pitch: 0, roll: 0, speed: 0, phase: 'takeoff-roll', gearDown: true, leg: 1, done: false };
+    this.airborneStart = w.phase !== 'takeoff-roll';
+    this.state = { x: w.x, y: w.y, z: w.z, heading: startHeading, pitch: 0, roll: 0, speed: this.airborneStart ? w.v : 0, phase: w.phase, gearDown: !this.airborneStart, leg: 1, done: false };
     this.legLen = this.len(0);
   }
 
   private len(i: number): number { const a = this.plan[i], b = this.plan[i + 1]; return Math.hypot(b.x - a.x, b.z - a.z); }
 
   step(dt: number): void {
-    const s = this.state, P = PLANE_PERF;
+    const s = this.state, P = this.perf;
     if (s.done) return;
     const a = this.plan[s.leg - 1], b = this.plan[s.leg];
     // ---- speed: accelerate (take-off) or brake (landing) or ease towards the target of the next waypoint
@@ -129,7 +190,7 @@ export class PlaneFlight {
     const A = this.plan[s.leg - 1], B = this.plan[s.leg];
     const t = this.legLen > 0 ? Math.min(1, this.along / this.legLen) : 1;
     s.x = A.x + (B.x - A.x) * t; s.z = A.z + (B.z - A.z) * t; s.y = A.y + (B.y - A.y) * t;
-    s.phase = s.leg === 1 ? (s.speed >= P.vRotate * 0.92 ? 'rotate' : 'takeoff-roll') : B.phase; // first leg = the take-off roll (the plan's first waypoint is the standing start)
+    s.phase = s.leg === 1 && !this.airborneStart ? (s.speed >= P.vRotate * 0.92 ? 'rotate' : 'takeoff-roll') : B.phase; // first leg = the take-off roll (the plan's first waypoint is the standing start)
     // ---- heading follows the leg direction, turn rate limited; bank follows the turn
     const want = Math.atan2(B.z - A.z, B.x - A.x), dh = angDiff(want, s.heading);
     const turn = Math.max(-P.maxTurnRate * dt, Math.min(P.maxTurnRate * dt, dh));

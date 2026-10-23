@@ -37,7 +37,7 @@ for (let x = -4950; x <= 4950; x += 150) for (let z = 1500; z <= 4950; z += 50) 
     const zn = getWorldZoneAt(x, z);
     if (zn.id.startsWith('island')) continue; // the island's own zones (hills + beach) include some shallow water around it
     seaTotal++;
-    if (zn.kind !== 'sea' && zn.kind !== 'seaport') seaMismatch++;
+    if (zn.kind !== 'sea' && zn.kind !== 'seaport' && zn.kind !== 'airport') seaMismatch++; // the sea airport stands in the sea
   }
 }
 console.log(`\nsea cells outside the sea zone: ${seaMismatch}/${seaTotal}`);

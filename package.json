@@ -67,6 +67,7 @@
     "test:library": "tsx scripts/library-test.ts",
     "test:army": "tsx scripts/army-site-test.ts",
     "test:airplane": "tsx scripts/airplane-test.ts",
+    "test:sea-airport": "tsx scripts/sea-airport-test.ts",
     "test:agro": "tsx scripts/agro-site-test.ts",
     "test:animals": "tsx scripts/animals-test.ts",
     "test:wanted": "tsx scripts/wanted-test.ts",

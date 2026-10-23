@@ -9,7 +9,7 @@ import { mallKeepout } from '../mall/MallSite';
 import { libraryKeepout } from '../library/LibrarySite';
 import { protoKeepout } from '../buildings/ProtoSite';
 import { infraKeepout } from '../engineering/InfraSites';
-import { airportKeepout } from '../airport/AirportSite';
+import { airportKeepout, seaAirportKeepout } from '../airport/AirportSite';
 import { armyKeepout } from '../army/ArmySite';
 import { agroKeepout } from '../agro/AgroSite';
 
@@ -290,7 +290,7 @@ export function planLocalStreets(sites: CitySite[], natural: Natural, roads: Roa
     skip: (owner: number, d: number) => boolean,
     keepout: boolean,
   ): number => {
-    if (evlabKeepout(x, z) || mallKeepout(x, z) || libraryKeepout(x, z) || protoKeepout(x, z) || infraKeepout(x, z) || airportKeepout(x, z) || armyKeepout(x, z) || agroKeepout(x, z)) return 1; // EVLab campus / City Mall / City Library plots: no local streets here
+    if (evlabKeepout(x, z) || mallKeepout(x, z) || libraryKeepout(x, z) || protoKeepout(x, z) || infraKeepout(x, z) || airportKeepout(x, z) || seaAirportKeepout(x, z) || armyKeepout(x, z) || agroKeepout(x, z)) return 1; // EVLab campus / City Mall / City Library plots: no local streets here
     if (area && !inArea(area, x, z, L.areaMargin)) return 1;
     if (wetAt(x, z, dx, dz, hw)) return 2;
     if (bridgePts.any(x, z, L.bridgeKeepout)) return 4;

@@ -40,6 +40,7 @@ export class RockPlacer {
     if (this.gen.railForm.inCorridor(x, z, 2)) return true;
     if (this.gen.portForm.inFootprint(x, z, 2)) return true; // STAGE 14: sea port
     if (this.gen.airport.contains(x, z, 3)) return true; // airport pad
+    if (this.gen.airportSea.contains(x, z, 3)) return true; // sea airport pad + causeway
     if (this.gen.army.contains(x, z, 3)) return true; // army camp
     if (this.gen.mall.contains(x, z, 3)) return true; // City Mall plot
     if (this.gen.evlab.contains(x, z, 3)) return true; // EVLab campus plot

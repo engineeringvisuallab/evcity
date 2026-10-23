@@ -18,6 +18,10 @@ export interface AirportSite {
   /** flat ground height of the whole airport */
   groundY: number;
   seed: number;
+  /** Length (m) of a paved access causeway that continues the entrance road (local +Z) over filled ground, e.g. out of the sea. 0 / missing = none. */
+  causeway?: number;
+  /** Adds a military apron (hardstands for 4 fighters) with hardened shelters on the east side (local +x) of the apron. */
+  military?: boolean;
 }
 
 export interface Rect { cx: number; cz: number; w: number; d: number }
@@ -65,6 +69,8 @@ export interface AirportPlan {
   /** aircraft/helicopter start points (local coords) */
   spawns: { runwayStart: { x: number; z: number; yaw: number }; helipad: { x: number; z: number } };
   pad: AirportPad;
+  /** The access causeway in the LOCAL frame (road + shoulders, levelled like the pad); z0 === z1 when there is none. */
+  causeway: { x0: number; x1: number; z0: number; z1: number };
 }
 
 export const DEFAULT_SITE: AirportSite = { cx: 0, cz: 0, heading: 0, groundY: 0, seed: 1 };
@@ -176,12 +182,22 @@ export function createAirportPlan(partial: Partial<AirportSite> = {}): AirportPl
   }
   pavements.push({ kind: 'apron', ...span(hMinX, hMaxX, taxiFar, hangarZ0) });
 
+  // ---- optional military apron: hardstands in a row (nose towards the shelters) + 4 hardened shelters
+  if (site.military) {
+    pavements.push({ kind: 'apron', ...span(290, 640, taxiFar, 300) });
+    for (let i = 0; i < 4; i++) buildings.push({ kind: 'hangar', cx: 330 + i * 70, cz: 270, w: 30, d: 40, h: 8, tint: 1 });
+  }
+
   // ---- landside: parking + entrance road
   const parkZ0 = termZ1 + S.parking.gap;
   const parkZ1 = parkZ0 + S.parking.depth;
   pavements.push({ kind: 'parking', ...span(-S.parking.width / 2, S.parking.width / 2, parkZ0, parkZ1) });
   const roadZ1 = parkZ1 + S.road.length;
   pavements.push({ kind: 'road', ...span(-S.road.width / 2, S.road.width / 2, parkZ1, roadZ1) });
+  // optional causeway road: the entrance road carries on over filled ground (the sea airport joins the shore this way)
+  const causeLen = site.causeway ?? 0;
+  if (causeLen > 0) pavements.push({ kind: 'road', ...span(-S.road.width / 2, S.road.width / 2, roadZ1, roadZ1 + causeLen) });
+  const causeway = { x0: -S.road.width / 2 - 14, x1: S.road.width / 2 + 14, z0: roadZ1, z1: roadZ1 + causeLen };
 
   // ---- bounds
   const m = S.fence.margin;
@@ -321,6 +337,6 @@ export function createAirportPlan(partial: Partial<AirportSite> = {}): AirportPl
 
   return {
     site, runway: { length: L, width: W, designators: S.runway.designators }, bounds,
-    pavements, markings, buildings, poles, windsock, fence, lights, helipad, entrance, spawns, pad,
+    pavements, markings, buildings, poles, windsock, fence, lights, helipad, entrance, spawns, pad, causeway,
   };
 }

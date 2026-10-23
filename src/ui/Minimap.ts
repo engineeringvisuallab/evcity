@@ -1,7 +1,7 @@
 import { Config } from '../core/Config';
 import type { CitySite } from '../terrain';
 import { ZONE_COLOR, type CityPlan } from '../city/CityPlan';
-import { AIRPORT, SEAPORT, WORLD_ZONE_COLOR, rasterizeWorldZones } from '../city/WorldZones';
+import { AIRPORT, AIRPORT_SEA, SEAPORT, WORLD_ZONE_COLOR, rasterizeWorldZones } from '../city/WorldZones';
 import { ENGINEERING_AREAS, ENGINEERING_GROUP_COLOR } from '../city/EngineeringZones';
 import type { RailNetwork } from '../rail';
 import type { ExpresswayNetwork } from '../expressway';
@@ -247,7 +247,7 @@ export class Minimap {
         // airport runway and port quay: thin white outlines so they read even at the whole-world zoom
         c.strokeStyle = '#ffffff';
         c.lineWidth = Math.max(1, this.dpr);
-        for (const f of [AIRPORT, SEAPORT]) c.strokeRect(X(f.x0), Z(f.z0), (f.x1 - f.x0) * ppm, (f.z1 - f.z0) * ppm);
+        for (const f of [AIRPORT, AIRPORT_SEA, SEAPORT]) c.strokeRect(X(f.x0), Z(f.z0), (f.x1 - f.x0) * ppm, (f.z1 - f.z0) * ppm);
         // engineering areas: a coloured outline (the colour of the branch group) on top of the zone layer, with the name when zoomed in
         for (const a of ENGINEERING_AREAS) {
           const col = ENGINEERING_GROUP_COLOR[a.group];
@@ -264,9 +264,11 @@ export class Minimap {
         }
         c.strokeStyle = '#ffffff';
         c.lineWidth = Math.max(1, this.dpr);
-        const rw = AIRPORT.areas[0];
-        c.fillStyle = '#222';
-        c.fillRect(X(rw.x0), Z(rw.z0), (rw.x1 - rw.x0) * ppm, Math.max(2 * this.dpr, (rw.z1 - rw.z0) * ppm));
+        for (const ap of [AIRPORT, AIRPORT_SEA]) {
+          const rw = ap.areas[0];
+          c.fillStyle = '#222';
+          c.fillRect(X(rw.x0), Z(rw.z0), (rw.x1 - rw.x0) * ppm, Math.max(2 * this.dpr, (rw.z1 - rw.z0) * ppm));
+        }
       }
       // planned city areas (Stage 10A): one translucent colour per zone kind; later areas are drawn first so the first (highest priority) is on top
       for (let i = this.plan.areas.length - 1; i >= 0; i--) {

@@ -13,6 +13,8 @@
  */
 import { Config } from '../core/Config';
 import { createArmyPlan } from '../army/ArmyPlan';
+import { airportPlanOf, SEA_AIRPORT_DEF } from '../airport/AirportSite';
+import { localToWorld } from '../airport/AirportPlan';
 import { ENGINEERING_AREAS, ENGINEERING_GROUP_COLOR, getEngineeringAreaAt } from './EngineeringZones';
 
 export type WorldZoneKind =
@@ -179,7 +181,7 @@ export function coastZ(x: number): number {
 export type FacilityAreaKind =
   | 'runway' | 'taxiway' | 'apron' | 'terminal' | 'cargo' | 'hangar' | 'fuel' | 'parking' | 'tower' | 'grounds'
   | 'container' | 'bulk' | 'oil' | 'fishing' | 'admin' | 'quay' | 'basin'
-  | 'camp' | 'gate' | 'hq' | 'parade' | 'barracks' | 'tents' | 'depot' | 'motorpool' | 'helipad';
+  | 'military' | 'camp' | 'gate' | 'hq' | 'parade' | 'barracks' | 'tents' | 'depot' | 'motorpool' | 'helipad';
 
 export interface FacilityArea {
   id: string;
@@ -191,7 +193,7 @@ export interface FacilityArea {
 }
 
 export interface Facility {
-  id: 'airport' | 'seaport' | 'army';
+  id: 'airport' | 'airport-sea' | 'seaport' | 'army';
   kind: 'airport' | 'seaport' | 'army';
   /** Outer boundary (axis-aligned, metres). */
   x0: number;
@@ -226,6 +228,40 @@ export const AIRPORT: Facility = {
     FA('airport-parking', 'parking', 2430, -3666, 2570, -3616),
     FA('airport-hangars', 'hangar', 2062.5, -3850, 2247.5, -3805),
     FA('airport-grounds', 'grounds', 1680, -4150, 3320, -3506),
+  ],
+};
+
+/**
+ * SEA AIRPORT - modern airport on reclaimed land in the sea just south of the south coast, between the island and the seaport (~3.7 km from the city
+ * centre). The land is filled to SEA_AIRPORT_FLOOR m above sea level (AirportSite) and a causeway road joins it to the shore. Same layout as the old
+ * airport (runway 09/27 west-east, taxiway, apron + 4-gate terminal + parking + tower + hangars) turned by 180 degrees (terminal side NORTH, towards
+ * the shore), plus a MILITARY apron with 4 hardstands and shelters. The sub-areas are written in the airport's local frame and turned into world
+ * rectangles with the site's position and heading, so they follow SEA_AIRPORT_DEF.
+ */
+const SEA_PLAN = airportPlanOf(SEA_AIRPORT_DEF);
+const seaRect = (id: string, kind: FacilityAreaKind, lx0: number, lz0: number, lx1: number, lz1: number): FacilityArea => {
+  const a = localToWorld(SEA_PLAN.site, lx0, lz0);
+  const b = localToWorld(SEA_PLAN.site, lx1, lz1);
+  return FA(id, kind, Math.min(a.x, b.x), Math.min(a.z, b.z), Math.max(a.x, b.x), Math.max(a.z, b.z));
+};
+const SEA_GROUNDS = seaRect('airport-sea-grounds', 'grounds', -760, -90, 760, 434);
+export const AIRPORT_SEA: Facility = {
+  id: 'airport-sea',
+  kind: 'airport',
+  x0: SEA_GROUNDS.x0,
+  z0: SEA_GROUNDS.z0,
+  x1: SEA_GROUNDS.x1,
+  z1: SEA_GROUNDS.z1,
+  areas: [
+    seaRect('airport-sea-runway', 'runway', -700, -22.5, 700, 22.5),
+    seaRect('airport-sea-tower', 'tower', 111.5, 300.5, 118.5, 307.5),
+    seaRect('airport-sea-taxiway', 'taxiway', -620, 114, 620, 136),
+    seaRect('airport-sea-military', 'military', 290, 136, 640, 300),
+    seaRect('airport-sea-apron', 'apron', -200, 136, 200, 276),
+    seaRect('airport-sea-terminal', 'terminal', -85, 284, 85, 324),
+    seaRect('airport-sea-parking', 'parking', -70, 334, 70, 384),
+    seaRect('airport-sea-hangars', 'hangar', -437.5, 150, -252.5, 195),
+    SEA_GROUNDS,
   ],
 };
 
@@ -271,7 +307,7 @@ export const ARMY: Facility = {
   areas: ARMY_PLAN.areas.map((a) => FA(a.id, a.id.slice(5) as FacilityAreaKind, ARMY_PLAN.site.cx + a.x0, ARMY_PLAN.site.cz + a.z0, ARMY_PLAN.site.cx + a.x1, ARMY_PLAN.site.cz + a.z1)),
 };
 
-export const FACILITIES: readonly Facility[] = [AIRPORT, ARMY, SEAPORT];
+export const FACILITIES: readonly Facility[] = [AIRPORT, AIRPORT_SEA, ARMY, SEAPORT];
 /** Facilities the RAILWAY keeps out of. The army camp is not in it on purpose: it was fitted next to the existing lines (the camp site is checked clear of every rail corridor), so the rail plan stays exactly as it was. */
 export const RAIL_FACILITIES: readonly Facility[] = [AIRPORT, SEAPORT];
 
@@ -324,7 +360,7 @@ export function getWorldZoneAt(x: number, z: number): WorldZoneHit {
 }
 
 /** All zone ids (seeds + airport + seaport + sea). */
-export const WORLD_ZONE_IDS: readonly string[] = [...WORLD_ZONES.map((z) => z.id), ...ISLAND_IDS, ...ENGINEERING_AREAS.map((a) => a.id), 'airport', 'army', 'seaport', 'sea-south'];
+export const WORLD_ZONE_IDS: readonly string[] = [...WORLD_ZONES.map((z) => z.id), ...ISLAND_IDS, ...ENGINEERING_AREAS.map((a) => a.id), 'airport', 'airport-sea', 'army', 'seaport', 'sea-south'];
 
 /** Rasterised zone map for the minimap and the tests: row-major (z rows from north), value = index into WORLD_ZONE_IDS. */
 export function rasterizeWorldZones(cell = 100): { n: number; cell: number; ids: Uint8Array; kinds: WorldZoneKind[] } {
@@ -336,7 +372,7 @@ export function rasterizeWorldZones(cell = 100): { n: number; cell: number; ids:
     const z = -half + (j + 0.5) * cell;
     for (let i = 0; i < n; i++) ids[j * n + i] = index.get(getWorldZoneAt(-half + (i + 0.5) * cell, z).id)!;
   }
-  const kinds: WorldZoneKind[] = WORLD_ZONE_IDS.map((id) => HITS.get(id)?.kind ?? (id === 'airport' ? 'airport' : id === 'army' ? 'army' : id === 'seaport' ? 'seaport' : 'sea'));
+  const kinds: WorldZoneKind[] = WORLD_ZONE_IDS.map((id) => HITS.get(id)?.kind ?? (id === 'airport' || id === 'airport-sea' ? 'airport' : id === 'army' ? 'army' : id === 'seaport' ? 'seaport' : 'sea'));
   return { n, cell, ids, kinds };
 }
 

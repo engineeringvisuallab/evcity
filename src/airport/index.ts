@@ -10,4 +10,5 @@ export { airportFootprints, isInsideAirport, padBlend, airportEntranceWorld } fr
 export type { Footprint } from './AirportCollision';
 export { AirportManager } from './AirportManager';
 export type { AirportDeps } from './AirportManager';
-export { AirportSite as AirportPadSite, AIRPORT_POS, airportKeepout } from './AirportSite';
+export { AirportSite as AirportPadSite, AIRPORT_POS, SEA_AIRPORT_POS, SEA_AIRPORT_FLOOR, OLD_AIRPORT_DEF, SEA_AIRPORT_DEF, airportKeepout, seaAirportKeepout } from './AirportSite';
+export type { AirportDef } from './AirportSite';
