@@ -21,5 +21,5 @@ export function buildRawMain({ mats: m }: Ctx): InfraPart {
     box(g, 0.7, hi - 0.4, 0.7, m.concrete, px, 0, z + 1.2);
   }
   box(g, 13, 0.4, 3.2, m.steel, -112, hi - 0.9, z);
-  return { id: 'rawMain', nameBn: 'কাঁচা পানির রাইজিং মেইন', group: g };
+  return { id: 'rawMain', nameBn: 'Raw Water Rising Main', group: g };
 }

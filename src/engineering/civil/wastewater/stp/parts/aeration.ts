@@ -33,5 +33,5 @@ export function buildAeration({ mats: m, site }: Ctx): InfraPart {
   pipe(g, [V(a.x - 30, 1.8, zh), V(a.x + 30, 1.8, zh)], 0.35, m.pipe.air);
   for (let dx = -30; dx <= 30; dx += 10) pipe(g, [V(a.x + dx, 1.8, zh), V(a.x + dx, 1.8, zh - 3), V(a.x + dx, -4.3, zh - 3)], 0.14, m.pipe.air);
   void pump;
-  return { id: 'aeration', nameBn: 'এয়ারেশন ট্যাংক ও ব্লোয়ার হাউস', group: g };
+  return { id: 'aeration', nameBn: 'Aeration Tank & Blower House', group: g };
 }

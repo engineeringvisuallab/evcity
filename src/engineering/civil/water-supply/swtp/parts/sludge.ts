@@ -19,5 +19,5 @@ export function buildSludge({ mats: m, site }: Ctx): InfraPart {
   pipe(g, [V(l.x, 0.2, 55), V(l.x, 1.6, 55), V(l.x, 1.6, l.zs[0] - 4), V(l.x, 0.6, l.zs[0] - 4)], 0.25, m.pipe.sludge);
   // transfer between lagoons
   pipe(g, [V(l.x + 12, 0.9, l.zs[0] + 8.5), V(l.x + 12, 0.9, l.zs[1] - 8.5)], 0.22, m.pipe.sludge);
-  return { id: 'sludge', nameBn: 'স্লাজ লেগুন (কাদা শুকানোর পুকুর)', group: g };
+  return { id: 'sludge', nameBn: 'Sludge Lagoons (Mud Drying Ponds)', group: g };
 }

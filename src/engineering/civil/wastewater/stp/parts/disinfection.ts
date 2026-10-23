@@ -35,5 +35,5 @@ export function buildDisinfection({ mats: m, site, opts }: Ctx): InfraPart {
   // sampling chamber (water quality is checked here)
   box(g, 3.2, 1.0, 3.2, m.concreteDark, 134, 0, zo + 4);
   cyl(g, 0.7, 0.15, m.steel, 134, 1.0, zo + 4, 16);
-  return { id: 'disinfection', nameBn: 'ক্লোরিন কন্টাক্ট ট্যাংক ও আউটফল', group: g };
+  return { id: 'disinfection', nameBn: 'Chlorine Contact Tank & Outfall', group: g };
 }

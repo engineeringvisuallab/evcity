@@ -37,5 +37,5 @@ export function buildRapidMix({ mats: m, site }: Ctx): InfraPart {
   cyl(g, 0.07, 5.2, m.steel, mx.x, -3.0, mx.z, 8);
   box(g, 2.0, 0.12, 0.35, m.steel, mx.x, -2.5, mx.z);
   box(g, 0.35, 0.12, 2.0, m.steel, mx.x, -2.5, mx.z);
-  return { id: 'rapidMix', nameBn: 'পার্শাল ফ্লুম ও র‍্যাপিড মিক্সিং', group: g };
+  return { id: 'rapidMix', nameBn: 'Parshall Flume & Rapid Mixing', group: g };
 }

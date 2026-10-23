@@ -68,5 +68,5 @@ export function buildEnvironment({ mats: m }: Ctx): InfraPart {
     i++;
   }
   g.add(trunk, crown);
-  return { id: 'environment', nameBn: 'নদী ও পারিপার্শ্বিক এলাকা', group: g };
+  return { id: 'environment', nameBn: 'River & Surroundings', group: g };
 }

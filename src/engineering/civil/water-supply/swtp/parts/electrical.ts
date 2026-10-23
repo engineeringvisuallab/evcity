@@ -61,5 +61,5 @@ export function buildElectrical({ mats: m, opts }: Ctx): InfraPart {
     wire(g, V(170, y1 + 11.6, s.z + dz), V(112, 11.6, s.z + dz), 1.5);
     wire(g, V(112, 11.6, s.z + dz), V(gx, 8.0, s.z + dz * 1.4), 2.2);
   }
-  return { id: 'electrical', nameBn: 'সাবস্টেশন ও স্ট্যান্ডবাই জেনারেটর', group: g };
+  return { id: 'electrical', nameBn: 'Substation & Standby Generator', group: g };
 }

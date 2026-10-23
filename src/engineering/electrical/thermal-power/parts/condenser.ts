@@ -50,5 +50,5 @@ export function buildCondenser({ mats: m, t, anim }: Ctx): InfraPart {
   flow(anim, g, hot, { color: 0xffd7a0, speed: 5, spacing: 3.4, size: 0.4 });
   // vacuum gauge lamp (green = vacuum OK) on the shell
   cyl(g, 0.25, 0.5, m.steel, x1 - 1, y0 + hC, z1 - 1, 10);
-  return { id: 'condenser', nameBn: 'কনডেনসার ও কনডেনসেট পাম্প', group: g };
+  return { id: 'condenser', nameBn: 'Condenser & Condensate Pumps', group: g };
 }

@@ -38,5 +38,5 @@ export function buildDigester({ mats: m }: Ctx): InfraPart {
   const flame = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.8, 10), m.pipe.biogas);
   flame.position.set(f.x, 7.9, f.z);
   g.add(flame);
-  return { id: 'digester', nameBn: 'অ্যানারোবিক ডাইজেস্টার ও বায়োগ্যাস', group: g };
+  return { id: 'digester', nameBn: 'Anaerobic Digester & Biogas', group: g };
 }

@@ -46,5 +46,5 @@ export function buildIntake({ mats: m, site, opts }: Ctx): InfraPart {
   railing(g, m.steel, x - w / 2 + 5.5, z - d / 2 + 0.6, x - w / 2 + 5.5, z + d / 2 - 0.6, 1.5);
   // suction pipes rise out of the well toward the pump house
   for (const zz of [z - 4, z, z + 4]) pipe(g, [V(-145, -depth + 1.5, zz), V(-145, 0.9, zz), V(-132.5, 0.9, zz)], 0.38, m.pipe.raw);
-  return { id: 'intake', nameBn: 'ইনটেক (নদী থেকে পানি গ্রহণ)', group: g };
+  return { id: 'intake', nameBn: 'Intake (Taking Water from the River)', group: g };
 }

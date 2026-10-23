@@ -23,19 +23,19 @@ import { buildControl } from './parts/control';
 
 /** Floating Bangla name tags: [text, x, y, z] (local metres). */
 const LABELS: [string, number, number, number][] = [
-  ['মূল ফটক', 0, 10, 108],
-  ['প্রশাসনিক ভবন', -45, 11, 88],
-  ['গ্যাস স্টেশন', -150, 9, 20],
-  ['বয়লার', -95, 50, -30],
-  ['চিমনি', -128, 78, -30],
-  ['টারবাইন ও জেনারেটর', -5, 26, -30],
-  ['কনডেনসার', -2, 9, -22],
-  ['কুলিং টাওয়ার', 105, 76, -66],
-  ['ফিডওয়াটার পাম্প', -52, 14, 12],
-  ['ডিএম প্ল্যান্ট', -125, 11, 55],
-  ['জেনারেটর ট্রান্সফর্মার', 45, 15, -30],
-  ['সুইচইয়ার্ড', 105, 18, -15],
-  ['কন্ট্রোল রুম', 22, 14, 8],
+  ['Main Gate', 0, 10, 108],
+  ['Administration Building', -45, 11, 88],
+  ['Gas Station', -150, 9, 20],
+  ['Boiler', -95, 50, -30],
+  ['Chimney', -128, 78, -30],
+  ['Turbine & Generator', -5, 26, -30],
+  ['Condenser', -2, 9, -22],
+  ['Cooling Tower', 105, 76, -66],
+  ['Feed Water Pumps', -52, 14, 12],
+  ['DM Plant', -125, 11, 55],
+  ['Generator Transformer', 45, 15, -30],
+  ['Switchyard', 105, 18, -15],
+  ['Control Room', 22, 14, 8],
 ];
 
 export function createThermalPlant(options?: InfraBuildOptions): Infrastructure {
@@ -73,7 +73,7 @@ export function createThermalPlant(options?: InfraBuildOptions): Infrastructure 
 
   return {
     id: 'thermal',
-    nameBn: 'তাপ বিদ্যুৎ কেন্দ্র (গ্যাসচালিত, ১৫০ মেগাওয়াট)',
+    nameBn: 'Thermal Power Plant (Gas-Fired, 150 MW)',
     category: 'electrical',
     root,
     parts,
@@ -101,7 +101,7 @@ export function createThermalPlant(options?: InfraBuildOptions): Infrastructure 
 
 export const thermalDef: InfrastructureDef = {
   id: 'thermal',
-  nameBn: 'তাপ বিদ্যুৎ কেন্দ্র (গ্যাসচালিত, ১৫০ মেগাওয়াট)',
+  nameBn: 'Thermal Power Plant (Gas-Fired, 150 MW)',
   category: 'electrical',
   create: (o) => createThermalPlant(o),
 };

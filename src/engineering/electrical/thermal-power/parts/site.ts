@@ -19,7 +19,7 @@ export function buildSiteWorks({ mats: m }: Ctx): InfraPart {
   box(g, 0.4, 3.4, 0.4, m.steel, -3.2, 0, G.z);
   const boom = box(g, 4.2, 0.2, 0.2, m.red, -1.2, 3.0, G.z);
   boom.rotation.z = 0;
-  const sign = makeSign('তাপ বিদ্যুৎ কেন্দ্র', 12, 2.2);
+  const sign = makeSign('Thermal Power Plant', 12, 2.2);
   sign.position.set(0, 6.4, G.z + 3.5);
   g.add(sign);
   for (const x of [-6.4, 6.4]) box(g, 0.5, 6.4, 0.5, m.steel, x, 0, G.z + 3.5);
@@ -34,5 +34,5 @@ export function buildSiteWorks({ mats: m }: Ctx): InfraPart {
   }
   for (let x = 20; x < L.yard.x1; x += 24) lightPole(g, m, x, 28.5, -1);
   void cyl;
-  return { id: 'gate', nameBn: 'মূল ফটক, প্রশাসনিক ভবন ও রাস্তা', group: g };
+  return { id: 'gate', nameBn: 'Main Gate, Administration & Roads', group: g };
 }

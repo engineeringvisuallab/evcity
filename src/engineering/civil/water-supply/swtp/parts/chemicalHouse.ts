@@ -26,5 +26,5 @@ export function buildChemicalHouse({ mats: m }: Ctx): InfraPart {
   }
   // header and the dosing line to the rapid mixer (x = -81)
   pipe(g, [V(-97.3, 1.8, z + 4.8), V(-81, 1.8, z + 4.8), V(-81, 1.8, L.mixer.z + 2.6), V(-81, 0.8, L.mixer.z + 2.6)], 0.14, m.pipe.chemical, m.concrete);
-  return { id: 'chemical', nameBn: 'কেমিক্যাল হাউস (ডোজিং)', group: g };
+  return { id: 'chemical', nameBn: 'Chemical House (Dosing)', group: g };
 }

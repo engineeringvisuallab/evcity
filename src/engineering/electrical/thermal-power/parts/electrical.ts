@@ -91,5 +91,5 @@ export function buildElectrical({ mats: m, t, anim }: Ctx): InfraPart {
   });
   // maintenance road to the transformer
   road(g, m.asphalt, 0, -8, T.x - 6, -8, 6);
-  return { id: 'electrical', nameBn: 'ট্রান্সফর্মার ও সুইচইয়ার্ড', group: g };
+  return { id: 'electrical', nameBn: 'Transformer & Switchyard', group: g };
 }

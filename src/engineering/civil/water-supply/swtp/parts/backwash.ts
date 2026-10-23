@@ -35,5 +35,5 @@ export function buildBackwash({ mats: m }: Ctx): InfraPart {
   // wash-water outlet: tank bottom -> down -> east -> north to the filter gallery
   pipe(g, [V(x, y0, z), V(x, 0.4, z), V(75, 0.4, z), V(75, 0.4, -40), V(73, 0.4, -40)], 0.3, m.pipe.backwash);
   valve(g, m, 68, 0.4, z, 0.3, 'x');
-  return { id: 'backwash', nameBn: 'ব্যাকওয়াশ ওভারহেড ট্যাংক', group: g };
+  return { id: 'backwash', nameBn: 'Backwash Overhead Tank', group: g };
 }

@@ -25,5 +25,5 @@ export function buildPrimary({ mats: m, site }: Ctx): InfraPart {
   // primary sludge: buried line from both tank bottoms to the thickener
   buriedLine(g, m.pipe.sludge, [V(xs[0], 0, z + r + 2), V(xs[0], 0, 20), V(-70, 0, 20), V(-70, 0, 36)], 10);
   buriedLine(g, m.pipe.sludge, [V(xs[1], 0, z + r + 2), V(xs[1], 0, 20), V(xs[0], 0, 20)], 10);
-  return { id: 'primary', nameBn: 'প্রাইমারি ক্ল্যারিফায়ার', group: g };
+  return { id: 'primary', nameBn: 'Primary Clarifier', group: g };
 }

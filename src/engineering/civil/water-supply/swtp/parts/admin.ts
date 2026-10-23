@@ -29,5 +29,5 @@ export function buildAdmin({ mats: m }: Ctx): InfraPart {
     box(g, 1.8, 0.8, 4, mat, a.x - 9.6 + i * 4.8, 0.3, a.z + 21);
     box(g, 1.6, 0.7, 2.2, m.glass, a.x - 9.6 + i * 4.8, 1.1, a.z + 21);
   });
-  return { id: 'lab', nameBn: 'কন্ট্রোল রুম, প্রশাসন ও ল্যাবরেটরি', group: g };
+  return { id: 'lab', nameBn: 'Control Room, Administration & Laboratory', group: g };
 }

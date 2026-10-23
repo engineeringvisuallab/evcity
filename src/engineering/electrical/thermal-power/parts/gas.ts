@@ -37,5 +37,5 @@ export function buildGas({ mats: m, t, anim }: Ctx): InfraPart {
   // gas flow dots: pipeline -> station -> burners
   const path = [V(ix, 1.2, R.z), ...inlet.slice(1), V(R.x + R.w / 2 - 0.2, 1.2, zi), ...main.slice(1, 6), V(-104, 9, B.z + B.d / 2 + 3.5), V(-95, 9, B.z + B.d / 2 + 3.5), V(-95, 9, B.z + B.d / 2 + 1.8)];
   flow(anim, g, path, { color: 0xfff2a8, speed: 5, spacing: 3, size: 0.32 });
-  return { id: 'gas', nameBn: 'গ্যাস রিসিভিং ও মিটারিং স্টেশন', group: g };
+  return { id: 'gas', nameBn: 'Gas Receiving & Metering Station', group: g };
 }

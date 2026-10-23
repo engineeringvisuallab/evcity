@@ -27,5 +27,5 @@ export function buildSedimentation({ mats: m, site }: Ctx): InfraPart {
     for (const k of [-1, 1]) cyl(g, 0.1, 5, m.steel, bx, -3.9, z + k * (s.d / 2 - 1.2), 8);
     box(g, 0.12, 1.8, s.d - 1.6, m.steel, bx, -3.9, z);
   }
-  return { id: 'sedimentation', nameBn: 'সেডিমেন্টেশন (থিতানো) ট্যাংক', group: g };
+  return { id: 'sedimentation', nameBn: 'Sedimentation (Settling) Tanks', group: g };
 }

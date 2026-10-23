@@ -22,5 +22,5 @@ export function buildHighLift({ mats: m }: Ctx): InfraPart {
     valve(g, m, 38, 2.4, zz, 0.35, 'x');
   }
   pipe(g, [V(34, 2.4, zs[0]), V(34, 2.4, zs[3])], 0.6, m.pipe.delivery);
-  return { id: 'highLift', nameBn: 'হাই-লিফট পাম্প হাউস', group: g };
+  return { id: 'highLift', nameBn: 'High-Lift Pump House', group: g };
 }

@@ -62,7 +62,7 @@ export function createStp(options?: InfraBuildOptions): Infrastructure {
 
   return {
     id: 'stp',
-    nameBn: 'সিউয়েজ ট্রিটমেন্ট প্ল্যান্ট (STP)',
+    nameBn: 'Sewage Treatment Plant (STP)',
     category: 'civil',
     root,
     parts,
@@ -87,7 +87,7 @@ export function createStp(options?: InfraBuildOptions): Infrastructure {
 
 export const stpDef: InfrastructureDef = {
   id: 'stp',
-  nameBn: 'সিউয়েজ ট্রিটমেন্ট প্ল্যান্ট (STP)',
+  nameBn: 'Sewage Treatment Plant (STP)',
   category: 'civil',
   create: (o) => createStp(o),
 };

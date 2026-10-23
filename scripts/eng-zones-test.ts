@@ -27,7 +27,7 @@ const g = new TerrainGenerator(Config.world.seed);
 const sc = g.makeSample(), s2 = g.makeSample();
 
 // the thermal plant is built INSIDE its own engineering area (eng-thermal-power): it is not an obstacle for that area
-const infra: [string, R][] = INFRA_PLACEMENTS.filter((p) => p.id !== 'thermal').map((p) => {
+const infra: [string, R][] = INFRA_PLACEMENTS.filter((p) => p.id !== 'thermal' && p.id !== 'grid' && p.id !== 'mech').map((p) => {
   const r = Math.hypot(Math.max(Math.abs(p.rect.x0), Math.abs(p.rect.x1)), Math.max(Math.abs(p.rect.z0), Math.abs(p.rect.z1))) + p.blend;
   return [p.id, { x0: p.x - r, x1: p.x + r, z0: p.z - r, z1: p.z + r }];
 });

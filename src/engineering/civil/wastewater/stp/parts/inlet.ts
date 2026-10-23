@@ -54,5 +54,5 @@ export function buildInlet({ mats: m, site }: Ctx): InfraPart {
   cyl(g, 0.9, 0.35, m.concreteDark, -146, 0, p.z, 16);
   cyl(g, 0.75, 0.1, m.steel, -146, 0.35, p.z, 16);
   buriedLine(g, m.pipe.sewage, [V(-146, 0, p.z), V(-138, 0, p.z)], 8);
-  return { id: 'inlet', nameBn: 'ইনলেট পাম্প স্টেশন ও স্ক্রিন', group: g };
+  return { id: 'inlet', nameBn: 'Inlet Pump Station & Screens', group: g };
 }

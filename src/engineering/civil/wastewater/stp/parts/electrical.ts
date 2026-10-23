@@ -37,5 +37,5 @@ export function buildElectrical({ mats: m, opts }: Ctx): InfraPart {
   box(g, 1.8, 1.9, 1.8, m.white, gn.x + 1.5, 0.2, gn.z - 1);
   cyl(g, 0.22, 3.2, m.chimney, gn.x - 3.5, 4.9, gn.z - 3, 10);
   cylH(g, 1.0, 4, m.steel, gn.x, 1.1, gn.z + 6.5, 'x', 18);
-  return { id: 'electrical', nameBn: 'সাবস্টেশন ও জেনারেটর', group: g };
+  return { id: 'electrical', nameBn: 'Substation & Generator', group: g };
 }

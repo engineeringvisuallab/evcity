@@ -70,7 +70,7 @@ export function createSwtp(options?: InfraBuildOptions): Infrastructure {
 
   return {
     id: 'swtp',
-    nameBn: 'সারফেস ওয়াটার ট্রিটমেন্ট প্ল্যান্ট (SWTP)',
+    nameBn: 'Surface Water Treatment Plant (SWTP)',
     category: 'civil',
     root,
     parts,
@@ -95,7 +95,7 @@ export function createSwtp(options?: InfraBuildOptions): Infrastructure {
 
 export const swtpDef: InfrastructureDef = {
   id: 'swtp',
-  nameBn: 'সারফেস ওয়াটার ট্রিটমেন্ট প্ল্যান্ট (SWTP)',
+  nameBn: 'Surface Water Treatment Plant (SWTP)',
   category: 'civil',
   create: (o) => createSwtp(o),
 };

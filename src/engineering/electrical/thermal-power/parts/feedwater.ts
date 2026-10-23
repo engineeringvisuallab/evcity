@@ -34,5 +34,5 @@ export function buildFeedwater({ mats: m, t, anim }: Ctx): InfraPart {
   flow(anim, g, [V(F.x, yD - 1.8, F.z), ...out, ...feed], { color: 0xa8d4ff, speed: 6, spacing: 2.6, size: 0.3 });
   // hot-steam extraction to the deaerator (small lagged pipe from the turbine side)
   void t;
-  return { id: 'feedwater', nameBn: 'ডিঅ্যারেটর ও ফিডওয়াটার পাম্প', group: g };
+  return { id: 'feedwater', nameBn: 'Deaerator & Feed Water Pumps', group: g };
 }

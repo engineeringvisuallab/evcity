@@ -87,5 +87,5 @@ export function buildBoiler({ mats: m, t, anim }: Ctx): InfraPart {
     br.position.y = (ya + yb) / 2;
     br.rotation.x = Math.atan2(fz1 - fz0, yb - ya);
   }
-  return { id: 'boiler', nameBn: 'বয়লার (ফার্নেস, স্টিম ড্রাম, বার্নার)', group: g };
+  return { id: 'boiler', nameBn: 'Boiler (Furnace, Steam Drum, Burners)', group: g };
 }

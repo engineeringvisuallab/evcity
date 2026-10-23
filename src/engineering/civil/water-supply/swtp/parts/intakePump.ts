@@ -17,5 +17,5 @@ export function buildIntakePump({ mats: m }: Ctx): InfraPart {
     valve(g, m, -128.4, 1.8, zz, 0.3, 'x');
   }
   pipe(g, [V(-126.5, 1.8, z - 4), V(-126.5, 1.8, z + 4)], 0.5, m.pipe.raw);
-  return { id: 'intakePump', nameBn: 'ইনটেক পাম্প হাউস (লো-লিফট)', group: g };
+  return { id: 'intakePump', nameBn: 'Intake Pump House (Low-Lift)', group: g };
 }

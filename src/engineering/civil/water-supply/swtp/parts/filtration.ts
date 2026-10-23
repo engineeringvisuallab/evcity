@@ -39,5 +39,5 @@ export function buildFiltration({ mats: m, site }: Ctx): InfraPart {
     pipe(g, [V(x + 3, 0.4, zg), V(x + 3, 0.4, f.zN + f.d / 2 - 0.2)], 0.22, m.pipe.backwash);
     pipe(g, [V(x + 3, 0.4, zg), V(x + 3, 0.4, f.zS - f.d / 2 + 0.2)], 0.22, m.pipe.backwash);
   }
-  return { id: 'filtration', nameBn: 'র‍্যাপিড স্যান্ড ফিল্টার', group: g };
+  return { id: 'filtration', nameBn: 'Rapid Sand Filters', group: g };
 }

@@ -9,7 +9,7 @@ const smoothstep = (a: number, b: number, x: number): number => {
 };
 
 export interface InfraPlacement {
-  id: 'swtp' | 'stp' | 'thermal';
+  id: 'swtp' | 'stp' | 'thermal' | 'grid' | 'mech';
   nameBn: string;
   /** site origin (the local (0,0) of the plant) and yaw: local +x maps to world (cos yaw, -sin yaw) */
   x: number;
@@ -33,11 +33,17 @@ export interface InfraPlacement {
 
 const d2r = Math.PI / 180;
 export const INFRA_PLACEMENTS: InfraPlacement[] = [
-  { id: 'swtp', nameBn: 'জল শোধনাগার (SWTP)', x: -180, z: 1260, yaw: 161.2 * d2r, rect: { x0: -168, x1: 158, z0: -113, z1: 113 }, riverSide: 'W', color: '#0ea5e9', mark: 'W', deep: 10, blend: 30, riverBlend: 22, lift: 2.5 },
-  { id: 'stp', nameBn: 'পয়ঃশোধনাগার (STP)', x: -240, z: 2040, yaw: 142.2 * d2r, rect: { x0: -153, x1: 153, z0: -103, z1: 103 }, riverSide: 'E', color: '#92400e', mark: 'S', deep: 7.5, blend: 30, riverBlend: 10, lift: 0 },
+  { id: 'swtp', nameBn: 'Water Treatment Plant (SWTP)', x: -180, z: 1260, yaw: 161.2 * d2r, rect: { x0: -168, x1: 158, z0: -113, z1: 113 }, riverSide: 'W', color: '#0ea5e9', mark: 'W', deep: 10, blend: 30, riverBlend: 22, lift: 2.5 },
+  { id: 'stp', nameBn: 'Sewage Treatment Plant (STP)', x: -240, z: 2040, yaw: 142.2 * d2r, rect: { x0: -153, x1: 153, z0: -103, z1: 103 }, riverSide: 'E', color: '#92400e', mark: 'S', deep: 7.5, blend: 30, riverBlend: 10, lift: 0 },
   // Thermal power plant: stands inside the engineering area 'eng-thermal-power' (x 700..1150, z -3150..-2850), no river needed.
   // Pad 348 x 224 m: clear of the pond in the area's south-west corner and of the public road just east of it; entrance on the south side (local +z).
-  { id: 'thermal', nameBn: 'তাপ বিদ্যুৎ কেন্দ্র', x: 925, z: -3010, yaw: 0, rect: { x0: -165, x1: 183, z0: -112, z1: 112 }, riverSide: 'none', color: '#f59e0b', mark: 'T', deep: 3, blend: 28, riverBlend: 28, lift: 0 },
+  { id: 'thermal', nameBn: 'Thermal Power Plant', x: 925, z: -3010, yaw: 0, rect: { x0: -165, x1: 183, z0: -112, z1: 112 }, riverSide: 'none', color: '#f59e0b', mark: 'T', deep: 3, blend: 28, riverBlend: 28, lift: 0 },
+  // 132/33 kV grid substation: inside the engineering area 'eng-grid' (x 150..600, z 2100..2450). A main road cuts that area at z~2350
+  // and another runs along its west side, so the pad stays in the north part; entrance on the north side (local -z).
+  { id: 'grid', nameBn: 'Grid Substation', x: 388, z: 2214, yaw: 0, rect: { x0: -180, x1: 180, z0: -92, z1: 80 }, riverSide: 'none', color: '#eab308', mark: 'G', deep: 2, blend: 26, riverBlend: 26, lift: 0 },
+  // Mechanical works: inside the engineering area 'eng-mech-works' (x 1450..2050, z 200..650). A public road runs N-S through the east part of the
+  // area (x ~1950) and hills rise in the south, so the pad sits in the flat north-west part; the plant's gate faces the road (east side).
+  { id: 'mech', nameBn: 'Mechanical Works', x: 1690, z: 332, yaw: 0, rect: { x0: -205, x1: 175, z0: -107, z1: 100 }, riverSide: 'none', color: '#8b5cf6', mark: 'M', deep: 1.5, blend: 26, riverBlend: 26, lift: 0 },
 ];
 
 /** Floor is cut slightly BELOW the plate so the plate never z-fights with the ground. */

@@ -37,5 +37,5 @@ export function buildFlocculation({ mats: m, site }: Ctx): InfraPart {
   for (const z of [f.zN, f.zS]) pipe(g, [V(fx, 0.9, z), V(x0 + 1, 0.9, z)], 0.55, m.pipe.raw);
   // outlets to the sedimentation tanks
   for (const z of [f.zN, f.zS]) pipe(g, [V(f.x + f.w / 2 - 1, 0.9, z), V(L.sed.x - L.sed.w / 2 + 1, 0.9, z)], 0.55, m.pipe.settled);
-  return { id: 'flocculation', nameBn: 'ফ্লকুলেশন বেসিন', group: g };
+  return { id: 'flocculation', nameBn: 'Flocculation Basins', group: g };
 }

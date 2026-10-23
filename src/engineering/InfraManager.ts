@@ -174,8 +174,8 @@ export class InfraManager {
     if (this.active) {
       const t = this.active.tour;
       const st = t.stops[t.index];
-      text = st ? `${this.active.site.nameBn} · ধাপ ${t.index + 1}/${t.stops.length}: ${st.titleBn}   [ . পরের · , আগের · Y থামুন ]` : '';
-    } else if (nearest && nd < HINT_DIST) text = `${nearest.site.nameBn} · Y চাপুন: ভয়েস ট্যুর`;
+      text = st ? `${this.active.site.nameBn} · Step ${t.index + 1}/${t.stops.length}: ${st.titleBn}   [ . next · , back · Y stop ]` : '';
+    } else if (nearest && nd < HINT_DIST) text = `${nearest.site.nameBn} · Press Y: guided voice tour`;
     if (text !== this.hintText) {
       this.hintText = text;
       this.hint.textContent = text;

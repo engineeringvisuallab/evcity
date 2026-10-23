@@ -24,5 +24,5 @@ export function buildReservoir({ mats: m, site }: Ctx): InfraPart {
   box(g, 0.2, 2.2, 1.2, m.door, r.x + 19.35, 1.7, r.z + 11);
   // overflow pipe on the east side
   pipe(g, [V(r.x + r.w / 2, 1.0, r.z - 8), V(r.x + r.w / 2 + 6, 1.0, r.z - 8)], 0.35, m.pipe.sludge);
-  return { id: 'reservoir', nameBn: 'পরিষ্কার পানির ভূগর্ভস্থ জলাধার', group: g };
+  return { id: 'reservoir', nameBn: 'Clear Water Underground Reservoir', group: g };
 }

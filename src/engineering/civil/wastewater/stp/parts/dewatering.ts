@@ -30,5 +30,5 @@ export function buildDewatering({ mats: m }: Ctx): InfraPart {
   g.add(pile);
   // digested sludge arrives by a buried line from the digester
   buriedLine(g, m.pipe.sludge, [V(-24, 0, L.digester.z + 2), V(b.x - b.w / 2 - 1, 0, L.digester.z + 2)], 9);
-  return { id: 'dewatering', nameBn: 'ডিওয়াটারিং ভবন (বেল্ট প্রেস)', group: g };
+  return { id: 'dewatering', nameBn: 'Dewatering Building (Belt Press)', group: g };
 }

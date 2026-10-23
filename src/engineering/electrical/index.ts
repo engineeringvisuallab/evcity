@@ -1,2 +1,3 @@
-// STAGE 11: electrical engineering systems. First one: the thermal (gas-fired steam) power plant -> registered in ../index.ts
+// Electrical engineering systems: thermal power plant (generation) and 132/33 kV grid substation (transmission). Registered in ../index.ts
 export { thermalDef, createThermalPlant } from './thermal-power';
+export { gridDef, createGridSubstation } from './grid-substation';

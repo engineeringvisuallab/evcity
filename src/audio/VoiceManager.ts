@@ -125,12 +125,16 @@ export class VoiceManager {
     }
 
     const voices = 'speechSynthesis' in window ? speechSynthesis.getVoices() : [];
-    const voice = this.ttsVoice ?? voices.find((v) => v.lang.toLowerCase().startsWith('bn')) ?? null;
+    // Bengali text -> a Bengali voice; any other text (the engineering sites are narrated in English) -> an English voice
+    const isBengali = /[\u0980-\u09FF]/.test(text);
+    const voice = isBengali
+      ? this.ttsVoice ?? voices.find((v) => v.lang.toLowerCase().startsWith('bn')) ?? null
+      : voices.find((v) => v.lang.toLowerCase() === 'en-us') ?? voices.find((v) => v.lang.toLowerCase().startsWith('en')) ?? null;
     if (voice && 'speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.voice = voice;
       utterance.lang = voice.lang;
-      utterance.rate = 0.94;
+      utterance.rate = isBengali ? 0.94 : 0.92;
       utterance.pitch = 0.98;
       utterance.onend = () => { if (my === this.token) { this.speaking = false; this.subtitles.hide(); } };
       utterance.onerror = () => { if (my === this.token) { this.speaking = false; this.busyUntil = performance.now() + readTime * 1000; this.subtitles.show(text, readTime); } };

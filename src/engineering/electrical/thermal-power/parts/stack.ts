@@ -51,5 +51,5 @@ export function buildStack({ mats: m, t, anim, solids }: Ctx): InfraPart {
   // aviation warning lights
   box(g, 0.6, 0.6, 0.6, t.lampR, S.x, top, S.z + S.r1);
   box(g, 0.6, 0.6, 0.6, t.lampR, S.x, 50, S.z + rAt(50));
-  return { id: 'stack', nameBn: 'চিমনি ও ফ্লু গ্যাস ফ্যান', group: g };
+  return { id: 'stack', nameBn: 'Chimney & Flue Gas Fan', group: g };
 }

@@ -22,5 +22,5 @@ export function buildDelivery({ mats: m, opts }: Ctx): InfraPart {
   // outlet through the south fence
   cylH(g, 0.7, 6, m.pipe.delivery, x, opts.groundY(x, 114) + 0.9, 113, 'z', 18);
   box(g, 1.8, 1.8, 0.3, m.concreteDark, x, 0, 110.2);
-  return { id: 'delivery', nameBn: 'ডেলিভারি মেইন (শহরের দিকে)', group: g };
+  return { id: 'delivery', nameBn: 'Delivery Main (to the City)', group: g };
 }

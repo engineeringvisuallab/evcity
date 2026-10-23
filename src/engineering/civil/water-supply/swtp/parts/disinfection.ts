@@ -33,5 +33,5 @@ export function buildDisinfection({ mats: m, site }: Ctx): InfraPart {
   box(g, 1.8, 2.0, 0.9, m.white, h.x + 5, 0.2, h.z - 3.5); // chlorinator
   pipe(g, [V(h.x - 5, 2.3, h.z - 3.5), V(h.x + 5, 2.3, h.z - 3.5), V(h.x + 5, 2.3, h.z + 1)], 0.1, m.pipe.chlorine);
   pipe(g, [V(h.x + 5, 2.3, h.z + 1), V(108, 1.3, h.z + 1), V(108, 1.3, c.z - 8.5), V(108, 0.2, c.z - 8.5)], 0.12, m.pipe.chlorine);
-  return { id: 'disinfection', nameBn: 'ক্লোরিন কন্টাক্ট ট্যাংক ও ক্লোরিন ঘর', group: g };
+  return { id: 'disinfection', nameBn: 'Chlorine Contact Tank & Chlorine Room', group: g };
 }

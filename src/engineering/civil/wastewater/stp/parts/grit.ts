@@ -23,5 +23,5 @@ export function buildGrit({ mats: m, site }: Ctx): InfraPart {
   const cl = box(g, 5.5, 0.8, 0.9, m.steel, t.x + 11, 1.2, t.z - 1);
   cl.rotation.z = 0.5;
   box(g, 2.4, 1.5, 1.8, m.yellow, t.x + 13, 0, t.z - 1);
-  return { id: 'grit', nameBn: 'গ্রিট চেম্বার', group: g };
+  return { id: 'grit', nameBn: 'Grit Chamber', group: g };
 }

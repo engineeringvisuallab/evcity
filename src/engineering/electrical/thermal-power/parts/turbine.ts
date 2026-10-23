@@ -96,5 +96,5 @@ export function buildTurbine({ mats: m, t, anim }: Ctx): InfraPart {
   pipe(g, cross, 0.6, t.lagging);
   flow(anim, g, [...steam, V(hp.x, Y, Z), V(hp.x + hp.len / 2, Y, Z), ...cross.slice(1)], { color: 0xffffff, speed: 14, spacing: 2.6, size: 0.3 });
   void cyl;
-  return { id: 'turbine', nameBn: 'টারবাইন হল (স্টিম টারবাইন ও জেনারেটর)', group: g };
+  return { id: 'turbine', nameBn: 'Turbine Hall (Steam Turbine & Generator)', group: g };
 }

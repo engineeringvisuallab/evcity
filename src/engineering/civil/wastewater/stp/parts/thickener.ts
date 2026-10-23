@@ -19,5 +19,5 @@ export function buildThickener({ mats: m, site }: Ctx): InfraPart {
   for (let i = 0; i < 6; i++) box(arm, 0.08, 3.5, 0.08, m.steel, 1.5 + i * 1.1, -3.4, 0);
   box(arm, t.r - 1.5, 0.1, 0.1, m.steel, t.r / 2 + 0.5, -3.5, 0);
   g.add(arm);
-  return { id: 'thickener', nameBn: 'স্লাজ থিকেনার', group: g };
+  return { id: 'thickener', nameBn: 'Sludge Thickener', group: g };
 }

@@ -44,5 +44,5 @@ export function buildControl({ mats: m, t, anim }: Ctx): InfraPart {
   box(g, 0.7, 0.7, 0.7, t.lampG, C.x + C.w / 2 - 2, C.h + 2.9, C.z);
   void V;
   void pipe;
-  return { id: 'control', nameBn: 'কন্ট্রোল রুম', group: g };
+  return { id: 'control', nameBn: 'Control Room', group: g };
 }

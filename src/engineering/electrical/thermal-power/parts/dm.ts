@@ -52,5 +52,5 @@ export function buildDm({ mats: m, t, anim }: Ctx): InfraPart {
   valve(g, m, -80, 1.2, 50, 0.3, 'x');
   flow(anim, g, [...toTanks, V(-89, 1.2, 50), ...toFeed.slice(1)], { color: 0xbfe0ff, speed: 3.5, spacing: 2.4, size: 0.24 });
   void cylH;
-  return { id: 'dm', nameBn: 'ডিএম প্ল্যান্ট (পানি শোধন)', group: g };
+  return { id: 'dm', nameBn: 'DM Plant (Water Purification)', group: g };
 }

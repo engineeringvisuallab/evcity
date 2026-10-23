@@ -44,5 +44,5 @@ export function buildSiteWorks({ mats: m }: Ctx): InfraPart {
   for (let x = -130; x <= 130; x += 30) lightPole(g, m, x, 22, 1);
   for (let z = 36; z <= 90; z += 27) lightPole(g, m, gx + 5.5, z, 1);
   for (let x = -120; x <= 130; x += 40) lightPole(g, m, x, -94.5, 1);
-  return { id: 'site', nameBn: 'সীমানা বেষ্টনী ও অভ্যন্তরীণ রাস্তা', group: g };
+  return { id: 'site', nameBn: 'Boundary Fence & Internal Roads', group: g };
 }

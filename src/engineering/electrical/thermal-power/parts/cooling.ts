@@ -57,5 +57,5 @@ export function buildCooling({ mats: m, t, anim, solids }: Ctx): InfraPart {
   pipe(g, back, 0.9, m.pipe.cooling);
   flow(anim, g, back, { color: 0xc8fff7, speed: 5, spacing: 3.4, size: 0.4 });
   pipe(g, [V(C.x - C.rBase + 2, 1.5, P.z), V(C.x - C.rBase - 1, 1.5, P.z)], 0.9, m.pipe.cooling);
-  return { id: 'cooling', nameBn: 'কুলিং টাওয়ার ও সার্কুলেটিং পাম্প', group: g };
+  return { id: 'cooling', nameBn: 'Cooling Tower & Circulating Pumps', group: g };
 }

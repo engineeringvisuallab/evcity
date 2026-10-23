@@ -28,5 +28,5 @@ export function buildSecondary({ mats: m, site }: Ctx): InfraPart {
   // waste (surplus) sludge: buried line to the thickener
   buriedLine(g, m.pipe.sludge, [V(xs[0] + 5, 0, z + r + 2), V(xs[0] + 5, 0, -16), V(-70, 0, -16), V(-70, 0, 36)], 10);
   buriedLine(g, m.pipe.sludge, [V(xs[1] + 5, 0, z + r + 2), V(xs[1] + 5, 0, -16), V(xs[0] + 5, 0, -16)], 10);
-  return { id: 'secondary', nameBn: 'সেকেন্ডারি ক্ল্যারিফায়ার', group: g };
+  return { id: 'secondary', nameBn: 'Secondary Clarifier', group: g };
 }
