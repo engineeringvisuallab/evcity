@@ -4,6 +4,7 @@ import { OrbitCamera } from '../camera/OrbitCamera';
 import { DriverCamera } from '../camera/DriverCamera';
 import { TRAIN_VIEW_NAMES, TrainCamera } from '../camera/TrainCamera';
 import { TunnelProbe } from '../trains/TunnelProbe';
+import { setTrainViewer } from '../trains/TrainView';
 import { Player } from '../characters';
 import { HELI, HelicopterManager } from '../aircraft';
 import { BoatManager, findWaterSpot } from '../boats';
@@ -814,6 +815,7 @@ export class Engine {
 
     this.player.update(dt, alpha);
     this.trainRider.update(dt); // a passenger moves with the seat of the train (after the trains moved, before the camera)
+    setTrainViewer(this.camera.position.x + this.world.origin.origin.x, this.camera.position.z + this.world.origin.origin.z); // saloons are only drawn near the camera
     this.airplanes.update(dt);
     this.planeRider.update(); // a passenger moves with the seat of the plane (after the planes moved, before the camera)
     this.vehicles.update(alpha, this.world.playerWorld, dt);

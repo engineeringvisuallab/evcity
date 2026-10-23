@@ -160,10 +160,22 @@ function buildOne(
   const rc = at(rl);
   const hwRoof = width / 2 + 0.5;
   boxes.push({ kind: 'roof', x: rc.x, y: T + 3.3, z: rc.z, ax: ox, az: oz, hl: 2.6, hh: 0.12, hw: hwRoof, solid: false });
+  // the four posts stand ON THE STAIR WALLS (their foot is the top of the wall under them, so none floats in the air or hangs over the steps)
   for (const dl of [-2.3, 2.3]) {
-    for (const dw of [-hwRoof + 0.2, hwRoof - 0.2]) {
-      const c = at(rl + dl);
-      boxes.push({ kind: 'post', x: c.x + tx * dw, y: T + 1.6, z: c.z + tz * dw, ax: ox, az: oz, hl: 0.1, hh: 1.6, hw: 0.1, solid: false });
+    const latp = rl + dl;
+    const c = at(latp);
+    let surf = T; // landing: platform height
+    let onGround = false; // past the last step (a short stair on high ground): the post stands on the terrain
+    if (latp > stairLat) {
+      const k = Math.floor((latp - stairLat) / run) + 1;
+      if (k <= steps.length) surf = T - k * rise;
+      else onGround = true;
+    }
+    const roofY = T + 3.3 - 0.1;
+    for (const dw of [-(width / 2 + wall / 2), width / 2 + wall / 2]) {
+      const px = c.x + tx * dw, pz = c.z + tz * dw;
+      const foot = onGround ? groundAt(px, pz) - 0.3 : surf + wallH - 0.1;
+      boxes.push({ kind: 'post', x: px, y: (foot + roofY) / 2, z: pz, ax: ox, az: oz, hl: 0.1, hh: (roofY - foot) / 2, hw: 0.1, solid: false });
     }
   }
   const sg = at(rl - 2.65);

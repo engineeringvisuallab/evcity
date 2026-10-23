@@ -40,6 +40,7 @@ const C = {
   emerg: [0.55, 1.0, 0.7] as V,
   sign: [0.1, 0.32, 0.75] as V,
   tactile: [0.85, 0.7, 0.12] as V,
+  clip: [0.46, 0.23, 0.11] as V,
   coping: [0.82, 0.81, 0.78] as V,
   joint: [0.58, 0.57, 0.55] as V,
   fascia: [0.15, 0.25, 0.42] as V,
@@ -47,6 +48,19 @@ const C = {
   bin: [0.12, 0.4, 0.2] as V,
   white: [0.95, 0.95, 0.95] as V,
 };
+
+/**
+ * SURFACE CLASS of a face, found from the colour constant it was emitted with. It rides in the `glow` attribute (glow + 4 * class, glow <= 1.5), so the
+ * worker transfer and the mesh data stay exactly as they were; RailMaterial decodes it and paints a procedural texture on the face:
+ * 1 ballast stones, 2 concrete (stains, formwork, tiles), 3 rail steel (shine + rust), 4 concrete sleeper, 5 painted metal, 6 wood, 7 tunnel lining tiles,
+ * 8 rusty rail clip, 9 tactile bumps.
+ */
+const SURF = new Map<V, number>([
+  [C.ballast, 1], [C.concrete, 2], [C.concreteDark, 2], [C.platform, 2], [C.subst, 2], [C.coping, 2], [C.joint, 2],
+  [C.rail, 3], [C.sleeper, 4],
+  [C.canopy, 5], [C.mast, 5], [C.steel, 5], [C.fascia, 5], [C.frog, 5],
+  [C.wood, 6], [C.lining, 7], [C.liningRoof, 7], [C.clip, 8], [C.tactile, 9],
+]);
 
 /** Geometry collector: flat-coloured quads with their own normals. */
 class Emit {
@@ -70,7 +84,7 @@ class Emit {
       this.pos.push(p[0] - this.ox, p[1], p[2] - this.oz);
       this.nrm.push(n[0], n[1], n[2]);
       this.col.push(col[0], col[1], col[2]);
-      this.glow.push(this.glowFn ? this.glowFn(p[0], p[1], p[2]) : 0);
+      this.glow.push((this.glowFn ? this.glowFn(p[0], p[1], p[2]) : 0) + 4 * (SURF.get(col) ?? 0));
     }
     this.idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
   }
@@ -146,6 +160,22 @@ function lerpNode(A: Node, B: Node, t: number): Node {
   tx /= l;
   tz /= l;
   return { x: A.x + (B.x - A.x) * t, y: A.y + (B.y - A.y) * t, z: A.z + (B.z - A.z) * t, tx, tz, wx: -tz, wz: tx };
+}
+
+/** Rusty rail clips: one flat plate over each rail foot on a sleeper (4 vertices each; the rails stand 0.04 above the sleeper top). */
+function emitClips(em: Emit, f: Node, half: number): void {
+  const y = f.y + 0.046;
+  for (const tr of [-half, half]) {
+    for (const rs of [-D.gauge / 2, D.gauge / 2]) {
+      const cx = f.x + f.wx * (tr + rs), cz = f.z + f.wz * (tr + rs);
+      const a = 0.09, w = 0.12;
+      em.quad(
+        [cx - f.tx * a - f.wx * w, y, cz - f.tz * a - f.wz * w], [cx + f.tx * a - f.wx * w, y, cz + f.tz * a - f.wz * w],
+        [cx + f.tx * a + f.wx * w, y, cz + f.tz * a + f.wz * w], [cx - f.tx * a + f.wx * w, y, cz - f.tz * a + f.wz * w],
+        [0, 1, 0], C.clip,
+      );
+    }
+  }
 }
 
 /** Everything of the railway that one chunk owns (an element is built by the chunk that holds its reference point). */
@@ -282,6 +312,7 @@ export function buildRailMesh(rail: RailNetwork, cx: number, cz: number, lod: nu
       const t = (k + 0.5) / n;
       const f = lerpNode(A, B, t);
       for (const tr of [-half, half]) em.box(f.x + f.wx * tr, f.y - 0.1, f.z + f.wz * tr, f.tx, f.tz, 0.13, 0.14, 1.3, C.sleeper, false);
+      emitClips(em, f, half);
     }
     // overhead line: contact wire + messenger wire over each track (25 kV 50 Hz AC)
     for (const tr of [-half, half]) {
@@ -475,6 +506,7 @@ function emitLined(em: Emit, e: RailEdge, i: number, kind: string, lod: number, 
     for (let k = 0; k < m; k++) {
       const f = lerpNode(a, b, (k + 0.5) / m);
       for (const tr of [-half, half]) em.box(f.x + f.wx * tr, f.y - 0.1, f.z + f.wz * tr, f.tx, f.tz, 0.13, 0.14, 1.3, C.sleeper, false);
+      emitClips(em, f, half);
     }
     for (const tr of [-half, half]) {
       em.beam(a, b, tr, 0.02, D.contactHeight, 0.04, C.wire);
@@ -590,11 +622,12 @@ function emitPlatformDetail(em: Emit, p: { x: number; z: number }, tx: number, t
     put(q, e0 + 4.1, top + 0.05, 0.3, 0.05, 0.3, C.concrete);
     put(q, e0 + 2.9, y + 4.58, 0.14, 0.14, 3.2, C.mast); // cross beam under the roof
     if (q < P / 2 - 20) {
-      // bench between this column and the next one, bin at the column
-      const qc = q + 7.5;
-      put(qc, e0 + 3.4, top + 0.46, 0.9, 0.03, 0.22, C.wood);
-      put(qc, e0 + 3.62, top + 0.74, 0.9, 0.2, 0.03, C.wood);
-      for (const dq of [-0.7, 0.7]) put(qc + dq, e0 + 3.4, top + 0.23, 0.04, 0.23, 0.18, C.mast);
+      // two benches per bay, at 3 m and 12 m after the column: the middle of the bay (7.5 m) belongs to the stair (StationAccess), keep it free
+      for (const qc of [q + 3.0, q + 12.0]) {
+        put(qc, e0 + 3.4, top + 0.46, 0.9, 0.03, 0.22, C.wood);
+        put(qc, e0 + 3.62, top + 0.74, 0.9, 0.2, 0.03, C.wood);
+        for (const dq of [-0.7, 0.7]) put(qc + dq, e0 + 3.4, top + 0.23, 0.04, 0.23, 0.18, C.mast);
+      }
       put(q + 1.2, e0 + 3.7, top + 0.4, 0.22, 0.4, 0.22, C.bin);
     }
   }

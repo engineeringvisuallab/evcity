@@ -207,7 +207,9 @@ console.log('\n== budget');
   }
   console.log(`peak ${peak} visible trains at central = ${peak * CONSIST.length} meshes (draw calls), ${peak * vertsPerTrain} vertices, ${peak * trisPerTrain} triangles; one train = ${CONSIST.length} meshes, ${vertsPerTrain} vertices, ${trisPerTrain} triangles`);
   if (peak * CONSIST.length > 50) fail('more than 50 train draw calls at the busiest place');
-  if (peak * vertsPerTrain > 60000) fail('more than 60k train vertices at the busiest place');
+  // the cars are detailed now (rounded roof, window frames, bogies, livery): ~41k vertices of outside per train; the saloon, windows and logo are only
+  // drawn within 160 m of the camera (TrainView) and are not counted here. 300k is still small beside the railway chunk meshes (>150k vertices each).
+  if (peak * vertsPerTrain > 300000) fail('more than 300k train vertices at the busiest place');
   const allVisible = m.trains.length * CONSIST.length;
   console.log(`worst case if every one of the ${m.trains.length} trains were in view: ${allVisible} meshes, ${m.trains.length * vertsPerTrain} vertices`);
   // CPU per frame: fixed update (60 Hz) + view update, as the engine calls them, 7 trains all visible

@@ -47,6 +47,7 @@
     "test:rail-links": "tsx scripts/rail-link-test.ts",
     "test:trains": "tsx scripts/train-sim-test.ts",
     "test:train-interior": "tsx scripts/train-interior-test.ts",
+    "test:station-posts": "tsx scripts/station-post-test.ts",
     "test:trains-game": "tsx scripts/train-game-test.ts",
     "test:trains-physics": "tsx scripts/train-physics-test.ts",
     "test:trains-signals": "tsx scripts/train-signal-test.ts",

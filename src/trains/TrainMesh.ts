@@ -17,7 +17,17 @@ export interface TrainMeshData {
   positions: Float32Array;
   normals: Float32Array;
   colors: Float32Array;
+  /** Per vertex: surface class for the procedural texture shader (see TRAIN_SURF). */
+  surf: Float32Array;
   indices: Uint16Array | Uint32Array;
+}
+
+/** Textured quads (logo): own UVs. */
+export interface TrainDecalData {
+  positions: Float32Array;
+  normals: Float32Array;
+  uvs: Float32Array;
+  indices: Uint16Array;
 }
 
 export interface CarParts {
@@ -30,9 +40,11 @@ type V = [number, number, number];
 type P2 = [number, number];
 
 const C = {
-  locoBody: [0.72, 0.12, 0.1] as V,
+  locoBody: [0.9, 0.91, 0.9] as V,
   locoStripe: [0.93, 0.93, 0.9] as V,
-  coachBody: [0.88, 0.89, 0.86] as V,
+  coachBody: [0.9, 0.91, 0.9] as V,
+  blue: [0.05, 0.24, 0.62] as V,
+  green: [0.33, 0.72, 0.16] as V,
   coachStripe: [0.1, 0.45, 0.28] as V,
   coachStripe2: [0.95, 0.75, 0.15] as V,
   roof: [0.74, 0.76, 0.78] as V,
@@ -48,18 +60,18 @@ const C = {
   panto: [0.62, 0.64, 0.68] as V,
   insulator: [0.8, 0.55, 0.3] as V,
   bellows: [0.09, 0.09, 0.1] as V,
-  louver: [0.2, 0.05, 0.04] as V,
+  louver: [0.2, 0.22, 0.25] as V,
   // ---- inside (colours before the fake shading of the `inside` emitter) ----
   wallUp: [0.9, 0.89, 0.84] as V,
   wallLow: [0.46, 0.5, 0.56] as V,
   ceiling: [0.94, 0.94, 0.92] as V,
   cove: [0.84, 0.85, 0.83] as V,
-  floor: [0.2, 0.22, 0.26] as V,
-  aisle: [0.36, 0.37, 0.4] as V,
-  seatBlue: [0.13, 0.28, 0.58] as V,
-  seatHead: [0.72, 0.76, 0.84] as V,
-  seatFrame: [0.2, 0.21, 0.24] as V,
-  arm: [0.27, 0.28, 0.3] as V,
+  floor: [0.4, 0.46, 0.54] as V,
+  aisle: [0.46, 0.52, 0.6] as V,
+  seatBlue: [0.1, 0.22, 0.62] as V,
+  seatHead: [0.1, 0.15, 0.32] as V,
+  seatFrame: [0.74, 0.76, 0.78] as V,
+  arm: [0.5, 0.52, 0.56] as V,
   chrome: [0.8, 0.82, 0.86] as V,
   strap: [0.95, 0.78, 0.18] as V,
   lamp: [1.0, 0.98, 0.9] as V,
@@ -76,6 +88,23 @@ const C = {
   machineDark: [0.28, 0.3, 0.32] as V,
 };
 
+/**
+ * SURFACE CLASS of a face (by the colour constant it was emitted with) for the procedural texture shader (TrainView):
+ * 1 body paint (panel joints, dirt near the sill), 2 dark metal, 3 seat fabric (blue with fine crackle lines), 4 floor (speckled vinyl),
+ * 5 wall panel, 6 ceiling (perforated panels), 7 chrome / steel, 8 rubber bellows (ribs), 9 hard plastic / leather.
+ */
+export const TRAIN_SURF = new Map<V, number>([
+  [C.coachBody, 1], [C.roof, 1], [C.blue, 1], [C.green, 1], [C.door, 1], [C.coachStripe, 1], [C.coachStripe2, 1],
+  [C.skirt, 2], [C.under, 2], [C.bogie, 2], [C.wheel, 2], [C.louver, 2], [C.vent, 2],
+  [C.seatBlue, 3], [C.cabSeat, 3],
+  [C.floor, 4], [C.aisle, 4], [C.machineDark, 4],
+  [C.wallUp, 5], [C.wallLow, 5], [C.cabWall, 5], [C.doorIn, 5], [C.machine, 5], [C.desk, 5],
+  [C.ceiling, 6], [C.cove, 6],
+  [C.chrome, 7], [C.roofGear, 7], [C.panto, 7], [C.disc, 7], [C.strap, 7],
+  [C.bellows, 8], [C.frame, 8],
+  [C.seatFrame, 9], [C.seatHead, 9], [C.arm, 9],
+]);
+
 /** Highest point of the raised pantograph collector above the rail head: it touches the contact wire (design height + contactHeight above the top of ballast). */
 export const PANTOGRAPH_TOP = D.contactHeight - RAIL_HEAD;
 
@@ -84,6 +113,7 @@ class Emit {
   nrm: number[] = [];
   col: number[] = [];
   idx: number[] = [];
+  surf: number[] = [];
   /** true: the colour is multiplied by a fake shading that depends on the face direction (for the unlit inside). */
   constructor(private shade = false) {}
   /** true: no shading at all (lamps). */
@@ -102,10 +132,12 @@ class Emit {
     const q = dot >= 0 ? [a, b, c, d] : [a, d, c, b];
     const base = this.pos.length / 3;
     const f = this.k(n);
+    const sid = TRAIN_SURF.get(col) ?? 0;
     for (const p of q) {
       this.pos.push(p[0], p[1], p[2]);
       this.nrm.push(n[0], n[1], n[2]);
       this.col.push(col[0] * f, col[1] * f, col[2] * f);
+      this.surf.push(sid);
     }
     this.idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
   }
@@ -117,10 +149,12 @@ class Emit {
     const q = dot >= 0 ? [a, b, c] : [a, c, b];
     const base = this.pos.length / 3;
     const f = this.k(n);
+    const sid = TRAIN_SURF.get(col) ?? 0;
     for (const p of q) {
       this.pos.push(p[0], p[1], p[2]);
       this.nrm.push(n[0], n[1], n[2]);
       this.col.push(col[0] * f, col[1] * f, col[2] * f);
+      this.surf.push(sid);
     }
     this.idx.push(base, base + 1, base + 2);
   }
@@ -215,6 +249,7 @@ class Emit {
       positions: Float32Array.from(this.pos),
       normals: Float32Array.from(this.nrm),
       colors: Float32Array.from(this.col),
+      surf: Float32Array.from(this.surf),
       indices: this.pos.length / 3 > 65535 ? Uint32Array.from(this.idx) : Uint16Array.from(this.idx),
     };
   }
@@ -327,10 +362,13 @@ function saloon(p: Parts, sp: SaloonSpec): void {
     xa = b;
   }
   if (x1 > xa) wall(p, xa, x1, I.sill, I.head, sp.skin, C.wallUp);
-  // stripes along the outside
+  // livery along the outside: blue band, thin green line, a green swoosh wedge at the ends
   for (const s of [-1, 1]) {
-    p.body.bx(x0 + 0.2, x1 - 0.2, 1.46, 1.64, s * 1.5, s * 1.512, C.coachStripe);
-    p.body.bx(x0 + 0.2, x1 - 0.2, 1.36, 1.4, s * 1.5, s * 1.512, C.coachStripe2);
+    p.body.bx(x0 + 0.1, x1 - 0.1, 0.98, 1.16, s * 1.5, s * 1.512, C.blue);
+    p.body.bx(x0 + 0.1, x1 - 0.1, 1.16, 1.24, s * 1.5, s * 1.512, C.green);
+    const wedge = (xa: number, dir: number): void => p.body.prism([[xa, 1.24], [xa + dir * 4.7, 1.24], [xa + dir * 2.4, 1.74], [xa, 1.74]], Math.min(s * 1.5, s * 1.512), Math.max(s * 1.5, s * 1.512), C.green);
+    wedge(x0 + 0.5, 1);
+    if (sp.gangwayFront) wedge(x1 - 0.5, -1);
   }
   // ---- windows: glass, rubber frame outside, sill ledge inside ----
   for (const c of sp.windows) {
@@ -382,11 +420,14 @@ function saloon(p: Parts, sp: SaloonSpec): void {
     for (const s of [-1, 1]) {
       const zl = s > 0 ? 0.46 : -1.37, zh = s > 0 ? 1.37 : -0.46;
       const xb = r.x - r.dir * 0.23;
-      p.inside.bx(r.x - 0.24, r.x + 0.24, I.floor, 1.34, zl + 0.02, zh - 0.02, C.seatFrame);
+      p.inside.bx(r.x - 0.2, r.x + 0.2, I.floor, 1.34, zl + 0.12, zh - 0.12, C.seatFrame);
       p.inside.bx(r.x - 0.25, r.x + 0.25, 1.34, 1.45, zl, zh, C.seatBlue);
-      p.inside.bx(xb - 0.05, xb + 0.05, 1.45, 2.05, zl, zh, C.seatBlue);
-      p.inside.bx(xb - 0.055, xb + 0.055, 2.05, 2.3, zl + 0.1, zh - 0.1, C.seatHead);
-      p.inside.bx(r.x - 0.22, r.x + 0.2, 1.45, 1.7, s > 0 ? 0.43 : -0.5, s > 0 ? 0.5 : -0.43, C.arm);
+      p.inside.bx(xb - 0.05, xb + 0.05, 1.45, 2.05, zl + 0.04, zh - 0.04, C.seatBlue);
+      p.inside.bx(xb - 0.065, xb + 0.065, 1.45, 2.08, zl - 0.02, zl + 0.04, C.seatFrame);
+      p.inside.bx(xb - 0.065, xb + 0.065, 1.45, 2.08, zh - 0.04, zh + 0.02, C.seatFrame);
+      p.inside.bx(xb - 0.07 - r.dir * 0.0, xb + 0.07, 2.05, 2.3, zl + 0.12, zh - 0.12, C.seatHead);
+      p.inside.bx(r.x - 0.22, r.x + 0.2, 1.45, 1.68, s > 0 ? 0.43 : -0.5, s > 0 ? 0.5 : -0.43, C.arm);
+      p.inside.bx(r.x - 0.22, r.x + 0.2, 1.45, 1.68, s > 0 ? 1.37 : -1.39, s > 0 ? 1.39 : -1.37, C.arm);
     }
   }
   // ---- ceiling lamps (lit), vents, grab rail with drops and hand loops, poles ----
@@ -395,9 +436,15 @@ function saloon(p: Parts, sp: SaloonSpec): void {
   for (let k = 0; k < bays; k++) {
     const x = bx0 + k * I.bay;
     p.inside.flat = true;
-    for (const s of [-1, 1]) p.inside.bx(x - 0.55, x + 0.55, ceil - 0.05, ceil - 0.03, s * 0.5, s * 0.66, C.lamp);
+    for (const s of [-1, 1]) p.inside.bx(x - 0.6, x + 0.6, ceil - 0.05, ceil - 0.03, s * 0.42, s * 0.7, C.lamp);
     p.inside.flat = false;
-    p.inside.bx(x - 0.3, x + 0.3, ceil - 0.045, ceil - 0.03, -0.12, 0.12, C.vent);
+    p.inside.bx(x - 0.4, x + 0.4, ceil - 0.045, ceil - 0.03, -0.25, 0.25, C.vent);
+    for (const s of [-1, 1]) p.inside.bx(x - 0.02, x + 0.02, 2.98, ceil - 0.24, s * 0.86, s * 0.9, C.chrome);
+  }
+  // luggage racks over the windows (slotted shelf with brackets)
+  for (const s of [-1, 1]) {
+    p.inside.bx(sp.rows.length ? sp.rows[0].x - 0.5 : x0 + 1, sp.rows.length ? sp.rows[sp.rows.length - 1].x + 0.5 : x1 - 1, 2.98, 3.02, s * 0.88, s * 1.38, C.chrome);
+    p.inside.bx(sp.rows.length ? sp.rows[0].x - 0.5 : x0 + 1, sp.rows.length ? sp.rows[sp.rows.length - 1].x + 0.5 : x1 - 1, 3.02, 3.1, s * 1.34, s * 1.38, C.chrome);
   }
   if (sp.rail) {
     p.inside.bx(sp.rail[0], sp.rail[1], 2.93, 2.97, -0.02, 0.02, C.chrome);
@@ -447,11 +494,11 @@ function cab(p: Parts, s: 1 | -1, xp: number, ceil: number, roofY: number, skin:
   p.body.prismX(roofProfile(ceil, roofY), X(0), X(1.45), C.roof);
   p.body.prism([[X(1.45), ceil], [X(L - 0.5), ceil], [X(L - 0.45), ceil + 0.12], [X(L - 1.0), roofY - 0.05], [X(1.45), roofY]], -1.5, 1.5, C.roof);
   // front: lower panel, raked windscreen with pillars, lamps
-  p.body.bx(X(L - 0.14), X(L), bottom, 2.05, -1.5, 1.5, skin);
+  p.body.prism([[X(L - 0.5), bottom], [X(L), bottom + 0.25], [X(L), 1.7], [X(L - 0.14), 2.05], [X(L - 0.5), 2.05]], -1.5, 1.5, C.blue);
   p.inside.bx(X(L - 0.16), X(L - 0.14), I.floor, 2.05, -I.linIn, I.linIn, C.cabWall);
   const wsn: V = [s * 0.62, 0.78, 0];
   p.glass.quad([X(L - 0.14), 2.05, -1.4], [X(L - 0.14), 2.05, 1.4], [X(1.45), ceil, 1.4], [X(1.45), ceil, -1.4], wsn, C.glass);
-  for (const z of [-1.4, 1.4]) p.body.strut(X(L - 0.14), 2.05, X(1.45), ceil, 0.1, z - 0.1, z + 0.1, skin);
+  for (const z of [-1.4, 1.4]) p.body.strut(X(L - 0.14), 2.05, X(1.45), ceil, 0.1, z - 0.1, z + 0.1, C.frame);
   p.body.strut(X(L - 0.14), 2.05, X(1.45), ceil, 0.06, -0.04, 0.04, C.frame);
   p.inside.flat = true;
   for (const z of [-1, 1]) {
@@ -524,6 +571,29 @@ function roofGear(em: Emit, xs: number[], roofY: number, len: number): void {
   }
 }
 
+/**
+ * "EVCity" logo plates on both sides of a car (textured quads with UVs, drawn by TrainView with a canvas texture): coaches and the driving trailer
+ * between the second window and the door, the locomotive in the middle of the machine room. Reads left to right from outside on both sides.
+ */
+export function buildCarDecals(kind: CarKind): TrainDecalData {
+  const pos: number[] = [], nrm: number[] = [], uv: number[] = [], idx: number[] = [];
+  const cx = kind === 'loco' ? 0 : -4.2;
+  const w = kind === 'loco' ? 3.2 : 3.1, h = w / 6.4;
+  const yc = kind === 'loco' ? 1.52 : 1.51;
+  for (const s of [-1, 1]) {
+    const z = s * 1.518;
+    const a = s > 0 ? cx - w / 2 : cx + w / 2; // left edge as seen from outside
+    const b = s > 0 ? cx + w / 2 : cx - w / 2;
+    const base = pos.length / 3;
+    pos.push(a, yc - h / 2, z, b, yc - h / 2, z, b, yc + h / 2, z, a, yc + h / 2, z);
+    for (let k = 0; k < 4; k++) nrm.push(0, 0, s);
+    uv.push(0, 0, 1, 0, 1, 1, 0, 1);
+    if (s > 0) idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+    else idx.push(base, base + 2, base + 1, base, base + 3, base + 2);
+  }
+  return { positions: Float32Array.from(pos), normals: Float32Array.from(nrm), uvs: Float32Array.from(uv), indices: Uint16Array.from(idx) };
+}
+
 /** The three parts of one car kind. */
 export function buildCarParts(kind: CarKind): CarParts {
   const p: Parts = { body: new Emit(), inside: new Emit(true), glass: new Emit() };
@@ -542,7 +612,8 @@ export function buildCarParts(kind: CarKind): CarParts {
     wall(p, x0, x1, b, 1.3, C.skirt, C.machineDark);
     wall(p, x0, x1, 1.3, ceil, C.locoBody, C.machine);
     for (const s of [-1, 1]) {
-      p.body.bx(x0 + 0.2, x1 - 0.2, 1.46, 1.58, s * 1.5, s * 1.512, C.locoStripe);
+      p.body.bx(x0 + 0.2, x1 - 0.2, 1.0, 1.2, s * 1.5, s * 1.512, C.blue);
+      p.body.bx(x0 + 0.2, x1 - 0.2, 1.2, 1.27, s * 1.5, s * 1.512, C.green);
       for (const cx of [-4.8, -1.6, 1.6, 4.8]) {
         p.body.bx(cx - 1.0, cx + 1.0, 1.75, 3.05, s * 1.5, s * 1.508, C.louver);
         for (let k = 0; k < 6; k++) p.body.bx(cx - 0.95, cx + 0.95, 1.85 + k * 0.2, 1.9 + k * 0.2, s * 1.5, s * 1.52, C.locoBody);

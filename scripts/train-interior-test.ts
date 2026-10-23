@@ -1,4 +1,4 @@
-import { BODY, INSIDE, NOSE_X, PANTOGRAPH_TOP, SEAT_EYE, buildCarParts } from '../src/trains/TrainMesh';
+import { BODY, INSIDE, NOSE_X, PANTOGRAPH_TOP, SEAT_EYE, buildCarDecals, buildCarParts } from '../src/trains/TrainMesh';
 import { CONSIST, type CarKind } from '../src/trains/TrainConfig';
 
 /**
@@ -29,6 +29,10 @@ for (const k of kinds) {
     for (const i of d.indices) maxIdx = Math.max(maxIdx, i);
     ok(bad === 0, `${k}.${name} has ${bad} bad numbers`);
     ok(maxIdx < n, `${k}.${name} index ${maxIdx} >= ${n}`);
+    ok(d.surf.length === n, `${k}.${name} surf attribute has ${d.surf.length} entries for ${n} vertices`);
+    let sMax = 0;
+    for (const v of d.surf) sMax = Math.max(sMax, v);
+    ok(sMax <= 9, `${k}.${name} surface class ${sMax} > 9`);
     ok(d.indices.length % 3 === 0, `${k}.${name} indices not multiple of 3`);
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9, z0 = 1e9, z1 = -1e9;
     for (let i = 0; i < n; i++) {
@@ -52,6 +56,14 @@ for (const k of kinds) {
   }
   ok(lowest <= INSIDE.floor + 0.001, `${k} inside has no floor`);
   ok(highest >= INSIDE.ceil - 0.05, `${k} inside has no ceiling`);
+}
+
+// logo plates: both sides, valid UVs, in front of the skin, no further out than the door leaves
+for (const k of kinds) {
+  const d = buildCarDecals(k);
+  ok(d.positions.length === 24 && d.uvs.length === 16 && d.indices.length === 12, `${k} decal sizes`);
+  for (let i = 0; i < 4 * 2; i++) ok(Math.abs(d.positions[i * 3 + 2]) > 1.512 && Math.abs(d.positions[i * 3 + 2]) < 1.53, `${k} decal depth`);
+  for (const v of d.uvs) ok(v === 0 || v === 1, `${k} decal uv`);
 }
 
 // seat eye: above the cushion (1.45), below the ceiling, inside the walls
