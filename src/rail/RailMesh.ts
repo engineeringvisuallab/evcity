@@ -1,4 +1,5 @@
 import { stationAccesses, type StationAccess } from './StationAccess';
+import { BOARD } from './StationSigns';
 import { chunkKey, chunkOriginX, chunkOriginZ, worldToChunkCoord } from '../world/WorldGrid';
 import { RAIL_DESIGN as D } from './RailPlan';
 import type { RailEdge, RailNetwork } from './RailNetwork';
@@ -47,6 +48,7 @@ const C = {
   wood: [0.45, 0.3, 0.18] as V,
   bin: [0.12, 0.4, 0.2] as V,
   white: [0.95, 0.95, 0.95] as V,
+  lampWarm: [1.0, 0.82, 0.5] as V,
 };
 
 /**
@@ -342,6 +344,16 @@ export function buildRailMesh(rail: RailNetwork, cx: number, cz: number, lod: nu
     const colTop = deckBottom - capH;
     if (colTop - p.baseY > 0.2) em.box(p.x, (colTop + p.baseY - 1.2) / 2, p.z, p.dx, p.dz, 1.3, (colTop - p.baseY + 1.2) / 2, 2.2, C.concreteDark, false);
     em.box(p.x, deckBottom - capH / 2, p.z, p.dx, p.dz, 1.6, capH / 2, across, C.concrete);
+    if (lod === 0 && colTop - p.baseY > 0.2) {
+      // fluted column: vertical grooves on both faces across the track, a warm light strip down each corner (like the station piers of a metro viaduct)
+      const cy = (colTop + p.baseY - 1.2) / 2, ch = (colTop - p.baseY + 1.2) / 2;
+      for (const side of [-1, 1]) {
+        for (let g = -4; g <= 4; g++) em.box(p.x + p.dx * side * 1.3 - p.dz * g * 0.45, cy, p.z + p.dz * side * 1.3 + p.dx * g * 0.45, p.dx, p.dz, 0.025, ch - 0.1, 0.07, C.joint, false);
+      }
+      em.glowFn = () => 1;
+      for (const side of [-1, 1]) for (const cs of [-1, 1]) em.box(p.x + p.dx * side * 1.32 - p.dz * cs * 2.05, cy + ch * 0.25, p.z + p.dz * side * 1.32 + p.dx * cs * 2.05, p.dx, p.dz, 0.02, ch * 0.5, 0.05, C.lampWarm, false);
+      em.glowFn = null;
+    }
   }
 
   // steel through-girder spans (over a big junction / wide street / road bridge, no pier possible)
@@ -636,13 +648,10 @@ function emitPlatformDetail(em: Emit, p: { x: number; z: number }, tx: number, t
   // lamps under the roof, self-lit
   em.glowFn = () => 1;
   for (let q = -P / 2 + 22.5; q <= P / 2 - 22; q += 7.5) put(q, e0 + 2.9, y + 4.64, 0.7, 0.025, 0.14, C.lamp);
-  // hanging station boards (blue board, white band) in the middle and near both ends
-  for (const q of [-P / 2 + 30, 0, P / 2 - 30]) {
-    put(q, e0 + 2.9, y + 3.85, 0.06, 0.34, 1.7, C.sign);
-    put(q, e0 + 2.9, y + 3.85, 0.065, 0.07, 1.4, C.white);
-  }
+  // hanging station boards (blue; the English + Bangla name is drawn on both faces by StationSignLayer) in the middle and near both ends
+  for (const q of BOARD.qs(P)) put(q, e0 + BOARD.lat, y + BOARD.y, BOARD.hl, BOARD.hh, BOARD.hw, C.sign);
   em.glowFn = null;
-  for (const q of [-P / 2 + 30, 0, P / 2 - 30]) for (const d of [-1.2, 1.2]) put(q, e0 + 2.9 + d, y + 4.42, 0.02, 0.45, 0.02, C.mast);
+  for (const q of BOARD.qs(P)) for (const d of [-1.2, 1.2]) put(q, e0 + BOARD.lat + d, y + 4.42, 0.02, 0.45, 0.02, C.mast);
 }
 
 /** One station access: treads, side walls, the gate shelter (roof on posts + sign) and the entrance sign at the foot. */
@@ -651,6 +660,24 @@ function emitAccess(em: Emit, a: StationAccess): void {
     const col = b.kind === 'tread' ? C.platform : b.kind === 'wall' ? C.concrete : b.kind === 'roof' ? C.canopy : b.kind === 'post' ? C.mast : C.sign;
     em.glowFn = b.kind === 'sign' ? () => 0.8 : null;
     em.box(b.x, b.y, b.z, b.ax, b.az, b.hl, b.hh, b.hw, col, b.kind !== 'tread');
+    // finish (pictures only, no colliders): the roof gets a dark fascia on all four edges, steel rafters and a lamp under it; every post stands on a
+    // base plate; every wall carries a handrail along its top
+    const tx = -b.az, tz = b.ax; // across the stair
+    if (b.kind === 'roof') {
+      const fy = b.y + 0.1;
+      for (const d of [-1, 1]) {
+        em.box(b.x + tx * d * (b.hw - 0.03), fy, b.z + tz * d * (b.hw - 0.03), b.ax, b.az, b.hl, 0.1, 0.04, C.fascia, false);
+        em.box(b.x + b.ax * d * (b.hl - 0.03), fy, b.z + b.az * d * (b.hl - 0.03), b.ax, b.az, 0.04, 0.1, b.hw, C.fascia, false);
+      }
+      for (const d of [-1.7, 0, 1.7]) em.box(b.x + b.ax * d, b.y - b.hh - 0.08, b.z + b.az * d, b.ax, b.az, 0.07, 0.08, b.hw - 0.05, C.mast, false);
+      em.glowFn = () => 1;
+      em.box(b.x, b.y - b.hh - 0.02, b.z, b.ax, b.az, 0.6, 0.02, 0.12, C.lamp, false);
+      em.glowFn = null;
+    } else if (b.kind === 'post') {
+      em.box(b.x, b.y - b.hh + 0.03, b.z, b.ax, b.az, 0.17, 0.03, 0.17, C.concrete, false);
+    } else if (b.kind === 'wall') {
+      em.box(b.x, b.y + b.hh + 0.04, b.z, b.ax, b.az, b.hl, 0.03, 0.045, C.mast, false);
+    }
   }
   em.glowFn = null;
 }

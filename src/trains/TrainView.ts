@@ -111,40 +111,41 @@ export class TrainGlassMaterial extends THREE.MeshBasicMaterial {
   }
 }
 
-/** "EVCity" logo (green leaf + blue lettering) drawn on a canvas, transparent background. */
+/**
+ * The OFFICIAL EVCity logo (public/assets/evcity-logo.png: teal E mark, white "EVCity" and tagline). The white letters would vanish on the white
+ * paint, so while it is copied onto the canvas every near-white pixel becomes charcoal (the teal mark keeps its colour). The canvas is transparent
+ * until the PNG has loaded, then the texture is refreshed. No DOM (headless): null.
+ */
 function makeLogoTexture(): THREE.Texture | null {
   if (typeof document === 'undefined') return null;
   const c = document.createElement('canvas');
-  c.width = 1024;
-  c.height = 160;
-  const g = c.getContext('2d');
-  if (!g) return null;
-  g.clearRect(0, 0, c.width, c.height);
-  // leaf mark
-  g.fillStyle = '#4fb82a';
-  g.beginPath();
-  g.moveTo(40, 120);
-  g.bezierCurveTo(10, 60, 60, 20, 130, 18);
-  g.bezierCurveTo(120, 70, 100, 110, 40, 120);
-  g.fill();
-  g.fillStyle = '#2f8f1f';
-  g.beginPath();
-  g.moveTo(95, 125);
-  g.bezierCurveTo(80, 90, 120, 60, 170, 56);
-  g.bezierCurveTo(165, 95, 145, 125, 95, 125);
-  g.fill();
-  // lettering
-  g.font = '900 118px "Segoe UI", Arial, Helvetica, sans-serif';
-  g.textBaseline = 'middle';
-  g.fillStyle = '#0d3f9c';
-  g.fillText('EV', 210, 84);
-  const ev = g.measureText('EV').width;
-  g.fillStyle = '#1b6fd6';
-  g.fillText('City', 210 + ev + 6, 84);
+  c.width = 1000;
+  c.height = 217;
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4;
-  t.needsUpdate = true;
+  const img = new Image();
+  img.onload = () => {
+    const g = c.getContext('2d');
+    if (!g) return;
+    g.clearRect(0, 0, c.width, c.height);
+    g.drawImage(img, 0, 0, c.width, c.height);
+    const d = g.getImageData(0, 0, c.width, c.height);
+    const px = d.data;
+    for (let i = 0; i < px.length; i += 4) {
+      const mx = Math.max(px[i], px[i + 1], px[i + 2]);
+      const mn = Math.min(px[i], px[i + 1], px[i + 2]);
+      if (mn > 150 && mx - mn < 40) {
+        // white / light grey letter pixel -> charcoal, keeping its antialiased alpha
+        px[i] = 29;
+        px[i + 1] = 36;
+        px[i + 2] = 41;
+      }
+    }
+    g.putImageData(d, 0, 0);
+    t.needsUpdate = true;
+  };
+  img.src = `${import.meta.env.BASE_URL}assets/evcity-logo.png`;
   return t;
 }
 

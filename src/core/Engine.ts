@@ -5,6 +5,7 @@ import { DriverCamera } from '../camera/DriverCamera';
 import { TRAIN_VIEW_NAMES, TrainCamera } from '../camera/TrainCamera';
 import { TunnelProbe } from '../trains/TunnelProbe';
 import { setTrainViewer } from '../trains/TrainView';
+import { StationSignLayer } from '../rail/StationSignLayer';
 import { Player } from '../characters';
 import { HELI, HelicopterManager } from '../aircraft';
 import { BoatManager, findWaterSpot } from '../boats';
@@ -215,6 +216,7 @@ export class Engine {
   private trainEntities: TrainEntity[] = [];
   /** STAGE 15 / Step 6: signals you see, the station board on the HUD, Bangla station announcements. */
   private signalLayer: SignalLayer;
+  private stationSigns: StationSignLayer;
   private trainBoard: StationBoard;
   private trainAnnouncer: TrainAnnouncer;
   /** The player as a train passenger (F at a platform next to a standing train; F again at a station to get off). */
@@ -297,6 +299,7 @@ export class Engine {
     this.trainPhysics = new TrainPhysics(physics, this.world.origin, this.trains);
     this.trainContacts = new TrainContacts(this.trains, (h) => bus.emit('train:overlap', h));
     this.signalLayer = new SignalLayer(this.world.root, this.trains.fleet);
+    this.stationSigns = new StationSignLayer(this.world.root, this.rail, (x, z) => this.world.terrain.heightAt(x, z)); // English + Bangla lettering on the station boards
     this.trainBoard = new StationBoard(this.trains.fleet, this.rail);
 
     // --- player (third-person) ---
@@ -952,6 +955,7 @@ export class Engine {
   private updateTrainSignalsUi(px: number, pz: number): void {
     this.trainAnnouncer.setPlayer(px, pz);
     this.signalLayer.update(px, pz);
+    this.stationSigns.update(this.camera.position.x + this.world.origin.origin.x, this.camera.position.z + this.world.origin.origin.z);
     const board = this.trainBoard.update(px, pz);
     this.hud.setTrainBoard(board ? formatBoard(board) : null);
   }
@@ -1333,6 +1337,7 @@ export class Engine {
     this.railDebug.dispose();
     this.trainPhysics.dispose();
     this.signalLayer.dispose();
+    this.stationSigns.dispose();
     this.trains.dispose();
     this.trainLayer.dispose();
     this.world.dispose();

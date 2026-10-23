@@ -193,6 +193,28 @@ class Emit {
     }
   }
 
+  /** Convex PLAN outline (x, z) extruded between y0 and y1: a nose that narrows towards the front. */
+  prismY(profile: P2[], y0: number, y1: number, col: V): void {
+    let area = 0;
+    for (let i = 0; i < profile.length; i++) {
+      const p = profile[i], q = profile[(i + 1) % profile.length];
+      area += p[0] * q[1] - q[0] * p[1];
+    }
+    const pr = area >= 0 ? profile : [...profile].reverse();
+    const m = pr.length;
+    for (let i = 0; i < m; i++) {
+      const p = pr[i], q = pr[(i + 1) % m];
+      const dx = q[0] - p[0], dz = q[1] - p[1];
+      const l = Math.hypot(dx, dz) || 1;
+      const n: V = [dz / l, 0, -dx / l];
+      this.quad([p[0], y0, p[1]], [q[0], y0, q[1]], [q[0], y1, q[1]], [p[0], y1, p[1]], n, col);
+    }
+    for (let i = 1; i < m - 1; i++) {
+      this.tri([pr[0][0], y1, pr[0][1]], [pr[i][0], y1, pr[i][1]], [pr[i + 1][0], y1, pr[i + 1][1]], [0, 1, 0], col);
+      this.tri([pr[0][0], y0, pr[0][1]], [pr[i][0], y0, pr[i][1]], [pr[i + 1][0], y0, pr[i + 1][1]], [0, -1, 0], col);
+    }
+  }
+
   /** Convex CROSS-SECTION (z, y) extruded along x (x0..x1, any order): the rounded roof, a tank, a pipe. */
   prismX(profile: P2[], xa: number, xb: number, col: V): void {
     const x0 = Math.min(xa, xb), x1 = Math.max(xa, xb);
@@ -466,17 +488,18 @@ function cab(p: Parts, s: 1 | -1, xp: number, ceil: number, roofY: number, skin:
   const L = I.cabLen;
   const sw = 1.85; // cab side window sill
   // floor
-  p.body.bx(X(0), X(L), bottom, 0.98, -I.skinIn, I.skinIn, C.under);
-  p.inside.bx(X(0), X(L - 0.14), 0.98, I.floor, -I.linIn, I.linIn, C.floor);
+  p.body.bx(X(0), X(L - 1.0), bottom, 0.98, -I.skinIn, I.skinIn, C.under);
+  p.inside.bx(X(0), X(L - 1.0), 0.98, I.floor, -I.linIn, I.linIn, C.floor);
+  p.inside.bx(X(L - 1.0), X(L - 0.16), 0.98, I.floor, -1.1, 1.1, C.floor); // inside the narrowing nose
   // side walls: lower band, pillar, header, window, front piece up to the raked windscreen
-  wall(p, X(0), X(L), bottom, 1.3, C.skirt, C.wallLow);
-  wall(p, X(0), X(L - 0.06), 1.3, sw, skin, C.wallLow);
+  wall(p, X(0), X(L - 1.0), bottom, 1.3, C.skirt, C.wallLow);
+  wall(p, X(0), X(L - 1.0), 1.3, sw, skin, C.wallLow);
   wall(p, X(0), X(0.45), sw, ceil, skin, C.cabWall);
   wall(p, X(0.45), X(1.25), 2.9, ceil, skin, C.cabWall);
   for (const z of [-1, 1]) {
     const zo = z > 0 ? [I.skinIn, 1.5] : [-1.5, -I.skinIn];
     const zi = z > 0 ? [I.linIn, I.skinIn] : [-I.skinIn, -I.linIn];
-    const piece: P2[] = [[X(1.25), sw], [X(L - 0.06), sw], [X(L - 0.06), 2.05], [X(1.4), ceil], [X(1.25), ceil]];
+    const piece: P2[] = [[X(1.25), sw], [X(L - 1.0), sw], [X(L - 1.0), 2.05 + (0.86 * (ceil - 2.05)) / 1.41], [X(1.4), ceil], [X(1.25), ceil]];
     p.body.prism(piece, zo[0], zo[1], skin);
     p.inside.prism(piece, zi[0], zi[1], C.cabWall);
     glassPane(p, X(0.45), X(1.25), sw, 2.9, z * 1.455);
@@ -494,21 +517,24 @@ function cab(p: Parts, s: 1 | -1, xp: number, ceil: number, roofY: number, skin:
   p.body.prismX(roofProfile(ceil, roofY), X(0), X(1.45), C.roof);
   p.body.prism([[X(1.45), ceil], [X(L - 0.5), ceil], [X(L - 0.45), ceil + 0.12], [X(L - 1.0), roofY - 0.05], [X(1.45), roofY]], -1.5, 1.5, C.roof);
   // front: lower panel, raked windscreen with pillars, lamps
-  p.body.prism([[X(L - 0.5), bottom], [X(L), bottom + 0.25], [X(L), 1.7], [X(L - 0.14), 2.05], [X(L - 0.5), 2.05]], -1.5, 1.5, C.blue);
-  p.inside.bx(X(L - 0.16), X(L - 0.14), I.floor, 2.05, -I.linIn, I.linIn, C.cabWall);
+  // nose: the bumper zone narrows towards the front in plan view, the face above it overhangs a little and carries the black face plate and the lamps
+  p.body.prismY([[X(L - 1.0), -1.5], [X(L - 0.5), -1.4], [X(L - 0.12), -1.15], [X(L), -0.9], [X(L), 0.9], [X(L - 0.12), 1.15], [X(L - 0.5), 1.4], [X(L - 1.0), 1.5]], bottom, 1.45, C.blue);
+  p.body.prism([[X(L - 0.6), 1.45], [X(L - 0.06), 1.45], [X(L - 0.06), 1.82], [X(L - 0.14), 2.05], [X(L - 0.6), 2.05]], -1.5, 1.5, C.blue);
+  p.body.bx(X(L - 0.06), X(L - 0.045), 1.52, 1.95, -1.15, 1.15, C.frame);
+  p.inside.bx(X(L - 0.16), X(L - 0.14), I.floor, 2.05, -1.1, 1.1, C.cabWall);
   const wsn: V = [s * 0.62, 0.78, 0];
-  p.glass.quad([X(L - 0.14), 2.05, -1.4], [X(L - 0.14), 2.05, 1.4], [X(1.45), ceil, 1.4], [X(1.45), ceil, -1.4], wsn, C.glass);
-  for (const z of [-1.4, 1.4]) p.body.strut(X(L - 0.14), 2.05, X(1.45), ceil, 0.1, z - 0.1, z + 0.1, C.frame);
+  p.glass.quad([X(L - 0.14), 2.05, -1.15], [X(L - 0.14), 2.05, 1.15], [X(1.45), ceil, 1.4], [X(1.45), ceil, -1.4], wsn, C.glass);
+  for (const z of [-1, 1]) p.body.strut(X(L - 0.14), 2.05, X(1.45), ceil, 0.1, z * 1.15 - 0.05, z * 1.15 + 0.05, C.frame);
   p.body.strut(X(L - 0.14), 2.05, X(1.45), ceil, 0.06, -0.04, 0.04, C.frame);
   p.inside.flat = true;
   for (const z of [-1, 1]) {
-    p.inside.bx(X(L), X(L + 0.02), 1.25, 1.42, z * 1.0, z * 1.28, C.headLamp);
-    p.inside.bx(X(L), X(L + 0.02), 1.25, 1.4, z * 0.6, z * 0.76, C.tailLamp);
+    p.inside.bx(X(L - 0.045), X(L - 0.02), 1.58, 1.76, z * 0.62, z * 0.98, C.headLamp);
+    p.inside.bx(X(L - 0.045), X(L - 0.02), 1.58, 1.74, z * 0.25, z * 0.42, C.tailLamp);
   }
   p.inside.bx(X(L - 0.1), X(L), 1.98, 2.05, -0.16, 0.16, C.headLamp);
   p.inside.flat = false;
   // buffer beam and coupler
-  p.body.bx(X(L - 0.2), X(L + 0.3), 0.7, 0.95, -1.45, 1.45, C.under);
+  p.body.bx(X(L - 0.2), X(L + 0.3), 0.7, 0.95, -0.85, 0.85, C.under);
   p.body.bx(X(L), X(L + 0.55), 0.72, 0.88, -0.18, 0.18, C.roofGear);
   // driver's desk: sloped console with screens, controller and buttons
   const desk: P2[] = [[X(L - 1.25), I.floor], [X(L - 0.35), I.floor], [X(L - 0.35), 1.38], [X(L - 0.65), 1.62], [X(L - 1.25), 1.55]];
@@ -578,7 +604,7 @@ function roofGear(em: Emit, xs: number[], roofY: number, len: number): void {
 export function buildCarDecals(kind: CarKind): TrainDecalData {
   const pos: number[] = [], nrm: number[] = [], uv: number[] = [], idx: number[] = [];
   const cx = kind === 'loco' ? 0 : -4.2;
-  const w = kind === 'loco' ? 3.2 : 3.1, h = w / 6.4;
+  const w = 2.4, h = w * (217 / 1000); // the official EVCity logo (public/assets/evcity-logo.png) is 1000 x 217
   const yc = kind === 'loco' ? 1.52 : 1.51;
   for (const s of [-1, 1]) {
     const z = s * 1.518;
