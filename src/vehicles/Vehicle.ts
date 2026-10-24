@@ -16,6 +16,8 @@ import { groundY, SUPRIM_FLIGHT, wheelDefs, type VehicleSpec, type WheelDef } fr
 import type { TerrainSample } from '../terrain/Lakes';
 import { waveHeight, waveScale } from '../water/WaterWaves';
 import type { VehicleFx } from './VehicleFx';
+import { RailLock, type RailPoint } from './RailLock';
+import type { RailNetwork } from '../rail/RailNetwork';
 
 export interface DriveInput {
   throttle: boolean;
@@ -35,9 +37,12 @@ export interface DriveInput {
 
 /**
  * Suprim: how it moves right now. drive = wheels on the road; fly = wings out, VTOL thrusters on (hovers, Space climbs);
- * land = flight mode is being switched off, it sinks to the ground / water; float = on the water surface; dive = submarine.
+ * land = flight mode is being switched off, it sinks to the ground / water; float = on the water surface; dive = submarine;
+ * rail = locked on a railway track (drives along the rails, steered by them).
  */
-export type VehicleMode = 'drive' | 'fly' | 'land' | 'float' | 'dive';
+const RAIL_LOCKS = new WeakMap<object, RailLock>();
+
+export type VehicleMode = 'drive' | 'fly' | 'land' | 'float' | 'dive' | 'rail';
 
 /** Who sits behind the wheel: a person, or the player himself. A vehicle never exists without one (see VehicleManager). */
 export type Driver = Person | 'player';
@@ -262,6 +267,19 @@ export class Vehicle implements OrbitTarget {
   private waterSc: TerrainSample = { h: 0, water: NaN, fx: 0, fz: 0 };
   private aheadSc: TerrainSample = { h: 0, water: NaN, fx: 0, fz: 0 };
   private eul = new THREE.Euler();
+  /** Drone physics: attitude (tilt of the whole craft, rad, + = nose down) that follows the commanded acceleration with a motor lag. */
+  private droneTilt = 0;
+  private windT = Math.random() * 100;
+  /** Rail mode: the point on the track (absolute world coordinates), which way the nose points along the track polyline (+1 / -1), speed along the polyline (m/s, signed). */
+  private railPt: RailPoint = { track: 0, i: 0, t: 0, x: 0, y: 0, z: 0, tx: 0, tz: 1, dist: 0 };
+  private railTmp: RailPoint = { track: 0, i: 0, t: 0, x: 0, y: 0, z: 0, tx: 0, tz: 1, dist: 0 };
+  private railFace = 1;
+  private railV = 0;
+  private railOff = { x: 0, y: 0, z: 0 };
+  private railSteerHold = 0;
+  private railCool = 0;
+  private railSpin = 0;
+  private railYaw = 0;
 
   constructor(
     private d: VehicleDeps,
@@ -557,6 +575,10 @@ export class Vehicle implements OrbitTarget {
 
   /** Put the car upright again (after a roll-over). */
   reset(): void {
+    if (this.mode === 'rail') {
+      this.leaveRail(0);
+      return;
+    }
     if (this.mode !== 'drive') {
       // Suprim in the air / on the water: stabilise = stop and level out
       this.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
@@ -662,6 +684,7 @@ export class Vehicle implements OrbitTarget {
       }
     }
     if (pt.gear < 0 && v < -7) thrTarget = 0; // reverse speed limit (~25 km/h)
+    if (s.amphibious && v > SUPRIM_FLIGHT.roadMax * 0.985) thrTarget = 0; // road speed limit: 500 km/h
     this.throttle += (thrTarget - this.throttle) * Math.min(1, 10 * dt);
     this.brake += (brkTarget - this.brake) * Math.min(1, 14 * dt);
     this.handbrake = inp.handbrake;
@@ -722,6 +745,7 @@ export class Vehicle implements OrbitTarget {
     this.body.resetTorques(true);
     this.body.addForce({ x: -this.fwd.x * drag, y: -this.fwd.y * drag, z: -this.fwd.z * drag }, true);
     if (s.downforce) this.body.addForce({ x: 0, y: -0.5 * RHO * s.downforce * v * v, z: 0 }, true); // aero downforce (supercar)
+    if (s.amphibious && this.depth > 0.02) this.wadeForces(v); // driving into water: buoyancy + water drag
     if (skid && !braking && !dead) {
       // a little direct yaw torque on top of the track forces (the real thing grips the ground with its whole length)
       this.body.addTorque({ x: 0, y: skidSteer * skid.yawAssist, z: 0 }, true);
@@ -734,7 +758,10 @@ export class Vehicle implements OrbitTarget {
     for (let i = 0; i < this.defs.length; i++) if (this.controller.wheelIsInContact(i)) n++;
     this.wheelsOnGround = n;
 
-    if (s.amphibious) this.checkWater();
+    if (s.amphibious) {
+      this.checkWater();
+      this.checkRail(dt, input);
+    }
 
     // safety net: never end up far below the analytic ground
     const t = this.body.translation();
@@ -754,6 +781,10 @@ export class Vehicle implements OrbitTarget {
     if (!this.spec.amphibious) return null;
     if (this.state !== 'ok') return '⚠️ গাড়ি নষ্ট — ফ্লাইট মোড চালু হবে না';
     switch (this.mode) {
+      case 'rail':
+        this.leaveRail(0);
+        this.enterFlight();
+        return null;
       case 'drive':
       case 'float':
         this.enterFlight();
@@ -781,6 +812,7 @@ export class Vehicle implements OrbitTarget {
       return null;
     }
     if (this.mode === 'fly' || this.mode === 'land') return '🛬 ডুব দিতে আগে নামুন (N)';
+    if (this.mode === 'rail') return '🚆 আগে রেললাইন ছাড়ুন (A / D ধরে রাখুন)';
     this.sampleWater();
     const deep = this.waterSc.water - this.waterSc.h;
     if (this.mode === 'drive' && !(this.depth > 0)) return '🌊 ডুব দিতে পানিতে নামুন';
@@ -872,19 +904,232 @@ export class Vehicle implements OrbitTarget {
     }
   }
 
+  /** Distance (m) from the tyre bottoms down to the first solid thing below (road deck, bridge, roof, ground), Infinity if there is nothing within 80 m. */
+  private probeBelow(): number {
+    const R = this.d.physics.RAPIER;
+    const t = this.body.translation();
+    const ray = new R.Ray({ x: t.x, y: t.y, z: t.z }, { x: 0, y: -1, z: 0 });
+    const hit = this.d.physics.world.castRay(ray, 80, true, R.QueryFilterFlags.EXCLUDE_SENSORS, undefined, undefined, this.body);
+    return hit ? hit.timeOfImpact + groundY(this.spec) : Infinity;
+  }
+
+  /** Driving into water (wheels still on the bottom): the water pushes the hull up (buoyancy) and slows it (drag). */
+  private wadeForces(v: number): void {
+    const F = SUPRIM_FLIGHT;
+    const m = this.spec.mass;
+    const g = -PhysicsConfig.gravity;
+    const sub = clamp(this.depth / F.floatDepth, 0, 1);
+    this.body.addForce({ x: 0, y: 0.85 * m * g * sub, z: 0 }, true); // buoyancy: up to 85 % of the weight
+    const a = Math.min(25, sub * 0.35 * v * Math.abs(v)); // water drag (m/s^2), never harder than 2.5 g
+    this.body.addForce({ x: -this.fwd.x * m * a * Math.sign(v), y: -this.fwd.y * m * a * Math.sign(v), z: -this.fwd.z * m * a * Math.sign(v) }, true);
+  }
+
+  // ------------------------------------------------------------------ Suprim: on the rails
+  private railLockOf(): RailLock | null {
+    const rail = (this.d.terrain as unknown as { rail?: RailNetwork }).rail;
+    if (!rail) return null;
+    let rl = RAIL_LOCKS.get(rail);
+    if (!rl) {
+      rl = new RailLock(rail);
+      RAIL_LOCKS.set(rail, rl);
+    }
+    return rl;
+  }
+
+  /** Drive mode: wheels on a rail head, nose along the track -> lock on and drive along the rails. */
+  private checkRail(dt: number, input: DriveInput | null): void {
+    if (this.mode !== 'drive' || this.state !== 'ok' || !input || this.ai || this.coast) return;
+    this.railCool = Math.max(0, this.railCool - dt);
+    if (this.railCool > 0 || this.wheelsOnGround < 2) return;
+    const lock = this.railLockOf();
+    if (!lock) return;
+    const t = this.body.translation();
+    const wx = t.x + this.d.origin.origin.x;
+    const wz = t.z + this.d.origin.origin.z;
+    const p = this.railPt;
+    if (!lock.nearest(wx, wz, SUPRIM_FLIGHT.railTol, p)) return;
+    const feetY = t.y + groundY(this.spec);
+    if (Math.abs(feetY - p.y) > 0.9) return; // under / over the track (bridge, tunnel), not on it
+    this.forwardVector(this.fwd);
+    const fl = Math.hypot(this.fwd.x, this.fwd.z) || 1;
+    const along = (this.fwd.x / fl) * p.tx + (this.fwd.z / fl) * p.tz;
+    if (Math.abs(along) < 0.88) return; // more than ~28 degrees across the rails
+    this.enterRail(along > 0 ? 1 : -1, wx, wz, feetY);
+  }
+
+  private enterRail(face: number, wx: number, wz: number, feetY: number): void {
+    const p = this.railPt;
+    const lv = this.body.linvel();
+    this.mode = 'rail';
+    this.railFace = face;
+    this.railV = lv.x * p.tx + lv.z * p.tz;
+    this.railOff.x = wx - p.x;
+    this.railOff.z = wz - p.z;
+    this.railOff.y = feetY - p.y;
+    this.railSteerHold = 0;
+    this.railCool = 0;
+    this.forwardVector(this.fwd);
+    this.railYaw = Math.atan2(this.fwd.x, this.fwd.z);
+    this.body.setGravityScale(0, true);
+    this.modeMsg = '🚆 রেললাইনে উঠেছে — W / S গতি · A বা D ধরে রাখুন = লাইন ছাড়া · N = ওড়া';
+  }
+
+  /** Back to the wheels. side: 0 = stay where you are, +1 / -1 = step off to the left / right of the track. */
+  private leaveRail(side: number): void {
+    if (this.mode !== 'rail') return;
+    if (side !== 0) {
+      const t = this.body.translation();
+      const fl = Math.hypot(this.fwd.x, this.fwd.z) || 1;
+      const hx = this.fwd.x / fl;
+      const hz = this.fwd.z / fl;
+      const off = 3.4 * side;
+      this.body.setTranslation({ x: t.x + hz * off, y: t.y + 0.15, z: t.z - hx * off }, true);
+    }
+    this.leaveAmphibious('drive');
+    this.railCool = side !== 0 ? 4 : 1.5;
+    this.railV = 0;
+    this.railSteerHold = 0;
+    if (side !== 0) this.modeMsg = '🚗 রেললাইন ছেড়েছে — সাধারণ ড্রাইভ মোড';
+  }
+
+  private railStep(dt: number, inp: DriveInput | null, _lv: { x: number; y: number; z: number }): void {
+    const F = SUPRIM_FLIGHT;
+    const body = this.body;
+    const lock = this.railLockOf();
+    const p = this.railPt;
+    if (!lock) {
+      this.leaveRail(0);
+      return;
+    }
+    const t = body.translation();
+    const ox = this.d.origin.origin.x;
+    const oz = this.d.origin.origin.z;
+    const drive = inp ? (inp.throttle && !inp.brake ? 1 : inp.brake && !inp.throttle ? -1 : 0) : 0;
+    const boost = !!inp?.boost;
+    const slow = !!inp?.slow;
+    const steer = inp ? clamp(inp.steer, -1, 1) : 0;
+    // A / D held for a moment: step off the rails
+    if (Math.abs(steer) > 0.5) this.railSteerHold += dt;
+    else this.railSteerHold = Math.max(0, this.railSteerHold - 2 * dt);
+    this.forwardVector(this.fwd);
+    if (this.railSteerHold > 0.4) {
+      this.leaveRail(steer > 0 ? 1 : -1);
+      return;
+    }
+    this.railCool = Math.max(0, this.railCool - dt);
+
+    // ---- speed: 500 km/h limit and the curves (lateral acceleration limit), looked at far enough ahead to brake in time ----
+    let vCar = this.railV * this.railFace;
+    const topLim = F.roadMax * (slow ? F.slow : 1);
+    const dirCar = vCar >= 0 ? this.railFace : -this.railFace;
+    const look = Math.min(2000, (vCar * vCar) / (2 * F.railBrake) + 40);
+    const rMin = lock.minRadiusAhead(p, dirCar, look);
+    const vCurve = Number.isFinite(rMin) ? Math.sqrt(F.railLat * Math.max(rMin, 20)) : Infinity;
+    const vLim = vCar >= 0 ? Math.min(topLim, vCurve) : 14;
+    if (!inp) vCar -= Math.sign(vCar) * Math.min(Math.abs(vCar), 3 * dt); // nobody driving: rolls to a stop
+    else if (drive > 0) vCar += F.railAccel * (boost ? 1.6 : 1) * Math.max(0.12, 1 - Math.max(0, vCar) / (F.roadMax * 1.05)) * dt;
+    else if (drive < 0) vCar -= (vCar > 0.5 ? F.railBrake : F.railAccel * 0.6) * dt;
+    else vCar -= Math.sign(vCar) * Math.min(Math.abs(vCar), (0.4 + 0.00012 * vCar * vCar) * dt);
+    if (vCar > vLim) vCar = Math.max(vLim, vCar - F.railBrake * dt);
+    vCar = clamp(vCar, -14, F.roadMax);
+    this.railV = vCar * this.railFace;
+    this.speed = vCar;
+    this.railSpin += (vCar * dt) / this.spec.wheelRadius;
+
+    // ---- move along the track; at the end of a track continue on the next one, or roll off ----
+    const ds = this.railV * dt;
+    if (!lock.advance(p, ds)) {
+      const q = this.railTmp;
+      let hopped = false;
+      const fxc = p.tx * this.railFace;
+      const fzc = p.tz * this.railFace;
+      if (this.railCool <= 0 && lock.nearest(p.x, p.z, 3.2, q, p.track)) {
+        const dot = q.tx * fxc + q.tz * fzc;
+        if (Math.abs(dot) > 0.85) {
+          hopped = true;
+          this.railOff.x += p.x - q.x;
+          this.railOff.y += p.y - q.y;
+          this.railOff.z += p.z - q.z;
+          Object.assign(p, q);
+          this.railFace = dot > 0 ? 1 : -1;
+          this.railV = vCar * this.railFace;
+          this.railCool = 0.6;
+        }
+      }
+      if (!hopped) {
+        body.setLinvel({ x: fxc * vCar, y: 0, z: fzc * vCar }, true);
+        this.leaveRail(0);
+        this.modeMsg = '🚆 রেললাইনের শেষ — ড্রাইভ মোড';
+        return;
+      }
+    }
+
+    // ---- put the chassis on the rail point: velocity that reaches it exactly at the end of this step (collisions still work) ----
+    const k = Math.exp(-5 * dt);
+    this.railOff.x *= k;
+    this.railOff.y *= k;
+    this.railOff.z *= k;
+    const tx = p.x + this.railOff.x - ox;
+    const tz = p.z + this.railOff.z - oz;
+    const ty = p.y + this.railOff.y - groundY(this.spec);
+    let vx = (tx - t.x) / dt;
+    let vy = (ty - t.y) / dt;
+    let vz = (tz - t.z) / dt;
+    const lim = Math.abs(vCar) + 25;
+    const m = Math.hypot(vx, vy, vz);
+    if (m > lim) {
+      vx *= lim / m;
+      vy *= lim / m;
+      vz *= lim / m;
+    }
+    body.setLinvel({ x: vx, y: vy, z: vz }, true);
+
+    // ---- attitude: nose along the rails (eased over the 20 m polyline corners), pitched with the grade ----
+    const goalYaw = Math.atan2(p.tx * this.railFace, p.tz * this.railFace);
+    const dy = Math.atan2(Math.sin(goalYaw - this.railYaw), Math.cos(goalYaw - this.railYaw));
+    this.railYaw += dy * Math.min(1, 10 * dt);
+    const tr = lock.tracks[p.track];
+    const seg = Math.hypot(tr.xs[p.i + 1] - tr.xs[p.i], tr.zs[p.i + 1] - tr.zs[p.i]) || 1;
+    const grade = ((tr.ys[p.i + 1] - tr.ys[p.i]) / seg) * this.railFace;
+    this.tiltP += (-Math.atan(grade) - this.tiltP) * Math.min(1, 8 * dt);
+    this.tiltR += (0 - this.tiltR) * Math.min(1, 8 * dt);
+    this.eul.set(this.tiltP, this.railYaw, this.tiltR, 'YXZ');
+    this.tmpQ.setFromEuler(this.eul);
+    body.setRotation({ x: this.tmpQ.x, y: this.tmpQ.y, z: this.tmpQ.z, w: this.tmpQ.w }, true);
+    body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    body.resetForces(true);
+    body.resetTorques(true);
+    this.yawRate = 0;
+    this.agl = 0;
+    this.depth = 0;
+    this.thrustAmt = 0;
+    this.throttle += ((!inp ? 0 : Math.abs(drive)) - this.throttle) * Math.min(1, 6 * dt);
+    this.brake = 0;
+    this.handbrake = false;
+    this.powertrain.step(dt, this.throttle, Math.max(0, vCar));
+  }
+
   /**
    * Fly / land / float / dive. The wheels are switched off: the chassis is moved by setting its velocity (like a drone / boat with an
    * autopilot), so it stays stable, but it is still a real Rapier body: buildings, hills and the sea floor stop it, and crashes hurt.
+   * AIR = drone physics (4 rotors: the craft tilts, the horizontal part of the thrust accelerates it, motor lag, wind gusts) that turns
+   * into a real aeroplane (lift grows with speed squared, pusher thrust, rotors fade out) above ~100 km/h. WATER = buoyancy spring following
+   * the waves, quadratic water drag, wave pitch / roll. All speed limits are hard: road 500, air 500, water 400 km/h.
    */
   private amphibiousStep(dt: number, input: DriveInput | null, lv: { x: number; y: number; z: number }): void {
     const F = SUPRIM_FLIGHT;
     const s = this.spec;
     const body = this.body;
+    const g = -PhysicsConfig.gravity;
     const inp = this.state === 'wrecked' || !input ? null : input;
     const dead = inp === null;
     // nobody at the controls: come down gently / come up
     if (dead && this.mode === 'fly') this.mode = 'land';
     if (dead && this.mode === 'dive') this.surfacing = true;
+    if (this.mode === 'rail') {
+      this.railStep(dt, inp, lv);
+      return;
+    }
 
     const t = body.translation();
     const ox = this.d.origin.origin.x;
@@ -911,47 +1156,96 @@ export class Vehicle implements OrbitTarget {
     const boost = !!inp?.boost;
     const slow = !!inp?.slow;
     const vF = lv.x * hx + lv.z * hz; // forward speed along the heading
-    const vL = lv.x * hz - lv.z * hx; // sideways (right-hand axis = (hz, -hx))
+    const vL = lv.x * hz - lv.z * hx; // sideways (body +X = left when the nose points to +Z)
     this.speed = vF;
     let vy = lv.y;
     let nF = vF;
     let nL = vL;
-    let wantTilt = 0;
-    let targetVy = 0;
+    let pitchGoal = 0; // + = nose down
+    let rollGoal = 0; // + = left side up
     let turnRate: number = F.yawAir;
+    let fast = false; // air: the attitude follows quicker
 
     if (this.mode === 'fly' || this.mode === 'land') {
-      // ---------------------------- AIR ----------------------------
+      // ---------------------------- AIR: drone + aeroplane ----------------------------
       this.depth = 0;
       this.flightClock += dt;
-      const ready = this.flightClock >= F.deploy;
+      const vH = Math.hypot(lv.x, lv.z);
+      const ready = this.flightClock >= F.deploy || vH > F.wingStall; // thrusters spooled up (or already flying fast)
       this.thrustAmt += ((ready ? 1 : 0) - this.thrustAmt) * Math.min(1, 3 * dt);
       const ground = wet ? Math.max(sc.h, wy) : sc.h;
-      this.agl = feetY - ground;
-      // look 1.2 s ahead so it climbs over hills before it reaches them
-      this.d.terrain.sample(wx + lv.x * 1.2, wz + lv.z * 1.2, this.aheadSc);
+      const agl = Math.min(feetY - ground, this.probeBelow()); // terrain / water, or anything solid below (expressway deck, bridge, roof)
+      this.agl = agl;
+      const landing = this.mode === 'land';
+      fast = true;
+
+      const wingK = clamp((vH - F.wingStall) / (F.wingFull - F.wingStall), 0, 1); // how much of the weight the wings carry
+      const rotorK = 1 - clamp((vH - F.rotorOff0) / (F.rotorOff1 - F.rotorOff0), 0, 1); // rotor authority fades out
+      const pushK = clamp((vH - 14) / 18, 0, 1); // the pusher thrust takes over from the rotors
+
+      // wind: slow gusts, stronger higher up (not on the ground)
+      this.windT += dt;
+      const gustK = clamp((agl - 4) / 20, 0, 1) * (ready ? 1 : 0);
+      const gu = (Math.sin(this.windT * 0.61 + 1.3) * 0.7 + Math.sin(this.windT * 1.7) * 0.35) * gustK;
+      const gv = (Math.sin(this.windT * 0.53 + 4.1) * 0.7 + Math.sin(this.windT * 1.9 + 2.0) * 0.35) * gustK;
+      const gw = (Math.sin(this.windT * 0.9 + 0.5) * 0.5 + Math.sin(this.windT * 2.3) * 0.25) * gustK;
+
+      // wanted forward speed: W = drone speed, or (once flying fast / Shift) the aeroplane cruise; S = slow down / back
+      const moveK = Math.max(clamp((agl - 1.0) / 2.0, 0, 1), clamp(vH / 25, 0, 1)); // no creeping along the ground
+      let tF = 0;
+      if (ready) {
+        if (drive > 0) tF = boost ? F.airMax : vH > 45 ? F.cruise : F.droneMax;
+        else if (drive < 0) tF = -F.droneMax * 0.45;
+        if (slow) tF *= F.slow;
+        if (landing) tF = Math.min(tF, 22);
+      }
+      tF *= moveK;
+
+      // forces along the heading
+      const kd = F.accel / (F.airMax * F.airMax); // quadratic drag: the normal pusher power balances it at airMax
+      const aDrag = -kd * vF * Math.abs(vF) - 0.02 * vF;
+      const aLim = g * Math.tan(F.tiltMax);
+      const aDes = clamp((tF - vF) * 1.4 - aDrag, -aLim, aLim); // the acceleration the rotors are asked for
+      const tiltCmd = ready ? Math.atan(aDes / g) : 0;
+      this.droneTilt += (tiltCmd - this.droneTilt) * (1 - Math.exp(-dt / F.tiltTau)); // motors + inertia: the attitude lags
+      const aRotor = g * Math.tan(this.droneTilt) * rotorK; // horizontal part of the rotor thrust
+      let aPush = 0;
+      if (ready && tF > vF && pushK > 0) aPush = clamp((tF - vF) * 2 - aDrag, 0, boost ? F.accelBoost : F.accel) * pushK;
+      let aBrake = ready && drive < 0 && vF > 3 ? -18 * (0.3 + 0.7 * wingK) : 0; // air brake (S)
+      if (ready && slow && vF > tF + 3) aBrake -= 14; // Ctrl: speed brakes out
+      nF = clamp(vF + (aRotor + aPush + aBrake + aDrag + (gu * hx + gv * hz) * 0.5) * dt, -F.droneMax, F.airMax);
+      nL = vL * Math.exp(-(1.1 + 3.0 * pushK) * dt) + (gu * hz - gv * hx) * 0.5 * dt;
+
+      // vertical: Space = climb (rotors / pull up), X = descend, otherwise hold the height; the terrain is looked at 1.5 s ahead
+      this.d.terrain.sample(wx + lv.x * 1.5, wz + lv.z * 1.5, this.aheadSc);
       const ahead = Math.max(this.aheadSc.h, Number.isNaN(this.aheadSc.water) ? -Infinity : this.aheadSc.water);
       const aglAhead = feetY - Math.max(ground, ahead);
-      const moveK = clamp((this.agl - 1.0) / 2.0, 0, 1); // no creeping along the ground: it moves once it has risen
-      const top = F.cruise * (boost ? F.boost : 1) * (slow ? F.slow : 1);
-      const tF = ready ? drive * top * moveK : 0;
-      const a = boost ? 42 : 24;
-      nF = vF + clamp(tF - vF, -a * dt, a * dt);
-      nL = vL * Math.exp(-4 * dt);
-      turnRate = F.yawAir / (1 + Math.abs(vF) / 45);
-      if (this.mode === 'land') {
-        const sink = this.agl < F.flare ? F.touchdown + (F.descend - F.touchdown) * clamp(this.agl / F.flare, 0, 1) : F.descend;
+      let targetVy = 0;
+      if (landing) {
+        const sink = agl < F.flare ? F.touchdown + (F.descend - F.touchdown) * clamp(agl / F.flare, 0, 1) : F.descend;
         targetVy = -sink;
       } else {
-        const climbing = !!inp?.up && ready && this.agl < F.ceiling;
-        targetVy = climbing ? (boost ? F.climbBoost : F.climb) : 0;
-        if (!climbing && moveK > 0.3 && aglAhead < 3.5) targetVy = Math.max(targetVy, (3.5 - aglAhead) * 3 + 1); // terrain clearance
-        if (this.agl >= F.ceiling && targetVy > 0) targetVy = 0;
+        const climbBase = boost ? F.climbBoost : F.climb;
+        const climbPlane = F.climbPlane * clamp(vH / 80, 0, 1);
+        if (inp?.up && ready && agl < F.ceiling) targetVy = Math.max(climbBase, climbBase + (climbPlane - climbBase) * wingK);
+        else if (inp?.down && ready) targetVy = -(7 + (45 - 7) * wingK);
+        const need = 3.5 + vH * 0.2; // clearance wanted over the ground ahead
+        if (moveK > 0.3 && aglAhead < need) targetVy = Math.max(targetVy, Math.min(40, (need - aglAhead) * 3 + 1));
+        if (agl >= F.ceiling && targetVy > 0) targetVy = 0;
       }
-      vy += clamp(targetVy - vy, -16 * dt, 16 * dt);
-      wantTilt = clamp(nF / F.cruise, -1, 1);
+      const aUp = 6.9 + (30 - 6.9) * wingK; // rotors: about 0.7 g spare; wings: pull-up
+      const aDn = 8 + (30 - 8) * wingK;
+      let dvy = clamp((targetVy - vy) * 3, -aDn, aUp);
+      dvy -= g * (1 - Math.cos(this.droneTilt)) * rotorK * 0.5; // a tilted rotor disc loses vertical thrust: the craft sags a little in a hard turn / stop
+      dvy += gw * 0.6;
+      vy += dvy * dt;
+
+      pitchGoal = this.droneTilt * rotorK - Math.atan2(vy, Math.max(vH, 8)) * wingK * 0.8;
+      turnRate = F.yawAir / (1 + vH / 45);
+      rollGoal = -clamp(Math.atan((this.yawRate * vH) / g), -0.9, 0.9) * (0.35 + 0.65 * wingK); // coordinated turn: bank = atan(yaw rate * v / g)
+
       // touch-down
-      if (this.mode === 'land' && this.agl <= 0.3) {
+      if (landing && agl <= 0.3) {
         const overWater = wet && wy - sc.h >= F.floatDepth * 0.9;
         this.leaveAmphibious(overWater ? 'float' : 'drive');
         if (!overWater) this.modeMsg = '🛬 নেমেছে — সাধারণ ড্রাইভ মোড';
@@ -969,15 +1263,28 @@ export class Vehicle implements OrbitTarget {
         return;
       }
       this.depth = Math.max(0, wy - feetY);
-      const targetY = wy - 0.28 - bottomLocal; // the hull sits just under the waterline
-      targetVy = clamp((targetY - t.y) * 5, -4, 4);
-      vy += clamp(targetVy - vy, -20 * dt, 20 * dt);
-      const top = F.floatSpeed * (boost ? F.waterBoost : 1) * (slow ? F.slow : 1);
-      const tF = drive * top;
-      nF = vF + clamp(tF - vF, -9 * dt, 9 * dt);
-      nL = vL * Math.exp(-3 * dt);
-      turnRate = F.yawWater;
-      wantTilt = clamp(nF / F.floatSpeed, -1, 1) * 0.8;
+      // the hull rides the waves: surface height at the bow, stern and both sides
+      const ws = waveScale(sc.water, Math.hypot(sc.fx, sc.fz), Math.max(0, sc.water - sc.h));
+      const surf = (px: number, pz: number): number => sc.water + waveHeight(px, pz, ws);
+      const hB = surf(wx + hx * 2.0, wz + hz * 2.0);
+      const hS = surf(wx - hx * 2.0, wz - hz * 2.0);
+      const hP = surf(wx + hz * 0.9, wz - hx * 0.9); // body +X (left)
+      const hM = surf(wx - hz * 0.9, wz + hx * 0.9);
+      const mean = (wy + hB + hS + hP + hM) / 5;
+      const targetY = mean - 0.28 - bottomLocal; // the hull sits just under the waterline
+      // buoyancy = spring towards the floating height + damping: dropping in from the air plunges, bobs up and settles
+      vy += (36 * (targetY - t.y) - 6.5 * vy) * dt;
+      vy = clamp(vy, -25, 25);
+      const aMax = F.floatAccel * (boost ? F.waterBoost : 1) * (slow ? F.slow : 1);
+      const kdw = (F.floatAccel * F.waterBoost) / (F.waterMax * F.waterMax); // water drag: boost power balances it at 400 km/h
+      const aThr = drive > 0 ? aMax : drive < 0 ? -aMax * 0.5 : 0;
+      const aF = aThr - kdw * vF * Math.abs(vF) - 0.02 * vF;
+      nF = clamp(vF + aF * dt, -20, F.waterMax);
+      nL = vL * Math.exp(-2.2 * dt);
+      turnRate = (F.yawWater / (1 + Math.abs(vF) / 40)) * (0.3 + 0.7 * clamp(Math.abs(vF) / 4, 0, 1));
+      const noseUp = Math.atan2(hB - hS, 4) + clamp(aF * 0.012, -0.12, 0.12) + 0.05 * clamp(vF / F.waterMax, 0, 1);
+      pitchGoal = -noseUp;
+      rollGoal = Math.atan2(hP - hM, 1.8) - clamp(Math.atan((this.yawRate * vF) / g), -0.5, 0.5) * 0.5;
     } else {
       // ---------------------------- SUBMARINE ----------------------------
       this.thrustAmt = 0;
@@ -998,14 +1305,18 @@ export class Vehicle implements OrbitTarget {
       const floatY = surf - 0.28 - bottomLocal;
       const targetY = this.surfacing ? floatY : Math.max(minCentre, surf - Math.min(this.diveTarget, Math.max(F.subMin, maxDepth)));
       this.depth = Math.max(0, surf - t.y);
-      targetVy = clamp((targetY - t.y) * 2.5, -5, 5);
-      vy += clamp(targetVy - vy, -10 * dt, 10 * dt);
-      const top = F.subSpeed * (boost ? F.waterBoost : 1) * (slow ? F.slow : 1);
-      const tF = drive * top;
-      nF = vF + clamp(tF - vF, -6 * dt, 6 * dt);
+      // ballast / trim planes: a damped spring to the wanted depth (neutral buoyancy, no gravity under water)
+      vy += (3.0 * (targetY - t.y) - 3.4 * vy) * dt;
+      vy = clamp(vy, -9, 9);
+      const aMax = F.subAccel * (boost ? F.waterBoost : 1) * (slow ? F.slow : 1);
+      const kdw = (F.subAccel * F.waterBoost) / (F.waterMax * F.waterMax);
+      const aThr = drive > 0 ? aMax : drive < 0 ? -aMax * 0.5 : 0;
+      const aF = aThr - kdw * vF * Math.abs(vF) - 0.03 * vF;
+      nF = clamp(vF + aF * dt, -15, F.waterMax);
       nL = vL * Math.exp(-2.5 * dt);
-      turnRate = F.yawSub;
-      wantTilt = clamp(nF / F.subSpeed, -1, 1) * 0.5;
+      turnRate = (F.yawSub / (1 + Math.abs(vF) / 50)) * (0.35 + 0.65 * clamp(Math.abs(vF) / 3, 0, 1));
+      pitchGoal = -clamp(Math.atan2(vy, Math.max(Math.abs(vF), 4)), -0.6, 0.6) * 0.8 + clamp(aF * 0.004, -0.05, 0.05);
+      rollGoal = -clamp(Math.atan((this.yawRate * vF) / g), -0.6, 0.6) * 0.7;
       if (this.surfacing && Math.abs(t.y - floatY) < 0.35 && wet) {
         this.surfacing = false;
         this.enterFloat();
@@ -1014,14 +1325,15 @@ export class Vehicle implements OrbitTarget {
       }
     }
 
-    // ---- common: yaw, velocity, banking ----
+    // ---- common: yaw, velocity, attitude ----
     this.yawRate += (steer * turnRate - this.yawRate) * Math.min(1, 6 * dt);
     yaw += this.yawRate * dt;
     const nhx = Math.sin(yaw);
     const nhz = Math.cos(yaw);
     body.setLinvel({ x: nhx * nF + nhz * nL, y: vy, z: nhz * nF - nhx * nL }, true);
-    this.tiltP += (wantTilt * 0.13 - this.tiltP) * Math.min(1, 4 * dt);
-    this.tiltR += (-this.yawRate * 0.22 * clamp(Math.abs(nF) / 18, 0, 1) - this.tiltR) * Math.min(1, 4 * dt);
+    const kA = fast ? 9 : 4;
+    this.tiltP += (pitchGoal - this.tiltP) * Math.min(1, kA * dt);
+    this.tiltR += (rollGoal - this.tiltR) * Math.min(1, kA * dt);
     this.eul.set(this.tiltP, yaw, this.tiltR, 'YXZ');
     this.tmpQ.setFromEuler(this.eul);
     body.setRotation({ x: this.tmpQ.x, y: this.tmpQ.y, z: this.tmpQ.z, w: this.tmpQ.w }, true);
@@ -1397,7 +1709,7 @@ export class Vehicle implements OrbitTarget {
       const len = this.controller.wheelSuspensionLength(i) ?? s.susp.rest;
       w.pivot.position.y = s.connY - len;
       w.steer.rotation.y = this.controller.wheelSteering(i) ?? 0;
-      w.spin.rotation.x = this.controller.wheelRotation(i) ?? 0;
+      w.spin.rotation.x = this.mode === 'rail' ? this.railSpin : this.controller.wheelRotation(i) ?? 0;
     }
   }
 

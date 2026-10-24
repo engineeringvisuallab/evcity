@@ -692,14 +692,14 @@ export const SUPRIM: VehicleSpec = finish({
     idleRpm: 600,
     redlineRpm: 12000,
     launchRpm: 2800,
-    torque: [[600, 560], [4500, 560], [7500, 510], [10000, 445], [12000, 365]],
+    torque: [[600, 1000], [4500, 1000], [7500, 960], [10000, 900], [12000, 820]], // ~1 MW at the top: enough for 500 km/h
     engineBraking: 80, // regenerative braking
   },
   gears: [2.5, 1.6, 1.0],
   reverse: 2.5,
-  finalDrive: 7.35,
+  finalDrive: 3.6, // 12000 rpm in 3rd = about 500 km/h (the governor in Vehicle stops it at SUPRIM_FLIGHT.roadMax)
   efficiency: 0.92,
-  brakeMax: brakeFor(2100, 4, 10),
+  brakeMax: brakeFor(2100, 4, 14),
   maxSteer: 0.5,
   cd: 0.28,
   frontalArea: 2.4,
@@ -717,13 +717,30 @@ export const SUPRIM: VehicleSpec = finish({
 
 /** Flight / water numbers of the Suprim (SI units). Used by Vehicle's mode machine. */
 export const SUPRIM_FLIGHT = {
-  /** Cruise speed in the air (m/s) and the Shift / Ctrl multipliers. */
-  cruise: 38,
-  boost: 2.2,
+  /** HARD speed limits (m/s): road 500 km/h, air 500 km/h, water 400 km/h. */
+  roadMax: 500 / 3.6,
+  airMax: 500 / 3.6,
+  waterMax: 400 / 3.6,
+  /** Drone (VTOL) regime: top horizontal speed on the rotors alone (m/s), steepest tilt (rad), tilt response time (s), hover climb / sink rates (m/s). */
+  droneMax: 28,
+  tiltMax: 0.62,
+  tiltTau: 0.28,
+  /** Plane regime: the wings carry the weight from this speed on (full lift at `wingFull`), the rotors fade out between `rotorOff0` and `rotorOff1`. */
+  wingStall: 30,
+  wingFull: 55,
+  rotorOff0: 42,
+  rotorOff1: 70,
+  /** Plane cruise (no boost) in m/s, Shift = full thrust up to airMax, Ctrl = slow. */
+  cruise: 100,
+  boost: 1.4,
   slow: 0.3,
-  /** Climb speed with Space (m/s), with Shift on top. */
+  /** Acceleration (m/s^2) of the pusher thrust, normal / boost. */
+  accel: 26,
+  accelBoost: 48,
+  /** Climb speed with Space (m/s), with Shift on top; plane climb at full speed. */
   climb: 11,
   climbBoost: 17,
+  climbPlane: 55,
   /** Sink speed when landing (m/s) and the slower final touch-down speed below `flare` metres. */
   descend: 7,
   touchdown: 2.2,
@@ -733,13 +750,13 @@ export const SUPRIM_FLIGHT = {
   yawWater: 1.0,
   yawSub: 0.9,
   /** Highest altitude above the ground (m). */
-  ceiling: 600,
+  ceiling: 2500,
   /** Takes off only when the thrusters have spooled up (s) and the wings are out. */
-  deploy: 1.0,
-  /** Water: surface speed, submarine speed (m/s), boost factor. */
-  floatSpeed: 21,
-  subSpeed: 13,
-  waterBoost: 1.8,
+  deploy: 1.4,
+  /** Water: surface / submarine acceleration (m/s^2); the top speed is waterMax, Ctrl slows. */
+  floatAccel: 14,
+  subAccel: 10,
+  waterBoost: 1.7,
   /** Needs at least this much water under the hull (m) to float / this much to dive. */
   floatDepth: 1.15,
   diveDepth: 3.2,
@@ -749,6 +766,11 @@ export const SUPRIM_FLIGHT = {
   subMax: 80,
   subRate: 3.5,
   floorGap: 1.8,
+  /** Rail: top speed on the track before curves (m/s), lateral acceleration allowed in curves (m/s^2), accel / brake (m/s^2). */
+  railAccel: 9,
+  railBrake: 12,
+  railLat: 16,
+  railTol: 1.4,
 } as const;
 
 /**

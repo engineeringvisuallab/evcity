@@ -1094,7 +1094,8 @@ export class VehicleModel {
       const drl = this.box(0.46, 0.012, 0.022, blue, sx * 0.5, H(0.445), 2.06, 2);
       drl.rotation.set(lead, -sx * 0.18, 0);
     }
-    this.logo('mark', true, 0.15, 0.15, 0, H(0.3), 2.408, 0, 2);
+    this.logo('mark', true, 0.2, 0.2, 0, H(0.3), 2.409, 0, 2); // EVCity mark on the nose
+    this.logoFlat('mark', false, 0.34, 0.34, 0, H(0.655) + 0.004, 1.72, -Math.PI / 2 + 0.33, 0, 3); // big EVCity mark on the bonnet
 
     // ---- sides: sills, blue lines, flared haunches, blade mirrors ----
     const flareG = new THREE.TorusGeometry(0.5, 0.04, 8, 18, Math.PI);
@@ -1108,6 +1109,7 @@ export class VehicleModel {
       this.box(0.012, 0.025, 0.17, chrome, sx * (side(0.3) + 0.006), H(0.62), 0.3, 0); // flush handle
       this.box(0.13, 0.06, 0.16, paint, sx * 1.04, H(0.88), 0.85, 3); // blade mirror
       this.label('EVCity Suprim', 0.78, sx * (side(-0.9) + 0.004), H(0.55), -0.9, sx * (Math.PI / 2), 0);
+      this.logo('wordmark', false, 0.6, 0.15, sx * (side(0.4) + 0.006), H(0.52), 0.4, sx * (Math.PI / 2), 0); // EVCity logo on the doors
       for (const z of [1.5, -1.5]) {
         const fl = this.mesh(flareG, rubber, sx * (side(z) + 0.004), H(spec.wheelRadius), z);
         fl.rotation.y = Math.PI / 2;
@@ -1123,6 +1125,8 @@ export class VehicleModel {
     this.box(1.5, 0.04, 0.016, redBar, 0, H(0.8), -2.402, 2);
     this.box(0.46, 0.1, 0.012, plate, 0, H(0.5), -2.404, 2);
     this.label('SUPRIM', 0.62, 0, H(0.66), -2.404, Math.PI, 0);
+    this.logo('mark', true, 0.22, 0.22, 0, H(0.9), -2.405, Math.PI, 2); // EVCity mark on the tail
+    this.logoFlat('mark', false, 0.3, 0.3, 0, H(0.99) + 0.004, -1.9, -Math.PI / 2, Math.PI, 3); // EVCity mark on the rear deck
     this.box(1.6, 0.035, 0.34, paint, 0, H(1.0), -2.2, 3).rotation.x = 0.12;
     this.box(1.15, 0.1, 0.14, carbon, 0, H(0.3), -2.36, 2);
     for (let k = -3; k <= 3; k++) this.box(0.014, 0.1, 0.16, dark, k * 0.16, H(0.28), -2.38, 2);
@@ -1194,7 +1198,7 @@ export class VehicleModel {
     for (const sx of [1, -1]) {
       for (const z of [1.55, -1.55]) {
         const g = new THREE.Group();
-        g.position.set(sx * 0.8, H(z > 0 ? 0.86 : 0.7), z);
+        g.position.set(sx * 0.8, H(z > 0 ? 0.78 : 0.74), z); // arm root on the body; the pod rises above wheel / body height when it deploys
         const bar = new THREE.Mesh(barG, armM);
         bar.castShadow = true;
         const pod = new THREE.Group();
@@ -1213,7 +1217,8 @@ export class VehicleModel {
         const glowMat = new THREE.MeshBasicMaterial({ color: 0x57b8ff, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
         const glow = new THREE.Mesh(glowG, glowMat);
         glow.position.y = -0.02;
-        pod.add(ring, rotor, disc, glow);
+        pod.add(ring, rotor); // no light cone / glow disc: the rotors are plain drone rotors
+        void disc; void glow;
         this.mats.push(discM as unknown as AnyMat, glowMat as unknown as AnyMat);
         g.add(bar, pod);
         this.root.add(g);
@@ -1230,24 +1235,32 @@ export class VehicleModel {
   setFlightPose(open: number, thrust: number, dt: number): void {
     if (!this.wingG.length) return;
     const e = open * open * (3 - 2 * open); // smooth
-    for (const w of this.wingG) w.g.rotation.y = w.sx * (Math.PI / 2) * (1 - e);
-    this.rotorAngle += dt * (6 + thrust * 70);
+    // wings: completely hidden while folded (normal car look), swing out when deploying
+    for (const w of this.wingG) {
+      w.g.visible = e > 0.015;
+      w.g.rotation.y = w.sx * (Math.PI / 2) * (1 - e);
+    }
+    this.rotorAngle += dt * (6 + thrust * 90);
     const L = 1.15;
+    const RISE = 0.5; // the drone pods end up this far above their arm roots (above the wheels / body line)
     for (const a of this.armG) {
       const ext = Math.max(0.001, e) * L;
+      const rise = e * RISE;
       const vis = e > 0.02;
+      const len = Math.hypot(ext, rise);
       a.bar.visible = vis;
       a.pod.visible = vis;
-      a.bar.scale.x = ext;
-      a.bar.position.x = (a.sx * ext) / 2;
-      a.pod.position.x = a.sx * ext;
+      a.bar.scale.x = len;
+      a.bar.position.set((a.sx * ext) / 2, rise / 2, 0);
+      a.bar.rotation.z = a.sx * Math.atan2(rise, ext);
+      a.pod.position.set(a.sx * ext, rise, 0);
       a.pod.scale.setScalar(Math.max(0.01, e));
       a.rotor.rotation.y = this.rotorAngle * (a.sx > 0 ? 1 : -1);
-      a.discM.opacity = 0.22 * thrust;
-      a.glowM.opacity = 0.5 * thrust * (0.8 + 0.2 * Math.sin(this.rotorAngle * 0.7));
-      a.glow.scale.set(1, 0.4 + 0.9 * thrust, 1);
-      a.glow.visible = thrust > 0.02;
-      a.rotor.visible = thrust < 0.55;
+      a.discM.opacity = 0;
+      a.glowM.opacity = 0;
+      a.glow.visible = false;
+      a.disc.visible = false;
+      a.rotor.visible = true;
     }
   }
 
@@ -2016,6 +2029,17 @@ export class VehicleModel {
     mesh.rotation.y = rotY;
     mesh.castShadow = false;
     if (parent === this.root) this.parts.push({ obj: mesh, stage });
+  }
+
+  /** Logo lying on a (nearly) horizontal panel: rotX = -PI/2 puts it flat facing up, rotZ turns it about its own normal. */
+  private logoFlat(style: LogoStyle, dark: boolean, w: number, h: number, x: number, y: number, z: number, rotX: number, rotZ: number, stage: ModelPart['stage'] = 0): void {
+    const tex = makeLogoTexture(style, dark);
+    if (!tex) return;
+    const m = this.mat(0xffffff, { map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    const mesh = this.mesh(new THREE.PlaneGeometry(w, h), m, x, y, z, this.root);
+    mesh.rotation.set(rotX, 0, rotZ);
+    mesh.castShadow = false;
+    this.parts.push({ obj: mesh, stage });
   }
 
   /** Builds the steering assembly into `g` (the steering group) - and, for a raked bike, `wheelFrame` (level axes, same origin). */

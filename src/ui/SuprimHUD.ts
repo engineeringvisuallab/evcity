@@ -2,8 +2,9 @@ import type { VehicleTelemetry } from '../vehicles/Vehicle';
 import { UI_FONT } from './theme';
 
 const MODE_TEXT: Record<string, { icon: string; name: string; keys: string }> = {
-  drive: { icon: '🚗', name: 'ড্রাইভ', keys: 'W A S D চলা · Shift বুস্ট · Ctrl ধীর · N ফ্লাইট মোড · C ডুব (পানিতে)' },
-  fly: { icon: '🛸', name: 'ফ্লাইট', keys: 'Space ওপরে · W A S D চলা/ঘোরা · Shift বুস্ট · Ctrl ধীর · N নামা' },
+  drive: { icon: '🚗', name: 'ড্রাইভ', keys: 'W A S D চলা · রেললাইনে উঠলে নিজে লক হয় · N ফ্লাইট মোড · C ডুব (পানিতে)' },
+  rail: { icon: '🚆', name: 'রেললাইনে', keys: 'W / S গতি · Ctrl ধীর · A বা D ধরে রাখুন = লাইন ছাড়া · N ওড়া' },
+  fly: { icon: '🛸', name: 'ফ্লাইট', keys: 'Space ওপরে · X নিচে · W A S D · Shift = বিমান গতি · Ctrl ধীর (ড্রোন) · N নামা' },
   land: { icon: '🛬', name: 'অবতরণ', keys: 'W A S D · N আবার ওড়া' },
   float: { icon: '🌊', name: 'পানিতে ভাসছে', keys: 'W A S D চলা · C ডুব · N ওড়া · Shift বুস্ট' },
   dive: { icon: '🤿', name: 'সাবমেরিন', keys: 'W A S D চলা · Space ওপরে · X নিচে · C ভেসে ওঠা · T পানির ওপরে' },

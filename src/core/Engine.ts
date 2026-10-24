@@ -860,7 +860,13 @@ export class Engine {
     this.tankCannon.update(dt, canShoot && !this.mall.inside && !this.agro.inside);
     this.police.update(dt, this.controlledWorld(this.tmpPoliceFocus), this.time.elapsed);
     this.tour.update(dt);
-    this.orbit.allowUnderwater = this.player.active && !this.player.inVehicle && this.player.swimming;
+    {
+      // Suprim in submarine mode: the camera follows it under the water (under-water view: blue fog, light shafts) instead of staying above the surface
+      const dv = this.vehicles.driver;
+      const diving = !!dv && !!dv.spec.amphibious && dv.mode === 'dive' && dv.depth > 1.6;
+      this.orbit.allowUnderwater = (this.player.active && !this.player.inVehicle && this.player.swimming) || diving;
+      if (diving && this.orbit.elevation > 0.1) this.orbit.elevation += (0.1 - this.orbit.elevation) * Math.min(1, 3 * dt);
+    }
     this.cameraController.update(dt);
     this.infra.applyCamera(dt, this.camera); // a running plant tour owns the camera
     this.world.update(dt, this.time.elapsed, this.camera, this.cameraController.isFreeFly);
