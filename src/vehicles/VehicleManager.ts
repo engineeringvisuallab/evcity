@@ -180,28 +180,6 @@ export class VehicleManager {
     return v;
   }
 
-  /** Create a dedicated Tour car with no AI driver; TourManager owns its lifecycle and autopilot. */
-  spawnTourVehicle(spec: VehicleSpec, world: THREE.Vector3, yaw: number, body = 0xd6b544): Vehicle {
-    const s = { ...spec, look: { ...spec.look, body, accent: 0x23332c } };
-    const v = new Vehicle(this.d.vehicle, s, world, yaw);
-    v.tourVehicle = true;
-    this.vehicles.push(v);
-    this.byHandle.set(v.collider.handle, v);
-    v.setEnabled(true);
-    return v;
-  }
-
-  removeTourVehicle(v: Vehicle): boolean {
-    if (!v.tourVehicle || v === this.driver) return false;
-    const i = this.vehicles.indexOf(v);
-    if (i < 0) return false;
-    v.removeDriver();
-    this.vehicles.splice(i, 1);
-    this.byHandle.delete(v.collider.handle);
-    v.dispose();
-    return true;
-  }
-
   /** Remove a vehicle from the world; returns the driver who was in it (the caller removes him too). */
   remove(v: Vehicle): Driver | null {
     const i = this.vehicles.indexOf(v);
@@ -238,8 +216,7 @@ export class VehicleManager {
     if (inp.wasPressed('KeyF')) {
       if (this.driver) this.exit();
       else {
-        // A marked Tour car takes priority over ordinary traffic when it is within reach.
-        const near = this.nearestTour(4) ?? this.nearest(4);
+        const near = this.nearest(4);
         // only a car that has (almost) stopped - the AI stops for you when you stand in front of it
         if (near && Math.abs(near.forwardSpeed) < 2.5 && !this.boarding) {
           if (near.hasDoor()) {
@@ -318,27 +295,6 @@ export class VehicleManager {
         hud.setMarker(this.d.project(this.tmp), 'car');
       } else hud.hideMarker();
     }
-  }
-
-  nearestTour(maxDist: number): Vehicle | null {
-    this.d.player.getWorldPosition(this.tmp2);
-    let best: Vehicle | null = null;
-    let bd = maxDist;
-    for (const v of this.vehicles) {
-      if (!v.tourVehicle) continue;
-      v.getWorldPosition(this.tmp);
-      const dd = Math.hypot(this.tmp.x - this.tmp2.x, this.tmp.z - this.tmp2.z);
-      if (dd < bd) { bd = dd; best = v; }
-    }
-    return best;
-  }
-
-  /** Automatically drop a passenger off only when the Tour car is safely stopped. */
-  disembarkTour(): boolean {
-    const v = this.driver;
-    if (!v || !v.tourVehicle || Math.abs(v.telemetry().speed) > 3) return false;
-    this.exit();
-    return this.driver !== v;
   }
 
   nearest(maxDist: number): Vehicle | null {

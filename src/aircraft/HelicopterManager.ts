@@ -65,30 +65,12 @@ export class HelicopterManager {
     return h;
   }
 
-  /** Spawn the marked service aircraft used by Tour mode. */
-  spawnTour(world: THREE.Vector3, yaw: number): Helicopter {
-    const h = this.spawn(world, yaw);
-    h.tourVehicle = true;
-    return h;
-  }
-
-  /** Enable built-in fly-by-waypoint control for a Tour aircraft, including while it is unoccupied. */
-  setTourTarget(h: Helicopter, target: THREE.Vector3, landingApproach = true): void {
-    h.tourVehicle = true;
-    h.engineOn = true;
-    h.assist = true;
-    h.setTourParked(false);
-    h.setEnabled(true);
-    this.tourTargets.set(h, { target: target.clone(), landingApproach });
-  }
-
   /** Police helicopters use the same stable autopilot but hold altitude instead of landing. */
   setPolicePursuitTarget(h: Helicopter, target: THREE.Vector3): void {
     h.policeAircraft = true;
-    h.tourVehicle = false;
     h.engineOn = true;
     h.assist = true;
-    h.setTourParked(false);
+    h.releaseAutopilot();
     h.setEnabled(true);
     this.tourTargets.set(h, { target: target.clone(), landingApproach: false });
   }
@@ -105,28 +87,6 @@ export class HelicopterManager {
 
   removePolicePursuit(h: Helicopter): boolean {
     if (!h.policeAircraft || h === this.pilot) return false;
-    this.tourTargets.delete(h);
-    const i = this.helis.indexOf(h);
-    if (i < 0) return false;
-    this.helis.splice(i, 1);
-    h.dispose();
-    return true;
-  }
-
-  /** Stop a Tour aircraft's autopilot after arrival so the player can be dropped off. */
-  disembarkTour(): boolean {
-    const h = this.pilot;
-    if (!h || !h.tourVehicle) return false;
-    const telemetry = h.telemetry();
-    if (telemetry.agl > 1.6 || telemetry.speed > 3) return false;
-    this.clearTourTarget(h);
-    h.engineOn = false;
-    this.exit();
-    return this.pilot !== h;
-  }
-
-  removeTour(h: Helicopter): boolean {
-    if (!h.tourVehicle || h === this.pilot) return false;
     this.tourTargets.delete(h);
     const i = this.helis.indexOf(h);
     if (i < 0) return false;
@@ -175,7 +135,7 @@ export class HelicopterManager {
       return false;
     }
     if (inp.wasPressed('KeyF') && !this.d.vehicles.driver) {
-      const near = this.nearestTour(ENTER_DIST) ?? this.nearest(ENTER_DIST);
+      const near = this.nearest(ENTER_DIST);
       if (near && near.dist <= this.carDistance()) {
         this.enter(near.heli);
         return true;
@@ -220,19 +180,6 @@ export class HelicopterManager {
     return Math.hypot(this.tmp.x - this.tmp2.x, this.tmp.z - this.tmp2.z);
   }
 
-  private nearestTour(maxDist: number): { heli: Helicopter; dist: number } | null {
-    this.d.player.getWorldPosition(this.tmp2);
-    let best: { heli: Helicopter; dist: number } | null = null;
-    let bd = maxDist;
-    for (const h of this.helis) {
-      if (!h.tourVehicle || h.policeAircraft) continue;
-      h.getWorldPosition(this.tmp);
-      const dd = Math.hypot(this.tmp.x - this.tmp2.x, this.tmp.z - this.tmp2.z);
-      if (dd < bd && Math.abs(this.tmp.y - this.tmp2.y) < 5) { bd = dd; best = { heli: h, dist: dd }; }
-    }
-    return best;
-  }
-
   private nearest(maxDist: number): { heli: Helicopter; dist: number } | null {
     this.d.player.getWorldPosition(this.tmp2);
     let best: { heli: Helicopter; dist: number } | null = null;
@@ -250,7 +197,7 @@ export class HelicopterManager {
 
   private enter(h: Helicopter): void {
     this.clearTourTarget(h);
-    h.setTourParked(false);
+    h.releaseAutopilot();
     this.pilot = h;
     h.occupied = true;
     h.setEnabled(true);
@@ -272,7 +219,6 @@ export class HelicopterManager {
     this.pilot = null;
     h.occupied = false;
     h.engineOn = false;
-    if (h.tourVehicle) h.setTourParked(true);
     this.d.player.setInVehicle(false);
     this.d.player.teleportTo(this.tmp);
     this.d.orbit.setTarget(this.d.player, Config.orbit.distance, Config.orbit.minDistance, Config.orbit.maxDistance);

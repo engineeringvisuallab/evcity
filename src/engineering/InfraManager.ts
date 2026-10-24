@@ -68,6 +68,26 @@ export class InfraManager {
     return this.active !== null;
   }
 
+  /** The Tour menu: one entry per engineering site in the world. */
+  listTours(): { id: string; name: string; color: string; mark: string; category: string; stops: number }[] {
+    return this.plants.map((pl) => ({ id: pl.site.id, name: pl.site.nameBn, color: pl.site.color, mark: pl.site.mark, category: pl.infra.category, stops: pl.tour.stops.length }));
+  }
+
+  /** Tour menu: start the guided tour of site `id` from wherever the player is (the camera cuts to the site, like Y next to it). */
+  startById(id: string): 'started' | 'unknown' | 'blocked' | 'busy' {
+    if (this.active) return 'busy';
+    const pl = this.plants.find((p) => p.site.id === id);
+    if (!pl) return 'unknown';
+    if (!(this.d.canStart?.() ?? true)) return 'blocked';
+    this.start(pl);
+    return 'started';
+  }
+
+  /** Stop the running tour (the Tour button while a tour runs). */
+  stopTour(): void {
+    this.active?.tour.stop();
+  }
+
   /** Name of the plant whose fence the world point is in (+margin), or null. */
   nameAt(x: number, z: number): { id: string; name: string; color: string } | null {
     for (const pl of this.plants) if (pl.site.inside(x, z, 6)) return { id: pl.site.id, name: pl.site.nameBn, color: pl.site.color };

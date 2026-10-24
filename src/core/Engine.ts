@@ -111,7 +111,7 @@ export class Engine {
   readonly helis: HelicopterManager;
   /** Speedboats floating on the sea, lakes and rivers (F to get in). */
   readonly boats: BoatManager;
-  /** The tour: call a helicopter / car, ride to any city area. */
+  /** The Tour button: pick an engineering site and its guided tour starts. */
   readonly tour: TourManager;
   /** Police vehicles pursue the player when the wanted level rises. */
   readonly police: PolicePursuitManager;
@@ -632,10 +632,11 @@ export class Engine {
       voice: this.voice,
       container,
       playerWorld: (out) => this.player.getWorldPosition(out),
-      canStart: () => !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.mall.inside && !this.library.inside && !this.agro.inside,
+      canStart: () => !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.planeRider.riding && !this.mall.inside && !this.library.inside && !this.agro.inside,
     });
     // the tour owns the camera: park the player (free-fly mode) while it runs, bring the player camera back afterwards
     this.infra.onTour = (active) => {
+      this.tour.setTouring(active);
       if (active && !this.cameraController.isFreeFly) {
         this.toggleFreeFly();
         this.infraFreeFly = true;
@@ -663,17 +664,7 @@ export class Engine {
       park(SEDAN, S.sedan, 0, -1), park(JEEP, S.jeep, 0, -1), park(HYPERCAR, S.hypercar, 0, -1), park(EVHYPAR, S.evhypar, 0, -1),
       park(BUS, S.bus, 1, 0),
     ]);
-    this.tour = new TourManager({
-      container,
-      player: this.player,
-      world: this.world,
-      vehicles: this.vehicles,
-      helis: this.helis,
-      roads: graph,
-      voice: this.voice,
-      hud: this.hud,
-      project: this.project,
-    });
+    this.tour = new TourManager({ container, infra: this.infra });
     bus.on('camera:locked', ({ locked }) => this.hud.setLocked(locked));
 
     // --- settings menu: everything that used to clutter the screen can be switched on here ---
@@ -751,7 +742,6 @@ export class Engine {
     this.trains.fixedUpdate(dt);
     this.trainPhysics.fixedUpdate(dt, this.world.playerWorld.x, this.world.playerWorld.z);
     this.police.fixedUpdate(dt, this.controlledWorld(this.tmpPoliceFocus));
-    this.tour.fixedUpdate(dt);
     this.vehicles.fixedUpdate(dt);
     this.helis.fixedUpdate(dt);
     this.boats.fixedUpdate(dt);
@@ -859,7 +849,6 @@ export class Engine {
     this.combat.update(dt, canShoot && !this.vehicles.playerTank && !this.mall.inside && !this.agro.inside); // in the tank the left mouse button fires the cannon instead
     this.tankCannon.update(dt, canShoot && !this.mall.inside && !this.agro.inside);
     this.police.update(dt, this.controlledWorld(this.tmpPoliceFocus), this.time.elapsed);
-    this.tour.update(dt);
     {
       // Suprim in submarine mode: the camera follows it under the water (under-water view: blue fog, light shafts) instead of staying above the surface
       const dv = this.vehicles.driver;

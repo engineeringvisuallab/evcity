@@ -1,7 +1,7 @@
 import { UI_FONT } from './theme';
 import { bn, bnNum } from '../i18n';
 
-export type MarkerIcon = 'car' | 'heli' | 'boat' | 'tour-car' | 'tour-heli';
+export type MarkerIcon = 'car' | 'heli' | 'boat';
 
 const CSS = `
 @keyframes evcSpin { to { transform: rotate(360deg); } }
@@ -12,8 +12,6 @@ const ICONS: Record<MarkerIcon, string> = {
   car: '<svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M5 11l1.6-4.2A2 2 0 018.5 5.5h7a2 2 0 011.9 1.3L19 11h1a1 1 0 011 1v4a1 1 0 01-1 1h-1a2 2 0 01-4 0H9a2 2 0 01-4 0H4a1 1 0 01-1-1v-4a1 1 0 011-1zm2.7-.1h8.6l-1-2.6a.5.5 0 00-.5-.3H9.2a.5.5 0 00-.5.3z"/></svg>',
   heli: '<svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M2 5h20v1.6H13v1.8c2.6.3 4.5 2.2 4.5 4.6 0 .3 0 .6-.1.9L21 12v2l-4.8 1.2A5 5 0 0112.5 17H11v2h4v1.6H6V19h3.4v-2H8a4 4 0 01-4-4c0-2.4 1.9-4.3 4.4-4.6V6.6H2z"/></svg>',
   boat: '<svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M3 14l2-7h14l2 7-9 5-9-5zm4-5l-1.2 4.2 6.2 3.5 6.2-3.5L17 9H7z"/></svg>',
-  'tour-car': '<svg viewBox="0 0 24 24" width="22" height="22" fill="#ffd21f"><path d="M5 11l1.6-4.2A2 2 0 018.5 5.5h7a2 2 0 011.9 1.3L19 11h1a1 1 0 011 1v4a1 1 0 01-1 1h-1a2 2 0 01-4 0H9a2 2 0 01-4 0H4a1 1 0 01-1-1v-4a1 1 0 011-1zm2.7-.1h8.6l-1-2.6a.5.5 0 00-.5-.3H9.2a.5.5 0 00-.5.3z"/><path d="M12 1.5l1.3 2.6 2.9.4-2.1 2 .5 2.9L12 8l-2.6 1.4.5-2.9-2.1-2 2.9-.4z"/></svg>',
-  'tour-heli': '<svg viewBox="0 0 24 24" width="22" height="22" fill="#ffd21f"><path d="M2 5h20v1.6H13v1.8c2.6.3 4.5 2.2 4.5 4.6 0 .3 0 .6-.1.9L21 12v2l-4.8 1.2A5 5 0 0112.5 17H11v2h4v1.6H6V19h3.4v-2H8a4 4 0 01-4-4c0-2.4 1.9-4.3 4.4-4.6V6.6H2z"/><path d="M12 0l1.3 2.5 2.8.4-2 2 .5 2.8L12 6.4 9.5 7.7 10 4.9l-2-2 2.8-.4z"/></svg>',
 };
 
 /**

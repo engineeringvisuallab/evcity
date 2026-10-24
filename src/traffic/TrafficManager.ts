@@ -91,7 +91,7 @@ export class TrafficManager {
     let ai = 0;
     for (let i = vm.vehicles.length - 1; i >= 0; i--) {
       const v = vm.vehicles[i];
-      if (v === vm.driver || v.tourVehicle || v.persistent) continue;
+      if (v === vm.driver || v.persistent) continue;
       v.physWorld(V3);
       const dist = Math.hypot(V3.x - focus.x, V3.z - focus.z);
       if (v.state === 'wrecked') {

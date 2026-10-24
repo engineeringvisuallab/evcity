@@ -81,12 +81,8 @@ export class Helicopter implements OrbitTarget {
   readonly body: RAPIER.RigidBody;
 
   occupied = false;
-  /** Marks a dispatched Tour helicopter so UI and lifecycle logic can distinguish it from free-play aircraft. */
-  tourVehicle = false;
-  /** Police pursuit aircraft are AI-only and must not be offered as Tour boarding targets. */
+  /** Police pursuit aircraft are AI-only (flown by the autopilot below). */
   policeAircraft = false;
-  /** Tour helicopters are held firmly on the ground after landing until boarded again. */
-  tourParked = false;
   /** False while parked far from the player (no ground collider there): body is frozen. */
   enabled = false;
   engineOn = false;
@@ -242,13 +238,12 @@ export class Helicopter implements OrbitTarget {
   }
 
   /**
-   * Stable, physics-integrated autopilot for dispatched Tour and police helicopters.
+   * Stable, physics-integrated autopilot for the police helicopters.
    * It steers velocity and heading directly while keeping the airframe level; normal player flight
    * still uses the force-based controller below. `targetWorld` is always in absolute world space.
    */
   tourFixedUpdate(dt: number, targetWorld: THREE.Vector3, landingApproach: boolean): void {
     if (!this.enabled) return;
-    this.tourParked = false;
     this.body.setGravityScale(0, true);
     this.engineOn = true;
     this.assist = true;
@@ -340,36 +335,14 @@ export class Helicopter implements OrbitTarget {
     this.thrust = this.collective * HELI.thrustMax * this.rpm * this.rpm;
   }
 
-  /** Hold a Tour helicopter safely on the ground after a passenger exits. */
-  setTourParked(parked: boolean): void {
-    this.tourParked = parked;
-    this.body.setGravityScale(parked ? 0 : 1, true);
-    if (!parked) return;
-    this.engineOn = false;
-    this.collective = 0;
-    this.forwardVector(this.tourHeadingForward);
-    const yaw = Math.atan2(this.tourHeadingForward.x, this.tourHeadingForward.z);
-    this.tourHeadingQuaternion.setFromAxisAngle(UP, yaw);
-    this.body.setRotation({ x: this.tourHeadingQuaternion.x, y: this.tourHeadingQuaternion.y, z: this.tourHeadingQuaternion.z, w: this.tourHeadingQuaternion.w }, true);
-    this.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
-    this.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
-    this.hSpeed = 0;
-    this.vz = 0;
-    this.pitchAng = 0;
-    this.rollAng = 0;
+  /** Hand the helicopter back from the autopilot to normal physics (gravity on again). */
+  releaseAutopilot(): void {
+    this.body.setGravityScale(1, true);
   }
 
   /** Called every fixed step BEFORE the physics world steps. input = null while parked. */
   fixedUpdate(dt: number, input: FlightInput | null): void {
     if (!this.enabled) return;
-    if (this.tourParked) {
-      this.rpm = Math.max(0, this.rpm - HELI.spoolDownGround * dt);
-      this.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
-      this.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
-      this.hSpeed = 0;
-      this.vz = 0;
-      return;
-    }
     const body = this.body;
     const inp = input ?? IDLE;
     const t = body.translation();

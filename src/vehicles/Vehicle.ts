@@ -99,7 +99,7 @@ export interface VehicleAudioState {
   surface: number;
   /** Driver door opening, 0..1. */
   door: number;
-  /** Somebody is driving (or the tour autopilot) and the vehicle is not a wreck. */
+  /** Somebody is driving (or an autopilot) and the vehicle is not a wreck. */
   engineOn: boolean;
   enclosed: boolean;
 }
@@ -175,8 +175,6 @@ export class Vehicle implements OrbitTarget {
   private controller: RAPIER.DynamicRayCastVehicleController;
 
   occupied = false;
-  /** Tour vehicles are managed by TourManager rather than regular traffic despawn rules. */
-  tourVehicle = false;
   /** Marked law-enforcement vehicle controlled by PolicePursuitManager. */
   policeVehicle = false;
   /** Parked player-owned vehicle (the tank): traffic never removes it. */
@@ -198,7 +196,7 @@ export class Vehicle implements OrbitTarget {
   /** Tank: turret yaw (rel. to the hull) and barrel pitch (rad). */
   turretYaw = 0;
   turretPitch = 0;
-  /** Non-null while a Tour ride is controlled by the service autopilot. */
+  /** Non-null while an autopilot (police pursuit, farm crew) drives the vehicle instead of a player or normal traffic AI. */
   tourInput: DriveInput | null = null;
   /** Whoever is driving. null only for the few seconds after the player left a car (it is removed then). */
   driver: Driver | null = null;
