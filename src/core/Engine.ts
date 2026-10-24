@@ -1185,16 +1185,25 @@ export class Engine {
     // five candidate spots (right, left, a bit further forward on each side, straight ahead): take the flattest one
     const cand: [number, number][] = [[side, ahead], [-side, ahead], [side, ahead + hz + 2], [-side, ahead + hz + 2], [0, hz + 4]];
     const hp = T.heightAt(pw.x, pw.z);
+    // standing on an elevated road (expressway / bridge): the car must go on the deck, not on the ground under it
+    const elevated = !heli && pw.y - hp > 1.5;
+    let deckY: number | undefined = elevated ? pw.y : undefined;
+    let deckFound = false;
     let best = cand[0], bd = Infinity;
     for (const [k, f] of cand) {
       const x = pw.x + rx * k + fx * f, z = pw.z + rz * k + fz * f;
+      if (elevated) {
+        const dy = this.vehicles.deckHeight(x, z, pw.y);
+        if (dy !== null && !deckFound) { deckFound = true; deckY = dy; best = [k, f]; }
+        continue;
+      }
       const d = Math.abs(T.heightAt(x, z) - hp) + Math.abs(T.heightAt(x + fx * hz, z + fz * hz) - hp) + Math.abs(T.heightAt(x - fx * hz, z - fz * hz) - hp);
       if (d < bd) { bd = d; best = [k, f]; }
     }
     const x = pw.x + rx * best[0] + fx * best[1], z = pw.z + rz * best[0] + fz * best[1];
     const nose = Math.atan2(fx, fz);
     if (heli) this.helis.summon(new THREE.Vector3(x, T.heightAt(x, z) + 1.5, z), nose);
-    else this.vehicles.summon(spec!, x, z, nose);
+    else this.vehicles.summon(spec!, x, z, nose, deckY);
     this.lastSummon.set(id, now);
     return null;
   }

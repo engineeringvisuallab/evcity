@@ -1005,7 +1005,7 @@ export class Vehicle implements OrbitTarget {
     const ox = this.d.origin.origin.x;
     const oz = this.d.origin.origin.z;
     const drive = inp ? (inp.throttle && !inp.brake ? 1 : inp.brake && !inp.throttle ? -1 : 0) : 0;
-    const boost = !!inp?.boost;
+    const boost = true; // full power all the time: no Shift needed
     const slow = !!inp?.slow;
     const steer = inp ? clamp(inp.steer, -1, 1) : 0;
     // A / D held for a moment: step off the rails
@@ -1153,7 +1153,7 @@ export class Vehicle implements OrbitTarget {
     const brk = inp && inp.brake && !inp.throttle ? 1 : 0;
     const drive = thr - brk * 0.45;
     const steer = inp ? clamp(inp.steer, -1, 1) : 0;
-    const boost = !!inp?.boost;
+    const boost = true; // full power all the time: no Shift needed (Ctrl still slows down)
     const slow = !!inp?.slow;
     const vF = lv.x * hx + lv.z * hz; // forward speed along the heading
     const vL = lv.x * hz - lv.z * hx; // sideways (body +X = left when the nose points to +Z)
@@ -1196,7 +1196,7 @@ export class Vehicle implements OrbitTarget {
       if (ready) {
         if (drive > 0) tF = boost ? F.airMax : vH > 45 ? F.cruise : F.droneMax;
         else if (drive < 0) tF = -F.droneMax * 0.45;
-        if (slow) tF *= F.slow;
+        if (slow) tF = Math.min(tF, F.cruise) * F.slow; // Ctrl = slow down (drone speed), however fast W alone would go
         if (landing) tF = Math.min(tF, 22);
       }
       tF *= moveK;
@@ -1212,7 +1212,7 @@ export class Vehicle implements OrbitTarget {
       let aPush = 0;
       if (ready && tF > vF && pushK > 0) aPush = clamp((tF - vF) * 2 - aDrag, 0, boost ? F.accelBoost : F.accel) * pushK;
       let aBrake = ready && drive < 0 && vF > 3 ? -18 * (0.3 + 0.7 * wingK) : 0; // air brake (S)
-      if (ready && slow && vF > tF + 3) aBrake -= 14; // Ctrl: speed brakes out
+      if (ready && slow && vF > tF + 3) aBrake -= 26; // Ctrl: speed brakes out
       nF = clamp(vF + (aRotor + aPush + aBrake + aDrag + (gu * hx + gv * hz) * 0.5) * dt, -F.droneMax, F.airMax);
       nL = vL * Math.exp(-(1.1 + 3.0 * pushK) * dt) + (gu * hz - gv * hx) * 0.5 * dt;
 
@@ -1225,7 +1225,7 @@ export class Vehicle implements OrbitTarget {
         const sink = agl < F.flare ? F.touchdown + (F.descend - F.touchdown) * clamp(agl / F.flare, 0, 1) : F.descend;
         targetVy = -sink;
       } else {
-        const climbBase = boost ? F.climbBoost : F.climb;
+        const climbBase = F.climb; // vertical speed stays precise (no overshoot after Space); only the forward speed is always full
         const climbPlane = F.climbPlane * clamp(vH / 80, 0, 1);
         if (inp?.up && ready && agl < F.ceiling) targetVy = Math.max(climbBase, climbBase + (climbPlane - climbBase) * wingK);
         else if (inp?.down && ready) targetVy = -(7 + (45 - 7) * wingK);
@@ -1240,9 +1240,11 @@ export class Vehicle implements OrbitTarget {
       dvy += gw * 0.6;
       vy += dvy * dt;
 
-      pitchGoal = this.droneTilt * rotorK - Math.atan2(vy, Math.max(vH, 8)) * wingK * 0.8;
+      // the body stays LEVEL in the air, like a normal car: the nose never rises when it speeds up / climbs, it never leans back or banks
+      // (the drone tilt above still drives the physics, it is just not shown on the body)
+      pitchGoal = 0;
       turnRate = F.yawAir / (1 + vH / 45);
-      rollGoal = -clamp(Math.atan((this.yawRate * vH) / g), -0.9, 0.9) * (0.35 + 0.65 * wingK); // coordinated turn: bank = atan(yaw rate * v / g)
+      rollGoal = 0;
 
       // touch-down
       if (landing && agl <= 0.3) {
@@ -1257,7 +1259,11 @@ export class Vehicle implements OrbitTarget {
       this.agl = 0;
       const shallow = !wet || wy - sc.h < F.floatDepth * 0.5;
       if (shallow) {
-        // reached the shore: the wheels take over again
+        // reached the shore: the wheels take over again (leaving the water at full boat speed would launch the car, so it is eased to ~160 km/h)
+        const sp = Math.hypot(lv.x, lv.z);
+        const cap = 45;
+        const k = sp > cap ? cap / sp : 1;
+        body.setLinvel({ x: lv.x * k, y: Math.min(lv.y, 0), z: lv.z * k }, true);
         this.leaveAmphibious('drive');
         this.modeMsg = '🏖️ তীরে পৌঁছেছে — ড্রাইভ মোড';
         return;

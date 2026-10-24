@@ -93,6 +93,12 @@ let dh = heading() - h0;
 while (dh > Math.PI) dh -= 2 * Math.PI;
 while (dh < -Math.PI) dh += 2 * Math.PI;
 ok(dh < -0.5 || dh > 0.5, `A turns (heading changed ${(dh * 57.3).toFixed(0)} deg)`);
+run(6, { throttle: true }); // no Shift: W alone must reach full speed
+ok(tel().kmh > 300, `W alone (no Shift) reaches high speed (${tel().kmh.toFixed(0)} km/h)`);
+{
+  const tp = (v as unknown as { tiltP: number }).tiltP, tr = (v as unknown as { tiltR: number }).tiltR;
+  ok(Math.abs(tp) < 0.02 && Math.abs(tr) < 0.02, `body stays level in the air (pitch ${tp.toFixed(3)}, roll ${tr.toFixed(3)})`);
+}
 run(3, { throttle: true, boost: true });
 ok(tel().kmh > 140, `Shift boosts (${tel().kmh.toFixed(0)} km/h)`);
 run(3, { throttle: true, slow: true });

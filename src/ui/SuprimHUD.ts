@@ -4,9 +4,9 @@ import { UI_FONT } from './theme';
 const MODE_TEXT: Record<string, { icon: string; name: string; keys: string }> = {
   drive: { icon: '🚗', name: 'ড্রাইভ', keys: 'W A S D চলা · রেললাইনে উঠলে নিজে লক হয় · N ফ্লাইট মোড · C ডুব (পানিতে)' },
   rail: { icon: '🚆', name: 'রেললাইনে', keys: 'W / S গতি · Ctrl ধীর · A বা D ধরে রাখুন = লাইন ছাড়া · N ওড়া' },
-  fly: { icon: '🛸', name: 'ফ্লাইট', keys: 'Space ওপরে · X নিচে · W A S D · Shift = বিমান গতি · Ctrl ধীর (ড্রোন) · N নামা' },
+  fly: { icon: '🛸', name: 'ফ্লাইট', keys: 'Space ওপরে · X নিচে · W A S D (সবসময় পুরো গতি) · Ctrl ধীর · N নামা' },
   land: { icon: '🛬', name: 'অবতরণ', keys: 'W A S D · N আবার ওড়া' },
-  float: { icon: '🌊', name: 'পানিতে ভাসছে', keys: 'W A S D চলা · C ডুব · N ওড়া · Shift বুস্ট' },
+  float: { icon: '🌊', name: 'পানিতে ভাসছে', keys: 'W A S D চলা (পুরো গতি) · C ডুব · N ওড়া' },
   dive: { icon: '🤿', name: 'সাবমেরিন', keys: 'W A S D চলা · Space ওপরে · X নিচে · C ভেসে ওঠা · T পানির ওপরে' },
 };
 

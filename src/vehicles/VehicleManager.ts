@@ -140,8 +140,23 @@ export class VehicleManager {
   private summoned: Vehicle[] = [];
 
   /** The N menu: a driverless copy of `spec` stands at (x, z), nose along `yaw`. The player gets in with F, like at the start fleet. */
-  summon(spec: VehicleSpec, x: number, z: number, yaw: number): Vehicle {
-    const y = this.d.vehicle.terrain.heightAt(x, z) + 1.4;
+  /**
+   * Height of the surface to put a called vehicle on. The terrain height is wrong on an elevated road (expressway, bridge): the car
+   * would appear under the deck. So when the caller stands above the ground, look for a solid surface at about his own height.
+   */
+  deckHeight(x: number, z: number, footY: number): number | null {
+    const phys = this.d.vehicle.physics;
+    const R = phys.RAPIER;
+    const o = this.d.vehicle.origin.origin;
+    const ray = new R.Ray({ x: x - o.x, y: footY + 2, z: z - o.z }, { x: 0, y: -1, z: 0 });
+    const hit = phys.world.castRay(ray, 6, true, R.QueryFilterFlags.EXCLUDE_SENSORS);
+    if (!hit) return null;
+    const y = footY + 2 - hit.timeOfImpact;
+    return y >= footY - 1.5 && y <= footY + 0.4 ? y : null;
+  }
+
+  summon(spec: VehicleSpec, x: number, z: number, yaw: number, deckY?: number): Vehicle {
+    const y = Math.max(this.d.vehicle.terrain.heightAt(x, z), deckY ?? -Infinity) + 1.4;
     const v = new Vehicle(this.d.vehicle, spec, this.tmp3.set(x, y, z), yaw);
     v.persistent = true; // traffic must not clear it while the player is away
     this.vehicles.push(v);

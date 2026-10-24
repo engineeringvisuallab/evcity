@@ -1240,7 +1240,9 @@ export class VehicleModel {
       w.g.visible = e > 0.015;
       w.g.rotation.y = w.sx * (Math.PI / 2) * (1 - e);
     }
-    this.rotorAngle += dt * (6 + thrust * 90);
+    // The two crossed blades look identical every 90 deg (1.57 rad): at 96 rad/s and 60 fps the step per frame is ~1.6 rad, so the
+    // rotor looked frozen (wagon-wheel effect). The step per frame is capped well below 45 deg, so it always visibly turns forward.
+    this.rotorAngle += Math.min(dt * (8 + thrust * 90), 0.5);
     const L = 1.15;
     const RISE = 0.5; // the drone pods end up this far above their arm roots (above the wheels / body line)
     for (const a of this.armG) {
