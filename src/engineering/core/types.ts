@@ -8,7 +8,7 @@ export type { InfraBuildOptions, SolidShape };
  * No Engine, no Config, no game imports. The game talks to an infrastructure through these types.
  * Units: metres. Local frame of `root`: x east, y up, z south, origin = site centre, ground y = 0.
  */
-export type InfraCategory = 'civil' | 'mechanical' | 'electrical' | 'chemical';
+export type InfraCategory = 'civil' | 'mechanical' | 'electrical' | 'chemical' | 'energy';
 
 export interface InfraPart {
   id: string;

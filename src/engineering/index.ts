@@ -6,9 +6,10 @@ import { registerInfrastructure } from './core/registry';
 import { swtpDef } from './civil/water-supply/swtp';
 import { stpDef } from './civil/wastewater/stp';
 import { thermalDef, gridDef } from './electrical';
-import { mechDef } from './mechanical';
+import { mechDef, autoDef } from './mechanical';
 import { damDef } from './civil';
 import { chemDef } from './chemical';
+import { renewDef } from './renewable';
 
 export * from './core/types';
 export { InfraTour, estimateSpeech } from './core/InfraTour';
@@ -23,5 +24,7 @@ export function registerBuiltinInfrastructure(): void {
   registerInfrastructure(mechDef);
   registerInfrastructure(damDef);
   registerInfrastructure(chemDef);
+  registerInfrastructure(autoDef);
+  registerInfrastructure(renewDef);
   // registerInfrastructure(wtpGroundwaterDef);  // later ...
 }

@@ -9,7 +9,7 @@ const smoothstep = (a: number, b: number, x: number): number => {
 };
 
 export interface InfraPlacement {
-  id: 'swtp' | 'stp' | 'thermal' | 'grid' | 'mech' | 'dam' | 'chem';
+  id: 'swtp' | 'stp' | 'thermal' | 'grid' | 'mech' | 'dam' | 'chem' | 'auto' | 'renew';
   nameBn: string;
   /** site origin (the local (0,0) of the plant) and yaw: local +x maps to world (cos yaw, -sin yaw) */
   x: number;
@@ -51,6 +51,12 @@ export const INFRA_PLACEMENTS: InfraPlacement[] = [
   // Chemical process plant: inside the engineering area 'eng-chemical' (x 2100..2700, z 2050..2450). Main roads cut that area in several places, so the pad sits in the
   // free, flat middle-east part (>= 12 m from every main road, ~3 m of relief); the gate faces south towards the nearest road.
   { id: 'chem', nameBn: 'Chemical Process Plant', x: 2539, z: 2242, yaw: 0, rect: { x0: -133, x1: 133, z0: -75, z1: 75 }, riverSide: 'none', color: '#ff9100', mark: 'C', deep: 1.5, blend: 24, riverBlend: 24, lift: 0 },
+  // Automation & robotics plant: inside the engineering area 'eng-automation' (x 2200..2800, z 550..1000). Two public roads run N-S through the east part of
+  // that area (x ~2670) and hills rise in the north-west and centre-south, so the pad sits in the flat north-centre part; the gate faces the road (east).
+  { id: 'auto', nameBn: 'Automation & Robotics Plant', x: 2425, z: 690, yaw: 0, rect: { x0: -195, x1: 185, z0: -95, z1: 80 }, riverSide: 'none', color: '#06b6d4', mark: 'A', deep: 1.5, blend: 26, riverBlend: 26, lift: 0 },
+  // Renewable energy park: inside the engineering area 'eng-renewable' (x -2750..-2250, z -2900..-2550). Free, flat ground (1.7 m of relief, >= 15 m from every road); the gate faces south
+  // towards the nearest road (S12, at the south-west corner).
+  { id: 'renew', nameBn: 'Renewable Energy Park', x: -2438, z: -2781, yaw: 0, rect: { x0: -158, x1: 158, z0: -93, z1: 93 }, riverSide: 'none', color: '#76ff03', mark: 'R', deep: 1.5, blend: 24, riverBlend: 24, lift: 0 },
 ];
 
 /** Floor is cut slightly BELOW the plate so the plate never z-fights with the ground. */

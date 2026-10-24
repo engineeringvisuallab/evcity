@@ -31,7 +31,7 @@
     "test:drive": "tsx scripts/drive-test.ts",
     "test:rivers": "tsx scripts/river-block.ts",
     "test:pads": "tsx scripts/pad-stat.ts",
-    "test:infra": "tsx scripts/infra-test.ts && tsx scripts/infra-runtime-test.ts && tsx scripts/thermal-test.ts && tsx scripts/grid-test.ts && tsx scripts/mech-test.ts && tsx scripts/dam-test.ts && tsx scripts/chem-test.ts",
+    "test:infra": "tsx scripts/infra-test.ts && tsx scripts/infra-runtime-test.ts && tsx scripts/thermal-test.ts && tsx scripts/grid-test.ts && tsx scripts/mech-test.ts && tsx scripts/dam-test.ts && tsx scripts/chem-test.ts && tsx scripts/automation-test.ts && tsx scripts/renew-test.ts",
     "test:people": "tsx scripts/people-test.ts",
     "test:city": "tsx scripts/city-plan-test.ts",
     "test:zones": "tsx scripts/world-zones-test.ts",
