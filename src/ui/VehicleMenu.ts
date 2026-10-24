@@ -29,6 +29,8 @@ export class VehicleMenu {
     private onChoose: (id: string) => string | null,
     /** The canvas: pointer lock is requested again on it after a pick, so the game goes on without an extra click. */
     private lockTarget?: HTMLElement,
+    /** While this returns true the N key is left to the game (the Suprim uses N for flight mode). */
+    private blocked: () => boolean = () => false,
   ) {
     this.style.textContent = `
       .evc-vm-choice:hover { background:rgba(255,210,31,.14)!important; border-color:#ffd21f!important; }
@@ -126,6 +128,7 @@ export class VehicleMenu {
     const t = e.target as HTMLElement | null;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
     if (e.code === 'KeyN') {
+      if (this.blocked() && !this.isOpen) return;
       if (e.repeat) return;
       e.preventDefault();
       e.stopImmediatePropagation();

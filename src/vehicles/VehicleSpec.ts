@@ -12,7 +12,7 @@ export interface EngineSpec {
   launchRpm?: number;
 }
 
-export type VehicleId = 'sedan' | 'jeep' | 'hypercar' | 'evhypar' | 'bike' | 'evbike' | 'rickshaw' | 'auto' | 'bus' | 'tank' | 'tractor' | 'combine' | 'pickup';
+export type VehicleId = 'sedan' | 'jeep' | 'hypercar' | 'evhypar' | 'bike' | 'evbike' | 'rickshaw' | 'auto' | 'bus' | 'tank' | 'tractor' | 'combine' | 'pickup' | 'suprim';
 
 /** One wheel of the raycast vehicle. `drive` = share of the drive force, `side` = track side for skid steering (+1 left, -1 right). */
 export interface WheelDef {
@@ -98,6 +98,11 @@ export interface VehicleSpec {
   camera?: { dist: number; min: number; max: number };
   /** Windscreen / cabin line: chassis-local y above which the people inside are visible to bullets (enclosed vehicles). */
   windowY?: number;
+  /**
+   * Road + air + water vehicle (EVCity Suprim). Besides driving it has a flight mode (N, wings + VTOL thrusters, Space = up) and a water
+   * mode (C = dive like a submarine, T = float on the surface). See Vehicle.mode / SUPRIM_FLIGHT.
+   */
+  amphibious?: boolean;
   /** Tank: turret pivot (chassis-local) and barrel length. */
   turret?: { y: number; z: number; barrel: number; maxPitch: number; minPitch: number; turnRate: number };
   /** Where the driver sits (chassis-local, hips) and how big he looks inside. Right-hand drive: Bangladesh drives on the LEFT. */
@@ -662,6 +667,91 @@ export const EVHYPAR: VehicleSpec = finish({
 
 
 /**
+ * EVCity SUPRIM: one electric vehicle, three worlds. On the road it is a low dual-motor AWD sports coupe (like the EVHypar, 2 seats).
+ * N unfolds the wings and starts the four VTOL thrusters (Space = up, then W A S D fly); N again lands. In water it floats (T) and dives like a
+ * submarine (C). The road physics below are the tested EVHypar numbers; flight / water are handled by Vehicle (mode machine), not by wheels.
+ */
+export const SUPRIM: VehicleSpec = finish({
+  id: 'suprim',
+  nameBn: 'ইভিসিটি সুপ্রিম (চলে · উড়ে · ডোবে)',
+  amphibious: true,
+  mass: 2100,
+  half: { x: 1.0, y: 0.4, z: 2.4 },
+  comY: -0.3,
+  wheelRadius: 0.4,
+  wheelWidth: 0.3,
+  trackHalf: 0.88,
+  wheelbaseHalf: 1.5,
+  connY: -0.04,
+  susp: { rest: 0.42, travel: 0.3, stiffness: 24, compression: 2.6, relaxation: 3.2 },
+  frictionSlip: 13,
+  sideFriction: 1.15,
+  drive: 'awd',
+  frontShare: 0.42,
+  engine: {
+    idleRpm: 600,
+    redlineRpm: 12000,
+    launchRpm: 2800,
+    torque: [[600, 560], [4500, 560], [7500, 510], [10000, 445], [12000, 365]],
+    engineBraking: 80, // regenerative braking
+  },
+  gears: [2.5, 1.6, 1.0],
+  reverse: 2.5,
+  finalDrive: 7.35,
+  efficiency: 0.92,
+  brakeMax: brakeFor(2100, 4, 10),
+  maxSteer: 0.5,
+  cd: 0.28,
+  frontalArea: 2.4,
+  downforce: 1.1,
+  use: USE.none(),
+  look: { kind: 'suprim', body: 0xc4cad3, accent: 0x0c1118 },
+  seat: { x: -0.42, y: 0, z: 0.1, scale: 0.95 },
+  seats: [{ x: 0.42, y: 0, z: 0.1, scale: 0.95 }],
+  pax: [0, 1],
+  enclosed: true,
+  bulletsToKill: 18,
+  fragile: 0.8,
+  camera: { dist: 10, min: 5.5, max: 40 },
+}, 0.2, 0.66, [0.66], undefined, 1.15);
+
+/** Flight / water numbers of the Suprim (SI units). Used by Vehicle's mode machine. */
+export const SUPRIM_FLIGHT = {
+  /** Cruise speed in the air (m/s) and the Shift / Ctrl multipliers. */
+  cruise: 38,
+  boost: 2.2,
+  slow: 0.3,
+  /** Climb speed with Space (m/s), with Shift on top. */
+  climb: 11,
+  climbBoost: 17,
+  /** Sink speed when landing (m/s) and the slower final touch-down speed below `flare` metres. */
+  descend: 7,
+  touchdown: 2.2,
+  flare: 6,
+  /** Turn rate (rad/s) in the air, on the water, under water. */
+  yawAir: 1.5,
+  yawWater: 1.0,
+  yawSub: 0.9,
+  /** Highest altitude above the ground (m). */
+  ceiling: 600,
+  /** Takes off only when the thrusters have spooled up (s) and the wings are out. */
+  deploy: 1.0,
+  /** Water: surface speed, submarine speed (m/s), boost factor. */
+  floatSpeed: 21,
+  subSpeed: 13,
+  waterBoost: 1.8,
+  /** Needs at least this much water under the hull (m) to float / this much to dive. */
+  floatDepth: 1.15,
+  diveDepth: 3.2,
+  /** Default cruising depth below the surface (m), the limits, how fast Space / X change it (m/s) and the clearance above the sea floor. */
+  subDepth: 5,
+  subMin: 1.6,
+  subMax: 80,
+  subRate: 3.5,
+  floorGap: 1.8,
+} as const;
+
+/**
  * FARM VEHICLES (never in AI traffic: FarmCrew puts a farmer at the wheel and drives them in the crop fields; you can take them over).
  * Tractor: ~34 km/h, big knobby tyres, all-wheel drive, open seat. Combine harvester: ~27 km/h, mostly front-wheel drive, heavy. Pickup: the farm's light truck.
  */
@@ -763,7 +853,7 @@ export const PICKUP: VehicleSpec = {
 };
 
 // the farm vehicles come LAST: scripts/vehicle-test.ts places every vehicle by its index in this object, so the older ones must keep their index
-export const SPECS: Record<VehicleId, VehicleSpec> = { sedan: SEDAN, jeep: JEEP, hypercar: HYPERCAR, evhypar: EVHYPAR, bike: BIKE, evbike: EVBIKE, rickshaw: RICKSHAW, auto: AUTO, bus: BUS, tank: TANK, tractor: TRACTOR, combine: COMBINE, pickup: PICKUP };
+export const SPECS: Record<VehicleId, VehicleSpec> = { sedan: SEDAN, jeep: JEEP, hypercar: HYPERCAR, evhypar: EVHYPAR, bike: BIKE, evbike: EVBIKE, rickshaw: RICKSHAW, auto: AUTO, bus: BUS, tank: TANK, tractor: TRACTOR, combine: COMBINE, pickup: PICKUP, suprim: SUPRIM };
 
 
 /**
@@ -784,6 +874,7 @@ export const SPEED_BOOST: Record<VehicleId, number> = {
   tractor: 1,
   combine: 1,
   pickup: 1,
+  suprim: 2,
 };
 
 /**

@@ -12,7 +12,9 @@ import { VehicleModel } from './VehicleModel';
 import { BIKE_PILLION_POSE, BIKE_RIDER_POSE, ENGINEER_LOOK, PersonModel } from '../people/PersonModel';
 import type { Person } from '../people/Person';
 import type { AIDriver } from '../traffic/AIDriver';
-import { wheelDefs, type VehicleSpec, type WheelDef } from './VehicleSpec';
+import { groundY, SUPRIM_FLIGHT, wheelDefs, type VehicleSpec, type WheelDef } from './VehicleSpec';
+import type { TerrainSample } from '../terrain/Lakes';
+import { waveHeight, waveScale } from '../water/WaterWaves';
 import type { VehicleFx } from './VehicleFx';
 
 export interface DriveInput {
@@ -24,7 +26,18 @@ export interface DriveInput {
   /** Optional analogue pedals (0..1) for AI drivers; the keyboard leaves them out (= full pedal). */
   throttleAmt?: number;
   brakeAmt?: number;
+  /** Suprim only: Space (climb / shallower), X (deeper under water), Shift (boost), Ctrl (slow down). */
+  up?: boolean;
+  down?: boolean;
+  boost?: boolean;
+  slow?: boolean;
 }
+
+/**
+ * Suprim: how it moves right now. drive = wheels on the road; fly = wings out, VTOL thrusters on (hovers, Space climbs);
+ * land = flight mode is being switched off, it sinks to the ground / water; float = on the water surface; dive = submarine.
+ */
+export type VehicleMode = 'drive' | 'fly' | 'land' | 'float' | 'dive';
 
 /** Who sits behind the wheel: a person, or the player himself. A vehicle never exists without one (see VehicleManager). */
 export type Driver = Person | 'player';
@@ -50,6 +63,10 @@ export interface VehicleTelemetry {
   engineBraking: boolean;
   handbrake: boolean;
   wheelsOnGround: number;
+  /** Suprim: current mode, height above the ground / water (m) and depth below the water surface (m). Other vehicles: 'drive', 0, 0. */
+  mode: VehicleMode;
+  altitude: number;
+  depth: number;
 }
 
 /** Everything the sound system (VehicleAudio) needs from a vehicle. */
@@ -225,6 +242,26 @@ export class Vehicle implements OrbitTarget {
   private bikeTrim = 0;
   private inertia = { x: 1, y: 1, z: 1 };
   private tmpV2 = new THREE.Vector3();
+
+  // ---- Suprim: road / air / water modes (see amphibiousStep) ----
+  mode: VehicleMode = 'drive';
+  /** Height of the wheels above the ground (or the water surface) in m, and depth of the hull below the water surface in m. */
+  agl = 0;
+  depth = 0;
+  /** Wings / thrusters animation, 0..1 (VehicleModel.setFlightPose). */
+  wingAmt = 0;
+  thrustAmt = 0;
+  /** A message for the player about a mode change (VehicleManager shows it once and clears it). */
+  modeMsg: string | null = null;
+  private flightClock = 0;
+  private diveTarget: number = SUPRIM_FLIGHT.subDepth;
+  private surfacing = false;
+  private yawRate = 0;
+  private tiltP = 0;
+  private tiltR = 0;
+  private waterSc: TerrainSample = { h: 0, water: NaN, fx: 0, fz: 0 };
+  private aheadSc: TerrainSample = { h: 0, water: NaN, fx: 0, fz: 0 };
+  private eul = new THREE.Euler();
 
   constructor(
     private d: VehicleDeps,
@@ -520,6 +557,15 @@ export class Vehicle implements OrbitTarget {
 
   /** Put the car upright again (after a roll-over). */
   reset(): void {
+    if (this.mode !== 'drive') {
+      // Suprim in the air / on the water: stabilise = stop and level out
+      this.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+      this.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+      this.tiltP = 0;
+      this.tiltR = 0;
+      this.yawRate = 0;
+      return;
+    }
     const r = this.body.rotation();
     this.forwardVector(this.fwd);
     const yaw = Math.atan2(this.fwd.x, this.fwd.z);
@@ -580,6 +626,15 @@ export class Vehicle implements OrbitTarget {
     }
     this.prevLv.set(lv.x, lv.y, lv.z);
     this.hasPrevLv = true;
+
+    // ---- Suprim: flying / floating / diving is not wheel physics ----
+    if (s.amphibious) {
+      if (this.state === 'wrecked' && this.mode !== 'drive') this.leaveAmphibious('drive');
+      if (this.mode !== 'drive') {
+        this.amphibiousStep(dt, input, lv);
+        return;
+      }
+    }
 
     // ---- pedals: W = gas / S = brake or reverse (as in most games) ----
     let thrTarget = 0;
@@ -679,6 +734,8 @@ export class Vehicle implements OrbitTarget {
     for (let i = 0; i < this.defs.length; i++) if (this.controller.wheelIsInContact(i)) n++;
     this.wheelsOnGround = n;
 
+    if (s.amphibious) this.checkWater();
+
     // safety net: never end up far below the analytic ground
     const t = this.body.translation();
     const wx = t.x + this.d.origin.origin.x;
@@ -688,6 +745,301 @@ export class Vehicle implements OrbitTarget {
       this.body.setTranslation({ x: t.x, y: gy + 1.5, z: t.z }, true);
       this.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
       this.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    }
+  }
+
+  // ------------------------------------------------------------------ Suprim: fly / float / dive
+  /** N: unfold the wings and start flying / switch flight mode off and land. Returns a refusal text, or null if accepted. */
+  toggleFlight(): string | null {
+    if (!this.spec.amphibious) return null;
+    if (this.state !== 'ok') return '⚠️ গাড়ি নষ্ট — ফ্লাইট মোড চালু হবে না';
+    switch (this.mode) {
+      case 'drive':
+      case 'float':
+        this.enterFlight();
+        return null;
+      case 'fly':
+        this.mode = 'land';
+        this.modeMsg = '🛬 অবতরণ শুরু… (N আবার চাপলে আবার ওড়া)';
+        return null;
+      case 'land':
+        this.mode = 'fly';
+        this.modeMsg = '🛫 আবার ফ্লাইট মোড';
+        return null;
+      default:
+        return '🌊 আগে পানির ওপরে উঠুন (C), তারপর N';
+    }
+  }
+
+  /** C: dive like a submarine / come back up. */
+  toggleDive(): string | null {
+    if (!this.spec.amphibious) return null;
+    if (this.state !== 'ok') return '⚠️ গাড়ি নষ্ট — ডুব দেওয়া যাবে না';
+    if (this.mode === 'dive') {
+      this.surfacing = !this.surfacing;
+      this.modeMsg = this.surfacing ? '⬆️ ভেসে উঠছে…' : '⬇️ আবার ডুব';
+      return null;
+    }
+    if (this.mode === 'fly' || this.mode === 'land') return '🛬 ডুব দিতে আগে নামুন (N)';
+    this.sampleWater();
+    const deep = this.waterSc.water - this.waterSc.h;
+    if (this.mode === 'drive' && !(this.depth > 0)) return '🌊 ডুব দিতে পানিতে নামুন';
+    if (deep < SUPRIM_FLIGHT.diveDepth) return '🌊 পানি যথেষ্ট গভীর নয় — গভীর পানিতে যান';
+    this.body.setGravityScale(0, true);
+    this.mode = 'dive';
+    this.surfacing = false;
+    this.diveTarget = clamp(SUPRIM_FLIGHT.subDepth, SUPRIM_FLIGHT.subMin, Math.max(SUPRIM_FLIGHT.subMin, deep - SUPRIM_FLIGHT.floorGap - 1.2));
+    this.modeMsg = '🌊 সাবমেরিন মোড — W A S D চলুন · Space ওপরে · X নিচে · C ভেসে ওঠা · T পানির ওপরে';
+    return null;
+  }
+
+  /** T: come up and float on the water surface (works from the road when the car stands in deep water). */
+  requestFloat(): string | null {
+    if (!this.spec.amphibious) return null;
+    if (this.mode === 'dive') {
+      this.surfacing = true;
+      this.modeMsg = '⬆️ পানির ওপরে উঠছে…';
+      return null;
+    }
+    if (this.mode === 'drive') {
+      this.sampleWater();
+      if (this.depth > 0) {
+        this.enterFloat();
+        return null;
+      }
+      return '🌊 ভাসতে পানিতে নামুন';
+    }
+    return null;
+  }
+
+  private sampleWater(): void {
+    const t = this.body.translation();
+    const sc = this.waterSc;
+    this.d.terrain.sample(t.x + this.d.origin.origin.x, t.z + this.d.origin.origin.z, sc);
+    const wet = !Number.isNaN(sc.water) && sc.h < sc.water;
+    this.depth = wet ? Math.max(0, sc.water - (t.y + groundY(this.spec))) : 0;
+  }
+
+  /** The water surface (with waves) at the hull centre, or NaN when there is no water. */
+  private waterY(sc: TerrainSample, x: number, z: number): number {
+    if (Number.isNaN(sc.water) || sc.h >= sc.water) return NaN;
+    return sc.water + waveHeight(x, z, waveScale(sc.water, Math.hypot(sc.fx, sc.fz), Math.max(0, sc.water - sc.h)));
+  }
+
+  private enterFlight(): void {
+    this.body.setGravityScale(0, true);
+    this.mode = 'fly';
+    this.flightClock = 0;
+    this.yawRate = 0;
+    this.modeMsg = '🚀 ফ্লাইট মোড চালু — ডানা খুলছে… Space চাপলে ওপরে ওঠা, তারপর W A S D';
+  }
+
+  private enterFloat(): void {
+    this.body.setGravityScale(0, true);
+    this.mode = 'float';
+    this.surfacing = false;
+    this.modeMsg = '🌊 পানিতে ভাসছে — W A S D চলুন · C ডুব · N ওড়া';
+  }
+
+  /** Back to the road (wheels take over) or to the water surface. */
+  private leaveAmphibious(to: 'drive' | 'float'): void {
+    const q = this.body.rotation();
+    this.forwardVector(this.fwd);
+    const yaw = Math.atan2(this.fwd.x, this.fwd.z);
+    void q;
+    const up = new THREE.Quaternion().setFromAxisAngle(UP, yaw);
+    this.body.setRotation({ x: up.x, y: up.y, z: up.z, w: up.w }, true);
+    this.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    this.tiltP = 0;
+    this.tiltR = 0;
+    this.yawRate = 0;
+    this.surfacing = false;
+    if (to === 'drive') {
+      this.body.setGravityScale(1, true);
+      this.mode = 'drive';
+      this.thrustAmt = 0;
+      this.impactGrace = 1.0; // the touch-down is not a crash
+    } else this.enterFloat();
+  }
+
+  /** Drive mode: a deep ford / lake under the hull turns the car into a boat. */
+  private checkWater(): void {
+    if (this.mode !== 'drive' || this.state !== 'ok') return;
+    this.sampleWater();
+    if (this.depth >= SUPRIM_FLIGHT.floatDepth) {
+      this.enterFloat();
+      this.modeMsg = '🌊 পানি! স্বয়ংক্রিয়ভাবে ভাসছে — C ডুব · T ভাসা · N ওড়া';
+    }
+  }
+
+  /**
+   * Fly / land / float / dive. The wheels are switched off: the chassis is moved by setting its velocity (like a drone / boat with an
+   * autopilot), so it stays stable, but it is still a real Rapier body: buildings, hills and the sea floor stop it, and crashes hurt.
+   */
+  private amphibiousStep(dt: number, input: DriveInput | null, lv: { x: number; y: number; z: number }): void {
+    const F = SUPRIM_FLIGHT;
+    const s = this.spec;
+    const body = this.body;
+    const inp = this.state === 'wrecked' || !input ? null : input;
+    const dead = inp === null;
+    // nobody at the controls: come down gently / come up
+    if (dead && this.mode === 'fly') this.mode = 'land';
+    if (dead && this.mode === 'dive') this.surfacing = true;
+
+    const t = body.translation();
+    const ox = this.d.origin.origin.x;
+    const oz = this.d.origin.origin.z;
+    const wx = t.x + ox;
+    const wz = t.z + oz;
+    const sc = this.waterSc;
+    this.d.terrain.sample(wx, wz, sc);
+    const wy = this.waterY(sc, wx, wz);
+    const wet = !Number.isNaN(wy);
+    const feetY = t.y + groundY(s); // height of the tyre bottoms
+    const bottomLocal = (s.colliderY ?? 0) - s.half.y; // hull bottom, chassis-local
+    this.forwardVector(this.fwd);
+    const fx = this.fwd.x;
+    const fz = this.fwd.z;
+    const fl = Math.hypot(fx, fz) || 1;
+    const hx = fx / fl; // heading (horizontal forward)
+    const hz = fz / fl;
+    let yaw = Math.atan2(hx, hz);
+    const thr = inp && inp.throttle && !inp.brake ? 1 : 0;
+    const brk = inp && inp.brake && !inp.throttle ? 1 : 0;
+    const drive = thr - brk * 0.45;
+    const steer = inp ? clamp(inp.steer, -1, 1) : 0;
+    const boost = !!inp?.boost;
+    const slow = !!inp?.slow;
+    const vF = lv.x * hx + lv.z * hz; // forward speed along the heading
+    const vL = lv.x * hz - lv.z * hx; // sideways (right-hand axis = (hz, -hx))
+    this.speed = vF;
+    let vy = lv.y;
+    let nF = vF;
+    let nL = vL;
+    let wantTilt = 0;
+    let targetVy = 0;
+    let turnRate: number = F.yawAir;
+
+    if (this.mode === 'fly' || this.mode === 'land') {
+      // ---------------------------- AIR ----------------------------
+      this.depth = 0;
+      this.flightClock += dt;
+      const ready = this.flightClock >= F.deploy;
+      this.thrustAmt += ((ready ? 1 : 0) - this.thrustAmt) * Math.min(1, 3 * dt);
+      const ground = wet ? Math.max(sc.h, wy) : sc.h;
+      this.agl = feetY - ground;
+      // look 1.2 s ahead so it climbs over hills before it reaches them
+      this.d.terrain.sample(wx + lv.x * 1.2, wz + lv.z * 1.2, this.aheadSc);
+      const ahead = Math.max(this.aheadSc.h, Number.isNaN(this.aheadSc.water) ? -Infinity : this.aheadSc.water);
+      const aglAhead = feetY - Math.max(ground, ahead);
+      const moveK = clamp((this.agl - 1.0) / 2.0, 0, 1); // no creeping along the ground: it moves once it has risen
+      const top = F.cruise * (boost ? F.boost : 1) * (slow ? F.slow : 1);
+      const tF = ready ? drive * top * moveK : 0;
+      const a = boost ? 42 : 24;
+      nF = vF + clamp(tF - vF, -a * dt, a * dt);
+      nL = vL * Math.exp(-4 * dt);
+      turnRate = F.yawAir / (1 + Math.abs(vF) / 45);
+      if (this.mode === 'land') {
+        const sink = this.agl < F.flare ? F.touchdown + (F.descend - F.touchdown) * clamp(this.agl / F.flare, 0, 1) : F.descend;
+        targetVy = -sink;
+      } else {
+        const climbing = !!inp?.up && ready && this.agl < F.ceiling;
+        targetVy = climbing ? (boost ? F.climbBoost : F.climb) : 0;
+        if (!climbing && moveK > 0.3 && aglAhead < 3.5) targetVy = Math.max(targetVy, (3.5 - aglAhead) * 3 + 1); // terrain clearance
+        if (this.agl >= F.ceiling && targetVy > 0) targetVy = 0;
+      }
+      vy += clamp(targetVy - vy, -16 * dt, 16 * dt);
+      wantTilt = clamp(nF / F.cruise, -1, 1);
+      // touch-down
+      if (this.mode === 'land' && this.agl <= 0.3) {
+        const overWater = wet && wy - sc.h >= F.floatDepth * 0.9;
+        this.leaveAmphibious(overWater ? 'float' : 'drive');
+        if (!overWater) this.modeMsg = '🛬 নেমেছে — সাধারণ ড্রাইভ মোড';
+        return;
+      }
+    } else if (this.mode === 'float') {
+      // ---------------------------- ON THE WATER ----------------------------
+      this.thrustAmt = 0;
+      this.agl = 0;
+      const shallow = !wet || wy - sc.h < F.floatDepth * 0.5;
+      if (shallow) {
+        // reached the shore: the wheels take over again
+        this.leaveAmphibious('drive');
+        this.modeMsg = '🏖️ তীরে পৌঁছেছে — ড্রাইভ মোড';
+        return;
+      }
+      this.depth = Math.max(0, wy - feetY);
+      const targetY = wy - 0.28 - bottomLocal; // the hull sits just under the waterline
+      targetVy = clamp((targetY - t.y) * 5, -4, 4);
+      vy += clamp(targetVy - vy, -20 * dt, 20 * dt);
+      const top = F.floatSpeed * (boost ? F.waterBoost : 1) * (slow ? F.slow : 1);
+      const tF = drive * top;
+      nF = vF + clamp(tF - vF, -9 * dt, 9 * dt);
+      nL = vL * Math.exp(-3 * dt);
+      turnRate = F.yawWater;
+      wantTilt = clamp(nF / F.floatSpeed, -1, 1) * 0.8;
+    } else {
+      // ---------------------------- SUBMARINE ----------------------------
+      this.thrustAmt = 0;
+      this.agl = 0;
+      if (!wet) {
+        this.surfacing = true;
+      }
+      const surf = wet ? wy : t.y;
+      this.d.terrain.sample(wx + lv.x * 1.2, wz + lv.z * 1.2, this.aheadSc);
+      const floor = Math.max(sc.h, Number.isNaN(this.aheadSc.water) || this.aheadSc.h >= this.aheadSc.water ? sc.h : this.aheadSc.h);
+      const minCentre = floor + F.floorGap - bottomLocal; // lowest allowed hull centre
+      const maxDepth = surf - minCentre; // deepest allowed depth of the centre
+      if (inp?.up) this.diveTarget -= F.subRate * dt;
+      if (inp?.down) this.diveTarget += F.subRate * dt;
+      // the wanted depth never winds up beyond what the water / sea floor allows (otherwise Space would have no effect for a long time)
+      this.diveTarget = clamp(this.diveTarget, F.subMin, Math.min(F.subMax, Math.max(F.subMin, maxDepth)));
+      if (maxDepth < F.subMin + 0.3) this.surfacing = true; // too shallow to stay under
+      const floatY = surf - 0.28 - bottomLocal;
+      const targetY = this.surfacing ? floatY : Math.max(minCentre, surf - Math.min(this.diveTarget, Math.max(F.subMin, maxDepth)));
+      this.depth = Math.max(0, surf - t.y);
+      targetVy = clamp((targetY - t.y) * 2.5, -5, 5);
+      vy += clamp(targetVy - vy, -10 * dt, 10 * dt);
+      const top = F.subSpeed * (boost ? F.waterBoost : 1) * (slow ? F.slow : 1);
+      const tF = drive * top;
+      nF = vF + clamp(tF - vF, -6 * dt, 6 * dt);
+      nL = vL * Math.exp(-2.5 * dt);
+      turnRate = F.yawSub;
+      wantTilt = clamp(nF / F.subSpeed, -1, 1) * 0.5;
+      if (this.surfacing && Math.abs(t.y - floatY) < 0.35 && wet) {
+        this.surfacing = false;
+        this.enterFloat();
+        this.modeMsg = '🌊 ভেসে উঠেছে — C আবার ডুব · N ওড়া';
+        return;
+      }
+    }
+
+    // ---- common: yaw, velocity, banking ----
+    this.yawRate += (steer * turnRate - this.yawRate) * Math.min(1, 6 * dt);
+    yaw += this.yawRate * dt;
+    const nhx = Math.sin(yaw);
+    const nhz = Math.cos(yaw);
+    body.setLinvel({ x: nhx * nF + nhz * nL, y: vy, z: nhz * nF - nhx * nL }, true);
+    this.tiltP += (wantTilt * 0.13 - this.tiltP) * Math.min(1, 4 * dt);
+    this.tiltR += (-this.yawRate * 0.22 * clamp(Math.abs(nF) / 18, 0, 1) - this.tiltR) * Math.min(1, 4 * dt);
+    this.eul.set(this.tiltP, yaw, this.tiltR, 'YXZ');
+    this.tmpQ.setFromEuler(this.eul);
+    body.setRotation({ x: this.tmpQ.x, y: this.tmpQ.y, z: this.tmpQ.z, w: this.tmpQ.w }, true);
+    body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    body.resetForces(true);
+    body.resetTorques(true);
+
+    // the electric motors still "sing" with the speed (VehicleAudio reads the powertrain)
+    this.throttle += ((dead ? 0 : Math.abs(drive)) - this.throttle) * Math.min(1, 6 * dt);
+    this.brake = 0;
+    this.handbrake = false;
+    this.powertrain.step(dt, this.throttle, Math.max(0, nF));
+
+    // safety net: never end up inside the ground
+    const gy = this.d.terrain.heightAt(wx, wz);
+    if (t.y < gy - 2) {
+      body.setTranslation({ x: t.x, y: gy + 1.5, z: t.z }, true);
+      body.setLinvel({ x: 0, y: 0, z: 0 }, true);
     }
   }
 
@@ -911,6 +1263,12 @@ export class Vehicle implements OrbitTarget {
   /** Every frame (render side): fire, smoke, fuse, wreck timer. `dt` in seconds. */
   tick(dt: number): void {
     this.animateDoor(dt);
+    if (this.spec.amphibious) {
+      const out = this.mode === 'fly' || this.mode === 'land';
+      this.wingAmt += clamp((out ? 1 : 0) - this.wingAmt, -dt / 1.2, dt / 1.2);
+      if (!out) this.thrustAmt = Math.max(0, this.thrustAmt - dt * 2);
+      this.model.setFlightPose(this.wingAmt, this.thrustAmt, dt);
+    }
     const fx = this.d.fx;
     if (this.state === 'ok') {
       if (this.hp < 100 * STAGES[2] && fx) this.emit(dt, 0.12, 1);
@@ -1096,6 +1454,9 @@ export class Vehicle implements OrbitTarget {
       engineBraking: pt.engineBraking,
       handbrake: this.handbrake,
       wheelsOnGround: this.wheelsOnGround,
+      mode: this.mode,
+      altitude: this.agl,
+      depth: this.depth,
     };
   }
 

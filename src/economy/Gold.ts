@@ -32,6 +32,7 @@ export const GoldConfig = {
     bus: 1.6,
     hypercar: 2.0,
     evhypar: 2.0,
+    suprim: 2.5,
     tank: 2.5,
     tractor: 1.3,
     pickup: 1.2,

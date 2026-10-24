@@ -18,7 +18,7 @@ const R = physics.RAPIER;
 const origin = new FloatingOrigin(new THREE.Group(), bus);
 const scene = new THREE.Scene();
 physics.world.createCollider(R.ColliderDesc.cuboid(2000, 0.5, 2000).setTranslation(0, -0.5, 0).setFriction(1));
-const terrain = { heightAt: () => 0, roads: { surfaceAt: () => 1 } } as never;
+const terrain = { heightAt: () => 0, roads: { surfaceAt: () => 1 }, sample: (_x: number, _z: number, o: { h: number; water: number; fx: number; fz: number }) => { o.h = 0; o.water = NaN; o.fx = 0; o.fz = 0; } } as never;
 const deps = { physics, terrain, origin, scene, bus };
 
 const none: DriveInput = { throttle: false, brake: false, steer: 0, handbrake: false };

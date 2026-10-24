@@ -60,6 +60,7 @@ import { InputManager } from '../input/InputManager';
 import { VoiceManager } from '../audio/VoiceManager';
 import { Environment, LighthouseLight, StreetLights } from '../environment';
 import { Toast } from '../ui/Toast';
+import { SuprimHUD } from '../ui/SuprimHUD';
 import { SettingsMenu } from '../ui/SettingsMenu';
 import { HudSettings } from '../ui/HudSettings';
 import type { TimeMode } from '../environment/DayNight';
@@ -508,6 +509,8 @@ export class Engine {
       orbit: this.orbit,
       hud: this.hud,
       vehicleHud: new VehicleHUD(container),
+      suprimHud: new SuprimHUD(container),
+      toast: (t) => this.toast.show(t, 3200),
       project: this.project,
       onDriverEjected: (person, door) => this.people.adopt(person, door, 'flee'),
     });
@@ -585,12 +588,13 @@ export class Engine {
       container,
       [
         { id: 'bike', icon: '🏍️' }, { id: 'evbike', icon: '🛵' }, { id: 'rickshaw', icon: '🚲' }, { id: 'auto', icon: '🛺' },
-        { id: 'sedan', icon: '🚗' }, { id: 'jeep', icon: '🚙' }, { id: 'hypercar', icon: '🏎️' }, { id: 'evhypar', icon: '🚘' },
+        { id: 'sedan', icon: '🚗' }, { id: 'jeep', icon: '🚙' }, { id: 'hypercar', icon: '🏎️' }, { id: 'evhypar', icon: '🚘' }, { id: 'suprim', icon: '🛸' },
         { id: 'bus', icon: '🚌' }, { id: 'tank', icon: '🪖' },
         { id: 'tractor', icon: '🚜' }, { id: 'combine', icon: '🌾' }, { id: 'pickup', icon: '🛻' },
       ].map((v) => ({ ...v, label: SPECS[v.id as keyof typeof SPECS].nameBn })).concat([{ id: 'heli', icon: '🚁', label: HELI.nameBn }]),
       (id) => this.summonVehicle(id),
       this.renderer.domElement,
+      () => !!this.vehicles.driver?.spec.amphibious, // N = flight mode while driving the Suprim
     );
 
     // --- the always-on site map (top-right) ---

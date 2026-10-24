@@ -7,6 +7,7 @@ import { PhysicsConfig } from '../physics/PhysicsConfig';
 import type { TerrainPhysics } from '../terrain';
 import type { HUD } from '../ui/HUD';
 import type { VehicleHUD } from '../ui/VehicleHUD';
+import type { SuprimHUD } from '../ui/SuprimHUD';
 import type { Person } from '../people/Person';
 import type { PeopleManager } from '../people';
 import { rayVsPerson } from '../combat/Hit';
@@ -25,6 +26,10 @@ export interface VehicleManagerDeps {
   orbit: OrbitCamera;
   hud: HUD;
   vehicleHud: VehicleHUD;
+  /** Suprim cockpit panel (mode / speed / altitude / depth). */
+  suprimHud?: SuprimHUD;
+  /** Short on-screen messages (mode changes of the Suprim). */
+  toast?: (text: string) => void;
   /** World position -> screen pixels (null if behind the camera). */
   project: (world: THREE.Vector3) => { x: number; y: number } | null;
   /** The driver the player pulled out of his seat: where does he go now? */
@@ -200,6 +205,11 @@ export class VehicleManager {
     this.drive.brake = k('KeyS');
     this.drive.steer = (k('KeyA') ? 1 : 0) - (k('KeyD') ? 1 : 0);
     this.drive.handbrake = k('Space');
+    // Suprim extras: Space = up (flight) / shallower (dive), X = deeper, Shift = boost, Ctrl = slow down
+    this.drive.up = this.drive.handbrake;
+    this.drive.down = k('KeyX');
+    this.drive.boost = k('ShiftLeft') || k('ShiftRight');
+    this.drive.slow = k('ControlLeft') || k('ControlRight');
     for (const v of this.vehicles) v.fixedUpdate(dt, v.tourInput ?? (v === this.driver ? this.drive : v.ai ? v.ai.input : v.coast ? this.coastInput : null));
   }
 
@@ -232,6 +242,13 @@ export class VehicleManager {
     if (inp.wasPressed('KeyG')) v.powertrain.auto = !v.powertrain.auto;
     if (inp.wasPressed('KeyI')) this.d.vehicleHud.toggleCurve();
     if (inp.wasPressed('KeyR')) v.reset();
+    if (v.spec.amphibious) {
+      // Suprim: N flight mode on / off, C dive / surface, T float on the water
+      const say = (msg: string | null) => { if (msg) this.d.toast?.(msg); };
+      if (inp.wasPressed('KeyN')) say(v.toggleFlight());
+      if (inp.wasPressed('KeyC')) say(v.toggleDive());
+      if (inp.wasPressed('KeyT')) say(v.requestFloat());
+    }
   }
 
   /** A car whose door is swinging open before the player gets in (`t` = seconds left). */
@@ -270,7 +287,13 @@ export class VehicleManager {
     const hud = this.d.hud;
     if (this.driver) {
       hud.hideMarker();
-      this.d.vehicleHud.update(this.driver.telemetry(), this.driver.spec);
+      if (this.driver.spec.amphibious) {
+        this.d.suprimHud?.update(this.driver.telemetry());
+        if (this.driver.modeMsg) {
+          this.d.toast?.(this.driver.modeMsg);
+          this.driver.modeMsg = null;
+        }
+      } else this.d.vehicleHud.update(this.driver.telemetry(), this.driver.spec);
     } else {
       // an icon over the vehicle you can get into (no text)
       const near = this.d.player.active && this.d.player.ready && !this.d.player.inVehicle ? this.nearest(4) : null;
@@ -344,11 +367,16 @@ export class VehicleManager {
     this.d.player.setInVehicle(true);
     const cam = v.spec.camera ?? { dist: 9, min: 5, max: 28 };
     this.d.orbit.setTarget(v, cam.dist, cam.min, cam.max);
-    this.d.vehicleHud.show();
+    if (v.spec.amphibious) this.d.suprimHud?.show();
+    else this.d.vehicleHud.show();
   }
 
   private exit(): void {
     const v = this.driver!;
+    if (v.mode === 'fly' || v.mode === 'land' || v.mode === 'dive') {
+      this.d.toast?.(v.mode === 'dive' ? '🌊 আগে পানির ওপরে উঠুন (C)' : '🛬 আগে নামুন (N)');
+      return;
+    }
     if (Math.abs(v.telemetry().speed) > 3) return; // can only get out when (almost) stopped
     v.openDoor(1.1); // the door swings open and shuts again behind the player
     v.doorPosition(this.tmp);
@@ -362,6 +390,7 @@ export class VehicleManager {
     this.d.player.teleportTo(this.tmp);
     this.d.orbit.setTarget(this.d.player, Config.orbit.distance, Config.orbit.minDistance, Config.orbit.maxDistance);
     this.d.vehicleHud.hide();
+    this.d.suprimHud?.hide();
   }
 
 
@@ -380,6 +409,7 @@ export class VehicleManager {
     this.d.player.teleportTo(this.tmp);
     this.d.orbit.setTarget(this.d.player, Config.orbit.distance, Config.orbit.minDistance, Config.orbit.maxDistance);
     this.d.vehicleHud.hide();
+    this.d.suprimHud?.hide();
   }
 
   /** Take somebody out of a vehicle and put him on the ground (dead or running). Returns false if he was not inside. */

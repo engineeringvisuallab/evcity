@@ -39,6 +39,7 @@ const PROFILES: Record<string, Profile> = {
   jeep: { type: 'diesel', cyl: 4, gain: 0.58, lp: [320, 1500], am: 0.45, evTop: 0, horn: { f: [370, 466], wave: 'square', lp: 1900, gain: 0.22 }, reverseBeep: true, airBrake: false, squeal: 0.9 },
   hypercar: { type: 'ev', cyl: 0, gain: 0.6, lp: [3000, 6000], am: 0, evTop: 3200, horn: { f: [440, 554], wave: 'square', lp: 2600, gain: 0.2 }, reverseBeep: true, airBrake: false, squeal: 1 },
   evhypar: { type: 'ev', cyl: 0, gain: 0.55, lp: [2200, 4500], am: 0, evTop: 1700, horn: { f: [392, 494], wave: 'square', lp: 2000, gain: 0.22 }, reverseBeep: true, airBrake: false, squeal: 0.8 },
+  suprim: { type: 'ev', cyl: 0, gain: 0.55, lp: [2600, 5200], am: 0, evTop: 2100, horn: { f: [440, 587], wave: 'square', lp: 2200, gain: 0.2 }, reverseBeep: true, airBrake: false, squeal: 0.8 },
   evbike: { type: 'ev', cyl: 0, gain: 0.55, lp: [3200, 7000], am: 0, evTop: 3800, horn: { f: [660, 880], wave: 'square', lp: 3000, gain: 0.18 }, reverseBeep: false, airBrake: false, squeal: 0.7 },
   bike: { type: 'single', cyl: 1, gain: 0.5, lp: [500, 3000], am: 0.5, evTop: 0, horn: { f: [620, 760], wave: 'square', lp: 2800, gain: 0.18 }, reverseBeep: false, airBrake: false, squeal: 0.7 },
   auto: { type: 'twostroke', cyl: 2, gain: 0.55, lp: [700, 2600], am: 0.55, evTop: 0, horn: { f: [520, 640], wave: 'sawtooth', lp: 2200, gain: 0.16 }, reverseBeep: false, airBrake: false, squeal: 0.6 },

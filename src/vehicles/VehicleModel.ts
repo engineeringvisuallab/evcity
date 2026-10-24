@@ -127,6 +127,30 @@ const EVH_CABIN: Section[] = [
   { z: 1.45, w: 0.82, hb: 1.02, ht: 1.02, r: 0.02, rb: 0.02 },
 ];
 
+/** Suprim: low, wide wedge body with a long tail. Heights above the ground in metres. */
+const SUP_SHELL: Section[] = [
+  { z: -2.4, w: 0.72, hb: 0.3, ht: 0.78, r: 0.12, rb: 0.08 },
+  { z: -2.25, w: 0.88, hb: 0.24, ht: 0.92, r: 0.2, rb: 0.1 },
+  { z: -1.7, w: 0.99, hb: 0.18, ht: 0.99, r: 0.22, rb: 0.1 },
+  { z: -0.9, w: 0.97, hb: 0.16, ht: 0.9, r: 0.2, rb: 0.1 },
+  { z: 0.0, w: 0.93, hb: 0.15, ht: 0.76, r: 0.18, rb: 0.08 },
+  { z: 0.9, w: 0.96, hb: 0.16, ht: 0.8, r: 0.2, rb: 0.1 },
+  { z: 1.5, w: 0.96, hb: 0.16, ht: 0.72, r: 0.2, rb: 0.1 },
+  { z: 2.0, w: 0.88, hb: 0.16, ht: 0.55, r: 0.18, rb: 0.08 },
+  { z: 2.28, w: 0.74, hb: 0.17, ht: 0.42, r: 0.15, rb: 0.06 },
+  { z: 2.4, w: 0.58, hb: 0.2, ht: 0.36, r: 0.12, rb: 0.05 },
+];
+
+/** Suprim: teardrop glass canopy. */
+const SUP_CABIN: Section[] = [
+  { z: -1.4, w: 0.58, hb: 0.84, ht: 0.9, r: 0.02, rb: 0.02 },
+  { z: -1.1, w: 0.64, hb: 0.8, ht: 1.1, r: 0.25, rb: 0.02 },
+  { z: -0.5, w: 0.7, hb: 0.72, ht: 1.2, r: 0.3, rb: 0.02 },
+  { z: 0.2, w: 0.7, hb: 0.72, ht: 1.18, r: 0.3, rb: 0.02 },
+  { z: 0.75, w: 0.7, hb: 0.72, ht: 1.0, r: 0.25, rb: 0.02 },
+  { z: 1.15, w: 0.66, hb: 0.7, ht: 0.76, r: 0.02, rb: 0.02 },
+];
+
 /** Jeep: tub + bonnet + nose (one shell). Square and upright. */
 const JEEP_SHELL: Section[] = [
   { z: -1.95, w: 0.9, hb: 0.42, ht: 1.1, r: 0.05, rb: 0.04 },
@@ -163,6 +187,10 @@ export class VehicleModel {
   private mats: AnyMat[] = [];
   private geos: THREE.BufferGeometry[] = [];
   private gy: number;
+  /** Suprim: folding wings (open 0..1 -> swing out about the vertical axis) and the four VTOL thruster arms. */
+  private wingG: { g: THREE.Group; sx: number }[] = [];
+  private armG: { g: THREE.Group; sx: number; bar: THREE.Mesh; pod: THREE.Group; rotor: THREE.Group; disc: THREE.Mesh; glow: THREE.Mesh; glowM: THREE.MeshBasicMaterial; discM: THREE.MeshBasicMaterial }[] = [];
+  private rotorAngle = 0;
 
   constructor(private spec: VehicleSpec) {
     this.gy = groundY(spec);
@@ -172,6 +200,7 @@ export class VehicleModel {
       case 'hypercar': this.hypercar(); break;
       case 'evbike': this.evbike(); break;
       case 'evhypar': this.evhypar(); break;
+      case 'suprim': this.suprim(); break;
       case 'bike': this.bike(); break;
       case 'rickshaw': this.rickshaw(); break;
       case 'auto': this.auto(); break;
@@ -1019,6 +1048,206 @@ export class VehicleModel {
       const back = this.box(0.5, 0.6, 0.1, interior, q.x, H(0.95), q.z - 0.3, 4);
       back.rotation.x = -0.28; // reclined sport seats
       this.box(0.22, 0.14, 0.08, interior, q.x, H(1.3), q.z - 0.4, 4); // head restraint
+    }
+  }
+
+  /**
+   * EVCity SUPRIM (one vehicle, three worlds). Silver low coupe with blue LED lines. Two folding wings lie along the rear deck and swing
+   * out to the sides in flight mode; four VTOL thruster arms (ducted rotor + blue exhaust) slide out of the fenders. `setFlightPose` animates them.
+   */
+  private suprim(): void {
+    const spec = this.spec;
+    const paint = this.carPaint(spec.look.body);
+    const carbon = this.pbr(spec.look.accent, { metalness: 0.4, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.08 });
+    const dark = this.pbr(0x0b0d10, { roughness: 0.6, metalness: 0.1 });
+    const glass = this.carGlass();
+    const interior = this.mat(0x23262b);
+    const chrome = this.chromeMat();
+    const plate = this.mat(0xe9e6d8);
+    const lamp = this.pbr(0xeef5ff, { emissive: 0xaecdff, emissiveIntensity: 0.8, roughness: 0.04, metalness: 0 });
+    const redBar = this.mat(0xe01010, { emissive: 0xa00000 });
+    const BLUE = 0x2a9bff;
+    const blue = this.mat(BLUE, { emissive: 0x1a6fe0 });
+    const H = (h: number) => this.gy + h;
+    const side = (z: number) => sectionAt(SUP_SHELL, z).w;
+
+    // ---- shell, canopy, roof, bonnet ----
+    this.loft(SUP_SHELL, paint, 0);
+    this.loft(SUP_CABIN, glass, 4);
+    const roof: Section[] = [-1.0, -0.5, 0.2, 0.7].map((z) => {
+      const gl = sectionAt(SUP_CABIN, z);
+      return { z, w: gl.w * 0.55, hb: gl.ht - 0.12, ht: gl.ht + 0.03, r: 0.1, rb: 0.01 };
+    });
+    this.loft(roof, carbon, 3);
+    const slope = Math.atan2(0.3, 0.7);
+    for (const sx of [1, -1]) this.box(0.24, 0.008, 0.6, dark, sx * 0.34, H(0.742), 1.5, 3).rotation.x = slope * 0.4; // bonnet vents
+    this.box(0.03, 0.008, 1.0, blue, 0, H(0.76), 1.45, 3).rotation.x = slope * 0.35; // blue centre line
+
+    // ---- front: splitter, intake, LED signature, blade headlamps ----
+    this.box(1.7, 0.03, 0.4, carbon, 0, H(0.17), 2.25, 1);
+    this.box(0.7, 0.1, 0.012, dark, 0, H(0.3), 2.402, 1);
+    const lead = Math.atan2(0.14, 0.3);
+    this.box(1.4, 0.016, 0.03, blue, 0, H(0.37), 2.33, 2).rotation.x = lead;
+    for (const sx of [1, -1]) {
+      const hl = this.box(0.48, 0.022, 0.16, lamp, sx * 0.5, H(0.43), 2.15, 2);
+      hl.rotation.set(lead, -sx * 0.18, 0);
+      const drl = this.box(0.46, 0.012, 0.022, blue, sx * 0.5, H(0.445), 2.06, 2);
+      drl.rotation.set(lead, -sx * 0.18, 0);
+    }
+    this.logo('mark', true, 0.15, 0.15, 0, H(0.3), 2.408, 0, 2);
+
+    // ---- sides: sills, blue lines, flared haunches, blade mirrors ----
+    const flareG = new THREE.TorusGeometry(0.5, 0.04, 8, 18, Math.PI);
+    const archG = new THREE.CircleGeometry(0.48, 24, 0, Math.PI);
+    this.geos.push(flareG, archG);
+    const rubber = this.pbr(0x101214, { roughness: 0.85, metalness: 0 });
+    for (const sx of [1, -1]) {
+      this.box(0.05, 0.07, 2.2, carbon, sx * 0.97, H(0.24), -0.1, 0);
+      this.box(0.012, 0.016, 2.8, blue, sx * (side(0) + 0.006), H(0.36), -0.1, 0); // blue body line
+      for (const z of [0.95, -0.15]) this.box(0.006, 0.45, 0.012, dark, sx * (side(z) + 0.004), H(0.52), z, 0); // door lines
+      this.box(0.012, 0.025, 0.17, chrome, sx * (side(0.3) + 0.006), H(0.62), 0.3, 0); // flush handle
+      this.box(0.13, 0.06, 0.16, paint, sx * 1.04, H(0.88), 0.85, 3); // blade mirror
+      this.label('EVCity Suprim', 0.78, sx * (side(-0.9) + 0.004), H(0.55), -0.9, sx * (Math.PI / 2), 0);
+      for (const z of [1.5, -1.5]) {
+        const fl = this.mesh(flareG, rubber, sx * (side(z) + 0.004), H(spec.wheelRadius), z);
+        fl.rotation.y = Math.PI / 2;
+        const arch = new THREE.Mesh(archG, dark);
+        arch.position.set(sx * (side(z) + 0.003), H(spec.wheelRadius), z);
+        arch.rotation.y = sx * (Math.PI / 2);
+        this.root.add(arch);
+      }
+    }
+    this.addDoor(0.95, 0.9, 1.05, 0.28, 0.46, 0.04, paint, chrome, dark); // driver's door (right-hand drive)
+
+    // ---- rear: light bar, ducktail, diffuser ----
+    this.box(1.5, 0.04, 0.016, redBar, 0, H(0.8), -2.402, 2);
+    this.box(0.46, 0.1, 0.012, plate, 0, H(0.5), -2.404, 2);
+    this.label('SUPRIM', 0.62, 0, H(0.66), -2.404, Math.PI, 0);
+    this.box(1.6, 0.035, 0.34, paint, 0, H(1.0), -2.2, 3).rotation.x = 0.12;
+    this.box(1.15, 0.1, 0.14, carbon, 0, H(0.3), -2.36, 2);
+    for (let k = -3; k <= 3; k++) this.box(0.014, 0.1, 0.16, dark, k * 0.16, H(0.28), -2.38, 2);
+
+    // ---- blue underglow (always on) ----
+    const glowM = new THREE.MeshBasicMaterial({ color: BLUE, transparent: true, opacity: 0.28, depthWrite: false, blending: THREE.AdditiveBlending });
+    this.mats.push(glowM as unknown as AnyMat);
+    const under = this.mesh(new THREE.PlaneGeometry(1.8, 4.4), glowM, 0, H(0.1), 0);
+    under.rotation.x = -Math.PI / 2;
+    under.castShadow = false;
+    under.receiveShadow = false;
+
+    // ---- interior seen through the canopy ----
+    this.box(1.5, 0.02, 2.2, interior, 0, H(0.45), -0.3, 4);
+    this.box(1.5, 0.18, 0.36, interior, 0, H(0.78), 1.0, 4);
+    const sw = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.015, 8, 20), dark);
+    this.geos.push(sw.geometry);
+    sw.position.set(-0.42, H(0.98), 0.74);
+    sw.rotation.x = -2.4;
+    this.root.add(sw);
+    this.parts.push({ obj: sw, stage: 4 });
+    for (const q of [spec.seat, ...(spec.seats ?? [])]) {
+      this.box(0.46, 0.12, 0.5, interior, q.x, H(0.58), q.z, 4);
+      this.box(0.46, 0.55, 0.1, interior, q.x, H(0.86), q.z - 0.3, 4).rotation.x = -0.28;
+    }
+
+    // ---- FOLDING WINGS: lie along the rear deck (closed), swing out sideways (open). Pivot on the shoulder behind the canopy ----
+    const wingM = this.pbr(spec.look.body, { metalness: 0.55, roughness: 0.28, clearcoat: 1, clearcoatRoughness: 0.06, side: THREE.DoubleSide });
+    const span = 2.5;
+    const shape = new THREE.Shape();
+    // x = span (outwards), y = -chord (towards +Z in the end): leading edge at y = 0 is the rear edge... swept-back trapezoid
+    shape.moveTo(0, 0);
+    shape.lineTo(span, -0.22);
+    shape.lineTo(span, -0.5);
+    shape.lineTo(0, -0.78);
+    shape.closePath();
+    const wingG = new THREE.ExtrudeGeometry(shape, { depth: 0.045, bevelEnabled: false });
+    wingG.rotateX(-Math.PI / 2); // shape y -> -z... (x, z, -y): chord ends up on +Z
+    this.geos.push(wingG);
+    const tipG = new THREE.BoxGeometry(span * 0.96, 0.012, 0.025);
+    this.geos.push(tipG);
+    for (const sx of [1, -1]) {
+      const g = new THREE.Group();
+      g.position.set(sx * 0.8, H(0.98), -0.7);
+      const m = new THREE.Mesh(wingG, wingM);
+      m.scale.x = sx;
+      m.castShadow = true;
+      const tip = new THREE.Mesh(tipG, blue.clone());
+      this.mats.push(tip.material as AnyMat);
+      tip.position.set(sx * span * 0.5, 0.03, 0.78 * 0.5);
+      g.add(m, tip);
+      this.root.add(g);
+      this.wingG.push({ g, sx });
+      g.rotation.y = sx * (Math.PI / 2); // folded
+    }
+
+    // ---- VTOL THRUSTER ARMS: slide out of the four corners ----
+    const armM = this.pbr(0x8e97a2, { metalness: 0.8, roughness: 0.35 });
+    const ringG = new THREE.TorusGeometry(0.52, 0.045, 8, 28);
+    const bladeG = new THREE.BoxGeometry(1.0, 0.012, 0.09);
+    const discG = new THREE.CircleGeometry(0.5, 28);
+    const hubG2 = new THREE.CylinderGeometry(0.09, 0.09, 0.1, 12);
+    const glowG = new THREE.ConeGeometry(0.4, 1.6, 14, 1, true);
+    glowG.translate(0, -0.8, 0); // apex at the pod, opening downwards
+    this.geos.push(ringG, bladeG, discG, hubG2, glowG);
+    const barG = new THREE.BoxGeometry(1, 0.07, 0.1);
+    this.geos.push(barG);
+    const L = 1.15;
+    for (const sx of [1, -1]) {
+      for (const z of [1.55, -1.55]) {
+        const g = new THREE.Group();
+        g.position.set(sx * 0.8, H(z > 0 ? 0.86 : 0.7), z);
+        const bar = new THREE.Mesh(barG, armM);
+        bar.castShadow = true;
+        const pod = new THREE.Group();
+        const ring = new THREE.Mesh(ringG, armM);
+        ring.rotation.x = Math.PI / 2;
+        const rotor = new THREE.Group();
+        rotor.add(new THREE.Mesh(bladeG, carbon), new THREE.Mesh(hubG2, chrome));
+        const b2 = new THREE.Mesh(bladeG, carbon);
+        b2.rotation.y = Math.PI / 2;
+        rotor.add(b2);
+        rotor.position.y = 0.04;
+        const discM = new THREE.MeshBasicMaterial({ color: 0xbfe3ff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide });
+        const disc = new THREE.Mesh(discG, discM);
+        disc.rotation.x = -Math.PI / 2;
+        disc.position.y = 0.045;
+        const glowMat = new THREE.MeshBasicMaterial({ color: 0x57b8ff, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+        const glow = new THREE.Mesh(glowG, glowMat);
+        glow.position.y = -0.02;
+        pod.add(ring, rotor, disc, glow);
+        this.mats.push(discM as unknown as AnyMat, glowMat as unknown as AnyMat);
+        g.add(bar, pod);
+        this.root.add(g);
+        this.armG.push({ g, sx, bar, pod, rotor, disc, glow, glowM: glowMat, discM });
+        pod.visible = false;
+        bar.visible = false;
+        void L;
+      }
+    }
+    this.setFlightPose(0, 0, 0);
+  }
+
+  /** Suprim animation: `open` 0..1 = wings out + thruster arms extended, `thrust` 0..1 = rotors spinning, exhaust glowing. */
+  setFlightPose(open: number, thrust: number, dt: number): void {
+    if (!this.wingG.length) return;
+    const e = open * open * (3 - 2 * open); // smooth
+    for (const w of this.wingG) w.g.rotation.y = w.sx * (Math.PI / 2) * (1 - e);
+    this.rotorAngle += dt * (6 + thrust * 70);
+    const L = 1.15;
+    for (const a of this.armG) {
+      const ext = Math.max(0.001, e) * L;
+      const vis = e > 0.02;
+      a.bar.visible = vis;
+      a.pod.visible = vis;
+      a.bar.scale.x = ext;
+      a.bar.position.x = (a.sx * ext) / 2;
+      a.pod.position.x = a.sx * ext;
+      a.pod.scale.setScalar(Math.max(0.01, e));
+      a.rotor.rotation.y = this.rotorAngle * (a.sx > 0 ? 1 : -1);
+      a.discM.opacity = 0.22 * thrust;
+      a.glowM.opacity = 0.5 * thrust * (0.8 + 0.2 * Math.sin(this.rotorAngle * 0.7));
+      a.glow.scale.set(1, 0.4 + 0.9 * thrust, 1);
+      a.glow.visible = thrust > 0.02;
+      a.rotor.visible = thrust < 0.55;
     }
   }
 
@@ -1873,14 +2102,14 @@ export class VehicleModel {
 
   private wheelsAndSpare(): void {
     const spec = this.spec;
-    const isCar = spec.look.kind === 'sedan' || spec.look.kind === 'jeep' || spec.look.kind === 'hypercar' || spec.look.kind === 'evbike' || spec.look.kind === 'evhypar' || spec.look.kind === 'tractor' || spec.look.kind === 'combine' || spec.look.kind === 'pickup';
+    const isCar = spec.look.kind === 'sedan' || spec.look.kind === 'jeep' || spec.look.kind === 'hypercar' || spec.look.kind === 'evbike' || spec.look.kind === 'evhypar' || spec.look.kind === 'suprim' || spec.look.kind === 'tractor' || spec.look.kind === 'combine' || spec.look.kind === 'pickup';
     const tireM = isCar ? this.pbr(0x131313, { roughness: 0.92, metalness: 0 }) : this.mat(spec.look.kind === 'tank' ? 0x1b1d17 : 0x161616);
     const rimM = isCar
       ? spec.look.kind === 'tractor' || spec.look.kind === 'combine'
         ? this.pbr(spec.look.accent, { metalness: 0.5, roughness: 0.5 }) // painted farm-machine wheels
         : spec.look.kind === 'jeep' || spec.look.kind === 'pickup'
         ? this.pbr(0x3a4047, { metalness: 0.85, roughness: 0.4 }) // gunmetal off-road wheels
-        : spec.look.kind === 'hypercar' || spec.look.kind === 'evbike'
+        : spec.look.kind === 'hypercar' || spec.look.kind === 'evbike' || spec.look.kind === 'suprim'
           ? this.pbr(0x2b3036, { metalness: 0.95, roughness: 0.25 }) // dark forged alloys
           : this.pbr(0xd2d6da, { metalness: 0.95, roughness: 0.22 }) // bright alloys
       : this.mat(spec.look.kind === 'tank' ? 0x4a4f3c : spec.look.kind === 'bike' ? 0x2a2f34 : spec.look.kind === 'auto' ? 0xa7adb3 : 0xb8bcc2);
@@ -1888,7 +2117,7 @@ export class VehicleModel {
     const w = spec.wheelWidth;
     const kind = spec.look.kind;
     const car = isCar || kind === 'auto' || kind === 'bus';
-    const rf = spec.look.kind === 'hypercar' ? 0.76 : spec.look.kind === 'evbike' ? 0.7 : 0.62; // inner tyre radius / outer (a low-profile tyre has more rim)
+    const rf = spec.look.kind === 'hypercar' || spec.look.kind === 'suprim' ? 0.76 : spec.look.kind === 'evbike' ? 0.7 : 0.62; // inner tyre radius / outer (a low-profile tyre has more rim)
     // sedan: rounded tyre profile (lathe) + alloy wheel; everything else keeps the simple cylinders
     let tireG: THREE.BufferGeometry;
     if (car) tireG = this.makeTyre(r, w, spec.look.kind === 'jeep' || spec.look.kind === 'tractor' || spec.look.kind === 'combine' || spec.look.kind === 'pickup', spec.look.kind === 'tractor' || spec.look.kind === 'combine' ? 0.5 : rf);
