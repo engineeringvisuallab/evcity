@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { TerrainGenerator } from '../terrain';
 import type { TerrainSample } from '../terrain/Lakes';
-import { buildFishGeometry, buildFishMaterial } from '../animals/AnimalModel';
+import { PAT, attachPattern, buildReefFishGeometry, buildReefFishMaterial } from './ReefFish';
 import { hash2, mergeParts, part } from './GeoUtil';
 
 /**
@@ -23,13 +23,35 @@ const QUALITY = [
   { schools: 22, jelly: 18, turtles: 4, reach: 115 },
 ] as const;
 
-const FISH_THEMES: [number, number, number][][] = [
-  [[1.5, 0.9, 0.25], [1.6, 0.5, 0.2]],        // orange
-  [[1.5, 1.4, 0.35], [1.4, 1.2, 0.5]],        // yellow
-  [[0.5, 0.95, 1.5], [0.4, 0.7, 1.3]],        // blue
-  [[1.2, 1.25, 1.3], [1.0, 1.05, 1.15]],      // silver
-  [[1.6, 0.45, 0.5], [1.4, 0.7, 0.4]],        // red
-  [[0.6, 1.3, 0.9], [0.9, 1.4, 0.5]],         // green
+/**
+ * Fish species. Kind 0 = shoals (14-24 fish), 1 = small groups (6-10), 2 = big loners (1-2).
+ * theme = colours (shown at 70 / 30 %), pat = body pattern (see ReefFish.ts), asp = body aspect (width, height, length),
+ * size = length range (m), w = how often it is picked.
+ */
+interface FishSp {
+  kind: 0 | 1 | 2;
+  w: number;
+  theme: [number, number, number][];
+  pat: number;
+  asp: [number, number, number];
+  size: [number, number];
+  fast?: number;
+}
+const FISH_SPECIES: FishSp[] = [
+  { kind: 0, w: 3, theme: [[1.5, 0.8, 0.25], [1.6, 0.55, 0.2]], pat: PAT.SILVER, asp: [1, 1, 1], size: [0.2, 0.3] }, // anthias
+  { kind: 0, w: 2, theme: [[0.45, 0.8, 1.5], [0.35, 0.65, 1.3]], pat: PAT.SILVER, asp: [0.9, 0.9, 1], size: [0.2, 0.3] }, // blue chromis
+  { kind: 0, w: 2, theme: [[0.5, 0.85, 1.5], [0.9, 1.0, 1.3]], pat: PAT.STRIPE, asp: [0.8, 0.75, 1.3], size: [0.26, 0.4] }, // fusilier
+  { kind: 0, w: 2, theme: [[1.2, 1.25, 1.3], [1.0, 1.05, 1.15]], pat: PAT.SILVER, asp: [0.75, 0.7, 1.3], size: [0.22, 0.34] }, // sardines
+  { kind: 0, w: 1, theme: [[1.5, 1.4, 0.3], [1.3, 1.25, 0.45]], pat: PAT.BARS, asp: [1, 1.2, 1], size: [0.22, 0.32] }, // sergeant major
+  { kind: 1, w: 2, theme: [[1.3, 1.0, 0.3], [0.5, 0.7, 1.5]], pat: PAT.BARS, asp: [0.8, 1.9, 0.95], size: [0.5, 0.75] }, // angelfish
+  { kind: 1, w: 2, theme: [[1.6, 1.5, 0.5], [1.5, 1.4, 0.4]], pat: PAT.BARS, asp: [0.75, 1.8, 0.9], size: [0.4, 0.6] }, // butterflyfish
+  { kind: 1, w: 3, theme: [[1.7, 0.6, 0.15], [1.6, 0.7, 0.2]], pat: PAT.CLOWN, asp: [1, 1.05, 0.85], size: [0.25, 0.4] }, // clownfish
+  { kind: 1, w: 2, theme: [[0.2, 0.5, 1.7], [0.25, 0.45, 1.5]], pat: PAT.TANG, asp: [0.8, 1.5, 1], size: [0.4, 0.6] }, // blue tang
+  { kind: 1, w: 2, theme: [[0.3, 1.1, 0.9], [0.6, 0.7, 1.4]], pat: PAT.SPOTS, asp: [1, 1.1, 1.2], size: [0.55, 0.85] }, // parrotfish
+  { kind: 2, w: 2, theme: [[0.85, 0.5, 0.35], [0.55, 0.55, 0.4]], pat: PAT.SPOTS, asp: [1.2, 1.1, 1], size: [1.2, 2.0] }, // grouper
+  { kind: 2, w: 2, theme: [[0.95, 1.0, 1.05]], pat: PAT.SILVER, asp: [0.7, 0.5, 1.8], size: [1.4, 2.4], fast: 1.5 }, // barracuda
+  { kind: 2, w: 2, theme: [[0.5, 0.7, 1.25], [0.6, 0.8, 1.2]], pat: PAT.SILVER, asp: [1, 0.9, 1.1], size: [1.4, 2.2], fast: 1.6 }, // tuna
+  { kind: 2, w: 1, theme: [[1.1, 1.15, 1.1]], pat: PAT.SILVER, asp: [0.85, 1.1, 1.1], size: [1.2, 1.8] }, // giant trevally
 ];
 const JELLY_TINTS: [number, number, number][] = [
   [1.0, 0.65, 1.0],
@@ -53,6 +75,7 @@ interface School {
   timer: number;
   yFrac: number;
   scatter: number;
+  asp: [number, number, number];
 }
 
 interface Fish {
@@ -146,8 +169,9 @@ function turtleGeometry(): THREE.BufferGeometry {
 
 export class MarineLife {
   private fishMesh: THREE.InstancedMesh;
-  private fishGeo = buildFishGeometry();
+  private fishGeo = buildReefFishGeometry();
   private fishMat: THREE.MeshStandardMaterial;
+  private patAttr: THREE.InstancedBufferAttribute;
   private jellyMesh: THREE.InstancedMesh;
   private jellyGeo = jellyGeometry();
   private jellyMat: THREE.MeshBasicMaterial;
@@ -177,12 +201,13 @@ export class MarineLife {
     this.dummy.rotation.order = 'YXZ';
 
     // fish
-    this.fishMat = buildFishMaterial(this.uTime);
+    this.patAttr = attachPattern(this.fishGeo, MAX_SCHOOLS * SLOT);
+    this.fishMat = buildReefFishMaterial(this.uTime);
     this.fishMesh = new THREE.InstancedMesh(this.fishGeo, this.fishMat, MAX_SCHOOLS * SLOT);
     this.fishMesh.frustumCulled = false;
     this.fishMesh.name = 'marineFish';
     for (let i = 0; i < MAX_SCHOOLS; i++) {
-      this.schools.push({ alive: false, kind: 0, x: 0, y: 0, z: 0, heading: 0, speed: 1, baseSpeed: 1, size: 0.3, n: 0, turn: 0, timer: 0, yFrac: 0.5, scatter: 0 });
+      this.schools.push({ alive: false, kind: 0, x: 0, y: 0, z: 0, heading: 0, speed: 1, baseSpeed: 1, size: 0.3, n: 0, turn: 0, timer: 0, yFrac: 0.5, scatter: 0, asp: [1, 1, 1] });
       for (let k = 0; k < SLOT; k++) {
         this.fish.push({ x: 0, y: 0, z: 0, heading: 0, pitch: 0, ox: 0, oy: 0, oz: 0, phase: 0, k: 1 });
         this.fishMesh.setMatrixAt(i * SLOT + k, this.zero);
@@ -304,6 +329,19 @@ export class MarineLife {
     const kind: 0 | 1 | 2 = kindRoll < 0.58 ? 0 : kindRoll < 0.9 ? 1 : 2;
     const minDepth = kind === 2 ? 6 : kind === 1 ? 3.5 : 2.6;
     if (!this.findWater(cx, cz, reach, minDepth, this.spot)) return;
+    // pick a species of this kind (weighted)
+    const pool = FISH_SPECIES.filter((f) => f.kind === kind);
+    let tot = 0;
+    for (const f of pool) tot += f.w;
+    let pick = this.rnd() * tot;
+    let sp0 = pool[0];
+    for (const f of pool) {
+      pick -= f.w;
+      if (pick <= 0) {
+        sp0 = f;
+        break;
+      }
+    }
     const s = this.schools[i];
     const sp = this.spot;
     s.alive = true;
@@ -312,8 +350,9 @@ export class MarineLife {
     s.z = sp.z;
     s.heading = this.rnd() * Math.PI * 2;
     s.n = kind === 0 ? 14 + Math.floor(this.rnd() * 10) : kind === 1 ? 6 + Math.floor(this.rnd() * 5) : 1 + Math.floor(this.rnd() * 2);
-    s.size = kind === 0 ? this.r(0.2, 0.36) : kind === 1 ? this.r(0.45, 0.75) : this.r(1.3, 2.4);
-    s.baseSpeed = kind === 0 ? this.r(0.9, 1.7) : kind === 1 ? this.r(0.9, 1.5) : this.r(0.6, 1.1);
+    s.size = this.r(sp0.size[0], sp0.size[1]);
+    s.asp = sp0.asp;
+    s.baseSpeed = (kind === 0 ? this.r(0.9, 1.7) : kind === 1 ? this.r(0.9, 1.5) : this.r(0.6, 1.1)) * (sp0.fast ?? 1);
     s.speed = s.baseSpeed;
     s.turn = 0;
     s.timer = 0;
@@ -321,7 +360,7 @@ export class MarineLife {
     s.yFrac = this.r(0.15, 0.85);
     const depth = sp.water - sp.h;
     s.y = sp.water - Math.max(0.8, depth * s.yFrac);
-    const theme = FISH_THEMES[Math.floor(this.rnd() * FISH_THEMES.length)];
+    const theme = sp0.theme;
     const spread = kind === 0 ? 1.4 : kind === 1 ? 2.2 : 3;
     for (let k = 0; k < SLOT; k++) {
       const f = this.fish[i * SLOT + k];
@@ -335,11 +374,13 @@ export class MarineLife {
       f.pitch = 0;
       f.phase = this.rnd() * 6.28;
       f.k = 0.8 + this.rnd() * 0.4;
-      const t = theme[this.rnd() < 0.7 ? 0 : 1];
+      const t = theme[this.rnd() < 0.7 || theme.length < 2 ? 0 : 1];
+      this.patAttr.setX(i * SLOT + k, sp0.pat);
       const v = 0.85 + this.rnd() * 0.3;
       this.fishMesh.setColorAt(i * SLOT + k, this.col.setRGB(t[0] * v, t[1] * v, t[2] * v));
     }
     if (this.fishMesh.instanceColor) this.fishMesh.instanceColor.needsUpdate = true;
+    this.patAttr.needsUpdate = true;
   }
 
   private spawnJelly(i: number, cx: number, cz: number, reach: number): void {
@@ -476,7 +517,7 @@ export class MarineLife {
         f.pitch += (Math.atan2(vy, Math.max(hv, 0.001)) - f.pitch) * Math.min(1, dt * 4);
         d.position.set(f.x, f.y, f.z);
         d.rotation.set(-Math.max(-0.6, Math.min(0.6, f.pitch)), f.heading, 0);
-        d.scale.setScalar(s.size * f.k);
+        d.scale.set(s.size * f.k * s.asp[0], s.size * f.k * s.asp[1], s.size * f.k * s.asp[2]);
         d.updateMatrix();
         this.fishMesh.setMatrixAt(i * SLOT + n, d.matrix);
       }

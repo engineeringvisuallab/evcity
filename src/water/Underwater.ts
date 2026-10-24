@@ -5,6 +5,7 @@ import type { TerrainGenerator } from '../terrain';
 import type { TerrainMaterials } from '../terrain';
 import type { TerrainSample } from '../terrain/Lakes';
 import { GodRays } from './GodRays';
+import { BigMarine } from './BigMarine';
 import { MarineLife } from './MarineLife';
 import { SeabedDecor } from './SeabedDecor';
 import { SplashRings } from './SplashRings';
@@ -55,6 +56,7 @@ export class WaterFX {
   private rings: SplashRings;
   private decor: SeabedDecor;
   private life: MarineLife;
+  private big: BigMarine;
   private sc: TerrainSample;
   private quality = 1;
   private camW = new THREE.Vector3();
@@ -87,6 +89,7 @@ export class WaterFX {
     this.rings = new SplashRings(d.root);
     this.decor = new SeabedDecor(d.root, d.terrain);
     this.life = new MarineLife(d.root, d.terrain);
+    this.big = new BigMarine(d.root, d.terrain);
     this.setQuality(1);
   }
 
@@ -98,6 +101,7 @@ export class WaterFX {
     this.rays.setQuality(this.quality);
     this.decor.setQuality(this.quality);
     this.life.setQuality(this.quality);
+    this.big.setQuality(this.quality);
   }
 
   get qualityLevel(): number {
@@ -189,6 +193,7 @@ export class WaterFX {
     if (nearWater) {
       this.decor.update(dt, time, cx, cz);
       this.life.update(dt, time, this.camW, focus);
+      this.big.update(dt, time, this.camW, focus);
     }
   }
 
@@ -213,9 +218,10 @@ export class WaterFX {
   }
 
   /** Debug numbers. */
-  get stats(): { plants: number; schools: number; jellyfish: number; turtles: number } {
+  get stats(): { plants: number; schools: number; jellyfish: number; turtles: number; big: number } {
     const s = this.life.stats;
-    return { plants: this.decor.count, schools: s.schools, jellyfish: s.jellyfish, turtles: s.turtles };
+    const b = this.big.stats;
+    return { plants: this.decor.count, schools: s.schools, jellyfish: s.jellyfish, turtles: s.turtles, big: Object.values(b).reduce((a, n) => a + n, 0) };
   }
 
   dispose(): void {
@@ -224,6 +230,7 @@ export class WaterFX {
     this.rings.dispose();
     this.decor.dispose();
     this.life.dispose();
+    this.big.dispose();
     this.overlay.remove();
     this.drown.remove();
     this.top.remove();
