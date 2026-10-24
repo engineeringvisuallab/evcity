@@ -9,7 +9,7 @@ const smoothstep = (a: number, b: number, x: number): number => {
 };
 
 export interface InfraPlacement {
-  id: 'swtp' | 'stp' | 'thermal' | 'grid' | 'mech' | 'dam' | 'chem' | 'auto' | 'renew' | 'vehicle';
+  id: 'swtp' | 'stp' | 'thermal' | 'grid' | 'mech' | 'dam' | 'chem' | 'auto' | 'renew' | 'vehicle' | 'tech';
   nameBn: string;
   /** site origin (the local (0,0) of the plant) and yaw: local +x maps to world (cos yaw, -sin yaw) */
   x: number;
@@ -60,6 +60,9 @@ export const INFRA_PLACEMENTS: InfraPlacement[] = [
   // EV vehicle factory: inside the NEW engineering area 'eng-vehicle' (x -500..100, z 2400..2750): flat dry ground, no public road crosses it (the fence has no gaps),
   // ~1.7 m of relief under the pad. Pad 380 x 300 m, entrance on the south side (local +z).
   { id: 'vehicle', nameBn: 'EV Vehicle Factory', x: -129, z: 2571, yaw: 0, rect: { x0: -190, x1: 190, z0: -150, z1: 150 }, riverSide: 'none', color: '#b388ff', mark: 'V', deep: 3, blend: 35, riverBlend: 35, lift: 0 },
+  // Computer science & electronics park: inside the engineering area 'eng-tech-park' (x 450..1050, z -1350..-900). Flat, dry ground in the north part; small hills in the west and
+  // south-east. Gate on the west side (towards the city). Minimap mark is 'E' (the letter 'C' is already used by the chemical plant).
+  { id: 'tech', nameBn: 'Computer Science & Electronics Park', x: 775, z: -1228, yaw: 0, rect: { x0: -175, x1: 175, z0: -100, z1: 100 }, riverSide: 'none', color: '#a855f7', mark: 'E', deep: 1.5, blend: 26, riverBlend: 26, lift: 0 },
 ];
 
 /** Floor is cut slightly BELOW the plate so the plate never z-fights with the ground. */
