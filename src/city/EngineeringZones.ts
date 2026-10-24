@@ -67,6 +67,7 @@ export const ENGINEERING_AREAS: readonly EngineeringArea[] = [
   E('eng-waste', 'environmental', 'land', ['waste-management', 'recycling', 'environmental'], 0, -2900, 400, -2600),
   // --- mechanical / production
   E('eng-mech-works', 'mechanical', 'land', ['mechanical', 'thermal', 'machine-design', 'production', 'industrial'], 1450, 200, 2050, 650),
+  E('eng-vehicle', 'mechanical', 'land', ['automotive', 'vehicle-engineering', 'manufacturing', 'ev'], -500, 2400, 100, 2750),
   E('eng-automation', 'mechanical', 'land', ['mechatronics', 'robotics', 'industrial-automation', 'supply-chain'], 2200, 550, 2800, 1000),
   // --- materials / textile
   E('eng-steel', 'materials', 'land', ['materials', 'metallurgy', 'cement', 'ceramic-glass'], 800, -3900, 1400, -3450),
@@ -99,6 +100,7 @@ export const ENGINEERING_AREAS: readonly EngineeringArea[] = [
 export const ENGINEERING_GATES: Readonly<Record<string, { side: 'N' | 'S' | 'E' | 'W'; at: number; width: number }>> = {
   'eng-thermal-power': { side: 'S', at: 925, width: 30 },
   'eng-dam': { side: 'S', at: 3450, width: 30 },
+  'eng-vehicle': { side: 'S', at: -129, width: 30 },
 };
 
 export const ENGINEERING_BY_ID: ReadonlyMap<string, EngineeringArea> = new Map(ENGINEERING_AREAS.map((a) => [a.id, a]));

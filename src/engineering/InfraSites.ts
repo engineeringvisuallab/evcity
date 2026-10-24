@@ -9,7 +9,7 @@ const smoothstep = (a: number, b: number, x: number): number => {
 };
 
 export interface InfraPlacement {
-  id: 'swtp' | 'stp' | 'thermal' | 'grid' | 'mech' | 'dam' | 'chem' | 'auto' | 'renew';
+  id: 'swtp' | 'stp' | 'thermal' | 'grid' | 'mech' | 'dam' | 'chem' | 'auto' | 'renew' | 'vehicle';
   nameBn: string;
   /** site origin (the local (0,0) of the plant) and yaw: local +x maps to world (cos yaw, -sin yaw) */
   x: number;
@@ -57,6 +57,9 @@ export const INFRA_PLACEMENTS: InfraPlacement[] = [
   // Renewable energy park: inside the engineering area 'eng-renewable' (x -2750..-2250, z -2900..-2550). Free, flat ground (1.7 m of relief, >= 15 m from every road); the gate faces south
   // towards the nearest road (S12, at the south-west corner).
   { id: 'renew', nameBn: 'Renewable Energy Park', x: -2438, z: -2781, yaw: 0, rect: { x0: -158, x1: 158, z0: -93, z1: 93 }, riverSide: 'none', color: '#76ff03', mark: 'R', deep: 1.5, blend: 24, riverBlend: 24, lift: 0 },
+  // EV vehicle factory: inside the NEW engineering area 'eng-vehicle' (x -500..100, z 2400..2750): flat dry ground, no public road crosses it (the fence has no gaps),
+  // ~1.7 m of relief under the pad. Pad 380 x 300 m, entrance on the south side (local +z).
+  { id: 'vehicle', nameBn: 'EV Vehicle Factory', x: -129, z: 2571, yaw: 0, rect: { x0: -190, x1: 190, z0: -150, z1: 150 }, riverSide: 'none', color: '#b388ff', mark: 'V', deep: 3, blend: 35, riverBlend: 35, lift: 0 },
 ];
 
 /** Floor is cut slightly BELOW the plate so the plate never z-fights with the ground. */
