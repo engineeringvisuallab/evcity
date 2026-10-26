@@ -4,7 +4,6 @@ import { ZONE_COLOR, type CityPlan } from '../city/CityPlan';
 import { AIRPORT, AIRPORT_SEA, SEAPORT, WORLD_ZONE_COLOR, rasterizeWorldZones } from '../city/WorldZones';
 import { ENGINEERING_AREAS, ENGINEERING_GROUP_COLOR } from '../city/EngineeringZones';
 import type { RailNetwork } from '../rail';
-import type { ExpresswayNetwork } from '../expressway';
 import { bn, bnDigits, bnSigned } from '../i18n';
 import type { MinimapRequest, MinimapResult } from '../workers/minimap.worker';
 import { UI_FONT } from './theme';
@@ -98,7 +97,6 @@ export class Minimap {
     private sites: CitySite[],
     private plan: CityPlan,
     private rail: RailNetwork,
-    private expressway: ExpresswayNetwork | null = null,
   ) {
     this.zoneLayer = Minimap.makeZoneLayer();
     const c = this.canvas;
@@ -312,23 +310,6 @@ export class Minimap {
         c.setLineDash([4 * this.dpr, 4 * this.dpr]);
         line();
         c.setLineDash([]);
-        // elevated cargo expressway: thin orange line (ramps thinner and lighter), drawn under the station rings
-        if (this.expressway) {
-          c.lineCap = 'round';
-          for (const pass of [0, 1]) {
-            for (const r of this.expressway.routes) {
-              const ramp = r.kind === 'ramp';
-              if ((pass === 0) !== ramp) continue;
-              c.strokeStyle = ramp ? 'rgba(255,170,110,0.9)' : '#ff6a2b';
-              c.lineWidth = (ramp ? 0.8 : 1.5) * this.dpr;
-              c.beginPath();
-              for (let i = 0; i < r.xs.length; i++) (i ? c.lineTo(X(r.xs[i]), Z(r.zs[i])) : c.moveTo(X(r.xs[i]), Z(r.zs[i])));
-              if (r.closed) c.closePath();
-              c.stroke();
-            }
-          }
-          c.lineCap = 'butt';
-        }
         c.font = `700 ${10 * this.dpr}px ${UI_FONT}`;
         c.textAlign = 'center';
         c.textBaseline = 'bottom';
