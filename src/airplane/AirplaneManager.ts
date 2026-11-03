@@ -109,6 +109,8 @@ export class AirplaneManager {
   /** Game clock of this manager (s) and the runway time slots that jobs have reserved (see reserve()). */
   private clock = 0;
   private slots: { ap: AirportOps; start: number; end: number; owner: Aircraft }[] = [];
+  /** Green light columns in front of the terminal of the airport where the passenger shuttle stands at its gate: that is where to press F to board. */
+  private readonly boardMarks: { ap: AirportOps; group: THREE.Group; mat: THREE.MeshBasicMaterial }[] = [];
 
   constructor(private d: AirplaneDeps) {
     const t = d.terrain;
@@ -138,7 +140,36 @@ export class AirplaneManager {
       d.root.add(m.group);
       this.statics.push(m);
     }
+    this.createBoardMarks();
     for (const a of this.craft) a.apply();
+  }
+
+  private createBoardMarks(): void {
+    for (const ap of this.airports) {
+      const mat = new THREE.MeshBasicMaterial({ color: 0x35ff8a, transparent: true, opacity: 0.35, depthWrite: false, toneMapped: false });
+      const g = new THREE.Group();
+      g.name = `board-mark-${ap.id}`;
+      const col = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 30, 20, 1, true), mat);
+      col.position.y = 15;
+      const ring = new THREE.Mesh(new THREE.RingGeometry(5.5, 7, 40), mat);
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.y = 0.25;
+      g.add(col, ring);
+      g.position.set(ap.gate.x, ap.y, ap.gate.z);
+      g.visible = false;
+      this.d.root.add(g);
+      this.boardMarks.push({ ap, group: g, mat });
+    }
+  }
+
+  private updateBoardMarks(): void {
+    const sh = this.shuttleCraft, t = this.clock;
+    for (const m of this.boardMarks) {
+      const here = sh.mode === 'parked' && sh.airport === m.ap;
+      const near = Math.hypot(this.p.x - m.ap.gate.x, this.p.z - m.ap.gate.z) < 1200;
+      m.group.visible = here && near;
+      m.mat.opacity = 0.28 + 0.14 * Math.sin(t * 3);
+    }
   }
 
   /* ---------------------------------------------------------------- queries for the rider / HUD */
@@ -185,6 +216,9 @@ export class AirplaneManager {
     return { x: c.x, y: a.airport.y + 1.6, z: c.z };
   }
 
+  /** The game clock of the planes (s). */
+  get time(): number { return this.clock; }
+
   airport(id: string): AirportOps {
     return id === 'sea' ? this.sea : this.old;
   }
@@ -216,6 +250,7 @@ export class AirplaneManager {
       a.model.group.visible = a.mode !== 'away' && Math.hypot(this.p.x - a.pose.x, this.p.z - a.pose.z) < SHOW_DIST;
     }
     for (const m of this.statics) m.group.visible = Math.hypot(this.p.x - m.group.position.x, this.p.z - m.group.position.z) < SHOW_DIST;
+    this.updateBoardMarks();
   }
 
   private hide(a: Aircraft, seconds: number): void {
@@ -274,7 +309,7 @@ export class AirplaneManager {
           a.airport = a.dest;
           a.stand = a.airport.stands[a.standId];
           const route = a.airport.taxiIn({ x: s.x, z: s.z }, a.landSide, a.stand);
-          a.taxi = new TaxiMover(route, s.heading, a.kind === 'fighter' ? 18 : 14);
+          a.taxi = new TaxiMover(route, s.heading, a.kind === 'fighter' ? 18 : 14, 0.7, { radius: a.kind === 'fighter' ? 14 : 28 });
           a.taxi.holding = true;
           a.taxiStarted = false;
           a.flight = null;
@@ -346,7 +381,8 @@ export class AirplaneManager {
     // reserve the runway: the take-off at this airport and the landing at the destination must not overlap any other plane's use of that runway
     const route = ap.taxiOut(a.stand, side);
     const speed = a.kind === 'fighter' ? 18 : 14;
-    const taxiT = this.routeLength(route) / speed + 12;
+    const radius = a.kind === 'fighter' ? 14 : 28, h0 = a.stand.heading;
+    const taxiT = TaxiMover.duration(route, h0, speed, { radius, pushback: true }) + 5; // the real time (pushback, curves, stopping), not length / speed
     const sim = this.simulate(plan, dep.heading, a.perf);
     const depSlot = { start: this.clock + taxiT - 10, end: this.clock + taxiT + sim.liftT + 20 };
     const arrSlot = a.dest ? { start: this.clock + taxiT + sim.touchT - 50, end: this.clock + taxiT + sim.doneT + 40 } : null;
@@ -354,7 +390,7 @@ export class AirplaneManager {
     this.reserve(a, ap, depSlot);
     if (a.dest && arrSlot) this.reserve(a, a.dest, arrSlot, true);
     a.plan = plan;
-    a.taxi = new TaxiMover(route, a.stand.heading, speed);
+    a.taxi = new TaxiMover(route, h0, speed, 0.7, { radius, pushback: true }); // nose-in stand: pushed back first
     a.mode = 'taxi-out';
     return true;
   }
@@ -373,11 +409,6 @@ export class AirplaneManager {
     return { liftT: lift < 0 ? t : lift, touchT: touch < 0 ? t : touch, doneT: t };
   }
 
-  private routeLength(route: Pt[]): number {
-    let d = 0;
-    for (let i = 1; i < route.length; i++) d += Math.hypot(route[i].x - route[i - 1].x, route[i].z - route[i - 1].z);
-    return d;
-  }
 
   private slotFree(ap: AirportOps, w: { start: number; end: number }, self: Aircraft): boolean {
     this.slots = this.slots.filter((sl) => sl.end > this.clock - 20);
@@ -455,5 +486,6 @@ export class AirplaneManager {
   dispose(): void {
     for (const a of this.craft) { this.d.root.remove(a.model.group); a.model.dispose(); }
     for (const m of this.statics) { this.d.root.remove(m.group); m.dispose(); }
+    for (const m of this.boardMarks) { this.d.root.remove(m.group); m.group.traverse((o) => { const me = o as THREE.Mesh; if (me.geometry) me.geometry.dispose(); }); m.mat.dispose(); }
   }
 }

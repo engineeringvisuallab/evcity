@@ -9,7 +9,7 @@ const smoothstep = (a: number, b: number, x: number): number => {
 };
 
 export interface InfraPlacement {
-  id: 'swtp' | 'stp' | 'thermal' | 'grid' | 'mech' | 'dam' | 'chem' | 'auto' | 'renew' | 'vehicle' | 'tech';
+  id: 'swtp' | 'stp' | 'thermal' | 'grid' | 'mech' | 'dam' | 'chem' | 'auto' | 'renew' | 'vehicle' | 'tech' | 'aircraft';
   nameBn: string;
   /** site origin (the local (0,0) of the plant) and yaw: local +x maps to world (cos yaw, -sin yaw) */
   x: number;
@@ -29,6 +29,8 @@ export interface InfraPlacement {
   riverBlend: number;
   /** floor raised this many metres above the natural ground (flood safety for a plant that stands on the flood plain) */
   lift: number;
+  /** the floor takes the height of another level pad (the site stands INSIDE it): 'airport' = the old airport's pad */
+  floorFrom?: 'airport';
 }
 
 const d2r = Math.PI / 180;
@@ -63,6 +65,9 @@ export const INFRA_PLACEMENTS: InfraPlacement[] = [
   // Computer science & electronics park: inside the engineering area 'eng-tech-park' (x 450..1050, z -1350..-900). Flat, dry ground in the north part; small hills in the west and
   // south-east. Gate on the west side (towards the city). Minimap mark is 'E' (the letter 'C' is already used by the chemical plant).
   { id: 'tech', nameBn: 'Computer Science & Electronics Park', x: 775, z: -1228, yaw: 0, rect: { x0: -175, x1: 175, z0: -100, z1: 100 }, riverSide: 'none', color: '#a855f7', mark: 'E', deep: 1.5, blend: 26, riverBlend: 26, lift: 0 },
+  // Aircraft factory: INSIDE the grounds of the old airport (east of its apron, south side of the runway), on the airport's own flat pad: its floor is the airport floor.
+  // Local +x = east, the assembly hall runs along the north side, the rollout door is in the west wall towards the apron.
+  { id: 'aircraft', nameBn: 'Aircraft Factory', x: 3000, z: -3740, yaw: 0, rect: { x0: -190, x1: 190, z0: -112, z1: 112 }, riverSide: 'none', color: '#38bdf8', mark: 'A', deep: 0, blend: 24, riverBlend: 24, lift: 0, floorFrom: 'airport' },
 ];
 
 /** Floor is cut slightly BELOW the plate so the plate never z-fights with the ground. */
@@ -80,6 +85,7 @@ export class InfraSite {
   readonly rect: InfraPlacement['rect'];
   readonly deep: number;
   readonly lift: number;
+  readonly floorFrom: InfraPlacement['floorFrom'];
   readonly riverSide: InfraPlacement['riverSide'];
   readonly color: string;
   readonly mark: string;
@@ -100,6 +106,7 @@ export class InfraSite {
     this.rect = p.rect;
     this.deep = p.deep;
     this.lift = p.lift;
+    this.floorFrom = p.floorFrom;
     this.riverSide = p.riverSide;
     this.color = p.color;
     this.mark = p.mark;

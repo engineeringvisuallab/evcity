@@ -167,6 +167,8 @@ export class TerrainGenerator {
       ah.sort((a, b) => a - b);
       this.airport.floorY = ah[ah.length >> 1];
     }
+    // plants that stand INSIDE the airport's pad (the aircraft factory) take the airport floor, so the two level pads are one flat surface
+    for (const site of this.infra) if (site.floorFrom === 'airport') site.floorY = this.airport.floorY;
     // the sea airport floor = the MEDIAN natural ground over its pad, but never below its fill height (the pad stands in the sea)
     {
       const R = this.airportSea.rect, ah: number[] = [];

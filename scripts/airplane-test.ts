@@ -5,11 +5,15 @@ import { AIRPORT_POS } from '../src/airport/AirportSite';
 let fails = 0;
 const ok = (c: boolean, m: string): void => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++; };
 const mesh = buildPlaneMesh();
-ok(mesh.body.positions.length > 0 && mesh.gear.positions.length > 0, `mesh built (${mesh.body.indices.length / 3} + ${mesh.gear.indices.length / 3} triangles)`);
-let ys = 0, mx = -1e9, mn = 1e9; for (let i = 1; i < mesh.body.positions.length; i += 3) { ys = Math.min(ys, mesh.body.positions[i]); }
-for (let i = 0; i < mesh.body.positions.length; i += 3) { mx = Math.max(mx, mesh.body.positions[i]); mn = Math.min(mn, mesh.body.positions[i]); }
+const all = [mesh.fuselage, mesh.body, mesh.fin, mesh.gear];
+ok(all.every((g) => g.positions.length > 0) && mesh.lights.positions.length > 0, `mesh built (${all.reduce((s, g) => s + g.indices.length / 3, 0)} triangles)`);
+let ys = 0, mx = -1e9, mn = 1e9;
+for (const g of all) for (let i = 0; i < g.positions.length; i += 3) { ys = Math.min(ys, g.positions[i + 1]); mx = Math.max(mx, g.positions[i]); mn = Math.min(mn, g.positions[i]); }
 ok(ys >= -0.01, 'nothing below the ground');
 ok(mx - mn > 40 && mx - mn < 50, `fuselage length ${(mx - mn).toFixed(1)} m`);
+let zmax = 0; for (const g of all) for (let i = 2; i < g.positions.length; i += 3) zmax = Math.max(zmax, Math.abs(g.positions[i]));
+ok(zmax > 16 && zmax < 20, `wing span ${(2 * zmax).toFixed(1)} m`);
+ok(mesh.fuselage.uvs.length / 2 === mesh.fuselage.positions.length / 3, 'the fuselage is UV mapped (livery)');
 
 // new runway: north-south (an example site; the real one is designed later), planes depart towards the NORTH
 const newRwy: RunwayEnd = { x: 500, z: 2600, heading: -Math.PI / 2, length: 1800, y: 20 };

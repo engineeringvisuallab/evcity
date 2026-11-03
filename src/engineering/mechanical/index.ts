@@ -2,3 +2,4 @@
 export { mechDef, createMechWorks } from "./mech-works";
 export { autoDef, createAutomationPlant } from "./automation";
 export { vehicleDef, createVehicleFactory } from "./vehicle-factory";
+export { aircraftDef, createAircraftFactory } from "./aircraft-factory";

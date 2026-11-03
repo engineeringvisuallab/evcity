@@ -76,7 +76,23 @@ export class PlaneRider {
       else this.d.prompt(bn.planes.ride.landedTaxi(airportName(sh.airportId)));
       return;
     }
-    this.d.prompt(this.cand ? bn.planes.ride.board(airportName(sh.toId), secs(sh.departIn)) : '');
+    this.d.prompt(this.cand ? bn.planes.ride.board(airportName(sh.toId), secs(sh.departIn)) : this.hint());
+  }
+
+  /** Near a terminal while the passenger plane is not at its gate: say where it is / when it comes (so the player knows to wait). */
+  private hint(): string {
+    if (!this.d.canBoard()) return '';
+    this.d.player.getWorldPosition(this.tmp);
+    const sh = this.d.planes.shuttle;
+    for (const ap of this.d.planes.airports) {
+      if (Math.hypot(this.tmp.x - ap.gate.x, this.tmp.z - ap.gate.z) > 320) continue;
+      const here = airportName(ap.id);
+      if (sh.mode === 'parked' && sh.airportId !== ap.id) return `যাত্রীবাহী বিমান এখন ${airportName(sh.airportId)} বিমানবন্দরের গেটে: ${here}-এ আসবে`;
+      if (sh.mode === 'flight' && sh.toId === ap.id) return `যাত্রীবাহী বিমান ${here}-এ আসছে${sh.eta === null ? '' : `: প্রায় ${secs(sh.eta)} সেকেন্ডে`}। টার্মিনালের সামনে সবুজ আলোর স্তম্ভে অপেক্ষা করুন, তারপর F`;
+      if (sh.mode === 'taxi-in' && sh.airportId === ap.id) return 'যাত্রীবাহী বিমান গেটের দিকে আসছে: সবুজ আলোর স্তম্ভে অপেক্ষা করুন';
+      return `যাত্রীবাহী বিমান ${here} ছেড়ে গেছে: পরের ফ্লাইটের জন্য অপেক্ষা করুন`;
+    }
+    return '';
   }
 
   private board(): void {

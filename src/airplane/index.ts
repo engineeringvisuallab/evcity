@@ -1,4 +1,5 @@
 export { buildPlaneMesh, PLANE_COLORS, PLANE_DIMS } from './AirplaneMesh';
+export type { PlaneMeshData } from './AirplaneMesh';
 export { createAirplaneModel } from './AirplaneModel';
 export type { AirplaneModel, AirplaneKind } from './AirplaneModel';
 export { buildFighterMesh, FIGHTER_COLORS, FIGHTER_DIMS } from './FighterMesh';
@@ -10,3 +11,6 @@ export { AirplaneManager } from './AirplaneManager';
 export type { AirplaneDeps, ShuttleStatus, AircraftPose } from './AirplaneManager';
 export { PlaneRider } from './PlaneRider';
 export type { PlaneRiderDeps } from './PlaneRider';
+export { PlayerJet } from './PlayerJet';
+export { JET, JetFlight } from './JetFlight';
+export type { PlayerJetDeps, JetTelemetry } from './PlayerJet';
