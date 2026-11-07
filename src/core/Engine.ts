@@ -638,6 +638,7 @@ export class Engine {
       voice: this.voice,
       container,
       playerWorld: (out) => this.player.getWorldPosition(out),
+      clock: () => this.airplanes.time,
       canStart: () => !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.planeRider.riding && !this.playerJet.riding && !this.mall.inside && !this.library.inside && !this.agro.inside,
     });
     // the tour owns the camera: park the player (free-fly mode) while it runs, bring the player camera back afterwards

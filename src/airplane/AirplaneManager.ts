@@ -10,6 +10,9 @@ import type { TerrainGenerator } from '../terrain/TerrainGenerator';
 import { createAirplaneModel, type AirplaneKind, type AirplaneModel } from './AirplaneModel';
 import { FIGHTER_PERF, PLANE_PERF, PlaneFlight, buildArrivalPlan, buildDeparturePlan, buildFlightPlan, type PlanePerf, type Waypoint } from './AirplaneLogic';
 import { TaxiMover, createAirportOps, type AirportOps, type Pt, type Side, type Stand } from './AirplaneOps';
+import { DELIVERY_GATES, DELIVERY_PARK, DeliveryPlanner } from './FactoryDelivery';
+import { L as FACTORY } from '../engineering/mechanical/aircraft-factory/layout';
+import { rolloutTime } from '../engineering/mechanical/aircraft-factory/schedule';
 
 export interface AirplaneDeps {
   root: THREE.Object3D; // world.root: children use ABSOLUTE world coordinates
@@ -23,13 +26,17 @@ const SHOW_DIST = 9000;
 const CRUISE = 700;
 /** How far beyond the airport the planes from / to abroad start / end (m): outside the 10 km map. */
 const FAR = 13000;
+/** The runway time of a delivery (take-off at the old airport, landing at the sea airport) is booked this long (s) before the aeroplane rolls out of the factory. */
+const DELIVERY_BOOK_AHEAD = 1500;
+/** Seconds after the end of a delivery's runway slot that other planes keep free as well (a delivery may be late by that much). */
+const DELIVERY_SLACK = 60;
 /** The old airport lies in a pocket of the hills: planes land there from the west on a steeper glide path (the standard one would cut into the ridge). */
 const OLD_APPROACH: PlanePerf = { ...PLANE_PERF, glideSlope: (8.5 * Math.PI) / 180, finalDist: 3000 };
 
 export interface AircraftPose { x: number; y: number; z: number; heading: number; pitch: number; roll: number }
 
 type Mode = 'parked' | 'taxi-out' | 'flight' | 'taxi-in' | 'away';
-type Job = { type: 'shuttle'; to: AirportOps } | { type: 'abroad' } | { type: 'sortie' };
+type Job = { type: 'shuttle'; to: AirportOps } | { type: 'abroad' } | { type: 'sortie'; ext?: number } | { type: 'delivery' };
 
 class Aircraft {
   readonly model: AirplaneModel;
@@ -43,6 +50,8 @@ class Aircraft {
   taxiStarted = false;
   /** The flight plan of the job being started (flown after the taxi to the runway). */
   plan: Waypoint[] | null = null;
+  /** Seconds from the start of that plan to lift-off, touch-down and the end (to book the runway time again when the plane had to wait at the hold-short line). */
+  fl: { liftT: number; touchT: number; doneT: number } | null = null;
   /** Id of its stand ('gate1', 'mil2' ...): the same stand exists at every airport. */
   readonly standId: string;
   /** Runway direction of the current take-off (departSide) and landing (landSide); +1 = towards local +x of the airport. */
@@ -100,6 +109,12 @@ export class AirplaneManager {
   private readonly abroadCraft: Aircraft;
   private readonly fighters: Aircraft[] = [];
   private readonly statics: AirplaneModel[] = [];
+  /** The two new aeroplanes that take turns to be delivered from the aircraft factory (the factory clock is this manager's clock). */
+  private readonly delivery: Aircraft[] = [];
+  private planner: DeliveryPlanner | null = null;
+  /** Index of the next factory rollout to hand over, and of the last rollout whose runway time is already booked. */
+  private nextRollout = 0;
+  private booked = -1;
   private p = new THREE.Vector3();
   private sortieTimer = 70;
   private sortieNext = 0;
@@ -133,15 +148,79 @@ export class AirplaneManager {
       this.craft.push(f);
     }
     // airliners that just stand at the gates (nothing flies them)
-    for (const [ap, gate] of [[this.sea, 'gate0'], [this.sea, 'gate3'], [this.old, 'gate0']] as const) {
+    for (const [ap, gate] of [[this.old, 'gate0']] as const) { // (the sea airport's gate0 and gate3 are where the aeroplanes delivered by the factory stand)
+
       const m = createAirplaneModel('airliner');
       const st = ap.stands[gate];
       m.place(st.x, ap.y, st.z, st.heading, 0, 0);
       d.root.add(m.group);
       this.statics.push(m);
     }
+    this.setupDeliveries();
     this.createBoardMarks();
     for (const a of this.craft) a.apply();
+  }
+
+  /** The aircraft factory's rollout: two delivery planes (hidden until their turn), the delivery planner and the first runway bookings. */
+  private setupDeliveries(): void {
+    const fs = this.d.terrain.infra.find((s) => s.id === 'aircraft');
+    if (!fs) return;
+    const w = { x: 0, z: 0 };
+    fs.toWorld(FACTORY.exit.x, FACTORY.exit.z, w);
+    const exit = { x: w.x, z: w.z };
+    fs.toWorld(FACTORY.corner.x, FACTORY.corner.z, w);
+    const corner = { x: w.x, z: w.z };
+    this.planner = new DeliveryPlanner(this.old, this.sea, exit, corner, CRUISE, DELIVERY_GATES[0]);
+    DELIVERY_GATES.forEach((gate, i) => {
+      const a = new Aircraft(`delivery${i}`, 'airliner', PLANE_PERF, this.d.root, this.sea, this.sea.stands[gate]);
+      this.hide(a, 1e9);
+      this.craft.push(a);
+      this.delivery.push(a);
+    });
+    this.updateDeliveries();
+  }
+
+  /** Book the runway time of the coming rollouts long before they happen, and hand over the aeroplane that has just come out of the factory door. */
+  private updateDeliveries(): void {
+    if (!this.planner) return;
+    while (rolloutTime(this.booked + 1) < this.clock + DELIVERY_BOOK_AHEAD) {
+      this.booked++;
+      if (this.booked < 0) continue;
+      const a = this.delivery[this.booked % this.delivery.length];
+      const s = this.planner.slots(rolloutTime(this.booked));
+      this.reserve(a, this.old, s.dep, true);
+      this.reserve(a, this.sea, s.arr, true);
+    }
+    while (rolloutTime(this.nextRollout) <= this.clock) {
+      const k = this.nextRollout++;
+      const a = this.delivery[k % this.delivery.length];
+      const b = this.delivery[(k + 1) % this.delivery.length];
+      const free = a.mode === 'away' ? a : b.mode === 'away' ? b : null; // both busy: this one is not delivered (the factory body is gone anyway)
+      if (free) this.startDelivery(free);
+    }
+  }
+
+  /** The new aeroplane stands at the factory's exit point (where the factory's body just disappeared) and starts to taxi to the runway of the old airport. */
+  private startDelivery(a: Aircraft): void {
+    const p = this.planner!.plan;
+    a.airport = this.old;
+    a.stand = this.old.stands[a.standId];
+    a.job = { type: 'delivery' };
+    a.dest = this.sea;
+    a.departSide = -1;
+    a.landSide = 1;
+    a.thr = { x: p.arr.x, z: p.arr.z };
+    a.plan = p.plan;
+    a.fl = { liftT: p.liftT, touchT: p.touchT, doneT: p.doneT };
+    a.flight = null;
+    a.taxiStarted = false;
+    a.taxi = new TaxiMover(p.route, p.heading, 14, 0.7, { radius: 28 });
+    a.mode = 'taxi-out';
+    const q = a.pose;
+    q.x = a.taxi.x; q.z = a.taxi.z; q.y = this.old.y; q.heading = p.heading; q.pitch = 0; q.roll = 0;
+    a.model.setGear(true);
+    a.apply();
+    a.model.group.visible = true;
   }
 
   private createBoardMarks(): void {
@@ -229,21 +308,26 @@ export class AirplaneManager {
     const step = Math.min(dt, 0.1);
     this.clock += step;
     this.d.playerWorld(this.p);
+    this.updateDeliveries();
     for (const a of this.craft) this.updateCraft(a, step);
     // a fighter takes off every few minutes (when no other flight is on its way)
     this.sortieTimer -= step;
     if (this.sortieTimer <= 0) {
       const f = this.fighters[this.sortieNext % this.fighters.length];
-      if (f.mode === 'parked' && this.runwayClear(this.sea, f) && !this.taxiBusy(this.sea, f)) {
-        f.job = { type: 'sortie' };
-        if (this.startJob(f)) {
+      if (f.mode === 'parked' && this.runwayClear(this.sea, f, true) && !this.taxiBusy(this.sea, f, true)) {
+        let started = false;
+        for (const ext of [0, 4000, 8000, 12000, 16000]) { // the shortest sortie that finds a free runway time at both ends
+          f.job = { type: 'sortie', ext };
+          if ((started = this.startJob(f))) break;
+        }
+        if (started) {
           this.sortieNext++;
           this.sortieTimer = 200;
         } else {
           f.job = null;
-          this.sortieTimer = 12;
+          this.sortieTimer = 2; // (a landing every five minutes leaves only short gaps: look for them often)
         }
-      } else this.sortieTimer = 15;
+      } else this.sortieTimer = 1;
     }
     for (const a of this.craft) {
       a.apply();
@@ -267,16 +351,19 @@ export class AirplaneManager {
         if (a === this.shuttleCraft) {
           a.timer -= dt;
           const to = a.airport === this.old ? this.sea : this.old;
-          if (a.timer <= 0 && this.runwayClear(a.airport, a) && !this.taxiBusy(a.airport, a) && this.runwayClear(to, a)) {
+          if (a.timer <= 0 && this.runwayClear(a.airport, a, true) && !this.taxiBusy(a.airport, a, true) && this.runwayClear(to, a, true)) {
             a.job = { type: 'shuttle', to };
             if (!this.startJob(a)) { a.job = null; a.timer = 6; } // the runway time slot is taken: wait a little
           }
         } else if (a === this.abroadCraft) {
           a.timer -= dt;
-          if (a.timer <= 0 && this.runwayClear(a.airport, a) && !this.taxiBusy(a.airport, a)) {
+          if (a.timer <= 0 && this.runwayClear(a.airport, a, true) && !this.taxiBusy(a.airport, a, true)) {
             a.job = { type: 'abroad' };
             if (!this.startJob(a)) { a.job = null; a.timer = 6; }
           }
+        } else if (this.delivery.includes(a)) {
+          a.timer -= dt; // a delivered plane stands at its gate for a while, then an airline takes it away
+          if (a.timer <= 0) this.hide(a, 1e9);
         }
         return;
       }
@@ -288,7 +375,10 @@ export class AirplaneManager {
       case 'taxi-out': {
         const t = a.taxi!;
         // hold short of the runway while another aircraft uses it or lands soon
-        t.holding = t.index <= 3 && t.remaining() <= 60 && !this.runwayClear(a.airport, a);
+        const near = t.remaining() <= 60; // (up to the runway centre line: a plane that is on the last 40 m can still be stopped)
+        // a plane that comes up behind one that waits at the hold-short line stops 80 m behind it
+        const ahead = this.craft.some((o) => o !== a && o.airport === a.airport && o.mode === 'taxi-out' && !!o.taxi && o.taxi.holding && o.taxi.remaining() < t.remaining());
+        t.holding = (near && (!this.runwayClear(a.airport, a) || !this.windowsFree(a))) || (ahead && t.remaining() <= 140);
         t.step(dt);
         this.copyTaxi(a, t);
         if (t.done) this.beginTakeoff(a);
@@ -326,7 +416,7 @@ export class AirplaneManager {
         if (t.done) {
           a.park();
           a.job = null;
-          a.timer = a === this.shuttleCraft ? 75 : a === this.abroadCraft ? 100 : 1e9;
+          a.timer = a === this.shuttleCraft ? 75 : a === this.abroadCraft ? 100 : this.delivery.includes(a) ? DELIVERY_PARK : 1e9;
         }
         return;
       }
@@ -374,7 +464,9 @@ export class AirplaneManager {
       const arr = ap.landingEnd(a.landSide);
       a.thr = { x: arr.x, z: arr.z };
       const y = ap.y + 650;
-      const dp = buildDeparturePlan(dep, { x: -700, z: 1500 }, FIGHTER_PERF, { cruiseAlt: 650 });
+      // (`ext` metres of extra flight out to the north-west: with a landing every five minutes the sortie must be able to fit its landing between two deliveries)
+      const ext = job.type === 'sortie' ? job.ext ?? 0 : 0;
+      const dp = buildDeparturePlan(dep, { x: -700 - 0.376 * ext, z: 1500 - 0.926 * ext }, FIGHTER_PERF, { cruiseAlt: 650 });
       const ap2 = buildArrivalPlan(arr, { x: 1500, z: 300, y }, FIGHTER_PERF, { cruiseAlt: 650 });
       plan = [...dp, ...ap2];
     }
@@ -389,6 +481,7 @@ export class AirplaneManager {
     if (!this.slotFree(ap, depSlot, a) || (a.dest && arrSlot && !this.slotFree(a.dest, arrSlot, a))) return false;
     this.reserve(a, ap, depSlot);
     if (a.dest && arrSlot) this.reserve(a, a.dest, arrSlot, true);
+    a.fl = sim;
     a.plan = plan;
     a.taxi = new TaxiMover(route, h0, speed, 0.7, { radius, pushback: true }); // nose-in stand: pushed back first
     a.mode = 'taxi-out';
@@ -412,7 +505,8 @@ export class AirplaneManager {
 
   private slotFree(ap: AirportOps, w: { start: number; end: number }, self: Aircraft): boolean {
     this.slots = this.slots.filter((sl) => sl.end > this.clock - 20);
-    return !this.slots.some((sl) => sl.ap === ap && sl.owner !== self && sl.start < w.end && w.start < sl.end);
+    // (the time after a delivery's slot is kept free too: a delivery that had to wait a little at the hold-short line must still find its own time free)
+    return !this.slots.some((sl) => sl.ap === ap && sl.owner !== self && sl.start < w.end && w.start < sl.end + (this.delivery.includes(sl.owner) ? DELIVERY_SLACK : 0));
   }
 
   /** Book a runway time slot (a plane's older slots are dropped when it books its departure slot). */
@@ -458,26 +552,57 @@ export class AirplaneManager {
   }
 
   /** True when another plane is rolling on the taxiways of `ap` (a plane that waits at the hold-short line or on the runway does not count). */
-  private taxiBusy(ap: AirportOps, self: Aircraft): boolean {
+  private taxiBusy(ap: AirportOps, self: Aircraft, starting = false): boolean {
     for (const o of this.craft) {
       if (o !== self && o.airport === ap && (o.mode === 'taxi-out' || o.mode === 'taxi-in') && o.taxi && !o.taxi.holding) return true;
+      // a plane waiting at the hold-short line: nobody else may start to taxi out behind it (the runway connector is one lane)
+      if (starting && o !== self && o.airport === ap && o.mode === 'taxi-out' && o.taxi && o.taxi.holding) return true;
     }
     return false;
   }
 
+  /**
+   * At the hold-short line: are the runway times the plane booked still right? A plane that had to wait would take off (and land) later than it booked, into the
+   * time of another plane. So it re-computes its take-off and landing windows from NOW; only when both are free does it go (and it books them anew), else it waits.
+   */
+  private windowsFree(a: Aircraft): boolean {
+    const f = a.fl;
+    if (!f || !a.taxi) return true;
+    const go = this.clock + a.taxi.remaining() / (a.kind === 'fighter' ? 18 : 14);
+    const dep = { start: go - 10, end: go + f.liftT + 20 };
+    const arr = a.dest ? { start: go + f.touchT - 50, end: go + f.doneT + 40 } : null;
+    if (a === this.delivery.find((d) => d === a) && a.job?.type === 'delivery') { // (a delivery's next turns stay booked: only this delivery's own two slots are replaced)
+      if (!this.slotFree(a.airport, dep, a) || (arr && a.dest && !this.slotFree(a.dest, arr, a))) return false;
+      this.slots = this.slots.filter((sl) => !(sl.owner === a && sl.start < this.clock + 450));
+    } else {
+      if (!this.slotFree(a.airport, dep, a) || (arr && a.dest && !this.slotFree(a.dest, arr, a))) return false;
+      this.slots = this.slots.filter((sl) => sl.owner !== a);
+    }
+    this.reserve(a, a.airport, dep, true);
+    if (arr && a.dest) this.reserve(a, a.dest, arr, true);
+    return true;
+  }
+
+  /** Which leg of the standard taxi-out route (stand, taxiway, connector, connector 40 m, runway: 0..4) a plane is on. The delivery route from the factory has one more point at its start. */
+  private outIdx(a: Aircraft): number {
+    return a.taxi!.index - (this.delivery.includes(a) ? 1 : 0);
+  }
+
   /** True when the runway of `ap` is free for `self` to enter: nobody on it, nobody about to land. */
-  private runwayClear(ap: AirportOps, self: Aircraft): boolean {
+  private runwayClear(ap: AirportOps, self: Aircraft, ignoreDelivery = false): boolean {
     for (const o of this.craft) {
       if (o === self) continue;
+      if (ignoreDelivery && this.delivery.includes(o)) continue; // (a delivery's runway time is booked: it is checked by the slots, and at the hold-short line)
       if (o.mode === 'flight' && o.flight) {
         const ph = o.flight.state.phase;
         if (o.airport === ap && (ph === 'takeoff-roll' || ph === 'rotate')) return false;
         if (o.dest === ap && o.thr) {
           const s = o.flight.state;
           if (ph === 'final' || ph === 'flare' || ph === 'landing-roll') return false;
-          if (Math.hypot(o.thr.x - s.x, o.thr.z - s.z) / 80 < 110) return false;
+          // (a delivery plane has its runway time booked beforehand, so other planes only keep a short distance from it: with a landing every 5 minutes they could never leave otherwise)
+          if (Math.hypot(o.thr.x - s.x, o.thr.z - s.z) / 80 < (this.delivery.includes(o) ? 40 : 110)) return false;
         }
-      } else if (o.mode === 'taxi-out' && o.airport === ap && o.taxi && o.taxi.index >= 4) return false;
+      } else if (o.mode === 'taxi-out' && o.airport === ap && o.taxi && this.outIdx(o) >= 4) return false;
       else if (o.mode === 'taxi-in' && o.airport === ap && o.taxi && o.taxi.index <= 2) return false;
     }
     return true;

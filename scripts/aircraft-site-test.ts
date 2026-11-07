@@ -1,4 +1,4 @@
-// Aircraft factory, stage 1 (site only): boundary fence, gate, roads, taxi strips, plot outlines. Built like the game builds it; checks the pad on the real terrain.
+// Aircraft factory SITE checks (boundary fence, gate, roads, taxi strips, the pad on the real terrain) and the factory's parts / tour as the game builds them.
 // Run: npx tsx scripts/aircraft-site-test.ts
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
@@ -40,8 +40,8 @@ for (let lx = R.x0; lx <= R.x1; lx += 20) for (let lz = R.z0; lz <= R.z1; lz += 
 ok(dev < 0.2, `the ground is level (max ${dev.toFixed(2)} m off)`);
 
 // parts, tour
-ok(pl.infra.parts.length === 1 && pl.infra.parts[0].id === 'gate', 'one part: the site works');
-ok(pl.infra.tour.length === 5 && pl.infra.narrationLang === 'en', `five English tour stops (${pl.infra.tour.length})`);
+ok(pl.infra.parts.map((p) => p.id).join() === 'gate,line,hall,cnc,wing,fuse,final,paint,test', `nine parts: site works, line, hall, parts shop, five stations (${pl.infra.parts.map((p) => p.id).join()})`);
+ok(pl.infra.tour.length === 12 && pl.infra.narrationLang === 'en', `twelve English tour stops (${pl.infra.tour.length})`);
 ok(pl.infra.tour.every((st) => st.text.length > 200 && /^[\x20-\x7e]+$/.test(st.text)), 'every stop has a real English narration');
 let bb = new THREE.Box3().setFromObject(pl.infra.root);
 ok(bb.max.x - bb.min.x < 430 && bb.max.z - bb.min.z < 260, `the site and its taxi strips fit (${(bb.max.x - bb.min.x).toFixed(0)} x ${(bb.max.z - bb.min.z).toFixed(0)} m)`);
@@ -55,14 +55,14 @@ ok(gateY !== null && Math.abs(gateY - site.floorY) < 0.3, 'the main gate is open
 ok(doorY !== null && Math.abs(doorY - site.floorY) < 0.3, 'the west gate (rollout road) is open');
 let plate = 0, miss = 0;
 for (let lx = SITE.minX + 4; lx < SITE.maxX - 4; lx += 10) for (let lz = SITE.minZ + 4; lz < SITE.maxZ - 4; lz += 10) { const y = ray(lx, lz); if (y === null) miss++; else if (Math.abs(y - site.floorY) < 0.3) plate++; }
-ok(plate > 600 && miss === 0, `the plate has a collider everywhere (${plate} samples, ${miss} misses)`);
+ok(plate > 300 && miss === 0, `the plate has a collider everywhere (${plate} samples on the floor, the rest on the buildings, ${miss} misses)`);
 
 // the tour runs
 const cam = new THREE.PerspectiveCamera();
 pressed.add('KeyY'); mgr.update(1 / 60);
 ok(mgr.touring, 'Y starts the tour');
 let nan = false;
-for (let i = 0; i < 5; i++) {
+for (let i = 0; i < 12; i++) {
   for (let f = 0; f < 60 * 3; f++) { mgr.update(1 / 60); mgr.applyCamera(1 / 60, cam); if (![cam.position.x, cam.position.y, cam.position.z, cam.quaternion.w].every(Number.isFinite)) nan = true; }
   pressed.add('Period'); mgr.update(1 / 60);
 }

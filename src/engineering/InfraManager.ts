@@ -23,6 +23,8 @@ export interface InfraDeps {
   playerWorld: (out: THREE.Vector3) => THREE.Vector3;
   /** May a tour start now? (not while driving, flying, sailing or inside a building) */
   canStart?: () => boolean;
+  /** Game clock (s) of the planes: plants that move with the airplane timetable (the aircraft factory) follow it. */
+  clock?: () => number;
 }
 
 export interface Plant {
@@ -122,7 +124,7 @@ export class InfraManager {
     }
     const def = getInfrastructureDef(site.id);
     if (!def) throw new Error(`infrastructure ${site.id} is not registered`);
-    const infra = def.create({ withEnvironment: false, groundY, riverReach: reach, waterRel, skirtDepth: site.deep });
+    const infra = def.create({ withEnvironment: false, groundY, riverReach: reach, waterRel, skirtDepth: site.deep, clock: this.d.clock });
     infra.setLabelsVisible(false);
     infra.root.position.set(site.x, site.floorY, site.z);
     infra.root.rotation.y = site.yaw;

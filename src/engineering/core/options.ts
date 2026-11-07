@@ -14,6 +14,8 @@ export interface InfraBuildOptions {
   waterRel?: number;
   /** Depth (m) of the concrete skirt under the ground pad (the game digs the ground under the pad). 0 = none. */
   skirtDepth?: number;
+  /** Game clock (seconds) that moving plants follow (the aircraft factory's assembly line follows the AIRPLANE clock, so the aeroplane that rolls out of its door is the one the airplane manager puts on the taxiway). Missing = the plant uses its own animation time. */
+  clock?: () => number;
 }
 
 export interface ResolvedOptions {
@@ -22,6 +24,7 @@ export interface ResolvedOptions {
   riverReach: number;
   waterRel: number;
   skirtDepth: number;
+  clock?: () => number;
 }
 
 /** side = which local side the river is on. Defaults reproduce the preview's own river bank (4 m drop over 14 m). */
@@ -36,5 +39,6 @@ export function resolveOptions(o: InfraBuildOptions | undefined, side: 'W' | 'E'
     riverReach: o?.riverReach ?? 5,
     waterRel: o?.waterRel ?? -1.5,
     skirtDepth: o?.skirtDepth ?? 0,
+    clock: o?.clock,
   };
 }
