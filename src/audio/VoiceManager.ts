@@ -91,6 +91,7 @@ export class VoiceManager {
       const u = new SpeechSynthesisUtterance(text);
       u.voice = this.ttsVoice;
       u.lang = this.ttsVoice.lang;
+      u.onboundary = (e) => { if (my === this.token) this.subtitles.seek(e.charIndex); }; // the one-line subtitle follows the voice
       u.onend = () => {
         if (my === this.token) { this.speaking = false; this.subtitles.hide(); }
       };
@@ -136,6 +137,7 @@ export class VoiceManager {
       utterance.lang = voice.lang;
       utterance.rate = isBengali ? 0.94 : 0.92;
       utterance.pitch = 0.98;
+      utterance.onboundary = (e) => { if (my === this.token) this.subtitles.seek(e.charIndex); }; // the one-line subtitle follows the voice
       utterance.onend = () => { if (my === this.token) { this.speaking = false; this.subtitles.hide(); } };
       utterance.onerror = () => { if (my === this.token) { this.speaking = false; this.busyUntil = performance.now() + readTime * 1000; this.subtitles.show(text, readTime); } };
       this.speaking = true;
