@@ -113,7 +113,8 @@ export class TourUI {
       spans[0].textContent = site.mark;
       (spans[0] as HTMLElement).style.background = site.color;
       spans[1].textContent = site.name;
-      spans[2].textContent = `${bn.tour.categories[site.category] ?? site.category} · ${bn.tour.stops(site.stops)}`;
+      const cat = bn.tour.categories[site.category] ?? site.category;
+      spans[2].textContent = site.stops > 0 ? `${cat} · ${bn.tour.stops(site.stops)}` : cat; // sites not built yet report 0 steps
       Object.assign(choice.style, {
         textAlign: 'left', padding: '14px', minHeight: '96px', borderRadius: '12px', border: '1px solid rgba(255,255,255,.17)',
         background: 'rgba(255,255,255,.055)', color: '#fff', font: `500 14px ${UI_FONT}`, cursor: 'pointer',

@@ -1,6 +1,7 @@
 import { UI_FONT } from './theme';
 import { bnDigits } from '../i18n';
 import { Config } from '../core/Config';
+import { currentChoice, setQualityChoice, type QualityChoice } from '../core/Quality';
 import type { TimeMode } from '../environment/DayNight';
 import type { HudOptions, HudSettings } from './HudSettings';
 import { getToolbar } from './Toolbar';
@@ -317,6 +318,39 @@ export class SettingsMenu {
       gold.append(gl, this.goldValue);
       sec.appendChild(gold);
       panel.appendChild(sec);
+    }
+
+    // --- graphics preset (phone / tablet / PC): saved, the game reloads once ---
+    {
+      const { sec } = this.section('⚙️ গ্রাফিক্স (ফোন / পিসি)');
+      const grid = document.createElement('div');
+      grid.className = 'evs-zoom';
+      grid.style.gridTemplateColumns = 'repeat(2,1fr)';
+      const choices: [QualityChoice, string, string][] = [
+        ['auto', 'অটো', 'ডিভাইস দেখে নিজে বাছবে'],
+        ['low', 'নিচু', 'ফোন / পুরনো পিসি'],
+        ['medium', 'মাঝারি', 'ট্যাবলেট / ল্যাপটপ'],
+        ['high', 'উঁচু', 'শক্তিশালী পিসি'],
+      ];
+      for (const [c, label, sub] of choices) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'evs-btn' + (c === currentChoice() ? ' on' : '');
+        b.innerHTML = '<span></span><small></small>';
+        (b.children[0] as HTMLElement).textContent = label;
+        (b.children[1] as HTMLElement).textContent = sub;
+        b.addEventListener('click', () => {
+          if (c === currentChoice()) return;
+          setQualityChoice(c);
+          location.reload();
+        });
+        grid.appendChild(b);
+      }
+      sec.appendChild(grid);
+      const gnote = document.createElement('div');
+      gnote.className = 'evs-note';
+      gnote.textContent = 'বদলালে গেম একবার রিলোড হবে। ফোন বা পিসি গরম / ধীর হলে "নিচু" বাছুন। রেজোলিউশন FPS দেখে নিজে কমে-বাড়ে।';
+      sec.appendChild(gnote);
     }
 
     // --- water ---

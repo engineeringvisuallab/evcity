@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Q, DynamicResolution, currentChoice } from './Quality';
 import { CameraController } from '../camera/CameraController';
 import { OrbitCamera } from '../camera/OrbitCamera';
 import { DriverCamera } from '../camera/DriverCamera';
@@ -220,6 +221,8 @@ export class Engine {
   private trainCam!: TrainCamera;
   /** Render quality: 0 normal, 1 high, 2 = 4K (Backquote cycles). */
   private renderQuality = 0;
+  /** Lowers / raises the picture resolution by itself to hold the FPS target (normal render mode only). */
+  private readonly dynRes = new DynamicResolution(Q.fpsCap || 60, Q.minScale, () => this.applyRenderScale());
   private planeRider!: PlaneRider;
   /** The fighter jet the player can fly (stands on the military apron of the sea airport). */
   private playerJet!: PlayerJet;
@@ -256,8 +259,8 @@ export class Engine {
     catalog: Catalog,
   ) {
     // --- rendering ---
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer = new THREE.WebGLRenderer({ antialias: Q.antialias, powerPreference: Q.powerPreference });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.maxDpr));
     this.renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(this.renderer.domElement);
 
@@ -639,6 +642,7 @@ export class Engine {
       container,
       playerWorld: (out) => this.player.getWorldPosition(out),
       clock: () => this.airplanes.time,
+      lazy: true, // sites are built when the player comes near (fast start-up)
       canStart: () => !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.planeRider.riding && !this.playerJet.riding && !this.mall.inside && !this.library.inside && !this.agro.inside,
     });
     // the tour owns the camera: park the player (free-fly mode) while it runs, bring the player camera back afterwards
@@ -710,6 +714,8 @@ export class Engine {
 
     window.addEventListener('resize', this.onResize);
     this.loop = new GameLoop(this.time, this.fixedUpdate, this.render);
+    this.loop.maxFps = Q.fpsCap;
+    this.applyRenderScale(); // the preset's pixel-ratio cap and pixel budget
   }
 
   /** One model of every vehicle and person type, kept alive on purpose: disposing them would let three drop the compiled shader programs again. */
@@ -740,6 +746,8 @@ export class Engine {
   start(): void {
     this.bus.emit('engine:ready', undefined);
     this.loop.start();
+    const tierName = { low: 'নিচু', medium: 'মাঝারি', high: 'উঁচু' }[Q.tier];
+    this.toast.show(`⚙️ গ্রাফিক্স: ${tierName}${currentChoice() === 'auto' ? ' (অটো)' : ''} · Tab চেপে সেটিংস থেকে বদলানো যায়`, 4200);
   }
 
   /** 60 Hz. Physics (and later vehicle/AI logic) only. */
@@ -762,6 +770,7 @@ export class Engine {
 
   /** Once per rendered frame. Order matters: input -> camera -> world streaming -> draw. */
   private render = (dt: number, alpha: number): void => {
+    if (this.renderQuality === 0) this.dynRes.sample(dt);
     if (this.input.wasPressed('F3')) this.debug.toggle();
     if (this.input.wasPressed('KeyM')) this.setMuted(!this.voice.isMuted);
     if (this.input.wasPressed('Tab')) this.settingsMenu.toggle(); // the settings menu (the gear button does the same)
@@ -1278,7 +1287,16 @@ export class Engine {
   private applyRenderScale(): void {
     const w = Math.max(1, this.container.clientWidth);
     const dpr = window.devicePixelRatio || 1;
-    const ratio = this.renderQuality === 0 ? Math.min(dpr, 2) : this.renderQuality === 1 ? Math.min(Math.max(dpr, 1.5), 2) : Math.min(Math.max(dpr, 3840 / w), 3);
+    const h = Math.max(1, this.container.clientHeight);
+    let ratio: number;
+    if (this.renderQuality === 0) {
+      // normal: the preset's ratio cap and pixel budget, times the automatic resolution factor
+      const budget = Math.sqrt(Q.maxPixels / (w * h));
+      ratio = Math.max(0.5, Math.min(dpr, Q.maxDpr, budget) * this.dynRes.scale);
+    } else {
+      // high / 4K: chosen by the player on purpose, left as it was
+      ratio = this.renderQuality === 1 ? Math.min(Math.max(dpr, 1.5), 2) : Math.min(Math.max(dpr, 3840 / w), 3);
+    }
     this.renderer.setPixelRatio(ratio);
     this.renderer.setSize(w, this.container.clientHeight);
   }

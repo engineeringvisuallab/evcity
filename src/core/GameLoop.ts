@@ -10,6 +10,8 @@ export class GameLoop {
   private last = 0;
   private rafId = 0;
   private running = false;
+  /** 0 = no limit. Frames (physics + picture) are skipped to stay at this rate: less heat and battery use. */
+  maxFps = 0;
 
   constructor(
     private time: Time,
@@ -32,6 +34,7 @@ export class GameLoop {
   private tick = (now: number): void => {
     if (!this.running) return;
     this.rafId = requestAnimationFrame(this.tick);
+    if (this.maxFps > 0 && now - this.last < 1000 / this.maxFps - 2) return;
 
     const frame = Math.min((now - this.last) / 1000, Config.loop.maxFrameTime);
     this.last = now;

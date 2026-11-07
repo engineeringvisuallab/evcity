@@ -5,9 +5,13 @@ import type { Engine } from './core/Engine';
 import { bn } from './i18n';
 import { Splash } from './ui/Splash';
 import { Watermark } from './ui/Watermark';
+import { initQuality } from './core/Quality';
 
 const container = document.getElementById('app');
 if (!container) throw new Error('#app element not found');
+
+// Graphics preset (phone / tablet / PC, Chrome / Safari): must run BEFORE the engine modules are imported (they read LOD, shadow and fog numbers).
+initQuality();
 
 // Logo splash shows immediately and stays until the engine is ready.
 const splash = new Splash();

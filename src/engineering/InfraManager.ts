@@ -11,6 +11,7 @@ import type { TerrainGenerator } from '../terrain/TerrainGenerator';
 import type { InputManager } from '../input/InputManager';
 import { getInfrastructureDef, InfraTour, registerBuiltinInfrastructure, type Infrastructure, type Narrator } from './index';
 import type { InfraSite } from './InfraSites';
+import { Q } from '../core/Quality';
 
 export interface InfraDeps {
   root: THREE.Object3D; // world.root: children use ABSOLUTE world coordinates
@@ -25,6 +26,8 @@ export interface InfraDeps {
   canStart?: () => boolean;
   /** Game clock (s) of the planes: plants that move with the airplane timetable (the aircraft factory) follow it. */
   clock?: () => number;
+  /** Build each plant only when the player comes within its draw distance (fast start-up). Default false = build all at once (the tests rely on it). */
+  lazy?: boolean;
 }
 
 export interface Plant {
@@ -34,10 +37,12 @@ export interface Plant {
   /** distance from the pad's river-side edge to the river, and the river level relative to the floor (measured) */
   riverReach: number;
   waterRel: number;
+  /** Only lazy plants: false until the plant has been built. */
+  readonly built?: boolean;
 }
 
 const ANIM_DIST = 900; // plant animation (flow dots, rotors, plumes) runs only this close
-const SHOW_DIST = 2400; // a plant is drawn within this distance of the player
+// a plant is built and drawn within Q.siteShowDist (2400 m on a strong PC, less on weaker devices) of the player
 const HINT_DIST = 450; // "press Y" hint within this distance
 const FONT = '"Noto Sans Bengali", "Nirmala UI", system-ui, sans-serif';
 
@@ -56,7 +61,7 @@ export class InfraManager {
   constructor(private d: InfraDeps) {
     registerBuiltinInfrastructure();
     this.lastOrigin.copy(d.origin.origin);
-    for (const site of d.terrain.infra) this.plants.push(this.build(site));
+    for (const site of d.terrain.infra) this.plants.push(d.lazy ? this.lazyPlant(site) : this.build(site));
 
     this.hint = document.createElement('div');
     Object.assign(this.hint.style, {
@@ -72,7 +77,7 @@ export class InfraManager {
 
   /** The Tour menu: one entry per engineering site in the world. */
   listTours(): { id: string; name: string; color: string; mark: string; category: string; stops: number }[] {
-    return this.plants.map((pl) => ({ id: pl.site.id, name: pl.site.nameBn, color: pl.site.color, mark: pl.site.mark, category: pl.infra.category, stops: pl.tour.stops.length }));
+    return this.plants.map((pl) => ({ id: pl.site.id, name: pl.site.nameBn, color: pl.site.color, mark: pl.site.mark, category: pl.built === false ? (getInfrastructureDef(pl.site.id)?.category ?? '') : pl.infra.category, stops: pl.built === false ? 0 : pl.tour.stops.length }));
   }
 
   /** Tour menu: start the guided tour of site `id` from wherever the player is (the camera cuts to the site, like Y next to it). */
@@ -97,6 +102,20 @@ export class InfraManager {
   }
 
   // ---------------------------------------------------------------------------------------------
+
+  /** A plant that is built the first time its infra / tour is used (InfraDeps.lazy): start-up does not pay for sites the player never visits. */
+  private lazyPlant(site: InfraSite): Plant {
+    let real: Plant | null = null;
+    const get = (): Plant => (real ??= this.build(site));
+    return {
+      site,
+      get built() { return real !== null; },
+      get infra() { return get().infra; },
+      get tour() { return get().tour; },
+      get riverReach() { return get().riverReach; },
+      get waterRel() { return get().waterRel; },
+    };
+  }
 
   private build(site: InfraSite): Plant {
     const { terrain, root } = this.d;
@@ -175,9 +194,22 @@ export class InfraManager {
     const pw = this.d.playerWorld(this.p);
     let nearest: Plant | null = null;
     let nd = Infinity;
+    let builtNow = false; // at most one lazy plant is built per frame
     for (const pl of this.plants) {
       const dist = Math.hypot(pw.x - pl.site.x, pw.z - pl.site.z);
-      pl.infra.root.visible = dist < SHOW_DIST || this.active === pl;
+      if (pl.built === false) {
+        if (dist < Q.siteShowDist && !builtNow) {
+          builtNow = true;
+          void pl.infra; // the player came near: build it now
+        } else {
+          if (dist < nd) {
+            nd = dist;
+            nearest = pl;
+          }
+          continue; // not built, nothing to draw
+        }
+      }
+      pl.infra.root.visible = dist < Q.siteShowDist || this.active === pl;
       if (pl.infra.root.visible && pl.infra.update && (dist < ANIM_DIST || this.active === pl)) pl.infra.update(dt); // spinning rotors, flowing dots, plumes
       if (dist < nd) {
         nd = dist;
@@ -248,6 +280,7 @@ export class InfraManager {
     this.active?.tour.stop();
     for (const b of this.bodies) this.d.physics.world.removeRigidBody(b);
     for (const pl of this.plants) {
+      if (pl.built === false) continue;
       pl.infra.root.removeFromParent();
       pl.infra.dispose();
     }
