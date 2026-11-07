@@ -599,7 +599,7 @@ export const bn = {
     close: 'বন্ধ করুন',
     blocked: 'ট্যুর শুরুর আগে যানবাহন, হেলিকপ্টার, নৌকা বা ভবন থেকে নেমে আসুন।',
     stops: (n: number) => `${String(n).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)])}টি ধাপ`,
-    categories: { civil: 'সিভিল', mechanical: 'মেকানিক্যাল', electrical: 'ইলেকট্রিক্যাল', chemical: 'কেমিক্যাল', energy: 'এনার্জি' } as Record<string, string>,
+    categories: { civil: 'সিভিল', mechanical: 'মেকানিক্যাল', electrical: 'ইলেকট্রিক্যাল', chemical: 'কেমিক্যাল', energy: 'এনার্জি', materials: 'ম্যাটেরিয়ালস' } as Record<string, string>,
   },
 
   /** ধাপ ৭: বিমান — যাত্রীবাহী শাটল, বিদেশগামী বিমান, সামরিক যুদ্ধবিমান; যাত্রী হিসেবে বিমানে ওঠা-নামা (F চাপুন)। */

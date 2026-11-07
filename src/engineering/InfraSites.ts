@@ -9,7 +9,7 @@ const smoothstep = (a: number, b: number, x: number): number => {
 };
 
 export interface InfraPlacement {
-  id: 'swtp' | 'stp' | 'thermal' | 'grid' | 'mech' | 'dam' | 'chem' | 'auto' | 'renew' | 'vehicle' | 'tech' | 'aircraft';
+  id: 'swtp' | 'stp' | 'thermal' | 'grid' | 'mech' | 'dam' | 'chem' | 'auto' | 'renew' | 'vehicle' | 'tech' | 'aircraft' | 'textile';
   nameBn: string;
   /** site origin (the local (0,0) of the plant) and yaw: local +x maps to world (cos yaw, -sin yaw) */
   x: number;
@@ -68,6 +68,9 @@ export const INFRA_PLACEMENTS: InfraPlacement[] = [
   // Aircraft factory: INSIDE the grounds of the old airport (east of its apron, south side of the runway), on the airport's own flat pad: its floor is the airport floor.
   // Local +x = east, the assembly hall runs along the north side, the rollout door is in the west wall towards the apron.
   { id: 'aircraft', nameBn: 'Aircraft Factory', x: 3000, z: -3740, yaw: 0, rect: { x0: -190, x1: 190, z0: -112, z1: 112 }, riverSide: 'none', color: '#38bdf8', mark: 'A', deep: 0, blend: 24, riverBlend: 24, lift: 0, floorFrom: 'airport' },
+  // Textile & garments factory: inside the engineering area 'eng-textile' (x 550..1000, z -2600..-2250), centred in the area (>= 70 m from every edge); the gate faces south
+  // towards the area's south entrance gate (ENGINEERING_GATES).
+  { id: 'textile', nameBn: 'Textile & Garments Factory', x: 775, z: -2425, yaw: 0, rect: { x0: -155, x1: 155, z0: -105, z1: 105 }, riverSide: 'none', color: '#ec4899', mark: 'F', deep: 1.5, blend: 26, riverBlend: 26, lift: 0 },
 ];
 
 /** Floor is cut slightly BELOW the plate so the plate never z-fights with the ground. */

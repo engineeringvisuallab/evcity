@@ -10,6 +10,7 @@ import { mechDef, autoDef, vehicleDef, aircraftDef } from './mechanical';
 import { damDef } from './civil';
 import { chemDef } from './chemical';
 import { renewDef } from './renewable';
+import { textileDef } from './materials';
 
 export * from './core/types';
 export { InfraTour, estimateSpeech } from './core/InfraTour';
@@ -29,5 +30,6 @@ export function registerBuiltinInfrastructure(): void {
   registerInfrastructure(renewDef);
   registerInfrastructure(vehicleDef);
   registerInfrastructure(techDef);
+  registerInfrastructure(textileDef);
   // registerInfrastructure(wtpGroundwaterDef);  // later ...
 }

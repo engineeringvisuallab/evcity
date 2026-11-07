@@ -101,6 +101,8 @@ export const ENGINEERING_GATES: Readonly<Record<string, { side: 'N' | 'S' | 'E' 
   'eng-thermal-power': { side: 'S', at: 925, width: 30 },
   'eng-dam': { side: 'S', at: 3450, width: 30 },
   'eng-vehicle': { side: 'S', at: -129, width: 30 },
+  // textile & garments factory: its gate is at local x -110, i.e. world x 665
+  'eng-textile': { side: 'S', at: 665, width: 30 },
 };
 
 export const ENGINEERING_BY_ID: ReadonlyMap<string, EngineeringArea> = new Map(ENGINEERING_AREAS.map((a) => [a.id, a]));
