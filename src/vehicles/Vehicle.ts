@@ -8,6 +8,7 @@ import type { TerrainGenerator } from '../terrain';
 import type { FloatingOrigin } from '../world/FloatingOrigin';
 import { clamp } from '../utils/math';
 import { Powertrain } from './Powertrain';
+import { CARGO_CAP } from './FuelAreas';
 import { ENERGY, consumptionFactor, rangeKm, type EnergyKind } from './Energy';
 import { VehicleModel } from './VehicleModel';
 import { VehicleLights } from './VehicleLights';
@@ -78,6 +79,9 @@ export interface VehicleTelemetry {
   energy: number;
   energyKind: EnergyKind | null;
   rangeKm: number;
+  /** Fuel cargo (m3) and how much this vehicle can carry (0 = nothing). */
+  cargo: number;
+  cargoCap: number;
 }
 
 /** Everything the sound system (VehicleAudio) needs from a vehicle. */
@@ -191,6 +195,8 @@ export class Vehicle implements OrbitTarget {
   hp = 100;
   /** Fuel tank / battery level 0..1 (see Energy.ts). Only the vehicle the PLAYER drives uses it up; AI traffic never does. */
   energy = 1;
+  /** Fuel (m3) loaded at the mine, on its way to the main station (see FuelAreas.ts CARGO_CAP). */
+  cargo = 0;
   state: 'ok' | 'burning' | 'wrecked' = 'ok';
   /** Seconds since the wreck blew up. */
   wreckedFor = 0;
@@ -1803,6 +1809,8 @@ export class Vehicle implements OrbitTarget {
       energy: this.energy,
       energyKind: ENERGY[this.spec.id]?.kind ?? null,
       rangeKm: ENERGY[this.spec.id] ? rangeKm(ENERGY[this.spec.id]!, this.energy, this.hp / 100) : 0,
+      cargo: this.cargo,
+      cargoCap: CARGO_CAP[this.spec.id] ?? 0,
     };
   }
 

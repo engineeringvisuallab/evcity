@@ -603,6 +603,10 @@ export class Engine {
     // --- Gold economy: accidents (vehicle crash / run over people) are fined, killing a criminal is rewarded ---
     this.economy = new Economy(container);
     this.vehicles.onPersonHit = (p, died) => this.economy.personHit(p, died);
+    // stations: fuel / charge cost Gold; fuel delivered from the mine to the main station earns the bonus
+    this.vehicles.payGold = (amount, reason) => this.economy.buy(amount, reason);
+    this.vehicles.bonusGold = (amount, reason) => this.economy.bonus(amount, reason);
+    this.vehicles.goldBalance = () => this.economy.balance;
     this.vehicles.setCrashHook((v, dv, speed) => this.onVehicleCrash(v, dv, speed));
     this.people.onCriminalKilled = () => this.economy.criminalKilled();
     this.mapStops = this.busStops.stops.filter((b) => b.dir === 1);

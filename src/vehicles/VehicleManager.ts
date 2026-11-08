@@ -19,8 +19,11 @@ import { Vehicle, type DriveInput, type Driver, type VehicleDeps } from './Vehic
 import type { VehicleSpec } from './VehicleSpec';
 import { VehicleAudio } from './VehicleAudio';
 import { ENERGY } from './Energy';
-import { CHARGE_SECONDS, FILL_SECONDS, STAND_STILL, chargeAreaAt, fuelAreaAt } from './FuelAreas';
-import { bn } from '../i18n';
+import {
+  CARGO_CAP, CHARGE_PRICE_FULL, CHARGE_SECONDS, DELIVERY_BONUS, BONUS_CARGO, FILL_SECONDS, FUEL_PRICE_FULL, LOAD_SECONDS, MINE_LOAD, STAND_STILL, UNLOAD_SECONDS,
+  chargeAreaAt, fuelAreaAt, mainStationAt, mineLoadAt,
+} from './FuelAreas';
+import { bn, bnNum } from '../i18n';
 
 export interface VehicleManagerDeps {
   vehicle: VehicleDeps;
@@ -302,32 +305,103 @@ export class VehicleManager {
     }
   }
 
+  // ------------------------------------------------------------------ stations, mine, main station
+  /** Set by the Engine: take Gold for fuel / charge (returns the Gold really taken), give the delivery bonus, and the current balance. */
+  payGold: ((amount: number, reason: string) => number) | null = null;
+  bonusGold: ((amount: number, reason: string) => void) | null = null;
+  goldBalance: (() => number) | null = null;
+
   /** 0 = fine, 1 = warned "low", 2 = warned "empty" (per vehicle, so the warning is not repeated every frame). */
   private energyWarn = new WeakMap<Vehicle, number>();
   private energyZone = '';
+  /** Gold owed for fuel / charge taken so far (paid in whole Gold). */
+  private energyDue = 0;
+  /** Fuel unloaded at the main station in this stop (m3) - paid when the unloading ends. */
+  private unloaded = 0;
+  private brokeWarned = false;
 
-  /** Fuel / charge of the vehicle the player drives: refill inside a fuel area (fuel) or at a charge point (electric), warn when low / empty. */
+  /**
+   * The vehicle the player drives:
+   *  - small station: standing still inside = the tank fills (fuel) / the battery charges (electric) and Gold is paid for it,
+   *  - mine load area: standing still = fuel is loaded into the vehicle (if it can carry any),
+   *  - main station: standing still = the load is unloaded and the delivery bonus is paid,
+   *  - warnings when the fuel / charge is low or empty.
+   */
   private energyTick(dt: number): void {
     const v = this.driver;
     if (!v) {
       this.energyZone = '';
+      this.flushDelivery();
       return;
     }
-    const en = ENERGY[v.spec.id];
-    if (!en) return;
     const say = (msg: string) => this.d.toast?.(msg);
-    const fuel = en.kind === 'fuel';
     v.getWorldPosition(this.tmp);
-    const area = fuel ? fuelAreaAt(this.tmp.x, this.tmp.z) : chargeAreaAt(this.tmp.x, this.tmp.z);
-    const id = area?.id ?? '';
+    const px = this.tmp.x;
+    const pz = this.tmp.z;
+    const still = Math.abs(v.forwardSpeed) < STAND_STILL;
+    const cap = CARGO_CAP[v.spec.id] ?? 0;
+
+    // ---- which place is the vehicle in? ----
+    const en = ENERGY[v.spec.id];
+    const fuel = en?.kind === 'fuel';
+    const st = en ? (fuel ? fuelAreaAt(px, pz) : chargeAreaAt(px, pz)) : null;
+    const free = st !== null && 'free' in st && st.free === true;
+    const mine = mineLoadAt(px, pz);
+    const main = mainStationAt(px, pz);
+    const id = st?.id ?? (mine ? MINE_LOAD.id : main ? 'main-station' : '');
     if (id !== this.energyZone) {
+      if (this.energyZone === 'main-station') this.flushDelivery();
       this.energyZone = id;
-      if (area) say(`${fuel ? '⛽' : '🔌'} ${area.nameBn} — ${fuel ? bn.vehicle.fuelAreaIn : bn.vehicle.chargeAreaIn}`);
+      this.brokeWarned = false;
+      if (st) say(`${fuel ? '⛽' : '🔌'} ${st.nameBn} — ${fuel ? bn.vehicle.fuelAreaIn : bn.vehicle.chargeAreaIn}${free ? '' : ` (${bn.vehicle.paid})`}`);
+      else if (mine) say(cap > 0 ? `⛏️ ${MINE_LOAD.nameBn} — ${bn.vehicle.loadIn}` : `⛏️ ${MINE_LOAD.nameBn} — ${bn.vehicle.noCargo}`);
+      else if (main) say(v.cargo > 0 ? `🏭 ${bn.vehicle.mainStation} — ${bn.vehicle.unloadIn}` : `🏭 ${bn.vehicle.mainStation} — ${bn.vehicle.noLoad}`);
     }
-    if (area && Math.abs(v.forwardSpeed) < STAND_STILL && v.energy < 1) {
-      v.energy = Math.min(1, v.energy + dt / (fuel ? FILL_SECONDS : CHARGE_SECONDS));
-      if (v.energy >= 1) say(`${fuel ? '⛽' : '🔋'} ${fuel ? bn.vehicle.fuelFull : bn.vehicle.chargeFull}`);
+
+    // ---- small station: refill / recharge and pay ----
+    if (en && st && still && v.energy < 1) {
+      const full = fuel ? FILL_SECONDS : CHARGE_SECONDS;
+      const inc = Math.min(1 - v.energy, dt / full);
+      const price = fuel ? FUEL_PRICE_FULL : CHARGE_PRICE_FULL;
+      const broke = !free && (this.goldBalance?.() ?? 1) <= 0 && this.energyDue < 1;
+      if (broke) {
+        if (!this.brokeWarned) {
+          this.brokeWarned = true;
+          say(`💸 ${bn.vehicle.noGold}`);
+        }
+      } else {
+        v.energy += inc;
+        if (!free) {
+          this.energyDue += inc * price;
+          const whole = Math.floor(this.energyDue);
+          if (whole >= 1) this.energyDue -= this.payGold ? this.payGold(whole, fuel ? bn.vehicle.fuel : bn.vehicle.charge) : whole;
+        }
+        if (v.energy >= 0.9999) {
+          v.energy = 1;
+          say(`${fuel ? '⛽' : '🔋'} ${fuel ? bn.vehicle.fuelFull : bn.vehicle.chargeFull}`);
+        }
+      }
     }
+
+    // ---- mine: load fuel ----
+    if (mine && cap > 0 && still && v.cargo < cap) {
+      v.cargo = Math.min(cap, v.cargo + (cap * dt) / LOAD_SECONDS);
+      if (v.cargo >= cap) say(`🛢️ ${bn.vehicle.loaded} (${bnNum(cap, 1)} ${bn.vehicle.m3}) — ${bn.vehicle.goMain}`);
+    }
+
+    // ---- main station: unload, bonus when done ----
+    if (main && still && v.cargo > 0) {
+      const d = Math.min(v.cargo, (Math.max(cap, 0.01) * dt) / UNLOAD_SECONDS);
+      v.cargo -= d;
+      this.unloaded += d;
+      if (v.cargo <= 1e-6) {
+        v.cargo = 0;
+        this.flushDelivery();
+      }
+    }
+
+    // ---- warnings ----
+    if (!en) return;
     const w = this.energyWarn.get(v) ?? 0;
     if (v.energy <= 0 && w < 2) {
       this.energyWarn.set(v, 2);
@@ -336,6 +410,14 @@ export class VehicleManager {
       this.energyWarn.set(v, 1);
       say(`⚠️ ${fuel ? bn.vehicle.fuelLow : bn.vehicle.chargeLow}`);
     } else if (v.energy > 0.25 && w > 0) this.energyWarn.set(v, 0);
+  }
+
+  /** Pay the delivery bonus for the fuel unloaded so far (once per stop). */
+  private flushDelivery(): void {
+    if (this.unloaded <= 0) return;
+    const bonus = Math.round((DELIVERY_BONUS * this.unloaded) / BONUS_CARGO);
+    this.unloaded = 0;
+    if (bonus > 0) this.bonusGold?.(bonus, bn.vehicle.deliveryBonus);
   }
 
   nearest(maxDist: number): Vehicle | null {

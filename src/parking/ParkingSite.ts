@@ -41,15 +41,27 @@ export const SIDE_DRIVE: LotRect = { id: 'sidedrive', s0: 108, s1: 116, n0: -14.
 export const PARKING_LOTS: ReadonlyArray<LotRect> = [MALL_LOT, APRON, EVLAB_LOT, FRONT_ROW, SIDE_LOT, SIDE_DRIVE];
 
 /**
- * FUEL AREAS: land kept free for fuel stations (nothing is built here yet - no pumps, no roof, no paint).
- * A fuel vehicle that stops inside one gets its tank filled (see vehicles/FuelAreas.ts). Same lot frame as the parking lots.
+ * SMALL STATIONS (FUEL_LOTS): land kept free for fuel / charge stations (nothing is built here yet - no pumps, no roof, no paint).
+ * A vehicle that stops inside one is refuelled (fuel vehicles) or charged (electric) and PAYS Gold for it (see vehicles/FuelAreas.ts). Same lot frame as the parking lots.
  * Move s0/s1 along F4 / n0/n1 across it; add another entry to add another area.
  */
 export interface FuelLot { id: string; nameBn: string; s0: number; s1: number; n0: number; n1: number }
 export const FUEL_LOTS: ReadonlyArray<FuelLot> = [
-  { id: 'fuel-1', nameBn: 'ফুয়েল এরিয়া ১', s0: 92, s1: 124, n0: 14, n1: 40 },
-  { id: 'fuel-2', nameBn: 'ফুয়েল এরিয়া ২', s0: 158, s1: 190, n0: -40, n1: -14.5 },
+  // start side of F4 (n > 0)
+  { id: 'station-1', nameBn: 'স্টেশন ১', s0: 92, s1: 124, n0: 14, n1: 40 },
+  { id: 'station-3', nameBn: 'স্টেশন ৩', s0: 220, s1: 252, n0: 14, n1: 40 },
+  { id: 'station-5', nameBn: 'স্টেশন ৫', s0: 300, s1: 332, n0: 14, n1: 40 },
+  // mall side of F4 (n < 0)
+  { id: 'station-2', nameBn: 'স্টেশন ২', s0: 158, s1: 190, n0: -40, n1: -14.5 },
+  { id: 'station-4', nameBn: 'স্টেশন ৪', s0: 240, s1: 272, n0: -40, n1: -14.5 },
+  { id: 'station-6', nameBn: 'স্টেশন ৬', s0: 320, s1: 352, n0: -40, n1: -14.5 },
 ];
+
+/**
+ * MAIN STATION area: the player brings the fuel loaded at the mine (see MINE_LOAD in vehicles/FuelAreas.ts) here and is paid a bonus.
+ * Land only for now (nothing built); the engineering pump station will be built here later. Start side of F4, next to station-1.
+ */
+export const MAIN_STATION_LOT: FuelLot = { id: 'main-station', nameBn: 'মেইন স্টেশন', s0: 132, s1: 184, n0: 14, n1: 52 };
 
 /** World position -> lot frame (s along F4, n across it). */
 export function worldToLot(x: number, z: number): { s: number; n: number } {
@@ -67,6 +79,8 @@ export function parkingContains(x: number, z: number, margin = 0): boolean {
   for (const l of FUEL_LOTS) {
     if (s >= l.s0 - margin && s <= l.s1 + margin && n >= l.n0 - margin && n <= l.n1 + margin) return true;
   }
+  const m = MAIN_STATION_LOT;
+  if (s >= m.s0 - margin && s <= m.s1 + margin && n >= m.n0 - margin && n <= m.n1 + margin) return true;
   return false;
 }
 

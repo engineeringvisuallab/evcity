@@ -44,6 +44,18 @@ export class Economy {
     this.hud.setChipVisible(on);
   }
 
+  /** Buying fuel / charge at a station: takes up to `amount` Gold (no pop-up per step; the balance chip updates). Returns the Gold really taken. */
+  buy(amount: number, reason: string): number {
+    return this.gold.charge(amount, reason);
+  }
+
+  /** Income with a pop-up message (e.g. the fuel delivery bonus). */
+  bonus(amount: number, reason: string): void {
+    if (amount <= 0) return;
+    this.gold.earn(amount, reason);
+    this.hud.say(`${reason}: +${fmt(amount)} ${bn.gold.unit}`, 'income');
+  }
+
   /** The player's vehicle crossed a stop line on a red light. */
   redLight(): void {
     if (this.now - this.lastSignalFine < GoldConfig.signalCooldown) return;

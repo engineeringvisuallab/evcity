@@ -19,3 +19,10 @@
 
 ## Charging
 - Not built. Planned points are listed in docs/CHARGING_POINTS.md. Until then the EVLAB fleet lot is the one charging depot.
+
+## Stations, mine and main station (Step 1: land only, no structures)
+- Small stations (`FUEL_LOTS`, parking/ParkingSite.ts): 6 areas along F4 (station-1..6). Standing still inside = fuel vehicles fill the tank, electric vehicles charge, and the player PAYS Gold (full tank 400, full battery 250; part-full costs less; no Gold = no refill). Prices: vehicles/FuelAreas.ts.
+- Mine load area (`MINE_LOAD`, inside eng-mining, x -3320..-3280, z -420..-380): standing still loads fuel into a vehicle that can carry it (`CARGO_CAP`: rickshaw 0.5, auto 1, sedan 1, jeep 2, pickup 4, bus 4 m3; 8 s for a full load). HUD shows the load.
+- Main station area (`MAIN_STATION_LOT`, start side of F4 next to station-1): standing still unloads (6 s) and pays 10000 Gold for 4 m3, proportionally less for less (`DELIVERY_BONUS`, `BONUS_CARGO`). Repeatable.
+- Free EVLAB charging depot stays until real charge points are built.
+- Still to check in game: the mine load spot must be drivable (move MINE_LOAD if not); F4 must be long enough for stations 3-6 (s up to 352).

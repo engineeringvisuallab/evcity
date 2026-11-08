@@ -158,6 +158,14 @@ export class VehicleHUD {
       c.textAlign = 'center';
       c.fillText(bn.vehicle.handbrake, 218, 166);
     }
+    // fuel cargo loaded at the mine (top-left, under the rpm unit)
+    if (t.cargoCap > 0 && t.cargo > 0.001) {
+      c.textAlign = 'left';
+      c.font = `500 11px ${UI_FONT}`;
+      c.fillStyle = '#ffd479';
+      c.fillText(`🛢 ${bnNum(t.cargo, 1)}/${bnNum(t.cargoCap, 1)} ${bn.vehicle.m3}`, 10, 34);
+      c.textAlign = 'center';
+    }
     // fuel tank / battery: bar + estimated distance left (bottom-left)
     if (t.energyKind) {
       const e = Math.max(0, Math.min(1, t.energy));
