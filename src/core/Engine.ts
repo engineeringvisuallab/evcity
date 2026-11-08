@@ -317,7 +317,7 @@ export class Engine {
     this.bridgePhysics = new BridgePhysics(physics, this.world.origin, roads.bridges, roads.roads);
     this.roadDebug = new RoadDebug(roads);
     this.streetLights = new StreetLights(this.world.root, roads);
-    this.junctionMirrors = new JunctionMirrors(this.world.root, roads, this.streetLights.spots);
+    this.junctionMirrors = new JunctionMirrors(this.world.root, roads, this.streetLights.spots, { live: Q.mirrorLive, dist: Q.mirrorLiveDist, size: Q.mirrorTex, samples: Q.antialias ? 4 : 0 });
     this.world.root.add(this.roadDebug.group);
     this.rail = this.world.terrain.rail;
     this.railDebug = new RailDebug(this.rail);
@@ -1037,6 +1037,9 @@ export class Engine {
       cars: this.vehicles.vehicles.length,
       aiCars: this.traffic.aiCount,
     }));
+
+    // the few road mirrors nearest to the camera draw the real scene (a small extra render each, before the main picture)
+    this.junctionMirrors.renderLive(this.renderer, this.scene, this.camera);
 
     if (Q.shadowInterval > 1) {
       // weak devices: the sun shadow map is redrawn only every n-th frame (the shadow box still follows the camera in texel steps)

@@ -73,6 +73,12 @@ export interface QualitySettings {
   signRadiusMul: number;
   /** Road sign boards: at most this many get their text drawn (a canvas texture) in one frame. */
   signPaintPerFrame: number;
+  /** Junction road mirrors: how many nearby mirrors show the real scene at once (0 = only the painted picture). */
+  mirrorLive: number;
+  /** Junction road mirrors: a mirror shows the real scene only within this distance (m) of the camera. */
+  mirrorLiveDist: number;
+  /** Junction road mirrors: size (px) of the square picture a live mirror renders. */
+  mirrorTex: number;
 }
 
 export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
@@ -83,6 +89,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
     peopleTarget: 12, trafficTarget: 5, maxBuses: 1, flockCount: 4, landAnimals: 24, predators: 2, dolphins: 3, fishSchools: 4,
     lampStepMul: 1.6, lightFxDist: 45, farmMul: 0.65, siteDisposeMul: 2.5, siteMerge: true, siteShadowMinR: 1.2, maxAniso: 2, shadowInterval: 2,
     signRadiusMul: 0.6, signPaintPerFrame: 1,
+    mirrorLive: 1, mirrorLiveDist: 30, mirrorTex: 256,
   },
   medium: {
     tier: 'medium', maxDpr: 1.25, maxPixels: 2_800_000, antialias: false, powerPreference: 'default',
@@ -91,6 +98,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
     peopleTarget: 22, trafficTarget: 8, maxBuses: 2, flockCount: 8, landAnimals: 42, predators: 3, dolphins: 5, fishSchools: 7,
     lampStepMul: 1.25, lightFxDist: 80, farmMul: 0.85, siteDisposeMul: 0, siteMerge: true, siteShadowMinR: 0.5, maxAniso: 4, shadowInterval: 1,
     signRadiusMul: 0.8, signPaintPerFrame: 2,
+    mirrorLive: 1, mirrorLiveDist: 40, mirrorTex: 384,
   },
   high: {
     tier: 'high', maxDpr: 2, maxPixels: 8_300_000, antialias: true, powerPreference: 'high-performance',
@@ -99,6 +107,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
     peopleTarget: 34, trafficTarget: 12, maxBuses: 3, flockCount: 12, landAnimals: 64, predators: 4, dolphins: 8, fishSchools: 10,
     lampStepMul: 1, lightFxDist: 130, farmMul: 1, siteDisposeMul: 0, siteMerge: true, siteShadowMinR: 0, maxAniso: 16, shadowInterval: 1,
     signRadiusMul: 1, signPaintPerFrame: 3,
+    mirrorLive: 2, mirrorLiveDist: 50, mirrorTex: 512,
   },
 };
 

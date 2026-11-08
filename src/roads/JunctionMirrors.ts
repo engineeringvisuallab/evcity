@@ -1,4 +1,7 @@
-// ROAD (CONVEX) MIRRORS at junctions: a short pole with a round orange-rimmed mirror, like the ones on real blind corners.
+// ROAD (CONVEX) MIRRORS at junctions: a pole with a big round orange-rimmed mirror, like the ones on real blind corners.
+//
+//   Every mirror has a painted picture (cheap, instanced). The few mirrors nearest to the camera (Q.mirrorLive) show the REAL scene instead:
+//   a small extra render from the mirror, bent like a fish-eye (convex) and flipped like a reflection. See JunctionMirrors.renderLive.
 //
 //   planJunctionMirrors(roads)   pure placement (no three.js scene): where every mirror stands and which way it faces
 //   JunctionMirrors              the 3D layer. Everything is INSTANCED: 2 draw calls for the whole map (poles + mirror faces)
@@ -133,9 +136,75 @@ export function planJunctionMirrors(roads: RoadNetwork, avoid: ReadonlyArray<{ x
 
 // --------------------------------------------------------------------------------------------------------------------------------------
 
-const MIRROR_R = 0.45;
-const MIRROR_Y = 2.45; // centre height above the foot of the pole (m)
-const POLE_TOP = 3.0;
+const MIRROR_R = 0.8; // rim radius (m): a 1.6 m round mirror, readable from 40+ m
+const MIRROR_Y = 3.2; // centre height above the foot of the pole (m); the lowest edge stays above 2.3 m
+const POLE_TOP = 4.1;
+/** Glass radius / rim radius in the painted face (faceTexture: 50 px of 64). The live picture is a little smaller so the rim stays visible. */
+const GLASS = 0.76;
+/** Live mirror: field of view of the render (deg, both ways) and how far the camera is tilted down (rad). The convex look is made by the disc's UVs. */
+const LIVE_FOV = 130;
+const LIVE_PITCH = 0.12;
+
+export interface MirrorLiveOptions {
+  /** How many mirrors may show the real scene at once (0 = none, only the painted picture). */
+  live: number;
+  /** Only mirrors within this distance (m) of the camera go live. */
+  dist: number;
+  /** Size (px) of each live picture (square). */
+  size: number;
+  /** MSAA samples of the live picture (0 = off). */
+  samples: number;
+}
+
+/**
+ * The glass of a live mirror: a polar disc (centre fan + rings) whose UVs squeeze a wide rectilinear picture into a fish-eye one
+ * (equidistant: angle from the axis is proportional to the distance from the centre) and flip it left-right, like a real reflection.
+ */
+function glassGeometry(radius: number, rings = 10, segs = 40): THREE.BufferGeometry {
+  const half = (LIVE_FOV / 2) * (Math.PI / 180);
+  const tMax = Math.tan(half);
+  const pos: number[] = [0, 0, 0];
+  const uv: number[] = [0.5, 0.5];
+  const idx: number[] = [];
+  for (let r = 1; r <= rings; r++) {
+    const rho = r / rings;
+    const img = Math.tan(rho * half) / tMax; // 0..1 across the rendered square
+    for (let s = 0; s < segs; s++) {
+      const a = (s / segs) * Math.PI * 2;
+      const c = Math.cos(a);
+      const sn = Math.sin(a);
+      pos.push(c * rho * radius, sn * rho * radius, 0);
+      uv.push(0.5 - 0.5 * img * c, 0.5 + 0.5 * img * sn); // camera right = mirror -X, so u runs backwards: the reflection flip
+    }
+  }
+  for (let s = 0; s < segs; s++) idx.push(0, 1 + s, 1 + ((s + 1) % segs));
+  for (let r = 1; r < rings; r++) {
+    const base = 1 + (r - 1) * segs;
+    const next = 1 + r * segs;
+    for (let s = 0; s < segs; s++) {
+      const a = base + s;
+      const b = base + ((s + 1) % segs);
+      const cc = next + s;
+      const d = next + ((s + 1) % segs);
+      idx.push(a, cc, d, a, d, b);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx);
+  return g;
+}
+
+interface LiveView {
+  rt: THREE.WebGLRenderTarget;
+  mat: THREE.MeshBasicMaterial;
+  mesh: THREE.Mesh;
+  /** Index into `spots` this view shows now (-1 = free). */
+  spot: number;
+  /** The first picture of the current spot is drawn already. */
+  ready: boolean;
+}
 
 /** The face: an orange rim with white stripes and a convex "reflection" (sky above, road below, curved horizon). */
 function faceTexture(): THREE.CanvasTexture {
@@ -207,17 +276,26 @@ export class JunctionMirrors {
   private poleMat = new THREE.MeshLambertMaterial({ color: 0x6a6f75 });
   private tex: THREE.CanvasTexture;
   private geos: THREE.BufferGeometry[] = [];
+  // live (real scene) mirrors
+  private live: LiveView[] = [];
+  private liveCam: THREE.PerspectiveCamera | null = null;
+  private liveDist: number;
+  private tick = 0;
+  private rr = 0;
+  private tmpP = new THREE.Vector3();
+  private tmpD = new THREE.Vector3();
 
-  constructor(parent: THREE.Object3D, roads: RoadNetwork, avoid: ReadonlyArray<{ x: number; z: number }> = []) {
+  constructor(parent: THREE.Object3D, roads: RoadNetwork, avoid: ReadonlyArray<{ x: number; z: number }> = [], opts: MirrorLiveOptions = { live: 0, dist: 40, size: 256, samples: 0 }) {
     this.spots = planJunctionMirrors(roads, avoid);
+    this.liveDist = opts.dist;
     const n = this.spots.length;
 
     // instance frame: +Z = the way the mirror faces, +Y up, +X = Y x Z. The pole stands a little behind the mirror (z = -0.14).
     const parts: THREE.BufferGeometry[] = [];
-    const pole = new THREE.CylinderGeometry(0.045, 0.06, POLE_TOP + 1.2, 8);
+    const pole = new THREE.CylinderGeometry(0.06, 0.08, POLE_TOP + 1.2, 10);
     pole.translate(0, (POLE_TOP - 1.2) / 2, -0.14);
     parts.push(pole);
-    const bracket = new THREE.BoxGeometry(0.07, 0.07, 0.16);
+    const bracket = new THREE.BoxGeometry(0.1, 0.1, 0.16);
     bracket.translate(0, MIRROR_Y, -0.08);
     parts.push(bracket);
     const dish = new THREE.CylinderGeometry(MIRROR_R + 0.03, MIRROR_R + 0.03, 0.1, 20);
@@ -259,7 +337,130 @@ export class JunctionMirrors {
       o.receiveShadow = false;
     }
     this.group.add(this.poles, this.faces);
+
+    if (opts.live > 0 && n > 0) {
+      this.liveCam = new THREE.PerspectiveCamera(LIVE_FOV, 1, 0.3, 700);
+      const glass = glassGeometry((MIRROR_R + 0.03) * GLASS);
+      this.geos.push(glass);
+      for (let i = 0; i < opts.live; i++) {
+        const rt = new THREE.WebGLRenderTarget(opts.size, opts.size, {
+          samples: opts.samples,
+          depthBuffer: true,
+          generateMipmaps: false,
+          minFilter: THREE.LinearFilter,
+          magFilter: THREE.LinearFilter,
+        });
+        const mat = new THREE.MeshBasicMaterial({ map: rt.texture, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+        const mesh = new THREE.Mesh(glass, mat);
+        mesh.visible = false;
+        mesh.frustumCulled = false;
+        mesh.castShadow = false;
+        mesh.receiveShadow = false;
+        this.group.add(mesh);
+        this.live.push({ rt, mat, mesh, spot: -1, ready: false });
+      }
+    }
     parent.add(this.group);
+  }
+
+  /**
+   * Call once per frame BEFORE the main render. The few mirrors nearest to the camera (in front of it, and seen from the front) show the real
+   * scene: each frame ONE of them is rendered from the mirror (130 degrees, tilted a little down) into its own small picture, so with 2 live
+   * mirrors each refreshes every 2nd frame. The sun shadow map is not redrawn for these passes. The others keep the painted picture.
+   */
+  renderLive(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera): void {
+    const cam = this.liveCam;
+    const parent = this.group.parent;
+    if (!cam || !parent || this.live.length === 0) return;
+
+    // 1) every 12th frame: choose which spots go live (nearest first, keep the ones that are still good)
+    if (this.tick++ % 12 === 0) {
+      parent.updateWorldMatrix(true, false);
+      camera.getWorldPosition(this.tmpP);
+      parent.worldToLocal(this.tmpP);
+      camera.getWorldDirection(this.tmpD);
+      const cx = this.tmpP.x;
+      const cy = this.tmpP.y;
+      const cz = this.tmpP.z;
+      const fx = this.tmpD.x;
+      const fy = this.tmpD.y;
+      const fz = this.tmpD.z;
+      const lim = this.liveDist * this.liveDist;
+      const cand: { i: number; d: number }[] = [];
+      for (let i = 0; i < this.spots.length; i++) {
+        const s = this.spots[i];
+        const dx = s.x - cx;
+        const dz = s.z - cz;
+        const dy = s.y + MIRROR_Y - cy;
+        const d2 = dx * dx + dy * dy + dz * dz;
+        if (d2 > lim || d2 < 1) continue;
+        const d = Math.sqrt(d2);
+        if (-(dx * s.nx + dz * s.nz) / d < 0.25) continue; // the camera is not in front of the mirror
+        if ((dx * fx + dy * fy + dz * fz) / d < 0.35) continue; // the mirror is not (nearly) in front of the camera
+        cand.push({ i, d });
+      }
+      cand.sort((a, b) => a.d - b.d);
+      const want = cand.slice(0, this.live.length).map((c) => c.i);
+      for (const v of this.live) {
+        if (v.spot >= 0 && !want.includes(v.spot)) {
+          v.spot = -1;
+          v.ready = false;
+          v.mesh.visible = false;
+        }
+      }
+      for (const i of want) {
+        if (this.live.some((v) => v.spot === i)) continue;
+        const v = this.live.find((w) => w.spot < 0);
+        if (!v) break;
+        const s = this.spots[i];
+        v.spot = i;
+        v.ready = false;
+        v.mesh.position.set(s.x + s.nx * 0.02, s.y + MIRROR_Y, s.z + s.nz * 0.02);
+        v.mesh.rotation.set(0, Math.atan2(s.nx, s.nz), 0);
+      }
+    }
+
+    // 2) draw ONE live mirror this frame: a new one first, else round robin
+    const n = this.live.length;
+    let pick: LiveView | null = this.live.find((v) => v.spot >= 0 && !v.ready) ?? null;
+    if (!pick) {
+      for (let k = 0; k < n; k++) {
+        const v = this.live[(this.rr + k) % n];
+        if (v.spot >= 0) {
+          pick = v;
+          this.rr = (this.rr + k + 1) % n;
+          break;
+        }
+      }
+    }
+    if (!pick) return;
+
+    const s = this.spots[pick.spot];
+    const cp = Math.cos(LIVE_PITCH);
+    const sp = Math.sin(LIVE_PITCH);
+    this.tmpP.set(s.x + s.nx * 0.3, s.y + MIRROR_Y, s.z + s.nz * 0.3); // a little in front of the glass
+    parent.localToWorld(this.tmpP);
+    cam.position.copy(this.tmpP);
+    cam.updateMatrixWorld(true);
+    cam.lookAt(this.tmpP.x + s.nx * cp, this.tmpP.y - sp, this.tmpP.z + s.nz * cp);
+    cam.updateMatrixWorld(true);
+
+    const shown = this.live.map((v) => v.mesh.visible);
+    for (const v of this.live) v.mesh.visible = false; // no mirror inside a mirror (and no texture read while it is written)
+    const sm = renderer.shadowMap;
+    const au = sm.autoUpdate;
+    const nu = sm.needsUpdate;
+    sm.autoUpdate = false;
+    sm.needsUpdate = false;
+    const prev = renderer.getRenderTarget();
+    renderer.setRenderTarget(pick.rt);
+    renderer.render(scene, cam);
+    renderer.setRenderTarget(prev);
+    sm.autoUpdate = au;
+    sm.needsUpdate = nu;
+    this.live.forEach((v, k) => (v.mesh.visible = shown[k]));
+    pick.ready = true;
+    pick.mesh.visible = true;
   }
 
   /** Once per rendered frame. on = 0 (day) .. 1 (night): the mirror is a dull dark disc at night. */
@@ -271,6 +472,10 @@ export class JunctionMirrors {
     this.group.parent?.remove(this.group);
     this.poles.dispose();
     this.faces.dispose();
+    for (const v of this.live) {
+      v.rt.dispose();
+      v.mat.dispose();
+    }
     for (const g of this.geos) g.dispose();
     this.poleMat.dispose();
     this.faceMat.dispose();
