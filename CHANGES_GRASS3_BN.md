@@ -23,3 +23,7 @@
 `npx tsx scripts/grass-clump-test.ts`: instance + blade reduction, clumps not in water / beach / on roads / steep ground, road sides >= 2x denser than open
 meadow, deterministic, far ring is a subset of the full tile. All OK. Tweak the look with `thin`, `clump.chanceImportant`, `clump.chanceMeadow`,
 `clump.width` / `clump.height`.
+
+## Ground: brown soil is now the main terrain (with pebbles), green only in patches
+- `Config.terrain.soilFrom / soilTo` (0.30 / 0.44, was 0.50 / 0.64 hard-coded in the shader): soil covers ~80 % of the flat land instead of about half.
+  Lower both numbers = even more soil, higher = more green. `TerrainMaterial.ts` reads them when the shader is built.

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Config } from '../core/Config';
 import { getGroundTextures, type GroundTextures } from './GroundTextures';
 
 /**
@@ -135,10 +136,10 @@ const FRAG_COLOR = /* glsl */ `
   vec3 snow  = vec3(0.93, 0.95, 0.98);
   vec3 wet   = vec3(0.30, 0.27, 0.19);
 
-  // dry straw already from the lowlands in patches, soil patches (about half of the flat land) with a soft edge
+  // dry straw already from the lowlands in patches, soil = the main ground (Config.terrain.soilFrom / soilTo) with green patches and a soft edge
   vec3 col = mix(grass, dry, smoothstep(60.0, 260.0, h + (nLow - 0.5) * 120.0));
   float soilN = evcNoise(ap * 0.0021 + 7.3) * 0.62 + evcNoise(ap * 0.009 + 1.7) * 0.28 + nHi * 0.10;
-  float soilAmt = smoothstep(0.50, 0.64, soilN);
+  float soilAmt = smoothstep(${Config.terrain.soilFrom.toFixed(3)}, ${Config.terrain.soilTo.toFixed(3)}, soilN);
   col = mix(col, soil, soilAmt * 0.85);
   // a little soil on steeper ground too (earth shows through where the slope is not yet rock)
   col = mix(col, soil, smoothstep(0.05, 0.14, slope) * 0.45);

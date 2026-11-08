@@ -15,6 +15,13 @@ export const Config = {
   },
 
   terrain: {
+    /**
+     * Brown SOIL (with pebbles) showing through the grass on flat land: soil share = smoothstep(soilFrom, soilTo, noise). The noise is ~0.5 on average,
+     * so 0.50..0.64 was about half of the land; 0.30..0.44 makes soil the main ground (~80 %), with green patches in between.
+     * Lower both = more soil, higher = more green.
+     */
+    soilFrom: 0.3,
+    soilTo: 0.44,
     seaLevel: 0,
     /** Highest possible terrain point (rim mountains). Used by shader/snow line and sanity checks. */
     maxHeight: 650,
