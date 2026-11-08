@@ -6,6 +6,7 @@ attribute float aDepth;
 attribute vec2 aFlow;
 attribute float aStep;
 uniform vec2 uOrigin;
+uniform float uStorm;
 varying float vDepth;
 varying vec2 vFlow;
 varying vec3 vWPos;
@@ -21,7 +22,8 @@ float waveScaleGL(float level, float flowSpeed, float depth) {
   float sea = 1.0 - smoothstep(0.3, 1.5, abs(level));
   float base = 0.35 + 0.65 * sea;
   float river = smoothstep(0.15, 0.8, flowSpeed);
-  float shallow = smoothstep(0.15, 4.0, depth);
+  float S = uStorm * sea;   // sea storm: the big waves run much closer to the shore
+  float shallow = smoothstep(0.15 * (1.0 - 0.9 * S), 4.0 - 2.4 * S, depth);
   return (base * (1.0 - river) + 0.06 * river) * shallow;
 }
 
@@ -55,6 +57,9 @@ uniform vec3 uHorizon;
 uniform vec3 uZenith;
 uniform vec3 uUnderColor;
 uniform float uDetail;
+uniform float uStorm;
+uniform float uRainAmt;
+uniform float uRainRip;
 varying float vDepth;
 varying vec2 vFlow;
 varying vec3 vWPos;
@@ -72,6 +77,21 @@ float wNoise(vec2 p) {
   vec2 f = fract(p);
   f = f * f * (3.0 - 2.0 * f);
   return mix(mix(wHash(i), wHash(i + vec2(1.0, 0.0)), f.x), mix(wHash(i + vec2(0.0, 1.0)), wHash(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+
+// Rain rings on the water: every cell of a grid gets a ring now and then (a small wave packet moving outwards).
+vec2 wRain(vec2 p, float amt) {
+  vec2 q = p * 1.3;
+  vec2 c = floor(q);
+  vec2 f = fract(q) - 0.5;
+  float h = wHash(c);
+  float live = step(h, amt * 0.9 + 0.04);
+  vec2 o = vec2(wHash(c + 3.1), wHash(c + 7.7)) - 0.5;
+  float ph = fract(uTime * (0.8 + 0.5 * wHash(c + 1.3)) + h * 9.0);
+  vec2 dv = f - o * 0.5;
+  float r = length(dv);
+  float ring = sin((r - ph * 0.5) * 40.0) * (1.0 - smoothstep(0.0, 0.07, abs(r - ph * 0.5))) * (1.0 - ph);
+  return dv / (r + 0.0001) * ring * live;
 }
 
 void main() {
@@ -94,6 +114,8 @@ void main() {
   }
   float rip = (0.22 + clamp(speed * 0.07, 0.0, 0.45)) * (1.0 - smoothstep(150.0, 900.0, dist) * 0.7);
   vec2 g = (g1 * 0.5 + g2 * 0.25) * rip;
+  float seaK = 1.0 - smoothstep(0.3, 1.5, abs(vLevel));
+  if (uRainRip > 0.5 && uRainAmt > 0.03 && dist < 90.0) g += wRain(ap, uRainAmt) * 0.45 * uRainAmt * (1.0 - smoothstep(30.0, 90.0, dist));
 
   // Every wave of the table shapes the shading, short ones fade out with distance (no shimmering at the horizon).
   vec2 ws;
@@ -143,14 +165,18 @@ void main() {
   // light scattering inside the swell: crests glow turquoise
   float sss = smoothstep(0.35, 1.0, vCrest) * (0.4 + 0.6 * max(dot(normalize(vec3(uSunDir.x, 0.0, uSunDir.z)), -normalize(vec3(V.x, 0.0, V.z))), 0.0));
   body += vec3(0.04, 0.3, 0.26) * sss * vScale;
+  // storm: dark grey-green water
+  body = mix(body, vec3(0.045, 0.1, 0.105), 0.5 * uStorm * seaK);
   vec3 col = mix(body, sky, fres * 0.9 + 0.04);
 
   // Foam: shore wash, wave crests, steep water (waterfalls, cascades) and fast water
   float steep = 1.0 - n0.y;
   float swash = 0.5 + 0.5 * sin(uTime * 0.8 + vAbs.x * 0.021 + vAbs.y * 0.017 + fn * 3.0);
-  float edge = dd - swash * 0.9;
-  float shore = (1.0 - smoothstep(0.0, 0.7, abs(edge))) * smoothstep(0.3, 0.75, fn) + (1.0 - smoothstep(0.0, 0.35, dd)) * 0.6;
-  float crest = smoothstep(0.78, 1.0, vCrest) * smoothstep(0.45, 0.8, fn) * smoothstep(0.6, 2.5, dd) * vScale;
+  float st = uStorm * seaK;
+  // storm: the swash reaches much further up the beach, the foam band is wide, the crests break everywhere (white caps)
+  float edge = dd - swash * (0.9 + 3.2 * st);
+  float shore = (1.0 - smoothstep(0.0, 0.7 + 1.4 * st, abs(edge))) * smoothstep(0.3 - 0.15 * st, 0.75, fn) + (1.0 - smoothstep(0.0, 0.35 + 0.9 * st, dd)) * (0.6 + 0.4 * st);
+  float crest = smoothstep(0.78 - 0.34 * st, 1.0, vCrest) * smoothstep(0.45 - 0.2 * st, 0.8, fn) * smoothstep(0.6, 2.5, dd) * vScale * (1.0 + 1.6 * st);
   float fall = smoothstep(0.12, 0.45, steep) * smoothstep(0.25, 0.65, fn + 0.25);
   float fast = smoothstep(2.5, 6.0, speed) * smoothstep(0.55, 0.85, fn) * 0.6;
   float foam = clamp(shore * 0.85 + crest * 0.7 + fall + fast, 0.0, 1.0);
@@ -191,6 +217,9 @@ export class WaterMaterial {
   private uSeaState = { value: 1 };
   private uWaveCount = { value: 5 };
   private uDetail = { value: 1 };
+  private uStorm = { value: 0 };
+  private uRainAmt = { value: 0 };
+  private uRainRip = { value: 0 };
   /** Colour of the water body seen from inside (the Underwater system keeps it up to date). */
   readonly uUnderColor = { value: new THREE.Color(0.02, 0.2, 0.3) };
 
@@ -212,6 +241,9 @@ export class WaterMaterial {
     u.uSeaState = this.uSeaState;
     u.uWaveCount = this.uWaveCount;
     u.uDetail = this.uDetail;
+    u.uStorm = this.uStorm;
+    u.uRainAmt = this.uRainAmt;
+    u.uRainRip = this.uRainRip;
     u.uUnderColor = this.uUnderColor;
     u.uSunDir = sky.uSunDir;
     u.uSunColor = sky.uSunColor;
@@ -226,6 +258,17 @@ export class WaterMaterial {
     this.uWaveCount.value = WATER_WAVES_BY_QUALITY[i];
     this.uDetail.value = i >= 1 ? 1 : 0;
     WaterClock.vertexWaves = Math.min(4, WATER_WAVES_BY_QUALITY[i]);
+  }
+
+  /**
+   * RAIN: sea storm 0..1 (big steep waves, white caps, foam far up the beach) and the rain itself (rings on the water).
+   * Call every frame BEFORE update() (the sea state read by update() and by boats uses WaterClock.storm).
+   */
+  setStorm(storm: number, rain: number, rings: boolean): void {
+    WaterClock.storm = storm;
+    this.uStorm.value = storm;
+    this.uRainAmt.value = rain;
+    this.uRainRip.value = rings ? 1 : 0;
   }
 
   update(time: number, originX: number, originZ: number): void {

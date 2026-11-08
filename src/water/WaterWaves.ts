@@ -33,11 +33,17 @@ const G = 9.81;
 const NEAR_FADE = (3 * 500) / 128;
 
 /** Shared clock: WaterMaterial.update() writes it, the CPU functions read it. */
-export const WaterClock = { time: 0, /** how many waves move the mesh (quality setting), same as the vertex shader */ vertexWaves: 4 };
+export const WaterClock = {
+  time: 0,
+  /** how many waves move the mesh (quality setting), same as the vertex shader */
+  vertexWaves: 4,
+  /** RAIN: sea storm 0..1 (WeatherSystem). 0 = the normal sea; 1 = big, steep waves that run right up to the shore. */
+  storm: 0,
+};
 
 /** Sea state 0..1 (slowly changing wind). Same formula is used in the shader through uSeaState. */
 export function seaStateAt(t: number): number {
-  return 0.78 + 0.22 * Math.sin(t * 0.045) * Math.sin(t * 0.0173 + 1.3);
+  return (0.78 + 0.22 * Math.sin(t * 0.045) * Math.sin(t * 0.0173 + 1.3)) * (1 + 1.25 * WaterClock.storm);
 }
 
 /**
@@ -48,7 +54,9 @@ export function waveScale(level: number, flowSpeed: number, depth: number): numb
   const sea = 1 - smooth(0.3, 1.5, Math.abs(level));
   const base = 0.35 + 0.65 * sea;
   const river = smooth(0.15, 0.8, flowSpeed);
-  const shallow = smooth(0.15, 4.0, depth);
+  // in a sea storm the big waves keep their height much closer to the shore (they hit the beach instead of dying out in the shallows)
+  const S = WaterClock.storm * sea;
+  const shallow = smooth(0.15 * (1 - 0.9 * S), 4.0 - 2.4 * S, depth);
   return (base * (1 - river) + 0.06 * river) * shallow;
 }
 

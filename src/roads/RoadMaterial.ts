@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { patchWet } from '../weather/WetSurface';
 
 /**
  * Concrete-grey road surfaces, slab joints, and lane markings are drawn in the shader (no textures).
@@ -171,7 +172,9 @@ export class RoadMaterial extends THREE.MeshLambertMaterial {
       shader.fragmentShader = shader.fragmentShader
         .replace('#include <common>', '#include <common>\n' + FRAG_HEADER)
         .replace('#include <color_fragment>', '#include <color_fragment>\n' + FRAG_COLOR);
+      // RAIN: wet asphalt (darker, shiny, puddles, rain rings)
+      patchWet(shader, { darken: 0.4, gloss: 1.0, puddle: 1.0 });
     };
-    this.customProgramCacheKey = () => 'evc-road-v12-one-asphalt-colour';
+    this.customProgramCacheKey = () => 'evc-road-v13-one-asphalt-colour-wet';
   }
 }

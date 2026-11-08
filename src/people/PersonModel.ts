@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { makeGun } from '../combat/GunModel';
 import type { WeaponId } from '../combat/Weapons';
 import { buildHuman, kneeFlex, ELBOW_REST, HAND_GRIP_Y } from './HumanBody';
+import { Umbrella, holdArm } from '../weather/Umbrella';
 
 /** Everything that makes one person look different from another. */
 export interface Appearance {
@@ -174,6 +175,9 @@ export class PersonModel {
   private work: WorkPose | null = null;
   private workT = Math.random() * 6;
   private fallTarget = 0;
+  /** RAIN: the umbrella (built on the first rain) and whether this person wants it up. */
+  private umbrella: Umbrella | null = null;
+  private umbrellaWant = false;
 
   constructor(readonly look: Appearance) {
     const rig = buildHuman(look, mat);
@@ -208,6 +212,17 @@ export class PersonModel {
   /** Arm raised, pointing the gun forward. */
   setAiming(on: boolean): void {
     this.aiming = on;
+  }
+
+  /** RAIN: put the umbrella up (true) or fold it (false). It opens / closes smoothly; seated and fallen people never hold one. */
+  setUmbrella(on: boolean): void {
+    this.umbrellaWant = on;
+    if (on && !this.umbrella) this.umbrella = new Umbrella(this.pivot, this.armL.position.x < 0 ? -1 : 1, Math.random());
+  }
+
+  /** True while the umbrella is (partly) open. */
+  get hasUmbrellaUp(): boolean {
+    return !!this.umbrella && this.umbrella.open > 0.02;
   }
 
   /** A work pose (farm work) on top of the walk / idle animation; null = normal again. */
@@ -246,6 +261,10 @@ export class PersonModel {
 
   setSeated(on: boolean, pose: SeatPose = SIT_POSE): void {
     this.seated = on;
+    if (on && this.umbrella) {
+      this.umbrella.open = 0;
+      this.umbrella.root.visible = false;
+    }
     this.pivot.position.y = on ? 0 : 0.9;
     const tucked = on && pose.lean !== 0;
     if (tucked) this.splitFeet();
@@ -287,7 +306,13 @@ export class PersonModel {
       this.pivot.rotation.x = -Math.PI / 2 * this.fall; // falls on its back
       this.pivot.position.y = 0.9 + (0.14 - 0.9) * this.fall;
     }
-    if (this.fall > 0) return; // lying: no walking animation
+    if (this.fall > 0) {
+      if (this.umbrella) {
+        this.umbrella.open = 0;
+        this.umbrella.root.visible = false;
+      }
+      return; // lying: no walking animation
+    }
     const k = Math.min(1, 14 * dt);
     const ease = (g: THREE.Object3D, target: number) => {
       g.rotation.x += (target - g.rotation.x) * k;
@@ -324,6 +349,10 @@ export class PersonModel {
       ease(this.foreL, -0.15);
     } else if (this.gun && mode === 'idle') {
       ease(this.armR, -0.35); // gun held low
+    }
+    if (this.umbrella) {
+      const o = this.umbrella.update(dt, this.umbrellaWant && !this.aiming && !this.work);
+      holdArm(this.armL, this.foreL, o);
     }
   }
 

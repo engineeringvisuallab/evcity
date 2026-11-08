@@ -23,6 +23,7 @@ import { HelicopterHUD } from '../ui/HelicopterHUD';
 import { BoatHUD } from '../ui/BoatHUD';
 import { OxygenHUD } from '../ui/OxygenHUD';
 import { WaterFX } from '../water';
+import { WeatherSystem } from '../weather';
 import { BridgeBuilder, BridgePhysics, RoadDebug } from '../roads';
 import { CombatSystem } from '../combat';
 import { CityPlan, ZONE_COLOR } from '../city/CityPlan';
@@ -149,6 +150,8 @@ export class Engine {
   private settingsMenu!: SettingsMenu;
   /** Waves' effects: under-water look, sea floor plants, fish / jellyfish / turtles, light beams, bubbles, splashes. */
   private waterFx!: WaterFX;
+  /** Rain, clouds, wet ground, sea storm, umbrellas (src/weather). */
+  private weather!: WeatherSystem;
   private oxygenHud!: OxygenHUD;
   private waterFocus = new THREE.Vector3();
   /** Gold: 10,000 at the start; fines for red lights and traffic accidents, a gift for killing a criminal. */
@@ -754,6 +757,12 @@ export class Engine {
       pxHeight: () => this.renderer.domElement.height,
     });
     this.waterFx.setQuality(this.hudSettings.values.waterQuality);
+    this.weather = new WeatherSystem({
+      scene: this.scene,
+      environment: this.environment,
+      water: this.world.water,
+      dayLen: (Config.environment.dayNight.dayMinutes + Config.environment.dayNight.nightMinutes) * 60,
+    });
     this.oxygenHud = new OxygenHUD(container);
     this.settingsMenu = new SettingsMenu(
       container,
@@ -969,6 +978,13 @@ export class Engine {
     }
     this.cameraController.update(dt);
     this.infra.applyCamera(dt, this.camera); // a running plant tour owns the camera
+    {
+      // RAIN: clouds, falling rain, wet ground, sea storm (BEFORE the world / water / environment update); people and the player open umbrellas
+      const shelter = this.mall.inside || this.agro.inside ? 1 : this.trainRider.riding ? 0.7 : 0;
+      this.weather.update(dt, this.time.elapsed, this.camera, this.world.origin.origin.x, this.world.origin.origin.z, this.renderer.domElement.height, shelter);
+      this.people.setRain(this.weather.intensity);
+      this.player.model.setUmbrella(this.weather.umbrellaWanted && this.hudSettings.values.rainUmbrella && this.player.active && !this.player.inVehicle && !shelter);
+    }
     this.world.update(dt, this.time.elapsed, this.camera, this.cameraController.isFreeFly);
     this.birds.update(dt, this.time.elapsed, this.world.playerWorld);
     this.animals.update(dt, this.time.elapsed, this.world.playerWorld);
@@ -1341,6 +1357,7 @@ export class Engine {
     this.vehicles.setMuted(muted);
     this.combat.setMuted(muted);
     this.explosions.setMuted(muted);
+    this.weather?.setMuted(muted);
     this.hudSettings.set('muted', muted);
     this.settingsMenu?.refresh();
   }
@@ -1355,6 +1372,7 @@ export class Engine {
   private applyHudOptions(): void {
     const v = this.hudSettings.values;
     if (this.waterFx && this.waterFx.qualityLevel !== v.waterQuality) this.waterFx.setQuality(v.waterQuality);
+    this.weather?.configure({ mode: v.rainMode, level: v.rainLevel, quality: v.rainQuality });
     this.hud.setOptions({ crosshair: v.crosshair, weapon: v.weapon, areaAlways: v.areaAlways });
     this.economy.setBalanceVisible(v.gold);
   }

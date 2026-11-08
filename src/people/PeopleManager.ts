@@ -64,6 +64,8 @@ export class PeopleManager {
   private st: { rail: RailNetwork; trains: TrainManager; accesses: StationAccess[] } | null = null;
   private focusX = 0;
   private focusZ = 0;
+  /** RAIN strength 0..1 (set by the Engine every frame): people open their umbrellas. */
+  private rain = 0;
 
   constructor(private d: PeopleDeps) {
     this.sc = d.terrain.makeSample();
@@ -140,6 +142,11 @@ export class PeopleManager {
     }
   }
 
+  /** How hard it rains (0 = dry). Most people open an umbrella when it gets stronger than their own limit (0.1 .. 0.18). */
+  setRain(level: number): void {
+    this.rain = level;
+  }
+
   update(dt: number, focus: THREE.Vector3): void {
     const T = Config.people;
     this.focusX = focus.x;
@@ -168,6 +175,7 @@ export class PeopleManager {
         if (p.vehicle) continue; // he just climbed back into his car (the vehicle owns the body now)
       }
       this.place(p);
+      p.model.setUmbrella(this.rain > 0.1 + 0.08 * p.umbrellaRoll && p.umbrellaRoll < 0.8 && !p.dead);
       p.model.update(dt, p.speed, p.mode);
     }
     if (this.combat) this.updatePolice(dt, focus);

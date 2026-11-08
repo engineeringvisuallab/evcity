@@ -120,6 +120,9 @@ export class SettingsMenu {
   private switches = new Map<string, HTMLButtonElement>();
   private zoomButtons: HTMLButtonElement[] = [];
   private waterButtons: HTMLButtonElement[] = [];
+  private rainModeButtons: HTMLButtonElement[] = [];
+  private rainLevelButtons: HTMLButtonElement[] = [];
+  private rainQualityButtons: HTMLButtonElement[] = [];
   private goldValue = document.createElement('span');
   private open_ = false;
   private relock = false;
@@ -195,6 +198,10 @@ export class SettingsMenu {
     this.setSwitch('sound', !this.hooks.getMuted());
     this.setSwitch('oxygen', v.infiniteOxygen);
     this.waterButtons.forEach((b, i) => b.classList.toggle('on', i === v.waterQuality));
+    this.rainModeButtons.forEach((b, i) => b.classList.toggle('on', i === v.rainMode));
+    this.rainLevelButtons.forEach((b, i) => b.classList.toggle('on', i === v.rainLevel));
+    this.rainQualityButtons.forEach((b, i) => b.classList.toggle('on', i === v.rainQuality));
+    this.setSwitch('umbrella', v.rainUmbrella);
     this.setSwitch('debug', this.hooks.getDebug());
     this.setSwitch('perf', this.hooks.getPerf?.() ?? false);
     const z = this.hooks.getMapZoom();
@@ -381,6 +388,81 @@ export class SettingsMenu {
       const note = document.createElement('div');
       note.className = 'evs-note';
       note.textContent = 'পানিতে নামলে C চেপে বা ক্যামেরা নিচের দিকে করে W চেপে ডুব দিন। Space চেপে ওপরে উঠুন।';
+      sec.appendChild(note);
+      panel.appendChild(sec);
+    }
+
+    // --- rain ---
+    {
+      const { sec } = this.section('🌧️ বৃষ্টি');
+      const choice = (labels: [string, string][], store: HTMLButtonElement[], key: 'rainMode' | 'rainLevel' | 'rainQuality'): HTMLElement => {
+        const grid = document.createElement('div');
+        grid.className = 'evs-zoom';
+        if (labels.length === 4) grid.style.gridTemplateColumns = 'repeat(2,1fr)';
+        labels.forEach(([label, sub], i) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'evs-btn';
+          b.innerHTML = '<span></span><small></small>';
+          (b.children[0] as HTMLElement).textContent = label;
+          (b.children[1] as HTMLElement).textContent = sub;
+          b.addEventListener('click', () => {
+            this.store.set(key, i);
+            this.refresh();
+          });
+          store.push(b);
+          grid.appendChild(b);
+        });
+        return grid;
+      };
+      const h = (t: string): HTMLElement => {
+        const e = document.createElement('div');
+        e.className = 'evs-note';
+        e.style.margin = '10px 0 6px';
+        e.style.fontWeight = '700';
+        e.textContent = t;
+        return e;
+      };
+      sec.appendChild(
+        choice(
+          [
+            ['বন্ধ', 'কখনো বৃষ্টি হবে না'],
+            ['অটো (এলোমেলো)', '২-৫ দিন পর পর, কখনো কম কখনো বেশি'],
+            ['সবসময়', 'সবসময় বৃষ্টি পড়বে'],
+          ],
+          this.rainModeButtons,
+          'rainMode',
+        ),
+      );
+      sec.appendChild(h('“সবসময়” মোডে বৃষ্টি কতটা জোরে'));
+      sec.appendChild(
+        choice(
+          [
+            ['হালকা', 'গুঁড়ি গুঁড়ি'],
+            ['মাঝারি', 'সাধারণ বৃষ্টি'],
+            ['ঝড়', 'ভারী বৃষ্টি, বিদ্যুৎ, সাগরে বড় ঢেউ'],
+          ],
+          this.rainLevelButtons,
+          'rainLevel',
+        ),
+      );
+      sec.appendChild(h('বৃষ্টির গ্রাফিক্স (পিসি দুর্বল হলে “নিচু”)'));
+      sec.appendChild(
+        choice(
+          [
+            ['অটো', 'ডিভাইস দেখে নিজে বাছবে'],
+            ['নিচু', 'অল্প ফোঁটা, ভেজা মাটি — প্রায় ফ্রি'],
+            ['মাঝারি', 'চকচকে রাস্তা, বিদ্যুৎ, সৈকতে ফেনা'],
+            ['উঁচু', 'জমা পানি, ঢেউয়ের বলয়, দূরের বৃষ্টি-পর্দা'],
+          ],
+          this.rainQualityButtons,
+          'rainQuality',
+        ),
+      );
+      sec.appendChild(this.row('আমার ছাতা', 'বৃষ্টিতে হাঁটলে প্লেয়ার ছাতা ধরবে (পানিতে বা নিশানা করলে ভাঁজ হয়ে যাবে)', this.makeSwitch('umbrella', () => this.store.set('rainUmbrella', !this.store.values.rainUmbrella))));
+      const note = document.createElement('div');
+      note.className = 'evs-note';
+      note.textContent = 'বৃষ্টি হলে রাস্তা ও মাটি ভিজে চকচক করে, মানুষ ছাতা ধরে, আর সাগরে বড় ঢেউ উঠে পাড়ে আছড়ে পড়ে। গাড়ি-বাড়ির ভেতরে বৃষ্টির শব্দ কমে যায়।';
       sec.appendChild(note);
       panel.appendChild(sec);
     }

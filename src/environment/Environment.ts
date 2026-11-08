@@ -81,6 +81,10 @@ export class Environment {
   private underDepth = 0;
   private underColorV = new THREE.Color(0.03, 0.3, 0.36);
   private underFogV = 0.035;
+  /** RAIN (WeatherSystem): how overcast the sky is 0..1, how hard it rains 0..1, lightning flash 0..1. */
+  private cloud = 0;
+  private rainK = 0;
+  private flash = 0;
 
   constructor(scene: THREE.Scene) {
     const horizon = this.horizon;
@@ -166,6 +170,18 @@ export class Environment {
     this.underFogV = fogDensity;
   }
 
+  /** Weather: grey sky and softer light (cloud), thicker fog (rain), a flash of lightning. Call every frame before update(). */
+  setWeather(cloud: number, rain: number, flash: number): void {
+    this.cloud = cloud;
+    this.rainK = rain;
+    this.flash = flash;
+  }
+
+  /** 0 = the camera is in the air .. 1 = fully under water (the rain stops falling under water). */
+  get underwaterAmount(): number {
+    return this.underAmount;
+  }
+
   /** The colour of the water body at the camera (the water shader uses it to paint the mirror under the surface). */
   get underwaterColor(): THREE.Color {
     return this.underColorV;
@@ -192,7 +208,40 @@ export class Environment {
     this.sun.color.copy(s.lightColor);
     this.sun.intensity = s.lightIntensity;
     this.lightDir.copy(s.lightDir);
+    if (this.cloud > 0.001 || this.flash > 0.001) this.applyWeather();
   }
+
+  /** Overcast / rain / lightning on top of the day-night look: greyer and darker sky, no sun disc, weaker sun, brighter ambient. */
+  private applyWeather(): void {
+    const c = this.cloud;
+    const grey = (col: THREE.Color, k: number, dim: number): void => {
+      const l = col.r * 0.3 + col.g * 0.59 + col.b * 0.11;
+      col.r += (l * 0.96 - col.r) * k;
+      col.g += (l * 1.0 - col.g) * k;
+      col.b += (l * 1.06 - col.b) * k;
+      col.multiplyScalar(dim);
+    };
+    const zenith = this.skyUniforms.uZenith.value as THREE.Color;
+    grey(this.horizon, c * 0.85, 1 - 0.3 * c);
+    grey(zenith, c * 0.9, 1 - 0.42 * c);
+    this.fog.color.copy(this.horizon);
+    grey(this.hemi.color, c * 0.7, 1);
+    this.skyMat.uniforms.uGlow.value *= 1 - 0.95 * c;
+    this.skyMat.uniforms.uNight.value *= 1 - 0.95 * c; // clouds hide the stars and the moon
+    (this.skyUniforms.uSunColor.value as THREE.Color).multiplyScalar(1 - 0.95 * c); // no sun disc / sun glint on the water
+    this.sun.intensity *= 1 - 0.8 * c;
+    this.hemi.intensity *= 1 + 0.22 * c;
+    const f = this.flash;
+    if (f > 0.001) {
+      // lightning: the whole sky and the land flash blue-white for a moment
+      this.horizon.lerp(this.flashColor, 0.55 * f);
+      zenith.lerp(this.flashColor, 0.5 * f);
+      this.fog.color.copy(this.horizon);
+      this.hemi.intensity += 2.6 * f;
+      this.sun.intensity += 0.8 * f;
+    }
+  }
+  private flashColor = new THREE.Color(0.82, 0.88, 1.0);
 
   /** Mix the underwater look into fog, background, sky and light (nothing happens while the camera is in the air). */
   private applyUnderwater(): void {
@@ -205,7 +254,7 @@ export class Environment {
     this.underColorV.setRGB(0.05 + (0.012 - 0.05) * deepK, 0.42 + (0.07 - 0.42) * deepK, 0.5 + (0.16 - 0.5) * deepK).multiplyScalar(day);
     if (a <= 0.001) {
       this.sky.visible = true;
-      this.fog.density = Config.environment.fogDensity;
+      this.fog.density = Config.environment.fogDensity * (1 + 2.4 * this.rainK + 0.5 * this.cloud);
       return;
     }
     this.fog.color.lerp(this.underColorV, a);

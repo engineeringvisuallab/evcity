@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Config } from '../core/Config';
 import { getGroundTextures, type GroundTextures } from './GroundTextures';
+import { patchWet } from '../weather/WetSurface';
 
 /**
  * Procedural terrain shading (no texture files needed).
@@ -301,8 +302,10 @@ export class TerrainMaterials {
         .replace('#include <common>', '#include <common>\n' + FRAG_HEADER)
         .replace('void main() {', 'void main() {\n' + FRAG_FADE)
         .replace('#include <color_fragment>', '#include <color_fragment>\n' + FRAG_COLOR);
+      // RAIN: wet ground (darker, shiny, puddles) and storm foam on the beach
+      patchWet(shader, { darken: 0.34, gloss: 0.55, puddle: 0.7, beach: true });
     };
-    m.customProgramCacheKey = () => 'evc-terrain-v8-seabed-caustics';
+    m.customProgramCacheKey = () => 'evc-terrain-v9-seabed-caustics-wet';
     this.all.add(m);
     return m;
   }

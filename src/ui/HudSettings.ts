@@ -16,6 +16,14 @@ export interface HudOptions {
   waterQuality: number;
   /** true = the diver never runs out of breath. */
   infiniteOxygen: boolean;
+  /** Rain: 0 off, 1 auto (random showers every 2..5 game days), 2 always raining. */
+  rainMode: number;
+  /** Rain strength when it always rains: 0 light, 1 medium, 2 storm. */
+  rainLevel: number;
+  /** Rain quality: 0 automatic (follows the graphics class of the device), 1 low, 2 medium, 3 high. */
+  rainQuality: number;
+  /** The player holds an umbrella in the rain. */
+  rainUmbrella: boolean;
 }
 
 export const HUD_DEFAULTS: Readonly<HudOptions> = {
@@ -27,6 +35,10 @@ export const HUD_DEFAULTS: Readonly<HudOptions> = {
   mapZoom: 1,
   waterQuality: 1,
   infiniteOxygen: false,
+  rainMode: 1,
+  rainLevel: 1,
+  rainQuality: 0,
+  rainUmbrella: true,
 };
 
 const KEY = 'evcity.settings';
@@ -43,6 +55,10 @@ export class HudSettings {
         for (const k of ['crosshair', 'gold', 'weapon', 'areaAlways', 'muted'] as const) if (typeof o[k] === 'boolean') this.values[k] = o[k] as boolean;
         if (typeof o.infiniteOxygen === 'boolean') this.values.infiniteOxygen = o.infiniteOxygen;
         if (typeof o.waterQuality === 'number' && o.waterQuality >= 0 && o.waterQuality <= 2) this.values.waterQuality = Math.round(o.waterQuality);
+        if (typeof o.rainMode === 'number' && o.rainMode >= 0 && o.rainMode <= 2) this.values.rainMode = Math.round(o.rainMode);
+        if (typeof o.rainLevel === 'number' && o.rainLevel >= 0 && o.rainLevel <= 2) this.values.rainLevel = Math.round(o.rainLevel);
+        if (typeof o.rainQuality === 'number' && o.rainQuality >= 0 && o.rainQuality <= 3) this.values.rainQuality = Math.round(o.rainQuality);
+        if (typeof o.rainUmbrella === 'boolean') this.values.rainUmbrella = o.rainUmbrella;
         if (typeof o.mapZoom === 'number' && o.mapZoom >= 0 && o.mapZoom <= 2) this.values.mapZoom = Math.round(o.mapZoom);
       }
     } catch {

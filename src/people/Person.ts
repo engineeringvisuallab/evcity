@@ -42,6 +42,8 @@ export class Person {
   vehicle: Vehicle | null = null;
   /** Seconds left in the current task (idle / flee). */
   timer = 0;
+  /** RAIN: 0..1, fixed per person. Below 0.8 he carries an umbrella and opens it when the rain is strong enough for HIS taste. */
+  readonly umbrellaRoll = Math.random();
 
   // sidewalk state
   roadId = -1;

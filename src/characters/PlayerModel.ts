@@ -3,6 +3,7 @@ import { makeGun } from '../combat/GunModel';
 import type { WeaponId } from '../combat/Weapons';
 import { ENGINEER_LOOK } from '../people/PersonModel';
 import { buildHuman, kneeFlex, ELBOW_REST, HAND_GRIP_Y } from '../people/HumanBody';
+import { Umbrella, holdArm } from '../weather/Umbrella';
 
 export type PlayerState = 'idle' | 'walk' | 'run' | 'air' | 'swim' | 'wade';
 
@@ -27,6 +28,9 @@ export class PlayerModel {
   private gunId: WeaponId | null = null;
   private aiming = false;
   private mats: THREE.Material[] = [];
+  /** RAIN: the umbrella (built on the first rain). */
+  private umbrella: Umbrella | null = null;
+  private umbrellaWant = false;
 
   constructor() {
     const rig = buildHuman(ENGINEER_LOOK, (c) => {
@@ -60,6 +64,12 @@ export class PlayerModel {
       this.gun.position.set(0, HAND_GRIP_Y, 0);
       this.foreR.add(this.gun);
     }
+  }
+
+  /** RAIN: umbrella up / down (it also folds by itself while swimming or aiming). */
+  setUmbrella(on: boolean): void {
+    this.umbrellaWant = on;
+    if (on && !this.umbrella) this.umbrella = new Umbrella(this.pivot, this.armL.position.x < 0 ? -1 : 1, 0.63);
   }
 
   /** Both arms raised, pointing the gun where the camera looks. */
@@ -129,6 +139,10 @@ export class PlayerModel {
       ease(this.armL, -1.25);
       ease(this.foreR, 0);
       ease(this.foreL, -0.15);
+    }
+    if (this.umbrella) {
+      const o = this.umbrella.update(dt, this.umbrellaWant && !this.aiming && state !== 'swim');
+      holdArm(this.armL, this.foreL, o);
     }
   }
 
