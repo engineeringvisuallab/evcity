@@ -20,7 +20,7 @@ interface Incident {
  *   FINE  : crossing a stop line on RED = 10 Gold.
  *           traffic accident (the player's vehicle hits another vehicle / runs people over) = 500 Gold x (type of the vehicle that was hit)
  *           + 500 Gold for every person killed (see GoldConfig / accidentFine).
- *   GIFT  : killing a criminal = 200 Gold.
+ *   GIFT  : killing a criminal = 200 Gold; ramming a rickshaw = 500 Gold bonus (once per accident).
  */
 export class Economy {
   readonly gold = new Gold();
@@ -98,6 +98,11 @@ export class Economy {
     const detail = parts.length ? ` (${parts.join(', ')})` : '';
     const text = taken < fine ? `${bn.gold.fineShort}: −${fmt(taken)} ${bn.gold.unit}` : `${bn.gold.accident}${detail}: −${fmt(taken)} ${bn.gold.unit}`;
     this.hud.say(text, 'fine');
+    // ramming a rickshaw pays a bonus (once per accident); shown after the fine message so neither is hidden
+    if (kinds.includes('rickshaw')) {
+      this.gold.earn(GoldConfig.rickshawHitBonus, bn.gold.rickshawBonus);
+      window.setTimeout(() => this.hud.say(`${bn.gold.rickshawBonus}: +${fmt(GoldConfig.rickshawHitBonus)} ${bn.gold.unit}`, 'income'), 1800);
+    }
   }
 
   dispose(): void {

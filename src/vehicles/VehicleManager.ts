@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { fireBurnSeconds } from './VehicleFire';
 import type { OrbitCamera } from '../camera/OrbitCamera';
 import type { Player } from '../characters';
 import { Config } from '../core/Config';
@@ -111,7 +112,7 @@ export class VehicleManager {
       if (p.v && !this.vehicles.includes(p.v)) p.v = null;
       if (p.v) {
         const w = p.v;
-        if (w !== this.driver && w.state === 'wrecked' && w.wreckedFor > 25) {
+        if (w !== this.driver && w.state === 'wrecked' && w.wreckedFor > Math.max(25, fireBurnSeconds(w.spec.look.kind) + 8)) {
           const i = this.vehicles.indexOf(w);
           this.vehicles.splice(i, 1);
           this.byHandle.delete(w.collider.handle);
@@ -496,7 +497,7 @@ export class VehicleManager {
     if (t && !this.vehicles.includes(t)) this.tank = null;
     if (this.tank) {
       const w = this.tank;
-      if (w.state === 'wrecked' && w.wreckedFor > 25 && w !== this.driver) {
+      if (w.state === 'wrecked' && w.wreckedFor > Math.max(25, fireBurnSeconds(w.spec.look.kind) + 8) && w !== this.driver) {
         const i = this.vehicles.indexOf(w);
         this.vehicles.splice(i, 1);
         this.byHandle.delete(w.collider.handle);

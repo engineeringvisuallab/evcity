@@ -58,7 +58,7 @@ for (const [id, spec] of Object.entries(SPECS)) {
 }
 
 console.log('--- acceleration / top speed / braking (straight, 60 s) ---');
-const targets: Record<string, [number, number]> = { sedan: [100, 220], jeep: [80, 200], hypercar: [255, 290], evhypar: [245, 262], bike: [90, 150], rickshaw: [10, 18], auto: [35, 55], bus: [70, 110], tank: [40, 70] };
+const targets: Record<string, [number, number]> = { sedan: [100, 220], jeep: [80, 200], hypercar: [255, 290], evhypar: [245, 262], bike: [90, 150], rickshaw: [44, 52], auto: [35, 55], bus: [70, 110], tank: [40, 70] };
 let lane = 5;
 for (const [id, spec] of Object.entries(SPECS)) {
   const v = make(spec, lane * 60, -1900);

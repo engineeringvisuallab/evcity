@@ -245,9 +245,10 @@ function finish(s: VehicleSpec, clearance: number, seatH: number, paxH: number[]
 
 const PEDAL_ENGINE: EngineSpec = {
   idleRpm: 40,
-  redlineRpm: 85,
+  // single gear 0.75, 0.34 m wheel: speed = rpm x 0.0475 m/s, so the redline limiter caps the rickshaw at 50 km/h (292 rpm = 13.9 m/s)
+  redlineRpm: 292,
   launchRpm: 70,
-  torque: [[40, 95], [85, 80]],
+  torque: [[40, 110], [150, 105], [250, 95], [292, 88]],
   engineBraking: 4,
 };
 
@@ -304,7 +305,7 @@ export const BIKE: VehicleSpec = finish({
   camera: { dist: 6, min: 3, max: 18 },
 }, 0.2, 0.875, [0.93]);
 
-/** Cycle rickshaw: one front wheel, two rear wheels, pedal power (about 15 km/h at best). */
+/** Cycle rickshaw: one front wheel, two rear wheels, pedal power. The player can push it to 50 km/h; AI rickshaws still crawl (cruiseMax). */
 export const RICKSHAW: VehicleSpec = finish({
   id: 'rickshaw',
   nameBn: 'রিকশা',

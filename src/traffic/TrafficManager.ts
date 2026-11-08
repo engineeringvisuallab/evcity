@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { fireBurnSeconds } from '../vehicles/VehicleFire';
 import type { Player } from '../characters';
 import { Config } from '../core/Config';
 import { PhysicsConfig } from '../physics/PhysicsConfig';
@@ -97,7 +98,7 @@ export class TrafficManager {
       const dist = Math.hypot(V3.x - focus.x, V3.z - focus.z);
       if (v.state === 'wrecked') {
         // a burnt-out wreck stays a while (it is something to look at) and then goes away
-        if (v.wreckedFor > 30 || dist > T.despawnRadius) this.remove(v);
+        if (v.wreckedFor > Math.max(30, fireBurnSeconds(v.spec.look.kind) + 8) || dist > T.despawnRadius) this.remove(v);
         continue;
       }
       if (v.driver === null) {

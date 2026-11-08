@@ -60,18 +60,26 @@ interface Prof {
 }
 
 const PROF: Record<string, Prof> = {
-  sedan: { burn: 55, grow: 9, battery: false, fuelTank: true, soot: 0.8, windows: 2, engine: 'front' },
-  jeep: { burn: 65, grow: 9, battery: false, fuelTank: true, soot: 0.85, windows: 2, engine: 'front' },
-  hypercar: { burn: 160, grow: 7, battery: true, fuelTank: false, soot: 0.45, windows: 2, engine: 'mid' },
-  evhypar: { burn: 210, grow: 9, battery: true, fuelTank: false, soot: 0.5, windows: 3, engine: 'mid' },
-  suprim: { burn: 200, grow: 9, battery: true, fuelTank: false, soot: 0.5, windows: 3, engine: 'mid' },
-  evbike: { burn: 90, grow: 5, battery: true, fuelTank: false, soot: 0.4, windows: 0, engine: 'mid' },
-  bike: { burn: 30, grow: 5, battery: false, fuelTank: true, soot: 0.7, windows: 0, engine: 'mid' },
-  auto: { burn: 45, grow: 7, battery: false, fuelTank: true, soot: 0.75, windows: 0, engine: 'rear' },
-  rickshaw: { burn: 28, grow: 6, battery: false, fuelTank: false, soot: 0.6, windows: 0, engine: 'mid' },
-  bus: { burn: 170, grow: 16, battery: false, fuelTank: true, soot: 1, windows: 8, engine: 'rear' },
-  tank: { burn: 80, grow: 10, battery: false, fuelTank: true, soot: 0.9, windows: 0, engine: 'rear' },
+  sedan: { burn: 40, grow: 9, battery: false, fuelTank: true, soot: 0.8, windows: 2, engine: 'front' },
+  jeep: { burn: 45, grow: 9, battery: false, fuelTank: true, soot: 0.85, windows: 2, engine: 'front' },
+  hypercar: { burn: 90, grow: 7, battery: true, fuelTank: false, soot: 0.45, windows: 2, engine: 'mid' },
+  evhypar: { burn: 110, grow: 9, battery: true, fuelTank: false, soot: 0.5, windows: 3, engine: 'mid' },
+  suprim: { burn: 105, grow: 9, battery: true, fuelTank: false, soot: 0.5, windows: 3, engine: 'mid' },
+  evbike: { burn: 60, grow: 5, battery: true, fuelTank: false, soot: 0.4, windows: 0, engine: 'mid' },
+  bike: { burn: 22, grow: 5, battery: false, fuelTank: true, soot: 0.7, windows: 0, engine: 'mid' },
+  auto: { burn: 35, grow: 7, battery: false, fuelTank: true, soot: 0.75, windows: 0, engine: 'rear' },
+  rickshaw: { burn: 20, grow: 6, battery: false, fuelTank: false, soot: 0.6, windows: 0, engine: 'mid' },
+  bus: { burn: 100, grow: 16, battery: false, fuelTank: true, soot: 1, windows: 8, engine: 'rear' },
+  tank: { burn: 60, grow: 10, battery: false, fuelTank: true, soot: 0.9, windows: 0, engine: 'rear' },
 };
+
+/** Seconds a wreck of this kind keeps burning. The cleaners (traffic, parking) wait for this, so a wreck never vanishes while it is still on fire. */
+export function fireBurnSeconds(kind: string): number {
+  return (PROF[kind] ?? (PROF.sedan as Prof)).burn;
+}
+
+/** A damaged (not burning) vehicle only smoulders this long (seconds); the smoke fades out over the last 40 % and then stops for good. */
+const SMOLDER_SECONDS = 40;
 
 // ------------------------------------------------------------------------------------------------ helpers
 
@@ -552,6 +560,8 @@ interface Rec {
   fresh: boolean;
   dist: number;
   sound: FireSound | null;
+  /** Seconds this vehicle has been smouldering (damaged, not burning). */
+  smolderT: number;
 }
 
 const TMP = new THREE.Vector3();
@@ -570,6 +580,8 @@ export class VehicleFire {
   private emberSprites: Sprites;
   private glowSprites: Sprites;
   private recs = new Map<object, Rec>();
+  /** Vehicles whose smouldering has finished: they do not start smoking again until they burn or get repaired. */
+  private spent = new WeakSet<object>();
   private cam: THREE.Camera | null = null;
   private time = 0;
   private wx = 1;
@@ -717,6 +729,7 @@ export class VehicleFire {
       fresh: v.state === 'burning',
       dist: 1e9,
       sound: null,
+      smolderT: 0,
     };
     if (!wrecked) {
       for (let i = 0; i < prof.windows; i++) rec.glassAt.push(2.5 + rnd() * prof.grow * 0.8);
@@ -839,6 +852,8 @@ export class VehicleFire {
       const burning = v.state === 'burning';
       const wrecked = v.state === 'wrecked' && v.wreckedFor < prof.burn * 0.95;
       const smoulder = v.state === 'ok' && v.hp < 28;
+      if (v.state === 'burning' || v.state === 'wrecked' || v.hp >= 28) this.spent.delete(v);
+      else if (this.spent.has(v)) continue;
       if ((burning || wrecked || smoulder) && v.enabled) this.recs.set(v, this.makeRec(v));
     }
   }
@@ -881,15 +896,24 @@ export class VehicleFire {
       rec.vel.multiplyScalar(Math.max(0, 1 - 2 * dt));
       rec.smolder = false;
       rec.age += dt;
-      rec.fuel -= dt / rec.prof.burn;
+      rec.fuel -= dt / 4; // the wreck is gone: the fire dies down within a few seconds
     }
+    if (rec.smolder) {
+      rec.smolderT += dt;
+      if (rec.smolderT > SMOLDER_SECONDS) {
+        if (rec.v) this.spent.add(rec.v);
+        rec.sound?.retire();
+        this.recs.delete(key);
+        return;
+      }
+    } else rec.smolderT = 0;
     const g = Math.max(1, rec.prof.grow);
     const burningNow = rec.v ? rec.v.state === 'burning' : false;
     let target: number;
-    if (rec.smolder) target = 0.14;
+    if (rec.smolder) target = 0.14 * (1 - smooth(SMOLDER_SECONDS * 0.6, SMOLDER_SECONDS, rec.smolderT));
     else if (burningNow) target = 0.1 + 0.9 * smooth(0, g, rec.age);
-    else target = clamp(Math.pow(Math.max(rec.fuel, 0), 0.7), 0, 1) * (0.5 + 0.5 * smooth(0, g * 0.5, rec.age));
-    rec.lvl += (target - rec.lvl) * Math.min(1, dt * (target > rec.lvl ? 1.2 : 0.5));
+    else target = clamp(Math.pow(Math.max(rec.fuel, 0), 1.15), 0, 1) * (0.5 + 0.5 * smooth(0, g * 0.5, rec.age));
+    rec.lvl += (target - rec.lvl) * Math.min(1, dt * (target > rec.lvl ? 1.2 : 0.9));
     if (rec.lvl < 0.012 && !rec.smolder && rec.fuel <= 0) {
       rec.sound?.retire();
       this.recs.delete(key);

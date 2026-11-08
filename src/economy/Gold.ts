@@ -48,6 +48,8 @@ export const GoldConfig = {
   // ---- INCOME ----
   /** Reward for killing a criminal (an armed attacker). */
   criminalReward: 200,
+  /** Bonus when the player's vehicle rams a rickshaw (once per accident, however many rickshaws were hit). */
+  rickshawHitBonus: 500,
 
   // ---- Traffic light timing is in src/traffic/TrafficSignals.ts ----
 } as const;
