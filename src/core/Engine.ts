@@ -42,7 +42,8 @@ import { RidePrompt } from '../ui/RidePrompt';
 import { bn } from '../i18n';
 import { MALL_DOORS } from '../mall/MallSite';
 import { ParkingLots } from '../parking/ParkingLots';
-import { EVLAB_LOT, EVLAB_SLOTS, FUEL_LOTS, MAIN_STATION_LOT, START_LOT_POS, lotToWorld, lotYaw } from '../parking/ParkingSite';
+import { CHARGE_LOTS, EVLAB_SLOTS, FUEL_LOTS, MAIN_STATION_LOT, START_LOT_POS, lotToWorld, lotYaw } from '../parking/ParkingSite';
+import { StationStructures } from '../parking/StationStructures';
 import { MallManager, loadCatalog, type Catalog } from '../mall';
 import { EVLabManager } from '../evlab';
 import { EngineeringBoundary } from '../zones';
@@ -98,6 +99,7 @@ function mapSize(kind: string): { len?: number; wide?: number } {
     case 'combine': return { len: 1.7, wide: 1.3 };
     case 'pickup': return { len: 1.3, wide: 0.9 };
     case 'truck': return { len: 1.9, wide: 1.1 };
+    case 'tanker': return { len: 1.5, wide: 1.0 };
     default: return {};
   }
 }
@@ -186,6 +188,7 @@ export class Engine {
   readonly mall: MallManager;
   /** All the parking around the mall: angled lot + entry road/start apron + EVLAB fleet lot across F4, the front row and the side lot on the mall side. No signboards. */
   readonly parking: ParkingLots;
+  readonly stationStructures: StationStructures;
   /** EVLab research campus (fenced, always standing on its big level plot west of the F4 road). */
   readonly evlab: EVLabManager;
   /** Prototype fence around every engineering area (no gates). */
@@ -201,11 +204,12 @@ export class Engine {
   readonly infra: LazyInfra;
   private infraFreeFly = false;
   private mapStops: { x: number; z: number }[] = [];
-  /** Map symbols: the six small stations (fuel + charge), the main fuel station and the EVLab charging depot (static). */
+  /** Map symbols: the six small stations (fuel + charge), the main fuel station and the eight charge points (static). */
   private mapStations: { x: number; z: number; kind: 'fuel' | 'charge' | 'both' }[] = [
     ...FUEL_LOTS.map((l) => ({ ...lotToWorld((l.s0 + l.s1) / 2, (l.n0 + l.n1) / 2), kind: 'both' as const })),
     { ...lotToWorld((MAIN_STATION_LOT.s0 + MAIN_STATION_LOT.s1) / 2, (MAIN_STATION_LOT.n0 + MAIN_STATION_LOT.n1) / 2), kind: 'fuel' as const },
-    { ...lotToWorld((EVLAB_LOT.s0 + EVLAB_LOT.s1) / 2, (EVLAB_LOT.n0 + EVLAB_LOT.n1) / 2), kind: 'charge' as const },
+    // Step 2: the EVLab free depot is gone; the 8 charge points (CP-01..CP-08) are the 'charge' symbols
+    ...CHARGE_LOTS.map((l) => ({ ...lotToWorld((l.s0 + l.s1) / 2, (l.n0 + l.n1) / 2), kind: 'charge' as const })),
   ];
   private minimap: Minimap;
   /** N key: pick any vehicle and it is brought next to the player. */
@@ -398,6 +402,8 @@ export class Engine {
 
     // --- parking lots (asphalt, bay lines; no signboards) ---
     this.parking = new ParkingLots({ root: this.world.root, terrain: this.world.terrain });
+    // STEP 2: light structures at the small stations and the charge points (pump / charger posts, little roofs, Bangla + English signs)
+    this.stationStructures = new StationStructures({ root: this.world.root, terrain: this.world.terrain });
 
     // --- City Mall (always standing there when the game starts) ---
     this.mall = new MallManager({
@@ -630,6 +636,7 @@ export class Engine {
     this.vehicles.payGold = (amount, reason) => this.economy.buy(amount, reason);
     this.vehicles.bonusGold = (amount, reason) => this.economy.bonus(amount, reason);
     this.vehicles.goldBalance = () => this.economy.balance;
+    this.vehicles.fineGold = (amount, reason) => this.economy.fineGold(amount, reason);
     this.vehicles.setCrashHook((v, dv, speed) => this.onVehicleCrash(v, dv, speed));
     this.people.onCriminalKilled = () => this.economy.criminalKilled(this.combat.wanted.stars); // the bounty grows with the wanted stars
     this.mapStops = this.busStops.stops.filter((b) => b.dir === 1);
@@ -691,7 +698,7 @@ export class Engine {
         { id: 'rickshaw', icon: '🚲' }, { id: 'auto', icon: '🛺' },
         { id: 'sedan', icon: '🚗' }, { id: 'jeep', icon: '🚙' }, { id: 'hypercar', icon: '🏎️' }, { id: 'evhypar', icon: '🚘' }, { id: 'suprim', icon: '🛸' },
         { id: 'bus', icon: '🚌' }, { id: 'tank', icon: '🪖' },
-        { id: 'tractor', icon: '🚜' }, { id: 'combine', icon: '🌾' }, { id: 'pickup', icon: '🛻' }, { id: 'truck', icon: '🚚' },
+        { id: 'tractor', icon: '🚜' }, { id: 'combine', icon: '🌾' }, { id: 'pickup', icon: '🛻' }, { id: 'truck', icon: '🚚' }, { id: 'tanker', icon: '⛽' },
       ].map((v) => ({ ...v, label: SPECS[v.id as keyof typeof SPECS].nameBn })).concat([{ id: 'heli', icon: '🚁', label: HELI.nameBn }]),
       (id) => this.summonVehicle(id),
       this.renderer.domElement,

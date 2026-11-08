@@ -58,6 +58,22 @@ export const FUEL_LOTS: ReadonlyArray<FuelLot> = [
 ];
 
 /**
+ * CHARGE POINTS (docs/CHARGING_POINTS.md, CP-01 .. CP-08): small electric charge posts with a little roof. Same lot frame; each is a small rectangle where an electric
+ * vehicle that stands still is charged (paid, like the stations). The doc's rough numbers were moved a few metres where they hit a lot, a station, the main station
+ * or the mall (the original s/n are in the comment of each line). Everything is checked by scripts/charge-points-test.ts.
+ */
+export const CHARGE_LOTS: ReadonlyArray<FuelLot> = [
+  { id: 'cp-01', nameBn: 'চার্জ পয়েন্ট ১ (ইভি ল্যাব)', s0: 56, s1: 64, n0: 39, n1: 43 }, // EV Lab lot, back row (doc: s 60, n 28 = the lot's drive lane)
+  { id: 'cp-02', nameBn: 'চার্জ পয়েন্ট ২', s0: -17, s1: -9, n0: 26, n1: 30 }, // doc: s 10, n 28 = inside MALL_LOT
+  { id: 'cp-03', nameBn: 'চার্জ পয়েন্ট ৩', s0: 83, s1: 89, n0: 20, n1: 24 }, // doc: s 86, n 22 (as is; the gap between the EV Lab lot and station-1)
+  { id: 'cp-04', nameBn: 'চার্জ পয়েন্ট ৪', s0: 125.5, s1: 130.5, n0: 20, n1: 24 }, // doc: s 128, n 26 (narrowed: gap between station-1 and the main station)
+  { id: 'cp-05', nameBn: 'চার্জ পয়েন্ট ৫', s0: 74, s1: 80, n0: -13.8, n1: -10.3 }, // doc: s 36, n -24 = inside the mall; now the strip beside F4 after the front row
+  { id: 'cp-06', nameBn: 'চার্জ পয়েন্ট ৬', s0: 92, s1: 98, n0: -13.8, n1: -10.3 }, // doc: s 96, n -24 = inside the mall
+  { id: 'cp-07', nameBn: 'চার্জ পয়েন্ট ৭', s0: 130, s1: 142, n0: -13.8, n1: -10.3 }, // doc: s 150, n -24 = inside the side lot (bus-size bay: 12 m)
+  { id: 'cp-08', nameBn: 'চার্জ পয়েন্ট ৮', s0: 194, s1: 206, n0: -13.8, n1: -10.3 }, // doc: s 196, n -24 (strip beside F4, bus-size bay: 12 m)
+];
+
+/**
  * MAIN STATION area: the player brings the fuel loaded at the mine (see MINE_LOAD in vehicles/FuelAreas.ts) here and is paid a bonus.
  * Land only for now (nothing built); the engineering pump station will be built here later. Start side of F4, next to station-1.
  */
@@ -77,6 +93,9 @@ export function parkingContains(x: number, z: number, margin = 0): boolean {
     if (s >= l.s0 - margin && s <= l.s1 + margin && n >= l.n0 - margin && n <= l.n1 + margin) return true;
   }
   for (const l of FUEL_LOTS) {
+    if (s >= l.s0 - margin && s <= l.s1 + margin && n >= l.n0 - margin && n <= l.n1 + margin) return true;
+  }
+  for (const l of CHARGE_LOTS) {
     if (s >= l.s0 - margin && s <= l.s1 + margin && n >= l.n0 - margin && n <= l.n1 + margin) return true;
   }
   const m = MAIN_STATION_LOT;
@@ -132,6 +151,8 @@ export function buildParkingGeometry(): ParkingGeometry {
   const inset = 0.6;
 
   for (const l of PARKING_LOTS) g.asphalt.push(rect(l));
+  // the charge points and the small stations get a patch of asphalt (stations are paved from Step 2 on)
+  for (const l of [...CHARGE_LOTS, ...FUEL_LOTS]) g.asphalt.push([l.s0, l.s1, l.n0, l.n1, 4]);
 
   // ---- road-side concrete kerb strips of the two start-side lots
   for (const l of [MALL_LOT, EVLAB_LOT]) g.kerb.push([l.s0, l.s1, l.n0, l.n0 + 1.4, 4]);

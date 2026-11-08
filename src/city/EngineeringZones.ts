@@ -103,6 +103,8 @@ export const ENGINEERING_GATES: Readonly<Record<string, { side: 'N' | 'S' | 'E' 
   'eng-vehicle': { side: 'S', at: -129, width: 30 },
   // textile & garments factory: its gate is at local x -110, i.e. world x 665
   'eng-textile': { side: 'S', at: 665, width: 30 },
+  // mining area (Step 2): the fence was closed all round and the ground is hilly, so vehicles could not reach MINE_LOAD. East gate, in line with the mine load terminal (world z -550).
+  'eng-mining': { side: 'E', at: -550, width: 30 },
 };
 
 export const ENGINEERING_BY_ID: ReadonlyMap<string, EngineeringArea> = new Map(ENGINEERING_AREAS.map((a) => [a.id, a]));

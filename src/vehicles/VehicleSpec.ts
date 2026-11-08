@@ -12,7 +12,7 @@ export interface EngineSpec {
   launchRpm?: number;
 }
 
-export type VehicleId = 'sedan' | 'jeep' | 'hypercar' | 'evhypar' | 'evbike' | 'rickshaw' | 'auto' | 'bus' | 'tank' | 'tractor' | 'combine' | 'pickup' | 'suprim' | 'truck';
+export type VehicleId = 'sedan' | 'jeep' | 'hypercar' | 'evhypar' | 'evbike' | 'rickshaw' | 'auto' | 'bus' | 'tank' | 'tractor' | 'combine' | 'pickup' | 'suprim' | 'truck' | 'tanker';
 
 /** One wheel of the raycast vehicle. `drive` = share of the drive force, `side` = track side for skid steering (+1 left, -1 right). */
 export interface WheelDef {
@@ -851,8 +851,28 @@ export const TRUCK: VehicleSpec = {
   camera: { dist: 15, min: 8, max: 38 },
 };
 
+
+/**
+ * FUEL TANKER (Step 2): the one vehicle that carries fuel from the MAIN STATION to the small stations (5000 Gold per delivery, see vehicles/FuelAreas.ts).
+ * A pickup-shaped truck with a tank on the bed (VehicleModel.pickup draws it when spec.id is 'tanker'); top speed 200 km/h (SPEED_BOOST.tanker).
+ * It is heavy and explosive: a hard crash with fuel on board makes it blow up (Vehicle.ts), and a wreck / fire costs the player TANKER_FINE Gold.
+ */
+export const TANKER: VehicleSpec = {
+  ...JEEP,
+  id: 'tanker',
+  nameBn: 'ফুয়েল ট্যাংকার',
+  mass: 3600,
+  half: { x: 1.0, y: 0.5, z: 2.7 },
+  wheelbaseHalf: 1.75,
+  use: USE.none(),
+  look: { kind: 'pickup', body: 0xc62828, accent: 0xf5f5f5 },
+  seats: [{ x: 0.45, y: 0.02, z: 0.2, scale: 0.95 }],
+  pax: [0, 1],
+  fragile: 0.6,
+};
+
 // the farm vehicles come LAST: scripts/vehicle-test.ts places every vehicle by its index in this object, so the older ones must keep their index
-export const SPECS: Record<VehicleId, VehicleSpec> = { sedan: SEDAN, jeep: JEEP, hypercar: HYPERCAR, evhypar: EVHYPAR, evbike: EVBIKE, rickshaw: RICKSHAW, auto: AUTO, bus: BUS, tank: TANK, tractor: TRACTOR, combine: COMBINE, pickup: PICKUP, suprim: SUPRIM, truck: TRUCK };
+export const SPECS: Record<VehicleId, VehicleSpec> = { sedan: SEDAN, jeep: JEEP, hypercar: HYPERCAR, evhypar: EVHYPAR, evbike: EVBIKE, rickshaw: RICKSHAW, auto: AUTO, bus: BUS, tank: TANK, tractor: TRACTOR, combine: COMBINE, pickup: PICKUP, suprim: SUPRIM, truck: TRUCK, tanker: TANKER };
 
 
 /**
@@ -875,6 +895,7 @@ export const SPEED_BOOST: Record<VehicleId, number> = {
   suprim: 2,
   /** Cargo truck: BUS gearing x 1.7 = about 180 km/h (the job needs 150-200 km/h). */
   truck: 1.7,
+  tanker: 1.72, // jeep base x 1.72 -> ~200 km/h (checked by scripts/tanker-test.ts)
 };
 
 /**

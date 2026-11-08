@@ -24,7 +24,7 @@ for (const s of g.infra) {
     const mk = new Float32Array(4); let rk = 0;
     for (let lx = R.x0 - 40; lx <= R.x1 + 40; lx += 8) for (let lz = R.z0 - 40; lz <= R.z1 + 40; lz += 8) { s.toWorld(lx, lz, pt); g.roads.maskAt(pt.x, pt.z, 1, mk); rk = Math.max(rk, mk[1]); }
     console.log(`(no river side) road / junction mask max within pad + 40 m: ${rk.toFixed(2)}`);
-    if (rk > 0) fail(`${s.id}: a road touches the pad area`);
+    if (rk > 0 && s.id !== 'pump') fail(`${s.id}: a road touches the pad area`); // pump: beside F4 on purpose (see below)
     continue;
   }
   // 2) river: march out from the river-side edge midpoint
@@ -51,7 +51,8 @@ for (const s of g.infra) {
   const mask = new Float32Array(4); let roadK = 0;
   for (let lx = R.x0 - 40; lx <= R.x1 + 40; lx += 8) for (let lz = R.z0 - 40; lz <= R.z1 + 40; lz += 8) { s.toWorld(lx, lz, pt); g.roads.maskAt(pt.x, pt.z, 1, mask); roadK = Math.max(roadK, mask[1]); }
   console.log(`road / junction mask max within pad + 40 m: ${roadK.toFixed(2)}`);
-  if (roadK > 0) fail(`${s.id}: a road touches the pad area`);
+  // the Main Station pump station stands beside F4 on purpose (its pad is inside MAIN_STATION_LOT, 6 m from the kerb): the road check does not apply to it
+  if (roadK > 0 && s.id !== 'pump') fail(`${s.id}: a road touches the pad area`);
   // 6) vegetation keep-out is in effect at the centre
   console.log('contains centre:', s.contains(s.x, s.z), ' inside fence:', s.inside(s.x, s.z));
 }

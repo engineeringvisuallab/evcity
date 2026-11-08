@@ -2102,6 +2102,21 @@ export class VehicleModel {
     for (const sx of [-1, 1]) this.boxG(0.08, 0.5, 2.3, paint, sx * 0.86, 1.28, -1.55);
     this.boxG(1.8, 0.5, 0.08, paint, 0, 1.28, -0.42);
     this.boxG(1.8, 0.5, 0.08, paint, 0, 1.28, -2.7, 2); // tailgate
+    if (spec.id === 'tanker') {
+      // the fuel tank on the bed: a long red drum with white bands, a filler hatch on top and a rear outlet
+      const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 0.78, 2.5, 20), paint);
+      drum.rotation.x = Math.PI / 2;
+      drum.position.set(0, this.gy + 1.85, -1.5);
+      this.root.add(drum);
+      for (const dz of [-0.55, -1.5, -2.45]) {
+        const band = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.14, 20), trim);
+        band.rotation.x = Math.PI / 2;
+        band.position.set(0, this.gy + 1.85, dz);
+        this.root.add(band);
+      }
+      this.boxG(0.45, 0.14, 0.45, dark, 0, 2.68, -1.5);
+      this.boxG(0.3, 0.3, 0.2, dark, 0, 1.25, -2.85);
+    }
     this.boxG(1.9, 0.25, 0.2, dark, 0, 0.55, 2.55, 1); // front bumper
     this.boxG(1.9, 0.25, 0.2, dark, 0, 0.55, -2.55, 2);
     for (const sx of [-1, 1]) {

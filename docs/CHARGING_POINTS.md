@@ -1,4 +1,6 @@
-# Charging points (ইলেকট্রিক চার্জ পয়েন্ট) — PLANNED, NOT BUILT
+# Charging points (ইলেকট্রিক চার্জ পয়েন্ট) — BUILT (Step 2)
+
+> Step 2 এ CP-01..CP-08 বানানো হয়েছে: `CHARGE_LOTS` (`src/parking/ParkingSite.ts`), মডেল `src/parking/StationStructures.ts`, লজিক `chargeAreaAt` (`src/vehicles/FuelAreas.ts`). পুরোনো ফ্রি EV Lab ডিপো সরানো হয়েছে. নিচের টেবিল হলো আদি প্রস্তাব — আসল কোঅর্ডিনেট `CHARGE_LOTS` এ (CP-02, 05, 06, 07, 08 জায়গা সরানো হয়েছে, কারণ প্রস্তাবিত জায়গা লট/মল/স্টেশনে পড়ছিল; প্রতি লাইনের কমেন্টে লেখা আছে)।
 
 ইলেকট্রিক গাড়ি (রিকশা, EV Hypar, বাস, EV Bike) ব্যাটারি দিয়ে চলে। চার্জ পয়েন্ট এখনো **বানানো হয়নি** — শুধু জায়গাগুলোর লিস্ট এখানে রাখা আছে।
 

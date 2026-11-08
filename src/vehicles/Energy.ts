@@ -27,6 +27,7 @@ export const ENERGY: Partial<Record<VehicleId, EnergySpec>> = {
   hypercar: { kind: 'fuel', baseKm: 10 },
   auto: { kind: 'fuel', baseKm: 15 },
   tank: { kind: 'fuel', baseKm: 10 },
+  tanker: { kind: 'fuel', baseKm: 15 },
 };
 
 /** Speed (km/h) at which `baseKm` is reached. */

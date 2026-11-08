@@ -146,6 +146,8 @@ const CRASH_DAMAGE = 2;
 const CRASH_HP_FLOOR = 15;
 /** Delta-v above which a badly damaged car can catch fire from a leaking fuel line (it burns, it does not explode). */
 const CRASH_FIRE_DV = 22;
+/** A loaded fuel tanker bursts when a crash changes its speed by more than this (m/s, ~32 km/h). */
+const TANKER_BURST_DV = 9;
 const CRASH_FIRE_HP = 20;
 /** Below this hp the engine / drivetrain is damaged and power falls off (limp mode). */
 const LIMP_HP = 30;
@@ -1467,6 +1469,12 @@ export class Vehicle implements OrbitTarget {
       this.explosive = false;
       this.fuse = 7 + Math.random() * 6;
       this.events.push({ type: 'totaled' }); // people get out of a burning car
+    }
+    // a FUEL TANKER with fuel on board bursts in a hard crash: it catches fire at once and blows up a moment later (big fire, see VehicleManager.handleEvents)
+    if (this.spec.id === 'tanker' && this.cargo > 0 && this.state === 'ok' && dv > TANKER_BURST_DV) {
+      this.state = 'burning';
+      this.explosive = true;
+      this.fuse = 0.9 + Math.random() * 0.8;
     }
   }
 

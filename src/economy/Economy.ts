@@ -58,6 +58,13 @@ export class Economy {
     this.hud.say(`${reason}: +${fmt(amount)} ${bn.gold.unit}`, 'income');
   }
 
+  /** A fixed fine with a pop-up (e.g. the wrecked fuel tanker). Takes what the player has. */
+  fineGold(amount: number, reason: string): void {
+    if (amount <= 0) return;
+    const taken = this.gold.charge(amount, reason);
+    this.hud.say(taken < amount ? `${bn.gold.fineShort}: −${fmt(taken)} ${bn.gold.unit}` : `${reason}: −${fmt(taken)} ${bn.gold.unit}`, 'fine');
+  }
+
   /** The player's vehicle crossed a stop line on a red light. */
   redLight(): void {
     if (this.now - this.lastSignalFine < GoldConfig.signalCooldown) return;

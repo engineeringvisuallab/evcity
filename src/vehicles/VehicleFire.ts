@@ -70,11 +70,13 @@ const PROF: Record<string, Prof> = {
   rickshaw: { burn: 20, grow: 6, battery: false, fuelTank: false, soot: 0.6, windows: 0, engine: 'mid' },
   bus: { burn: 100, grow: 16, battery: false, fuelTank: true, soot: 1, windows: 8, engine: 'rear' },
   tank: { burn: 60, grow: 10, battery: false, fuelTank: true, soot: 0.9, windows: 0, engine: 'rear' },
+  // the fuel tanker: a full tank of fuel burns long and black (looked up by vehicle id first, see profFor)
+  tanker: { burn: 150, grow: 6, battery: false, fuelTank: true, soot: 1, windows: 2, engine: 'front' },
 };
 
 /** Seconds a wreck of this kind keeps burning. The cleaners (traffic, parking) wait for this, so a wreck never vanishes while it is still on fire. */
-export function fireBurnSeconds(kind: string): number {
-  return (PROF[kind] ?? (PROF.sedan as Prof)).burn;
+export function fireBurnSeconds(kind: string, id?: string): number {
+  return ((id ? PROF[id] : undefined) ?? PROF[kind] ?? (PROF.sedan as Prof)).burn;
 }
 
 /** A damaged (not burning) vehicle only smoulders this long (seconds); the smoke fades out over the last 40 % and then stops for good. */
@@ -698,7 +700,7 @@ export class VehicleFire {
   // ------------------------------------------------------------------ fire records
 
   private makeRec(v: Vehicle): Rec {
-    const prof = PROF[v.spec.look.kind] ?? (PROF.sedan as Prof);
+    const prof = PROF[v.spec.id] ?? PROF[v.spec.look.kind] ?? (PROF.sedan as Prof);
     const h = v.spec.half;
     const sf = clamp(Math.sqrt((h.x * 2 * h.z * 2) / 7.9), 0.3, 2.4);
     const wrecked = v.state === 'wrecked';
@@ -847,7 +849,7 @@ export class VehicleFire {
     const list = this.d.vehicles.vehicles;
     for (const v of list) {
       if (this.recs.has(v)) continue;
-      const prof = PROF[v.spec.look.kind] ?? (PROF.sedan as Prof);
+      const prof = PROF[v.spec.id] ?? PROF[v.spec.look.kind] ?? (PROF.sedan as Prof);
       const burning = v.state === 'burning';
       const wrecked = v.state === 'wrecked' && v.wreckedFor < prof.burn * 0.95;
       const smoulder = v.state === 'ok' && v.hp < 28;

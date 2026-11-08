@@ -9,7 +9,7 @@ const smoothstep = (a: number, b: number, x: number): number => {
 };
 
 export interface InfraPlacement {
-  id: 'swtp' | 'stp' | 'thermal' | 'grid' | 'mech' | 'dam' | 'chem' | 'auto' | 'renew' | 'vehicle' | 'tech' | 'aircraft' | 'textile';
+  id: 'swtp' | 'stp' | 'thermal' | 'grid' | 'mech' | 'dam' | 'chem' | 'auto' | 'renew' | 'vehicle' | 'tech' | 'aircraft' | 'textile' | 'pump' | 'mineload';
   nameBn: string;
   /** site origin (the local (0,0) of the plant) and yaw: local +x maps to world (cos yaw, -sin yaw) */
   x: number;
@@ -70,6 +70,10 @@ export const INFRA_PLACEMENTS: InfraPlacement[] = [
   { id: 'aircraft', nameBn: 'Aircraft Factory', x: 3000, z: -3740, yaw: 0, rect: { x0: -190, x1: 190, z0: -112, z1: 112 }, riverSide: 'none', color: '#38bdf8', mark: 'A', deep: 0, blend: 24, riverBlend: 24, lift: 0, floorFrom: 'airport' },
   // Textile & garments factory: inside the engineering area 'eng-textile' (x 550..1000, z -2600..-2250), centred in the area (>= 70 m from every edge); the gate faces south
   // towards the area's south entrance gate (ENGINEERING_GATES).
+  // Step 2: the Main Station pump station stands on MAIN_STATION_LOT (yaw = the F4 heading, local +z = towards the road); pad 50 x 36 m inside the 52 x 38 m lot
+  { id: 'pump', nameBn: 'Main Station Pump Station', x: 36.5, z: -253.37, yaw: 1.2312728, rect: { x0: -25, x1: 25, z0: -18, z1: 18 }, riverSide: 'none', color: '#38bdf8', mark: 'P', deep: 4.2, blend: 5, riverBlend: 5, lift: 0 },
+  // Step 2: the mine load terminal stands INSIDE the mining area (eng-mining, x -3600..-3000) near its east gate: a level pad on the hill (56 x 40 m)
+  { id: 'mineload', nameBn: 'Mine Fuel Load Terminal', x: -3050, z: -550, yaw: 0, rect: { x0: -28, x1: 28, z0: -20, z1: 20 }, riverSide: 'none', color: '#a16207', mark: 'M', deep: 0.6, blend: 20, riverBlend: 20, lift: 0 },
   { id: 'textile', nameBn: 'Textile & Garments Factory', x: 775, z: -2425, yaw: 0, rect: { x0: -155, x1: 155, z0: -105, z1: 105 }, riverSide: 'none', color: '#ec4899', mark: 'F', deep: 1.5, blend: 26, riverBlend: 26, lift: 0 },
 ];
 

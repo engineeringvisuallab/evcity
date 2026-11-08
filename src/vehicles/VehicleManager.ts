@@ -20,7 +20,7 @@ import type { VehicleSpec } from './VehicleSpec';
 import { VehicleAudio } from './VehicleAudio';
 import { ENERGY } from './Energy';
 import {
-  CARGO_CAP, CHARGE_PRICE_FULL, CHARGE_SECONDS, DELIVERY_BONUS, BONUS_CARGO, FILL_SECONDS, FUEL_PRICE_FULL, LOAD_SECONDS, MINE_LOAD, STAND_STILL, UNLOAD_SECONDS,
+  CARGO_CAP, MAIN_LOAD_SECONDS, STATION_BONUS, STATION_COOLDOWN, TANKER_BLAST, TANKER_CAP, TANKER_FINE, CHARGE_PRICE_FULL, CHARGE_SECONDS, DELIVERY_BONUS, BONUS_CARGO, FILL_SECONDS, FUEL_PRICE_FULL, LOAD_SECONDS, MINE_LOAD, STAND_STILL, UNLOAD_SECONDS,
   chargeAreaAt, fuelAreaAt, mainStationAt, mineLoadAt,
 } from './FuelAreas';
 import { bn, bnNum } from '../i18n';
@@ -118,7 +118,7 @@ export class VehicleManager {
       if (p.v && !this.vehicles.includes(p.v)) p.v = null;
       if (p.v) {
         const w = p.v;
-        if (w !== this.driver && w.state === 'wrecked' && w.wreckedFor > Math.max(25, fireBurnSeconds(w.spec.look.kind) + 8)) {
+        if (w !== this.driver && w.state === 'wrecked' && w.wreckedFor > Math.max(25, fireBurnSeconds(w.spec.look.kind, w.spec.id) + 8)) {
           const i = this.vehicles.indexOf(w);
           this.vehicles.splice(i, 1);
           this.byHandle.delete(w.collider.handle);
@@ -310,6 +310,16 @@ export class VehicleManager {
   payGold: ((amount: number, reason: string) => number) | null = null;
   bonusGold: ((amount: number, reason: string) => void) | null = null;
   goldBalance: (() => number) | null = null;
+  /** Set by the Engine: a fixed fine with a pop-up message. */
+  fineGold: ((amount: number, reason: string) => void) | null = null;
+
+  /** Fuel TANKER: the tanker the player drives (fined once if it is wrecked / burns), game clock, per-station delivery cooldown, fuel unloaded in this stop. */
+  private playerTanker: Vehicle | null = null;
+  private tankerFined = new WeakSet<Vehicle>();
+  private clock = 0;
+  private stationLast = new Map<string, number>();
+  private stationUnloaded = 0;
+  private stationUnloadedId = '';
 
   /** 0 = fine, 1 = warned "low", 2 = warned "empty" (per vehicle, so the warning is not repeated every frame). */
   private energyWarn = new WeakMap<Vehicle, number>();
@@ -328,10 +338,21 @@ export class VehicleManager {
    *  - warnings when the fuel / charge is low or empty.
    */
   private energyTick(dt: number): void {
+    this.clock += dt;
     const v = this.driver;
+    // ---- the fuel tanker the player drives: wrecked or on fire = 3000 Gold fine (once per tanker; the player is thrown out, so this runs before the no-driver return) ----
+    if (v && v.spec.id === 'tanker') this.playerTanker = v;
+    else if (v && this.playerTanker && v !== this.playerTanker && this.playerTanker.state === 'ok') this.playerTanker = null;
+    const pt = this.playerTanker;
+    if (pt && pt.state !== 'ok' && !this.tankerFined.has(pt)) {
+      this.tankerFined.add(pt);
+      this.fineGold?.(TANKER_FINE, bn.vehicle.tankerFine);
+      this.playerTanker = null;
+    }
     if (!v) {
       this.energyZone = '';
       this.flushDelivery();
+      this.flushStationDelivery();
       return;
     }
     const say = (msg: string) => this.d.toast?.(msg);
@@ -339,7 +360,8 @@ export class VehicleManager {
     const px = this.tmp.x;
     const pz = this.tmp.z;
     const still = Math.abs(v.forwardSpeed) < STAND_STILL;
-    const cap = CARGO_CAP[v.spec.id] ?? 0;
+    const tanker = v.spec.id === 'tanker';
+    const cap = tanker ? TANKER_CAP : CARGO_CAP[v.spec.id] ?? 0;
 
     // ---- which place is the vehicle in? ----
     const en = ENERGY[v.spec.id];
@@ -351,9 +373,12 @@ export class VehicleManager {
     const id = st?.id ?? (mine ? MINE_LOAD.id : main ? 'main-station' : '');
     if (id !== this.energyZone) {
       if (this.energyZone === 'main-station') this.flushDelivery();
+      if (this.energyZone.startsWith('station-')) this.flushStationDelivery();
       this.energyZone = id;
       this.brokeWarned = false;
-      if (st) say(`${fuel ? '⛽' : '🔌'} ${st.nameBn} — ${fuel ? bn.vehicle.fuelAreaIn : bn.vehicle.chargeAreaIn}${free ? '' : ` (${bn.vehicle.paid})`}`);
+      if (st && tanker && v.cargo > 0) say(`⛽ ${st.nameBn} — ${bn.vehicle.stationUnloadIn}`);
+      else if (st) say(`${fuel ? '⛽' : '🔌'} ${st.nameBn} — ${fuel ? bn.vehicle.fuelAreaIn : bn.vehicle.chargeAreaIn}${free ? '' : ` (${bn.vehicle.paid})`}`);
+      else if (tanker && main) say(`🏭 ${bn.vehicle.mainStation} — ${bn.vehicle.tankerLoadIn}`);
       else if (mine) say(cap > 0 ? `⛏️ ${MINE_LOAD.nameBn} — ${bn.vehicle.loadIn}` : `⛏️ ${MINE_LOAD.nameBn} — ${bn.vehicle.noCargo}`);
       else if (main) say(v.cargo > 0 ? `🏭 ${bn.vehicle.mainStation} — ${bn.vehicle.unloadIn}` : `🏭 ${bn.vehicle.mainStation} — ${bn.vehicle.noLoad}`);
     }
@@ -384,13 +409,39 @@ export class VehicleManager {
     }
 
     // ---- mine: load fuel ----
-    if (mine && cap > 0 && still && v.cargo < cap) {
+    if (mine && !tanker && cap > 0 && still && v.cargo < cap) {
       v.cargo = Math.min(cap, v.cargo + (cap * dt) / LOAD_SECONDS);
       if (v.cargo >= cap) say(`🛢️ ${bn.vehicle.loaded} (${bnNum(cap, 1)} ${bn.vehicle.m3}) — ${bn.vehicle.goMain}`);
     }
 
+    // ---- main station, FUEL TANKER: load fuel here (free), then take it to a small station ----
+    if (main && tanker && still && v.cargo < cap) {
+      v.cargo = Math.min(cap, v.cargo + (cap * dt) / MAIN_LOAD_SECONDS);
+      if (v.cargo >= cap) say(`🛢️ ${bn.vehicle.tankerLoaded}`);
+    }
+
+    // ---- small station, FUEL TANKER: unload; the bonus is paid when it is empty (once per STATION_COOLDOWN per station) ----
+    if (tanker && st && still && v.cargo > 0) {
+      const last = this.stationLast.get(st.id);
+      if (last !== undefined && this.clock - last < STATION_COOLDOWN) {
+        if (this.stationUnloadedId !== 'full:' + st.id) {
+          this.stationUnloadedId = 'full:' + st.id;
+          say(`⛽ ${bn.vehicle.stationFull}`);
+        }
+      } else {
+        const d = Math.min(v.cargo, (cap * dt) / UNLOAD_SECONDS);
+        v.cargo -= d;
+        this.stationUnloaded += d;
+        this.stationUnloadedId = st.id;
+        if (v.cargo <= 1e-6) {
+          v.cargo = 0;
+          this.flushStationDelivery();
+        }
+      }
+    }
+
     // ---- main station: unload, bonus when done ----
-    if (main && still && v.cargo > 0) {
+    if (main && !tanker && still && v.cargo > 0) {
       const d = Math.min(v.cargo, (Math.max(cap, 0.01) * dt) / UNLOAD_SECONDS);
       v.cargo -= d;
       this.unloaded += d;
@@ -410,6 +461,16 @@ export class VehicleManager {
       this.energyWarn.set(v, 1);
       say(`⚠️ ${fuel ? bn.vehicle.fuelLow : bn.vehicle.chargeLow}`);
     } else if (v.energy > 0.25 && w > 0) this.energyWarn.set(v, 0);
+  }
+
+  /** Pay the small-station bonus for the fuel the tanker unloaded so far (a full tank = STATION_BONUS). */
+  private flushStationDelivery(): void {
+    if (this.stationUnloaded <= 0) return;
+    const bonus = Math.round((STATION_BONUS * this.stationUnloaded) / TANKER_CAP);
+    this.stationUnloaded = 0;
+    if (this.stationUnloadedId && !this.stationUnloadedId.startsWith('full:')) this.stationLast.set(this.stationUnloadedId, this.clock);
+    this.stationUnloadedId = '';
+    if (bonus > 0) this.bonusGold?.(bonus, bn.vehicle.stationBonus);
   }
 
   /** Pay the delivery bonus for the fuel unloaded so far (once per stop). */
@@ -563,7 +624,13 @@ export class VehicleManager {
         const fx = this.d.vehicle.fx;
         for (const p of v.occupants()) this.eject(v, p, true, ev.byPlayer);
         if (v.driver === 'player') this.forceExit(v);
-        fx?.explode(this.tmp3, Math.max(4.5, v.spec.half.z * 1.5), v.spec.mass > 5000 ? 110 : 70, ev.byPlayer, v);
+        if (v.spec.id === 'tanker') {
+          // a tanker with fuel on board: a BIG fire (blast radius and power grow with the fuel it carried)
+          const k = Math.max(0.25, v.cargo);
+          fx?.explode(this.tmp3, TANKER_BLAST.baseRadius + TANKER_BLAST.perM3 * k, TANKER_BLAST.power, ev.byPlayer, v);
+          if (v.cargo > 0) this.d.toast?.(`🔥 ${bn.vehicle.tankerBurst}`);
+          v.cargo = 0;
+        } else fx?.explode(this.tmp3, Math.max(4.5, v.spec.half.z * 1.5), v.spec.mass > 5000 ? 110 : 70, ev.byPlayer, v);
       } else if (ev.type === 'totaled') {
         // write-off without an explosion (crash fire): everybody climbs out alive
         if (v.driver === 'player') this.forceExit(v);
@@ -619,7 +686,7 @@ export class VehicleManager {
     if (t && !this.vehicles.includes(t)) this.tank = null;
     if (this.tank) {
       const w = this.tank;
-      if (w.state === 'wrecked' && w.wreckedFor > Math.max(25, fireBurnSeconds(w.spec.look.kind) + 8) && w !== this.driver) {
+      if (w.state === 'wrecked' && w.wreckedFor > Math.max(25, fireBurnSeconds(w.spec.look.kind, w.spec.id) + 8) && w !== this.driver) {
         const i = this.vehicles.indexOf(w);
         this.vehicles.splice(i, 1);
         this.byHandle.delete(w.collider.handle);

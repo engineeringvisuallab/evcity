@@ -7,7 +7,7 @@ import { swtpDef } from './civil/water-supply/swtp';
 import { stpDef } from './civil/wastewater/stp';
 import { thermalDef, gridDef, techDef } from './electrical';
 import { mechDef, autoDef, vehicleDef, aircraftDef } from './mechanical';
-import { damDef } from './civil';
+import { damDef, pumpStationDef, mineLoadDef } from './civil';
 import { chemDef } from './chemical';
 import { renewDef } from './renewable';
 import { textileDef } from './materials';
@@ -25,6 +25,8 @@ export function registerBuiltinInfrastructure(): void {
   registerInfrastructure(mechDef);
   registerInfrastructure(aircraftDef);
   registerInfrastructure(damDef);
+  registerInfrastructure(pumpStationDef);
+  registerInfrastructure(mineLoadDef);
   registerInfrastructure(chemDef);
   registerInfrastructure(autoDef);
   registerInfrastructure(renewDef);
