@@ -9,6 +9,7 @@ import * as THREE from 'three';
 import type { RoadNetwork, RoadSpec } from '../roads';
 import { BOARD_W_M, boardHeightM, drawSignCanvas } from './SignCanvas';
 import type { SignColor, SignRow } from './SignFormat';
+import type { PlannedSign } from './SignPlan';
 
 export interface SideSignSpec {
   /** Foot of the posts (world metres). */
@@ -182,6 +183,31 @@ export class RoadSignLayer {
       }
     }
     return `Step 1 test signs: ${lines.length} placed. ${lines.join('; ')}`;
+  }
+
+  /**
+   * STEP 3 PREVIEW ONLY: shows a few boards of the plan (SignPlan.ts) near (px, pz) so the rows, arrows and km can be checked by eye.
+   * Every board is built as a SIDE board (the overhead gantry comes in Step 4), on the left edge of the road, at most `maxDist` m from the player;
+   * two chosen boards are never closer than 40 m. Returns a short text for the console.
+   */
+  addPlannedPreview(plan: readonly PlannedSign[], groundAt: (x: number, z: number) => number, px: number, pz: number, count = 6, maxDist = 1500): string {
+    const cand = plan
+      .filter((q) => q.sideOk)
+      .map((q) => ({ q, d: Math.hypot(q.sx - px, q.sz - pz) }))
+      .filter((c) => c.d <= maxDist)
+      .sort((a, b) => a.d - b.d);
+    const picked: PlannedSign[] = [];
+    for (const c of cand) {
+      if (picked.length >= count) break;
+      if (picked.some((o) => Math.hypot(o.sx - c.q.sx, o.sz - c.q.sz) < 40)) continue;
+      picked.push(c.q);
+    }
+    const lines: string[] = [];
+    for (const q of picked) {
+      if (!this.addSideSign({ x: q.sx, y: groundAt(q.sx, q.sz), z: q.sz, fx: q.fx, fz: q.fz, rows: q.rows, color: q.color })) continue;
+      lines.push(`#${q.id} ${q.purpose}/${q.style} ${q.roadName} at x=${q.sx.toFixed(0)} z=${q.sz.toFixed(0)}: ${q.rows.map((r) => `${r.arrow} ${r.en} ${(r.km ?? 0).toFixed(1)}`).join(' | ')}`);
+    }
+    return `Step 3 preview: ${lines.length} planned boards placed (side style). ${lines.join(' ;; ')}`;
   }
 
   /** Once per rendered frame. lampOn = 0 (day) .. 1 (night): the boards are a little darker at night. */

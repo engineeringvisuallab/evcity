@@ -60,6 +60,7 @@ import { InputManager } from '../input/InputManager';
 import { VoiceManager } from '../audio/VoiceManager';
 import { Environment, LighthouseLight, StreetLights } from '../environment';
 import { RoadSignLayer } from '../signs/RoadSignLayer';
+import { planRoadSigns } from '../signs/SignPlan';
 import { JunctionMirrors } from '../roads/JunctionMirrors';
 import { Toast } from '../ui/Toast';
 import { SuprimHUD } from '../ui/SuprimHUD';
@@ -370,6 +371,10 @@ export class Engine {
     // --- road sign boards (Bangla + English). STEP 1: three test boards next to the road nearest to the start point ---
     this.roadSigns = new RoadSignLayer(this.world.root);
     console.info('[RoadSigns]', this.roadSigns.addStep1TestSigns(roads, (x, z) => this.world.terrain.heightAt(x, z), this.startPoint.x, this.startPoint.z));
+    // STEP 3: the plan for the whole map (numbers in the console) + a few planned boards near the start to check them by eye
+    const signPlan = planRoadSigns(roads);
+    console.info('[RoadSigns]', signPlan.summary);
+    console.info('[RoadSigns]', this.roadSigns.addPlannedPreview(signPlan.signs, (x, z) => this.world.terrain.heightAt(x, z), this.startPoint.x, this.startPoint.z));
 
     // --- parking lots (asphalt, bay lines; no signboards) ---
     this.parking = new ParkingLots({ root: this.world.root, terrain: this.world.terrain });

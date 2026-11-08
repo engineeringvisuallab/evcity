@@ -36,6 +36,11 @@ export interface GraphEdge {
   dir: 1 | -1;
   /** Direction (rad, atan2(dz, dx)) in which this edge LEAVES its pad. Step 3 uses it to find which pad arm an edge belongs to. */
   heading: number;
+  /** Distance along the road (m) of the pad where this edge STARTS and of the pad where it ENDS (Step 3 uses them to put a sign a given distance along the edge). */
+  s0: number;
+  s1: number;
+  /** true = the closing stretch of a ring road: it runs over the end of the road back to its start (so s1 < s0 although dir = +1). */
+  wrap: boolean;
 }
 
 /** A place where a road meets a pad: distance along the road (m), the pad, and the road's heading there in the direction of increasing s. */
@@ -99,10 +104,10 @@ export function buildPadGraph(roads: readonly GraphRoad[], pads: readonly GraphP
 
   const adj: GraphEdge[][] = pads.map(() => []);
   let edgeCount = 0;
-  const link = (a: Station, b: Station, len: number, roadId: number): void => {
+  const link = (a: Station, b: Station, len: number, roadId: number, wrap = false): void => {
     if (a.pad === b.pad || !(len >= 0)) return;
-    adj[a.pad].push({ to: b.pad, len, roadId, dir: 1, heading: a.fwd });
-    adj[b.pad].push({ to: a.pad, len, roadId, dir: -1, heading: wrapPi(b.fwd + Math.PI) });
+    adj[a.pad].push({ to: b.pad, len, roadId, dir: 1, heading: a.fwd, s0: a.s, s1: b.s, wrap });
+    adj[b.pad].push({ to: a.pad, len, roadId, dir: -1, heading: wrapPi(b.fwd + Math.PI), s0: b.s, s1: a.s, wrap });
     edgeCount += 2;
   };
   for (const [roadId, list] of stations) {
@@ -113,7 +118,7 @@ export function buildPadGraph(roads: readonly GraphRoad[], pads: readonly GraphP
     if (r.closed && list.length >= 2) {
       const first = list[0];
       const last = list[list.length - 1];
-      link(last, first, r.length - (last.s - first.s), roadId);
+      link(last, first, r.length - (last.s - first.s), roadId, true);
     }
   }
   return { adj, edgeCount, stations };
