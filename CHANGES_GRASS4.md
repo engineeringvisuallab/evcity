@@ -61,3 +61,6 @@ Placement CPU in the chunk worker: 13 ms / tile in the city (same as before), 8 
 - **Visual result**: the shader code (pavers, striped kerb, white lines, terrain green) and the new models could not be rendered or GLSL-compiled here. Placement logic and the model builders were run headless with a stub of three.js; the full-project `tsc` could not run (three / rapier not installed). Run `npm run build` first; expect at worst small typing or GLSL typos in `RoadMaterial.ts`, `TerrainMaterial.ts`, `RoadsideView.ts`, `GrassManager.ts`.
 - Mixed junction pads (arms of different tiers) still show the old gravel border; the roundabout / pad corners have no pits.
 - The tree pit trees use the existing vase / broadleaf / slender models at scale 0.7-0.95.
+
+## Map symbols (added later)
+- Minimap: fuel stations (orange square, white pump) and charging points (green square, white lightning bolt). The 6 small stations show both side by side, the main station a pump, the EVLab depot a bolt. Close and medium zoom only. Files: `src/ui/Minimap.ts`, `src/core/Engine.ts`.

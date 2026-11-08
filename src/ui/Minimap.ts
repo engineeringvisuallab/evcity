@@ -43,6 +43,8 @@ export interface MapState {
   agro?: { x: number; z: number };
   /** SWTP / STP plants (world x, z): always shown. */
   infra?: { x: number; z: number; id: string; color: string; mark: string }[];
+  /** Fuel stations / charging points (world x, z): `fuel` = pump symbol, `charge` = lightning bolt, `both` = the two side by side (every small station gives fuel AND charge). */
+  stations?: { x: number; z: number; kind: 'fuel' | 'charge' | 'both' }[];
   /** The camera's world position: shown as numbers under the map. */
   camera?: { x: number; y: number; z: number };
   /** Time of day in hours (0 .. 24): shown as a faint clock next to the map. */
@@ -406,6 +408,54 @@ export class Minimap {
         c.textBaseline = 'middle';
         c.fillText(pl.mark, ix, iz + r * 0.05);
         c.restore();
+      }
+    }
+
+    // FUEL STATIONS (orange-red square, white pump) and CHARGING POINTS (green square, white lightning bolt): close and medium maps
+    if (s.stations && this.zoom < 2) {
+      const d = this.dpr;
+      const r = (this.zoom === 0 ? 5.8 : 4.6) * d;
+      const badge = (bx: number, bz: number, color: string, glyph: 'pump' | 'bolt'): void => {
+        c.fillStyle = color;
+        c.strokeStyle = '#fff';
+        c.lineWidth = 1.4 * d;
+        c.beginPath();
+        c.roundRect(bx - r, bz - r, 2 * r, 2 * r, 2.5 * d);
+        c.fill();
+        c.stroke();
+        c.fillStyle = '#fff';
+        c.strokeStyle = '#fff';
+        if (glyph === 'pump') {
+          c.fillRect(bx - r * 0.5, bz - r * 0.6, r * 0.75, r * 1.2); // pump body
+          c.fillStyle = color;
+          c.fillRect(bx - r * 0.38, bz - r * 0.46, r * 0.51, r * 0.4); // display window
+          c.strokeStyle = '#fff';
+          c.lineWidth = 1.2 * d;
+          c.beginPath();
+          c.moveTo(bx + r * 0.3, bz - r * 0.3); // hose + nozzle
+          c.lineTo(bx + r * 0.62, bz - r * 0.1);
+          c.lineTo(bx + r * 0.62, bz + r * 0.4);
+          c.stroke();
+        } else {
+          c.beginPath(); // lightning bolt
+          c.moveTo(bx + r * 0.15, bz - r * 0.75);
+          c.lineTo(bx - r * 0.45, bz + r * 0.1);
+          c.lineTo(bx - r * 0.02, bz + r * 0.1);
+          c.lineTo(bx - r * 0.18, bz + r * 0.75);
+          c.lineTo(bx + r * 0.45, bz - r * 0.15);
+          c.lineTo(bx + r * 0.02, bz - r * 0.15);
+          c.closePath();
+          c.fill();
+        }
+      };
+      for (const st of s.stations) {
+        const sx = X(st.x);
+        const sz = Z(st.z);
+        if (sx < -3 * r || sz < -r || sx > S + 3 * r || sz > S + r) continue;
+        if (st.kind === 'both') {
+          badge(sx - r * 1.1, sz, '#e8590c', 'pump');
+          badge(sx + r * 1.1, sz, '#2f9e44', 'bolt');
+        } else badge(sx, sz, st.kind === 'fuel' ? '#e8590c' : '#2f9e44', st.kind === 'fuel' ? 'pump' : 'bolt');
       }
     }
 

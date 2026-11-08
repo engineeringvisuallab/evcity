@@ -42,7 +42,7 @@ import { RidePrompt } from '../ui/RidePrompt';
 import { bn } from '../i18n';
 import { MALL_DOORS } from '../mall/MallSite';
 import { ParkingLots } from '../parking/ParkingLots';
-import { EVLAB_SLOTS, START_LOT_POS, lotToWorld, lotYaw } from '../parking/ParkingSite';
+import { EVLAB_LOT, EVLAB_SLOTS, FUEL_LOTS, MAIN_STATION_LOT, START_LOT_POS, lotToWorld, lotYaw } from '../parking/ParkingSite';
 import { MallManager, loadCatalog, type Catalog } from '../mall';
 import { EVLabManager } from '../evlab';
 import { EngineeringBoundary } from '../zones';
@@ -196,6 +196,12 @@ export class Engine {
   readonly infra: LazyInfra;
   private infraFreeFly = false;
   private mapStops: { x: number; z: number }[] = [];
+  /** Map symbols: the six small stations (fuel + charge), the main fuel station and the EVLab charging depot (static). */
+  private mapStations: { x: number; z: number; kind: 'fuel' | 'charge' | 'both' }[] = [
+    ...FUEL_LOTS.map((l) => ({ ...lotToWorld((l.s0 + l.s1) / 2, (l.n0 + l.n1) / 2), kind: 'both' as const })),
+    { ...lotToWorld((MAIN_STATION_LOT.s0 + MAIN_STATION_LOT.s1) / 2, (MAIN_STATION_LOT.n0 + MAIN_STATION_LOT.n1) / 2), kind: 'fuel' as const },
+    { ...lotToWorld((EVLAB_LOT.s0 + EVLAB_LOT.s1) / 2, (EVLAB_LOT.n0 + EVLAB_LOT.n1) / 2), kind: 'charge' as const },
+  ];
   private minimap: Minimap;
   /** N key: pick any vehicle and it is brought next to the player. */
   private vehicleMenu: VehicleMenu;
@@ -1182,7 +1188,7 @@ export class Engine {
     for (const t of this.trains.markers()) others.push({ x: t.x, z: t.z, heading: t.heading, kind: 'train' });
     this.world.origin.toWorld(this.camera.position, this.tmpVec);
     const camera = { x: this.tmpVec.x, y: this.tmpVec.y, z: this.tmpVec.z };
-    return { me, camera, hours: this.environment.hours, viewHeading: view, others, stops: this.mapStops, mall: this.mall.position, library: this.library.position, building: this.protoBuilding.position, buildings: this.placedBuildings.markers, agro: this.agro.position, infra: this.world.terrain.infra.map((s) => ({ x: s.x, z: s.z, id: s.id, color: s.color, mark: s.mark })) };
+    return { me, camera, hours: this.environment.hours, viewHeading: view, others, stops: this.mapStops, stations: this.mapStations, mall: this.mall.position, library: this.library.position, building: this.protoBuilding.position, buildings: this.placedBuildings.markers, agro: this.agro.position, infra: this.world.terrain.infra.map((s) => ({ x: s.x, z: s.z, id: s.id, color: s.color, mark: s.mark })) };
   }
 
   /** The player's vehicle crossed a stop line while its light was red: a Gold fine (no police case). */
