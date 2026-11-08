@@ -172,10 +172,12 @@ const FRAG_COLOR = /* glsl */ `
   if (isCityMain) {
     // CITY ROAD OF TIER 1-3: the gravel shoulder becomes the paved sidewalk, and the median is a yellow-black striped kerb
     col = mix(col, evcSidewalk(max(au - hw, 0.0), u, s), smoothstep(hw - 0.12, hw + 0.12, au));
-    float kh = hw > 6.0 ? 0.6 : ${KERB_HALF} + 0.12;
-    float kerbM = (1.0 - smoothstep(kh - 0.03, kh + 0.03, au)) * fadeMid;
-    vec3 stripe = mix(vec3(0.05), vec3(0.95, 0.74, 0.04), step(fract(s / (2.0 * ${STRIPE})), 0.5));
-    col = mix(col, stripe, kerbM);
+    // MEDIAN: plain double solid yellow line (the old black-yellow striped kerb was too harsh on the eyes)
+    vec3 medYellow = vec3(0.86, 0.68, 0.10);
+    float medLine = max(evcLine(au - 0.16, 0.06), evcLine(au + 0.16, 0.06));
+    float medWear = 0.72 + 0.28 * evcRdNoise(vec2(u * 3.0, s * 1.3));
+    col = mix(col, medYellow, medLine * inRoad * fadeMid * medWear);
+    float kerbM = 0.0;
     // white lane lines on arterials / collectors too (the freeway branch already has its own dashed white lines)
     if (hw <= 6.0) col = mix(col, vec3(0.88), evcLine(au - (hw - 0.4), 0.075) * inRoad * fadeEdge * (1.0 - kerbM));
   }
@@ -220,6 +222,6 @@ export class RoadMaterial extends THREE.MeshLambertMaterial {
       // RAIN: wet asphalt (darker, shiny, puddles, rain rings)
       patchWet(shader, { darken: 0.4, gloss: 1.0, puddle: 1.0 });
     };
-    this.customProgramCacheKey = () => 'evc-road-v14-city-sidewalk-wet';
+    this.customProgramCacheKey = () => 'evc-road-v15-city-yellow-median-wet';
   }
 }
