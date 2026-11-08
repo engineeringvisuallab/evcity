@@ -375,6 +375,8 @@ export class Engine {
     const signPlan = planRoadSigns(roads);
     console.info('[RoadSigns]', signPlan.summary);
     console.info('[RoadSigns]', this.roadSigns.addPlannedPreview(signPlan.signs, (x, z) => this.world.terrain.heightAt(x, z), this.startPoint.x, this.startPoint.z));
+    // STEP 4: overhead gantries - the planned overhead boards nearest to the start + one 3-board demo gantry, to check the model by eye
+    console.info('[RoadSigns]', this.roadSigns.addStep4TestGantries(roads, signPlan.signs, (x, z) => this.world.terrain.heightAt(x, z), this.startPoint.x, this.startPoint.z));
 
     // --- parking lots (asphalt, bay lines; no signboards) ---
     this.parking = new ParkingLots({ root: this.world.root, terrain: this.world.terrain });

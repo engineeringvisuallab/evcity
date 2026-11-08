@@ -4,10 +4,12 @@
 // Traffic drives on the LEFT (as in Bangladesh), so a board stands on the LEFT edge of the road, outside the gravel shoulder, and looks back
 // at the drivers who come towards it (turned a few degrees towards the road).
 // Children use ABSOLUTE world coordinates (parent = world.root, which the floating origin moves), like StreetLights / StationSignLayer.
-// Later steps add: the real destination table + road distances (Step 2), the placement rules (Step 3), the overhead gantry (Step 4).
+// Step 2 added the real destination table + road distances, Step 3 the placement plan, Step 4 (this file too) the OVERHEAD GANTRY:
+// two posts on the road edges, a beam across all lanes and 1..3 boards on the beam (layout maths in GantryLayout.ts).
 import * as THREE from 'three';
 import type { RoadNetwork, RoadSpec } from '../roads';
 import { BOARD_W_M, boardHeightM, drawSignCanvas } from './SignCanvas';
+import { GANTRY, gantryEdge, layoutGantry } from './GantryLayout';
 import type { SignColor, SignRow } from './SignFormat';
 import type { PlannedSign } from './SignPlan';
 
@@ -22,6 +24,57 @@ export interface SideSignSpec {
   rows: SignRow[];
   color: SignColor;
 }
+
+export interface GantryBoard {
+  rows: SignRow[];
+  color: SignColor;
+}
+
+export interface GantrySpec {
+  /** Road centreline point under the beam: x, z and the road SURFACE height y (world metres). */
+  x: number;
+  y: number;
+  z: number;
+  /** The driver's unit heading (x, z) there. The boards face back at him. */
+  hx: number;
+  hz: number;
+  /** Distance of each post from the centreline (see gantryEdge). */
+  edge: number;
+  /** Ground height at the foot of the left and the right post (the posts go a little below it). */
+  footLeftY: number;
+  footRightY: number;
+  /** Boards from the driver's LEFT to his RIGHT (1..3; more than fit are dropped, see layoutGantry). */
+  boards: GantryBoard[];
+}
+
+export interface GantryResult {
+  placed: number;
+  dropped: number;
+  scale: number;
+  fits: boolean;
+}
+
+/** Point, height and unit tangent of a road at distance s from its start. */
+function roadPointAt(r: RoadSpec, s: number): { x: number; y: number; z: number; tx: number; tz: number; i: number } {
+  const sc = Math.max(0, Math.min(r.length, s));
+  let i = 0;
+  while (i < r.xs.length - 2 && r.cum[i + 1] < sc) i++;
+  const seg = r.cum[i + 1] - r.cum[i];
+  const f = seg > 1e-6 ? Math.min(1, Math.max(0, (sc - r.cum[i]) / seg)) : 0;
+  let tx = r.xs[i + 1] - r.xs[i];
+  let tz = r.zs[i + 1] - r.zs[i];
+  const tl = Math.hypot(tx, tz) || 1;
+  tx /= tl;
+  tz /= tl;
+  return { x: r.xs[i] + (r.xs[i + 1] - r.xs[i]) * f, y: r.ys[i] + (r.ys[i + 1] - r.ys[i]) * f, z: r.zs[i] + (r.zs[i + 1] - r.zs[i]) * f, tx, tz, i };
+}
+
+/** Real places of the map for the STEP 4 demo gantry (the km are straight-line, as in Step 1). */
+const DEMO_PLACES = {
+  central: { en: 'Central City', bn: 'কেন্দ্রীয় শহর', x: 0, z: 0 },
+  airport: { en: 'Airport', bn: 'বিমানবন্দর', x: 2500, z: -3828 },
+  seaport: { en: 'Seaport', bn: 'সমুদ্রবন্দর', x: 1740, z: 2920 },
+};
 
 /** Height of the lower edge of the board above the ground (m). */
 const CLEARANCE = 2.0;
@@ -186,13 +239,170 @@ export class RoadSignLayer {
   }
 
   /**
+   * Builds one OVERHEAD GANTRY: two posts (one on each road edge), a box beam across the road and 1..3 boards on the front of the beam.
+   * Returns null when there is no DOM to draw the text (headless).
+   * Local frame (group rotated so that +Z = the way the boards face = back at the driver, +X = the driver's right): the posts stand at x = -edge / +edge,
+   * the beam is `GANTRY.clearanceM` above the road surface, the boards sit on its front with their lower edge a little above the beam's lower edge.
+   */
+  addGantry(spec: GantrySpec): GantryResult | null {
+    const boards = spec.boards.slice(0, GANTRY.maxBoards);
+    if (boards.length === 0) return null;
+    const lay = layoutGantry(spec.edge, boards.length);
+    // draw every face first; if any fails (no DOM) nothing is built
+    const faces: HTMLCanvasElement[] = [];
+    for (let i = 0; i < lay.n; i++) {
+      const c = drawSignCanvas(boards[i].rows, boards[i].color);
+      if (!c) return null;
+      faces.push(c);
+    }
+
+    const g = new THREE.Group();
+    g.name = 'gantry';
+    const beamBottom = GANTRY.clearanceM;
+    const beamTop = beamBottom + GANTRY.beamH;
+
+    // the beam
+    const beamGeo = new THREE.BoxGeometry(lay.beamLen, GANTRY.beamH, GANTRY.beamDepth);
+    this.geos.push(beamGeo);
+    const beam = new THREE.Mesh(beamGeo, this.metal);
+    beam.position.set(0, beamBottom + GANTRY.beamH / 2, 0);
+    g.add(beam);
+
+    // the two posts, from a little below their foot to a little above the beam
+    const feet = [spec.footLeftY - spec.y, spec.footRightY - spec.y];
+    for (let k = 0; k < 2; k++) {
+      const bottom = Math.min(feet[k], 0) - GANTRY.postBelowM;
+      const top = beamTop + GANTRY.postAboveBeamM;
+      const geo = new THREE.CylinderGeometry(GANTRY.postR, GANTRY.postR, top - bottom, 10);
+      this.geos.push(geo);
+      const post = new THREE.Mesh(geo, this.metal);
+      post.position.set(k === 0 ? -spec.edge : spec.edge, (top + bottom) / 2, 0);
+      g.add(post);
+    }
+
+    // the boards on the front of the beam
+    const bodyZ = GANTRY.beamDepth / 2 + 0.05;
+    for (let i = 0; i < lay.n; i++) {
+      const tex = new THREE.CanvasTexture(faces[i]);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = 8;
+      this.textures.push(tex);
+      const faceMat = new THREE.MeshBasicMaterial({ map: tex, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+      this.faceMats.push(faceMat);
+      const W = lay.boardW;
+      const H = boardHeightM(boards[i].rows.length) * lay.scale;
+      const bodyGeo = new THREE.BoxGeometry(W + 0.1, H + 0.1, 0.06);
+      const faceGeo = new THREE.PlaneGeometry(W, H);
+      this.geos.push(bodyGeo, faceGeo);
+      const cy = beamBottom + GANTRY.boardLiftM + H / 2;
+      const body = new THREE.Mesh(bodyGeo, this.metal);
+      body.position.set(lay.xs[i], cy, bodyZ);
+      const face = new THREE.Mesh(faceGeo, faceMat);
+      face.position.set(lay.xs[i], cy, bodyZ + 0.034);
+      g.add(body, face);
+    }
+
+    g.position.set(spec.x, spec.y, spec.z);
+    g.rotation.y = Math.atan2(-spec.hx, -spec.hz); // local +Z (the faces) -> back at the driver = -(hx, hz); local +X -> his right
+    this.group.add(g);
+    this.count++;
+    return { placed: lay.n, dropped: lay.dropped, scale: lay.scale, fits: lay.fits };
+  }
+
+  /**
+   * STEP 4 TEST ONLY: gantries near the player start to check the model by eye.
+   *  (a) up to `count` of the planned OVERHEAD boards (SignPlan.ts) nearest to (px, pz), each as a one-board gantry on its real road, at least 150 m apart;
+   *  (b) one demo gantry with THREE boards (ahead / right / left) on the road nearest to (px, pz), about 260 m ahead of the point nearest to the player.
+   * Returns a short text for the console.
+   */
+  addStep4TestGantries(net: RoadNetwork, plan: readonly PlannedSign[], groundAt: (x: number, z: number) => number, px: number, pz: number, count = 3, maxDist = 2500): string {
+    const byId = new Map<number, RoadSpec>(net.roads.map((r) => [r.id, r]));
+    // the two post positions of a gantry at road point (x, z) with driver heading (hx, hz): left = (hz, -hx)
+    const feet = (x: number, z: number, hx: number, hz: number, edge: number): { l: [number, number]; r: [number, number] } => ({
+      l: [x + hz * edge, z - hx * edge],
+      r: [x - hz * edge, z + hx * edge],
+    });
+    const build = (road: RoadSpec, x: number, y: number, z: number, hx: number, hz: number, boards: GantryBoard[]): GantryResult | null => {
+      const edge = gantryEdge(road.halfWidth, road.shoulder);
+      const f = feet(x, z, hx, hz, edge);
+      return this.addGantry({ x, y, z, hx, hz, edge, footLeftY: groundAt(f.l[0], f.l[1]), footRightY: groundAt(f.r[0], f.r[1]), boards });
+    };
+
+    const lines: string[] = [];
+    // (a) planned overhead boards
+    const cand = plan
+      .filter((q) => q.style === 'overhead')
+      .map((q) => ({ q, d: Math.hypot(q.x - px, q.z - pz) }))
+      .filter((c) => c.d <= maxDist)
+      .sort((a, b) => a.d - b.d);
+    const picked: PlannedSign[] = [];
+    for (const c of cand) {
+      if (picked.length >= count) break;
+      if (picked.some((o) => Math.hypot(o.x - c.q.x, o.z - c.q.z) < 150)) continue;
+      picked.push(c.q);
+    }
+    for (const q of picked) {
+      const road = byId.get(q.roadId);
+      if (!road) continue;
+      const y = roadPointAt(road, q.s).y;
+      const res = build(road, q.x, y, q.z, q.hx, q.hz, [{ rows: q.rows, color: q.color }]);
+      if (!res) continue;
+      lines.push(`#${q.id} ${q.purpose} ${q.roadName} (${q.roadKind}, ${q.lanes} lanes) at x=${q.x.toFixed(0)} z=${q.z.toFixed(0)}: ${q.rows.map((r) => `${r.arrow} ${r.en} ${(r.km ?? 0).toFixed(1)}`).join(' | ')}`);
+    }
+
+    // (b) three-board demo on the road nearest to the player (a normal road, not earthen, not a roundabout)
+    let best: RoadSpec | null = null;
+    let bestI = -1;
+    let bestD = Infinity;
+    for (const road of net.roads) {
+      if (road.earth || road.kind === 'roundabout') continue;
+      for (let i = 0; i < road.xs.length; i++) {
+        if (road.bridgeOf[i] >= 0) continue;
+        const d = Math.hypot(road.xs[i] - px, road.zs[i] - pz);
+        if (d < bestD) {
+          bestD = d;
+          best = road;
+          bestI = i;
+        }
+      }
+    }
+    let demo = 'no road for the 3-board demo';
+    if (best) {
+      const r: RoadSpec = best;
+      const s0 = r.cum[bestI];
+      const dir: 1 | -1 = s0 + 330 <= r.length ? 1 : -1;
+      const edge = gantryEdge(r.halfWidth, r.shoulder);
+      const P = DEMO_PLACES;
+      const boards: GantryBoard[] = [
+        { color: 'green', rows: [{ en: P.seaport.en, bn: P.seaport.bn, arrow: 'left', km: 4.4 }] },
+        { color: 'green', rows: [{ en: P.central.en, bn: P.central.bn, arrow: 'ahead', km: 1.2 }, { en: P.airport.en, bn: P.airport.bn, arrow: 'ahead', km: 5.1 }] },
+        { color: 'blue', rows: [{ en: P.airport.en, bn: P.airport.bn, arrow: 'right', km: 5.1 }] },
+      ];
+      let s = s0 + dir * 260;
+      for (let tries = 0; tries < 30; tries++, s += dir * 10) {
+        const p = roadPointAt(r, s);
+        if (r.bridgeOf[p.i] >= 0 || r.bridgeOf[Math.min(r.bridgeOf.length - 1, p.i + 1)] >= 0) continue;
+        const hx = p.tx * dir;
+        const hz = p.tz * dir;
+        const f = feet(p.x, p.z, hx, hz, edge);
+        // posts must not stand on another road or in a junction, and the beam centre not inside a junction
+        if (net.surfaceAt(f.l[0], f.l[1]) === 1 || net.surfaceAt(f.r[0], f.r[1]) === 1 || net.padAt(p.x, p.z)) continue;
+        const res = build(r, p.x, p.y, p.z, hx, hz, boards);
+        if (res) demo = `3-board demo on road ${r.name} (${r.kind}, ${r.lanes} lanes) at x=${p.x.toFixed(0)} z=${p.z.toFixed(0)}: ${res.placed} boards placed, ${res.dropped} dropped, scale ${res.scale.toFixed(2)}${res.fits ? '' : ' (DOES NOT FIT the road)'}`;
+        break;
+      }
+    }
+    return `Step 4 test gantries: ${lines.length} planned overhead boards placed. ${lines.join(' ;; ')} || ${demo}`;
+  }
+
+  /**
    * STEP 3 PREVIEW ONLY: shows a few boards of the plan (SignPlan.ts) near (px, pz) so the rows, arrows and km can be checked by eye.
-   * Every board is built as a SIDE board (the overhead gantry comes in Step 4), on the left edge of the road, at most `maxDist` m from the player;
+   * Only the planned SIDE boards are shown here (the overhead ones are the gantries of Step 4), on the left edge of the road, at most `maxDist` m from the player;
    * two chosen boards are never closer than 40 m. Returns a short text for the console.
    */
   addPlannedPreview(plan: readonly PlannedSign[], groundAt: (x: number, z: number) => number, px: number, pz: number, count = 6, maxDist = 1500): string {
     const cand = plan
-      .filter((q) => q.sideOk)
+      .filter((q) => q.style === 'side' && q.sideOk)
       .map((q) => ({ q, d: Math.hypot(q.sx - px, q.sz - pz) }))
       .filter((c) => c.d <= maxDist)
       .sort((a, b) => a.d - b.d);
@@ -207,7 +417,7 @@ export class RoadSignLayer {
       if (!this.addSideSign({ x: q.sx, y: groundAt(q.sx, q.sz), z: q.sz, fx: q.fx, fz: q.fz, rows: q.rows, color: q.color })) continue;
       lines.push(`#${q.id} ${q.purpose}/${q.style} ${q.roadName} at x=${q.sx.toFixed(0)} z=${q.sz.toFixed(0)}: ${q.rows.map((r) => `${r.arrow} ${r.en} ${(r.km ?? 0).toFixed(1)}`).join(' | ')}`);
     }
-    return `Step 3 preview: ${lines.length} planned boards placed (side style). ${lines.join(' ;; ')}`;
+    return `Step 3 preview: ${lines.length} planned side boards placed. ${lines.join(' ;; ')}`;
   }
 
   /** Once per rendered frame. lampOn = 0 (day) .. 1 (night): the boards are a little darker at night. */
