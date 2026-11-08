@@ -5,11 +5,12 @@
 // at the drivers who come towards it (turned a few degrees towards the road).
 // Children use ABSOLUTE world coordinates (parent = world.root, which the floating origin moves), like StreetLights / StationSignLayer.
 // Step 2 added the real destination table + road distances, Step 3 the placement plan, Step 4 (this file too) the OVERHEAD GANTRY:
-// two posts on the road edges, a beam across all lanes and 1..3 boards on the beam (layout maths in GantryLayout.ts).
+// two round posts on the road edges, a frame across ALL lanes and 1..3 panels that fill the whole width, each over the lanes of its direction
+// (layout maths in GantryLayout.ts).
 import * as THREE from 'three';
 import type { RoadNetwork, RoadSpec } from '../roads';
-import { BOARD_W_M, boardHeightM, drawSignCanvas } from './SignCanvas';
-import { GANTRY, gantryEdge, layoutGantry } from './GantryLayout';
+import { BOARD_PX_PER_M, BOARD_W_M, boardHeightM, drawSignCanvas } from './SignCanvas';
+import { GANTRY, gantryEdge, layoutGantry, splitPanels } from './GantryLayout';
 import type { SignColor, SignRow } from './SignFormat';
 import type { PlannedSign } from './SignPlan';
 
@@ -43,14 +44,15 @@ export interface GantrySpec {
   /** Ground height at the foot of the left and the right post (the posts go a little below it). */
   footLeftY: number;
   footRightY: number;
-  /** Boards from the driver's LEFT to his RIGHT (1..3; more than fit are dropped, see layoutGantry). */
+  /** Panels from the driver's LEFT to his RIGHT (1..3, see splitPanels); together they fill the whole width between the posts. Too many for a narrow road are merged into the last one. */
   boards: GantryBoard[];
 }
 
 export interface GantryResult {
   placed: number;
-  dropped: number;
-  scale: number;
+  merged: number;
+  /** Width of the whole sign face (m). */
+  span: number;
   fits: boolean;
 }
 
@@ -87,6 +89,7 @@ export class RoadSignLayer {
   private textures: THREE.CanvasTexture[] = [];
   private geos: THREE.BufferGeometry[] = [];
   private metal = new THREE.MeshLambertMaterial({ color: 0x4d5258 });
+  private concrete = new THREE.MeshLambertMaterial({ color: 0x9a9a95 });
   private count = 0;
 
   constructor(private root: THREE.Object3D) {
@@ -239,80 +242,100 @@ export class RoadSignLayer {
   }
 
   /**
-   * Builds one OVERHEAD GANTRY: two posts (one on each road edge), a box beam across the road and 1..3 boards on the front of the beam.
-   * Returns null when there is no DOM to draw the text (headless).
-   * Local frame (group rotated so that +Z = the way the boards face = back at the driver, +X = the driver's right): the posts stand at x = -edge / +edge,
-   * the beam is `GANTRY.clearanceM` above the road surface, the boards sit on its front with their lower edge a little above the beam's lower edge.
+   * Builds one OVERHEAD GANTRY: two round posts on concrete bases (one on each road edge), a frame (top and bottom pipe + a sign body) across ALL lanes,
+   * and 1..3 panels whose faces together cover the whole width between the posts. Returns null when there is no DOM to draw the text (headless).
+   * Local frame (group rotated so that +Z = the way the boards face = back at the driver, +X = the driver's right): the lowest part of the gantry is
+   * `GANTRY.clearanceM` above the road surface; the panels sit on the front of the sign body.
    */
   addGantry(spec: GantrySpec): GantryResult | null {
-    const boards = spec.boards.slice(0, GANTRY.maxBoards);
-    if (boards.length === 0) return null;
-    const lay = layoutGantry(spec.edge, boards.length);
-    // draw every face first; if any fails (no DOM) nothing is built
+    if (spec.boards.length === 0) return null;
+    const lay = layoutGantry(spec.edge, spec.boards.length);
+    // too many panels for this road: the extra ones are merged into the last panel (at most maxRows rows)
+    const panels: GantryBoard[] = spec.boards.slice(0, lay.n).map((b) => ({ rows: b.rows.slice(), color: b.color }));
+    for (const extra of spec.boards.slice(lay.n)) panels[lay.n - 1].rows.push(...extra.rows);
+    for (const p of panels) p.rows = p.rows.slice(0, 4);
+    const heightRows = Math.max(...panels.map((p) => p.rows.length));
+
+    // draw every face first; if any fails (no DOM) nothing is built. The pixel density is the same horizontally and vertically.
+    const hs = GANTRY.heightScale;
+    const pxPerM = BOARD_PX_PER_M / hs;
     const faces: HTMLCanvasElement[] = [];
-    for (let i = 0; i < lay.n; i++) {
-      const c = drawSignCanvas(boards[i].rows, boards[i].color);
+    for (const p of panels) {
+      const c = drawSignCanvas(p.rows, p.color, { widthPx: lay.panelW * pxPerM, heightRows });
       if (!c) return null;
       faces.push(c);
     }
 
     const g = new THREE.Group();
     g.name = 'gantry';
-    const beamBottom = GANTRY.clearanceM;
-    const beamTop = beamBottom + GANTRY.beamH;
+    const faceH = boardHeightM(heightRows) * hs;
+    const faceBottom = GANTRY.clearanceM + GANTRY.faceLiftM;
+    const faceTop = faceBottom + faceH;
+    const bodyH = faceH + 2 * GANTRY.bodyPadM;
+    const bodyMid = faceBottom + faceH / 2;
+    const topPipeY = faceTop + GANTRY.bodyPadM + GANTRY.chordR;
+    const botPipeY = GANTRY.clearanceM + GANTRY.chordR;
 
-    // the beam
-    const beamGeo = new THREE.BoxGeometry(lay.beamLen, GANTRY.beamH, GANTRY.beamDepth);
-    this.geos.push(beamGeo);
-    const beam = new THREE.Mesh(beamGeo, this.metal);
-    beam.position.set(0, beamBottom + GANTRY.beamH / 2, 0);
-    g.add(beam);
-
-    // the two posts, from a little below their foot to a little above the beam
-    const feet = [spec.footLeftY - spec.y, spec.footRightY - spec.y];
-    for (let k = 0; k < 2; k++) {
-      const bottom = Math.min(feet[k], 0) - GANTRY.postBelowM;
-      const top = beamTop + GANTRY.postAboveBeamM;
-      const geo = new THREE.CylinderGeometry(GANTRY.postR, GANTRY.postR, top - bottom, 10);
-      this.geos.push(geo);
-      const post = new THREE.Mesh(geo, this.metal);
-      post.position.set(k === 0 ? -spec.edge : spec.edge, (top + bottom) / 2, 0);
-      g.add(post);
+    // the sign body: the plain metal back of all the panels (seen from the other direction) + the two chord pipes along its top and bottom
+    const bodyGeo = new THREE.BoxGeometry(lay.span + 0.1, bodyH, GANTRY.bodyDepthM);
+    this.geos.push(bodyGeo);
+    const body = new THREE.Mesh(bodyGeo, this.metal);
+    body.position.set(0, bodyMid, 0);
+    g.add(body);
+    const pipeGeo = new THREE.CylinderGeometry(GANTRY.chordR, GANTRY.chordR, lay.frameLen, 10);
+    pipeGeo.rotateZ(Math.PI / 2); // along local X
+    this.geos.push(pipeGeo);
+    for (const y of [topPipeY, botPipeY]) {
+      const pipe = new THREE.Mesh(pipeGeo, this.metal);
+      pipe.position.set(0, y, -0.05);
+      g.add(pipe);
     }
 
-    // the boards on the front of the beam
-    const bodyZ = GANTRY.beamDepth / 2 + 0.05;
-    for (let i = 0; i < lay.n; i++) {
+    // the two posts (round tubes) with a concrete base each, from a little below the foot up past the top pipe
+    const feet = [spec.footLeftY - spec.y, spec.footRightY - spec.y];
+    const baseGeo = new THREE.BoxGeometry(GANTRY.baseSizeM, GANTRY.baseHeightM, GANTRY.baseSizeM);
+    this.geos.push(baseGeo);
+    for (let k = 0; k < 2; k++) {
+      const bottom = Math.min(feet[k], 0) - GANTRY.postBelowM;
+      const top = topPipeY + GANTRY.chordR + GANTRY.postAboveM;
+      const geo = new THREE.CylinderGeometry(GANTRY.postR, GANTRY.postR, top - bottom, 12);
+      this.geos.push(geo);
+      const x = k === 0 ? -spec.edge : spec.edge;
+      const post = new THREE.Mesh(geo, this.metal);
+      post.position.set(x, (top + bottom) / 2, -0.15);
+      g.add(post);
+      const base = new THREE.Mesh(baseGeo, this.concrete);
+      base.position.set(x, feet[k] + GANTRY.baseHeightM / 2 - 0.1, -0.15);
+      g.add(base);
+    }
+
+    // the panels on the front of the sign body, side by side over the whole width
+    const faceZ = GANTRY.bodyDepthM / 2 + 0.004;
+    for (let i = 0; i < panels.length; i++) {
       const tex = new THREE.CanvasTexture(faces[i]);
       tex.colorSpace = THREE.SRGBColorSpace;
       tex.anisotropy = 8;
       this.textures.push(tex);
       const faceMat = new THREE.MeshBasicMaterial({ map: tex, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
       this.faceMats.push(faceMat);
-      const W = lay.boardW;
-      const H = boardHeightM(boards[i].rows.length) * lay.scale;
-      const bodyGeo = new THREE.BoxGeometry(W + 0.1, H + 0.1, 0.06);
-      const faceGeo = new THREE.PlaneGeometry(W, H);
-      this.geos.push(bodyGeo, faceGeo);
-      const cy = beamBottom + GANTRY.boardLiftM + H / 2;
-      const body = new THREE.Mesh(bodyGeo, this.metal);
-      body.position.set(lay.xs[i], cy, bodyZ);
+      const faceGeo = new THREE.PlaneGeometry(lay.panelW, faceH);
+      this.geos.push(faceGeo);
       const face = new THREE.Mesh(faceGeo, faceMat);
-      face.position.set(lay.xs[i], cy, bodyZ + 0.034);
-      g.add(body, face);
+      face.position.set(lay.xs[i], bodyMid, faceZ);
+      g.add(face);
     }
 
     g.position.set(spec.x, spec.y, spec.z);
     g.rotation.y = Math.atan2(-spec.hx, -spec.hz); // local +Z (the faces) -> back at the driver = -(hx, hz); local +X -> his right
     this.group.add(g);
     this.count++;
-    return { placed: lay.n, dropped: lay.dropped, scale: lay.scale, fits: lay.fits };
+    return { placed: lay.n, merged: lay.merged, span: lay.span, fits: lay.fits };
   }
 
   /**
    * STEP 4 TEST ONLY: gantries near the player start to check the model by eye.
-   *  (a) up to `count` of the planned OVERHEAD boards (SignPlan.ts) nearest to (px, pz), each as a one-board gantry on its real road, at least 150 m apart;
-   *  (b) one demo gantry with THREE boards (ahead / right / left) on the road nearest to (px, pz), about 260 m ahead of the point nearest to the player.
+   *  (a) up to `count` of the planned OVERHEAD boards (SignPlan.ts) nearest to (px, pz), each as a full-width gantry on its real road, at least 150 m apart;
+   *  (b) one demo gantry with THREE panels (left / ahead / right) on the road nearest to (px, pz), about 260 m ahead of the point nearest to the player.
    * Returns a short text for the console.
    */
   addStep4TestGantries(net: RoadNetwork, plan: readonly PlannedSign[], groundAt: (x: number, z: number) => number, px: number, pz: number, count = 3, maxDist = 2500): string {
@@ -345,9 +368,9 @@ export class RoadSignLayer {
       const road = byId.get(q.roadId);
       if (!road) continue;
       const y = roadPointAt(road, q.s).y;
-      const res = build(road, q.x, y, q.z, q.hx, q.hz, [{ rows: q.rows, color: q.color }]);
+      const res = build(road, q.x, y, q.z, q.hx, q.hz, splitPanels(q.rows).map((rows) => ({ rows, color: q.color })));
       if (!res) continue;
-      lines.push(`#${q.id} ${q.purpose} ${q.roadName} (${q.roadKind}, ${q.lanes} lanes) at x=${q.x.toFixed(0)} z=${q.z.toFixed(0)}: ${q.rows.map((r) => `${r.arrow} ${r.en} ${(r.km ?? 0).toFixed(1)}`).join(' | ')}`);
+      lines.push(`#${q.id} ${q.purpose} ${q.roadName} (${q.roadKind}, ${q.lanes} lanes, ${res.placed} panels, ${res.span.toFixed(1)} m wide) at x=${q.x.toFixed(0)} z=${q.z.toFixed(0)}: ${q.rows.map((r) => `${r.arrow} ${r.en} ${(r.km ?? 0).toFixed(1)}`).join(' | ')}`);
     }
 
     // (b) three-board demo on the road nearest to the player (a normal road, not earthen, not a roundabout)
@@ -366,7 +389,7 @@ export class RoadSignLayer {
         }
       }
     }
-    let demo = 'no road for the 3-board demo';
+    let demo = 'no road for the 3-panel demo';
     if (best) {
       const r: RoadSpec = best;
       const s0 = r.cum[bestI];
@@ -376,7 +399,7 @@ export class RoadSignLayer {
       const boards: GantryBoard[] = [
         { color: 'green', rows: [{ en: P.seaport.en, bn: P.seaport.bn, arrow: 'left', km: 4.4 }] },
         { color: 'green', rows: [{ en: P.central.en, bn: P.central.bn, arrow: 'ahead', km: 1.2 }, { en: P.airport.en, bn: P.airport.bn, arrow: 'ahead', km: 5.1 }] },
-        { color: 'blue', rows: [{ en: P.airport.en, bn: P.airport.bn, arrow: 'right', km: 5.1 }] },
+        { color: 'green', rows: [{ en: P.airport.en, bn: P.airport.bn, arrow: 'right', km: 5.1 }] },
       ];
       let s = s0 + dir * 260;
       for (let tries = 0; tries < 30; tries++, s += dir * 10) {
@@ -388,11 +411,11 @@ export class RoadSignLayer {
         // posts must not stand on another road or in a junction, and the beam centre not inside a junction
         if (net.surfaceAt(f.l[0], f.l[1]) === 1 || net.surfaceAt(f.r[0], f.r[1]) === 1 || net.padAt(p.x, p.z)) continue;
         const res = build(r, p.x, p.y, p.z, hx, hz, boards);
-        if (res) demo = `3-board demo on road ${r.name} (${r.kind}, ${r.lanes} lanes) at x=${p.x.toFixed(0)} z=${p.z.toFixed(0)}: ${res.placed} boards placed, ${res.dropped} dropped, scale ${res.scale.toFixed(2)}${res.fits ? '' : ' (DOES NOT FIT the road)'}`;
+        if (res) demo = `3-panel demo on road ${r.name} (${r.kind}, ${r.lanes} lanes) at x=${p.x.toFixed(0)} z=${p.z.toFixed(0)}: ${res.placed} panels over ${res.span.toFixed(1)} m${res.fits ? '' : ' (DOES NOT FIT the road)'}`;
         break;
       }
     }
-    return `Step 4 test gantries: ${lines.length} planned overhead boards placed. ${lines.join(' ;; ')} || ${demo}`;
+    return `Step 4 test gantries: ${lines.length} planned overhead gantries placed. ${lines.join(' ;; ')} || ${demo}`;
   }
 
   /**
@@ -432,6 +455,7 @@ export class RoadSignLayer {
     for (const t of this.textures) t.dispose();
     for (const m of this.faceMats) m.dispose();
     this.metal.dispose();
+    this.concrete.dispose();
     this.geos.length = 0;
     this.textures.length = 0;
     this.faceMats.length = 0;

@@ -51,16 +51,28 @@ function fitText(g: CanvasRenderingContext2D, text: string, x: number, y: number
   g.fillText(text, x, y);
 }
 
+export interface SignCanvasOptions {
+  /** Board width in "design pixels" (default BOARD_W_PX). A wide board (the panels of an overhead gantry) is drawn with the names centred. */
+  widthPx?: number;
+  /** Draw the board as tall as this many rows (default: rows.length), so panels of one gantry can all have the same height. */
+  heightRows?: number;
+}
+
+/** Widest real canvas (px): wider design widths are drawn squeezed and the texture stretches them back, so the letters keep their shape. */
+const MAX_CANVAS_PX = 4096;
+
 /** The board face. Returns null when there is no DOM (headless tests). */
-export function drawSignCanvas(rows: readonly SignRow[], color: SignColor): HTMLCanvasElement | null {
+export function drawSignCanvas(rows: readonly SignRow[], color: SignColor, opts: SignCanvasOptions = {}): HTMLCanvasElement | null {
   if (typeof document === 'undefined' || rows.length === 0) return null;
-  const W = BOARD_W_PX;
-  const H = boardHeightPx(rows.length);
+  const W = Math.max(BOARD_W_PX, Math.round(opts.widthPx ?? BOARD_W_PX));
+  const H = boardHeightPx(Math.max(rows.length, opts.heightRows ?? 0));
   const c = document.createElement('canvas');
-  c.width = W;
+  c.width = Math.min(W, MAX_CANVAS_PX);
   c.height = H;
   const g = c.getContext('2d');
   if (!g) return null;
+  g.scale(c.width / W, 1);
+  const wide = W > 1.6 * BOARD_W_PX;
 
   // background + white border
   g.fillStyle = BG[color];
@@ -90,8 +102,10 @@ export function drawSignCanvas(rows: readonly SignRow[], color: SignColor): HTML
     g.fillStyle = '#ffffff';
     if (row.arrow) drawArrow(g, row.arrow, left + 60, mid, 110);
     // Bangla on top, English under it
-    fitText(g, row.bn, textX, mid - 38, nameW, 70, BN_FONT, '700', 'left');
-    fitText(g, row.en, textX, mid + 44, nameW, 56, EN_FONT, '700', 'left');
+    const nameX = wide ? textX + nameW / 2 : textX;
+    const nameAlign: CanvasTextAlign = wide ? 'center' : 'left';
+    fitText(g, row.bn, nameX, mid - 38, nameW, 70, BN_FONT, '700', nameAlign);
+    fitText(g, row.en, nameX, mid + 44, nameW, 56, EN_FONT, '700', nameAlign);
     if (row.km !== undefined) {
       fitText(g, kmEn(row.km), right, mid - 36, kmW, 62, EN_FONT, '700', 'right');
       fitText(g, kmBn(row.km), right, mid + 40, kmW, 54, BN_FONT, '600', 'right');
