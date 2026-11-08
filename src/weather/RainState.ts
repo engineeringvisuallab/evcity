@@ -1,8 +1,8 @@
 // RAIN LOGIC (pure maths: no three.js, no DOM, so a headless test can run it).
 //
 //   - AUTO mode: it rains on one game day out of every 2..5 (random: 2, 2, 3, 4, 5, 5). On a rain day the shower starts at a random
-//     time of the day, lasts about 1.7 .. 5 minutes and has a random strength (a light drizzle ... a heavy storm). The strength also
-//     wobbles slowly while it rains (a little more, a little less).
+//     time of the day and is SHORT: it fades in over 20 s, rains at full strength for 60 s and fades out over 20 s (100 s in all,
+//     see RAIN_FADE_IN / RAIN_HOLD / RAIN_FADE_OUT). Its strength is random (a steady rain ... a heavy downpour) and wobbles a little.
 //   - ALWAYS mode: it rains all the time at the level the player picked (light / medium / storm). OFF mode: never.
 //   - Everything is smooth: clouds come ~50 s BEFORE the first drop, the ground gets wet slowly and dries slowly, the sea state
 //     (big waves) builds up slowly and stays rough for a while after the rain has stopped.
@@ -13,6 +13,10 @@ export type RainMode = 'off' | 'auto' | 'always';
 export const RAIN_DAY_CHOICES: readonly number[] = [2, 2, 3, 4, 5, 5];
 /** Strength of "always on" rain: light, medium, storm. */
 export const ALWAYS_LEVELS: readonly number[] = [0.3, 0.62, 1];
+/** A shower (AUTO mode): seconds of fading in, of full rain and of fading out. */
+export const RAIN_FADE_IN = 20;
+export const RAIN_HOLD = 60;
+export const RAIN_FADE_OUT = 20;
 
 export interface RainEvent {
   /** Seconds on the rain clock. */
@@ -29,6 +33,8 @@ export interface RainProfile {
   far: number;
   /** Ground wetness: 1 = darker only, 2 = + sky / sun shine, 3 = + puddles and ripples. */
   wetQ: number;
+  /** Splash droplets that jump up where the rain hits the ground near the camera (0 = none). */
+  splash: number;
   /** Rain rings on the sea / lakes. */
   waterRipples: boolean;
   /** Storm foam running up the beach. */
@@ -39,9 +45,9 @@ export interface RainProfile {
 
 /** 0 = low (old PC / phone: almost free), 1 = medium, 2 = high. */
 export const RAIN_PROFILES: readonly RainProfile[] = [
-  { near: 450, far: 0, wetQ: 1, waterRipples: false, beach: false, lightning: false },
-  { near: 1800, far: 800, wetQ: 2, waterRipples: true, beach: true, lightning: true },
-  { near: 3600, far: 2400, wetQ: 3, waterRipples: true, beach: true, lightning: true },
+  { near: 450, far: 0, wetQ: 1, splash: 0, waterRipples: false, beach: false, lightning: false },
+  { near: 1800, far: 800, wetQ: 2, splash: 500, waterRipples: true, beach: true, lightning: true },
+  { near: 3600, far: 2400, wetQ: 3, splash: 1200, waterRipples: true, beach: true, lightning: true },
 ];
 
 const smooth = (a: number, b: number, x: number): number => {
@@ -60,8 +66,10 @@ export class RainState {
   cloud = 0;
   /** 0..1: sea storm (big waves). Builds up slowly, calms down slowly. */
   storm = 0;
-  /** 0..1: how wet the ground is (wets in ~20 s of rain, dries in ~3 minutes). */
+  /** 0..1: how wet the ground is (wets in ~15 s of rain, dries in ~3.5 minutes). */
   wet = 0;
+  /** 0..1: water standing on flat ground (puddles). It FILLS while it rains (about 40 s of steady rain) and slowly dries / soaks away (~4 minutes). */
+  puddle = 0;
   /** 0..1 wind strength and its direction (radians, 0 = +X). */
   wind = 0.1;
   windDir = 0.7;
@@ -95,9 +103,9 @@ export class RainState {
   }
 
   private makeEvent(start: number): RainEvent {
-    const dur = 100 + this.rng() * 220;
-    const peak = 0.2 + 0.8 * Math.pow(this.rng(), 0.85);
-    return { start, end: start + dur, peak };
+    // a short shower: always RAIN_FADE_IN + RAIN_HOLD + RAIN_FADE_OUT seconds, strength 0.45 .. 1 (a steady rain ... a downpour)
+    const peak = 0.45 + 0.55 * Math.pow(this.rng(), 0.85);
+    return { start, end: start + RAIN_FADE_IN + RAIN_HOLD + RAIN_FADE_OUT, peak };
   }
 
   /** The slow wobble of the strength while it rains (0..1). */
@@ -134,11 +142,10 @@ export class RainState {
     } else if (this.mode === 'auto' && this.event) {
       const e = this.event;
       const t = this.time;
-      const ramp = Math.min(45, (e.end - e.start) * 0.3);
-      const up = smooth(e.start, e.start + ramp, t);
-      const down = 1 - smooth(e.end - ramp, e.end, t);
-      target = e.peak * (0.7 + 0.3 * n) * up * down;
-      pre = smooth(e.start - 50, e.start + 5, t) * (1 - smooth(e.end, e.end + 70, t)) * (0.45 + 0.5 * e.peak);
+      const up = smooth(e.start, e.start + RAIN_FADE_IN, t);
+      const down = 1 - smooth(e.end - RAIN_FADE_OUT, e.end, t);
+      target = e.peak * (0.8 + 0.2 * n) * up * down;
+      pre = smooth(e.start - 25, e.start + 5, t) * (1 - smooth(e.end, e.end + 40, t)) * (0.45 + 0.5 * e.peak);
     }
     this.target = target;
 
@@ -147,15 +154,18 @@ export class RainState {
       const tau = to > cur ? tauUp : tauDown;
       return cur + (to - cur) * (1 - Math.exp(-dt / tau));
     };
-    this.intensity = ease(this.intensity, target, 5, this.mode === 'off' ? 1.5 : 6);
+    this.intensity = ease(this.intensity, target, 2.5, this.mode === 'off' ? 1.5 : 3);
     if (this.intensity < 0.002) this.intensity = 0;
-    this.cloud = ease(this.cloud, Math.min(1, Math.max(this.intensity * 1.25, pre)), 12, 30);
+    this.cloud = ease(this.cloud, Math.min(1, Math.max(this.intensity * 1.25, pre)), 8, 22);
     if (this.cloud < 0.002) this.cloud = 0;
-    this.storm = ease(this.storm, Math.pow(Math.min(1, this.intensity * 1.1), 0.85), 28, 80);
+    this.storm = ease(this.storm, Math.pow(Math.min(1, this.intensity * 1.1), 0.85), 14, 50);
     if (this.storm < 0.002) this.storm = 0;
     // the ground
-    if (this.intensity > 0.04) this.wet += (1 - this.wet) * (1 - Math.exp((-dt * this.intensity) / 16));
-    else this.wet = Math.max(0, this.wet - dt / 180);
+    if (this.intensity > 0.04) this.wet += (1 - this.wet) * (1 - Math.exp((-dt * this.intensity) / 9));
+    else this.wet = Math.max(0, this.wet - dt / 200);
+    // standing water: the ground is wet first, then the puddles fill up; when the rain stops they shrink slowly
+    if (this.intensity > 0.1 && this.wet > 0.4) this.puddle = Math.min(1, this.puddle + (dt * Math.pow(this.intensity, 1.2)) / 40);
+    else if (this.intensity < 0.1) this.puddle = Math.max(0, this.puddle - dt / 240);
     this.wind = Math.min(1, 0.1 + 0.9 * this.storm + 0.07 * n);
     this.windDir = 0.7 + 0.8 * Math.sin(this.time * 0.004);
 

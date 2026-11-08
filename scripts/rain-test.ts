@@ -1,5 +1,5 @@
 // Headless test of the rain logic (src/weather/RainState.ts): npm run test:rain
-import { ALWAYS_LEVELS, RAIN_PROFILES, RainState } from '../src/weather/RainState';
+import { ALWAYS_LEVELS, RAIN_FADE_IN, RAIN_FADE_OUT, RAIN_HOLD, RAIN_PROFILES, RainState } from '../src/weather/RainState';
 
 let fails = 0;
 const ok = (c: boolean, msg: string): void => {
@@ -52,7 +52,7 @@ const DT = 0.1;
   ok(gaps.length > 0 && Math.min(...gaps) >= 2 && Math.max(...gaps) <= 6, `gap between rain days is 2..5 (min ${Math.min(...gaps)}, max ${Math.max(...gaps)})`);
   ok(gaps.includes(2) && gaps.includes(5), 'both the 2-day and the 5-day gap happen');
   const peaks = showers.map((s) => s.maxI);
-  ok(Math.max(...peaks) > 0.7 && Math.min(...peaks) < 0.45, `strength varies (weakest ${Math.min(...peaks).toFixed(2)}, strongest ${Math.max(...peaks).toFixed(2)})`);
+  ok(Math.max(...peaks) > 0.7 && Math.min(...peaks) < 0.65, `strength varies (weakest ${Math.min(...peaks).toFixed(2)}, strongest ${Math.max(...peaks).toFixed(2)})`);
   ok(maxStep < 0.02, `no jumps: the strength changes smoothly (largest step ${maxStep.toFixed(4)})`);
 }
 
@@ -86,6 +86,36 @@ const DT = 0.1;
   ok(wetLater > 0.2 && wetLater < wetAtEnd + 1e-9, `ground dries slowly (${wetAtEnd.toFixed(2)} -> ${wetLater.toFixed(2)})`);
 }
 
+// ---- 2b. a shower is SHORT: 20 s fade in, 60 s of rain, 20 s fade out; the puddles fill while it rains and dry slowly ----
+{
+  const r = new RainState(seeded(11), DAY, true);
+  const e = r.event!;
+  ok(Math.abs(e.end - e.start - (RAIN_FADE_IN + RAIN_HOLD + RAIN_FADE_OUT)) < 1e-9, `a shower lasts ${RAIN_FADE_IN} + ${RAIN_HOLD} + ${RAIN_FADE_OUT} = ${e.end - e.start} s`);
+  const at = (t: number): number => {
+    while (r.time < t) r.update(DT);
+    return r.intensity;
+  };
+  const peak = e.peak;
+  const before = at(e.start - 1);
+  const early = at(e.start + 5);
+  const mid = at(e.start + 20);
+  const hold = at(e.start + 55);
+  const fading = at(e.end - 8);
+  const after = at(e.end + 15);
+  ok(before < 0.01, `dry right before the start (${before.toFixed(3)})`);
+  ok(early > 0 && early < 0.45 * peak, `it starts gently: 5 s in only ${early.toFixed(2)} (peak ${peak.toFixed(2)})`);
+  ok(mid > early && mid > 0.5 * peak, `20 s in it is close to full strength (${mid.toFixed(2)})`);
+  ok(hold > 0.6 * peak, `it rains hard during the 60 s hold (${hold.toFixed(2)})`);
+  ok(fading < hold, `it is fading 8 s before the end (${fading.toFixed(2)})`);
+  ok(after < 0.05, `15 s after the end the rain is off (${after.toFixed(3)})`);
+  const puddleEnd = r.puddle;
+  ok(puddleEnd > 0.35, `puddles filled during the shower (${puddleEnd.toFixed(2)})`);
+  const wetEnd = r.wet;
+  while (r.time < e.end + 120) r.update(DT);
+  ok(r.puddle > 0.1 && r.puddle < puddleEnd, `puddles are still there 2 minutes later, smaller (${r.puddle.toFixed(2)})`);
+  ok(r.wet < wetEnd && r.wet > 0.2, `the ground is still damp 2 minutes later (${r.wet.toFixed(2)})`);
+}
+
 // ---- 3. OFF and ALWAYS ----
 {
   const r = new RainState(seeded(3), DAY, true);
@@ -117,6 +147,7 @@ const DT = 0.1;
   ok(lo.near + lo.far < me.near + me.far && me.near + me.far < hi.near + hi.far, 'low < medium < high streak counts');
   ok(lo.near + lo.far <= 500 && !lo.lightning && !lo.beach && lo.wetQ === 1, 'LOW profile: a few hundred streaks, darker ground only');
   ok(hi.wetQ === 3 && hi.waterRipples && hi.beach, 'HIGH profile: puddles, water rings, beach foam');
+  ok(lo.splash === 0 && me.splash > 0 && hi.splash > me.splash, 'splash droplets: none on LOW, more on HIGH than MEDIUM');
 }
 
 if (fails) {

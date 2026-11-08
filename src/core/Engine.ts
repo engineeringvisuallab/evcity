@@ -765,6 +765,7 @@ export class Engine {
       environment: this.environment,
       water: this.world.water,
       dayLen: (Config.environment.dayNight.dayMinutes + Config.environment.dayNight.nightMinutes) * 60,
+      groundAt: (x, z) => this.world.terrain.heightAt(x, z),
     });
     this.oxygenHud = new OxygenHUD(container);
     this.settingsMenu = new SettingsMenu(

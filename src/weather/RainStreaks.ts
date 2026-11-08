@@ -21,9 +21,12 @@ uniform float uPx;      // world size of one pixel per metre of distance
 uniform float uAlpha;
 varying float vA;
 varying float vX;
+varying float vY;
 void main() {
   vec3 hb = uBox * vec3(0.5, 0.35, 0.5);
-  vec3 p = aSeed.xyz * uBox + uFall * uTime;
+  // big drops fall faster than small ones (0.85 .. 1.15 x), like real rain
+  float spd = 0.85 + 0.3 * fract(aSeed.w * 7.31 + aSeed.x * 3.7);
+  vec3 p = aSeed.xyz * uBox + uFall * spd * uTime;
   vec3 rel = mod(p - uCam + hb, uBox) - hb;      // wrapped around the camera
   vec3 P = uCam + rel;
   vec3 d = normalize(uRel);
@@ -33,26 +36,40 @@ void main() {
   vec3 side = cross(d, v);
   float sl = length(side);
   side = sl > 0.0001 ? side / sl : vec3(1.0, 0.0, 0.0);
-  float len = uLen * (0.7 + 0.6 * aSeed.w);
+  // a few percent of the drops are big and fat, most are small and thin
+  float big = step(0.93, fract(aSeed.w * 13.7 + aSeed.y * 5.1));
+  float len = uLen * (0.7 + 0.6 * aSeed.w) * spd * (1.0 + 0.35 * big);
   float pxw = dist * uPx;
-  float w = max(uWidth, pxw);
+  float w0 = uWidth * (0.7 + 0.5 * aSeed.z) * (1.0 + 1.3 * big);
+  float w = max(w0, pxw);
   vec3 pos = P + d * (position.y * len) + side * (position.x * w);
   float fr = length(rel.xz) / (0.5 * uBox.x);
   float fy = abs(rel.y - 0.15 * uBox.y) / (0.5 * uBox.y);
   float fade = (1.0 - smoothstep(0.55, 1.0, fr)) * (1.0 - smoothstep(0.7, 1.0, fy));
-  vA = uAlpha * fade * smoothstep(0.7, 2.8, dist) * (0.45 + 0.55 * aSeed.w) * min(1.0, uWidth / w) * (0.3 + 0.7 * position.y);
+  vA = uAlpha * fade * smoothstep(0.7, 2.8, dist) * (0.45 + 0.55 * aSeed.w) * min(1.0, w0 / w) * (1.0 + 0.5 * big);
   vX = position.x;
+  vY = position.y;
   gl_Position = projectionMatrix * viewMatrix * vec4(pos, 1.0);
 }
 `;
 
+// A real drop in the air is a streak (it moves during the exposure): it fades in thin and faint at the tail, is brightest and
+// fattest just behind the head (the water bead itself) and ends in a round tip. The core of the streak is brighter than its rim.
 const FRAG = /* glsl */ `
 uniform vec3 uColor;
 varying float vA;
 varying float vX;
+varying float vY;
 void main() {
-  float e = 1.0 - smoothstep(0.15, 1.0, abs(vX) * 2.0);
-  gl_FragColor = vec4(uColor, vA * e);
+  float wy = mix(0.18, 1.0, smoothstep(0.0, 0.82, vY));
+  float ax = abs(vX) * 2.0 / wy;
+  float e = 1.0 - smoothstep(0.0, 1.0, ax);
+  float core = 1.0 - smoothstep(0.0, 0.55, ax);
+  float tail = smoothstep(0.0, 0.55, vY);
+  float tip = 1.0 - smoothstep(0.93, 1.0, vY);
+  float bead = smoothstep(0.72, 0.9, vY);
+  float a = vA * e * (0.35 + 0.65 * core) * (0.25 + 0.75 * tail) * tip * (1.0 + 0.7 * bead);
+  gl_FragColor = vec4(uColor * (1.0 + 0.35 * bead), clamp(a, 0.0, 0.9));
 }
 `;
 
@@ -64,7 +81,7 @@ export interface StreakLayerSpec {
   alpha: number;
 }
 
-const NEAR: Omit<StreakLayerSpec, 'max'> = { box: new THREE.Vector3(26, 18, 26), len: 0.9, width: 0.011, alpha: 0.5 };
+const NEAR: Omit<StreakLayerSpec, 'max'> = { box: new THREE.Vector3(26, 18, 26), len: 0.9, width: 0.009, alpha: 0.62 };
 const FAR: Omit<StreakLayerSpec, 'max'> = { box: new THREE.Vector3(90, 50, 90), len: 2.6, width: 0.03, alpha: 0.26 };
 
 class Layer {
