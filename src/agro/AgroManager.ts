@@ -1,4 +1,4 @@
-// EV Agro Research Institute inside the open world (west farmland).
+// EVC Agro Research Institute inside the open world (west farmland).
 //  - the institute (AgroBuilder: 120 x 80 m, two floors around a garden courtyard, 16 themed rooms) + the research field (shade houses, plots, pond)
 //    stand at AGRO_POS on a flat pad (terrain.agro), always there when the game starts
 //  - Rapier colliders for every wall / counter / pole (the 2-D rectangles of the module), the first-floor slab and the roof:

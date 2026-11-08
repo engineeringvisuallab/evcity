@@ -76,7 +76,7 @@ goTo(start);
 
 // ---- UI ----
 const ui = document.createElement('div'); ui.className = 'fp';
-ui.innerHTML = `<div class="panel"><h1>EV কৃষি প্রিভিউ</h1><div id="b"></div></div><div class="info" id="info"></div><div class="help">W A S D · Shift দ্রুত · Q/E নিচে/উপরে · ক্লিক করে মাউস ঘোরান</div>`;
+ui.innerHTML = `<div class="panel"><h1>EVC কৃষি প্রিভিউ</h1><div id="b"></div></div><div class="info" id="info"></div><div class="help">W A S D · Shift দ্রুত · Q/E নিচে/উপরে · ক্লিক করে মাউস ঘোরান</div>`;
 document.body.appendChild(ui);
 const box = ui.querySelector('#b') as HTMLElement, info = ui.querySelector('#info') as HTMLElement;
 const jump = (label: string, test: (f: Field) => boolean) => {

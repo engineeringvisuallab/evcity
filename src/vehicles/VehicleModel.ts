@@ -1266,7 +1266,7 @@ export class VehicleModel {
     }
   }
 
-  /** EVCity electric sport bike: silver body, teal accents, no engine / exhaust (battery pack instead), fairing turns with the bars. */
+  /** EVCity sport bike: silver body, teal accents, a real inline-four engine with radiator, 4-1 exhaust and chain drive, fairing turns with the bars. */
   private bike(): void {
     const body = this.mat(this.spec.look.body);
     const dark = this.mat(this.spec.look.accent);
@@ -1274,7 +1274,12 @@ export class VehicleModel {
     const chrome = this.mat(0xaeb4ba);
     const alu = this.mat(0x8c939a);
     const teal = this.mat(EV_TEAL, { emissive: 0x0c6f5c });
-    const tealDeep = this.mat(0x14a890, { emissive: 0x06382f });
+    const engineM = this.pbr(0x3a3f45, { metalness: 0.6, roughness: 0.45 });
+    const fin = this.pbr(0x23272b, { metalness: 0.5, roughness: 0.5 });
+    const exhaustM = this.pbr(0xb8bcc2, { metalness: 0.8, roughness: 0.3 });
+    const exhaustTip = this.pbr(0x1d1f22, { metalness: 0.6, roughness: 0.4 });
+    const chainM = this.pbr(0x2a2d31, { metalness: 0.7, roughness: 0.4 });
+    const dial = this.mat(0x9fffe9, { emissive: 0x27c9a6 });
     const lamp = this.mat(0xd8fff6, { emissive: 0x2ee6c8 });
     const tail = this.mat(0xcc1111, { emissive: 0x660000 });
     const amber = this.mat(0xffa21a, { emissive: 0x553300 });
@@ -1295,16 +1300,60 @@ export class VehicleModel {
       this.tube(P(sx * 0.1, 0.62, -0.1), P(sx * 0.08, 0.7, -0.78), 0.016, dark, 0); // sub-frame
       this.tube(P(sx * 0.11, 0.48, 0.3), P(sx * 0.12, 0.34, -0.1), 0.02, dark, 0); // lower cradle
     }
-    this.boxG(0.27, 0.3, 0.46, tealDeep, 0, 0.42, 0.06, 3); // battery pack (teal casing, seen below the tank)
+    // ---- engine (inline-four, 4 cylinders in a row across the frame), radiator, airbox ----
+    this.boxG(0.2, 0.2, 0.34, engineM, 0, 0.4, -0.12, 3); // crankcase + gearbox
+    for (let i = 0; i < 4; i++) {
+      const cx = -0.075 + i * 0.05;
+      const cylB = this.boxG(0.046, 0.17, 0.11, engineM, cx, 0.56, 0.0, 3); // cylinder block, leaning forward
+      cylB.rotation.x = -0.35;
+      for (let f = 0; f < 3; f++) this.boxG(0.05, 0.008, 0.14, fin, cx, 0.5 + f * 0.04, 0.02 + f * 0.012, 3).rotation.x = -0.35; // cooling fins
+    }
+    const headCover = this.boxG(0.21, 0.04, 0.12, fin, 0, 0.66, 0.07, 3); // cylinder head cover
+    headCover.rotation.x = -0.35;
+    this.boxG(0.2, 0.15, 0.04, alu, 0, 0.47, 0.2, 2); // radiator (front of the engine, behind the fairing)
+    this.boxG(0.16, 0.08, 0.2, black, 0, 0.74, 0.12, 3); // airbox under the tank
+    this.boxG(0.08, 0.1, 0.1, chrome, 0.115, 0.4, -0.12, 3); // clutch cover (left)
     // ---- swing arm, hub motor + belt drive, shock ----
     for (const sx of [1, -1]) {
       this.tube(P(sx * 0.12, pivotH, pivotZ), P(sx * 0.115, wr, -W), 0.03, alu, 0); // swing-arm leg
       this.boxG(0.04, 0.12, 0.1, dark, sx * 0.115, wr, -W, 0); // axle plate
     }
-    this.boxG(0.04, 0.05, 0.62, black, 0.125, 0.4, -0.54, 3); // drive belt (left side)
-    this.mesh(this.cyl(0.075, 0.2, 14), black, 0, gy + pivotH, pivotZ, this.root).rotation.z = Math.PI / 2; // motor
+    // chain drive (left): gearbox sprocket -> rear sprocket, with the chain as two runs
+    const sprocketF = this.mesh(this.cyl(0.04, 0.012, 14), chainM, 0.135, gy + 0.36, -0.28, this.root);
+    sprocketF.rotation.z = Math.PI / 2;
+    const sprocketR = this.mesh(this.cyl(0.095, 0.012, 20), chainM, 0.1, gy + wr, -W, this.root);
+    sprocketR.rotation.z = Math.PI / 2;
+    this.tube([0.135, gy + 0.4, -0.28], [0.1, gy + wr + 0.095, -W], 0.006, chainM, 0); // upper chain run
+    this.tube([0.135, gy + 0.32, -0.28], [0.1, gy + wr - 0.095, -W], 0.006, chainM, 0); // lower chain run
+    // ---- exhaust: 4 header pipes collect under the engine, one silencer on the right side to the tail ----
+    for (let i = 0; i < 4; i++) {
+      const hx = -0.075 + i * 0.05;
+      this.tube(P(hx, 0.55, 0.06), P(hx * 0.4, 0.3, 0.02), 0.012, exhaustM, 3); // header
+    }
+    this.tube(P(0, 0.3, 0.02), P(0.1, 0.27, -0.4), 0.032, exhaustM, 3); // collector under the belly
+    this.tube(P(0.1, 0.27, -0.4), P(0.17, 0.5, -0.98), 0.048, exhaustM, 3); // silencer (right side, rising to the tail)
+    this.mesh(this.cyl(0.04, 0.03, 14), exhaustTip, 0.17, gy + 0.5, -0.99, this.root).rotation.x = Math.PI / 2 - 0.5; // exhaust tip
     this.tube(P(0, 0.72, -0.42), P(0, 0.4, pivotZ - 0.06), 0.022, chrome, 3); // rear shock
     this.tube(P(0, 0.62, -0.4), P(0, 0.5, pivotZ - 0.05), 0.04, teal, 3); // shock spring
+    // ---- more frame: steering head tube, cross members, engine mounts, triangulation, swing-arm brace ----
+    this.tube(P(0, 0.9, 0.44), P(0, 0.74, 0.5), 0.034, alu, 0); // steering head tube (raked)
+    this.tube(P(0.1, 0.62, -0.1), P(-0.1, 0.62, -0.1), 0.014, dark, 0); // cross member behind the tank
+    this.tube(P(0.12, pivotH, pivotZ), P(-0.12, pivotH, pivotZ), 0.02, alu, 0); // swing-arm pivot shaft
+    this.tube(P(0.11, 0.48, 0.3), P(-0.11, 0.48, 0.3), 0.014, dark, 0); // front engine cross tube
+    for (const sx of [1, -1]) {
+      this.boxG(0.012, 0.18, 0.1, alu, sx * 0.105, 0.45, 0.0, 0); // engine mount plate
+      this.tube(P(sx * 0.115, 0.6, -0.12), P(sx * 0.08, 0.7, -0.5), 0.012, dark, 0); // sub-frame triangulation
+    }
+    this.tube(P(0.118, 0.39, -0.54), P(-0.118, 0.39, -0.54), 0.018, alu, 0); // swing-arm cross brace
+    // chain guard over the upper run, rear caliper on the swing arm
+    this.boxG(0.014, 0.02, 0.4, dark, 0.125, 0.5, -0.53, 3).rotation.x = 0.1;
+    this.boxG(0.04, 0.08, 0.07, black, -0.1, wr + 0.05, -W + 0.12, 0);
+    // fuel filler cap on the tank
+    this.boxG(0.07, 0.008, 0.07, chrome, 0, 0.935, 0.2, 3);
+    // foot controls: gear shifter (left), rear brake pedal (right), side stand (left, folded)
+    this.tube(P(-0.18, 0.32, -0.2), P(-0.18, 0.32, -0.04), 0.01, chrome, 0);
+    this.tube(P(0.2, 0.3, -0.25), P(0.2, 0.3, -0.45), 0.01, chrome, 0);
+    this.tube(P(-0.14, 0.38, -0.3), P(-0.27, 0.07, -0.2), 0.011, dark, 0);
     // ---- bodywork (lofted shells) ----
     // tail: raised pillion cowl, narrow at the tip
     this.loft(
@@ -1362,17 +1411,6 @@ export class VehicleModel {
       body,
       2,
     );
-    // belly pan around the battery (ends before the front tyre)
-    this.loft(
-      [
-        { z: -0.2, w: 0.12, hb: 0.3, ht: 0.55, r: 0.05 },
-        { z: 0.0, w: 0.175, hb: 0.24, ht: 0.58, r: 0.06 },
-        { z: 0.3, w: 0.185, hb: 0.22, ht: 0.6, r: 0.07 },
-        { z: 0.38, w: 0.13, hb: 0.26, ht: 0.58, r: 0.06 },
-      ],
-      body,
-      1,
-    );
     // ---- fairing details: screen, headlights, intake, signals, stripes, tail light, plate ----
     const screen = this.boxG(0.26, 0.27, 0.012, glass, 0, 1.06, 0.5, 4);
     screen.rotation.x = -1.0;
@@ -1380,11 +1418,9 @@ export class VehicleModel {
       const l = this.boxG(0.1, 0.035, 0.03, lamp, sx * 0.065, 0.83, 0.975, 2); // cyan LED headlight
       l.rotation.set(0, sx * 0.55, sx * -0.12);
       this.boxG(0.015, 0.03, 0.06, amber, sx * 0.185, 0.9, 0.62, 2); // indicator on the fairing side
-      this.boxG(0.012, 0.035, 0.6, teal, sx * 0.166, 0.43, 0.15, 1); // teal stripe on the belly pan
       this.boxG(0.012, 0.03, 0.3, teal, sx * 0.196, 0.88, 0.5, 2).rotation.set(0, 0, 0); // teal stripe on the fairing
       this.boxG(0.012, 0.03, 0.4, teal, sx * 0.168, 0.74, -0.7, 2); // teal stripe on the tail
       this.logo('wordmark', false, 0.26, 0.065, sx * 0.2, gy + 0.8, 0.5, sx * (Math.PI / 2), 2); // on the fairing
-      this.logo('wordmark', false, 0.3, 0.075, sx * 0.1865, gy + 0.4, 0.15, sx * (Math.PI / 2), 1); // on the belly pan
       this.logo('wordmark', false, 0.22, 0.055, sx * 0.168, gy + 0.78, -0.7, sx * (Math.PI / 2), 2); // on the tail
     }
     this.boxG(0.09, 0.03, 0.02, black, 0, 0.77, 0.998, 2); // air intake slot under the lamps
@@ -1420,6 +1456,7 @@ export class VehicleModel {
       }
       this.mesh(new THREE.BoxGeometry(0.2, 0.035, 0.07), dark, 0, topY, 0, g); // triple clamp
       this.mesh(new THREE.BoxGeometry(0.1, 0.06, 0.05), black, 0, topY + 0.045, -0.03, g); // dash
+      this.mesh(new THREE.BoxGeometry(0.075, 0.03, 0.006), dial, 0, topY + 0.058, 0.0, g).rotation.x = -0.5; // speedometer / rev display
       // front mudguard over the tyre (wheel-aligned frame): follows the tyre radius
       const fs: Section[] = [];
       for (const dz of [-0.31, -0.22, -0.12, 0, 0.12, 0.22, 0.31]) {
@@ -1439,17 +1476,78 @@ export class VehicleModel {
     const tail = this.mat(0xe01010, { emissive: 0xa00000 });
     const glass = this.pbr(0x10202c, { metalness: 0.1, roughness: 0.04, transparent: true, opacity: 0.5, envMapIntensity: 1.5 });
     const wr = this.spec.wheelRadius; // wheel centre height above the ground
-    // ---- frame, battery pack, swing arm, motor, shock ----
-    this.boxG(0.14, 0.2, 1.0, carbon, 0, 0.52, 0); // frame
-    this.boxG(0.26, 0.22, 0.62, carbon, 0, 0.42, 0.05, 3); // battery pack
-    this.boxG(0.18, 0.015, 0.5, teal, 0, 0.3, 0.05, 3); // glowing underside
-    this.boxG(0.22, 0.16, 0.16, carbon, 0, 0.36, -0.2); // motor housing
-    const shock = this.boxG(0.04, 0.3, 0.04, chrome, 0, 0.55, -0.35, 3);
-    shock.rotation.x = 0.5;
+    // ---- real motorcycle underneath: trellis frame, inline-four engine, chain drive, exhaust, swing arm, shock ----
+    const gy = this.gy;
+    const W = this.spec.wheelbaseHalf; // front axle z; the rear axle is at -W
+    const P = (x: number, h: number, z: number): number[] => [x, gy + h, z]; // [x, height above ground, z]
+    const alu = this.pbr(0x8c939a, { metalness: 0.8, roughness: 0.35 });
+    const engineM = this.pbr(0x3a3f45, { metalness: 0.6, roughness: 0.45 });
+    const fin = this.pbr(0x23272b, { metalness: 0.5, roughness: 0.5 });
+    const exhaustM = this.pbr(0xc4c8ce, { metalness: 0.85, roughness: 0.25 });
+    const exhaustTip = this.pbr(0x1d1f22, { metalness: 0.6, roughness: 0.4 });
+    const chainM = this.pbr(0x2a2d31, { metalness: 0.7, roughness: 0.4 });
+    const black = this.mat(0x0e1012);
+    const amber = this.mat(0xffa21a, { emissive: 0x553300 });
+    const spring = this.mat(0xd02020);
+    const dial = this.mat(0x9fffe9, { emissive: 0x27c9a6 });
+    const pivotZ = -0.38;
+    const pivotH = 0.5;
+    // trellis frame: twin spars from the steering head to the swing-arm pivot, lower cradle, rear sub-frame, cross members
+    this.tube(P(0, 0.92, 0.46), P(0, 0.76, 0.52), 0.036, alu, 0); // steering head tube (raked)
     for (const sx of [1, -1]) {
-      this.boxG(0.045, 0.07, 0.6, carbon, sx * 0.115, 0.36, -0.45); // swing arm
-      this.boxG(0.012, 0.03, 0.5, teal, sx * 0.132, 0.42, 0.05, 3); // battery light strip
+      this.tube(P(sx * 0.1, 0.86, 0.46), P(sx * 0.118, 0.64, -0.14), 0.026, alu, 0); // main spar (upper)
+      this.tube(P(sx * 0.118, 0.64, -0.14), P(sx * 0.125, pivotH + 0.04, pivotZ + 0.02), 0.028, alu, 0); // spar down to the pivot
+      this.tube(P(sx * 0.1, 0.78, 0.44), P(sx * 0.115, 0.5, 0.0), 0.014, alu, 0); // trellis diagonal
+      this.tube(P(sx * 0.11, 0.5, 0.32), P(sx * 0.125, 0.36, -0.12), 0.02, alu, 0); // lower cradle
+      this.tube(P(sx * 0.105, 0.66, -0.12), P(sx * 0.085, 0.74, -0.86), 0.017, alu, 0); // rear sub-frame (seat rail)
+      this.tube(P(sx * 0.125, pivotH + 0.04, pivotZ), P(sx * 0.09, 0.72, -0.62), 0.013, alu, 0); // sub-frame brace
+      this.boxG(0.012, 0.18, 0.1, alu, sx * 0.108, 0.47, 0.02, 0); // engine mount plate
     }
+    this.tube(P(0.1, 0.66, -0.12), P(-0.1, 0.66, -0.12), 0.015, alu, 0); // cross member behind the tank
+    this.tube(P(0.11, 0.5, 0.32), P(-0.11, 0.5, 0.32), 0.015, alu, 0); // front engine cross tube
+    this.tube(P(0.125, pivotH, pivotZ), P(-0.125, pivotH, pivotZ), 0.022, alu, 0); // swing-arm pivot shaft
+    // engine: crankcase + gearbox, four finned cylinders leaning forward, head cover, radiator, airbox
+    this.boxG(0.21, 0.2, 0.36, engineM, 0, 0.42, -0.12, 3);
+    for (let n = 0; n < 4; n++) {
+      const cx = -0.078 + n * 0.052;
+      this.boxG(0.048, 0.18, 0.12, engineM, cx, 0.58, 0.0, 3).rotation.x = -0.35;
+      for (let f = 0; f < 3; f++) this.boxG(0.052, 0.008, 0.15, fin, cx, 0.52 + f * 0.04, 0.02 + f * 0.012, 3).rotation.x = -0.35;
+    }
+    this.boxG(0.22, 0.04, 0.13, fin, 0, 0.68, 0.07, 3).rotation.x = -0.35; // head cover
+    this.boxG(0.2, 0.17, 0.04, alu, 0, 0.5, 0.22, 2); // radiator
+    this.boxG(0.17, 0.09, 0.22, black, 0, 0.77, 0.12, 3); // airbox
+    this.boxG(0.08, 0.1, 0.1, chrome, 0.118, 0.42, -0.12, 3); // clutch cover
+    // swing arm with a cross brace, chain drive (left), rear caliper
+    for (const sx of [1, -1]) this.tube(P(sx * 0.125, pivotH, pivotZ), P(sx * 0.12, wr, -W), 0.032, alu, 0);
+    this.tube(P(0.123, 0.4, -0.55), P(-0.123, 0.4, -0.55), 0.02, alu, 0); // swing-arm brace
+    const sprocketF = this.mesh(this.cyl(0.04, 0.012, 14), chainM, 0.14, gy + 0.38, -0.3, this.root);
+    sprocketF.rotation.z = Math.PI / 2;
+    const sprocketR = this.mesh(this.cyl(0.1, 0.012, 20), chainM, 0.105, gy + wr, -W, this.root);
+    sprocketR.rotation.z = Math.PI / 2;
+    this.tube([0.14, gy + 0.42, -0.3], [0.105, gy + wr + 0.1, -W], 0.006, chainM, 0); // upper chain run
+    this.tube([0.14, gy + 0.34, -0.3], [0.105, gy + wr - 0.1, -W], 0.006, chainM, 0); // lower chain run
+    this.boxG(0.04, 0.08, 0.07, black, -0.1, wr + 0.05, -W + 0.12, 0); // rear brake caliper
+    // rear shock with a red spring
+    this.tube(P(0, 0.74, -0.42), P(0, 0.42, pivotZ - 0.06), 0.022, chrome, 3);
+    this.tube(P(0, 0.64, -0.41), P(0, 0.5, pivotZ - 0.05), 0.04, spring, 3);
+    // exhaust: 4 headers -> collector under the belly -> silencer on the right, rising to the tail
+    for (let n = 0; n < 4; n++) {
+      const hx = -0.078 + n * 0.052;
+      this.tube(P(hx, 0.57, 0.06), P(hx * 0.4, 0.32, 0.02), 0.012, exhaustM, 3);
+    }
+    this.tube(P(0, 0.32, 0.02), P(0.1, 0.28, -0.42), 0.034, exhaustM, 3);
+    this.tube(P(0.1, 0.28, -0.42), P(0.18, 0.56, -1.0), 0.05, exhaustM, 3);
+    this.mesh(this.cyl(0.042, 0.03, 14), exhaustTip, 0.18, gy + 0.56, -1.01, this.root).rotation.x = Math.PI / 2 - 0.55;
+    // fuel cap, foot controls, side stand, indicators
+    this.boxG(0.07, 0.008, 0.07, chrome, 0, 0.965, 0.22, 3);
+    for (const sx of [1, -1]) {
+      this.tube(P(sx * 0.12, 0.5, -0.32), P(sx * 0.19, 0.34, -0.22), 0.014, alu, 0); // foot-peg bracket
+      this.tube(P(sx * 0.15, 0.34, -0.22), P(sx * 0.25, 0.34, -0.22), 0.013, chrome, 0);
+      this.boxG(0.015, 0.03, 0.06, amber, sx * 0.19, 0.78, 0.42, 2); // indicator
+    }
+    this.tube(P(-0.18, 0.34, -0.22), P(-0.18, 0.34, -0.06), 0.01, chrome, 0); // gear shifter
+    this.tube(P(0.22, 0.32, -0.3), P(0.22, 0.32, -0.5), 0.01, chrome, 0); // rear brake pedal
+    this.tube(P(-0.14, 0.4, -0.32), P(-0.28, 0.07, -0.22), 0.011, black, 0); // side stand
     // ---- tank cover, side fairings, tail (pearl white) ----
     this.loft(
       [
@@ -1490,7 +1588,9 @@ export class VehicleModel {
     this.frontFork = (g: THREE.Group) => {
       const y = (h: number) => h - wr; // height above ground -> local to the wheel centre
       for (const sx of [1, -1]) {
-        this.mesh(new THREE.BoxGeometry(0.04, 0.6, 0.04), chrome, sx * 0.09, 0.3, 0, g); // fork leg
+        this.mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.34, 10), carbon, sx * 0.09, 0.44, 0, g); // upside-down fork: thick upper tube
+        this.mesh(new THREE.CylinderGeometry(0.017, 0.017, 0.34, 10), chrome, sx * 0.09, 0.15, 0, g); // slim lower tube
+        this.mesh(new THREE.BoxGeometry(0.035, 0.09, 0.07), carbon, sx * 0.095, 0.09, -0.05, g); // brake caliper
         this.mesh(new THREE.BoxGeometry(0.24, 0.03, 0.03), carbon, sx * 0.18, y(0.82), -0.12, g); // clip-on bar
         this.mesh(new THREE.BoxGeometry(0.012, 0.06, 0.012), carbon, sx * 0.22, y(0.93), -0.1, g); // mirror stem
         this.mesh(new THREE.BoxGeometry(0.07, 0.04, 0.03), carbon, sx * 0.23, y(0.96), -0.1, g); // mirror
@@ -1505,6 +1605,7 @@ export class VehicleModel {
       const screen = this.mesh(new THREE.BoxGeometry(0.22, 0.24, 0.02), glass, 0, y(1.08), -0.02, g);
       screen.rotation.x = -0.55;
       this.mesh(new THREE.BoxGeometry(0.24, 0.012, 0.02), teal, 0, y(0.79), 0.465, g); // teal DRL line
+      this.mesh(new THREE.BoxGeometry(0.1, 0.03, 0.006), dial, 0, y(0.97), -0.02, g).rotation.x = -0.5; // speedometer / rev display
       this.logo('mark', false, 0.08, 0.08, 0, y(0.86), 0.458, 0, 0, g); // EVCity mark on the nose
       for (const sx of [1, -1]) this.logo('wordmark', false, 0.26, 0.065, sx * 0.152, y(0.87), 0.1, sx * (Math.PI / 2), 0, g);
     };
@@ -1544,6 +1645,9 @@ export class VehicleModel {
     this.utube([0.3, 0.45, 0.4], [0.3, 0.45, -1.08], 0.018, dark, 0); // chassis rails
     this.utube([-0.3, 0.45, 0.4], [-0.3, 0.45, -1.08], 0.018, dark, 0);
     this.ucyl(0.02, 0.02, 1.08, steel, 0, 0.34, -0.55, 'x', 0, this.root, 8); // rear axle
+    for (const s of [-1, 1]) this.rbox(0.03, 0.025, 0.55, 0.008, steel, s * 0.3, 0.4, -0.55, 1); // rear leaf springs
+    this.utube([-0.34, 0.75, -0.12], [0.34, 0.75, -0.12], 0.01, steel, 3); // passenger grab bar
+    this.utube([-0.4, 0.46, 0.2], [0.4, 0.46, 0.2], 0.012, steel, 2); // foot rest bar
     this.rbox(0.96, 0.04, 1.12, 0.015, gold, 0, 0.46, -0.52, 1); // floor
     this.rbox(0.9, 0.04, 0.2, 0.015, gold, 0, 0.5, 0.12, 2); // foot board
     this.rbox(0.78, 0.14, 0.52, 0.05, cushion, 0, 0.57, -0.55, 2); // seat cushion

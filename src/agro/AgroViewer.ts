@@ -1,4 +1,4 @@
-// Standalone walkthrough of the EV Agro institute (agro.html). Two floors, lifts, room teleport menu.
+// Standalone walkthrough of the EVC Agro institute (agro.html). Two floors, lifts, room teleport menu.
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { MallInteraction } from '../mall/MallInteraction';
@@ -46,7 +46,7 @@ export async function startAgroViewer(container: HTMLElement): Promise<void> {
 
   // ---- UI ----
   const ui = document.createElement('div'); ui.className = 'ag';
-  ui.innerHTML = `<div class="panel"><h1>EV Agro Institute</h1><input id="q" placeholder="রুম বা বিষয় খুঁজুন… (যেমন: সার, সেচ, মাছ)"><div id="res"></div><button id="b-out" style="--c:#94a3b8">বাইরে (প্রবেশদ্বার)</button><button id="b-lobby" style="--c:#4ade80">লবি</button>
+  ui.innerHTML = `<div class="panel"><h1>EVC Agro Institute</h1><input id="q" placeholder="রুম বা বিষয় খুঁজুন… (যেমন: সার, সেচ, মাছ)"><div id="res"></div><button id="b-out" style="--c:#94a3b8">বাইরে (প্রবেশদ্বার)</button><button id="b-lobby" style="--c:#4ade80">লবি</button>
     <h2>গবেষণা মাঠ (খোলা শেড)</h2><div id="lf"></div><h2>নিচতলা</h2><div id="l0"></div><h2>দোতলা</h2><div id="l1"></div></div><div class="where" id="where"></div><canvas id="mini" width="195" height="135"></canvas><div class="cross"></div>
     <div class="tip" id="tip"></div><div class="toast" id="toast"></div><div class="fade" id="fade"></div>
     <div class="help">W A S D চলুন · Shift দৌড় · মাউস ঘোরান · লিফটের সবুজ বোতামে ক্লিক = তলা বদল · বিশেষজ্ঞে ক্লিক = পরামর্শ · O = ওপর থেকে দেখুন · Esc = মাউস ছাড়ুন</div>`;

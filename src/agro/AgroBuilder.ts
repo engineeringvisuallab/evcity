@@ -1,4 +1,4 @@
-// EV Agro Research Institute - the whole institute as ONE THREE.Group (local origin = centre, y = 0 ground floor).
+// EVC Agro Research Institute - the whole institute as ONE THREE.Group (local origin = centre, y = 0 ground floor).
 // 120 x 80 m, two floors around an open garden courtyard; lifts in the lobby; 16 themed rooms with experts.
 // Place later: inst.group.position.set(x, groundY, z); inst.group.rotation.y = yaw;  (colliders stay in LOCAL space)
 import * as THREE from 'three';
@@ -185,7 +185,7 @@ export function buildAgro(): AgroBuild {
   }
   // reception desk + welcome board (ground lobby)
   slab(-4, 4, 30, 31.2, 0, 1.1, stdMat(0x166534, 0.1, 0.6), 0, true);
-  const welcome = signMesh(9, 2, 'স্বাগতম — EV Agro', 'কৃষি গবেষণা ইনস্টিটিউট', 0x22c55e); welcome.position.set(0, 2.6, hz - 0.35); facing(welcome, 0, -1); g.add(welcome);
+  const welcome = signMesh(9, 2, 'স্বাগতম — EVC Agro', 'কৃষি গবেষণা ইনস্টিটিউট', 0x22c55e); welcome.position.set(0, 2.6, hz - 0.35); facing(welcome, 0, -1); g.add(welcome);
   const lounge = signMesh(9, 2, 'মেজানাইন লাউঞ্জ', 'লিফট: ১১ মিটার ডানে/বামে', 0x22c55e); lounge.position.set(0, FH + 2.6, hz - 0.35); facing(lounge, 0, -1); upper.add(lounge);
 
   // lobby / lounge seating, planters, floor emblem, receptionist
@@ -251,7 +251,7 @@ export function buildAgro(): AgroBuild {
   colliders[0].push(...field.colliders); pickables[0].push(...field.pickables); blockers.push(...field.blockers);
 
   // ---- facade, canopy, rooftop sign, rooftop solar ----
-  const big = signMesh(30, 3.4, 'EV AGRO RESEARCH INSTITUTE', 'ইভি এগ্রো কৃষি গবেষণা ইনস্টিটিউট', 0x22c55e);
+  const big = signMesh(30, 3.4, 'EVC AGRO RESEARCH INSTITUTE', 'ইভিসি এগ্রো কৃষি গবেষণা ইনস্টিটিউট', 0x22c55e);
   slab(-16, 16, hz - 0.5, hz - 0.1, 2 * FH, 2 * FH + 3.8, darkM, -1, false, false, roof); big.position.set(0, 2 * FH + 1.9, hz - 0.08); roof.add(big);
   slab(-9, 9, hz, hz + 7, 3.7, 4.0, stdMat(0x22c55e, 0.3, 0.4), -1, false, true);
   plane(14, 10, 0, 0.012, hz + 6, stdMat(0xd6d3d1, 0, 0.9), g);

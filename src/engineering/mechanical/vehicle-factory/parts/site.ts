@@ -19,7 +19,7 @@ export function buildSiteWorks({ mats: m }: Ctx): InfraPart {
   building(g, m, { x: 8, z: G.z - 2, w: 6, d: 5, h: 3.2 });
   box(g, 0.4, 3.4, 0.4, m.steel, -3.2, 0, G.z);
   box(g, 4.2, 0.2, 0.2, m.red, -1.2, 3.0, G.z);
-  const sign = makeSign('EV VEHICLE FACTORY', 14, 2.2);
+  const sign = makeSign('EVC VEHICLE FACTORY', 14, 2.2);
   sign.position.set(0, 6.4, G.z + 2.2);
   g.add(sign);
   for (const x of [-7, 7]) box(g, 0.5, 6.4, 0.5, m.steel, x, 0, G.z + 2.2);

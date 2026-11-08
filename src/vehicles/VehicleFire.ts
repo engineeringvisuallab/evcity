@@ -65,7 +65,7 @@ const PROF: Record<string, Prof> = {
   hypercar: { burn: 90, grow: 7, battery: true, fuelTank: false, soot: 0.45, windows: 2, engine: 'mid' },
   evhypar: { burn: 110, grow: 9, battery: true, fuelTank: false, soot: 0.5, windows: 3, engine: 'mid' },
   suprim: { burn: 105, grow: 9, battery: true, fuelTank: false, soot: 0.5, windows: 3, engine: 'mid' },
-  evbike: { burn: 60, grow: 5, battery: true, fuelTank: false, soot: 0.4, windows: 0, engine: 'mid' },
+  evbike: { burn: 24, grow: 5, battery: false, fuelTank: true, soot: 0.4, windows: 0, engine: 'mid' },
   bike: { burn: 22, grow: 5, battery: false, fuelTank: true, soot: 0.7, windows: 0, engine: 'mid' },
   auto: { burn: 35, grow: 7, battery: false, fuelTank: true, soot: 0.75, windows: 0, engine: 'rear' },
   rickshaw: { burn: 20, grow: 6, battery: false, fuelTank: false, soot: 0.6, windows: 0, engine: 'mid' },

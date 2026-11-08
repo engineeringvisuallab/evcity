@@ -1,4 +1,4 @@
-// EV Agro Research Institute - the room table. Rectangles are in the building's LOCAL space (metres).
+// EVC Agro Research Institute - the room table. Rectangles are in the building's LOCAL space (metres).
 // `face` = direction from the room towards its corridor; `doorAt` = door centre along that wall.
 // `topics` is for the later "ask the expert" feature (what the expert in this room can advise on).
 import type { PickInfo } from '../mall/MallBuilder';
@@ -34,7 +34,7 @@ export const ROOMS: RoomDef[] = [
     x0: 30, x1: 60, z0: -40, z1: -26, face: '+z', doorAt: 42, topics: ['ড্রিপ সেচ', 'সোলার পাম্প', 'পানি সাশ্রয়'] },
   { id: 'greenhouse', level: 0, bn: 'গ্রিনহাউস ও হাইড্রোপনিক্স', en: 'Greenhouse & Hydroponics', theme: 'greenhouse', color: 0x16a34a,
     x0: -60, x1: -46, z0: -26, z1: 26, face: '+x', doorAt: 0, topics: ['হাইড্রোপনিক্স', 'নিয়ন্ত্রিত পরিবেশ', 'সবজি চাষ'] },
-  { id: 'workshop', level: 0, bn: 'ইভি কৃষি যন্ত্র কর্মশালা', en: 'EV Farm Machinery Workshop', theme: 'workshop', color: 0xf97316,
+  { id: 'workshop', level: 0, bn: 'ইভিসি কৃষি যন্ত্র কর্মশালা', en: 'EVC Farm Machinery Workshop', theme: 'workshop', color: 0xf97316,
     x0: 46, x1: 60, z0: -26, z1: 26, face: '-x', doorAt: 0, backDoor: 0, topics: ['ইলেকট্রিক ট্রাক্টর', 'যন্ত্র রক্ষণাবেক্ষণ', 'ব্যাটারি'] },
   { id: 'solar', level: 0, bn: 'সোলার ও নবায়নযোগ্য শক্তি', en: 'Solar & Renewable Energy', theme: 'solar', color: 0xfacc15,
     x0: -60, x1: -15, z0: 26, z1: 40, face: '-z', doorAt: -30, topics: ['সোলার প্যানেল', 'ব্যাটারি ব্যাকআপ', 'খরচ হিসাব'] },

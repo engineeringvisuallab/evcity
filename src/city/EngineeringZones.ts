@@ -4,7 +4,7 @@
  * No building is placed here (that is the next step); this file only fixes WHERE each area is and how far it reaches.
  *
  * Already built elsewhere and therefore NOT repeated here: airport (src/airport), seaport (src/port), railway (src/rail), agro site (src/agro),
- * shopping mall (src/mall), city library (src/library), EV lab (src/evlab). Ordinary buildings (homes, shops ...) have no boundary at all.
+ * shopping mall (src/mall), city library (src/library), EVC lab (src/evlab). Ordinary buildings (homes, shops ...) have no boundary at all.
  *
  * `getWorldZoneAt` (WorldZones.ts) returns kind 'engineering' and the area id for every point inside a rectangle. Bangla names: `bn.worldZones.names[id]`
  * and `bn.worldZones.engineeringGroup[group]`. The positions were chosen on the real terrain (dry, gentle ground, away from the railway and stations,

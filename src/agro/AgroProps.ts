@@ -1,4 +1,4 @@
-// EV Agro - procedural props and the furnishing of every room theme.
+// EVC Agro - procedural props and the furnishing of every room theme.
 // Room-local frame: `a` = distance along the door wall, `t` = depth from the door wall inwards (0 .. D).
 import * as THREE from 'three';
 import { makePerson, makeProductModel, stdMat } from '../mall/ProductModels';
@@ -210,7 +210,7 @@ export function furnish(theme: Theme, c: RoomCtx): void {
       for (let i = 0; i < 3; i++) { bx(c, L0 + 6 + i * 11, D / 2, 3, 1.2, 0.8, wood, 0, true); } break;
     case 'auditorium': {
       bx(c, c.a0 + 3.2, D / 2, 5.2, D - 1.0, 0.5, stdMat(0x7f1d1d, 0, 0.8), 0, true);
-      board(c.a0 + 0.8, 2.4, 9, 3.2, 'EV Agro Training', 'কৃষক প্রশিক্ষণ ও সেমিনার');
+      board(c.a0 + 0.8, 2.4, 9, 3.2, 'EVC Agro Training', 'কৃষক প্রশিক্ষণ ও সেমিনার');
       const pts: [number, number, number][] = [];
       for (let a = c.a0 + 9; a < c.a1 - 6; a += 1.15) for (let t = 4.2; t < D - 1.2; t += 0.9) if (Math.abs(t - D / 2) > 0.7) pts.push([a, t, 0.25]);
       inst(c, new THREE.BoxGeometry(0.5, 0.5, 0.5), pts, [0xe11d48, 0x1e293b]);

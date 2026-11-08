@@ -1,4 +1,4 @@
-// Where the EV Agro Research Institute stands in the world, plus the level pad it needs.
+// Where the EVC Agro Research Institute stands in the world, plus the level pad it needs.
 // Pure numbers + one height function (no three.js / DOM), so the terrain generator and its worker can use it safely.
 //
 // LOCATION: the west farmland (zone 'west-farms'), ~3 km west of the spawn crossing. The land there is the flattest dry farmland of the

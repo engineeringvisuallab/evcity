@@ -61,7 +61,7 @@ export const INFRA_PLACEMENTS: InfraPlacement[] = [
   { id: 'renew', nameBn: 'Renewable Energy Park', x: -2438, z: -2781, yaw: 0, rect: { x0: -158, x1: 158, z0: -93, z1: 93 }, riverSide: 'none', color: '#76ff03', mark: 'R', deep: 1.5, blend: 24, riverBlend: 24, lift: 0 },
   // EV vehicle factory: inside the NEW engineering area 'eng-vehicle' (x -500..100, z 2400..2750): flat dry ground, no public road crosses it (the fence has no gaps),
   // ~1.7 m of relief under the pad. Pad 380 x 300 m, entrance on the south side (local +z).
-  { id: 'vehicle', nameBn: 'EV Vehicle Factory', x: -129, z: 2571, yaw: 0, rect: { x0: -190, x1: 190, z0: -150, z1: 150 }, riverSide: 'none', color: '#b388ff', mark: 'V', deep: 3, blend: 35, riverBlend: 35, lift: 0 },
+  { id: 'vehicle', nameBn: 'EVC Vehicle Factory', x: -129, z: 2571, yaw: 0, rect: { x0: -190, x1: 190, z0: -150, z1: 150 }, riverSide: 'none', color: '#b388ff', mark: 'V', deep: 3, blend: 35, riverBlend: 35, lift: 0 },
   // Computer science & electronics park: inside the engineering area 'eng-tech-park' (x 450..1050, z -1350..-900). Flat, dry ground in the north part; small hills in the west and
   // south-east. Gate on the west side (towards the city). Minimap mark is 'E' (the letter 'C' is already used by the chemical plant).
   { id: 'tech', nameBn: 'Computer Science & Electronics Park', x: 775, z: -1228, yaw: 0, rect: { x0: -175, x1: 175, z0: -100, z1: 100 }, riverSide: 'none', color: '#a855f7', mark: 'E', deep: 1.5, blend: 26, riverBlend: 26, lift: 0 },

@@ -216,7 +216,7 @@ export class Engine {
   readonly airplanes: AirplaneManager;
   /** Army camp in the north-west, on the low flat land at the foot of the big hill: gate, HQ, barracks, tents, depot, motor pool, helipad. */
   readonly army: ArmyManager;
-  /** EV Agro Research Institute (west farmland, ~3 km from the spawn): 2-floor institute + research field. K = go there. */
+  /** EVC Agro Research Institute (west farmland, ~3 km from the spawn): 2-floor institute + research field. K = go there. */
   readonly agro: AgroManager;
   /** Crop fields of the whole map (farmland, villages, hill orchards): rice / wheat / vegetables / fruit trees, tractors, combines, workers. */
   readonly farm: FarmManager;
@@ -490,7 +490,7 @@ export class Engine {
       playerWorld: (out) => this.player.getWorldPosition(out),
     });
 
-    // --- EV Agro Research Institute (west farmland; hidden when the player is far away) ---
+    // --- EVC Agro Research Institute (west farmland; hidden when the player is far away) ---
     this.agro = new AgroManager({
       root: this.world.root,
       physics,
@@ -920,7 +920,7 @@ export class Engine {
       this.player.teleportTo(this.tmpVec.set(c.x, this.world.terrain.airportSea.floorY + 3, c.z));
     }
 
-    // K: go to the EV Agro institute (on foot only): you stand on the driveway in front of the entrance
+    // K: go to the EVC Agro institute (on foot only): you stand on the driveway in front of the entrance
     if (this.input.wasPressed('KeyK') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.planeRider.riding && !this.playerJet.riding && !this.cameraController.isFreeFly) {
       const e = this.agro.entrance;
       this.player.teleportTo(this.tmpVec.set(e.x, this.world.terrain.agro.floorY + 3, e.z));
@@ -1241,11 +1241,11 @@ export class Engine {
     }
     if (this.agro.inside) {
       const rm = this.agro.room;
-      this.hud.setArea({ key: `agro-${rm?.id ?? (this.agro.level ? 'f1' : 'f0')}`, name: 'ইভি এগ্রো রিসার্চ ইনস্টিটিউট', kind: rm ? `${rm.bn} · ${this.agro.level ? 'দোতলা' : 'নিচতলা'}` : `কৃষি গবেষণা · ${this.agro.level ? 'দোতলা' : 'নিচতলা'}`, color: '#22c55e' });
+      this.hud.setArea({ key: `agro-${rm?.id ?? (this.agro.level ? 'f1' : 'f0')}`, name: 'ইভিসি এগ্রো রিসার্চ ইনস্টিটিউট', kind: rm ? `${rm.bn} · ${this.agro.level ? 'দোতলা' : 'নিচতলা'}` : `কৃষি গবেষণা · ${this.agro.level ? 'দোতলা' : 'নিচতলা'}`, color: '#22c55e' });
       return;
     }
     if (this.world.terrain.agro.inside(p.x, p.z)) {
-      this.hud.setArea({ key: 'agro-grounds', name: 'ইভি এগ্রো রিসার্চ ইনস্টিটিউট', kind: 'গবেষণা মাঠ ও প্রাঙ্গণ', color: '#22c55e' });
+      this.hud.setArea({ key: 'agro-grounds', name: 'ইভিসি এগ্রো রিসার্চ ইনস্টিটিউট', kind: 'গবেষণা মাঠ ও প্রাঙ্গণ', color: '#22c55e' });
       return;
     }
     const fld = this.farm.info(p.x, p.z);

@@ -76,7 +76,7 @@ export class TerrainGenerator {
   /** Army camp (north-west, on the low flat land at the foot of the big hill): only its own pad + skirt is levelled, same rules as the airport. */
   readonly army = new ArmySite();
   private armyMask = new Float32Array(2);
-  /** EV Agro Research Institute (west farmland): a level pad for the building and the research field (applied late in sample(), same in every chunk, worker and collider). */
+  /** EVC Agro Research Institute (west farmland): a level pad for the building and the research field (applied late in sample(), same in every chunk, worker and collider). */
   readonly agro = new AgroSite();
   private agroMask = new Float32Array(2);
   private scratch: TerrainSample = { h: 0, water: NaN, fx: 0, fz: 0 };

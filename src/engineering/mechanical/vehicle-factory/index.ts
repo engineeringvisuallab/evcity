@@ -21,7 +21,7 @@ import { buildWarehouse } from './parts/warehouse';
 import { buildDesign } from './parts/design';
 import { buildTesting } from './parts/testing';
 
-const NAME = 'EV Vehicle Factory';
+const NAME = 'EVC Vehicle Factory';
 
 /** Floating English name tags: [text, x, y, z, scale] (local metres). */
 const LABELS: [string, number, number, number, number?][] = [

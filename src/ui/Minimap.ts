@@ -39,7 +39,7 @@ export interface MapState {
   building?: { x: number; z: number };
   /** All placed building models (world x, z + dot colour): small dots, always shown. */
   buildings?: { x: number; z: number; color: string }[];
-  /** EV Agro Research Institute (world x, z): always shown. */
+  /** EVC Agro Research Institute (world x, z): always shown. */
   agro?: { x: number; z: number };
   /** SWTP / STP plants (world x, z): always shown. */
   infra?: { x: number; z: number; id: string; color: string; mark: string }[];
@@ -474,7 +474,7 @@ export class Minimap {
       }
     }
 
-    // EV Agro Research Institute: green leaf marker (always visible, every zoom level)
+    // EVC Agro Research Institute: green leaf marker (always visible, every zoom level)
     if (s.agro) {
       const d = this.dpr;
       const r = (this.zoom === 0 ? 7.5 : this.zoom === 1 ? 6 : 5) * d;

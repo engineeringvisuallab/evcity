@@ -1,4 +1,4 @@
-// EV Agro Research Field - open-air research area east of the institute building (connected via the workshop's back door).
+// EVC Agro Research Field - open-air research area east of the institute building (connected via the workshop's back door).
 //  * MAIN SHADE HOUSE 80 x 60 m: open-sided steel frame + shade net, 4 research zones underneath
 //  * OPEN FIELD plots + irrigation canal, weather station, drone pad
 //  * fish/duck pond with pavilion, EV machinery parking shade with solar roof
@@ -130,14 +130,14 @@ export function buildField(): FieldBuild {
   for (const [dx, dz] of [[-2, -2], [2, -2], [-2, 2], [2, 2]]) { mk(new THREE.CylinderGeometry(0.1, 0.1, 3.2, 8), M(0x78350f, 0, 1), 95 + dx, 1.6, 55 + dz); col(95 + dx, 55 + dz, 0.25); }
   box(5, 0.15, 5, M(0xb45309, 0, 0.8), 95, 3.3, 55); box(2.2, 0.15, 0.6, M(0x92400e, 0, 0.8), 95, 0.5, 56.5, true);
 
-  // ---- EV MACHINERY PARKING SHADE (x 70..108, z -70..-44) with solar roof ----
+  // ---- EVC MACHINERY PARKING SHADE (x 70..108, z -70..-44) with solar roof ----
   for (const [x, z] of [[72, -46], [106, -46], [72, -68], [106, -68], [89, -46], [89, -68]]) { mk(new THREE.CylinderGeometry(0.18, 0.2, 4.6, 10), M(0x6b7280, 0.6, 0.4), x, 2.3, z); col(x, z, 0.35); }
   const roofP = box(38, 0.2, 26, M(0x1e3a8a, 0.8, 0.25), 89, 4.7, -57); roofP.rotation.x = 0.08; shade.add(roofP);
   [[76, -52, 0], [89, -52, 0], [102, -52, 0], [82, -62, 0]].forEach(([x, z], i) => {
     const t = makeTractor(); t.scale.setScalar(1); t.position.set(x, 0, z); t.rotation.y = Math.PI / 2 * 0 + (i % 2 ? 0.3 : -0.2); g.add(t); col(x, z, 1.6, 1.4);
     const ch = makeProductModel('charger', 0x3b82f6, 1); ch.position.set(x + 2.6, 0, z); g.add(ch); col(x + 2.6, z, 0.5, 0.4);
   });
-  label(8, 1.6, 'ইভি যন্ত্র পার্কিং', 'EV Machinery Parking · Solar Charging', 0xf97316, 89, 3.8, -44.5, 0, 1);
+  label(8, 1.6, 'ইভিসি যন্ত্র পার্কিং', 'EVC Machinery Parking · Solar Charging', 0xf97316, 89, 3.8, -44.5, 0, 1);
 
   // ---- fence, gate arch, entrance sign, experts ----
   const fenceTex = canvasTex(32, 32, (c) => { c.strokeStyle = 'rgba(71,85,105,0.9)'; c.lineWidth = 2; c.beginPath(); c.moveTo(0, 0); c.lineTo(32, 32); c.moveTo(32, 0); c.lineTo(0, 32); c.stroke(); });
@@ -154,12 +154,12 @@ export function buildField(): FieldBuild {
   fence(FIELD.x0, FIELD.x0, 40, FIELD.z1); fence(FIELD.x0, FIELD.x0, FIELD.z0, -40);
   for (const x of [98, 110]) { mk(new THREE.CylinderGeometry(0.25, 0.3, 5, 10), M(0x14532d, 0.3, 0.6), x, 2.5, FIELD.z1); col(x, FIELD.z1, 0.4); }
   box(13, 0.4, 0.4, M(0x14532d, 0.3, 0.6), 104, 5.2, FIELD.z1);
-  label(11, 1.8, 'EV Agro গবেষণা মাঠ', 'Research Field — স্বাগতম', 0x22c55e, 104, 4.2, FIELD.z1 + 0.25, 0, 1);
+  label(11, 1.8, 'EVC Agro গবেষণা মাঠ', 'Research Field — স্বাগতম', 0x22c55e, 104, 4.2, FIELD.z1 + 0.25, 0, 1);
   expert(64, 4.5, 1, 0, 0x16a34a); expert(166, 3.5, -1, 0, 0xd97706);
 
   // ---- teleport spots ----
   const S = (id: string, bn: string, x: number, z: number, yaw: number) => spots.push({ id, bn, pos: new THREE.Vector3(x, 0, z), yaw });
   S('gate', 'মাঠের প্রবেশদ্বার', 104, 84, 0); S('shade', 'শেড এলাকা (গবেষণা)', 73, 0, -Math.PI / 2); S('open', 'খোলা মাঠ', 156, -14, -Math.PI / 2);
-  S('pond', 'পুকুর ও মৎস্য', 78, 40, Math.PI); S('parking', 'ইভি যন্ত্র পার্কিং', 89, -41, 0); S('weather', 'আবহাওয়া ও ড্রোন', 200, 36, 0);
+  S('pond', 'পুকুর ও মৎস্য', 78, 40, Math.PI); S('parking', 'ইভিসি যন্ত্র পার্কিং', 89, -41, 0); S('weather', 'আবহাওয়া ও ড্রোন', 200, 36, 0);
   return { group: g, shade, colliders, pickables, blockers, spots };
 }
