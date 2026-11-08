@@ -22,6 +22,7 @@ import { TreeKind } from '../vegetation/TreeTypes';
  */
 const C = Config.city.roadside;
 const H = Config.city.highway;
+const ST = C.streetTree;
 const sqr = (x: number): number => x * x;
 
 export interface RoadsidePlan {
@@ -144,7 +145,7 @@ export function planCityTrees(roads: RoadNetwork): { pits: number[]; trees: numb
         const yaw = Math.atan2(w.tx, w.tz);
         pits.push(px, w.y, pz, yaw);
         const k = kind < 0.4 ? TreeKind.vase : kind < 0.75 ? TreeKind.broadleaf : TreeKind.slender;
-        const t = [px, w.y - Config.vegetation.sink, pz, 0.7 + 0.25 * scale, rng() * Math.PI * 2, 0.9 + 0.2 * tint, k];
+        const t = [px, w.y - Config.vegetation.sink, pz, ST.scale[0] + (ST.scale[1] - ST.scale[0]) * scale, rng() * Math.PI * 2, ST.tint[0] + (ST.tint[1] - ST.tint[0]) * tint, k];
         trees.push(...t);
         const c = worldToChunkCoord(px, pz);
         const ck = chunkKey(c.cx, c.cz);

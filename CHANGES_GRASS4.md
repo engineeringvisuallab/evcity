@@ -19,7 +19,7 @@ Built on step 3 (clumps, `CHANGES_GRASS3_BN.md`). All new numbers are Config kno
 - Ribbon = asphalt + paved sidewalk, `city.roadside.sidewalk` = 3 m on both sides (also for tier 1-3 inside cities; the street PLAN keeps its old clearance, so the street layout is unchanged).
 - Shader (`RoadMaterial.ts`): white dashed centre line + white edge lines, kerb stone, grey **basket-weave interlocking pavers** (procedural, grout fades with distance), concrete edging next to the lawn strip, **yellow-black striped kerb** at the median (freeway arms: 1.2 m median; arterials: centre kerb instead of the double yellow). Vertex code: +100 local street (as before), **+4000 city road tier 1-3**.
 - `Roadside.ts` + `RoadsideView.ts` (new, instanced, grouped in 250 m squares, shown within `drawRadius` x type range at 2 Hz):
-  - tree pits (square kerbed, every 12-15 m, both sides; median spacing 13.5 m) + street trees that go through the NORMAL tree pipeline (chunk worker, LOD, colliders),
+  - tree pits (square kerbed, every 24-30 m, both sides; small young trees, scale 0.42-0.6, deep green tint 0.58-0.7: `city.roadside.treeSpacing` and `streetTree`) + street trees that go through the NORMAL tree pipeline (chunk worker, LOD, colliders),
   - low flowering hedge (new model, 0.6-0.9 m, dense green, white/pink flowers) on freeway medians in the city and along open edges of the mall / EVLab / side parking lots,
   - street lamps (existing `StreetLights`) now stand on the sidewalk, behind the pits.
 - Lawn strip between sidewalk and plot = the city lawn above.

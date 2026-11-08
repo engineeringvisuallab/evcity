@@ -127,7 +127,7 @@ const rs = planRoadside(gen);
   const med = lens[Math.floor(lens.length / 2)];
   console.log(`pit spacing along the roads: median ${med.toFixed(1)} m (straight-line)`);
   void spacingBad;
-  ok(med >= 11.5 && med <= 15.5, 'tree pits are 12-15 m apart (median)');
+  ok(med >= Config.city.roadside.treeSpacing[0] - 1.5 && med <= Config.city.roadside.treeSpacing[1] + 1.5, `tree pits are ${Config.city.roadside.treeSpacing[0]}-${Config.city.roadside.treeSpacing[1]} m apart (median)`);
   ok(rs.hedges.length / 7 > 100, `hedge pieces: ${rs.hedges.length / 7}`);
   let hedgeH = true;
   for (let i = 0; i < rs.hedges.length; i += 7) { const h = rs.hedges[i + 5] * 0.75; if (h < Config.city.roadside.hedge.hMin - 0.01 || h > Config.city.roadside.hedge.hMax + 0.01) hedgeH = false; }
