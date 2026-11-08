@@ -59,6 +59,7 @@ import { GoldConfig } from '../economy/Gold';
 import { InputManager } from '../input/InputManager';
 import { VoiceManager } from '../audio/VoiceManager';
 import { Environment, LighthouseLight, StreetLights } from '../environment';
+import { RoadSignLayer } from '../signs/RoadSignLayer';
 import { JunctionMirrors } from '../roads/JunctionMirrors';
 import { Toast } from '../ui/Toast';
 import { SuprimHUD } from '../ui/SuprimHUD';
@@ -135,6 +136,7 @@ export class Engine {
   private trafficLights: TrafficLightLayer;
   /** Day / night: street lights on every road + the lighthouse lantern (both follow environment.lampOn). */
   private streetLights: StreetLights;
+  private roadSigns: RoadSignLayer;
   /** Convex road mirrors at the junctions (2 draw calls for the whole map). */
   private junctionMirrors: JunctionMirrors;
   private lighthouseLight: LighthouseLight | null = null;
@@ -365,6 +367,9 @@ export class Engine {
     this.cameraController.setTrainCamera(this.trainCam);
     // START VIEW: the camera stands behind the player on the apron and looks over F4 at the mall's west door
     this.orbit.yaw = Math.atan2(-this.startPoint.ux, -this.startPoint.uz);
+    // --- road sign boards (Bangla + English). STEP 1: three test boards next to the road nearest to the start point ---
+    this.roadSigns = new RoadSignLayer(this.world.root);
+    console.info('[RoadSigns]', this.roadSigns.addStep1TestSigns(roads, (x, z) => this.world.terrain.heightAt(x, z), this.startPoint.x, this.startPoint.z));
 
     // --- parking lots (asphalt, bay lines; no signboards) ---
     this.parking = new ParkingLots({ root: this.world.root, terrain: this.world.terrain });
@@ -978,6 +983,7 @@ export class Engine {
       const fov = this.camera.fov;
       const px = this.renderer.domElement.height;
       this.streetLights.update(lamp, fov, px);
+      this.roadSigns.update(lamp);
       this.junctionMirrors.update(lamp);
       NightLamps.on = lamp; // vehicle headlights / tail lights
       this.lighthouseLight?.update(lamp, this.time.elapsed, fov, px);
@@ -1434,6 +1440,7 @@ export class Engine {
     this.busStops.dispose();
     this.trafficLights.dispose();
     this.streetLights.dispose();
+    this.roadSigns.dispose();
     this.junctionMirrors.dispose();
     this.lighthouseLight?.dispose();
     this.trainRider.dispose();
