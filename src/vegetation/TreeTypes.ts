@@ -23,8 +23,8 @@ export const RockKind = {
 } as const;
 export const ROCK_KIND_COUNT = 2;
 
-/** Floats per grass tuft: x, y, z (tile-local, metres), scale, yaw (rad), tint (~0.85..1.15), dry (0 green .. 1 dry). */
-export const GRASS_STRIDE = 7;
+/** Floats per grass tuft / clump: x, y, z (tile-local, metres), scale, yaw (rad), tint (~0.85..1.15), dry (0 green .. 1 dry), clump (0 = small tuft, 1 = big grass clump). */
+export const GRASS_STRIDE = 8;
 
 /**
  * Grass / flower tuft types (the main thread picks one per tuft from a hash + meadow patches; the workers do not care).
@@ -41,8 +41,11 @@ export const GrassType = {
   poppy: 7,
   cornflower: 8,
   clover: 9,
+  // GRASS CLUMPS (tussocks): 60..110 blades growing out of one root like a fountain, tall in the middle, arching outwards at the edge
+  tussock: 10, // upright, dense
+  tussockWide: 11, // wider, more arching, a few straw-coloured blades
 } as const;
-export const GRASS_TYPE_COUNT = 10;
+export const GRASS_TYPE_COUNT = 12;
 
 /** One Float32Array per tree kind (index = TreeKind). Empty kinds have length 0. */
 export type TreeChunkData = Float32Array[];

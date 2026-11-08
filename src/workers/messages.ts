@@ -66,7 +66,7 @@ export interface GrassRequest {
   tx: number;
   tz: number;
   seed: number;
-  /** only every `stride`-th cell of the tile's cell grid gets a tuft (1 = all; far LOD rings use 2 and 5). */
+  /** only every `stride`-th cell of the tile's cell grid gets a tuft (1 = all; far LOD rings use 2 and 5); the clump grid is thinned by that ring's `clumpStride`. */
   stride: number;
   dens?: WorldDensity;
 }
@@ -76,6 +76,6 @@ export interface GrassResult {
   tx: number;
   tz: number;
   stride: number;
-  /** GRASS_STRIDE floats per tuft, tile-local. */
+  /** GRASS_STRIDE floats per tuft or clump, tile-local (the last float says which). */
   data: Float32Array;
 }

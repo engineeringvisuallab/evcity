@@ -8,6 +8,7 @@ import { GRASS_TYPE_COUNT, GrassType } from './TreeTypes';
  *   0 lawn   - short, fine, very dense blades            1 wild  - tall, slim, bent blades (the "meadow" look)
  *   2 clump  - broad-leaf bunch                            3 seed  - tall straw-coloured grass with feathery seed heads
  *   4 daisy  5 buttercup  6 lavender  7 poppy  8 cornflower  9 clover  - a grass tuft with real flower heads growing out of it
+ *   10 tussock  11 tussockWide - big grass CLUMPS: 60..110 blades from one root, tall and upright in the middle, arching outwards at the edge
  * Every blade is a curved ribbon (base -> middle -> pointed tip) with its own height, lean, droop, width and tint, a dark root and a
  * bright tip, and normals that bend a little to the sides so a blade is shaded round, not flat. Flower heads are built from petals
  * (not a coloured dot): daisy = 12 white petals around a yellow eye, buttercup = 5 round yellow petals, poppy = a red cup with a
@@ -140,6 +141,57 @@ function grassBlades(b: Builder, r: RNG, s: GrassStyle, density = 1): void {
       h,
       lean: s.lean[0] + r() * (s.lean[1] - s.lean[0]),
       droop: (s.droop[0] + r() * (s.droop[1] - s.droop[0])) * (0.5 + h),
+      w: s.wMin + r() * (s.wMax - s.wMin),
+      tint,
+      root: 0.22 + r() * 0.1,
+      tip: 1.0 + r() * 0.2,
+    });
+  }
+}
+
+interface TussockStyle {
+  blades: number;
+  /** radius (m) of the disc the roots grow on */
+  baseR: number;
+  hMin: number;
+  hMax: number;
+  /** outward lean of a blade at the clump edge (m); the middle blades stand up straight */
+  lean: [number, number];
+  /** extra arching of the tip (m, grows with the blade height) */
+  arch: [number, number];
+  wMin: number;
+  wMax: number;
+  straw: number;
+  yellow: number;
+}
+
+const TUSSOCKS: Record<number, TussockStyle> = {
+  [GrassType.tussock]: { blades: 80, baseR: 0.16, hMin: 0.3, hMax: 0.85, lean: [0.04, 0.2], arch: [0.03, 0.12], wMin: 0.013, wMax: 0.022, straw: 0.08, yellow: 0.28 },
+  [GrassType.tussockWide]: { blades: 110, baseR: 0.22, hMin: 0.25, hMax: 1.0, lean: [0.06, 0.26], arch: [0.06, 0.18], wMin: 0.012, wMax: 0.02, straw: 0.2, yellow: 0.35 },
+};
+
+/**
+ * A grass clump (tussock): the roots sit evenly on a small disc (golden-angle spiral), every blade grows OUTWARD from the middle.
+ * Middle blades are the tallest and stand up, edge blades are short and arch over, so the clump is a fountain, like real bunch grass.
+ */
+function tussockBlades(b: Builder, r: RNG, s: TussockStyle, density = 1): void {
+  const count = Math.max(14, Math.round(s.blades * Config.vegetation.grass.bladeDensity * density));
+  for (let i = 0; i < count; i++) {
+    const a = i * 2.39996 + (r() - 0.5) * 0.5;
+    const f = Math.sqrt((i + 0.5) / count); // 0 = middle .. 1 = edge
+    const rad = s.baseR * f * (0.85 + 0.3 * r());
+    const h = (s.hMin + (s.hMax - s.hMin) * (1 - f * 0.65) * (0.65 + 0.35 * r())) * (1 - 0.1 * r());
+    const da = a + (r() - 0.5) * 0.5;
+    const k = r();
+    const tint: RGB = k < s.straw ? [1.5, 1.2, 0.62] : k < s.straw + s.yellow ? [1.2, 1.08, 0.78] : [0.9 + r() * 0.14, 1.0 + r() * 0.06, 0.88 + r() * 0.16];
+    blade(b, {
+      cx: Math.cos(a) * rad,
+      cz: Math.sin(a) * rad,
+      dx: Math.cos(da),
+      dz: Math.sin(da),
+      h,
+      lean: (s.lean[0] + (s.lean[1] - s.lean[0]) * (0.2 + 0.8 * f)) * (0.75 + 0.25 * r()),
+      droop: (s.arch[0] + r() * (s.arch[1] - s.arch[0])) * (0.4 + h) * (0.4 + 0.6 * f),
       w: s.wMin + r() * (s.wMax - s.wMin),
       tint,
       root: 0.22 + r() * 0.1,
@@ -402,7 +454,9 @@ function make(type: number, density = 1): THREE.BufferGeometry {
   const r = mulberry32(4242 + type * 7919);
   const b = new Builder();
   const style = STYLES[type];
-  if (style) {
+  if (TUSSOCKS[type]) {
+    tussockBlades(b, r, TUSSOCKS[type], density);
+  } else if (style) {
     grassBlades(b, r, style, density);
     if (type === GrassType.seed && density >= 1) seedHeads(b, r);
   } else {
@@ -420,7 +474,7 @@ function make(type: number, density = 1): THREE.BufferGeometry {
 }
 
 export class GrassAssets {
-  /** [LOD ring][GrassType]. Ring 0 has all ten tuft models, the far rings only the four grass kinds (no flowers, fewer blades). */
+  /** [LOD ring][GrassType]. Ring 0 has all twelve models, the far rings the four grass kinds + the two clumps (no flowers, fewer blades). */
   readonly lodGeometries: THREE.BufferGeometry[][] = [];
   /** index = GrassType (ring 0) */
   readonly geometries: THREE.BufferGeometry[];
@@ -430,9 +484,13 @@ export class GrassAssets {
 
   constructor() {
     Config.vegetation.grass.lods.forEach((lod, i) => {
-      const n = i === 0 ? GRASS_TYPE_COUNT : 4;
       const list: THREE.BufferGeometry[] = [];
-      for (let t = 0; t < n; t++) list.push(make(t, lod.density));
+      for (let t = 0; t < GRASS_TYPE_COUNT; t++) {
+        const clump = t >= GrassType.tussock;
+        // flowers exist in ring 0 only (the manager never asks for them in the far rings): share the ring 0 model, no extra geometry
+        if (i > 0 && !clump && t >= GrassType.daisy) list.push(this.lodGeometries[0][t]);
+        else list.push(make(t, clump ? lod.clumpDensity : lod.density));
+      }
       this.lodGeometries.push(list);
     });
     this.geometries = this.lodGeometries[0];
@@ -498,7 +556,7 @@ export class GrassAssets {
   }
 
   dispose(): void {
-    for (const list of this.lodGeometries) for (const g of list) g.dispose();
+    for (const g of new Set(this.lodGeometries.flat())) g.dispose();
     this.material.dispose();
   }
 }

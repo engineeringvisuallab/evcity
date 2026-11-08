@@ -186,6 +186,13 @@ export class GrassManager {
       const h3 = hh * 31.7 - Math.floor(hh * 31.7);
       const dry = data[o + 6];
       let type: number;
+      if (data[o + 7] > 0.5) {
+        // a big grass clump (tussock): two shapes, mixed by the hash
+        type = h1 < 0.55 ? GrassType.tussock : GrassType.tussockWide;
+        types[i] = type;
+        counts[type]++;
+        continue;
+      }
       // flower patches (value noise, ~25 m) with one dominant species per patch (another noise, ~60 m); never on dry high ground
       const patch = vnoise(wx / 22, wz / 22);
       const inPatch = patch > 0.64;
@@ -228,8 +235,14 @@ export class GrassManager {
       const grow = 0.8 + 0.5 * h2;
       const wide = type === GrassType.lawn ? 1.1 : type === GrassType.wild ? 0.95 : 1;
       // width: far rings have fewer tufts, each a bit wider. height: Config.grass.heightScale, width: Config.grass.widthScale (both 2x bigger than step 3)
-      const w = sc * wide * ring.size * G.widthScale;
-      dummy.scale.set(w, sc * grow * G.heightScale, w);
+      if (type >= GrassType.tussock) {
+        // clump: its own size (model scale 0.75..1.45 x clump.width / clump.height), the far rings make it a bit wider
+        const cw = sc * ring.clumpSize * G.clump.width;
+        dummy.scale.set(cw, sc * grow * G.clump.height, cw);
+      } else {
+        const w = sc * wide * ring.size * G.widthScale;
+        dummy.scale.set(w, sc * grow * G.heightScale, w);
+      }
       dummy.updateMatrix();
       mesh.setMatrixAt(slot, dummy.matrix);
       const dry = data[o + 6];

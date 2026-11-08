@@ -176,11 +176,33 @@ export const Config = {
        * Far rings have no flowers. The tuft positions of a coarse ring are a subset of the near ring, so nothing jumps when a tile changes ring.
        */
       lods: [
-        { to: 40, stride: 1, density: 1, size: 1 },
-        { to: 80, stride: 2, density: 0.5, size: 1.4 },
-        { to: 170, stride: 5, density: 0.25, size: 2.2 },
-      ] as { to: number; stride: number; density: number; size: number }[],
+        { to: 40, stride: 1, density: 1, size: 1, clumpStride: 1, clumpDensity: 1, clumpSize: 1 },
+        { to: 80, stride: 2, density: 0.5, size: 1.4, clumpStride: 1, clumpDensity: 0.6, clumpSize: 1 },
+        { to: 170, stride: 5, density: 0.25, size: 2.2, clumpStride: 2, clumpDensity: 0.35, clumpSize: 1.35 },
+      ] as { to: number; stride: number; density: number; size: number; clumpStride: number; clumpDensity: number; clumpSize: number }[],
       lodHysteresis: 0.12,
+      /**
+       * Small tufts are only this share of what they were (0.12 = 88 % fewer tufts). The grass that stays is made of big CLUMPS
+       * (see `clump`) in the places that matter, so the world still looks full but has far fewer instances.
+       */
+      thin: 0.12,
+      /**
+       * GRASS CLUMPS: one clump = 60..110 blades in one bunch (a tussock), ~0.8..1.5 m wide and 0.5..1.1 m tall. They grow on their own
+       * grid (`cell`, tile / cell must be whole) in "important" places: next to roads (`roadStep` widens the road mask: ~step * 0.6 + shoulder
+       * metres), around landmark plots and placed buildings (`landmarkReach` m at full chance, half chance up to twice that), and in lush
+       * open meadow. `groupScale` = size (m) of the noise that groups clumps together with gaps between the groups.
+       */
+      clump: {
+        cell: 1.6,
+        chanceImportant: 1,
+        chanceMeadow: 0.5,
+        roadStep: 24,
+        landmarkReach: 24,
+        groupScale: 14,
+        /** Size of a clump = its model scale (0.75..1.45) times these. */
+        width: 1,
+        height: 1,
+      },
       /** Chance per cell inside a meadow / on bare patches, and the extra thinning inside forests. Higher = denser, fewer bald patches. */
       maxChance: 0.98,
       minChance: 0.6,
