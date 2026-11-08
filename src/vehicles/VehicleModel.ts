@@ -206,6 +206,7 @@ export class VehicleModel {
       case 'tractor': this.tractor(); break;
       case 'combine': this.combine(); break;
       case 'pickup': this.pickup(); break;
+      case 'truck': this.truck(); break;
     }
     this.wheelsAndSpare();
   }
@@ -2109,6 +2110,32 @@ export class VehicleModel {
     }
   }
 
+  /** Cargo truck: orange cab at the front (+z), a white box body behind it. Nose = +z, ground = y 0. */
+  private truck(): void {
+    const spec = this.spec;
+    const cab = this.carPaint(spec.look.accent);
+    const box = this.pbr(spec.look.body, { metalness: 0.1, roughness: 0.6 });
+    const dark = this.pbr(0x16191c, { roughness: 0.6, metalness: 0.1 });
+    const trim = this.pbr(0x3a4047, { metalness: 0.4, roughness: 0.5 });
+    const glass = this.carGlass();
+    const lamp = this.pbr(0xeef5ff, { emissive: 0xaecdff, emissiveIntensity: 0.6, roughness: 0.04, metalness: 0 });
+    const tail = this.pbr(0xd01414, { emissive: 0x8a0000, roughness: 0.15, metalness: 0 });
+    this.boxG(2.3, 0.45, 10.4, dark, 0, 0.78, 0); // chassis frame
+    this.boxG(2.5, 2.3, 6.9, box, 0, 2.2, -1.8); // cargo box
+    this.boxG(2.55, 0.12, 6.95, trim, 0, 3.4, -1.8, 3); // box roof edge
+    this.boxG(2.55, 0.08, 6.95, trim, 0, 1.05, -1.8); // box floor edge
+    this.boxG(2.5, 1.7, 1.9, cab, 0, 1.85, 4.1, 3); // cab lower
+    this.boxG(2.5, 0.9, 1.9, glass, 0, 2.95, 4.15, 4); // cab windows
+    this.boxG(2.5, 0.12, 1.95, cab, 0, 3.45, 4.1, 3); // cab roof
+    this.boxG(2.2, 0.55, 0.5, cab, 0, 1.2, 5.3, 1); // nose
+    this.boxG(2.4, 0.3, 0.25, dark, 0, 0.62, 5.45, 1); // front bumper
+    this.boxG(2.4, 0.3, 0.25, dark, 0, 0.62, -5.35, 2); // rear bumper
+    for (const sx of [-1, 1]) {
+      this.boxG(0.4, 0.2, 0.08, lamp, sx * 0.85, 1.25, 5.58, 4);
+      this.boxG(0.3, 0.2, 0.08, tail, sx * 0.95, 0.95, -5.4, 4);
+    }
+  }
+
   private wheelsAndSpare(): void {
     const spec = this.spec;
     const isCar = spec.look.kind === 'sedan' || spec.look.kind === 'jeep' || spec.look.kind === 'hypercar' || spec.look.kind === 'evbike' || spec.look.kind === 'evhypar' || spec.look.kind === 'suprim' || spec.look.kind === 'tractor' || spec.look.kind === 'combine' || spec.look.kind === 'pickup';
@@ -2125,7 +2152,7 @@ export class VehicleModel {
     const r = spec.wheelRadius;
     const w = spec.wheelWidth;
     const kind = spec.look.kind;
-    const car = isCar || kind === 'auto' || kind === 'bus';
+    const car = isCar || kind === 'auto' || kind === 'bus' || kind === 'truck';
     const rf = spec.look.kind === 'hypercar' || spec.look.kind === 'suprim' ? 0.76 : spec.look.kind === 'evbike' ? 0.7 : 0.62; // inner tyre radius / outer (a low-profile tyre has more rim)
     // sedan: rounded tyre profile (lathe) + alloy wheel; everything else keeps the simple cylinders
     let tireG: THREE.BufferGeometry;
@@ -2144,7 +2171,7 @@ export class VehicleModel {
     const spokeLen = r * (rf - 0.12);
     const spokeC = spokeLen / 2 + r * 0.05; // spoke centre radius
     const jeepW = spec.look.kind === 'jeep' || spec.look.kind === 'tractor' || spec.look.kind === 'combine' || spec.look.kind === 'pickup';
-    const singleSpoke = jeepW || kind === 'bus' || kind === 'auto';
+    const singleSpoke = jeepW || kind === 'bus' || kind === 'auto' || kind === 'truck';
     const spokeG = new THREE.BoxGeometry(spokeLen, 0.03, jeepW ? 0.075 : kind === 'bus' ? 0.09 : kind === 'auto' ? 0.055 : 0.038);
     const ringG = new THREE.TorusGeometry(r * (rf - 0.02), jeepW ? 0.014 : 0.01, 6, 28);
     const hubG = new THREE.CylinderGeometry(r * 0.14, r * 0.14, w * 0.99, 10);

@@ -57,6 +57,8 @@ import { VehicleModel } from '../vehicles/VehicleModel';
 import { PeopleManager, PersonModel, ENGINEER_LOOK } from '../people';
 import { RoadGraph, TrafficLightLayer, TrafficManager, TrafficSignals } from '../traffic';
 import { Economy } from '../economy/Economy';
+import { Jobs } from '../economy/Jobs';
+import { Extras } from '../economy/Extras';
 import { GoldConfig } from '../economy/Gold';
 import { InputManager } from '../input/InputManager';
 import { VoiceManager } from '../audio/VoiceManager';
@@ -95,6 +97,7 @@ function mapSize(kind: string): { len?: number; wide?: number } {
     case 'tractor': return { len: 1.2, wide: 1.0 };
     case 'combine': return { len: 1.7, wide: 1.3 };
     case 'pickup': return { len: 1.3, wide: 0.9 };
+    case 'truck': return { len: 1.9, wide: 1.1 };
     default: return {};
   }
 }
@@ -158,6 +161,8 @@ export class Engine {
   private waterFocus = new THREE.Vector3();
   /** Gold: 10,000 at the start; fines for red lights and traffic accidents, a gift for killing a criminal. */
   readonly economy: Economy;
+  private jobs!: Jobs;
+  private extras!: Extras;
   private redLightPrev = { x: 0, z: 0, ok: false };
   private redLightP = new THREE.Vector3();
   private redLightF = new THREE.Vector3();
@@ -612,13 +617,21 @@ export class Engine {
     this.people.onRetake = (p, car) => this.traffic.resume(car, p); // the owner of a stolen car got it back: he drives off again
     // --- Gold economy: accidents (vehicle crash / run over people) are fined, killing a criminal is rewarded ---
     this.economy = new Economy(container);
+    // cargo truck job + safe-driving bonus (Jobs.ts): any fine restarts the safe-driving round
+    this.jobs = new Jobs({ parent: container, input: this.input, economy: this.economy, vehicles: this.vehicles, sites: this.world.terrain.sites });
+    this.economy.onFine = () => this.jobs.notifyFine();
+    // passenger fare, race, farm work, plant income (Extras.ts)
+    this.extras = new Extras({
+      parent: container, input: this.input, economy: this.economy, vehicles: this.vehicles,
+      depots: () => this.jobs.depots, stops: () => this.mapStops, fieldAt: (x, z) => this.farm.info(x, z), cargoBusy: () => this.jobs.busy,
+    });
     this.vehicles.onPersonHit = (p, died) => this.economy.personHit(p, died);
     // stations: fuel / charge cost Gold; fuel delivered from the mine to the main station earns the bonus
     this.vehicles.payGold = (amount, reason) => this.economy.buy(amount, reason);
     this.vehicles.bonusGold = (amount, reason) => this.economy.bonus(amount, reason);
     this.vehicles.goldBalance = () => this.economy.balance;
     this.vehicles.setCrashHook((v, dv, speed) => this.onVehicleCrash(v, dv, speed));
-    this.people.onCriminalKilled = () => this.economy.criminalKilled();
+    this.people.onCriminalKilled = () => this.economy.criminalKilled(this.combat.wanted.stars); // the bounty grows with the wanted stars
     this.mapStops = this.busStops.stops.filter((b) => b.dir === 1);
 
     // --- guns (left mouse = shoot, right mouse = aim, Q = next weapon) ---
@@ -678,7 +691,7 @@ export class Engine {
         { id: 'rickshaw', icon: '🚲' }, { id: 'auto', icon: '🛺' },
         { id: 'sedan', icon: '🚗' }, { id: 'jeep', icon: '🚙' }, { id: 'hypercar', icon: '🏎️' }, { id: 'evhypar', icon: '🚘' }, { id: 'suprim', icon: '🛸' },
         { id: 'bus', icon: '🚌' }, { id: 'tank', icon: '🪖' },
-        { id: 'tractor', icon: '🚜' }, { id: 'combine', icon: '🌾' }, { id: 'pickup', icon: '🛻' },
+        { id: 'tractor', icon: '🚜' }, { id: 'combine', icon: '🌾' }, { id: 'pickup', icon: '🛻' }, { id: 'truck', icon: '🚚' },
       ].map((v) => ({ ...v, label: SPECS[v.id as keyof typeof SPECS].nameBn })).concat([{ id: 'heli', icon: '🚁', label: HELI.nameBn }]),
       (id) => this.summonVehicle(id),
       this.renderer.domElement,
@@ -961,6 +974,8 @@ export class Engine {
     this.trafficLights.update();
     this.checkRedLight();
     this.economy.update(this.time.elapsed);
+    this.jobs.update(dt);
+    this.extras.update(dt, this.world.playerWorld);
     this.people.update(dt, this.world.playerWorld);
     this.traffic.update(dt, this.world.playerWorld);
     this.helis.update(dt, alpha, this.world.playerWorld);
@@ -1219,6 +1234,8 @@ export class Engine {
    * (no vehicle next to it) is not a traffic accident and costs nothing.
    */
   private onVehicleCrash(v: Vehicle, dv: number, speed: number): void {
+    this.jobs.onCrash(v, dv); // the cargo of the job truck takes damage
+    this.extras.onCrash(v, dv); // a bump during a taxi ride lowers the fare
     if (v !== this.vehicles.driver) return;
     if (dv < GoldConfig.accidentMinDv || speed < GoldConfig.accidentMinSpeed) return;
     v.physWorld(this.crashA);
@@ -1502,6 +1519,8 @@ export class Engine {
     this.trainRider.dispose();
     this.ridePrompt.dispose();
     this.toast.dispose();
+    this.jobs.dispose();
+    this.extras.dispose();
     this.economy.dispose();
     this.birds.dispose();
     this.animals.dispose();

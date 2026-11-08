@@ -26,8 +26,6 @@ vRdDist = length((modelViewMatrix * vec4(transformed, 1.0)).xyz);
 `;
 const SIDEWALK = Config.city.roadside.sidewalk.toFixed(3);
 const PAVER = Config.city.roadside.paver.toFixed(3);
-const STRIPE = Config.city.roadside.kerbStripe.toFixed(3);
-const KERB_HALF = (Config.city.roadside.kerbWidth * 0.5).toFixed(3);
 const FRAG_HEADER = /* glsl */ `
 varying vec4 vRd;
 varying float vRdDist;

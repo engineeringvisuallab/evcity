@@ -12,7 +12,7 @@ export interface EngineSpec {
   launchRpm?: number;
 }
 
-export type VehicleId = 'sedan' | 'jeep' | 'hypercar' | 'evhypar' | 'evbike' | 'rickshaw' | 'auto' | 'bus' | 'tank' | 'tractor' | 'combine' | 'pickup' | 'suprim';
+export type VehicleId = 'sedan' | 'jeep' | 'hypercar' | 'evhypar' | 'evbike' | 'rickshaw' | 'auto' | 'bus' | 'tank' | 'tractor' | 'combine' | 'pickup' | 'suprim' | 'truck';
 
 /** One wheel of the raycast vehicle. `drive` = share of the drive force, `side` = track side for skid steering (+1 left, -1 right). */
 export interface WheelDef {
@@ -834,8 +834,25 @@ export const PICKUP: VehicleSpec = {
   pax: [0, 1],
 };
 
+export const TRUCK: VehicleSpec = {
+  ...BUS,
+  id: 'truck',
+  nameBn: 'মালবাহী ট্রাক',
+  mass: 7500,
+  brakeMax: brakeFor(7500, 4, 5.2),
+  use: USE.none(),
+  look: { kind: 'truck', body: 0xf4f4f0, accent: 0xff7a00 },
+  seat: { ...BUS.seat, x: -0.52, z: 4.0 },
+  seats: [],
+  pax: [0, 0],
+  bulletsToKill: 22,
+  fragile: 0.4,
+  cruiseMax: undefined,
+  camera: { dist: 15, min: 8, max: 38 },
+};
+
 // the farm vehicles come LAST: scripts/vehicle-test.ts places every vehicle by its index in this object, so the older ones must keep their index
-export const SPECS: Record<VehicleId, VehicleSpec> = { sedan: SEDAN, jeep: JEEP, hypercar: HYPERCAR, evhypar: EVHYPAR, evbike: EVBIKE, rickshaw: RICKSHAW, auto: AUTO, bus: BUS, tank: TANK, tractor: TRACTOR, combine: COMBINE, pickup: PICKUP, suprim: SUPRIM };
+export const SPECS: Record<VehicleId, VehicleSpec> = { sedan: SEDAN, jeep: JEEP, hypercar: HYPERCAR, evhypar: EVHYPAR, evbike: EVBIKE, rickshaw: RICKSHAW, auto: AUTO, bus: BUS, tank: TANK, tractor: TRACTOR, combine: COMBINE, pickup: PICKUP, suprim: SUPRIM, truck: TRUCK };
 
 
 /**
@@ -856,6 +873,8 @@ export const SPEED_BOOST: Record<VehicleId, number> = {
   combine: 1,
   pickup: 1,
   suprim: 2,
+  /** Cargo truck: BUS gearing x 1.7 = about 180 km/h (the job needs 150-200 km/h). */
+  truck: 1.7,
 };
 
 /**

@@ -35,6 +35,7 @@ const DEF: Record<VehicleId, LampDef> = {
   rickshaw: { x: 0, h: 0.85, tailH: 0.7, beamW: 6, beamL: 18 },
   auto: { x: 0, h: 0.85, tailH: 0.8, beamW: 8, beamL: 24 },
   bus: { x: 0.85, h: 0.85, tailH: 1.1, beamW: 15, beamL: 40 },
+  truck: { x: 0.85, h: 1.0, tailH: 1.1, beamW: 15, beamL: 40 },
   tank: { x: 0.9, h: 1.1, tailH: 1.1, beamW: 12, beamL: 30 },
   tractor: { x: 0.7, h: 1.15, tailH: 1.1, beamW: 12, beamL: 30 },
   combine: { x: 1.0, h: 1.7, tailH: 1.5, beamW: 14, beamL: 34 },

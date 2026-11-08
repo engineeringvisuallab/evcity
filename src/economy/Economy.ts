@@ -28,6 +28,8 @@ export class Economy {
   private now = 0;
   private incident: Incident | null = null;
   private lastSignalFine = -999;
+  /** Called whenever the player is fined (red light / accident): the safe-driving streak (Jobs) restarts. */
+  onFine: (() => void) | null = null;
 
   constructor(parent: HTMLElement) {
     this.hud = new GoldHUD(parent);
@@ -63,6 +65,7 @@ export class Economy {
     const taken = this.gold.charge(GoldConfig.signalFine, bn.gold.fine);
     const text = taken < GoldConfig.signalFine ? bn.gold.fineShort : `${bn.gold.fine}: −${fmt(taken)} ${bn.gold.unit}`;
     this.hud.say(text, 'fine');
+    this.onFine?.();
   }
 
   /** The player's vehicle crashed into another vehicle. */
@@ -79,10 +82,19 @@ export class Economy {
     } else if (!inc.killed.has(who)) inc.hurt.add(who);
   }
 
-  /** The player killed a criminal: a gift. */
-  criminalKilled(): void {
-    this.gold.earn(GoldConfig.criminalReward, bn.gold.criminal);
-    this.hud.say(`${bn.gold.criminal}: +${fmt(GoldConfig.criminalReward)} ${bn.gold.unit}`, 'income');
+  /** The player killed a criminal: a gift; the more wanted stars, the bigger the bounty. */
+  criminalKilled(stars = 0): void {
+    const reward = GoldConfig.criminalReward + GoldConfig.criminalStarBonus * Math.max(0, Math.floor(stars));
+    this.gold.earn(reward, bn.gold.criminal);
+    this.hud.say(`${bn.gold.criminal}: +${fmt(reward)} ${bn.gold.unit}`, 'income');
+  }
+
+  /** A fine with a pop-up message (cargo destroyed, job cancelled). Returns the Gold really taken. */
+  fine(amount: number, reason: string): number {
+    const taken = this.gold.charge(amount, reason);
+    this.hud.say(`${reason}: −${fmt(taken)} ${bn.gold.unit}`, 'fine');
+    this.onFine?.();
+    return taken;
   }
 
   /** Short message under the Gold chip. */
@@ -110,6 +122,7 @@ export class Economy {
     const detail = parts.length ? ` (${parts.join(', ')})` : '';
     const text = taken < fine ? `${bn.gold.fineShort}: −${fmt(taken)} ${bn.gold.unit}` : `${bn.gold.accident}${detail}: −${fmt(taken)} ${bn.gold.unit}`;
     this.hud.say(text, 'fine');
+    this.onFine?.();
     // ramming a rickshaw pays a bonus (once per accident); shown after the fine message so neither is hidden
     if (kinds.includes('rickshaw')) {
       this.gold.earn(GoldConfig.rickshawHitBonus, bn.gold.rickshawBonus);

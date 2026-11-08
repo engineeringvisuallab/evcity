@@ -36,6 +36,7 @@ export const GoldConfig = {
     tractor: 1.3,
     pickup: 1.2,
     combine: 2.0,
+    truck: 1.8,
   } as Record<VehicleId, number>,
   /** A crash counts as an accident with a vehicle from this speed change (m/s, ~18 km/h); gentler bumps cost nothing. */
   accidentMinDv: 5,
@@ -47,8 +48,66 @@ export const GoldConfig = {
   // ---- INCOME ----
   /** Reward for killing a criminal (an armed attacker). */
   criminalReward: 200,
+  /** Extra Gold per WANTED star the player has at the moment the criminal dies (0 stars = 200, 5 stars = 700). */
+  criminalStarBonus: 100,
   /** Bonus when the player's vehicle rams a rickshaw (once per accident, however many rickshaws were hit). */
   rickshawHitBonus: 500,
+
+  // ---- CARGO JOB (Jobs.ts): drive the cargo truck from one depot to another ----
+  /** Bonus for delivering the cargo in good condition (full bonus from `cargoGoodHp` % health up, proportional below). */
+  cargoBonus: 5000,
+  cargoGoodHp: 70,
+  /** Fine when the cargo is destroyed (crashes, roll-over, truck wrecked). */
+  cargoFine: 3000,
+  /** Fine for cancelling a job after the cargo was loaded. */
+  cargoCancelFine: 1000,
+  /** A crash only hurts the cargo above this speed change (m/s); every m/s above costs `cargoDmgPerDv` % of the cargo. */
+  cargoMinDv: 4,
+  cargoDmgPerDv: 3,
+  /** The destination depot is at least this far (m) from the loading depot (the truck is built for 150-200 km/h). */
+  cargoMinDist: 800,
+
+  // ---- SAFE DRIVING BONUS (Jobs.ts) ----
+  /** Seconds of driving without a fine / accident for one bonus; the bonus grows with every clean round: safeBase x round (max safeMaxRounds). */
+  safeInterval: 180,
+  safeBase: 100,
+  safeMaxRounds: 10,
+
+  // ---- PASSENGER FARE (Extras.ts, key Y in a passenger vehicle): bus stop -> bus stop ----
+  /** Fare = rideBase + ridePerKm x km of the ride; x rideBumpFactor when the car was hit during the ride; + rideFastTip (share) when fast enough. */
+  rideBase: 150,
+  ridePerKm: 600,
+  rideBumpFactor: 0.7,
+  rideFastTip: 0.25,
+  /** Average speed (m/s) and spare seconds that count as 'fast' for the tip. */
+  rideFastSpeed: 16,
+  rideFastSpare: 30,
+
+  // ---- RACE / TIME TRIAL (Extras.ts, key O in any vehicle): reach a far depot in time ----
+  /** Reward = raceBase x metres + raceTimeBonus x (share of the time that was left). Time limit = metres / raceAvgSpeed + raceSpare. */
+  raceBase: 0.8,
+  raceTimeBonus: 1500,
+  raceAvgSpeed: 25,
+  raceSpare: 25,
+  raceMinDist: 1000,
+
+  // ---- FARM WORK (Extras.ts): drive a tractor / combine over a crop field ----
+  /** Gold per m2 worked (tractor), and the working width (m). The combine pays farmCombineMul times more and works a wider swath. */
+  farmPerM2: 0.25,
+  farmSwath: 3,
+  farmCombineSwath: 6,
+  farmCombineMul: 2,
+  /** One payment for every this many m2 worked; a field is paid once for at most farmCoverFrac of its area, then rests for farmRestSeconds. */
+  farmChunk: 1000,
+  farmCoverFrac: 0.9,
+  farmRestSeconds: 600,
+
+  // ---- PLANT INCOME (Extras.ts): every engineering plant earns while you are away; walk or drive in to collect ----
+  /** Gold per minute of every plant area, and the most minutes that can pile up. */
+  plantPerMinute: 20,
+  plantMaxMinutes: 60,
+  /** Nothing is paid below this amount (so the pop-up does not appear at every step across the border). */
+  plantMinPay: 100,
 
   // ---- Traffic light timing is in src/traffic/TrafficSignals.ts ----
 } as const;
