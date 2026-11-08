@@ -668,6 +668,41 @@ export class VehicleModel {
       back.rotation.x = -0.12;
       if (top > 1.25) this.box(0.2, 0.12, 0.07, interior, st.x, H(top + 0.02), zb, 4); // head restraint
     }
+
+    // ---- real car inside: seat cushions, console, gear lever, hand brake, steering column, gauges, screen, vents, door trim, mirror, dome light ----
+    const seatCloth = this.mat(0x3a3f46);
+    const dialM = this.mat(0x9fffe9, { emissive: 0x27c9a6 });
+    const PT = (x: number, h: number, z: number): number[] => [x, H(h), z];
+    for (const st of seats) this.box(0.46, 0.09, 0.5, seatCloth, st.x, H(0.955), st.z, 4); // seat cushion
+    this.box(0.2, 0.14, 0.75, interior, 0, H(0.97), 0.15, 4); // centre console
+    this.tube(PT(0, 1.03, 0.2), PT(0, 1.17, 0.14), 0.012, chrome, 4); // gear lever
+    this.box(0.04, 0.04, 0.04, dark, 0, H(1.18), 0.14, 4); // gear knob
+    this.tube(PT(0.1, 1.04, -0.05), PT(0.1, 1.09, 0.1), 0.01, chrome, 4); // hand brake
+    this.tube(PT(-0.42, 0.97, 0.63), PT(-0.42, 1.0, 0.56), 0.03, dark, 4); // steering column
+    this.box(0.26, 0.07, 0.012, dialM, -0.42, H(0.99), 0.528, 4); // instrument cluster (speedometer)
+    this.box(0.22, 0.12, 0.015, dialM, 0.12, H(1.02), 0.528, 4); // centre screen
+    for (const vx of [-0.1, 0.3, 0.55]) this.box(0.1, 0.03, 0.012, dark, vx, H(0.99), 0.526, 4); // air vents
+    this.box(0.2, 0.05, 0.02, dark, 0, H(1.2), 0.45, 4); // rear-view mirror
+    this.box(0.12, 0.01, 0.2, ledStrip, 0, H(1.19), -0.2, 4); // dome light
+    for (const sx of [1, -1]) for (const z of [0.15, -0.65]) this.box(0.05, 0.06, 0.5, interior, sx * 0.7, H(0.97), z, 4); // door trim + armrest
+    // ---- real car underneath: chassis rails, axles, differential, drive shaft, springs, fuel tank, exhaust ----
+    const steelM = this.pbr(0x3b4046, { metalness: 0.7, roughness: 0.5 });
+    for (const sx of [1, -1]) {
+      this.tube(PT(sx * 0.4, 0.14, -1.9), PT(sx * 0.4, 0.14, 1.9), 0.04, steelM, 0); // chassis rail
+      this.tube(PT(sx * 0.5, 0.2, -1.3), PT(sx * 0.5, 0.2, 1.4), 0.025, steelM, 0); // sill brace
+    }
+    for (const z of [-1.3, 0, 1.3]) this.tube(PT(-0.4, 0.14, z), PT(0.4, 0.14, z), 0.035, steelM, 0); // cross members
+    for (const z of [-1.3, 1.3]) this.tube(PT(-0.8, 0.33, z), PT(0.8, 0.33, z), 0.03, steelM, 0); // axle
+    const diff = this.mesh(new THREE.SphereGeometry(0.12, 12, 10), steelM, 0, H(0.33), -1.3);
+    this.parts.push({ obj: diff, stage: 0 });
+    this.tube(PT(0, 0.28, -1.2), PT(0, 0.28, 0.5), 0.03, steelM, 0); // drive shaft
+    for (const d of wheelDefs(spec)) {
+      const sx = d.x > 0 ? 1 : -1;
+      this.tube(PT(sx * 0.7, 0.5, d.z), PT(sx * 0.7, 0.2, d.z), 0.04, dark, 0); // spring + damper
+    }
+    this.box(0.7, 0.13, 0.5, steelM, 0, H(0.165), -1.7, 1); // fuel tank
+    this.tube(PT(0.5, 0.2, 0.6), PT(0.5, 0.2, -2.2), 0.035, chrome, 2); // exhaust pipe
+    this.tube(PT(0.5, 0.18, -1.5), PT(0.5, 0.18, -2.0), 0.07, chrome, 2); // silencer
   }
 
   private jeep(): void {
