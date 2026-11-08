@@ -189,23 +189,35 @@ export const Config = {
       ] as { to: number; stride: number; density: number; size: number; clumpStride: number; clumpDensity: number; clumpSize: number }[],
       lodHysteresis: 0.12,
       /**
-       * Small tufts are only this share of what they were (0.12 = 88 % fewer tufts). The grass that stays is made of big CLUMPS
-       * (see `clump`) in the places that matter, so the world still looks full but has far fewer instances.
+       * GRASS PATCHES: grass does not cover the land evenly. A low-frequency noise (`scale` m, 20..60 looks right) decides where it grows.
+       * `coverage` = share of the land that lies inside a patch (the noise threshold is found from the world seed, so it is a real share).
+       * Inside a patch the cover is dense: tufts at `density` x the old chance plus clumps (`clumpChance` per clump cell, they overlap).
+       * Outside a patch there is bare soil: no tuft at all where the patch value is below `minValue`. The rim is soft: `edge` = softness in noise
+       * units (about 4 m at scale 40), and tufts / clumps at the rim are fewer and smaller (`edgeScale` = their size at the very rim, 1 in the
+       * core; the core starts at patch value `coreAt`). Road sides and landmark plots are pulled into a patch (`boost` = patch value there,
+       * 0 = off): `roadStep` widens the road mask (reach ~ step * 0.6 + shoulder metres), `landmarkReach` m around plots / placed buildings,
+       * `gridStep` = resolution (m) of that road / landmark field.
        */
-      thin: 0.12,
+      patch: {
+        scale: 40,
+        coverage: 0.22,
+        edge: 0.2,
+        minValue: 0.25,
+        coreAt: 0.85,
+        density: 1,
+        clumpChance: 0.75,
+        edgeScale: 0.5,
+        boost: 0.9,
+        roadStep: 24,
+        landmarkReach: 24,
+        gridStep: 2,
+      },
       /**
        * GRASS CLUMPS: one clump = 60..110 blades in one bunch (a tussock), ~0.8..1.5 m wide and 0.5..1.1 m tall. They grow on their own
-       * grid (`cell`, tile / cell must be whole) in "important" places: next to roads (`roadStep` widens the road mask: ~step * 0.6 + shoulder
-       * metres), around landmark plots and placed buildings (`landmarkReach` m at full chance, half chance up to twice that), and in lush
-       * open meadow. `groupScale` = size (m) of the noise that groups clumps together with gaps between the groups.
+       * grid (`cell`, tile / cell must be whole), only inside patches (see `patch.clumpChance`).
        */
       clump: {
         cell: 1.6,
-        chanceImportant: 1,
-        chanceMeadow: 0.5,
-        roadStep: 24,
-        landmarkReach: 24,
-        groupScale: 14,
         /** Size of a clump = its model scale (0.75..1.45) times these. */
         width: 1,
         height: 1,

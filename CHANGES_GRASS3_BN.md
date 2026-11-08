@@ -1,29 +1,28 @@
-# Step 4: 80 % less grass + big grass CLUMPS in the important places
+# Grass rework: PATCHES + big CLUMPS + brown soil ground
 
-## What the player gets
-- About 87 % fewer grass instances (tufts + clumps) and about 80 % fewer blades than before (measured around 4 city sites, see the test below).
-- The grass that stays in the important places is made of big CLUMPS: 60..110 blades growing out of one root, tall and upright in the
-  middle, arching outwards at the edge (like real bunch grass), about 0.6..1.7 m wide and 0.55..1.2 m tall.
+## 1. Grass grows in patches (no more even, thin scatter)
+- A low-frequency noise (`Config.vegetation.grass.patch.scale` = 40 m) decides where grass grows. `coverage` (0.22) = share of the land inside a patch
+  (the noise threshold is found from the world seed, so it is a real share).
+- Inside a patch (core): dense cover. Tufts keep exactly their old density (`density` 1) and clumps are close together and overlap (`clumpChance`).
+- Outside a patch: bare soil, no tuft at all (patch value below `minValue` 0.25).
+- Soft rim: median 3.8 m wide (`edge`); at the rim there are fewer and smaller tufts / clumps (`edgeScale` = size at the very rim).
+- Road sides and landmark plots (mall, EVLab, library, agro, airport, army, SWTP / STP, placed buildings) are pulled into a patch (`boost`, `roadStep`,
+  `landmarkReach`), with the same soft rim.
+- Amount: total instances (tufts + clumps) are ~28 % of the old amount (measured around 4 city sites), ~34 % of the old blade count.
+- Still deterministic, and a far LOD ring is exactly a subset of the full tile (tufts and clumps).
 
-## How it works
-- `Config.vegetation.grass.thin = 0.12`: the small tufts are only 12 % of what they were (same deterministic subset, so nothing jumps between LOD rings).
-- `Config.vegetation.grass.clump`: clumps grow on their own 1.6 m grid, in groups with gaps between them (noise, `groupScale`):
-  - full chance (`chanceImportant`) next to roads (road mask widened by `roadStep`) and around landmark plots / placed buildings
-    (mall, EVLab, library, agro, airport, army, SWTP / STP, placed buildings: full chance within `landmarkReach` = 24 m, half chance up to 48 m);
-  - a lower chance (`chanceMeadow`) in lush open meadow; half as many inside planned city areas, thinner in forests.
-- Clumps obey exactly the same no-grass rules as tufts (water, beach, roads, rail, steep ground, airports, plots, fields ...): `GrassPlacer.blocked()`.
-- New models in `GrassAssets.ts`: `GrassType.tussock` (upright, dense) and `GrassType.tussockWide` (wider, more arching, some straw blades). They exist in
-  all 3 LOD rings (far rings: fewer blades `clumpDensity`, a bit wider `clumpSize`, every 2nd clump `clumpStride` in the last ring).
-- Data layout: `GRASS_STRIDE` 7 -> 8, the new last float is the clump flag (0 tuft, 1 clump). Workers / manager / tests use the constant.
+## 2. Clumps (tussocks)
+- One clump = 60..110 blades from one root, tall and upright in the middle, arching outwards at the edge, ~0.6..1.7 m wide, 0.55..1.2 m tall.
+  Models `GrassType.tussock` / `tussockWide` in `GrassAssets.ts`, in all 3 LOD rings. Own grid `clump.cell` 1.6 m, only inside patches.
+- `GRASS_STRIDE` is 8: the last float is the clump flag (0 tuft, 1 clump).
+
+## 3. Ground: brown soil is the main terrain
+- `Config.terrain.soilFrom / soilTo` (0.30 / 0.44, was 0.50 / 0.64 hard-coded in the shader): soil covers ~80 % of the flat land. Lower = more soil.
 
 ## Files
-`src/core/Config.ts`, `src/vegetation/{GrassPlacement,GrassAssets,GrassManager,TreeTypes}.ts`, `src/workers/messages.ts`, `scripts/grass-clump-test.ts` (new).
+`src/core/Config.ts`, `src/terrain/TerrainMaterial.ts`, `src/vegetation/{GrassPlacement,GrassAssets,GrassManager,TreeTypes}.ts`, `src/workers/messages.ts`,
+`scripts/grass-clump-test.ts`.
 
-## Tests
-`npx tsx scripts/grass-clump-test.ts`: instance + blade reduction, clumps not in water / beach / on roads / steep ground, road sides >= 2x denser than open
-meadow, deterministic, far ring is a subset of the full tile. All OK. Tweak the look with `thin`, `clump.chanceImportant`, `clump.chanceMeadow`,
-`clump.width` / `clump.height`.
-
-## Ground: brown soil is now the main terrain (with pebbles), green only in patches
-- `Config.terrain.soilFrom / soilTo` (0.30 / 0.44, was 0.50 / 0.64 hard-coded in the shader): soil covers ~80 % of the flat land instead of about half.
-  Lower both numbers = even more soil, higher = more green. `TerrainMaterial.ts` reads them when the shader is built.
+## Test
+`npx tsx scripts/grass-clump-test.ts`: amount 20-32 % of the old, no tuft / clump outside a patch, no tuft farther than 8 m from a core (0.5 %), rims 2.5-6 m,
+core density = old meadow, no grass in water / beach / roads / steep ground, deterministic, LOD subset. All OK. A tile takes ~110 ms in the worker.
