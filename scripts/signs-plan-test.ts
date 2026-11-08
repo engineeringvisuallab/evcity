@@ -1,3 +1,4 @@
+// (Step 7 added: double-sided boards - a hand-made pair in Part A, pairing rules + a report by road kind in Part B.)
 // ROAD SIGNS Step 3 test: npx tsx scripts/signs-plan-test.ts
 //   Part A  a small hand-made road network (runs anywhere): checks arrows (left / ahead / right), km, dead-end roads, the "behind you" rule, styles.
 //   Part B  the real game map (needs the game's node_modules, ~10 s): builds the plan, prints the numbers and a list of boards, checks the rules.
@@ -118,7 +119,7 @@ function coverageReport(net: { roads: readonly PlanRoad[]; pads: readonly { x: n
       k.kmBoard += r.length / 1000;
     }
   }
-  console.log('road kind'.padEnd(22) + 'roads  w/pad  w/board  boards    km  km-with-board');
+  console.log('road kind'.padEnd(22) + 'roads  w/pad  w/board   faces    km  km-with-board');
   for (const [key, k] of [...kinds].sort())
     console.log(key.padEnd(22) + [k.roads, k.withPad, k.withBoard, k.boards].map((n) => String(n).padStart(5)).join('  ') + k.km.toFixed(1).padStart(7) + k.kmBoard.toFixed(1).padStart(10));
 
@@ -165,6 +166,44 @@ function coverageReport(net: { roads: readonly PlanRoad[]; pads: readonly { x: n
   const confirmEligible = net.roads.filter((r) => SIGN_RULES.confirmKinds.includes(r.kind));
   const confirmCount = signs.filter((q) => q.purpose === 'confirm').length;
   console.log(`  (c) confirm boards: ${confirmCount} on ${confirmEligible.length} highway/arterial/collector roads (${(confirmEligible.reduce((a, r) => a + r.length, 0) / 1000).toFixed(1)} km)`);
+}
+
+/** STEP 7: two opposite-direction boards 60 m apart on one road are joined into ONE double-sided board; each driver keeps his own distance rule and his own km. */
+function partA7(): void {
+  console.log('\n--- Part A (Step 7): double-sided board ---');
+  const roads = [line(0, 'E0', 'collector', 2, -3000, 0, 3000, 0), line(1, 'N1', 'collector', 2, 0, -3000, 0, 3000), line(2, 'N2', 'collector', 2, 300, -3000, 300, 3000)];
+  const pads = [
+    { x: 0, z: 0, arms: [{ roadId: 0 }, { roadId: 1 }] },
+    { x: 300, z: 0, arms: [{ roadId: 0 }, { roadId: 2 }] },
+  ];
+  const net: PlanNet = { roads, pads, padAt: () => null, surfaceAt: () => 0 };
+  const dests = [dest('e', 'East', 1, 2800, 0), dest('w', 'West', 1, -2900, 0), dest('n1', 'North1', 1, 0, -2800), dest('n2', 'North2', 1, 300, -2800)];
+  const plan = planRoadSigns(net, dests, { x: 0, z: 0 });
+  console.log(plan.summary);
+  const east = plan.signs.find((q) => q.purpose === 'advance' && q.roadId === 0 && q.dir === 1 && q.padId === 1);
+  const west = plan.signs.find((q) => q.purpose === 'advance' && q.roadId === 0 && q.dir === -1 && q.padId === 0);
+  ok(!!east && !!west, 'advance boards for the eastbound driver (junction x = 300) and the westbound driver (junction x = 0) exist');
+  if (!east || !west) return;
+  ok(east.board === west.board && plan.boards[east.board].back !== null, 'the two boards (60 m apart) are ONE double-sided board');
+  const board = plan.boards[east.board];
+  ok(board.front === east && board.back === west && east.face === 'front' && west.face === 'back', 'equal rows: the direction +1 face is the front');
+  ok(plan.pairs >= 1 && plan.boards.length === plan.signs.length - plan.pairs, `${plan.boards.length} boards for ${plan.signs.length} faces (${plan.pairs} pairs)`);
+  ok(near(east.s, west.s, 1e-9) && near(east.x, west.x, 1e-9) && near(east.z, west.z, 1e-9), 'both faces stand at the same spot of the road');
+  ok(near(east.dM, 150, 5) && near(west.dM, 150, 5), `joined in the middle: eastbound ${east.dM.toFixed(0)} m, westbound ${west.dM.toFixed(0)} m before their junctions`);
+  ok(near(east.hx, -west.hx, 1e-9) && near(east.hz, -west.hz, 1e-9), 'the two drivers have opposite headings');
+  ok(near(west.fx, -east.fx, 1e-9) && near(west.fz, -east.fz, 1e-9), 'the back face looks the opposite way of the front face');
+  ok(east.fx * east.hx + east.fz * east.hz < 0 && west.fx * west.hx + west.fz * west.hz < 0, 'each face looks back at its own oncoming driver');
+  ok(near(west.sx, east.sx, 1e-9) && near(west.sz, east.sz, 1e-9), 'one set of posts (both faces share the standing place)');
+  const by = (q: PlannedSign, en: string) => q.rows.find((r) => r.en === en);
+  ok(near(by(east, 'East')?.km ?? 0, (east.dM + 2500) / 1000, 0.002), `eastbound: East ${by(east, 'East')?.km?.toFixed(3)} km = board distance + 2500 m`);
+  ok(near(by(west, 'West')?.km ?? 0, (west.dM + 2900) / 1000, 0.002), `westbound: West ${by(west, 'West')?.km?.toFixed(3)} km = board distance + 2900 m`);
+  ok(by(east, 'North2')?.arrow === 'left' && by(west, 'North1')?.arrow === 'right', 'each face has its own arrows (eastbound: north is LEFT, westbound: north is RIGHT)');
+  ok(!by(east, 'West') && !by(west, 'East'), 'each face lists only places ahead of its own driver');
+  // every face is in exactly one board, board numbers are consistent
+  ok(plan.signs.every((q) => (q.face === 'front' ? plan.boards[q.board].front === q : plan.boards[q.board].back === q)), 'every face knows its board and its side');
+  // far apart boards (> 150 m) stay single-sided
+  const far = plan.signs.filter((q) => q.purpose === 'confirm' && q.roadId === 0);
+  ok(far.every((q) => plan.boards[q.board].back === null), 'confirm boards far from any opposite board stay single-sided');
 }
 
 async function partB(): Promise<void> {
@@ -296,11 +335,55 @@ async function partB(): Promise<void> {
   ok(signs.every((q) => q.padId >= 0 && q.padId < plan.pads.length), 'every board points to an existing junction');
   coverageReport({ roads: net.roads, pads: plan.pads }, signs, plan.skipped);
 
+  // ---- STEP 7: double-sided boards
+  const boards = plan.boards;
+  const pairsN = boards.filter((b) => b.back).length;
+  console.log('\n--- double-sided boards (Step 7) ---');
+  ok(boards.length === signs.length - pairsN && plan.pairs === pairsN, `${boards.length} boards = ${signs.length} faces - ${pairsN} pairs`);
+  ok(signs.every((q) => q.board >= 0 && q.board < boards.length && (q.face === 'front' ? boards[q.board].front === q : boards[q.board].back === q)), 'every face belongs to exactly one board');
+  ok(boards.every((b) => b.front.face === 'front' && (!b.back || b.back.face === 'back')) && boards.every((b, i) => b.id === i), 'board ids and face sides are consistent');
+  const dbl = boards.filter((b): b is typeof b & { back: PlannedSign } => !!b.back);
+  const ringGap = (b: { front: PlannedSign; back: PlannedSign }): number => {
+    const r = byId.get(b.front.roadId)!;
+    const raw = Math.abs(b.front.s - b.back.s);
+    return r.closed ? Math.min(raw, r.length - raw) : raw;
+  };
+  ok(dbl.every((b) => b.back.roadId === b.front.roadId && b.back.dir === -b.front.dir && b.back.style === b.front.style && ringGap(b) < 1e-6), 'a pair: same road, opposite directions, same style, one spot');
+  ok(dbl.every((b) => Math.hypot(b.front.x - b.back.x, b.front.z - b.back.z) < 1e-6 && Math.hypot(b.front.sx - b.back.sx, b.front.sz - b.back.sz) < 1e-6), 'a pair stands in one place (one set of posts)');
+  ok(dbl.every((b) => Math.abs(b.front.fx + b.back.fx) < 1e-6 && Math.abs(b.front.fz + b.back.fz) < 1e-6), 'the back face looks the opposite way of the front face');
+  ok(
+    dbl.every((b) => [b.front, b.back].every((q) => (q.purpose === 'advance' ? q.dM >= SIGN_RULES.pairAdvanceMinM - 1e-6 && q.dM <= SIGN_RULES.pairAdvanceMaxM + 1e-6 : q.dM >= SIGN_RULES.pairConfirmMinM - 1e-6))),
+    `joined boards keep the rule for BOTH drivers: advance ${SIGN_RULES.pairAdvanceMinM}-${SIGN_RULES.pairAdvanceMaxM} m before the junction, confirm at least ${SIGN_RULES.pairConfirmMinM} m after it`,
+  );
+  ok(dbl.every((b) => b.style === 'overhead' || b.front.rows.length >= b.back.rows.length), 'a side board stands on the edge of the driver with more rows (or equal rows: direction +1)');
+  ok(dbl.every((b) => b.style !== 'side' || b.front.rows.length > b.back.rows.length || b.front.dir === 1), 'equal rows: the direction +1 face is the front');
+  ok(dbl.every((b) => [b.front, b.back].every((q) => q.rows.every((r) => Number.isFinite(r.km) && (r.km ?? 0) > 0))), 'joined faces have positive km on every row');
+  ok(boards.every((b) => b.style === b.front.style), 'board style = face style');
+  // a face with no partner: no other board of the same road, opposite direction, same style within the window that it could have joined
+  // (checked loosely: every joinable pair that was left alone has a reason in `skipped`)
+  const single = boards.filter((b) => !b.back);
+  console.log(`double-sided ${pairsN}, single-sided ${single.length}; pair attempts that failed: ` + Object.entries(plan.skipped).filter(([k]) => k.startsWith('pair:')).map(([k, v]) => `${k} ${v}`).join('; '));
+
+  // report by road kind (faces = one per driving direction; boards = what is built)
+  console.log('\nroad kind   faces  boards  double  single | gantry boards (double)  side boards (double)');
+  for (const kind of ['highway', 'arterial', 'collector', 'local']) {
+    const f = signs.filter((q) => q.roadKind === kind).length;
+    const bb = boards.filter((b) => b.front.roadKind === kind);
+    const d = bb.filter((b) => b.back).length;
+    const g = bb.filter((b) => b.style === 'overhead');
+    const s = bb.filter((b) => b.style === 'side');
+    console.log(`${kind.padEnd(10)} ${String(f).padStart(6)} ${String(bb.length).padStart(7)} ${String(d).padStart(7)} ${String(bb.length - d).padStart(7)} | ${String(g.length).padStart(6)} (${g.filter((b) => b.back).length})${' '.repeat(12)}${String(s.length).padStart(6)} (${s.filter((b) => b.back).length})`);
+  }
+  console.log(`TOTAL      ${String(signs.length).padStart(6)} ${String(boards.length).padStart(7)} ${String(pairsN).padStart(7)} ${String(single.length).padStart(7)} | ${boards.filter((b) => b.style === 'overhead').length} gantries, ${boards.filter((b) => b.style === 'side').length} side boards`);
+  const shifts = dbl.map((b) => b.front.dM - b.back.dM);
+  console.log(`double-sided boards: front-driver distance minus back-driver distance (m): min ${Math.min(...shifts).toFixed(0)}, max ${Math.max(...shifts).toFixed(0)}`);
+
   console.log('\nfirst 20 boards (id purpose style road D | rows):');
   for (const q of signs.slice(0, 20)) console.log(`  #${q.id} ${q.purpose} ${q.style} ${q.roadName} (${q.roadKind} L${q.lanes}) ${q.dM.toFixed(0)} m | ${boardText(q)}`);
 }
 
 partA();
+partA7();
 partB()
   .catch((e) => {
     console.log('Part B error:', e);

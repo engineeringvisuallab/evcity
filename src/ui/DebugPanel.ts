@@ -38,8 +38,8 @@ export interface DebugStats {
   people: number;
   cars: number;
   aiCars: number;
-  /** Road sign boards: how many exist, are visible, have their text drawn, how many textures (same text shares one) and solid bodies are active. */
-  signs: { total: number; visible: number; painted: number; textures: number; solids: number; bodies: number };
+  /** Road sign boards (a double-sided board counts once, its faces are counted separately): how many exist, are visible, have their text drawn, how many faces and textures (same text shares one) and solid bodies are active. */
+  signs: { total: number; faces: number; visible: number; painted: number; textures: number; solids: number; bodies: number };
 }
 
 /** বাংলা ডিবাগ প্যানেল (উপরে-বামে)। F3 দিয়ে দেখানো/লুকানো। দুই কলামের গ্রিড, তাই বাংলা লেখাতেও লাইন মিলে থাকে। */
@@ -137,7 +137,7 @@ export class DebugPanel {
       onOff(s.railLines),
       bnNum(s.people),
       `${bnNum(s.cars)} / ${bnNum(s.aiCars)}`,
-      `${bnNum(s.signs.visible)} / ${bnNum(s.signs.painted)} / ${bnNum(s.signs.total)}  (${d.signTex} ${bnNum(s.signs.textures)}, ${d.signBodies} ${bnNum(s.signs.bodies)})`,
+      `${bnNum(s.signs.visible)} / ${bnNum(s.signs.painted)} / ${bnNum(s.signs.total)}  (${d.signFaces} ${bnNum(s.signs.faces)}, ${d.signTex} ${bnNum(s.signs.textures)}, ${d.signBodies} ${bnNum(s.signs.bodies)})`,
     ];
     for (let i = 0; i < v.length; i++) this.values[i].textContent = v[i];
   }

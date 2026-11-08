@@ -33,6 +33,8 @@ export const SOLID = {
   sidePostR: 0.12,
   /** The board of a side sign (a thin box). */
   sideBoardDepth: 0.06,
+  /** STEP 7: the board of a double-sided side sign (thicker, centred on the posts). */
+  sideBoardDepthDouble: 0.12,
 } as const;
 
 const cyl = (cx: number, cy: number, cz: number, r: number, hy: number): SignSolid => ({ k: 1, cx, cy, cz, hx: r, hy, hz: r });
@@ -42,13 +44,15 @@ const box = (cx: number, cy: number, cz: number, hx: number, hy: number, hz: num
  * Side sign: two posts + the board. Local frame as RoadSignLayer.addSideSign: +Z = the way the face looks, the origin on the ground at the foot.
  * `boardW`, `boardH` = size of the face (m), `clearance` = lower edge of the board above the ground, `postDx` = post offset from the centre, `postZ` = depth.
  */
-export function sideSolids(boardW: number, boardH: number, clearance: number, postDx: number, postZ: number, postBelow: number): SignSolid[] {
+export function sideSolids(boardW: number, boardH: number, clearance: number, postDx: number, postZ: number, postBelow: number, double = false): SignSolid[] {
   const top = clearance + boardH + 0.25;
   const bottom = -postBelow;
   const hy = (top - bottom) / 2;
   const out: SignSolid[] = [];
   for (const sx of [-1, 1]) out.push(cyl(sx * postDx, (top + bottom) / 2, postZ, SOLID.sidePostR, hy));
-  out.push(box(0, clearance + boardH / 2, -SOLID.sideBoardDepth / 2, boardW / 2 + 0.04, boardH / 2 + 0.04, SOLID.sideBoardDepth / 2 + 0.02));
+  // single-sided: the board is in front of the posts (z from -depth to 0); STEP 7 double-sided: the board is centred on the origin
+  if (double) out.push(box(0, clearance + boardH / 2, 0, boardW / 2 + 0.04, boardH / 2 + 0.04, SOLID.sideBoardDepthDouble / 2 + 0.02));
+  else out.push(box(0, clearance + boardH / 2, -SOLID.sideBoardDepth / 2, boardW / 2 + 0.04, boardH / 2 + 0.04, SOLID.sideBoardDepth / 2 + 0.02));
   return out;
 }
 

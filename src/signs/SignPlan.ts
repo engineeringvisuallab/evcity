@@ -10,6 +10,11 @@
 //             a gantry over the carriageway (Step 4 builds it; until then a side board shows it)
 //   side      everything else (small roads, 4+ lane city roads at ordinary junctions), and every confirm board
 //
+// STEP 7 - DOUBLE-SIDED boards: the planner first makes one board per driving direction ("faces"), then pairs a +1 face with a -1 face of the same road
+//   and style that stand within `pairWindowM` of each other and moves both to ONE spot where both drivers still keep their own rules (advance board 70-300 m
+//   before its junction, confirm board at least 70 m after it, 400 m / 150 m spacing, no bridge / junction pad). One pair = one board (one set of posts):
+//   `front` faces one driver, `back` the opposite driver. A face with no partner stays a single-sided board (its back is plain metal).
+//   A side board stands on the near edge of the driver with MORE rows (tie: direction +1); a gantry spans the whole road anyway, so it has no near edge.
 // How the rows are chosen at a junction (pad P) for a driver who arrives along arm A:
 //   1. every destination goes to the arm of P that reaches it with the least driving (the arm's cost = its own length + road distance from its far
 //      end; a destination that lies ON the arm's stretch of road costs just the distance to it). A road that dead-ends behind the last junction is an
@@ -80,6 +85,14 @@ export const SIGN_RULES = {
   virtualPadTouchM: 8,
   /** |angle| below this (degrees) = ahead. */
   aheadDeg: 35,
+  /** STEP 7 - double-sided boards: two opposite-direction boards of the same road and style are joined when they are at most this far apart (m along the road). */
+  pairWindowM: 150,
+  /** STEP 7 - after joining, an advance board must still stand this far before its junction (min / max), a confirm board at least this far after it. */
+  pairAdvanceMinM: 70,
+  pairAdvanceMaxM: 300,
+  pairConfirmMinM: 70,
+  /** STEP 7 - the joined board is looked for along the stretch between the two boards in steps of this many metres, from the middle outwards. */
+  pairSpotStepM: 5,
 };
 
 export interface PlannedSign {
@@ -115,10 +128,31 @@ export interface PlannedSign {
   /** STEP 6: a board for a short block (always a side board, even on a highway / arterial). */
   short?: boolean;
   rows: SignRow[];
+  /** STEP 7: the board (index in `SignPlanResult.boards`) this face belongs to, and which face of it. A single-sided board has only a front. */
+  board: number;
+  face: 'front' | 'back';
+}
+
+/**
+ * STEP 7: one physical board. `front` is the face for one driver, `back` (if any) the face for the driver of the opposite direction (same road, same
+ * spot). For a SIDE board the post foot is at front.sx / front.sz and the front faces front.fx / front.fz; a GANTRY stands at front.x / front.z with the
+ * front driver's heading front.hx / front.hz. The back face has its own rows, arrows and km, written for the opposite driver.
+ */
+export interface PlannedBoard {
+  id: number;
+  style: SignStyle;
+  roadId: number;
+  front: PlannedSign;
+  back: PlannedSign | null;
 }
 
 export interface SignPlanResult {
+  /** Every face (one per driving direction). Since Step 7 a face of a double-sided board stands at the joined spot. */
   signs: PlannedSign[];
+  /** STEP 7: the physical boards (what is built): double-sided pairs + single-sided boards. */
+  boards: PlannedBoard[];
+  /** STEP 7: how many double-sided boards. */
+  pairs: number;
   /** How many candidate boards were dropped, by reason. */
   skipped: Record<string, number>;
   /** Rows whose arrows were the same although they point along different arms (the board is ambiguous). */
@@ -339,6 +373,184 @@ export function findVirtualPads(net: PlanNet): GraphPad[] {
   return out;
 }
 
+
+/** Position of the junction a face belongs to (m along its road, in the face's own frame). */
+const junctionS = (q: PlannedSign): number => (q.purpose === 'advance' ? q.s + q.dir * q.dM : q.s - q.dir * q.dM);
+/** Distance between a face standing at s and its junction sj (advance: before it, confirm: after it). */
+const dMAt = (q: PlannedSign, sj: number, s: number): number => (q.purpose === 'advance' ? q.dir : -q.dir) * (sj - s);
+/** The range of s (m along the road) in which a face keeps its own distance rule. */
+function sRange(q: PlannedSign, sj: number): [number, number] {
+  const R = SIGN_RULES;
+  const lo = q.purpose === 'advance' ? R.pairAdvanceMinM : R.pairConfirmMinM;
+  const hi = q.purpose === 'advance' ? R.pairAdvanceMaxM : 1e9;
+  return (q.purpose === 'advance' ? q.dir : -q.dir) === 1 ? [sj - hi, sj - lo] : [sj + lo, sj + hi];
+}
+
+/**
+ * STEP 7: joins opposite-direction faces into double-sided boards (see the header). Changes the joined faces in place (position, distance, km of the
+ * rows) and returns the boards; sets `board` / `face` on every face. `skip` counts the pairs that could not be made.
+ */
+function pairSigns(net: PlanNet, roadById: Map<number, PlanRoad>, signs: PlannedSign[], skip: (why: string) => void): PlannedBoard[] {
+  const R = SIGN_RULES;
+  const byRoad = new Map<number, PlannedSign[]>();
+  for (const q of signs) (byRoad.get(q.roadId) ?? byRoad.set(q.roadId, []).get(q.roadId)!).push(q);
+
+  interface Cand {
+    a: PlannedSign;
+    b: PlannedSign;
+    d: number;
+    off: number;
+  }
+  const cands: Cand[] = [];
+  for (const [roadId, list] of byRoad) {
+    const r = roadById.get(roadId)!;
+    for (const a of list) {
+      if (a.dir !== 1) continue;
+      for (const b of list) {
+        if (b.dir !== -1 || a.style !== b.style) continue;
+        let diff = b.s - a.s;
+        let off = 0;
+        if (r.closed) {
+          const L = r.length;
+          let w = ((diff % L) + L) % L;
+          if (w > L / 2) w -= L;
+          off = w - diff;
+          diff = w;
+        }
+        if (Math.abs(diff) <= R.pairWindowM) cands.push({ a, b, d: Math.abs(diff), off });
+      }
+    }
+  }
+  cands.sort((u, v) => u.d - v.d || u.a.id - v.a.id || u.b.id - v.b.id);
+
+  const used = new Set<number>();
+  const partner = new Map<number, PlannedSign>(); // face id -> the other face
+  const frontOf = new Map<number, PlannedSign>(); // board key (lower face id) -> front face
+  const wrapS = (r: PlanRoad, s: number): number => (r.closed ? ((s % r.length) + r.length) % r.length : s);
+  const gapOf = (r: PlanRoad, s1: number, s2: number): number => {
+    const raw = Math.abs(s1 - s2);
+    return r.closed ? Math.min(raw, r.length - raw) : raw;
+  };
+
+  for (const c of cands) {
+    const { a, b, off } = c;
+    if (used.has(a.id) || used.has(b.id)) continue;
+    const r = roadById.get(a.roadId)!;
+    const sjA = junctionS(a);
+    const sjB = junctionS(b) + off;
+    const ra = sRange(a, sjA);
+    const rb = sRange(b, sjB);
+    const bs = b.s + off;
+    const lo = Math.max(ra[0], rb[0], Math.min(a.s, bs));
+    const hi = Math.min(ra[1], rb[1], Math.max(a.s, bs));
+    if (lo > hi + 1e-9) {
+      skip('pair: a driver would stand too near / too far from his junction');
+      continue;
+    }
+    // the near edge of a side board belongs to the driver with more rows (tie: direction +1); a gantry has no near edge
+    const front = a.style === 'side' && b.rows.length > a.rows.length ? b : a;
+    // candidate spots: the middle of the allowed stretch first, then outwards in steps
+    const mid = (lo + hi) / 2;
+    const spots: number[] = [mid];
+    for (let k = 1; mid - k * R.pairSpotStepM >= lo - 1e-9 || mid + k * R.pairSpotStepM <= hi + 1e-9; k++) {
+      if (mid - k * R.pairSpotStepM >= lo - 1e-9) spots.push(mid - k * R.pairSpotStepM);
+      if (mid + k * R.pairSpotStepM <= hi + 1e-9) spots.push(mid + k * R.pairSpotStepM);
+    }
+    const others = (byRoad.get(a.roadId) ?? []).filter((o) => o !== a && o !== b);
+    let chosen: { s: number; spot: Omit<Spot, 'd'> } | null = null;
+    let blockedBySpacing = false;
+    for (const s of spots) {
+      const sw = wrapS(r, s);
+      const spot = spotAt(net, r, sw, front.dir, front.style);
+      if (!spot) continue;
+      // the spacing rules of Step 3 again, with the new position
+      let clash = false;
+      for (const o of others) {
+        const dir = o.dir;
+        if (dir !== a.dir && dir !== b.dir) continue;
+        const mine = dir === a.dir ? a : b;
+        const dist = gapOf(r, o.s, sw);
+        if (o.style !== mine.style && dist < R.mixedGapM) clash = true;
+        else if (o.purpose !== mine.purpose && dist < R.sameGapM) clash = true;
+        else if (o.purpose === 'confirm' && mine.purpose === 'confirm' && dist < R.sameGapM) clash = true;
+        if (clash) break;
+      }
+      if (clash) {
+        blockedBySpacing = true;
+        continue;
+      }
+      chosen = { s, spot };
+      break;
+    }
+    if (!chosen) {
+      skip(blockedBySpacing ? 'pair: spacing rule would be broken' : 'pair: no free spot (bridge / junction)');
+      continue;
+    }
+
+    // ---- join: both faces move to the chosen spot, distances and km follow
+    const sw = wrapS(r, chosen.s);
+    const back = front === a ? b : a;
+    for (const q of [a, b]) {
+      const sj = q === a ? sjA : sjB;
+      const newD = dMAt(q, sj, chosen.s);
+      const delta = newD - q.dM;
+      const p = roadAt(r, sw);
+      q.s = sw;
+      q.dM = newD;
+      q.x = p.x;
+      q.z = p.z;
+      q.hx = p.tx * q.dir;
+      q.hz = p.tz * q.dir;
+      // advance board: nearer to the junction = fewer km; confirm board: further after the junction = fewer km left
+      const dk = (q.purpose === 'advance' ? delta : -delta) / 1000;
+      q.rows = q.rows.map((row) => ({ ...row, km: (row.km ?? 0) + dk }));
+    }
+    // the standing place (side) belongs to the front face; a double-sided board has no tilt, so both drivers see it equally well
+    front.sx = chosen.spot.sx;
+    front.sz = chosen.spot.sz;
+    front.sideOk = true;
+    if (front.style === 'side') {
+      front.fx = -front.hx;
+      front.fz = -front.hz;
+    } else {
+      front.fx = chosen.spot.fx;
+      front.fz = chosen.spot.fz;
+    }
+    back.sx = front.sx;
+    back.sz = front.sz;
+    back.fx = -front.fx;
+    back.fz = -front.fz;
+    back.sideOk = true;
+    used.add(a.id);
+    used.add(b.id);
+    partner.set(a.id, b);
+    partner.set(b.id, a);
+    frontOf.set(Math.min(a.id, b.id), front);
+  }
+
+  // ---- the boards, in the order of their lowest face id
+  const boards: PlannedBoard[] = [];
+  for (const q of signs) {
+    const other = partner.get(q.id);
+    if (other && other.id < q.id) continue; // the board was made at the other face
+    let front = q;
+    let back: PlannedSign | null = null;
+    if (other) {
+      front = frontOf.get(Math.min(q.id, other.id))!;
+      back = front === q ? other : q;
+    }
+    const id = boards.length;
+    front.board = id;
+    front.face = 'front';
+    if (back) {
+      back.board = id;
+      back.face = 'back';
+    }
+    boards.push({ id, style: front.style, roadId: front.roadId, front, back });
+  }
+  return boards;
+}
+
 export function planRoadSigns(net: PlanNet, destinations: readonly Destination[] = DESTINATIONS, home = { x: 0, z: 0 }): SignPlanResult {
   const R = SIGN_RULES;
   const virtual = findVirtualPads(net);
@@ -378,7 +590,7 @@ export function planRoadSigns(net: PlanNet, destinations: readonly Destination[]
     return arm.len + rd.distance(d, arm.edge.to);
   };
 
-  const planned: Omit<PlannedSign, 'id'>[] = [];
+  const planned: Omit<PlannedSign, 'id' | 'board' | 'face'>[] = [];
   let sameArrowBoards = 0;
 
   for (let p = 0; p < pads.length; p++) {
@@ -576,7 +788,7 @@ export function planRoadSigns(net: PlanNet, destinations: readonly Destination[]
     if (g) g.push(i);
     else groups.set(key, [i]);
   });
-  const gap = (u: Omit<PlannedSign, 'id'>, v: Omit<PlannedSign, 'id'>): number => {
+  const gap = (u: Omit<PlannedSign, 'id' | 'board' | 'face'>, v: Omit<PlannedSign, 'id' | 'board' | 'face'>): number => {
     const r = roadById.get(u.roadId)!;
     const raw = Math.abs(u.s - v.s);
     return r.closed ? Math.min(raw, r.length - raw) : raw;
@@ -605,15 +817,20 @@ export function planRoadSigns(net: PlanNet, destinations: readonly Destination[]
   }
   const signs: PlannedSign[] = [];
   planned.forEach((q, i) => {
-    if (keep[i]) signs.push({ ...q, id: signs.length });
+    if (keep[i]) signs.push({ ...q, id: signs.length, board: -1, face: 'front' });
   });
+
+  // ---- STEP 7: double-sided boards
+  const boards = pairSigns(net, roadById, signs, skip);
+  const pairs = boards.filter((b) => b.back).length;
 
   // ---- summary
   const count = (f: (q: PlannedSign) => boolean): number => signs.filter(f).length;
   const rowsHist = [1, 2, 3, 4].map((n) => `${n}:${count((q) => q.rows.length === n)}`).join(' ');
   const summary =
-    `Step 3 plan: ${signs.length} boards (advance ${count((q) => q.purpose === 'advance')}, confirm ${count((q) => q.purpose === 'confirm')}; ` +
+    `Step 3 plan: ${signs.length} faces, one per driving direction (advance ${count((q) => q.purpose === 'advance')}, confirm ${count((q) => q.purpose === 'confirm')}; ` +
     `overhead ${count((q) => q.style === 'overhead')}, side ${count((q) => q.style === 'side')}; green ${count((q) => q.color === 'green')}, blue ${count((q) => q.color === 'blue')}); ` +
-    `rows per board ${rowsHist}; ${pads.filter((_, p) => arms[p].length >= R.minArms).length} junctions with boards (${virtual.length} virtual)`;
-  return { signs, skipped, sameArrowBoards, summary, pads, virtualPads: virtual.length };
+    `rows per board ${rowsHist}; ${pads.filter((_, p) => arms[p].length >= R.minArms).length} junctions with boards (${virtual.length} virtual); ` +
+    `Step 7: ${boards.length} boards for ${signs.length} faces (${pairs} double-sided, ${boards.length - pairs} single-sided; gantry ${boards.filter((b) => b.style === 'overhead').length}, side ${boards.filter((b) => b.style === 'side').length})`;
+  return { signs, boards, pairs, skipped, sameArrowBoards, summary, pads, virtualPads: virtual.length };
 }

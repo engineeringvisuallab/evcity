@@ -56,6 +56,8 @@ export interface SignCanvasOptions {
   widthPx?: number;
   /** Draw the board as tall as this many rows (default: rows.length), so panels of one gantry can all have the same height. */
   heightRows?: number;
+  /** STEP 7: when the board is taller than its rows (heightRows > rows), put the rows in the vertical middle instead of at the top. */
+  centerRows?: boolean;
 }
 
 /** Widest real canvas (px): wider design widths are drawn squeezed and the texture stretches them back, so the letters keep their shape. */
@@ -92,8 +94,9 @@ export function drawSignCanvas(rows: readonly SignRow[], color: SignColor, opts:
 
   g.fillStyle = '#ffffff';
   g.textBaseline = 'middle';
+  const yOff = opts.centerRows ? ((Math.max(rows.length, opts.heightRows ?? 0) - rows.length) * ROW_H_PX) / 2 : 0;
   rows.forEach((row, i) => {
-    const top = MARGIN_PX + i * ROW_H_PX;
+    const top = MARGIN_PX + yOff + i * ROW_H_PX;
     const mid = top + ROW_H_PX / 2;
     if (i > 0) {
       g.fillStyle = 'rgba(255,255,255,0.35)';

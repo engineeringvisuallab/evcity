@@ -385,6 +385,7 @@ export const bn = {
     pending: 'অপেক্ষমাণ',
     byLod: 'LOD অনুযায়ী',
     signs: 'সাইন বোর্ড (দেখা / লেখা আঁকা / মোট)',
+    signFaces: 'মুখ',
     signTex: 'টেক্সচার',
     signBodies: 'খুঁটি-বডি',
     bodies: 'ফিজিক্স বডি',

@@ -1,4 +1,5 @@
 // (Step 6 added: solid parts of the boards, no gantry post on a junction / road, texture memory estimate.)
+// (Step 7 added: double-sided boards - solids of a double-sided side sign / gantry, mirrored back layout, texture memory counts both faces of a board.)
 // ROAD SIGNS Step 4 test: npx tsx scripts/signs-gantry-test.ts
 //   Part A  the gantry layout maths (runs anywhere, no node_modules): panels fill the whole width, narrow roads, how rows are split into panels.
 //   Part B  the real game map (needs the game's node_modules, ~10 s): for every planned OVERHEAD board checks that its gantry fits the real road
@@ -78,6 +79,24 @@ function partASolids(): void {
   ok(Math.abs(board.cy - (2 + 0.6)) < 1e-9 && board.hx > 1.6, 'the side board box sits 2 m above the ground, as wide as the board');
   ok(sd.filter((x) => x.k === 1).every((p) => Math.abs(p.hx - SOLID.sidePostR) < 1e-9 && p.cy - p.hy <= -0.8 + 1e-9), 'side posts go into the ground');
   ok(solidsRadius(g) > edge && solidsRadius(sd) > 1.2, 'activation radius covers the solids');
+
+  // ---- Step 7: double-sided boards
+  console.log('\n--- Part A (Step 7): double-sided boards ---');
+  const sd2 = sideSolids(3.2, 1.2, 2, 1.2, 0, 0.8, true);
+  const board2 = sd2.find((x) => x.k === 0)!;
+  ok(sd2.length === 3 && sd2.filter((x) => x.k === 1).length === 2, 'a double-sided side sign still has 2 posts + the board (one collider group)');
+  ok(Math.abs(board2.cz) < 1e-9 && board2.hz >= SOLID.sideBoardDepthDouble / 2, 'the double-sided board box is centred on the posts and as thick as the visible body');
+  ok(sd2.filter((x) => x.k === 1).every((p) => Math.abs(p.cz) < 1e-9), 'the posts of a double-sided sign stand inside the board thickness');
+  ok(Math.abs(board2.cy - board.cy) < 1e-9 && board2.hx === board.hx, 'same height and width as a single-sided board');
+  ok(GANTRY.bodyDepthDoubleM >= 2 * GANTRY.postR - 1e-9, 'the body of a double-sided gantry is at least as deep as a post is thick (posts do not cover the panels)');
+  const g2 = gantrySolids(edge, [-0.4, 1.2], 8, GANTRY.postR, GANTRY.postBelowM, GANTRY.baseSizeM, GANTRY.baseHeightM, 0);
+  ok(g2.length === 4 && g2.every((x) => Math.abs(x.cz) < 1e-9), 'double-sided gantry: still 4 solids, all on the centre line of the body');
+  // the back panels use their own layout, mirrored: the opposite driver's LEFT is local +X, so slot i is at -xs[i]
+  for (const n of [1, 2, 3]) {
+    const L = layoutGantry(9.7, n);
+    const mirrored = L.xs.map((x) => -x).sort((a, b) => a - b);
+    ok(L.xs.every((x, i) => near(x, mirrored[i], 1e-9)), `${n} back panel(s): the mirrored layout covers the same slots as the front layout`);
+  }
 }
 
 /** Rough GPU memory of one face texture (RGBA8 + mipmaps). */
@@ -148,15 +167,23 @@ async function partB(): Promise<void> {
   type Face = { x: number; z: number; mb: number; key: string; gantry: boolean };
   const faces: Face[] = [];
   const hs = GANTRY.heightScale;
-  for (const q of plan.signs) {
-    const key = (rows: SignRow[]): string => `${q.color}#${rows.map((r) => `${r.arrow}|${r.en}|${(r.km ?? 0).toFixed(1)}`).join('/')}`;
-    if (q.style === 'side') faces.push({ x: q.sx, z: q.sz, mb: texMB(BOARD_W_PX, q.rows.length), key: key(q.rows), gantry: false });
-    else {
+  // Step 7: one entry per FACE of every board (a double-sided board has two); both faces of a board are as tall as the taller one, rows centred
+  const keyOf = (q: { color: string }, rows: SignRow[], extra: string): string => `${q.color}#${rows.map((r) => `${r.arrow}|${r.en}|${(r.km ?? 0).toFixed(1)}`).join('/')}${extra}`;
+  for (const b of plan.boards) {
+    const q = b.front;
+    const sides = b.back ? [q, b.back] : [q];
+    if (b.style === 'side') {
+      const rowsN = Math.max(...sides.map((f) => f.rows.length));
+      for (const f of sides) faces.push({ x: q.sx, z: q.sz, mb: texMB(BOARD_W_PX, rowsN), key: keyOf(f, f.rows, `@${rowsN}${b.back ? 'c' : ''}`), gantry: false });
+    } else {
       const r = byId.get(q.roadId)!;
-      const lay = layoutGantry(gantryEdge(r.halfWidth, r.shoulder), splitPanels(q.rows).length);
-      const panels = splitPanels(q.rows).slice(0, lay.n);
-      const hr = Math.max(...panels.map((p) => p.length));
-      for (const p of panels) faces.push({ x: q.x, z: q.z, mb: texMB((lay.panelW * BOARD_PX_PER_M) / hs, hr), key: `${key(p)}@${lay.panelW.toFixed(1)}x${hr}`, gantry: true });
+      const edge = gantryEdge(r.halfWidth, r.shoulder);
+      const lays = sides.map((f) => {
+        const lay = layoutGantry(edge, splitPanels(f.rows).length);
+        return { f, lay, panels: splitPanels(f.rows).slice(0, lay.n) };
+      });
+      const hr = Math.max(...lays.flatMap((l) => l.panels.map((p) => p.length)));
+      for (const { f, lay, panels } of lays) for (const p of panels) faces.push({ x: q.x, z: q.z, mb: texMB((lay.panelW * BOARD_PX_PER_M) / hs, hr), key: `${keyOf(f, p, '')}@${lay.panelW.toFixed(1)}x${hr}${b.back ? 'c' : ''}`, gantry: true });
     }
   }
   const uniq = new Set(faces.map((f) => f.key)).size;

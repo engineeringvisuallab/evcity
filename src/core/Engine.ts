@@ -375,7 +375,7 @@ export class Engine {
     // STEP 3: the plan for the whole map; STEP 4 + 5: every planned board is built (gantries on highways / arterials, side boards elsewhere), the text is drawn only near the player
     const signPlan = planRoadSigns(roads);
     console.info('[RoadSigns]', signPlan.summary);
-    console.info('[RoadSigns]', this.roadSigns.addPlanned(roads, signPlan.signs, (x, z) => this.world.terrain.heightAt(x, z)));
+    console.info('[RoadSigns]', this.roadSigns.addPlanned(roads, signPlan.boards, (x, z) => this.world.terrain.heightAt(x, z)));
     // STEP 6: the posts and bases of the boards are solid (cars and people hit them), colliders only near the player
     this.signPhysics = new SignPhysics(physics, this.world.origin, this.roadSigns.solidGroups);
 

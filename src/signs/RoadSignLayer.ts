@@ -8,6 +8,8 @@
 //   - when the player leaves again the texture is freed, so only a few dozen textures exist at any time (FPS and memory stay flat).
 // Step 6: the Step 1 test boards are gone; boards of the same text share ONE texture (texCache); the SIGN_FIELD distances and the paints per frame follow the
 // Quality preset (Q.signRadiusMul, Q.signPaintPerFrame); every board lists its solid parts (solidGroups) for SignPhysics (cars and people hit the posts).
+// Step 7: DOUBLE-SIDED boards: one set of posts / one body carries two faces (front for one driver, back for the opposite driver, each with its own text and the
+// text the right way round); a board with no partner keeps a plain metal back. `addPlanned` builds the physical boards of the plan (PlannedBoard).
 // Children use ABSOLUTE world coordinates (parent = world.root, which the floating origin moves), like StreetLights / StationSignLayer.
 import * as THREE from 'three';
 import type { RoadNetwork, RoadSpec } from '../roads';
@@ -15,8 +17,8 @@ import { Q } from '../core/Quality';
 import { BOARD_PX_PER_M, BOARD_W_M, boardHeightM, drawSignCanvas } from './SignCanvas';
 import { GANTRY, gantryEdge, layoutGantry, splitPanels } from './GantryLayout';
 import { kmBn, kmEn, type SignColor, type SignRow } from './SignFormat';
-import { gantrySolids, sideSolids, solidsRadius, type SignSolidGroup } from './SignSolids';
-import type { PlannedSign } from './SignPlan';
+import { gantrySolids, sideSolids, solidsRadius, SOLID, type SignSolidGroup } from './SignSolids';
+import type { PlannedBoard } from './SignPlan';
 
 export interface SideSignSpec {
   /** Foot of the posts (world metres). */
@@ -28,6 +30,9 @@ export interface SideSignSpec {
   fz: number;
   rows: SignRow[];
   color: SignColor;
+  /** STEP 7: the face on the back (for the driver of the opposite direction); omitted = a plain metal back. */
+  backRows?: SignRow[];
+  backColor?: SignColor;
 }
 
 export interface GantryBoard {
@@ -50,6 +55,8 @@ export interface GantrySpec {
   footRightY: number;
   /** Panels from the driver's LEFT to his RIGHT (1..3, see splitPanels); together they fill the whole width between the posts. Too many for a narrow road are merged into the last one. */
   boards: GantryBoard[];
+  /** STEP 7: the panels on the back, from the LEFT to the RIGHT of the OPPOSITE driver (who looks at the back); omitted / empty = a plain metal back. */
+  backBoards?: GantryBoard[];
 }
 
 export interface GantryResult {
@@ -81,6 +88,8 @@ interface FaceSlot {
   color: SignColor;
   widthPx?: number;
   heightRows?: number;
+  /** STEP 7: rows centred vertically (a face of a double-sided board whose partner face has more rows). */
+  center?: boolean;
   tex: THREE.CanvasTexture | null;
   /** Key of the shared texture in texCache (null while not painted). */
   key: string | null;
@@ -143,21 +152,23 @@ export class RoadSignLayer {
   }
 
   /** Boards that are visible right now / have their text drawn right now (for the console and the debug panel). */
-  get fieldStats(): { total: number; visible: number; painted: number; textures: number; solids: number } {
+  get fieldStats(): { total: number; faces: number; visible: number; painted: number; textures: number; solids: number } {
     let visible = 0;
     let painted = 0;
+    let faces = 0;
     for (const e of this.entries) {
+      faces += e.slots.length;
       if (e.group.visible) visible++;
       if (e.painted) painted++;
     }
-    return { total: this.entries.length, visible, painted, textures: this.texCache.size, solids: this.solidGroups.length };
+    return { total: this.entries.length, faces, visible, painted, textures: this.texCache.size, solids: this.solidGroups.length };
   }
 
   // ----- faces: a material that is a plain board colour until a texture is drawn into it -----
 
-  private newSlot(rows: SignRow[], color: SignColor, widthPx?: number, heightRows?: number): FaceSlot {
+  private newSlot(rows: SignRow[], color: SignColor, widthPx?: number, heightRows?: number, center = false): FaceSlot {
     const mat = new THREE.MeshBasicMaterial({ color: BOARD_COLOR[color], polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
-    const slot: FaceSlot = { mat, rows, color, widthPx, heightRows, tex: null, key: null };
+    const slot: FaceSlot = { mat, rows, color, widthPx, heightRows, center, tex: null, key: null };
     this.slots.push(slot);
     this.tint(slot);
     return slot;
@@ -171,7 +182,7 @@ export class RoadSignLayer {
   /** What is written on a face (the visible text, colour and size): faces with the same key look the same and share one texture. */
   private faceKey(s: FaceSlot): string {
     const rows = s.rows.map((r) => `${r.arrow ?? ''}|${r.bn}|${r.en}|${r.km == null ? '' : `${kmEn(r.km)}~${kmBn(r.km)}`}`).join('/');
-    return `${s.color}#${Math.round(s.widthPx ?? 0)}x${s.heightRows ?? 0}#${rows}`;
+    return `${s.color}#${Math.round(s.widthPx ?? 0)}x${s.heightRows ?? 0}${s.center ? 'c' : ''}#${rows}`;
   }
 
   /** Draws the text of a face into a canvas texture (or takes the texture of a face with the same text). Does nothing when there is no DOM (headless). */
@@ -180,7 +191,7 @@ export class RoadSignLayer {
     const key = this.faceKey(s);
     let hit = this.texCache.get(key);
     if (!hit) {
-      const c = drawSignCanvas(s.rows, s.color, { widthPx: s.widthPx, heightRows: s.heightRows });
+      const c = drawSignCanvas(s.rows, s.color, { widthPx: s.widthPx, heightRows: s.heightRows, centerRows: s.center });
       if (!c) return false;
       const tex = new THREE.CanvasTexture(c);
       tex.colorSpace = THREE.SRGBColorSpace;
@@ -224,41 +235,54 @@ export class RoadSignLayer {
    */
   addSideSign(spec: SideSignSpec, lazy = false): boolean {
     if (!lazy && typeof document === 'undefined') return false;
-    const slot = this.newSlot(spec.rows, spec.color);
+    // STEP 7: with `backRows` the board is double-sided: both faces are as tall as the taller one, rows centred
+    const double = !!spec.backRows && spec.backRows.length > 0;
+    const rowsN = double ? Math.max(spec.rows.length, spec.backRows!.length) : spec.rows.length;
+    const slot = this.newSlot(spec.rows, spec.color, undefined, double ? rowsN : undefined, double);
+    const backSlot = double ? this.newSlot(spec.backRows!, spec.backColor ?? spec.color, undefined, rowsN, true) : null;
     const W = BOARD_W_M;
-    const H = boardHeightM(spec.rows.length);
+    const H = boardHeightM(rowsN);
+    const depth = double ? SOLID.sideBoardDepthDouble : 0.06; // thickness of the board body
+    const postZ = double ? 0 : -0.14;
 
     const g = new THREE.Group();
-    g.name = 'side-sign';
+    g.name = double ? 'side-sign-2' : 'side-sign';
 
-    // board body (thin box, the back side is plain metal) and the face on its front
-    const bodyGeo = new THREE.BoxGeometry(W + 0.08, H + 0.08, 0.06);
+    // board body (thin box; single-sided: the back side is plain metal) and the face on its front (double-sided: another face on the back)
+    const bodyGeo = new THREE.BoxGeometry(W + 0.08, H + 0.08, depth);
     const faceGeo = new THREE.PlaneGeometry(W, H);
     this.geos.push(bodyGeo, faceGeo);
     const body = new THREE.Mesh(bodyGeo, this.metal);
-    body.position.set(0, CLEARANCE + H / 2, -0.03);
+    body.position.set(0, CLEARANCE + H / 2, double ? 0 : -0.03);
     const face = new THREE.Mesh(faceGeo, slot.mat);
-    face.position.set(0, CLEARANCE + H / 2, 0.004);
+    face.position.set(0, CLEARANCE + H / 2, double ? depth / 2 + 0.004 : 0.004);
     g.add(body, face);
+    if (backSlot) {
+      const backFace = new THREE.Mesh(faceGeo, backSlot.mat);
+      backFace.position.set(0, CLEARANCE + H / 2, -(depth / 2 + 0.004));
+      backFace.rotation.y = Math.PI; // looks the other way; the text reads the right way round for the opposite driver
+      g.add(backFace);
+    }
 
-    // two posts behind the board, down into the ground
+    // two posts (single-sided: behind the board; double-sided: inside its thickness), down into the ground
     const postH = CLEARANCE + H + 0.25 + POST_BELOW;
     const postGeo = new THREE.CylinderGeometry(POST_R, POST_R, postH, 8);
     this.geos.push(postGeo);
     for (const sx of [-1, 1]) {
       const p = new THREE.Mesh(postGeo, this.metal);
-      p.position.set(sx * (W / 2 - 0.4), (CLEARANCE + H + 0.25 - POST_BELOW) / 2, -0.14);
+      p.position.set(sx * (W / 2 - 0.4), (CLEARANCE + H + 0.25 - POST_BELOW) / 2, postZ);
       g.add(p);
     }
 
     g.position.set(spec.x, spec.y, spec.z);
     g.rotation.y = Math.atan2(spec.fx, spec.fz); // local +Z (the face) -> (fx, fz)
     this.group.add(g);
-    const sideS = sideSolids(W, H, CLEARANCE, W / 2 - 0.4, -0.14, POST_BELOW);
+    const sideS = sideSolids(W, H, CLEARANCE, W / 2 - 0.4, postZ, POST_BELOW, double);
     this.solidGroups.push({ x: spec.x, y: spec.y, z: spec.z, yaw: g.rotation.y, radius: solidsRadius(sideS), solids: sideS });
     this.count++;
-    if (lazy) this.register(g, spec.x, spec.z, SIGN_FIELD.side, [slot]);
-    else this.paint(slot);
+    const slots = backSlot ? [slot, backSlot] : [slot];
+    if (lazy) this.register(g, spec.x, spec.z, SIGN_FIELD.side, slots);
+    else for (const s of slots) this.paint(s);
     return true;
   }
 
@@ -271,20 +295,31 @@ export class RoadSignLayer {
   addGantry(spec: GantrySpec, lazy = false): GantryResult | null {
     if (spec.boards.length === 0) return null;
     if (!lazy && typeof document === 'undefined') return null;
+    // STEP 7: with `backBoards` the gantry carries panels on both sides; both faces have the same height (the taller one), rows centred
+    const double = !!spec.backBoards && spec.backBoards.length > 0;
     const lay = layoutGantry(spec.edge, spec.boards.length);
+    const layB = double ? layoutGantry(spec.edge, spec.backBoards!.length) : null;
     // too many panels for this road: the extra ones are merged into the last panel (at most 4 rows)
-    const panels: GantryBoard[] = spec.boards.slice(0, lay.n).map((b) => ({ rows: b.rows.slice(), color: b.color }));
-    for (const extra of spec.boards.slice(lay.n)) panels[lay.n - 1].rows.push(...extra.rows);
-    for (const p of panels) p.rows = p.rows.slice(0, 4);
-    const heightRows = Math.max(...panels.map((p) => p.rows.length));
+    const fit = (boards: GantryBoard[], n: number): GantryBoard[] => {
+      const panels: GantryBoard[] = boards.slice(0, n).map((b) => ({ rows: b.rows.slice(), color: b.color }));
+      for (const extra of boards.slice(n)) panels[n - 1].rows.push(...extra.rows);
+      for (const p of panels) p.rows = p.rows.slice(0, 4);
+      return panels;
+    };
+    const panels = fit(spec.boards, lay.n);
+    const panelsB = layB ? fit(spec.backBoards!, layB.n) : [];
+    const heightRows = Math.max(...panels.map((p) => p.rows.length), ...panelsB.map((p) => p.rows.length));
 
     // the pixel density of the faces is the same horizontally and vertically
     const hs = GANTRY.heightScale;
     const pxPerM = BOARD_PX_PER_M / hs;
-    const slots = panels.map((p) => this.newSlot(p.rows, p.color, lay.panelW * pxPerM, heightRows));
+    const slots = panels.map((p) => this.newSlot(p.rows, p.color, lay.panelW * pxPerM, heightRows, double));
+    const slotsB = layB ? panelsB.map((p) => this.newSlot(p.rows, p.color, layB.panelW * pxPerM, heightRows, true)) : [];
 
     const g = new THREE.Group();
-    g.name = 'gantry';
+    g.name = double ? 'gantry-2' : 'gantry';
+    const depth = double ? GANTRY.bodyDepthDoubleM : GANTRY.bodyDepthM;
+    const postZ = double ? 0 : -0.15; // single-sided: posts behind the body; double-sided: inside its thickness
     const faceH = boardHeightM(heightRows) * hs;
     const faceBottom = GANTRY.clearanceM + GANTRY.faceLiftM;
     const faceTop = faceBottom + faceH;
@@ -293,8 +328,8 @@ export class RoadSignLayer {
     const topPipeY = faceTop + GANTRY.bodyPadM + GANTRY.chordR;
     const botPipeY = GANTRY.clearanceM + GANTRY.chordR;
 
-    // the sign body: the plain metal back of all the panels (seen from the other direction) + the two chord pipes along its top and bottom
-    const bodyGeo = new THREE.BoxGeometry(lay.span + 0.1, bodyH, GANTRY.bodyDepthM);
+    // the sign body: the plain metal back of all the panels (seen from the other direction; double-sided: the panels of the other direction sit on it) + the two chord pipes
+    const bodyGeo = new THREE.BoxGeometry(lay.span + 0.1, bodyH, depth);
     this.geos.push(bodyGeo);
     const body = new THREE.Mesh(bodyGeo, this.metal);
     body.position.set(0, bodyMid, 0);
@@ -304,7 +339,7 @@ export class RoadSignLayer {
     this.geos.push(pipeGeo);
     for (const y of [topPipeY, botPipeY]) {
       const pipe = new THREE.Mesh(pipeGeo, this.metal);
-      pipe.position.set(0, y, -0.05);
+      pipe.position.set(0, y, double ? 0 : -0.05);
       g.add(pipe);
     }
 
@@ -319,15 +354,15 @@ export class RoadSignLayer {
       this.geos.push(geo);
       const x = k === 0 ? -spec.edge : spec.edge;
       const post = new THREE.Mesh(geo, this.metal);
-      post.position.set(x, (top + bottom) / 2, -0.15);
+      post.position.set(x, (top + bottom) / 2, postZ);
       g.add(post);
       const base = new THREE.Mesh(baseGeo, this.concrete);
-      base.position.set(x, feet[k] + GANTRY.baseHeightM / 2 - 0.1, -0.15);
+      base.position.set(x, feet[k] + GANTRY.baseHeightM / 2 - 0.1, postZ);
       g.add(base);
     }
 
     // the panels on the front of the sign body, side by side over the whole width
-    const faceZ = GANTRY.bodyDepthM / 2 + 0.004;
+    const faceZ = depth / 2 + 0.004;
     for (let i = 0; i < slots.length; i++) {
       const faceGeo = new THREE.PlaneGeometry(lay.panelW, faceH);
       this.geos.push(faceGeo);
@@ -335,34 +370,51 @@ export class RoadSignLayer {
       face.position.set(lay.xs[i], bodyMid, faceZ);
       g.add(face);
     }
+    // STEP 7: the panels on the back. The opposite driver looks along local +Z, so HIS right is local -X: his leftmost panel is the one at local +X.
+    if (layB) {
+      for (let i = 0; i < slotsB.length; i++) {
+        const faceGeo = new THREE.PlaneGeometry(layB.panelW, faceH);
+        this.geos.push(faceGeo);
+        const face = new THREE.Mesh(faceGeo, slotsB[i].mat);
+        face.position.set(-layB.xs[i], bodyMid, -faceZ);
+        face.rotation.y = Math.PI;
+        g.add(face);
+      }
+    }
 
     g.position.set(spec.x, spec.y, spec.z);
     g.rotation.y = Math.atan2(-spec.hx, -spec.hz); // local +Z (the faces) -> back at the driver = -(hx, hz); local +X -> his right
     this.group.add(g);
-    const gantryS = gantrySolids(spec.edge, [feet[0], feet[1]], topPipeY + GANTRY.chordR + GANTRY.postAboveM, GANTRY.postR, GANTRY.postBelowM, GANTRY.baseSizeM, GANTRY.baseHeightM, -0.15);
+    const gantryS = gantrySolids(spec.edge, [feet[0], feet[1]], topPipeY + GANTRY.chordR + GANTRY.postAboveM, GANTRY.postR, GANTRY.postBelowM, GANTRY.baseSizeM, GANTRY.baseHeightM, postZ);
     this.solidGroups.push({ x: spec.x, y: spec.y, z: spec.z, yaw: g.rotation.y, radius: solidsRadius(gantryS), solids: gantryS });
     this.count++;
-    if (lazy) this.register(g, spec.x, spec.z, SIGN_FIELD.gantry, slots);
-    else for (const s of slots) this.paint(s);
+    const all = [...slots, ...slotsB];
+    if (lazy) this.register(g, spec.x, spec.z, SIGN_FIELD.gantry, all);
+    else for (const s of all) this.paint(s);
     return { placed: lay.n, merged: lay.merged, span: lay.span, fits: lay.fits };
   }
 
   /**
-   * STEP 5: builds EVERY board of the plan on the whole map: overhead boards as gantries (panels from splitPanels, full width of their road),
-   * side boards on the left edge of their road. All of them start hidden and plain; updateField shows them and draws the text when the player is near.
+   * STEP 5 / 7: builds EVERY board of the plan on the whole map. A plan board is a physical board (PlannedBoard): overhead ones become gantries (panels
+   * from splitPanels, full width of their road), side ones stand on the left edge of the road of their FRONT driver. A board with a `back` face is
+   * double-sided (the back face is written for the opposite driver). All start hidden and plain; updateField shows them and draws the text when the player is near.
    * Returns a short text for the console.
    */
-  addPlanned(net: RoadNetwork, plan: readonly PlannedSign[], groundAt: (x: number, z: number) => number): string {
+  addPlanned(net: RoadNetwork, plan: readonly PlannedBoard[], groundAt: (x: number, z: number) => number): string {
     const byId = new Map<number, RoadSpec>(net.roads.map((r) => [r.id, r]));
     let gantries = 0;
     let panels = 0;
     let sides = 0;
+    let doubles = 0;
+    let faces = 0;
     let noRoad = 0;
     let noSpot = 0;
     let tooNarrow = 0;
-    for (const q of plan) {
-      if (q.style === 'overhead') {
-        const road = byId.get(q.roadId);
+    for (const b of plan) {
+      const q = b.front;
+      const back = b.back;
+      if (b.style === 'overhead') {
+        const road = byId.get(b.roadId);
         if (!road) {
           noRoad++;
           continue;
@@ -381,6 +433,7 @@ export class RoadSignLayer {
             footLeftY: groundAt(q.x + q.hz * edge, q.z - q.hx * edge),
             footRightY: groundAt(q.x - q.hz * edge, q.z + q.hx * edge),
             boards: splitPanels(q.rows).map((rows) => ({ rows, color: q.color })),
+            backBoards: back ? splitPanels(back.rows).map((rows) => ({ rows, color: back.color })) : undefined,
           },
           true,
         );
@@ -389,10 +442,16 @@ export class RoadSignLayer {
         panels += res.placed;
         if (!res.fits) tooNarrow++;
       } else if (q.sideOk) {
-        if (this.addSideSign({ x: q.sx, y: groundAt(q.sx, q.sz), z: q.sz, fx: q.fx, fz: q.fz, rows: q.rows, color: q.color }, true)) sides++;
-      } else noSpot++;
+        if (this.addSideSign({ x: q.sx, y: groundAt(q.sx, q.sz), z: q.sz, fx: q.fx, fz: q.fz, rows: q.rows, color: q.color, backRows: back?.rows, backColor: back?.color }, true)) sides++;
+        else continue;
+      } else {
+        noSpot++;
+        continue;
+      }
+      faces += back ? 2 : 1;
+      if (back) doubles++;
     }
-    return `Step 5: ${gantries} gantries (${panels} panels) + ${sides} side boards placed on the whole map (${plan.length} planned; no road ${noRoad}, no free side spot ${noSpot}, gantry too narrow ${tooNarrow}). Text is drawn only within ${SIGN_FIELD.gantry.paint} m (gantries) / ${SIGN_FIELD.side.paint} m (side boards) of the player.`;
+    return `Step 7: ${gantries + sides} boards (${gantries} gantries with ${panels} front panels + ${sides} side boards; ${doubles} double-sided, ${faces} faces) placed on the whole map (${plan.length} planned; no road ${noRoad}, no free side spot ${noSpot}, gantry too narrow ${tooNarrow}). Text is drawn only within ${SIGN_FIELD.gantry.paint} m (gantries) / ${SIGN_FIELD.side.paint} m (side boards) of the player.`;
   }
 
   /**
@@ -416,7 +475,7 @@ export class RoadSignLayer {
         let all = true;
         for (const s of e.slots) all = this.paint(s) && all;
         e.painted = all;
-        budget--;
+        budget -= e.slots.length; // STEP 7: one canvas per face (a double-sided board costs two)
       }
     }
   }

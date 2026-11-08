@@ -26,6 +26,8 @@ export const GANTRY = {
   /** The sign body (the back of the boards) is this much taller than the faces, and this deep. */
   bodyPadM: 0.25,
   bodyDepthM: 0.25,
+  /** STEP 7: a double-sided gantry has panels on both sides; its body is as deep as a post is thick, so the posts hide inside it (they do not cover the panels). */
+  bodyDepthDoubleM: 0.6,
   /** Gap between two panels. */
   panelGapM: 0.1,
   /** A panel narrower than this is not worth drawing: the panels are merged instead. */
