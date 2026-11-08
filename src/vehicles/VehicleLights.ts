@@ -31,7 +31,6 @@ const DEF: Record<VehicleId, LampDef> = {
   evhypar: { x: 0.68, h: 0.55, tailH: 0.7, beamW: 12, beamL: 36 },
   suprim: { x: 0.66, h: 0.52, tailH: 0.66, beamW: 12, beamL: 36 },
   pickup: { x: 0.68, h: 0.9, tailH: 1.0, beamW: 12, beamL: 36 },
-  bike: { x: 0, h: 0.85, tailH: 0.75, beamW: 7, beamL: 26 },
   evbike: { x: 0, h: 0.85, tailH: 0.78, beamW: 7, beamL: 26 },
   rickshaw: { x: 0, h: 0.85, tailH: 0.7, beamW: 6, beamL: 18 },
   auto: { x: 0, h: 0.85, tailH: 0.8, beamW: 8, beamL: 24 },

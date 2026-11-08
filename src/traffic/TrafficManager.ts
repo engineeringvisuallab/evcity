@@ -166,6 +166,11 @@ export class TrafficManager {
       const pax = lo + Math.floor(Math.random() * (hi - lo + 1));
       for (let i = 0; i < pax; i++) if (!car.seatPassenger(this.d.people.createPerson())) break;
       car.ai = new AIDriver(car, route, this.d.signals);
+      // some drivers (rickshaws) are reckless: they speed, run red lights and brake late, so crashes with cars really happen
+      if (spec.reckless && Math.random() < spec.reckless) {
+        car.ai.reckless = 0.6 + Math.random() * 0.4;
+        car.ai.ignoreSignals = true;
+      }
       car.setEnabled(true);
       return;
     }

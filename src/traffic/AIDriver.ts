@@ -35,6 +35,8 @@ export class AIDriver {
   finishedFor = 0;
   /** Set true for a driver that must not obey traffic lights. */
   ignoreSignals = false;
+  /** 0..1: a reckless driver (rickshaw) brakes for other vehicles very late, speeds and runs red lights, so real accidents happen. */
+  reckless = 0;
   /** Buses: the bus stop being approached, the ones already served, and how long the bus has waited there. */
   stop: BusStop | null = null;
   readonly served = new Set<number>();
@@ -99,7 +101,7 @@ export class AIDriver {
       vt = Math.min(vt, Math.sqrt(pts[j].vmax * pts[j].vmax + 2 * BRAKE_DECEL * dist));
     }
     if (!Number.isFinite(vt)) vt = 0;
-    if (spec.cruiseMax !== undefined) vt = Math.min(vt, spec.cruiseMax); // rickshaws crawl, autos stay modest
+    if (spec.cruiseMax !== undefined) vt = Math.min(vt, this.reckless > 0 ? (spec.recklessSpeed ?? spec.cruiseMax) : spec.cruiseMax);
     // a bus stop ahead: halt with the middle of the bus at the stop, wait a while, then go on
     if (this.stop) {
       const da = (this.stop.sx - P.x) * fx + (this.stop.sz - P.z) * fz;
@@ -144,7 +146,9 @@ export class AIDriver {
       if (a < 0.5) continue;
       const l = rx * fz - rz * fx;
       if (Math.abs(l) > halfW + o.r) continue;
-      const reach = 6 + av * 1.8 + (av * av) / (2 * BRAKE_DECEL);
+      // a reckless driver only sees other VEHICLES very late (people are still respected)
+      const late = this.reckless > 0 && o.kind === 'vehicle' ? 1 - 0.85 * this.reckless : 1;
+      const reach = (6 + av * 1.8 + (av * av) / (2 * BRAKE_DECEL)) * late;
       if (a > reach + o.r + halfLen) continue;
       const gap = a - halfLen - o.r - 1.5;
       const ahead = Math.max(0, o.vx * fx + o.vz * fz);

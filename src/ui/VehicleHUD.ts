@@ -158,6 +158,23 @@ export class VehicleHUD {
       c.textAlign = 'center';
       c.fillText(bn.vehicle.handbrake, 218, 166);
     }
+    // fuel tank / battery: bar + estimated distance left (bottom-left)
+    if (t.energyKind) {
+      const e = Math.max(0, Math.min(1, t.energy));
+      const elec = t.energyKind === 'electric';
+      c.fillStyle = '#2d3a4d';
+      c.fillRect(40, 183, 140, 8);
+      c.fillStyle = e <= 0.15 ? '#ff5a4a' : elec ? '#4ee08a' : '#ffb347';
+      c.fillRect(40, 183, 140 * e, 8);
+      c.textAlign = 'left';
+      c.textBaseline = 'middle';
+      c.font = `500 11px ${UI_FONT}`;
+      c.fillStyle = '#cfe0f5';
+      c.fillText(elec ? bn.vehicle.charge : bn.vehicle.fuel, 6, 187);
+      c.textAlign = 'right';
+      c.fillText(`≈ ${bnNum(t.rangeKm, 1)} ${bn.vehicle.km}`, 254, 187);
+      c.textAlign = 'center';
+    }
     void spec;
   }
 

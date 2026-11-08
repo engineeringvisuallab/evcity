@@ -58,7 +58,7 @@ for (const [id, spec] of Object.entries(SPECS)) {
 }
 
 console.log('--- acceleration / top speed / braking (straight, 60 s) ---');
-const targets: Record<string, [number, number]> = { sedan: [100, 220], jeep: [80, 200], hypercar: [255, 290], evhypar: [245, 262], bike: [90, 150], rickshaw: [44, 52], auto: [35, 55], bus: [70, 110], tank: [40, 70] };
+const targets: Record<string, [number, number]> = { sedan: [100, 220], jeep: [80, 200], hypercar: [255, 290], evhypar: [245, 262], rickshaw: [140, 156], auto: [35, 55], bus: [70, 110], tank: [40, 70] };
 let lane = 5;
 for (const [id, spec] of Object.entries(SPECS)) {
   const v = make(spec, lane * 60, -1900);
@@ -85,7 +85,7 @@ for (const [id, spec] of Object.entries(SPECS)) {
 }
 
 console.log('--- cornering ---');
-for (const id of ['bike', 'rickshaw', 'auto', 'bus', 'sedan'] as const) {
+for (const id of ['rickshaw', 'auto', 'bus', 'sedan'] as const) {
   const spec = SPECS[id];
   const v = make(spec, 700 + Object.keys(SPECS).indexOf(id) * 80, -300);
   const sp = id === 'rickshaw' ? 3 : id === 'bus' ? 9 : 8;
@@ -95,7 +95,6 @@ for (const id of ['bike', 'rickshaw', 'auto', 'bus', 'sedan'] as const) {
   });
   console.log(`${id}: circle at ${sp} m/s: max roll ${(maxRoll * 57.3).toFixed(0)} deg, upY ${v.upY.toFixed(2)}, fallen ${v.fallen}, speed ${kmh(v).toFixed(0)} km/h`);
   ok(v.upY > 0.7 && !v.fallen, `${id} corners without falling over`);
-  if (id === 'bike') ok(maxRoll > 0.05, 'bike leans into the bend');
 }
 
 console.log('--- tank skid steering ---');
@@ -119,7 +118,7 @@ console.log('--- tank skid steering ---');
 console.log('--- crash into a wall ---');
 {
   physics.world.createCollider(R.ColliderDesc.cuboid(20, 3, 0.5).setTranslation(1850, 2, 100));
-  for (const id of ['sedan', 'bus', 'bike', 'tank'] as const) {
+  for (const id of ['sedan', 'bus', 'tank'] as const) {
     const spec = SPECS[id];
     const gap = id === 'tank' ? 160 : 120;
     const v = make(spec, 1850, 100 - gap, 0);
@@ -132,7 +131,6 @@ console.log('--- crash into a wall ---');
     console.log(`${id}: hp ${v.hp.toFixed(0)} state ${v.state} fallen ${v.fallen} events:${evt || ' none'}`);
     if (id === 'sedan') ok(v.hp < 85, 'sedan crashing into a wall at speed is damaged');
     if (id === 'sedan' || id === 'bus') ok(!evt.includes('explode'), `${id}: a crash alone never blows the vehicle up`);
-    if (id === 'bike') ok(v.fallen, 'bike falls over when it hits a wall');
     if (id === 'tank') ok(v.hp > 90, 'tank is hardly scratched by a wall');
   }
 }
@@ -147,7 +145,7 @@ console.log('--- light bump ---');
 }
 
 console.log('--- bullets ---');
-for (const id of ['sedan', 'jeep', 'bus', 'bike', 'rickshaw', 'auto'] as const) {
+for (const id of ['sedan', 'jeep', 'bus', 'rickshaw', 'auto'] as const) {
   const v = make(SPECS[id], -400, -400 - Object.keys(SPECS).indexOf(id) * 30);
   let n = 0;
   while (v.state === 'ok' && n < 100) {

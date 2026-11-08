@@ -49,7 +49,7 @@ function roll(v: Vehicle): number {
   return Math.asin(Math.max(-1, Math.min(1, new THREE.Vector3(1, 0, 0).applyQuaternion(q).y)));
 }
 const deg = (x: number) => (x * 57.2958).toFixed(1);
-const spec = SPECS.bike;
+const spec = SPECS.evbike;
 
 console.log('--- settle ---');
 {

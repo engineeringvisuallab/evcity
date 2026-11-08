@@ -26,7 +26,6 @@ ok(!canUse(R_, 'local', 'urban-core', 'industrial') && !canUse(R_, 'local', 'ind
 ok(canUse(A_, 'local', 'urban-core', 'residential') && canUse(A_, 'collector', 'residential', null), 'CNG auto: residential streets and collectors');
 ok(!canUse(A_, 'highway', 'residential', null) && !canUse(A_, 'arterial', 'residential', 'residential') && !canUse(A_, 'local', 'urban-core', 'industrial'), 'CNG auto: not on main roads, not in factories');
 ok(!canUse(SPECS.bus.use, 'local', 'urban-core', 'residential') && canUse(SPECS.bus.use, 'arterial', 'urban-core', 'commercial'), 'bus: main roads, not residential lanes');
-ok(!canUse(SPECS.bike.use, 'highway', 'urban-core', null), 'motorbike: not on the freeway');
 ok(canUse(SPECS.sedan.use, 'highway', 'farmland', null) && canUse(SPECS.jeep.use, 'local', 'village', null), 'car / jeep: everywhere');
 ok(SPECS.tank.use.weight === 0, 'tank: never in AI traffic');
 

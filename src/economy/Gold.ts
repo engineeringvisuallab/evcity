@@ -23,7 +23,6 @@ export const GoldConfig = {
   accidentKillExtra: 500,
   /** Multiplier of the base fine by the TYPE of the vehicle that was hit (a bus or a hypercar costs more than a bike). */
   vehicleMultiplier: {
-    bike: 0.6,
     evbike: 0.8,
     rickshaw: 0.7,
     auto: 0.9,

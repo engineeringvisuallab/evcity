@@ -8,6 +8,7 @@ import type { TerrainGenerator } from '../terrain';
 import type { FloatingOrigin } from '../world/FloatingOrigin';
 import { clamp } from '../utils/math';
 import { Powertrain } from './Powertrain';
+import { ENERGY, consumptionFactor, rangeKm, type EnergyKind } from './Energy';
 import { VehicleModel } from './VehicleModel';
 import { VehicleLights } from './VehicleLights';
 import { BIKE_PILLION_POSE, BIKE_RIDER_POSE, ENGINEER_LOOK, PersonModel } from '../people/PersonModel';
@@ -73,6 +74,10 @@ export interface VehicleTelemetry {
   mode: VehicleMode;
   altitude: number;
   depth: number;
+  /** Fuel tank / battery level 0..1, its kind and the estimated distance left (km); `energyKind` is null for a vehicle that never runs out. */
+  energy: number;
+  energyKind: EnergyKind | null;
+  rangeKm: number;
 }
 
 /** Everything the sound system (VehicleAudio) needs from a vehicle. */
@@ -184,6 +189,8 @@ export class Vehicle implements OrbitTarget {
   readonly passengers: Person[] = [];
   /** 100 = new, 0 = on fire and about to blow up. */
   hp = 100;
+  /** Fuel tank / battery level 0..1 (see Energy.ts). Only the vehicle the PLAYER drives uses it up; AI traffic never does. */
+  energy = 1;
   state: 'ok' | 'burning' | 'wrecked' = 'ok';
   /** Seconds since the wreck blew up. */
   wreckedFor = 0;
@@ -616,6 +623,15 @@ export class Vehicle implements OrbitTarget {
     this.speed = v;
     const pt = this.powertrain;
 
+    // ---- energy: fuel / battery is used up by the distance the player drives (more at speed, more when damaged) ----
+    const en = ENERGY[s.id];
+    const metered = en !== undefined && this.driver === 'player' && this.state !== 'wrecked';
+    if (metered && this.energy > 0) {
+      const f = consumptionFactor(Math.abs(v) * 3.6, this.hp / 100, this.throttle);
+      this.energy = Math.max(0, this.energy - ((Math.abs(v) * dt) / (en.baseKm * 1000)) * f);
+    }
+    const outOfEnergy = metered && this.energy <= 0;
+
     // ---- crash detection: the NET velocity change of a whole impact (~0.1 s), not single-step spikes ----
     this.age += dt;
     this.impactGrace = Math.max(0, this.impactGrace - dt);
@@ -723,7 +739,7 @@ export class Vehicle implements OrbitTarget {
       const w = this.defs[i];
       const lost = this.lostWheel[i];
       this.controller.setWheelFrictionSlip(i, s.frictionSlip * SURFACE_GRIP[this.wheelSurface[i]] * (lost ? 0.15 : 1));
-      let force = braking || lost ? 0 : pt.wheelForce * w.drive * health;
+      let force = braking || lost || outOfEnergy ? 0 : pt.wheelForce * w.drive * health;
       // a tracked vehicle turns by driving its two sides at different speeds (left turn: left side slower, right side faster)
       if (skid && !braking) force -= (skidSteer * w.side * skid.turnForce) / nSide;
       this.controller.setWheelEngineForce(i, force);
@@ -1427,14 +1443,18 @@ export class Vehicle implements OrbitTarget {
   /** A whole crash is over: the net velocity change was `dv` m/s. */
   private impact(dv: number): void {
     if (this.spec.balance && !this.fallen && dv > 3.6) this.fall(Math.abs(this.speed) + dv);
+    // an open vehicle (rickshaw) tips over in a real crash: driver and passengers are thrown out onto the road
+    const eject = this.spec.crashEject;
+    if (eject !== undefined && !this.fallen && dv > eject) this.fall(Math.max(Math.abs(this.speed), this.crashSpeed) * 0.6 + dv);
     if (dv > 2.5) {
       this.physWorld(this.tmpV2);
       this.d.fx?.crash(this.tmpV2, dv); // sparks and a bang, even when nothing is damaged
     }
     this.impactGrace = 0.3;
     this.d.onCrash?.(this, dv, this.crashSpeed);
-    if (dv <= CRASH_DV) return; // a light bump: no damage at all
-    this.hurt((dv - CRASH_DV) * CRASH_DAMAGE * this.spec.fragile, false, 'crash');
+    const dvMin = this.spec.crashDv ?? CRASH_DV;
+    if (dv <= dvMin) return; // a light bump: no damage at all
+    this.hurt((dv - dvMin) * CRASH_DAMAGE * this.spec.fragile, false, 'crash');
     // a very hard hit on a car that is already in a bad way can start a fuel-leak fire: it burns, but it does not explode
     if (this.state === 'ok' && dv > CRASH_FIRE_DV && this.hp < CRASH_FIRE_HP && this.spec.fragile > 0.1 && Math.random() < Math.min(0.6, (dv - CRASH_FIRE_DV) / 20)) {
       this.state = 'burning';
@@ -1780,6 +1800,9 @@ export class Vehicle implements OrbitTarget {
       mode: this.mode,
       altitude: this.agl,
       depth: this.depth,
+      energy: this.energy,
+      energyKind: ENERGY[this.spec.id]?.kind ?? null,
+      rangeKm: ENERGY[this.spec.id] ? rangeKm(ENERGY[this.spec.id]!, this.energy, this.hp / 100) : 0,
     };
   }
 

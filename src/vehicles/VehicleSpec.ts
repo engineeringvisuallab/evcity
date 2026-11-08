@@ -12,7 +12,7 @@ export interface EngineSpec {
   launchRpm?: number;
 }
 
-export type VehicleId = 'sedan' | 'jeep' | 'hypercar' | 'evhypar' | 'bike' | 'evbike' | 'rickshaw' | 'auto' | 'bus' | 'tank' | 'tractor' | 'combine' | 'pickup' | 'suprim';
+export type VehicleId = 'sedan' | 'jeep' | 'hypercar' | 'evhypar' | 'evbike' | 'rickshaw' | 'auto' | 'bus' | 'tank' | 'tractor' | 'combine' | 'pickup' | 'suprim';
 
 /** One wheel of the raycast vehicle. `drive` = share of the drive force, `side` = track side for skid steering (+1 left, -1 right). */
 export interface WheelDef {
@@ -94,6 +94,14 @@ export interface VehicleSpec {
   skid?: { turnForce: number; yawAssist: number };
   /** AI top speed (m/s). */
   cruiseMax?: number;
+  /** Chance (0..1) that an AI driver of this vehicle is reckless: runs red lights, brakes late for other vehicles, drives at `recklessSpeed`. Accidents happen. */
+  reckless?: number;
+  /** AI top speed (m/s) of a reckless driver. */
+  recklessSpeed?: number;
+  /** Net crash delta-v (m/s) below which nothing is damaged. Default 9 (cars). An open, light vehicle gets hurt at a much lower speed. */
+  crashDv?: number;
+  /** Open vehicle: a crash with at least this delta-v (m/s) throws everybody off (the rickshaw tips over, driver + passengers fall out). */
+  crashEject?: number;
   /** Orbit camera: start distance, min, max. */
   camera?: { dist: number; min: number; max: number };
   /** Windscreen / cabin line: chassis-local y above which the people inside are visible to bullets (enclosed vehicles). */
@@ -245,67 +253,14 @@ function finish(s: VehicleSpec, clearance: number, seatH: number, paxH: number[]
 
 const PEDAL_ENGINE: EngineSpec = {
   idleRpm: 40,
-  // single gear 0.75, 0.34 m wheel: speed = rpm x 0.0475 m/s, so the redline limiter caps the rickshaw at 50 km/h (292 rpm = 13.9 m/s)
+  // single gear 0.75, 0.34 m wheel: speed = rpm x 0.0475 m/s, so the redline limiter caps the BASE rickshaw at 50 km/h (292 rpm = 13.9 m/s); SPEED_BOOST.rickshaw = 3 makes that 150 km/h
   redlineRpm: 292,
   launchRpm: 70,
   torque: [[40, 110], [150, 105], [250, 95], [292, 88]],
   engineBraking: 4,
 };
 
-/**
- * EVCity electric sport bike: real sport-bike proportions (wheelbase 1.44 m, 17-inch wheels, seat 0.79 m, centre of mass 0.6 m above the
- * road with the rider). Two wheels: a roll controller plays the rider (see Vehicle.balanceBike) and leans it into bends.
- */
-export const BIKE: VehicleSpec = finish({
-  id: 'bike',
-  nameBn: 'মোটরবাইক',
-  mass: 215,
-  half: { x: 0.22, y: 0.3, z: 0.95 },
-  comY: 0.1,
-  comZ: -0.04,
-  wheelRadius: 0.31,
-  wheelWidth: 0.15,
-  trackHalf: 0,
-  wheelbaseHalf: 0.72,
-  connY: -0.02,
-  susp: { rest: 0.27, travel: 0.16, stiffness: 48, compression: 3.2, relaxation: 4.0 },
-  frictionSlip: 9,
-  sideFriction: 1,
-  drive: 'rwd',
-  frontShare: 0,
-  wheels: [
-    { x: 0, z: 0.72, steer: true, drive: 0, side: 0 },
-    { x: 0, z: -0.72, steer: false, drive: 1, side: 0 },
-  ],
-  engine: {
-    idleRpm: 1400,
-    redlineRpm: 9000,
-    launchRpm: 4000,
-    torque: [[1400, 20], [3000, 27], [5000, 31], [7000, 29], [9000, 23]],
-    engineBraking: 8,
-  },
-  gears: [2.9, 1.9, 1.4, 1.1],
-  reverse: 2.5,
-  finalDrive: 3.6,
-  efficiency: 0.9,
-  brakeMax: brakeFor(215, 2, 4.8),
-  maxSteer: 0.5,
-  cd: 0.62,
-  frontalArea: 0.5,
-  use: USE.bike(0.2),
-  look: { kind: 'bike', body: 0xc7ccd1, accent: 0x1a1d21 },
-  seat: { x: 0, y: 0, z: -0.24, scale: 0.9 },
-  seats: [{ x: 0, y: 0, z: -0.68, scale: 0.86 }],
-  pax: [0, 1],
-  enclosed: false,
-  bulletsToKill: 10,
-  fragile: 1.7,
-  balance: true,
-  cruiseMax: 15,
-  camera: { dist: 6, min: 3, max: 18 },
-}, 0.2, 0.875, [0.93]);
-
-/** Cycle rickshaw: one front wheel, two rear wheels, pedal power. The player can push it to 50 km/h; AI rickshaws still crawl (cruiseMax). */
+/** Electric rickshaw: one front wheel, two rear wheels. The player can drive it up to 150 km/h (SPEED_BOOST x3); AI rickshaws are reckless (see `reckless`). */
 export const RICKSHAW: VehicleSpec = finish({
   id: 'rickshaw',
   nameBn: 'রিকশা',
@@ -336,7 +291,7 @@ export const RICKSHAW: VehicleSpec = finish({
   maxSteer: 0.55,
   cd: 0.9,
   frontalArea: 0.8,
-  use: USE.rickshaw(0.12),
+  use: USE.rickshaw(0.2),
   look: { kind: 'rickshaw', body: 0x2e6fbd, accent: 0xe8c23a },
   seat: { x: 0, y: 0, z: 0.38, scale: 0.95 },
   seats: [
@@ -346,8 +301,12 @@ export const RICKSHAW: VehicleSpec = finish({
   pax: [0, 2],
   enclosed: false,
   bulletsToKill: 10,
-  fragile: 1.4,
-  cruiseMax: 3.9,
+  fragile: 2,
+  cruiseMax: 7,
+  reckless: 0.7,
+  recklessSpeed: 14,
+  crashDv: 4,
+  crashEject: 6,
   camera: { dist: 7, min: 3, max: 18 },
 }, 0.25, 0.98, [0.66]);
 
@@ -562,7 +521,7 @@ export const HYPERCAR: VehicleSpec = finish({
 }, 0.13, 0.43, [0.43], undefined, 0.8);
 
 /**
- * EVCity Volt R: high-speed electric superbike for the player (not in AI traffic). Two wheels with the roll controller (like BIKE),
+ * EVCity Volt R: high-speed electric superbike for the player (not in AI traffic). Two wheels with the roll controller (like a bike),
  * long wheelbase for stability, strong motor with a 3-speed e-gearbox: about 225 km/h, 0-100 km/h in roughly 3.5 s.
  */
 export const EVBIKE: VehicleSpec = finish({
@@ -876,7 +835,7 @@ export const PICKUP: VehicleSpec = {
 };
 
 // the farm vehicles come LAST: scripts/vehicle-test.ts places every vehicle by its index in this object, so the older ones must keep their index
-export const SPECS: Record<VehicleId, VehicleSpec> = { sedan: SEDAN, jeep: JEEP, hypercar: HYPERCAR, evhypar: EVHYPAR, bike: BIKE, evbike: EVBIKE, rickshaw: RICKSHAW, auto: AUTO, bus: BUS, tank: TANK, tractor: TRACTOR, combine: COMBINE, pickup: PICKUP, suprim: SUPRIM };
+export const SPECS: Record<VehicleId, VehicleSpec> = { sedan: SEDAN, jeep: JEEP, hypercar: HYPERCAR, evhypar: EVHYPAR, evbike: EVBIKE, rickshaw: RICKSHAW, auto: AUTO, bus: BUS, tank: TANK, tractor: TRACTOR, combine: COMBINE, pickup: PICKUP, suprim: SUPRIM };
 
 
 /**
@@ -888,9 +847,8 @@ export const SPEED_BOOST: Record<VehicleId, number> = {
   jeep: 2,
   hypercar: 2,
   evhypar: 2,
-  bike: 2.3,
   evbike: 2,
-  rickshaw: 1,
+  rickshaw: 3, // 3 x the old 50 km/h = 150 km/h (set 1 for the old pedal speed)
   auto: 2,
   bus: 2,
   tank: 2,

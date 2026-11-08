@@ -18,6 +18,9 @@ import { TANK } from './VehicleSpec';
 import { Vehicle, type DriveInput, type Driver, type VehicleDeps } from './Vehicle';
 import type { VehicleSpec } from './VehicleSpec';
 import { VehicleAudio } from './VehicleAudio';
+import { ENERGY } from './Energy';
+import { CHARGE_SECONDS, FILL_SECONDS, STAND_STILL, chargeAreaAt, fuelAreaAt } from './FuelAreas';
+import { bn } from '../i18n';
 
 export interface VehicleManagerDeps {
   vehicle: VehicleDeps;
@@ -276,6 +279,7 @@ export class VehicleManager {
       v.update(alpha, dist);
     }
     this.audio.update(dt, this.vehicles, this.driver, focus, this.d.project, this.d.input.isDown('KeyH')); // H = horn / bell
+    this.energyTick(dt);
 
     const hud = this.d.hud;
     if (this.driver) {
@@ -296,6 +300,42 @@ export class VehicleManager {
         hud.setMarker(this.d.project(this.tmp), 'car');
       } else hud.hideMarker();
     }
+  }
+
+  /** 0 = fine, 1 = warned "low", 2 = warned "empty" (per vehicle, so the warning is not repeated every frame). */
+  private energyWarn = new WeakMap<Vehicle, number>();
+  private energyZone = '';
+
+  /** Fuel / charge of the vehicle the player drives: refill inside a fuel area (fuel) or at a charge point (electric), warn when low / empty. */
+  private energyTick(dt: number): void {
+    const v = this.driver;
+    if (!v) {
+      this.energyZone = '';
+      return;
+    }
+    const en = ENERGY[v.spec.id];
+    if (!en) return;
+    const say = (msg: string) => this.d.toast?.(msg);
+    const fuel = en.kind === 'fuel';
+    v.getWorldPosition(this.tmp);
+    const area = fuel ? fuelAreaAt(this.tmp.x, this.tmp.z) : chargeAreaAt(this.tmp.x, this.tmp.z);
+    const id = area?.id ?? '';
+    if (id !== this.energyZone) {
+      this.energyZone = id;
+      if (area) say(`${fuel ? '⛽' : '🔌'} ${area.nameBn} — ${fuel ? bn.vehicle.fuelAreaIn : bn.vehicle.chargeAreaIn}`);
+    }
+    if (area && Math.abs(v.forwardSpeed) < STAND_STILL && v.energy < 1) {
+      v.energy = Math.min(1, v.energy + dt / (fuel ? FILL_SECONDS : CHARGE_SECONDS));
+      if (v.energy >= 1) say(`${fuel ? '⛽' : '🔋'} ${fuel ? bn.vehicle.fuelFull : bn.vehicle.chargeFull}`);
+    }
+    const w = this.energyWarn.get(v) ?? 0;
+    if (v.energy <= 0 && w < 2) {
+      this.energyWarn.set(v, 2);
+      say(`🚫 ${fuel ? bn.vehicle.fuelEmpty : bn.vehicle.chargeEmpty}`);
+    } else if (v.energy > 0 && v.energy <= 0.15 && w < 1) {
+      this.energyWarn.set(v, 1);
+      say(`⚠️ ${fuel ? bn.vehicle.fuelLow : bn.vehicle.chargeLow}`);
+    } else if (v.energy > 0.25 && w > 0) this.energyWarn.set(v, 0);
   }
 
   nearest(maxDist: number): Vehicle | null {

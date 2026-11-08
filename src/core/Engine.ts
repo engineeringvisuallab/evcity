@@ -51,7 +51,7 @@ import { LazyInfra } from '../engineering/LazyInfra';
 import { Minimap, type MapMarker, type MapState } from '../ui/Minimap';
 import { VehicleMenu } from '../ui/VehicleMenu';
 import { VehicleHUD } from '../ui/VehicleHUD';
-import { type Vehicle, VehicleManager, NightLamps, SEDAN, JEEP, HYPERCAR, EVHYPAR, EVBIKE, BIKE, RICKSHAW, AUTO, BUS, SPECS } from '../vehicles';
+import { type Vehicle, VehicleManager, NightLamps, SEDAN, JEEP, HYPERCAR, EVHYPAR, EVBIKE, RICKSHAW, AUTO, BUS, SPECS } from '../vehicles';
 import { VehicleModel } from '../vehicles/VehicleModel';
 import { PeopleManager, PersonModel, ENGINEER_LOOK } from '../people';
 import { RoadGraph, TrafficLightLayer, TrafficManager, TrafficSignals } from '../traffic';
@@ -86,7 +86,6 @@ import { Time } from './Time';
 /** Minimap marker size per vehicle kind. */
 function mapSize(kind: string): { len?: number; wide?: number } {
   switch (kind) {
-    case 'bike':
     case 'evbike': return { len: 0.6, wide: 0.45 };
     case 'rickshaw': return { len: 0.75, wide: 0.6 };
     case 'auto': return { len: 0.8, wide: 0.8 };
@@ -662,7 +661,7 @@ export class Engine {
     this.vehicleMenu = new VehicleMenu(
       container,
       [
-        { id: 'bike', icon: '🏍️' }, { id: 'evbike', icon: '🛵' }, { id: 'rickshaw', icon: '🚲' }, { id: 'auto', icon: '🛺' },
+        { id: 'evbike', icon: '🛵' }, { id: 'rickshaw', icon: '🚲' }, { id: 'auto', icon: '🛺' },
         { id: 'sedan', icon: '🚗' }, { id: 'jeep', icon: '🚙' }, { id: 'hypercar', icon: '🏎️' }, { id: 'evhypar', icon: '🚘' }, { id: 'suprim', icon: '🛸' },
         { id: 'bus', icon: '🚌' }, { id: 'tank', icon: '🪖' },
         { id: 'tractor', icon: '🚜' }, { id: 'combine', icon: '🌾' }, { id: 'pickup', icon: '🛻' },
@@ -738,7 +737,7 @@ export class Engine {
     const S = EVLAB_SLOTS;
     const park = (spec: typeof SEDAN, sl: { s: number; n: number }, ds: number, dn: number) => ({ spec, ...this.slot(sl.s, sl.n, ds, dn) });
     this.vehicles.setParked([
-      park(BIKE, S.bike, 0, -1), park(EVBIKE, S.evbike, 0, -1), park(RICKSHAW, S.rickshaw, 0, -1), park(AUTO, S.auto, 0, -1),
+      park(EVBIKE, S.evbike, 0, -1), park(RICKSHAW, S.rickshaw, 0, -1), park(AUTO, S.auto, 0, -1),
       park(SEDAN, S.sedan, 0, -1), park(JEEP, S.jeep, 0, -1), park(HYPERCAR, S.hypercar, 0, -1), park(EVHYPAR, S.evhypar, 0, -1),
       park(BUS, S.bus, 1, 0),
     ]);

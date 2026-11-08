@@ -7,8 +7,6 @@ import { carEnv } from './CarEnv';
 
 type AnyMat = THREE.MeshLambertMaterial | THREE.MeshStandardMaterial;
 
-/** Steering-head rake of the bike (rad): the fork leans back 25 degrees from vertical. */
-const RAKE = 0.436;
 
 export interface WheelNode {
   /** Moves up/down with the suspension. */
@@ -201,7 +199,6 @@ export class VehicleModel {
       case 'evbike': this.evbike(); break;
       case 'evhypar': this.evhypar(); break;
       case 'suprim': this.suprim(); break;
-      case 'bike': this.bike(); break;
       case 'rickshaw': this.rickshaw(); break;
       case 'auto': this.auto(); break;
       case 'bus': this.bus(); break;
@@ -1301,207 +1298,6 @@ export class VehicleModel {
     }
   }
 
-  /** EVCity sport bike: silver body, teal accents, a real inline-four engine with radiator, 4-1 exhaust and chain drive, fairing turns with the bars. */
-  private bike(): void {
-    const body = this.mat(this.spec.look.body);
-    const dark = this.mat(this.spec.look.accent);
-    const black = this.mat(0x0e1012);
-    const chrome = this.mat(0xaeb4ba);
-    const alu = this.mat(0x8c939a);
-    const teal = this.mat(EV_TEAL, { emissive: 0x0c6f5c });
-    const engineM = this.pbr(0x3a3f45, { metalness: 0.6, roughness: 0.45 });
-    const fin = this.pbr(0x23272b, { metalness: 0.5, roughness: 0.5 });
-    const exhaustM = this.pbr(0xb8bcc2, { metalness: 0.8, roughness: 0.3 });
-    const exhaustTip = this.pbr(0x1d1f22, { metalness: 0.6, roughness: 0.4 });
-    const chainM = this.pbr(0x2a2d31, { metalness: 0.7, roughness: 0.4 });
-    const dial = this.mat(0x9fffe9, { emissive: 0x27c9a6 });
-    const lamp = this.mat(0xd8fff6, { emissive: 0x2ee6c8 });
-    const tail = this.mat(0xcc1111, { emissive: 0x660000 });
-    const amber = this.mat(0xffa21a, { emissive: 0x553300 });
-    const glass = this.mat(0x172431, { transparent: true, opacity: 0.5 });
-    const plate = this.mat(0xe9e6d8);
-    const wr = this.spec.wheelRadius;
-    const gy = this.gy;
-    const W = this.spec.wheelbaseHalf; // front axle z; the rear axle is at -W
-    const P = (x: number, h: number, z: number): number[] => [x, gy + h, z]; // [x, height above ground, z] -> chassis-local point
-
-    // ---- frame: twin aluminium spars from the steering head back to the swing-arm pivot, sub-frame under the seat ----
-    const head = [0, 0.84, 0.47];
-    const pivotZ = -0.36;
-    const pivotH = 0.47;
-    for (const sx of [1, -1]) {
-      this.tube(P(sx * 0.1, head[1] - 0.04, head[2] - 0.04), P(sx * 0.115, 0.6, -0.12), 0.024, alu, 0); // main spar (upper run)
-      this.tube(P(sx * 0.115, 0.6, -0.12), P(sx * 0.12, pivotH + 0.04, pivotZ + 0.02), 0.026, alu, 0);
-      this.tube(P(sx * 0.1, 0.62, -0.1), P(sx * 0.08, 0.7, -0.78), 0.016, dark, 0); // sub-frame
-      this.tube(P(sx * 0.11, 0.48, 0.3), P(sx * 0.12, 0.34, -0.1), 0.02, dark, 0); // lower cradle
-    }
-    // ---- engine (inline-four, 4 cylinders in a row across the frame), radiator, airbox ----
-    this.boxG(0.2, 0.2, 0.34, engineM, 0, 0.4, -0.12, 3); // crankcase + gearbox
-    for (let i = 0; i < 4; i++) {
-      const cx = -0.075 + i * 0.05;
-      const cylB = this.boxG(0.046, 0.17, 0.11, engineM, cx, 0.56, 0.0, 3); // cylinder block, leaning forward
-      cylB.rotation.x = -0.35;
-      for (let f = 0; f < 3; f++) this.boxG(0.05, 0.008, 0.14, fin, cx, 0.5 + f * 0.04, 0.02 + f * 0.012, 3).rotation.x = -0.35; // cooling fins
-    }
-    const headCover = this.boxG(0.21, 0.04, 0.12, fin, 0, 0.66, 0.07, 3); // cylinder head cover
-    headCover.rotation.x = -0.35;
-    this.boxG(0.2, 0.15, 0.04, alu, 0, 0.47, 0.2, 2); // radiator (front of the engine, behind the fairing)
-    this.boxG(0.16, 0.08, 0.2, black, 0, 0.74, 0.12, 3); // airbox under the tank
-    this.boxG(0.08, 0.1, 0.1, chrome, 0.115, 0.4, -0.12, 3); // clutch cover (left)
-    // ---- swing arm, hub motor + belt drive, shock ----
-    for (const sx of [1, -1]) {
-      this.tube(P(sx * 0.12, pivotH, pivotZ), P(sx * 0.115, wr, -W), 0.03, alu, 0); // swing-arm leg
-      this.boxG(0.04, 0.12, 0.1, dark, sx * 0.115, wr, -W, 0); // axle plate
-    }
-    // chain drive (left): gearbox sprocket -> rear sprocket, with the chain as two runs
-    const sprocketF = this.mesh(this.cyl(0.04, 0.012, 14), chainM, 0.135, gy + 0.36, -0.28, this.root);
-    sprocketF.rotation.z = Math.PI / 2;
-    const sprocketR = this.mesh(this.cyl(0.095, 0.012, 20), chainM, 0.1, gy + wr, -W, this.root);
-    sprocketR.rotation.z = Math.PI / 2;
-    this.tube([0.135, gy + 0.4, -0.28], [0.1, gy + wr + 0.095, -W], 0.006, chainM, 0); // upper chain run
-    this.tube([0.135, gy + 0.32, -0.28], [0.1, gy + wr - 0.095, -W], 0.006, chainM, 0); // lower chain run
-    // ---- exhaust: 4 header pipes collect under the engine, one silencer on the right side to the tail ----
-    for (let i = 0; i < 4; i++) {
-      const hx = -0.075 + i * 0.05;
-      this.tube(P(hx, 0.55, 0.06), P(hx * 0.4, 0.3, 0.02), 0.012, exhaustM, 3); // header
-    }
-    this.tube(P(0, 0.3, 0.02), P(0.1, 0.27, -0.4), 0.032, exhaustM, 3); // collector under the belly
-    this.tube(P(0.1, 0.27, -0.4), P(0.17, 0.5, -0.98), 0.048, exhaustM, 3); // silencer (right side, rising to the tail)
-    this.mesh(this.cyl(0.04, 0.03, 14), exhaustTip, 0.17, gy + 0.5, -0.99, this.root).rotation.x = Math.PI / 2 - 0.5; // exhaust tip
-    this.tube(P(0, 0.72, -0.42), P(0, 0.4, pivotZ - 0.06), 0.022, chrome, 3); // rear shock
-    this.tube(P(0, 0.62, -0.4), P(0, 0.5, pivotZ - 0.05), 0.04, teal, 3); // shock spring
-    // ---- more frame: steering head tube, cross members, engine mounts, triangulation, swing-arm brace ----
-    this.tube(P(0, 0.9, 0.44), P(0, 0.74, 0.5), 0.034, alu, 0); // steering head tube (raked)
-    this.tube(P(0.1, 0.62, -0.1), P(-0.1, 0.62, -0.1), 0.014, dark, 0); // cross member behind the tank
-    this.tube(P(0.12, pivotH, pivotZ), P(-0.12, pivotH, pivotZ), 0.02, alu, 0); // swing-arm pivot shaft
-    this.tube(P(0.11, 0.48, 0.3), P(-0.11, 0.48, 0.3), 0.014, dark, 0); // front engine cross tube
-    for (const sx of [1, -1]) {
-      this.boxG(0.012, 0.18, 0.1, alu, sx * 0.105, 0.45, 0.0, 0); // engine mount plate
-      this.tube(P(sx * 0.115, 0.6, -0.12), P(sx * 0.08, 0.7, -0.5), 0.012, dark, 0); // sub-frame triangulation
-    }
-    this.tube(P(0.118, 0.39, -0.54), P(-0.118, 0.39, -0.54), 0.018, alu, 0); // swing-arm cross brace
-    // chain guard over the upper run, rear caliper on the swing arm
-    this.boxG(0.014, 0.02, 0.4, dark, 0.125, 0.5, -0.53, 3).rotation.x = 0.1;
-    this.boxG(0.04, 0.08, 0.07, black, -0.1, wr + 0.05, -W + 0.12, 0);
-    // fuel filler cap on the tank
-    this.boxG(0.07, 0.008, 0.07, chrome, 0, 0.935, 0.2, 3);
-    // foot controls: gear shifter (left), rear brake pedal (right), side stand (left, folded)
-    this.tube(P(-0.18, 0.32, -0.2), P(-0.18, 0.32, -0.04), 0.01, chrome, 0);
-    this.tube(P(0.2, 0.3, -0.25), P(0.2, 0.3, -0.45), 0.01, chrome, 0);
-    this.tube(P(-0.14, 0.38, -0.3), P(-0.27, 0.07, -0.2), 0.011, dark, 0);
-    // ---- bodywork (lofted shells) ----
-    // tail: raised pillion cowl, narrow at the tip
-    this.loft(
-      [
-        { z: -1.02, w: 0.07, hb: 0.74, ht: 0.83, r: 0.03 },
-        { z: -0.9, w: 0.12, hb: 0.7, ht: 0.85, r: 0.05 },
-        { z: -0.7, w: 0.16, hb: 0.67, ht: 0.84, r: 0.06 },
-        { z: -0.55, w: 0.165, hb: 0.65, ht: 0.8, r: 0.06 },
-      ],
-      body,
-      2,
-    );
-    // pillion pad and rider seat (dark, stepped)
-    this.loft(
-      [
-        { z: -0.88, w: 0.1, hb: 0.8, ht: 0.865, r: 0.03 },
-        { z: -0.7, w: 0.14, hb: 0.78, ht: 0.87, r: 0.04 },
-        { z: -0.52, w: 0.15, hb: 0.76, ht: 0.82, r: 0.04 },
-      ],
-      black,
-      3,
-    );
-    this.loft(
-      [
-        { z: -0.58, w: 0.13, hb: 0.72, ht: 0.8, r: 0.03 },
-        { z: -0.4, w: 0.16, hb: 0.68, ht: 0.795, r: 0.04 },
-        { z: -0.2, w: 0.15, hb: 0.68, ht: 0.79, r: 0.04 },
-        { z: 0.0, w: 0.11, hb: 0.7, ht: 0.8, r: 0.035 },
-      ],
-      black,
-      4,
-    );
-    // tank / battery cover: narrow where the knees grip, wider and higher at the front
-    this.loft(
-      [
-        { z: -0.1, w: 0.09, hb: 0.62, ht: 0.83, r: 0.04 },
-        { z: 0.1, w: 0.085, hb: 0.6, ht: 0.88, r: 0.04 },
-        { z: 0.28, w: 0.13, hb: 0.6, ht: 0.94, r: 0.06 },
-        { z: 0.44, w: 0.16, hb: 0.64, ht: 0.95, r: 0.07 },
-        { z: 0.54, w: 0.13, hb: 0.7, ht: 0.93, r: 0.06 },
-      ],
-      body,
-      3,
-    );
-    // fixed fairing: nose cowl and side panels (widest over the front wheel, narrowing to the nose)
-    this.loft(
-      [
-        { z: 0.28, w: 0.17, hb: 0.62, ht: 0.9, r: 0.07 },
-        { z: 0.42, w: 0.19, hb: 0.58, ht: 0.97, r: 0.09 },
-        { z: 0.58, w: 0.195, hb: 0.6, ht: 0.96, r: 0.1 },
-        { z: 0.78, w: 0.16, hb: 0.68, ht: 0.95, r: 0.09 },
-        { z: 0.93, w: 0.11, hb: 0.72, ht: 0.9, r: 0.06 },
-        { z: 1.0, w: 0.07, hb: 0.73, ht: 0.85, r: 0.04 },
-      ],
-      body,
-      2,
-    );
-    // ---- fairing details: screen, headlights, intake, signals, stripes, tail light, plate ----
-    const screen = this.boxG(0.26, 0.27, 0.012, glass, 0, 1.06, 0.5, 4);
-    screen.rotation.x = -1.0;
-    for (const sx of [1, -1]) {
-      const l = this.boxG(0.1, 0.035, 0.03, lamp, sx * 0.065, 0.83, 0.975, 2); // cyan LED headlight
-      l.rotation.set(0, sx * 0.55, sx * -0.12);
-      this.boxG(0.015, 0.03, 0.06, amber, sx * 0.185, 0.9, 0.62, 2); // indicator on the fairing side
-      this.boxG(0.012, 0.03, 0.3, teal, sx * 0.196, 0.88, 0.5, 2).rotation.set(0, 0, 0); // teal stripe on the fairing
-      this.boxG(0.012, 0.03, 0.4, teal, sx * 0.168, 0.74, -0.7, 2); // teal stripe on the tail
-      this.logo('wordmark', false, 0.26, 0.065, sx * 0.2, gy + 0.8, 0.5, sx * (Math.PI / 2), 2); // on the fairing
-      this.logo('wordmark', false, 0.22, 0.055, sx * 0.168, gy + 0.78, -0.7, sx * (Math.PI / 2), 2); // on the tail
-    }
-    this.boxG(0.09, 0.03, 0.02, black, 0, 0.77, 0.998, 2); // air intake slot under the lamps
-    this.logo('mark', false, 0.075, 0.075, 0, gy + 0.8, 1.003, 0, 2); // EVCity mark on the nose
-    this.boxG(0.17, 0.025, 0.02, tail, 0, 0.8, -1.03, 3); // LED tail light
-    this.boxG(0.012, 0.025, 0.05, amber, 0.1, 0.78, -1.0, 3).rotation.y = 0.5;
-    this.boxG(0.012, 0.025, 0.05, amber, -0.1, 0.78, -1.0, 3).rotation.y = -0.5;
-    this.boxG(0.2, 0.13, 0.01, plate, 0, 0.66, -1.02, 3); // number plate
-    this.logo('mark', false, 0.075, 0.075, 0, gy + 0.855, -1.045, Math.PI, 3); // EVCity mark above the plate
-    // ---- foot pegs (rider rear-sets, pillion pegs) with brackets ----
-    for (const sx of [1, -1]) {
-      this.tube(P(sx * 0.11, 0.52, -0.3), P(sx * 0.17, 0.32, -0.19), 0.014, alu, 0);
-      this.tube(P(sx * 0.14, 0.32, -0.19), P(sx * 0.24, 0.32, -0.19), 0.013, chrome, 0);
-      this.tube(P(sx * 0.1, 0.56, -0.7), P(sx * 0.16, 0.3, -0.63), 0.012, alu, 0);
-      this.tube(P(sx * 0.12, 0.3, -0.63), P(sx * 0.2, 0.3, -0.63), 0.012, chrome, 0);
-    }
-    // ---- the steering assembly: everything in here turns with the bars, about the raked steering axis ----
-    this.frontFork = (g: THREE.Group, wheelFrame: THREE.Group) => {
-      // g: local +Y is the steering axis (up and back by `rake`), origin = front axle. wheelFrame: same origin, axes level.
-      const topY = 0.62;
-      for (const sx of [1, -1]) {
-        this.tube([sx * 0.095, 0.3, 0], [sx * 0.095, topY - 0.02, 0], 0.024, dark, 0, g); // upside-down fork: thick upper tube
-        this.tube([sx * 0.095, 0.0, 0], [sx * 0.095, 0.31, 0], 0.017, chrome, 0, g); // slim lower tube
-        this.mesh(new THREE.BoxGeometry(0.03, 0.07, 0.05), dark, sx * 0.1, 0.02, 0, g); // axle lug
-        this.mesh(new THREE.BoxGeometry(0.035, 0.09, 0.07), black, sx * 0.095, 0.11, -0.045, g); // brake caliper
-        // clip-on handlebar from the fork top to the grip, rubber grip, mirror on a stalk, brake lever
-        this.tube([sx * 0.095, topY, 0.0], [sx * 0.31, 0.7, -0.1], 0.013, alu, 0, g);
-        this.tube([sx * 0.3, 0.7, -0.1], [sx * 0.36, 0.7, -0.1], 0.017, black, 0, g);
-        this.tube([sx * 0.3, 0.71, -0.1], [sx * 0.33, 0.82, -0.04], 0.007, dark, 0, g);
-        const m = this.mesh(new THREE.BoxGeometry(0.11, 0.065, 0.014), body, sx * 0.335, 0.86, -0.04, g);
-        m.rotation.set(0.25, sx * -0.25, 0);
-        this.mesh(new THREE.BoxGeometry(0.1, 0.014, 0.016), black, sx * 0.3, 0.725, 0.04, g);
-      }
-      this.mesh(new THREE.BoxGeometry(0.2, 0.035, 0.07), dark, 0, topY, 0, g); // triple clamp
-      this.mesh(new THREE.BoxGeometry(0.1, 0.06, 0.05), black, 0, topY + 0.045, -0.03, g); // dash
-      this.mesh(new THREE.BoxGeometry(0.075, 0.03, 0.006), dial, 0, topY + 0.058, 0.0, g).rotation.x = -0.5; // speedometer / rev display
-      // front mudguard over the tyre (wheel-aligned frame): follows the tyre radius
-      const fs: Section[] = [];
-      for (const dz of [-0.31, -0.22, -0.12, 0, 0.12, 0.22, 0.31]) {
-        const top = Math.sqrt(Math.max(0, (wr + 0.03) ** 2 - dz * dz));
-        fs.push({ z: dz, w: 0.075, hb: wr + top - 0.03, ht: wr + top, r: 0.02 });
-      }
-      this.loft(fs, body, 0, wheelFrame, -wr);
-    };
-  }
-
   private evbike(): void {
     const body = this.carPaint(this.spec.look.body);
     const carbon = this.pbr(this.spec.look.accent, { metalness: 0.4, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.08 });
@@ -2325,7 +2121,7 @@ export class VehicleModel {
         : spec.look.kind === 'hypercar' || spec.look.kind === 'evbike' || spec.look.kind === 'suprim'
           ? this.pbr(0x2b3036, { metalness: 0.95, roughness: 0.25 }) // dark forged alloys
           : this.pbr(0xd2d6da, { metalness: 0.95, roughness: 0.22 }) // bright alloys
-      : this.mat(spec.look.kind === 'tank' ? 0x4a4f3c : spec.look.kind === 'bike' ? 0x2a2f34 : spec.look.kind === 'auto' ? 0xa7adb3 : 0xb8bcc2);
+      : this.mat(spec.look.kind === 'tank' ? 0x4a4f3c : spec.look.kind === 'auto' ? 0xa7adb3 : 0xb8bcc2);
     const r = spec.wheelRadius;
     const w = spec.wheelWidth;
     const kind = spec.look.kind;
@@ -2369,9 +2165,7 @@ export class VehicleModel {
       pivot.position.set(d.x, spec.connY - spec.susp.rest, d.z);
       const steer = new THREE.Group();
       const spin = new THREE.Group();
-      const bike = spec.look.kind === 'bike';
-      if (bike) this.bikeWheel(spin, d.steer);
-      else if (kind === 'rickshaw') {
+      if (kind === 'rickshaw') {
         spin.add(new THREE.Mesh(tireG, tireM), new THREE.Mesh(rimG, hubM));
         if (spokesG) spin.add(new THREE.Mesh(spokesG, hubM));
       } else if (kind === 'tank') {
@@ -2418,84 +2212,16 @@ export class VehicleModel {
         }
         spin.add(dish);
       }
-      if (bike && d.steer) {
-        // raked steering axis: pivot -> tilt (axis leans back) -> steer (yaw about that axis) -> untilt (wheel level again) -> spin
-        const tilt = new THREE.Group();
-        tilt.rotation.x = -RAKE;
-        const untilt = new THREE.Group();
-        untilt.rotation.x = RAKE;
-        pivot.add(tilt);
-        tilt.add(steer);
-        steer.add(untilt);
-        untilt.add(spin);
-        if (this.frontFork) this.frontFork(steer, untilt);
+      steer.add(spin);
+      pivot.add(steer);
+      if (first && d.steer && this.frontFork) {
+        this.frontFork(steer, steer);
         this.frontFork = null;
-      } else {
-        steer.add(spin);
-        pivot.add(steer);
-        if (first && d.steer && this.frontFork) {
-          this.frontFork(steer, steer);
-          this.frontFork = null;
-        }
       }
       first = false;
       this.root.add(pivot);
       this.wheels.push({ pivot, steer, spin });
     }
-  }
-
-  /** Sport-bike wheel (axle = local X): round-profile tyre, dark 5-spoke alloy with a teal ring, brake discs, hub. */
-  private bikeWheel(spin: THREE.Group, front: boolean): void {
-    const r = this.spec.wheelRadius;
-    const hw = front ? 0.06 : 0.09; // half tyre width: 120 front, 180 rear
-    const rimR = 0.215;
-    const tireM = this.mat(0x141518);
-    const rimM = this.mat(0x2b3036);
-    const spokeM = this.mat(0x7d858d);
-    const discM = this.mat(0xb9bec4);
-    const teal = this.mat(EV_TEAL, { emissive: 0x0c6f5c });
-    const prof = [
-      [rimR - 0.01, -hw * 0.8], [r * 0.86, -hw * 0.98], [r * 0.95, -hw * 0.86], [r * 0.99, -hw * 0.5], [r, -hw * 0.15],
-      [r, hw * 0.15], [r * 0.99, hw * 0.5], [r * 0.95, hw * 0.86], [r * 0.86, hw * 0.98], [rimR - 0.01, hw * 0.8],
-    ].map(([x, y]) => new THREE.Vector2(x, y));
-    const tyre = this.mesh(new THREE.LatheGeometry(prof, 32), tireM, 0, 0, 0, spin);
-    tyre.rotation.z = Math.PI / 2; // lathe axis Y -> X
-    const face = new THREE.CylinderGeometry(rimR, rimR, 0.02, 24);
-    const ringG = new THREE.TorusGeometry(rimR - 0.012, 0.007, 6, 32);
-    const spokeG = new THREE.BoxGeometry(0.016, 0.17, 0.034);
-    const hubG = new THREE.CylinderGeometry(0.04, 0.04, hw * 1.7, 12);
-    const discG = new THREE.CylinderGeometry(front ? 0.13 : 0.11, front ? 0.13 : 0.11, 0.006, 24);
-    this.geos.push(face, ringG, spokeG, hubG, discG);
-    for (const sx of [1, -1]) {
-      const x = sx * hw * 0.55;
-      const f = new THREE.Mesh(face, rimM);
-      f.rotation.z = Math.PI / 2;
-      f.position.x = x;
-      const ring = new THREE.Mesh(ringG, teal);
-      ring.rotation.y = Math.PI / 2;
-      ring.position.x = x + sx * 0.011;
-      spin.add(f, ring);
-      for (let k = 0; k < 5; k++) {
-        const arm = new THREE.Group();
-        arm.rotation.x = (k / 5) * Math.PI * 2;
-        arm.position.x = x + sx * 0.012;
-        const sp = new THREE.Mesh(spokeG, spokeM);
-        sp.position.y = 0.12;
-        arm.add(sp);
-        spin.add(arm);
-      }
-      if (front || sx < 0) {
-        const disc = new THREE.Mesh(discG, discM);
-        disc.rotation.z = Math.PI / 2;
-        disc.position.x = sx * (front ? 0.075 : 0.07);
-        spin.add(disc);
-      }
-    }
-    const hub = new THREE.Mesh(hubG, discM);
-    hub.rotation.z = Math.PI / 2;
-    spin.add(hub);
-    this.mesh(this.cyl(0.07, 0.008, 20), teal, hw * 1.25 * (front ? -1 : 1), 0, 0, spin).rotation.z = Math.PI / 2; // sprocket / hub cap
-    tyre.castShadow = true;
   }
 
   /** Burnt out: everything left on the wreck turns black. */

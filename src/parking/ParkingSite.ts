@@ -40,11 +40,31 @@ export const SIDE_DRIVE: LotRect = { id: 'sidedrive', s0: 108, s1: 116, n0: -14.
 
 export const PARKING_LOTS: ReadonlyArray<LotRect> = [MALL_LOT, APRON, EVLAB_LOT, FRONT_ROW, SIDE_LOT, SIDE_DRIVE];
 
+/**
+ * FUEL AREAS: land kept free for fuel stations (nothing is built here yet - no pumps, no roof, no paint).
+ * A fuel vehicle that stops inside one gets its tank filled (see vehicles/FuelAreas.ts). Same lot frame as the parking lots.
+ * Move s0/s1 along F4 / n0/n1 across it; add another entry to add another area.
+ */
+export interface FuelLot { id: string; nameBn: string; s0: number; s1: number; n0: number; n1: number }
+export const FUEL_LOTS: ReadonlyArray<FuelLot> = [
+  { id: 'fuel-1', nameBn: 'ফুয়েল এরিয়া ১', s0: 92, s1: 124, n0: 14, n1: 40 },
+  { id: 'fuel-2', nameBn: 'ফুয়েল এরিয়া ২', s0: 158, s1: 190, n0: -40, n1: -14.5 },
+];
+
+/** World position -> lot frame (s along F4, n across it). */
+export function worldToLot(x: number, z: number): { s: number; n: number } {
+  const dx = x - OX, dz = z - OZ;
+  return { s: dx * UX + dz * UZ, n: dx * NX + dz * NZ };
+}
+
 /** True on a lot (+ margin): no trees, rocks or grass here. */
 export function parkingContains(x: number, z: number, margin = 0): boolean {
   const dx = x - OX, dz = z - OZ;
   const s = dx * UX + dz * UZ, n = dx * NX + dz * NZ;
   for (const l of PARKING_LOTS) {
+    if (s >= l.s0 - margin && s <= l.s1 + margin && n >= l.n0 - margin && n <= l.n1 + margin) return true;
+  }
+  for (const l of FUEL_LOTS) {
     if (s >= l.s0 - margin && s <= l.s1 + margin && n >= l.n0 - margin && n <= l.n1 + margin) return true;
   }
   return false;
@@ -55,7 +75,6 @@ const SH = EVLAB_LOT.s0 - 48;
 
 /** Row A (nose to the road): the eight small road vehicles. Row B: bus (along the road), tank and helicopter pad. */
 export const EVLAB_SLOTS = {
-  bike: { s: 52.5 + SH, n: 16.6 },
   evbike: { s: 56.5 + SH, n: 16.6 },
   rickshaw: { s: 60.5 + SH, n: 16.8 },
   auto: { s: 64.5 + SH, n: 16.8 },
