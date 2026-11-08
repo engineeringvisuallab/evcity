@@ -94,6 +94,79 @@ function boardText(q: PlannedSign): string {
   return q.rows.map((r) => `${r.arrow} ${r.en} ${(r.km ?? 0).toFixed(1)}`).join(' | ');
 }
 
+/** STEP 6: where do boards stand and where do they not? Printed numbers only (no pass/fail), the decision what to fill is the user's. */
+function coverageReport(net: { roads: readonly PlanRoad[]; pads: readonly { x: number; z: number; arms: readonly { roadId: number }[] }[] }, signs: PlannedSign[], skipped: Record<string, number>): void {
+  console.log('\n--- coverage (Step 6) ---');
+  const padsOf = new Map<number, number>();
+  for (const p of net.pads) for (const a of new Set(p.arms.map((x) => x.roadId))) padsOf.set(a, (padsOf.get(a) ?? 0) + 1);
+  const byRoad = new Map<number, PlannedSign[]>();
+  for (const q of signs) (byRoad.get(q.roadId) ?? byRoad.set(q.roadId, []).get(q.roadId)!).push(q);
+
+  type Row = { roads: number; withPad: number; withBoard: number; boards: number; km: number; kmBoard: number };
+  const kinds = new Map<string, Row>();
+  const get = (k: string): Row => kinds.get(k) ?? (kinds.set(k, { roads: 0, withPad: 0, withBoard: 0, boards: 0, km: 0, kmBoard: 0 }), kinds.get(k)!);
+  for (const r of net.roads) {
+    const key = r.kind + (r.lanes >= 4 && r.kind !== 'highway' && r.kind !== 'arterial' ? ' (4+ lane)' : '');
+    const k = get(key);
+    const n = byRoad.get(r.id)?.length ?? 0;
+    k.roads++;
+    k.km += r.length / 1000;
+    if ((padsOf.get(r.id) ?? 0) > 0) k.withPad++;
+    if (n > 0) {
+      k.withBoard++;
+      k.boards += n;
+      k.kmBoard += r.length / 1000;
+    }
+  }
+  console.log('road kind'.padEnd(22) + 'roads  w/pad  w/board  boards    km  km-with-board');
+  for (const [key, k] of [...kinds].sort())
+    console.log(key.padEnd(22) + [k.roads, k.withPad, k.withBoard, k.boards].map((n) => String(n).padStart(5)).join('  ') + k.km.toFixed(1).padStart(7) + k.kmBoard.toFixed(1).padStart(10));
+
+  // roads with NO board, grouped by why
+  const noPad: PlanRoad[] = [];
+  const padNoBoard: PlanRoad[] = [];
+  for (const r of net.roads) {
+    if (byRoad.has(r.id)) continue;
+    ((padsOf.get(r.id) ?? 0) === 0 ? noPad : padNoBoard).push(r);
+  }
+  const list = (title: string, rs: PlanRoad[]): void => {
+    console.log(`\n${title}: ${rs.length} roads, ${(rs.reduce((a, r) => a + r.length, 0) / 1000).toFixed(1)} km`);
+    const perKind = new Map<string, number>();
+    for (const r of rs) perKind.set(r.kind, (perKind.get(r.kind) ?? 0) + 1);
+    console.log('  by kind: ' + [...perKind].map(([k, n]) => `${k} ${n}`).join(', '));
+    for (const r of [...rs].sort((a, b) => b.length - a.length).slice(0, 12)) console.log(`  #${r.id} ${r.name} (${r.kind} L${r.lanes}) ${r.length.toFixed(0)} m, pads ${padsOf.get(r.id) ?? 0}`);
+  };
+  list('roads with no junction pad at all (not in the sign graph)', noPad);
+  list('roads that touch a pad but got no board', padNoBoard);
+
+  // long stretches without a board, per road and driving direction (boards only help the driver who passes them in their own direction)
+  const gaps: { r: PlanRoad; dir: number; gap: number; from: number }[] = [];
+  for (const r of net.roads) {
+    if (r.kind === 'local' && r.length < 800) continue;
+    for (const dir of [1, -1]) {
+      const ss = (byRoad.get(r.id) ?? []).filter((q) => q.dir === dir).map((q) => q.s).sort((a, b) => a - b);
+      const pts = [0, ...ss, r.length];
+      for (let i = 1; i < pts.length; i++) {
+        const gap = pts[i] - pts[i - 1];
+        if (gap > 1500) gaps.push({ r, dir, gap, from: pts[i - 1] });
+      }
+    }
+  }
+  console.log(`\nstretches over 1500 m with no board in that driving direction: ${gaps.length}`);
+  for (const g of gaps.sort((a, b) => b.gap - a.gap).slice(0, 12)) console.log(`  #${g.r.id} ${g.r.name} (${g.r.kind}) dir ${g.dir > 0 ? '+' : '-'}: ${g.gap.toFixed(0)} m from s=${g.from.toFixed(0)}`);
+
+  // the four gaps the user listed
+  console.log('\nthe four known gaps:');
+  console.log(`  (a) short blocks: ${skipped['advance: block too short'] ?? 0} advance candidates dropped (block too short)`);
+  const small = net.roads.filter((r) => r.kind === 'local' && r.lanes >= 4);
+  console.log(`  (d) 4+ lane local roads: ${small.length}, with a board: ${small.filter((r) => byRoad.has(r.id)).length}, lengths ${small.map((r) => r.length.toFixed(0)).join(' ')} m`);
+  const sea = net.roads.filter((r) => /sea\s*airport/i.test(r.name));
+  for (const r of sea) console.log(`  (d) ${r.name} #${r.id} (${r.kind} L${r.lanes}) ${r.length.toFixed(0)} m, pads ${padsOf.get(r.id) ?? 0}, boards ${byRoad.get(r.id)?.length ?? 0}`);
+  const confirmEligible = net.roads.filter((r) => SIGN_RULES.confirmKinds.includes(r.kind));
+  const confirmCount = signs.filter((q) => q.purpose === 'confirm').length;
+  console.log(`  (c) confirm boards: ${confirmCount} on ${confirmEligible.length} highway/arterial/collector roads (${(confirmEligible.reduce((a, r) => a + r.length, 0) / 1000).toFixed(1)} km)`);
+}
+
 async function partB(): Promise<void> {
   console.log('\n--- Part B: real map ---');
   let TerrainGenerator: typeof import('../src/terrain/TerrainGenerator').TerrainGenerator;
@@ -124,13 +197,13 @@ async function partB(): Promise<void> {
   ok(signs.every((q) => q.purpose === 'advance' || q.style === 'side'), 'confirm boards are always side boards');
   ok(
     signs.every((q) => {
-      if (q.purpose !== 'advance') return true;
+      if (q.purpose !== 'advance' || q.short) return true;
       const r = byId.get(q.roadId)!;
       if (r.kind === 'highway' || r.kind === 'arterial') return q.style === 'overhead';
       if (r.lanes < 4) return q.style === 'side';
       return true; // 4+ lane city road: either, decided by the junction
     }),
-    'advance boards: highway / arterial overhead, roads under 4 lanes side',
+    'advance boards: highway / arterial overhead, roads under 4 lanes side (short-block boards are always side)',
   );
   const wideCity = signs.filter((q) => q.purpose === 'advance' && q.roadKind !== 'highway' && q.roadKind !== 'arterial' && q.lanes >= 4);
   console.log(`4+ lane city roads: ${wideCity.filter((q) => q.style === 'overhead').length} overhead (special junction), ${wideCity.filter((q) => q.style === 'side').length} side`);
@@ -188,7 +261,7 @@ async function partB(): Promise<void> {
   for (const q of signs) {
     if (q.purpose !== 'advance') continue;
     const th = q.padHeading;
-    const pad = net.pads[q.padId];
+    const pad = plan.pads[q.padId];
     for (const r of q.rows) {
       const d = pos.get(r.en);
       if (!d) continue;
@@ -204,6 +277,24 @@ async function partB(): Promise<void> {
   }
   console.log(`arrow vs straight-line bearing: ${contradictions} clear contradictions in ${rowsChecked} rows`);
   for (const e of examples) console.log('  WARN  ' + e);
+
+  // ---- STEP 6 rules
+  const nReal = net.pads.length;
+  ok(plan.pads.length === nReal + plan.virtualPads, `junction list = ${nReal} real + ${plan.virtualPads} virtual pads`);
+  let nearReal = 0;
+  for (const v of plan.pads.slice(nReal)) if (net.pads.some((p) => Math.hypot(p.x - v.x, p.z - v.z) < SIGN_RULES.virtualPadMinGapM - 1e-6)) nearReal++;
+  ok(nearReal === 0, `no virtual pad within ${SIGN_RULES.virtualPadMinGapM} m of a real pad (${nearReal})`);
+  const shorts = signs.filter((q) => q.short);
+  ok(shorts.every((q) => q.style === 'side' && q.purpose === 'advance'), `${shorts.length} short-block boards are all side advance boards`);
+  ok(shorts.every((q) => q.dM >= SIGN_RULES.shortBlockMinM - SIGN_RULES.shortBlockFromBehindM - 10), 'short-block boards stand at least ~35 m before their junction');
+  ok(signs.filter((q) => q.purpose === 'advance' && !q.short).every((q) => q.dM >= SIGN_RULES.minAdvanceM - 1e-6), 'normal advance boards stand at least 70 m before the junction');
+  const confirms = signs.filter((q) => q.purpose === 'confirm');
+  let confirmGapBad = 0;
+  for (const a of confirms) for (const b of confirms) if (a !== b && a.roadId === b.roadId && a.dir === b.dir && Math.abs(a.s - b.s) < SIGN_RULES.sameGapM) confirmGapBad++;
+  ok(confirmGapBad === 0, `confirm boards of one road and direction are >= ${SIGN_RULES.sameGapM} m apart`);
+  ok(signs.every((q) => q.purpose !== 'confirm' || q.dM >= 60), 'confirm boards stand at least 60 m after their junction');
+  ok(signs.every((q) => q.padId >= 0 && q.padId < plan.pads.length), 'every board points to an existing junction');
+  coverageReport({ roads: net.roads, pads: plan.pads }, signs, plan.skipped);
 
   console.log('\nfirst 20 boards (id purpose style road D | rows):');
   for (const q of signs.slice(0, 20)) console.log(`  #${q.id} ${q.purpose} ${q.style} ${q.roadName} (${q.roadKind} L${q.lanes}) ${q.dM.toFixed(0)} m | ${boardText(q)}`);

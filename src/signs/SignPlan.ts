@@ -21,6 +21,7 @@
 import { DESTINATIONS, type Destination } from './SignDestinations';
 import { RoadDistances, type GraphEdge, type GraphPad, type GraphRoad } from './RoadDistance';
 import type { SignArrow, SignColor, SignRow } from './SignFormat';
+import { gantryEdge } from './GantryLayout';
 
 export type SignStyle = 'overhead' | 'side';
 export type SignPurpose = 'advance' | 'confirm';
@@ -68,6 +69,15 @@ export const SIGN_RULES = {
   /** Two boards of the same kind on the same road and direction closer than this: the confirm board is dropped. */
   sameGapM: 150,
   maxRows: 4,
+  /** STEP 6 - short block (too short for an advance board): a side board this far before the junction, if the block is at least `shortBlockMinM` long. */
+  shortBlockMinM: 75,
+  shortBlockFromBehindM: 30,
+  /** STEP 6 - long stretch of a main road: another confirm board every this many metres, as long as at least `confirmEndKeepM` remain to the next junction. */
+  confirmEveryM: 1500,
+  confirmEndKeepM: 500,
+  /** STEP 6 - T-junctions / crossings without a pad: a virtual junction is made when two roads meet (end on the other road, or cross at grade) and no real pad is within this distance. */
+  virtualPadMinGapM: 45,
+  virtualPadTouchM: 8,
   /** |angle| below this (degrees) = ahead. */
   aheadDeg: 35,
 };
@@ -102,6 +112,8 @@ export interface PlannedSign {
   fz: number;
   /** false = the side spot is on another road or in a junction (a side board cannot stand there). */
   sideOk: boolean;
+  /** STEP 6: a board for a short block (always a side board, even on a highway / arterial). */
+  short?: boolean;
   rows: SignRow[];
 }
 
@@ -112,6 +124,10 @@ export interface SignPlanResult {
   /** Rows whose arrows were the same although they point along different arms (the board is ambiguous). */
   sameArrowBoards: number;
   summary: string;
+  /** The junctions the boards refer to by `padId`: the real pads first, then the virtual ones (T-junctions / crossings that have no pad). */
+  pads: GraphPad[];
+  /** How many virtual junctions were added. */
+  virtualPads: number;
 }
 
 const TWO_PI = Math.PI * 2;
@@ -218,12 +234,116 @@ function spotAt(net: PlanNet, r: PlanRoad, s: number, driveDir: 1 | -1, style: S
   fz /= fl;
   const sideOk = !(net.surfaceAt(sx, sz) === 1 || net.padAt(sx, sz));
   if (style === 'side' && !sideOk) return null;
+  if (style === 'overhead') {
+    // STEP 6: neither gantry post may stand on a junction or on another road's surface (the caller then tries another distance along the road)
+    const edge = gantryEdge(r.halfWidth, r.shoulder);
+    for (const sg of [1, -1]) {
+      const px = p.x + lx * edge * sg;
+      const pz = p.z + lz * edge * sg;
+      if (net.surfaceAt(px, pz) === 1 || net.padAt(px, pz)) return null;
+    }
+  }
   return { s, x: p.x, z: p.z, hx, hz, sx, sz, fx, fz, sideOk };
+}
+
+/**
+ * STEP 6: junctions of two roads that have no pad (a road ends on another road, two roads meet end to end, or two roads cross at grade). The
+ * pad graph does not know them, so boards never stood before them and road distances could not turn there. Earth roads are ignored, a crossing
+ * where either road is on a bridge is not a junction. Returns small pad-like points (both roads as arms).
+ */
+export function findVirtualPads(net: PlanNet): GraphPad[] {
+  const R = SIGN_RULES;
+  const live = net.roads.filter((r) => !r.earth && r.xs.length >= 2);
+  const out: GraphPad[] = [];
+  const near = (x: number, z: number): boolean => {
+    for (const p of net.pads) if (Math.hypot(p.x - x, p.z - z) < R.virtualPadMinGapM) return true;
+    for (const p of out) if (Math.hypot(p.x - x, p.z - z) < R.virtualPadMinGapM) return true;
+    return false;
+  };
+  const bridgeNear = (r: PlanRoad, s: number): boolean => {
+    const reach = Math.ceil(30 / Math.max(1, r.step)) + 1;
+    const i = roadAt(r, s).i;
+    for (let k = Math.max(0, i - reach); k <= Math.min(r.xs.length - 1, i + reach); k++) if (r.bridgeOf[k] >= 0) return true;
+    return false;
+  };
+  const add = (x: number, z: number, a: PlanRoad, b: PlanRoad): void => {
+    if (near(x, z)) return;
+    out.push({ x, z, arms: [{ roadId: a.id }, { roadId: b.id }] });
+  };
+  const box = live.map((r) => {
+    let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (let i = 0; i < r.xs.length; i++) {
+      x0 = Math.min(x0, r.xs[i]); x1 = Math.max(x1, r.xs[i]); z0 = Math.min(z0, r.zs[i]); z1 = Math.max(z1, r.zs[i]);
+    }
+    return { x0: x0 - 20, x1: x1 + 20, z0: z0 - 20, z1: z1 + 20 };
+  });
+  const distTo = (px: number, pz: number, r: PlanRoad): { d: number; s: number } => {
+    let best = Infinity;
+    let bs = 0;
+    for (let i = 0; i < r.xs.length - 1; i++) {
+      const dx = r.xs[i + 1] - r.xs[i];
+      const dz = r.zs[i + 1] - r.zs[i];
+      const l2 = dx * dx + dz * dz || 1;
+      const t = Math.max(0, Math.min(1, ((px - r.xs[i]) * dx + (pz - r.zs[i]) * dz) / l2));
+      const d = Math.hypot(r.xs[i] + dx * t - px, r.zs[i] + dz * t - pz);
+      if (d < best) {
+        best = d;
+        bs = r.cum[i] + t * (r.cum[i + 1] - r.cum[i]);
+      }
+    }
+    return { d: best, s: bs };
+  };
+  for (let i = 0; i < live.length; i++) {
+    const a = live[i];
+    // (1) an end of road a touches road b
+    if (!a.closed) {
+      for (const idx of [0, a.xs.length - 1]) {
+        const px = a.xs[idx];
+        const pz = a.zs[idx];
+        for (let j = 0; j < live.length; j++) {
+          if (j === i) continue;
+          const b = live[j];
+          if (px < box[j].x0 || px > box[j].x1 || pz < box[j].z0 || pz > box[j].z1) continue;
+          const q = distTo(px, pz, b);
+          if (q.d <= R.virtualPadTouchM && !bridgeNear(b, q.s)) add(px, pz, a, b);
+        }
+      }
+    }
+    // (2) road a crosses road b
+    for (let j = i + 1; j < live.length; j++) {
+      const b = live[j];
+      if (box[i].x1 < box[j].x0 || box[j].x1 < box[i].x0 || box[i].z1 < box[j].z0 || box[j].z1 < box[i].z0) continue;
+      for (let u = 0; u < a.xs.length - 1; u++) {
+        for (let v = 0; v < b.xs.length - 1; v++) {
+          const p = a.xs[u];
+          const q = a.zs[u];
+          const r2 = a.xs[u + 1] - p;
+          const s2 = a.zs[u + 1] - q;
+          const x = b.xs[v];
+          const z = b.zs[v];
+          const t2 = b.xs[v + 1] - x;
+          const w2 = b.zs[v + 1] - z;
+          const den = r2 * w2 - s2 * t2;
+          if (Math.abs(den) < 1e-9) continue;
+          const tt = ((x - p) * w2 - (z - q) * t2) / den;
+          const uu = ((x - p) * s2 - (z - q) * r2) / den;
+          if (tt < 0 || tt > 1 || uu < 0 || uu > 1) continue;
+          const sa = a.cum[u] + tt * (a.cum[u + 1] - a.cum[u]);
+          const sb = b.cum[v] + uu * (b.cum[v + 1] - b.cum[v]);
+          if (bridgeNear(a, sa) || bridgeNear(b, sb)) continue;
+          add(p + tt * r2, q + tt * s2, a, b);
+        }
+      }
+    }
+  }
+  return out;
 }
 
 export function planRoadSigns(net: PlanNet, destinations: readonly Destination[] = DESTINATIONS, home = { x: 0, z: 0 }): SignPlanResult {
   const R = SIGN_RULES;
-  const rd = new RoadDistances(net.roads, net.pads, destinations, home);
+  const virtual = findVirtualPads(net);
+  const pads: GraphPad[] = [...net.pads, ...virtual];
+  const rd = new RoadDistances(net.roads, pads, destinations, home);
   const roadById = new Map<number, PlanRoad>();
   for (const r of net.roads) roadById.set(r.id, r);
   const skipped: Record<string, number> = {};
@@ -232,7 +352,7 @@ export function planRoadSigns(net: PlanNet, destinations: readonly Destination[]
   };
 
   // ---- the arms of every junction: real edges + stubs
-  const arms: Arm[][] = net.pads.map(() => []);
+  const arms: Arm[][] = pads.map(() => []);
   rd.graph.adj.forEach((list, p) => {
     for (const e of list) arms[p].push({ edge: e, roadId: e.roadId, dir: e.dir, s0: e.s0, len: e.len, heading: e.heading });
   });
@@ -261,7 +381,7 @@ export function planRoadSigns(net: PlanNet, destinations: readonly Destination[]
   const planned: Omit<PlannedSign, 'id'>[] = [];
   let sameArrowBoards = 0;
 
-  for (let p = 0; p < net.pads.length; p++) {
+  for (let p = 0; p < pads.length; p++) {
     const pa = arms[p];
     if (pa.length < R.minArms) continue;
     // best arm per destination
@@ -313,20 +433,28 @@ export function planRoadSigns(net: PlanNet, destinations: readonly Destination[]
 
       // ---- where it stands: D metres before the junction along this approach road
       const special = pa.length >= 4 || pa.some((q) => ['highway', 'arterial'].includes(roadById.get(q.roadId)?.kind ?? ''));
-      const style: SignStyle = overheadAt(road, special) ? 'overhead' : 'side';
-      const dMax = a.len - R.minGapM;
+      const style: SignStyle = overheadAt(road, special) && !(a.len - R.minGapM < R.minAdvanceM) ? 'overhead' : 'side';
+      let dMax = a.len - R.minGapM;
+      let shortBlock = false;
       if (dMax < R.minAdvanceM) {
-        skip('advance: block too short');
-        continue;
+        // STEP 6: a short block gets a side board (never overhead), standing `shortBlockFromBehindM` after the junction behind it
+        if (a.len < R.shortBlockMinM) {
+          skip('advance: block too short');
+          continue;
+        }
+        shortBlock = true;
+        dMax = a.len - R.shortBlockFromBehindM;
       }
-      const dPref = Math.min(advanceDistance(road, style), dMax);
+      const dPref = shortBlock ? dMax : Math.min(advanceDistance(road, style), dMax);
       const tryD = (dd: number): Spot | null => {
         const q = spotAt(net, road, a.s0 + a.dir * dd, (a.dir * -1) as 1 | -1, style);
         return q ? { ...q, d: dd } : null;
       };
       let sp: Spot | null = null;
-      for (let dd = dPref; dd >= R.minAdvanceM && !sp; dd -= 10) sp = tryD(dd);
+      const ddMin = shortBlock ? R.shortBlockMinM - R.shortBlockFromBehindM - 10 : R.minAdvanceM;
+      for (let dd = dPref; dd >= ddMin && !sp; dd -= 10) sp = tryD(dd);
       for (let dd = dPref + 10; dd <= dMax && !sp; dd += 10) sp = tryD(dd);
+      if (sp && shortBlock) skip('advance: short block, side board instead');
       if (!sp) {
         skip('advance: no free spot (bridge / junction)');
         continue;
@@ -371,59 +499,71 @@ export function planRoadSigns(net: PlanNet, destinations: readonly Destination[]
         fx: sp.fx,
         fz: sp.fz,
         sideOk: sp.sideOk,
+        short: shortBlock || undefined,
         rows: withArm.map((w) => w.row),
       });
     }
 
-    // ---- CONFIRM boards: after the junction, along each real exit of a long main road
+    // ---- CONFIRM boards: after the junction, along each exit of a long main road (also a road that dead-ends behind the last junction),
+    // the first `confirmAfterM` after the junction, then another one every `confirmEveryM` while `confirmEndKeepM` remain
     for (let ei = 0; ei < pa.length; ei++) {
       const e = pa[ei];
-      if (!e.edge) continue;
       const road = roadById.get(e.roadId);
       if (!road || !R.confirmKinds.includes(road.kind) || e.len < R.confirmMinEdgeM) continue;
-      const sp0 = spotAt(net, road, e.s0 + e.dir * R.confirmAfterM, e.dir, 'side');
-      if (!sp0) {
-        skip('confirm: no free spot (bridge / junction)');
-        continue;
+      for (let off = R.confirmAfterM; off <= e.len - (off === R.confirmAfterM ? 0 : R.confirmEndKeepM); off += off === R.confirmAfterM ? R.confirmEveryM - R.confirmAfterM : R.confirmEveryM) {
+        let sp0: Omit<Spot, 'd'> | null = null;
+        let used = off;
+        for (const shift of [0, 10, -10, 20, -20, 40, -40, 60]) {
+          if (off + shift < 60) continue;
+          sp0 = spotAt(net, road, e.s0 + e.dir * (off + shift), e.dir, 'side');
+          if (sp0) {
+            used = off + shift;
+            break;
+          }
+        }
+        if (!sp0) {
+          skip('confirm: no free spot (bridge / junction)');
+          continue;
+        }
+        // the places this exit leads to (best arm = this exit), biggest first; the remaining distance is measured from the board
+        const list: { d: number; rank: number; m: number }[] = [];
+        destinations.forEach((dest, d) => {
+          if (best[d] !== ei) return;
+          const m = cost[ei][d] - used;
+          if (m < R.hereM || m > (R.maxM[dest.rank] ?? 0) || dest.rank > 2) return;
+          list.push({ d, rank: dest.rank, m });
+        });
+        if (list.length === 0) {
+          skip('confirm: nothing worth listing');
+          continue;
+        }
+        list.sort((u, v) => u.rank - v.rank || u.m - v.m);
+        const pick = list.slice(0, 2);
+        planned.push({
+          purpose: 'confirm',
+          style: 'side',
+          color: signColor(road),
+          padId: p,
+          roadId: road.id,
+          roadName: road.name,
+          roadKind: road.kind,
+          lanes: road.lanes,
+          s: sp0.s,
+          dir: e.dir,
+          dM: used,
+          padHeading: Math.atan2(sp0.hz, sp0.hx),
+          x: sp0.x,
+          z: sp0.z,
+          hx: sp0.hx,
+          hz: sp0.hz,
+          sx: sp0.sx,
+          sz: sp0.sz,
+          fx: sp0.fx,
+          fz: sp0.fz,
+          sideOk: true,
+          rows: pick.map((c) => ({ en: destinations[c.d].en, bn: destinations[c.d].bn, km: c.m / 1000, arrow: 'ahead' as SignArrow })),
+        });
       }
-      // the places this exit leads to (best arm = this exit), biggest first; the remaining distance is measured from the board
-      const list: { d: number; rank: number; m: number }[] = [];
-      destinations.forEach((dest, d) => {
-        if (best[d] !== ei) return;
-        const m = cost[ei][d] - R.confirmAfterM;
-        if (m < R.hereM || m > (R.maxM[dest.rank] ?? 0) || dest.rank > 2) return;
-        list.push({ d, rank: dest.rank, m });
-      });
-      if (list.length === 0) {
-        skip('confirm: nothing worth listing');
-        continue;
-      }
-      list.sort((u, v) => u.rank - v.rank || u.m - v.m);
-      const pick = list.slice(0, 2);
-      planned.push({
-        purpose: 'confirm',
-        style: 'side',
-        color: signColor(road),
-        padId: p,
-        roadId: road.id,
-        roadName: road.name,
-        roadKind: road.kind,
-        lanes: road.lanes,
-        s: sp0.s,
-        dir: e.dir,
-        dM: R.confirmAfterM,
-        padHeading: Math.atan2(sp0.hz, sp0.hx),
-        x: sp0.x,
-        z: sp0.z,
-        hx: sp0.hx,
-        hz: sp0.hz,
-        sx: sp0.sx,
-        sz: sp0.sz,
-        fx: sp0.fx,
-        fz: sp0.fz,
-        sideOk: true,
-        rows: pick.map((c) => ({ en: destinations[c.d].en, bn: destinations[c.d].bn, km: c.m / 1000, arrow: 'ahead' as SignArrow })),
-      });
     }
   }
 
@@ -474,6 +614,6 @@ export function planRoadSigns(net: PlanNet, destinations: readonly Destination[]
   const summary =
     `Step 3 plan: ${signs.length} boards (advance ${count((q) => q.purpose === 'advance')}, confirm ${count((q) => q.purpose === 'confirm')}; ` +
     `overhead ${count((q) => q.style === 'overhead')}, side ${count((q) => q.style === 'side')}; green ${count((q) => q.color === 'green')}, blue ${count((q) => q.color === 'blue')}); ` +
-    `rows per board ${rowsHist}; ${net.pads.filter((_, p) => arms[p].length >= R.minArms).length} junctions with boards`;
-  return { signs, skipped, sameArrowBoards, summary };
+    `rows per board ${rowsHist}; ${pads.filter((_, p) => arms[p].length >= R.minArms).length} junctions with boards (${virtual.length} virtual)`;
+  return { signs, skipped, sameArrowBoards, summary, pads, virtualPads: virtual.length };
 }

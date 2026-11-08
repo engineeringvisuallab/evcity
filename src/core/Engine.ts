@@ -60,6 +60,7 @@ import { InputManager } from '../input/InputManager';
 import { VoiceManager } from '../audio/VoiceManager';
 import { Environment, LighthouseLight, StreetLights } from '../environment';
 import { RoadSignLayer } from '../signs/RoadSignLayer';
+import { SignPhysics } from '../signs/SignPhysics';
 import { planRoadSigns } from '../signs/SignPlan';
 import { JunctionMirrors } from '../roads/JunctionMirrors';
 import { Toast } from '../ui/Toast';
@@ -138,6 +139,7 @@ export class Engine {
   /** Day / night: street lights on every road + the lighthouse lantern (both follow environment.lampOn). */
   private streetLights: StreetLights;
   private roadSigns: RoadSignLayer;
+  private signPhysics: SignPhysics;
   /** Convex road mirrors at the junctions (2 draw calls for the whole map). */
   private junctionMirrors: JunctionMirrors;
   private lighthouseLight: LighthouseLight | null = null;
@@ -368,13 +370,14 @@ export class Engine {
     this.cameraController.setTrainCamera(this.trainCam);
     // START VIEW: the camera stands behind the player on the apron and looks over F4 at the mall's west door
     this.orbit.yaw = Math.atan2(-this.startPoint.ux, -this.startPoint.uz);
-    // --- road sign boards (Bangla + English). STEP 1: three test boards next to the road nearest to the start point ---
+    // --- road sign boards (Bangla + English) ---
     this.roadSigns = new RoadSignLayer(this.world.root);
-    console.info('[RoadSigns]', this.roadSigns.addStep1TestSigns(roads, (x, z) => this.world.terrain.heightAt(x, z), this.startPoint.x, this.startPoint.z));
     // STEP 3: the plan for the whole map; STEP 4 + 5: every planned board is built (gantries on highways / arterials, side boards elsewhere), the text is drawn only near the player
     const signPlan = planRoadSigns(roads);
     console.info('[RoadSigns]', signPlan.summary);
     console.info('[RoadSigns]', this.roadSigns.addPlanned(roads, signPlan.signs, (x, z) => this.world.terrain.heightAt(x, z)));
+    // STEP 6: the posts and bases of the boards are solid (cars and people hit them), colliders only near the player
+    this.signPhysics = new SignPhysics(physics, this.world.origin, this.roadSigns.solidGroups);
 
     // --- parking lots (asphalt, bay lines; no signboards) ---
     this.parking = new ParkingLots({ root: this.world.root, terrain: this.world.terrain });
@@ -990,6 +993,7 @@ export class Engine {
       this.streetLights.update(lamp, fov, px);
       this.roadSigns.update(lamp);
       this.roadSigns.updateField(this.world.playerWorld.x, this.world.playerWorld.z);
+    this.signPhysics.update(dt, this.world.playerWorld.x, this.world.playerWorld.z);
       this.junctionMirrors.update(lamp);
       NightLamps.on = lamp; // vehicle headlights / tail lights
       this.lighthouseLight?.update(lamp, this.time.elapsed, fov, px);
@@ -1028,6 +1032,7 @@ export class Engine {
       surface: this.world.terrain.roads.surfaceAt(this.world.playerWorld.x, this.world.playerWorld.z),
       roadLines: this.roadDebug.visible,
       railLines: this.railDebug.visible,
+      signs: { ...this.roadSigns.fieldStats, bodies: this.signPhysics.activeCount },
       people: this.people.count,
       cars: this.vehicles.vehicles.length,
       aiCars: this.traffic.aiCount,
@@ -1446,6 +1451,7 @@ export class Engine {
     this.busStops.dispose();
     this.trafficLights.dispose();
     this.streetLights.dispose();
+    this.signPhysics.dispose();
     this.roadSigns.dispose();
     this.junctionMirrors.dispose();
     this.lighthouseLight?.dispose();

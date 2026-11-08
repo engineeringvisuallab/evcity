@@ -69,6 +69,10 @@ export interface QualitySettings {
   maxAniso: number;
   /** The sun shadow map is redrawn every n-th frame (1 = every frame). */
   shadowInterval: number;
+  /** Road sign boards: multiplier of the show / paint / unpaint distances in SIGN_FIELD (1 = high). */
+  signRadiusMul: number;
+  /** Road sign boards: at most this many get their text drawn (a canvas texture) in one frame. */
+  signPaintPerFrame: number;
 }
 
 export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
@@ -78,6 +82,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
     treeMul: 0.35, rockMul: 0.35, grassMul: 0.6, treeMaxLod: 1, grassRadius: 120, grassBlades: 0.6,
     peopleTarget: 12, trafficTarget: 5, maxBuses: 1, flockCount: 4, landAnimals: 24, predators: 2, dolphins: 3, fishSchools: 4,
     lampStepMul: 1.6, lightFxDist: 45, farmMul: 0.65, siteDisposeMul: 2.5, siteMerge: true, siteShadowMinR: 1.2, maxAniso: 2, shadowInterval: 2,
+    signRadiusMul: 0.6, signPaintPerFrame: 1,
   },
   medium: {
     tier: 'medium', maxDpr: 1.25, maxPixels: 2_800_000, antialias: false, powerPreference: 'default',
@@ -85,6 +90,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
     treeMul: 0.65, rockMul: 0.65, grassMul: 0.85, treeMaxLod: 1, grassRadius: 145, grassBlades: 0.8,
     peopleTarget: 22, trafficTarget: 8, maxBuses: 2, flockCount: 8, landAnimals: 42, predators: 3, dolphins: 5, fishSchools: 7,
     lampStepMul: 1.25, lightFxDist: 80, farmMul: 0.85, siteDisposeMul: 0, siteMerge: true, siteShadowMinR: 0.5, maxAniso: 4, shadowInterval: 1,
+    signRadiusMul: 0.8, signPaintPerFrame: 2,
   },
   high: {
     tier: 'high', maxDpr: 2, maxPixels: 8_300_000, antialias: true, powerPreference: 'high-performance',
@@ -92,6 +98,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
     treeMul: 1, rockMul: 1, grassMul: 1, treeMaxLod: 1, grassRadius: 170, grassBlades: 1,
     peopleTarget: 34, trafficTarget: 12, maxBuses: 3, flockCount: 12, landAnimals: 64, predators: 4, dolphins: 8, fishSchools: 10,
     lampStepMul: 1, lightFxDist: 130, farmMul: 1, siteDisposeMul: 0, siteMerge: true, siteShadowMinR: 0, maxAniso: 16, shadowInterval: 1,
+    signRadiusMul: 1, signPaintPerFrame: 3,
   },
 };
 

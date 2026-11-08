@@ -1,9 +1,12 @@
+// (Step 6 added: solid parts of the boards, no gantry post on a junction / road, texture memory estimate.)
 // ROAD SIGNS Step 4 test: npx tsx scripts/signs-gantry-test.ts
 //   Part A  the gantry layout maths (runs anywhere, no node_modules): panels fill the whole width, narrow roads, how rows are split into panels.
 //   Part B  the real game map (needs the game's node_modules, ~10 s): for every planned OVERHEAD board checks that its gantry fits the real road
 //           and that both posts stand on free ground (not on another road, not in a junction), and counts panels per gantry.
 import { GANTRY, gantryEdge, layoutGantry, splitPanels } from '../src/signs/GantryLayout';
 import type { SignArrow, SignRow } from '../src/signs/SignFormat';
+import { gantrySolids, sideSolids, solidsRadius, SOLID } from '../src/signs/SignSolids';
+import { BOARD_PX_PER_M, BOARD_W_PX, boardHeightPx } from '../src/signs/SignCanvas';
 
 let fails = 0;
 const ok = (c: boolean, msg: string): void => {
@@ -55,6 +58,31 @@ function partA(): void {
   ok(splitPanels([row('L', 'left'), row('A', 'ahead'), row('R', 'right'), row('X', 'ahead')]).length === 3, '4 rows still give at most 3 panels');
   const total = (pp: SignRow[][]): number => pp.reduce((n, g) => n + g.length, 0);
   ok(total(splitPanels([row('a', 'left'), row('b', 'left'), row('c', 'right'), row('d', 'ahead')])) === 4, 'no row is lost when splitting');
+}
+
+function partASolids(): void {
+  console.log('\n--- Part A (Step 6): solid parts ---');
+  const edge = 9;
+  const g = gantrySolids(edge, [-0.4, 1.2], 8, GANTRY.postR, GANTRY.postBelowM, GANTRY.baseSizeM, GANTRY.baseHeightM, -0.15);
+  ok(g.length === 4, 'a gantry has 4 solids: 2 posts + 2 concrete bases');
+  const posts = g.filter((x) => x.k === 1);
+  ok(posts.length === 2 && Math.abs(posts[0].cx + edge) < 1e-9 && Math.abs(posts[1].cx - edge) < 1e-9, 'posts stand exactly at +-edge, left and right');
+  ok(posts.every((p) => p.cy + p.hy >= 8 - 1e-9 && p.cy - p.hy <= -GANTRY.postBelowM + 1e-9), 'a post reaches from below the road / its foot up to the top');
+  ok(posts[0].cy - posts[0].hy <= -0.4 - GANTRY.postBelowM + 1e-9, 'a post whose foot is lower than the road goes below its own foot');
+  ok(g.filter((x) => x.k === 0).every((b) => Math.abs(b.hx * 2 - GANTRY.baseSizeM) < 1e-9), 'concrete bases have the model size');
+  ok(g.every((x) => Math.abs(x.cx) <= edge + 1e-9), 'no solid sticks into the carriageway (all at |x| >= post edge - base)');
+  ok(g.every((x) => Math.abs(x.cx) - x.hx >= edge - GANTRY.baseSizeM / 2 - 1e-9), 'the inner side of a post / base is at most half a base from the post axis');
+  const sd = sideSolids(3.2, 1.2, 2, 1.2, -0.14, 0.8);
+  ok(sd.length === 3 && sd.filter((x) => x.k === 1).length === 2, 'a side sign has 2 posts + the board');
+  const board = sd.find((x) => x.k === 0)!;
+  ok(Math.abs(board.cy - (2 + 0.6)) < 1e-9 && board.hx > 1.6, 'the side board box sits 2 m above the ground, as wide as the board');
+  ok(sd.filter((x) => x.k === 1).every((p) => Math.abs(p.hx - SOLID.sidePostR) < 1e-9 && p.cy - p.hy <= -0.8 + 1e-9), 'side posts go into the ground');
+  ok(solidsRadius(g) > edge && solidsRadius(sd) > 1.2, 'activation radius covers the solids');
+}
+
+/** Rough GPU memory of one face texture (RGBA8 + mipmaps). */
+function texMB(wPx: number, rows: number): number {
+  return (Math.min(wPx, 4096) * boardHeightPx(rows) * 4 * 1.33) / 1048576;
 }
 
 async function partB(): Promise<void> {
@@ -114,12 +142,55 @@ async function partB(): Promise<void> {
   }
   console.log('gantries by number of panels:', panelsHist, `sign face width ${minSpan.toFixed(1)}..${maxSpan.toFixed(1)} m`);
   // posts on a junction pad / another road are a WARN (Step 5 can shift the gantry along the road), not a failure
-  if (badPost > 0) console.log(`WARN  ${badPost} of ${over.length} gantries have a post on a junction or on another road's surface`);
-  else console.log(`PASS  no gantry post stands in a junction (${over.length} checked)`);
+  ok(badPost === 0, `no gantry post stands on a junction or on another road's surface (${badPost} of ${over.length})`);
+
+  // ---- texture memory (Step 6): how many faces can be painted at once and how much memory that is, per quality preset
+  type Face = { x: number; z: number; mb: number; key: string; gantry: boolean };
+  const faces: Face[] = [];
+  const hs = GANTRY.heightScale;
+  for (const q of plan.signs) {
+    const key = (rows: SignRow[]): string => `${q.color}#${rows.map((r) => `${r.arrow}|${r.en}|${(r.km ?? 0).toFixed(1)}`).join('/')}`;
+    if (q.style === 'side') faces.push({ x: q.sx, z: q.sz, mb: texMB(BOARD_W_PX, q.rows.length), key: key(q.rows), gantry: false });
+    else {
+      const r = byId.get(q.roadId)!;
+      const lay = layoutGantry(gantryEdge(r.halfWidth, r.shoulder), splitPanels(q.rows).length);
+      const panels = splitPanels(q.rows).slice(0, lay.n);
+      const hr = Math.max(...panels.map((p) => p.length));
+      for (const p of panels) faces.push({ x: q.x, z: q.z, mb: texMB((lay.panelW * BOARD_PX_PER_M) / hs, hr), key: `${key(p)}@${lay.panelW.toFixed(1)}x${hr}`, gantry: true });
+    }
+  }
+  const uniq = new Set(faces.map((f) => f.key)).size;
+  console.log(`faces: ${faces.length}, different texts: ${uniq} (sharing saves ${faces.length - uniq} textures)`);
+  const FIELD = { gantry: { paint: 380, unpaint: 600 }, side: { paint: 230, unpaint: 380 } };
+  for (const [tier, mul] of [['low', 0.6], ['medium', 0.8], ['high', 1]] as const) {
+    let peakN = 0;
+    let peakMB = 0;
+    for (let px = -5000; px <= 5000; px += 250) {
+      for (let pz = -5000; pz <= 5000; pz += 250) {
+        let n = 0;
+        let mb = 0;
+        const seen = new Set<string>();
+        for (const f of faces) {
+          const R = (f.gantry ? FIELD.gantry.unpaint : FIELD.side.unpaint) * mul; // worst case: the board is still painted until it is beyond `unpaint`
+          if (Math.hypot(f.x - px, f.z - pz) > R || seen.has(f.key)) continue;
+          seen.add(f.key);
+          n++;
+          mb += f.mb;
+        }
+        if (mb > peakMB) {
+          peakMB = mb;
+          peakN = n;
+        }
+      }
+    }
+    console.log(`texture memory, ${tier}: worst place ${peakN} textures, ${peakMB.toFixed(0)} MB`);
+    if (tier === 'high') ok(peakMB < 700, `high: texture memory under 700 MB in the worst place (${peakMB.toFixed(0)} MB)`);
+  }
 
 }
 
 partA();
+partASolids();
 partB()
   .catch((e) => {
     console.log('Part B error:', e);

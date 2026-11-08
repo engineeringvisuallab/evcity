@@ -6,12 +6,16 @@
 // Step 5: the WHOLE MAP (addPlanned): every board of the plan (SignPlan.ts) is built once, but the text is only drawn near the player (updateField):
 //   - far away a board is hidden, a little nearer it is a plain green / blue board, close up the Bangla + English face is drawn on a canvas texture,
 //   - when the player leaves again the texture is freed, so only a few dozen textures exist at any time (FPS and memory stay flat).
+// Step 6: the Step 1 test boards are gone; boards of the same text share ONE texture (texCache); the SIGN_FIELD distances and the paints per frame follow the
+// Quality preset (Q.signRadiusMul, Q.signPaintPerFrame); every board lists its solid parts (solidGroups) for SignPhysics (cars and people hit the posts).
 // Children use ABSOLUTE world coordinates (parent = world.root, which the floating origin moves), like StreetLights / StationSignLayer.
 import * as THREE from 'three';
 import type { RoadNetwork, RoadSpec } from '../roads';
+import { Q } from '../core/Quality';
 import { BOARD_PX_PER_M, BOARD_W_M, boardHeightM, drawSignCanvas } from './SignCanvas';
 import { GANTRY, gantryEdge, layoutGantry, splitPanels } from './GantryLayout';
-import type { SignColor, SignRow } from './SignFormat';
+import { kmBn, kmEn, type SignColor, type SignRow } from './SignFormat';
+import { gantrySolids, sideSolids, solidsRadius, type SignSolidGroup } from './SignSolids';
 import type { PlannedSign } from './SignPlan';
 
 export interface SideSignSpec {
@@ -66,7 +70,7 @@ const BOARD_COLOR: Record<SignColor, number> = { green: 0x0a6a3c, blue: 0x0b4f9e
 export const SIGN_FIELD = {
   gantry: { show: 800, paint: 380, unpaint: 600 },
   side: { show: 500, paint: 230, unpaint: 380 },
-  /** At most this many boards get their texture drawn in one frame (a canvas costs a few ms). */
+  /** At most this many boards get their texture drawn in one frame (a canvas costs a few ms). The Quality preset lowers it (Q.signPaintPerFrame). */
   paintPerFrame: 3,
 };
 
@@ -78,6 +82,8 @@ interface FaceSlot {
   widthPx?: number;
   heightRows?: number;
   tex: THREE.CanvasTexture | null;
+  /** Key of the shared texture in texCache (null while not painted). */
+  key: string | null;
 }
 
 /** A board of the plan that is hidden / painted by distance. */
@@ -120,6 +126,10 @@ export class RoadSignLayer {
   private metal = new THREE.MeshLambertMaterial({ color: 0x4d5258 });
   private concrete = new THREE.MeshLambertMaterial({ color: 0x9a9a95 });
   private count = 0;
+  /** Textures by what is written on the face: boards with the same text share one texture (refs = faces using it). */
+  private texCache = new Map<string, { tex: THREE.CanvasTexture; refs: number }>();
+  /** Solid parts of every board, for SignPhysics (filled while the boards are built). */
+  readonly solidGroups: SignSolidGroup[] = [];
   /** 1 by day, down to 0.6 at night (the boards are a little darker). */
   private nightK = 1;
 
@@ -133,21 +143,21 @@ export class RoadSignLayer {
   }
 
   /** Boards that are visible right now / have their text drawn right now (for the console and the debug panel). */
-  get fieldStats(): { total: number; visible: number; painted: number } {
+  get fieldStats(): { total: number; visible: number; painted: number; textures: number; solids: number } {
     let visible = 0;
     let painted = 0;
     for (const e of this.entries) {
       if (e.group.visible) visible++;
       if (e.painted) painted++;
     }
-    return { total: this.entries.length, visible, painted };
+    return { total: this.entries.length, visible, painted, textures: this.texCache.size, solids: this.solidGroups.length };
   }
 
   // ----- faces: a material that is a plain board colour until a texture is drawn into it -----
 
   private newSlot(rows: SignRow[], color: SignColor, widthPx?: number, heightRows?: number): FaceSlot {
     const mat = new THREE.MeshBasicMaterial({ color: BOARD_COLOR[color], polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
-    const slot: FaceSlot = { mat, rows, color, widthPx, heightRows, tex: null };
+    const slot: FaceSlot = { mat, rows, color, widthPx, heightRows, tex: null, key: null };
     this.slots.push(slot);
     this.tint(slot);
     return slot;
@@ -158,33 +168,53 @@ export class RoadSignLayer {
     else s.mat.color.setHex(BOARD_COLOR[s.color]).multiplyScalar(this.nightK);
   }
 
-  /** Draws the text of a face into a canvas texture. Does nothing when there is no DOM (headless) or the face is already drawn. */
+  /** What is written on a face (the visible text, colour and size): faces with the same key look the same and share one texture. */
+  private faceKey(s: FaceSlot): string {
+    const rows = s.rows.map((r) => `${r.arrow ?? ''}|${r.bn}|${r.en}|${r.km == null ? '' : `${kmEn(r.km)}~${kmBn(r.km)}`}`).join('/');
+    return `${s.color}#${Math.round(s.widthPx ?? 0)}x${s.heightRows ?? 0}#${rows}`;
+  }
+
+  /** Draws the text of a face into a canvas texture (or takes the texture of a face with the same text). Does nothing when there is no DOM (headless). */
   private paint(s: FaceSlot): boolean {
     if (s.tex) return true;
-    const c = drawSignCanvas(s.rows, s.color, { widthPx: s.widthPx, heightRows: s.heightRows });
-    if (!c) return false;
-    const tex = new THREE.CanvasTexture(c);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.anisotropy = 8;
-    s.tex = tex;
-    s.mat.map = tex;
+    const key = this.faceKey(s);
+    let hit = this.texCache.get(key);
+    if (!hit) {
+      const c = drawSignCanvas(s.rows, s.color, { widthPx: s.widthPx, heightRows: s.heightRows });
+      if (!c) return false;
+      const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = Math.min(8, Q.maxAniso);
+      hit = { tex, refs: 0 };
+      this.texCache.set(key, hit);
+    }
+    hit.refs++;
+    s.key = key;
+    s.tex = hit.tex;
+    s.mat.map = hit.tex;
     s.mat.needsUpdate = true;
     this.tint(s);
     return true;
   }
 
-  /** Frees the texture of a face (it becomes a plain coloured board again). */
+  /** Lets go of the texture of a face (it becomes a plain coloured board again); the texture is freed when no face uses it any more. */
   private unpaint(s: FaceSlot): void {
     if (!s.tex) return;
-    s.tex.dispose();
+    const hit = s.key ? this.texCache.get(s.key) : undefined;
+    if (hit && --hit.refs <= 0) {
+      hit.tex.dispose();
+      this.texCache.delete(s.key!);
+    } else if (!hit) s.tex.dispose();
     s.tex = null;
+    s.key = null;
     s.mat.map = null;
     s.mat.needsUpdate = true;
     this.tint(s);
   }
 
   private register(group: THREE.Group, x: number, z: number, radii: { show: number; paint: number; unpaint: number }, slots: FaceSlot[]): void {
-    this.entries.push({ group, x, z, showR2: radii.show * radii.show, paintR2: radii.paint * radii.paint, unpaintR2: radii.unpaint * radii.unpaint, slots, painted: false });
+    const k = Q.signRadiusMul; // the Quality preset: Low draws fewer / nearer boards
+    this.entries.push({ group, x, z, showR2: (radii.show * k) ** 2, paintR2: (radii.paint * k) ** 2, unpaintR2: (radii.unpaint * k) ** 2, slots, painted: false });
     group.visible = false; // updateField shows it when the player is near
   }
 
@@ -224,106 +254,12 @@ export class RoadSignLayer {
     g.position.set(spec.x, spec.y, spec.z);
     g.rotation.y = Math.atan2(spec.fx, spec.fz); // local +Z (the face) -> (fx, fz)
     this.group.add(g);
+    const sideS = sideSolids(W, H, CLEARANCE, W / 2 - 0.4, -0.14, POST_BELOW);
+    this.solidGroups.push({ x: spec.x, y: spec.y, z: spec.z, yaw: g.rotation.y, radius: solidsRadius(sideS), solids: sideS });
     this.count++;
     if (lazy) this.register(g, spec.x, spec.z, SIGN_FIELD.side, [slot]);
     else this.paint(slot);
     return true;
-  }
-
-  /**
-   * STEP 1 TEST ONLY: three boards in a row on the left edge of the road nearest to (px, pz) - the player start, across the F4 road from the mall.
-   * They stand 60 / 110 / 160 m ahead of the road point nearest to the player and face back at it, so standing on the road and looking along it you see
-   * all three. The names are real places of the map but the arrows are only there to show all three arrow kinds, and the km are STRAIGHT-LINE
-   * distances from the board (Step 2 replaces them by real road distances to the real destination table).
-   * Returns a short text for the console / the handoff note.
-   */
-  addStep1TestSigns(net: RoadNetwork, groundAt: (x: number, z: number) => number, px: number, pz: number): string {
-    // nearest point of a normal (not earthen, not roundabout) road to the player start
-    let best: RoadSpec | null = null;
-    let bestI = -1;
-    let bestD = Infinity;
-    for (const road of net.roads) {
-      if (road.earth || road.kind === 'roundabout') continue;
-      for (let i = 0; i < road.xs.length; i++) {
-        if (road.bridgeOf[i] >= 0) continue;
-        const d = Math.hypot(road.xs[i] - px, road.zs[i] - pz);
-        if (d < bestD) {
-          bestD = d;
-          best = road;
-          bestI = i;
-        }
-      }
-    }
-    if (!best) return 'no road found';
-    const r: RoadSpec = best;
-    const s0 = r.cum[bestI];
-    // drive direction: the way with at least 200 m of road ahead
-    const dir: 1 | -1 = s0 + 200 <= r.length ? 1 : -1;
-
-    const at = (s: number): { x: number; y: number; z: number; tx: number; tz: number; i: number } => {
-      const sc = Math.max(0, Math.min(r.length, s));
-      let i = 0;
-      while (i < r.xs.length - 2 && r.cum[i + 1] < sc) i++;
-      const seg = r.cum[i + 1] - r.cum[i];
-      const f = seg > 1e-6 ? Math.min(1, Math.max(0, (sc - r.cum[i]) / seg)) : 0;
-      let tx = r.xs[i + 1] - r.xs[i];
-      let tz = r.zs[i + 1] - r.zs[i];
-      const tl = Math.hypot(tx, tz) || 1;
-      tx /= tl;
-      tz /= tl;
-      return { x: r.xs[i] + (r.xs[i + 1] - r.xs[i]) * f, y: r.ys[i] + (r.ys[i + 1] - r.ys[i]) * f, z: r.zs[i] + (r.zs[i + 1] - r.zs[i]) * f, tx, tz, i };
-    };
-
-    // fixed demo places (x, z in world metres); Step 2 builds the real table from WorldZones
-    const CENTRAL = { en: 'Central City', bn: 'কেন্দ্রীয় শহর', x: 0, z: 0 };
-    const AIRPORT = { en: 'Airport', bn: 'বিমানবন্দর', x: 2500, z: -3828 };
-    const SEAPORT = { en: 'Seaport', bn: 'সমুদ্রবন্দর', x: 1740, z: 2920 };
-    const BAZAAR = { en: 'South Bazaar', bn: 'দক্ষিণ বাজার', x: 0, z: 1550 };
-    const NORTH = { en: 'North Industrial City', bn: 'উত্তর শিল্পনগর', x: 800, z: -3350 };
-    const UNI = { en: 'University Town', bn: 'বিশ্ববিদ্যালয় নগর', x: -1150, z: -1150 };
-    type Place = typeof CENTRAL;
-    const demos: { color: SignColor; rows: [Place, 'ahead' | 'left' | 'right'][] }[] = [
-      { color: 'green', rows: [[CENTRAL, 'ahead'], [AIRPORT, 'right'], [SEAPORT, 'left']] },
-      { color: 'blue', rows: [[BAZAAR, 'ahead']] },
-      { color: 'green', rows: [[NORTH, 'ahead'], [UNI, 'right']] },
-    ];
-
-    const lines: string[] = [];
-    let s = s0 + dir * 60;
-    for (let k = 0; k < demos.length; k++) {
-      // find a spot that is not on a bridge, not on another road's asphalt and not inside a junction pad
-      let placed = false;
-      for (let tries = 0; tries < 25 && !placed; tries++, s += dir * 10) {
-        const p = at(s);
-        if (r.bridgeOf[p.i] >= 0) continue;
-        // left of the travel direction (hx, hz) = dir * tangent is (hz, -hx)
-        const hx = p.tx * dir;
-        const hz = p.tz * dir;
-        const lx = hz;
-        const lz = -hx;
-        const edge = r.halfWidth + r.shoulder + 0.9;
-        const fxp = p.x + lx * edge;
-        const fzp = p.z + lz * edge;
-        if (net.surfaceAt(fxp, fzp) === 1 || net.padAt(fxp, fzp)) continue;
-        // face: back along the road (towards the oncoming driver), turned ~7 degrees towards the road centre
-        let fx = -hx - lx * 0.12;
-        let fz = -hz - lz * 0.12;
-        const fl = Math.hypot(fx, fz) || 1;
-        fx /= fl;
-        fz /= fl;
-        const demo = demos[k];
-        const rows: SignRow[] = demo.rows.map(([pl, arrow]) => ({
-          en: pl.en,
-          bn: pl.bn,
-          arrow,
-          km: Math.hypot(pl.x - fxp, pl.z - fzp) / 1000,
-        }));
-        placed = this.addSideSign({ x: fxp, y: groundAt(fxp, fzp), z: fzp, fx, fz, rows, color: demo.color });
-        if (placed) lines.push(`board ${k + 1} (${demo.color}, ${rows.length} rows) on road ${r.name} at x=${fxp.toFixed(0)} z=${fzp.toFixed(0)}`);
-        s += dir * 50; // next board 50 m further
-      }
-    }
-    return `Step 1 test signs: ${lines.length} placed. ${lines.join('; ')}`;
   }
 
   /**
@@ -403,6 +339,8 @@ export class RoadSignLayer {
     g.position.set(spec.x, spec.y, spec.z);
     g.rotation.y = Math.atan2(-spec.hx, -spec.hz); // local +Z (the faces) -> back at the driver = -(hx, hz); local +X -> his right
     this.group.add(g);
+    const gantryS = gantrySolids(spec.edge, [feet[0], feet[1]], topPipeY + GANTRY.chordR + GANTRY.postAboveM, GANTRY.postR, GANTRY.postBelowM, GANTRY.baseSizeM, GANTRY.baseHeightM, -0.15);
+    this.solidGroups.push({ x: spec.x, y: spec.y, z: spec.z, yaw: g.rotation.y, radius: solidsRadius(gantryS), solids: gantryS });
     this.count++;
     if (lazy) this.register(g, spec.x, spec.z, SIGN_FIELD.gantry, slots);
     else for (const s of slots) this.paint(s);
@@ -462,7 +400,7 @@ export class RoadSignLayer {
    * SIGN_FIELD.paintPerFrame per call) and frees the text of the ones the player has left.
    */
   updateField(px: number, pz: number): void {
-    let budget = SIGN_FIELD.paintPerFrame;
+    let budget = Math.min(SIGN_FIELD.paintPerFrame, Q.signPaintPerFrame);
     for (const e of this.entries) {
       const dx = e.x - px;
       const dz = e.z - pz;
@@ -492,10 +430,10 @@ export class RoadSignLayer {
   dispose(): void {
     this.root.remove(this.group);
     for (const g of this.geos) g.dispose();
-    for (const s of this.slots) {
-      s.tex?.dispose();
-      s.mat.dispose();
-    }
+    for (const c of this.texCache.values()) c.tex.dispose();
+    this.texCache.clear();
+    for (const s of this.slots) s.mat.dispose();
+    this.solidGroups.length = 0;
     this.metal.dispose();
     this.concrete.dispose();
     this.geos.length = 0;
