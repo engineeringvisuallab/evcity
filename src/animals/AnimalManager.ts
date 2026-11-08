@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { TerrainGenerator } from '../terrain';
 import type { TerrainSample } from '../terrain/Lakes';
-import { BUILT_UP_KINDS, getWorldZoneAt, type WorldZoneKind } from '../city/WorldZones';
+import { BUILT_UP_KINDS, getWorldZoneAt } from '../city/WorldZones';
 import { BUILDING_PLACEMENTS, placementContains } from '../buildings/Placements';
 import { CityPlan } from '../city/CityPlan';
 import { Config } from '../core/Config';
