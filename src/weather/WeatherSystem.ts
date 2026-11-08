@@ -52,6 +52,8 @@ export class WeatherSystem {
   private profile: RainProfile = RAIN_PROFILES[1];
   private profileIndex = -1;
   private quality = 0;
+  /** What the player chose in the menu (the real mode is 'off' on a weak PC, see rainAllowed). */
+  private wantedMode: RainMode = 'auto';
   private tmpQ = new THREE.Quaternion();
   private sky = new THREE.Color();
 
@@ -62,10 +64,18 @@ export class WeatherSystem {
 
   /** Apply the menu settings. */
   configure(o: WeatherOptions): void {
-    this.state.mode = MODES[Math.max(0, Math.min(2, Math.round(o.mode)))];
+    this.wantedMode = MODES[Math.max(0, Math.min(2, Math.round(o.mode)))];
     this.state.alwaysLevel = Math.max(0, Math.min(2, Math.round(o.level)));
     this.quality = Math.max(0, Math.min(3, Math.round(o.quality)));
     this.pickProfile();
+  }
+
+  /**
+   * Rain is for PCs with good graphics: with the rain graphics on "auto" a device of the LOW class (weak PC, phone) gets no rain at
+   * all (no clouds, no wet ground, no umbrellas). Whoever picks low / medium / high rain graphics by hand gets rain on any device.
+   */
+  get rainAllowed(): boolean {
+    return this.quality > 0 || Q.tier !== 'low';
   }
 
   /** 0 low, 1 medium, 2 high: the player's choice, or the graphics class of the device. */
@@ -94,6 +104,7 @@ export class WeatherSystem {
    */
   update(dt: number, time: number, camera: THREE.PerspectiveCamera, originX: number, originZ: number, pxHeight: number, shelter: number): void {
     const s = this.state;
+    s.mode = this.rainAllowed ? this.wantedMode : 'off';
     this.pickProfile();
     s.update(dt);
     const P = this.profile;

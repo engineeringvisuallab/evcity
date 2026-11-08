@@ -170,6 +170,13 @@ export class CombatSystem {
     this.d.hud.setAmmo(this.ammo.mag(w), this.ammo.reserve(w), prog < 0 ? -1 : prog / 20);
   }
 
+  /**
+   * WEAPON WHEEL (B): the guns sit on a circle in the middle of the screen, over the game. Click a gun to take it in the hand; B or Esc closes the wheel. The centre shows the gun under the mouse (or the one in the hand) with its ammo.
+   */
+  private wheelItems: { id: WeaponId; el: HTMLButtonElement }[] = [];
+  private wheelInfo = document.createElement('div');
+  private wheelHover: WeaponId | null = null;
+
   private createWeaponPicker(parent: HTMLElement): void {
     this.weaponButton.type = 'button';
     this.weaponButton.textContent = '🔫 সরঞ্জাম  [B]';
@@ -177,54 +184,109 @@ export class CombatSystem {
       position: 'fixed', right: '14px', top: '176px', zIndex: '60', padding: '10px 13px',
       borderRadius: '10px', border: '1px solid rgba(255,255,255,.35)', background: 'rgba(12,24,34,.9)',
       color: '#fff', font: '700 14px sans-serif', cursor: 'pointer', pointerEvents: 'auto',
-      // no on-screen label any more: the B key (and the touch TOOLS button) open the picker
+      // no on-screen label any more: the B key (and the touch TOOLS button) open the wheel
       display: 'none',
     });
     this.weaponButton.addEventListener('click', () => this.toggleWeaponPicker());
     Object.assign(this.weaponPanel.style, {
       position: 'fixed', inset: '0', zIndex: '100', display: 'none', alignItems: 'center', justifyContent: 'center',
-      padding: '18px', background: 'rgba(2,8,14,.78)', pointerEvents: 'auto',
+      background: 'radial-gradient(circle at 50% 50%, rgba(2,8,14,.25) 0%, rgba(2,8,14,.62) 100%)', pointerEvents: 'auto',
+      fontFamily: 'sans-serif', userSelect: 'none',
     });
-    const card = document.createElement('div');
-    Object.assign(card.style, { width: 'min(620px,96vw)', maxHeight: '82vh', overflow: 'auto', padding: '22px',
-      borderRadius: '18px', background: 'linear-gradient(145deg,#172b36,#08151e)', color: '#fff',
-      border: '1px solid rgba(255,255,255,.22)', boxShadow: '0 20px 60px rgba(0,0,0,.5)', fontFamily: 'sans-serif' });
-    const heading = document.createElement('div');
-    heading.textContent = 'সরঞ্জাম বেছে নিন';
-    Object.assign(heading.style, { fontSize: '22px', fontWeight: '800', marginBottom: '6px' });
-    const hint = document.createElement('div');
-    hint.textContent = 'তালিকা থেকে সরঞ্জাম বেছে নিন · Fire: বাম মাউস · Aim: ডান মাউস · Reload: R · পরেরটি: Q';
-    Object.assign(hint.style, { fontSize: '13px', opacity: '.75', lineHeight: '1.6', marginBottom: '16px' });
-    const grid = document.createElement('div');
-    Object.assign(grid.style, { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(165px,1fr))', gap: '9px' });
-    for (const id of WEAPON_ORDER) {
+    const wheel = document.createElement('div');
+    wheel.style.position = 'relative';
+    wheel.dataset.wheel = '1';
+    const ring = document.createElement('div');
+    Object.assign(ring.style, { position: 'absolute', inset: '9%', borderRadius: '50%', border: '2px solid rgba(255,255,255,.22)',
+      background: 'radial-gradient(circle, rgba(18,36,48,.88) 0%, rgba(8,21,30,.82) 62%, rgba(8,21,30,.35) 100%)', boxShadow: '0 12px 50px rgba(0,0,0,.55)' });
+    wheel.appendChild(ring);
+    // centre: name + ammo of the gun under the mouse / in the hand
+    Object.assign(this.wheelInfo.style, { position: 'absolute', left: '50%', top: '50%', width: '34%', transform: 'translate(-50%,-50%)',
+      textAlign: 'center', color: '#fff', pointerEvents: 'none', lineHeight: '1.35' });
+    wheel.appendChild(this.wheelInfo);
+    const n = WEAPON_ORDER.length;
+    WEAPON_ORDER.forEach((id, i) => {
+      const ang = -Math.PI / 2 + (i / n) * Math.PI * 2; // the first gun at the top, then clockwise
       const b = document.createElement('button');
       b.type = 'button';
-      b.textContent = `${dName(id)}  ·  ${this.ammo.mag(id)}/∞`;
-      Object.assign(b.style, { padding: '13px 10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,.2)',
-        background: '#203846', color: '#fff', textAlign: 'left', font: '700 14px sans-serif', cursor: 'pointer' });
-      b.addEventListener('click', () => {
-        this.weaponIdx = WEAPON_ORDER.indexOf(id);
-        this.drawn = Config.combat.drawSeconds;
-        this.ammo.cancelReload();
-        this.ammoKey = '';
-        this.shownWeapon = null;
-        this.weaponPanel.style.display = 'none';
-      });
-      grid.appendChild(b);
+      b.dataset.w = id;
+      Object.assign(b.style, { position: 'absolute', left: `${50 + 40 * Math.cos(ang)}%`, top: `${50 + 40 * Math.sin(ang)}%`,
+        transform: 'translate(-50%,-50%)', width: '25%', minHeight: '13%', padding: '6px 4px', borderRadius: '999px',
+        border: '2px solid rgba(255,255,255,.28)', background: '#203846', color: '#fff', font: '700 13px sans-serif',
+        cursor: 'pointer', transition: 'transform .08s, background .08s, border-color .08s', lineHeight: '1.25' });
+      b.addEventListener('mouseenter', () => { this.wheelHover = id; this.refreshWheel(); });
+      b.addEventListener('mouseleave', () => { this.wheelHover = null; this.refreshWheel(); });
+      b.addEventListener('click', (e) => { e.stopPropagation(); this.equipWeapon(id); });
+      this.wheelItems.push({ id, el: b });
+      wheel.appendChild(b);
+    });
+    this.weaponPanel.appendChild(wheel);
+    this.weaponPanel.addEventListener('click', () => { this.closeWheel(); });
+    window.addEventListener('keydown', (e) => {
+      if (this.weaponPanel.style.display !== 'flex') return;
+      if (e.key === 'Escape') this.closeWheel();
+    });
+    parent.append(this.weaponButton, this.weaponPanel);
+  }
+
+  /** Take a gun in the hand (clicked on the wheel / number key). */
+  private equipWeapon(id: WeaponId): void {
+    this.weaponIdx = WEAPON_ORDER.indexOf(id);
+    this.drawn = Config.combat.drawSeconds;
+    this.ammo.cancelReload();
+    this.ammoKey = '';
+    this.shownWeapon = null;
+    this.closeWheel();
+  }
+
+  private closeWheel(): void {
+    this.weaponPanel.style.display = 'none';
+    this.wheelHover = null;
+  }
+
+  /** Names, ammo, the gun in the hand highlighted, the centre text. */
+  private refreshWheel(): void {
+    const cur = this.weapon;
+    for (const { id, el } of this.wheelItems) {
+      const active = id === cur;
+      el.textContent = '';
+      const name = document.createElement('div');
+      name.textContent = dName(id);
+      const am = document.createElement('div');
+      am.textContent = `${this.ammo.mag(id)} / ${this.ammo.reserve(id)}`;
+      am.style.cssText = 'font-size:11px;font-weight:600;opacity:.75';
+      el.append(name, am);
+      const hov = id === this.wheelHover;
+      el.style.background = active ? '#1f7a4d' : hov ? '#2c5a72' : '#203846';
+      el.style.borderColor = active ? '#7dffb5' : hov ? '#9fd8ff' : 'rgba(255,255,255,.28)';
+      el.style.transform = hov ? 'translate(-50%,-50%) scale(1.08)' : 'translate(-50%,-50%)';
     }
-    const close = document.createElement('button');
-    close.type = 'button'; close.textContent = 'বন্ধ করুন (Esc)';
-    Object.assign(close.style, { display: 'block', margin: '16px 0 0 auto', padding: '9px 13px', borderRadius: '9px',
-      background: 'rgba(255,255,255,.1)', color: '#fff', border: '1px solid rgba(255,255,255,.25)', cursor: 'pointer' });
-    close.addEventListener('click', () => { this.weaponPanel.style.display = 'none'; });
-    this.weaponPanel.addEventListener('click', (e) => { if (e.target === this.weaponPanel) this.weaponPanel.style.display = 'none'; });
-    window.addEventListener('keydown', (e) => { if (e.key === 'Escape') this.weaponPanel.style.display = 'none'; });
-    card.append(heading, hint, grid, close); this.weaponPanel.appendChild(card); parent.append(this.weaponButton, this.weaponPanel);
+    const shown = this.wheelHover ?? cur;
+    this.wheelInfo.textContent = '';
+    const t = document.createElement('div');
+    t.textContent = dName(shown);
+    t.style.cssText = 'font-size:18px;font-weight:800';
+    const a = document.createElement('div');
+    a.textContent = `গুলি ${this.ammo.mag(shown)} / ${this.ammo.reserve(shown)}`;
+    a.style.cssText = 'font-size:13px;opacity:.85';
+    const h = document.createElement('div');
+    h.textContent = this.wheelHover ? 'ক্লিক করে হাতে নিন' : 'হাতে আছে · B / Esc বন্ধ';
+    h.style.cssText = 'font-size:11px;opacity:.6;margin-top:4px';
+    this.wheelInfo.append(t, a, h);
   }
 
   private toggleWeaponPicker(): void {
-    this.weaponPanel.style.display = this.weaponPanel.style.display === 'flex' ? 'none' : 'flex';
+    if (this.weaponPanel.style.display === 'flex') {
+      this.closeWheel();
+      return;
+    }
+    const wheel = this.weaponPanel.querySelector('[data-wheel]') as HTMLElement;
+    const s = Math.round(Math.max(300, Math.min(560, window.innerWidth * 0.94, window.innerHeight * 0.92)));
+    wheel.style.width = `${s}px`;
+    wheel.style.height = `${s}px`;
+    this.wheelHover = null;
+    this.refreshWheel();
+    this.weaponPanel.style.display = 'flex';
   }
 
   private fire(aiming: boolean): void {
