@@ -1845,7 +1845,7 @@ export class VehicleModel {
       { z: 5.18, w: 1.17, hb: 2.4, ht: 2.74, r: 0.14, rb: 0.05 },
       { z: 5.28, w: 1.05, hb: 2.4, ht: 2.62, r: 0.1, rb: 0.05 },
     ], white, 3);
-    // roof pod (battery / HVAC) with louvres
+    // roof pod (air-conditioning) with louvres
     this.uloft([
       { z: -3.7, w: 0.6, hb: 3.0, ht: 3.17, r: 0.1 },
       { z: -3.4, w: 0.86, hb: 3.0, ht: 3.3, r: 0.16 },
@@ -1925,6 +1925,54 @@ export class VehicleModel {
     const sw = new THREE.TorusGeometry(0.19, 0.02, 6, 18);
     sw.rotateX(-0.9);
     this.reg(this.mesh(sw, dark, -0.62, this.gy + 1.88, 4.3), 4, this.root);
+
+    // ---- real bus underneath: chassis frame, axles, rear diesel engine, drive shaft, exhaust, tanks, air suspension ----
+    const steel = this.pbr(0x3b4046, { metalness: 0.7, roughness: 0.5 });
+    const engineM = this.pbr(0x30363b, { metalness: 0.6, roughness: 0.45 });
+    const tankM = this.pbr(0xb9bfc4, { metalness: 0.8, roughness: 0.35 });
+    const bag = this.mat(0x15171a);
+    for (const x of [-0.55, 0.55]) this.utube([x, 0.28, -4.7], [x, 0.28, 4.6], 0.07, steel, 0); // two chassis rails
+    for (const z of [-4.4, -3.2, -1.2, 0.2, 1.6, 2.8, 4.4]) this.utube([-0.55, 0.28, z], [0.55, 0.28, z], 0.045, steel, 0); // cross members
+    for (const z of WZ) {
+      this.ucyl(0.07, 0.07, 2.1, steel, 0, 0.5, z, 'x', 0, this.root, 10); // axle beam
+      for (const x of [-0.8, 0.8]) this.ucyl(0.14, 0.14, 0.26, bag, x, 0.42, z + (z > 0 ? -0.2 : 0.2), 'y', 0, this.root, 12); // air spring bag
+    }
+    this.mesh(new THREE.SphereGeometry(0.2, 12, 10), steel, 0, this.gy + 0.5, WZ[1], this.root); // differential
+    this.ucyl(0.045, 0.045, 1.5, steel, 0, 0.5, WZ[1] - 0.95, 'z', 0, this.root, 8); // propeller shaft
+    this.rbox(0.9, 0.5, 1.5, 0.05, engineM, 0, 0.62, -4.0, 1); // rear diesel engine
+    for (const k of [0, 1, 2, 3, 4, 5]) this.rbox(0.1, 0.22, 0.2, 0.02, engineM, -0.36 + k * 0.144, 0.97, -4.0, 1); // six cylinder heads
+    this.rbox(1.0, 0.5, 0.06, 0.02, tankM, 0, 0.7, -4.8, 1); // radiator at the tail
+    this.ucyl(0.07, 0.07, 1.6, tankM, 0.75, 0.2, -3.9, 'z', 1, this.root, 10); // exhaust pipe (right side)
+    this.ucyl(0.1, 0.1, 0.24, tankM, 0.75, 0.22, -4.72, 'z', 1, this.root, 10); // silencer tip
+    this.ucyl(0.22, 0.22, 1.8, tankM, 0.85, 0.34, 1.0, 'z', 1, this.root, 14); // diesel fuel tank (right side, visible below the body)
+    this.rbox(0.5, 0.26, 0.4, 0.03, steel, -0.85, 0.3, 1.4, 1); // battery box (left side)
+    this.ucyl(0.13, 0.13, 0.7, tankM, -0.85, 0.3, 0.2, 'z', 1, this.root, 12); // compressed-air tank
+    this.rbox(0.5, 0.16, 0.3, 0.03, steel, 0, 0.28, 3.4, 1); // steering box / front axle gear
+
+    // ---- driver cab: steering column, pedals, gear lever, hand brake, gauges, inside mirror ----
+    this.utube([-0.62, 1.5, 4.55], [-0.62, 1.86, 4.34], 0.035, dark, 4); // steering column
+    this.rbox(0.14, 0.04, 0.1, 0.01, dark, -0.5, 0.96, 4.4, 4); // brake pedal
+    this.rbox(0.07, 0.04, 0.15, 0.01, dark, -0.74, 0.96, 4.4, 4); // accelerator
+    this.utube([-0.2, 0.98, 4.3], [-0.2, 1.3, 4.25], 0.015, pole, 4); // gear lever
+    this.ucyl(0.03, 0.03, 0.05, dark, -0.2, 1.33, 4.25, 'y', 4, this.root, 8);
+    this.utube([-0.12, 0.98, 4.1], [-0.12, 1.22, 4.2], 0.012, pole, 4); // hand brake
+    for (const gx of [-0.72, -0.52]) this.ucyl(0.07, 0.07, 0.02, lampW, gx, 1.62, 4.52, 'z', 4, this.root, 12); // speedometer, fuel gauge
+    this.rbox(0.3, 0.1, 0.02, 0.01, dark, 0, 2.3, 5.15, 4); // inside mirror
+    this.rbox(0.02, 1.0, 0.7, 0.01, glass, -0.28, 1.65, 3.85, 4); // driver safety screen
+    // ---- passenger area: more seats (bench at the back), overhead lights, stop buttons, grab straps, fare box, door steps ----
+    const sh0 = (this.spec.seats?.[0]?.y ?? this.spec.seat.y) - this.gy;
+    for (const [sx0, sz] of [[-0.62, -1.8], [-0.62, 2.8]] as const) {
+      this.rbox(0.46, 0.34, 0.4, 0.04, trim, sx0, sh0 - 0.38, sz, 4);
+      this.rbox(0.5, 0.12, 0.5, 0.04, seatM, sx0, sh0 - 0.1, sz, 4);
+      this.rbox(0.5, 0.58, 0.1, 0.04, seatM, sx0, sh0 + 0.2, sz - 0.27, 4);
+    }
+    this.rbox(1.9, 0.12, 0.5, 0.04, seatM, 0, sh0 - 0.1, -4.45, 4); // rear bench cushion
+    this.rbox(1.9, 0.58, 0.1, 0.04, seatM, 0, sh0 + 0.2, -4.75, 4); // rear bench back
+    for (const x of [-0.3, 0.3]) this.rbox(0.1, 0.02, 8.4, 0.01, lampW, x, 2.46, 0, 4); // ceiling light strips
+    for (const z of [3.85, 2.45, 0.35, -0.95]) this.rbox(0.05, 0.08, 0.03, 0.01, tail, 0.915, 1.6, z, 4); // red stop buttons on the poles
+    for (const z of [2.4, 1.3, 0.2, -1.0, -2.2]) for (const x of [-0.55, 0.55]) this.utube([x, 2.42, z], [x, 2.08, z], 0.008, dark, 4, this.root, 5); // grab straps
+    this.rbox(0.25, 0.34, 0.25, 0.03, trim, 0.55, 1.2, 4.38, 4); // fare box
+    for (const zc of [3.15, -0.3]) this.rbox(0.06, 0.02, 1.1, 0.005, this.mat(0xe8c23a), W - 0.05, 0.93, zc, 4); // yellow step edge at the doors
   }
 
   /** Outline of a track loop (rear sprocket + front idler) as [z, height] points, `inset` metres inside the outer surface. */
