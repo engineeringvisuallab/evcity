@@ -15,6 +15,7 @@ import * as THREE from 'three';
 import type { RoadNetwork } from '../roads';
 import type { RoadKind } from '../roads/RoadTypes';
 import { Q } from '../core/Quality';
+import { Config } from '../core/Config';
 
 export interface LampSpot {
   /** Foot of the pole (world metres). */
@@ -90,25 +91,32 @@ export function planStreetLights(roads: RoadNetwork): LampSpot[] {
     if (n < 2) continue;
     let side = r.id % 2 ? 1 : -1; // neighbouring roads do not all start on the same side
     const step = c.step * Q.lampStepMul; // 1 on the high preset
+    // GRASS 4: outside the cities the roads of tier 1-3 have their lights on ONE side only (spacing x Config.city.highway.lampStepMul); inside a city they alternate
+    const open = r.kind !== 'local' && r.kind !== 'roundabout';
+    const stepOpen = step * Config.city.highway.lampStepMul;
+    const oneSide = r.id % 2 ? 1 : -1;
     let target = step * 0.5;
     let i = 0;
     while (target < r.length) {
       while (i < n - 2 && r.cum[i + 1] < target) i++;
       const seg = r.cum[i + 1] - r.cum[i];
       const f = seg > 1e-6 ? Math.min(1, Math.max(0, (target - r.cum[i]) / seg)) : 0;
-      target += step;
       const x = r.xs[i] + (r.xs[i + 1] - r.xs[i]) * f;
       const z = r.zs[i] + (r.zs[i + 1] - r.zs[i]) * f;
+      const inCity = roads.isCityPoint(x, z);
+      const country = open && !inCity;
+      target += country ? stepOpen : step;
       const y = r.ys[i] + (r.ys[i + 1] - r.ys[i]) * f;
       let nx = r.nx[i] + (r.nx[i + 1] - r.nx[i]) * f;
       let nz = r.nz[i] + (r.nz[i + 1] - r.nz[i]) * f;
       const nl = Math.hypot(nx, nz) || 1;
       nx /= nl;
       nz /= nl;
-      side = -side;
+      side = country ? oneSide : -side;
       if (inPad(x, z)) continue;
       const bid = r.bridgeOf[f < 0.5 ? i : i + 1];
-      const edge = bid >= 0 ? (bridgeHalf.get(bid) ?? r.halfWidth) - 0.35 : r.halfWidth + Math.max(0.6, r.shoulder * 0.5);
+      // city road: the pole stands on the paved sidewalk, behind the tree pits (pits are centred 1 m from the kerb); open country: on the gravel shoulder
+      const edge = bid >= 0 ? (bridgeHalf.get(bid) ?? r.halfWidth) - 0.35 : r.halfWidth + (inCity ? Math.max(1.0, Config.city.roadside.sidewalk - 0.9) : Math.max(0.6, r.shoulder * 0.5));
       const px = x + nx * edge * side;
       const pz = z + nz * edge * side;
       // another road's asphalt (a crossing that is not a pad): no pole here

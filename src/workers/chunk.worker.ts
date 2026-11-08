@@ -80,6 +80,7 @@ ctx.onmessage = (e: MessageEvent<ChunkRequest | GrassRequest>) => {
     maxHeight: m.maxHeight,
     water: m.water,
     roadMask: m.roadMask,
+    cityMask: m.cityMask,
     road: m.road,
     rail: m.rail,
     port: m.port,
@@ -93,6 +94,7 @@ ctx.onmessage = (e: MessageEvent<ChunkRequest | GrassRequest>) => {
     transfer.push(w.positions.buffer as ArrayBuffer, w.normals.buffer as ArrayBuffer, w.depth.buffer as ArrayBuffer, w.flow.buffer as ArrayBuffer, w.indices.buffer as ArrayBuffer);
   }
   if (m.roadMask) transfer.push(m.roadMask.buffer as ArrayBuffer);
+  if (m.cityMask) transfer.push(m.cityMask.buffer as ArrayBuffer);
   if (m.holeIndices) transfer.push(m.holeIndices.buffer as ArrayBuffer);
   if (m.road) transfer.push(m.road.positions.buffer as ArrayBuffer, m.road.normals.buffer as ArrayBuffer, m.road.info.buffer as ArrayBuffer, m.road.indices.buffer as ArrayBuffer);
   if (m.rail) transfer.push(m.rail.positions.buffer as ArrayBuffer, m.rail.normals.buffer as ArrayBuffer, m.rail.colors.buffer as ArrayBuffer, m.rail.glow.buffer as ArrayBuffer, m.rail.indices.buffer as ArrayBuffer);

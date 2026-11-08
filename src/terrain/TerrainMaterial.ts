@@ -21,18 +21,22 @@ varying vec3 vWPos;
 varying vec3 vWNrm;
 attribute vec2 aRoad;
 varying vec2 vRoad;
+attribute float aCity;
+varying float vCity;
 `;
 
 const VERT_BODY = /* glsl */ `
 vWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
 vWNrm = normalize(mat3(modelMatrix) * normal);
 vRoad = aRoad;
+vCity = aCity;
 `;
 
 const FRAG_HEADER = /* glsl */ `
 varying vec3 vWPos;
 varying vec3 vWNrm;
 varying vec2 vRoad;
+varying float vCity;
 uniform vec2 uOrigin;
 uniform float uDebugLod;
 uniform float uLod;
@@ -138,12 +142,19 @@ const FRAG_COLOR = /* glsl */ `
   vec3 wet   = vec3(0.30, 0.27, 0.19);
 
   // dry straw already from the lowlands in patches, soil = the main ground (Config.terrain.soilFrom / soilTo) with green patches and a soft edge
-  vec3 col = mix(grass, dry, smoothstep(60.0, 260.0, h + (nLow - 0.5) * 120.0));
+  // CITY GREEN (GRASS 4): vCity = 0..1 greenness of the planned city (1 inside, soft edge outside). Inside a city the ground is fresh lawn green:
+  // no dry straw, no brown soil (the soil share fades to 0, only a little stays on steep ground), the grass colour leans to a bright lawn green.
+  float cityG = clamp(vCity, 0.0, 1.0);
+  vec3 lawn = mix(vec3(0.22, 0.40, 0.11), vec3(0.34, 0.52, 0.16), nMid * 0.6 + nHi * 0.4);
+  lawn = mix(lawn, vec3(0.40, 0.54, 0.18), smoothstep(0.55, 0.85, evcNoise(ap * 0.07 + 5.3)) * 0.35);
+  grass = mix(grass, lawn, cityG * ${Config.terrain.cityGreen.lawnTint.toFixed(3)});
+  vec3 col = mix(grass, dry, smoothstep(60.0, 260.0, h + (nLow - 0.5) * 120.0) * (1.0 - cityG));
   float soilN = evcNoise(ap * 0.0021 + 7.3) * 0.62 + evcNoise(ap * 0.009 + 1.7) * 0.28 + nHi * 0.10;
-  float soilAmt = smoothstep(${Config.terrain.soilFrom.toFixed(3)}, ${Config.terrain.soilTo.toFixed(3)}, soilN);
+  float soilAmt = smoothstep(${Config.terrain.soilFrom.toFixed(3)}, ${Config.terrain.soilTo.toFixed(3)}, soilN) * (1.0 - cityG);
   col = mix(col, soil, soilAmt * 0.85);
-  // a little soil on steeper ground too (earth shows through where the slope is not yet rock)
-  col = mix(col, soil, smoothstep(0.05, 0.14, slope) * 0.45);
+  // a little soil on steeper ground too (earth shows through where the slope is not yet rock); less of it inside a city
+  float slopeSoil = smoothstep(0.05, 0.14, slope) * 0.45 * mix(1.0, ${Config.terrain.cityGreen.slopeSoilKeep.toFixed(3)}, cityG);
+  col = mix(col, soil, slopeSoil);
   float rockAmt = smoothstep(0.10, 0.26, slope + (nTri - 0.5) * 0.10);
   rockAmt = max(rockAmt, smoothstep(250.0, 420.0, h + (nLow - 0.5) * 120.0) * 0.7);
   col = mix(col, rock, rockAmt);
@@ -177,7 +188,7 @@ const FRAG_COLOR = /* glsl */ `
     vec3 dSoil  = evcDetail(uDirtTex, uDirtMean, ap, 3.1, 11.3);
     vec3 dSand  = evcDetail(uSandTex, uSandMean, ap, 2.8, 12.9);
     vec3 dRock  = evcRockDetail(p3, nrm);
-    float wSoil = clamp(soilAmt * 0.85 + smoothstep(0.05, 0.14, slope) * 0.45, 0.0, 1.0);
+    float wSoil = clamp(soilAmt * 0.85 + slopeSoil, 0.0, 1.0);
     vec3 det = mix(dGrass, dSoil, wSoil);
     det = mix(det, dRock, rockAmt);
     det = mix(det, dSand, sandAmt * (1.0 - rockAmt * 0.6));
@@ -305,7 +316,7 @@ export class TerrainMaterials {
       // RAIN: wet ground (darker, shiny, puddles) and storm foam on the beach
       patchWet(shader, { darken: 0.34, gloss: 0.55, puddle: 0.7, beach: true });
     };
-    m.customProgramCacheKey = () => 'evc-terrain-v9-seabed-caustics-wet';
+    m.customProgramCacheKey = () => 'evc-terrain-v10-city-green-wet';
     this.all.add(m);
     return m;
   }

@@ -6,6 +6,7 @@ import { chunkKey, worldToChunkCoord } from '../world/WorldGrid';
 import type { BridgeSpec, CulvertSpec, JunctionSpec, PadSpec, RoadInfo, RoadKind, RoadSpec, SurfaceKind } from './RoadTypes';
 import { buildJunctionPads } from './Junctions';
 import { planLocalStreets } from './LocalRoads';
+import { CityPlan } from '../city/CityPlan';
 import type { LocalAreaStat } from './LocalRoads';
 
 /** Natural terrain WITHOUT roads (hills, rivers, lakes, sea). Roads are planned on top of this. */
@@ -17,7 +18,8 @@ const smoothstep = (a: number, b: number, x: number): number => {
 };
 
 const KIND = {
-  highway: { halfWidth: 7, shoulder: 2.2, lanes: 4, speedKmh: 100, maxGrade: 0.08, step: 8 },
+  // GRASS 4: highways outside the cities have a narrow dirt / gravel shoulder (Config.city.highway.shoulder, 1.5 m), then the grass verge
+  highway: { halfWidth: 7, shoulder: Config.city.highway.shoulder, lanes: 4, speedKmh: 100, maxGrade: 0.08, step: 8 },
   local: { halfWidth: 4.5, shoulder: 1.3, lanes: 2, speedKmh: 50, maxGrade: 0.1, step: 6 },
   arterial: { halfWidth: 5.5, shoulder: 1.6, lanes: 2, speedKmh: 70, maxGrade: 0.09, step: 8 },
   collector: { halfWidth: 4.8, shoulder: 1.4, lanes: 2, speedKmh: 50, maxGrade: 0.1, step: 8 },
@@ -121,6 +123,9 @@ export class RoadNetwork {
   private score = new Float32Array(0);
   private sbridge = new Uint8Array(0);
   private searth = new Uint8Array(0);
+  /** 1 = the segment lies inside a planned city area (sidewalk, kerb, tree pits, hedges: Config.city.roadside), 0 = open country. */
+  private scity = new Uint8Array(0);
+  private cityPlan: CityPlan | null = null;
   /** Number of earthen tracks (stats). */
   earthTracks = 0;
   private cells = new Map<number, Int32Array>();
@@ -212,7 +217,7 @@ export class RoadNetwork {
           pts: s.pts,
           endY: s.endY,
           halfWidth: s.halfWidth,
-          shoulder: Config.city.localRoads.sidewalk,
+          shoulder: Config.city.roadside.sidewalk, // paved sidewalk (the street PLAN still keeps its clearance for localRoads.sidewalk)
           lanes: s.lanes,
           speedKmh: s.speedKmh,
           areaId: s.areaId,
@@ -1816,6 +1821,9 @@ export class RoadNetwork {
     this.score = new Float32Array(total);
     this.sbridge = new Uint8Array(total);
     this.searth = new Uint8Array(total);
+    this.scity = new Uint8Array(total);
+    const cityPlan = (this.cityPlan = new CityPlan(this.sites));
+    const walk = Config.city.roadside.sidewalk;
 
     const temp = new Map<number, number[]>();
     const S = Config.world.chunkSize;
@@ -1836,7 +1844,13 @@ export class RoadNetwork {
         this.sea[s] = emb(r, i);
         this.seb[s] = emb(r, j);
         this.shw[s] = r.halfWidth;
-        this.score[s] = r.halfWidth + r.shoulder;
+        // CITY ROAD: every road piece whose midpoint lies inside a planned city (local streets always do) gets a paved sidewalk of at least `roadside.sidewalk` m;
+        // bridges and earthen tracks keep their own look. Road type flags used: tier 4 / areaId, otherwise CityPlan.siteAt of the midpoint.
+        const mx = (r.xs[i] + r.xs[j]) / 2;
+        const mz = (r.zs[i] + r.zs[j]) / 2;
+        const city = !r.earth && r.bridgeOf[i] < 0 && r.bridgeOf[j] < 0 && (r.tier === 4 || cityPlan.siteAt(mx, mz) >= 0);
+        this.scity[s] = city ? 1 : 0;
+        this.score[s] = r.halfWidth + (city ? Math.max(r.shoulder, walk) : r.shoulder);
         this.searth[s] = r.earth ? 1 : 0;
         this.sbridge[s] = r.bridgeOf[i] >= 0 && r.bridgeOf[i] === r.bridgeOf[j] ? 1 : 0;
 
@@ -2111,5 +2125,34 @@ export class RoadNetwork {
   }
   segmentPoint(s: number): number {
     return this.segPt[s];
+  }
+  /** True when the point lies inside a planned city area (CityPlan.siteAt). */
+  isCityPoint(x: number, z: number): boolean {
+    return this.cityPlan !== null && this.cityPlan.siteAt(x, z) >= 0;
+  }
+  /** True when the segment lies inside a planned city area (city style: sidewalk, kerb, tree pits, hedges). */
+  segmentCity(s: number): boolean {
+    return this.scity[s] === 1;
+  }
+  /** Half width (m) of the ribbon of segment s: asphalt + shoulder / sidewalk. */
+  segmentHalf(s: number): number {
+    return this.score[s];
+  }
+  /** True when (x, z) is on the paved sidewalk of a city road (outside the asphalt, inside the ribbon). Used to keep grass off the pavement. */
+  cityWalkAt(x: number, z: number): boolean {
+    const segs = this.cellOf(x, z);
+    if (!segs) return false;
+    for (let q = 0; q < segs.length; q++) {
+      const s = segs[q];
+      if (!this.scity[s]) continue;
+      const abx = this.sbx[s] - this.sax[s];
+      const abz = this.sbz[s] - this.saz[s];
+      const l2 = abx * abx + abz * abz;
+      let t = l2 > 0 ? ((x - this.sax[s]) * abx + (z - this.saz[s]) * abz) / l2 : 0;
+      t = t < 0 ? 0 : t > 1 ? 1 : t;
+      const d = Math.hypot(x - (this.sax[s] + abx * t), z - (this.saz[s] + abz * t));
+      if (d > this.shw[s] && d <= this.score[s]) return true;
+    }
+    return false;
   }
 }

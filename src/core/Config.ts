@@ -22,6 +22,13 @@ export const Config = {
      */
     soilFrom: 0.3,
     soilTo: 0.44,
+    /**
+     * GREEN CITY GROUND: inside the planned city areas (CityPlan: distance to the site hub < maxRadius) the ground is lawn green, not brown soil.
+     * The chunk worker builds a per-vertex greenness mask (`aCity`): 1 inside the city, falling to 0 over `fadeOut` metres outside it.
+     * The terrain shader multiplies the soil share (and the soil on slopes) by (1 - greenness * `amount`) and tints the grass colour `lawnTint`
+     * towards a fresh lawn green. amount 0 = old behaviour (brown soil everywhere).
+     */
+    cityGreen: { amount: 1, fadeOut: 120, lawnTint: 0.65, slopeSoilKeep: 0.25 },
     seaLevel: 0,
     /** Highest possible terrain point (rim mountains). Used by shader/snow line and sanity checks. */
     maxHeight: 650,
@@ -103,8 +110,49 @@ export const Config = {
       minArm: 40,
       minPadSpacing: 48,
       mixedPadSpacing: 76,
-      /** Footpath (sidewalk) width beside local streets (m), in place of the gravel shoulder. */
+      /** Footpath (sidewalk) width beside local streets (m) used for the CLEARANCE tests of the street planner (kept at 2 so the street plan does not change). */
       sidewalk: 2,
+    },
+    /**
+     * CITY ROADSIDE (Roadside.ts, RoadMesh / RoadMaterial city style). Only roads inside a planned city area (CityPlan.siteAt) get it:
+     * paved interlocking-tile sidewalk `sidewalk` m wide on both sides (this is the ribbon shoulder of a city road), a kerb, a lawn strip behind
+     * the sidewalk (grass, see vegetation.grass.city), trees in square kerbed pits every `treeSpacing` m, low flowering hedges (`hedge`) along
+     * medians and parking edges, street lamps (StreetLights, on the sidewalk).
+     */
+    roadside: {
+      sidewalk: 3,
+      /** Tree pits: spacing range (m) along each sidewalk, pit side (m, kerbed square), distance of the pit centre from the asphalt edge (m). */
+      treeSpacing: [12, 15] as [number, number],
+      pitSize: 1.2,
+      pitOffset: 1.0,
+      /** Low flowering hedge: height range (m), width (m), spacing of the instances (m) along the line, length of one hedge piece (m, a little more than the spacing so pieces overlap). */
+      hedge: { hMin: 0.6, hMax: 0.9, width: 0.8, step: 2.6, pieceLen: 3.1 },
+      /** Hedge / pit / shrub / guardrail instances are drawn within this distance (m) of the player (they live in 500 m chunk groups that are shown / hidden at 2 Hz). */
+      drawRadius: 380,
+      /** Yellow-black striped kerb at the median: stripe length (m) and kerb width (m). */
+      kerbStripe: 0.7,
+      kerbWidth: 0.35,
+      /** Paving tile size (m) of the interlocking pavers (shader). */
+      paver: 0.24,
+    },
+    /**
+     * HIGHWAY ROADSIDE outside the cities (Roadside.ts): galvanized W-beam guardrail on embankment and curve sides (posts every `postStep` m),
+     * a dirt / gravel shoulder `shoulder` m wide instead of grass, then tall grass clumps and shrubs on the verge (grass patch, see
+     * vegetation.grass.verge) and street lights on one side.
+     */
+    highway: {
+      postStep: 4,
+      /** Guardrail goes up where the ground beside the road drops more than `dropMin` m within 6 m, or where the road bends tighter than `curveRadius` m. */
+      dropMin: 0.8,
+      curveRadius: 900,
+      shoulder: 1.5,
+      railHeight: 0.75,
+      /** Lamps on one side only: spacing (m) is the normal highway lamp class spacing times this. */
+      lampStepMul: 1.4,
+      /** Verge shrubs (the model of the city hedge, bigger): spacing range (m) along each side, distance range (m) beyond the shoulder, scale range. */
+      shrubSpacing: [7, 16] as [number, number],
+      shrubOffset: [1.4, 6.5] as [number, number],
+      shrubScale: [0.8, 1.7] as [number, number],
     },
   },
 
@@ -239,8 +287,28 @@ export const Config = {
       heightFadeEnd: 300,
       dryFrom: 120,
       dryTo: 280,
-      /** Chance factor inside planned city areas (buildings will clear their own ground later). */
-      cityChance: 0.5,
+      /**
+       * GREEN CITY LAWN: everywhere inside a planned city area that is not road, pavement, plaza, parking or a building plot (the same `blocked` list as
+       * everywhere else) the ground is lawn. No patches there (patch value forced to 1 inside the city, soft edge `edge` m outside it), the 0.5 city thinning
+       * of the old `cityChance` is gone. Flag in the data (last float): 2 = lawn tuft, 3 = tall clump at a tree base / fence.
+       *   density      tuft chance multiplier of lawn cells (1 = the old open-meadow density; 0.55 keeps the instance count sane)
+       *   height       lawn tufts are this fraction of the normal height (short, mown)
+       *   clumpChance  small clumps scattered over the lawn (per clump cell), clumpScale their size
+       *   baseChance   clumps at tree bases and along plot fences (per clump cell inside the band), baseScale their size (taller), baseReach / fenceReach metres
+       *   flowerShare  share of lawn tufts that carry a small flower (daisy, clover, buttercup)
+       *   edge         metres over which the lawn blends into the normal patchy meadow outside the city
+       */
+      city: { density: 0.55, height: 0.55, clumpChance: 0.1, clumpScale: 0.8, baseChance: 0.9, baseScale: 1.3, baseReach: 1.6, fenceReach: 1.4, flowerShare: 0.05, edge: 40 },
+      /**
+       * HIGHWAY VERGE outside cities: beyond the gravel shoulder the road side is a grass patch (patch value forced up, like the road-side boost) with
+       * tall clumps; `reach` = width (m) of the strip next to the shoulder, `clumpChance` per clump cell inside it, `tall` = clump height multiplier.
+       */
+      verge: { reach: 7, clumpChance: 0.8, tall: 1.35, density: 1 },
+      /**
+       * COLOUR: every tuft is fresh green, yellow-green or straw (`strawShare` of the tufts lean to straw outside the city, `yellowShare` to yellow-green).
+       * `rootDark` = brightness of the blade at the root (0..1, 1 = no darkening), `wind` = global wind sway multiplier (0 = still air; the sway grows with blade height, so short lawn moves little anyway).
+       */
+      look: { strawShare: 0.12, yellowShare: 0.3, rootDark: 0.45, wind: 1 },
       /** No grass is made while the camera is higher than this above the ground (m): free-fly / helicopter. */
       maxAboveGround: 70,
     },

@@ -143,7 +143,7 @@ function grassBlades(b: Builder, r: RNG, s: GrassStyle, density = 1): void {
       droop: (s.droop[0] + r() * (s.droop[1] - s.droop[0])) * (0.5 + h),
       w: s.wMin + r() * (s.wMax - s.wMin),
       tint,
-      root: 0.22 + r() * 0.1,
+      root: Config.vegetation.grass.look.rootDark * (0.49 + r() * 0.22),
       tip: 1.0 + r() * 0.2,
     });
   }
@@ -194,7 +194,7 @@ function tussockBlades(b: Builder, r: RNG, s: TussockStyle, density = 1): void {
       droop: (s.arch[0] + r() * (s.arch[1] - s.arch[0])) * (0.4 + h) * (0.4 + 0.6 * f),
       w: s.wMin + r() * (s.wMax - s.wMin),
       tint,
-      root: 0.22 + r() * 0.1,
+      root: Config.vegetation.grass.look.rootDark * (0.49 + r() * 0.22),
       tip: 1.0 + r() * 0.2,
     });
   }
@@ -480,6 +480,7 @@ export class GrassAssets {
   readonly geometries: THREE.BufferGeometry[];
   readonly material: THREE.MeshLambertMaterial;
   private time = { value: 0 };
+  private wind = { value: Config.vegetation.grass.look.wind };
   private fade = { value: new THREE.Vector2(Config.vegetation.grass.fadeStart, Config.vegetation.grass.fadeEnd) };
 
   constructor() {
@@ -502,9 +503,10 @@ export class GrassAssets {
     const m = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     m.onBeforeCompile = (shader) => {
       shader.uniforms.uGrassTime = this.time;
+      shader.uniforms.uGrassWind = this.wind;
       shader.uniforms.uGrassFade = this.fade;
       shader.vertexShader = shader.vertexShader
-        .replace('#include <common>', '#include <common>\nuniform float uGrassTime;\nuniform vec2 uGrassFade;\nattribute float aFlower;\nvarying float vFlower;')
+        .replace('#include <common>', '#include <common>\nuniform float uGrassTime;\nuniform float uGrassWind;\nuniform vec2 uGrassFade;\nattribute float aFlower;\nvarying float vFlower;')
         // flower parts keep their own colour: undo the per-instance green / dry tint for them
         .replace(
           '#include <color_vertex>',
@@ -524,8 +526,8 @@ export class GrassAssets {
             // slow wind gusts that travel across the meadow (waves of bending) + the small fast flutter of each tuft
             float gust = sin(uGrassTime * 0.9 + instanceMatrix[3].x * 0.045 + instanceMatrix[3].z * 0.03) * 0.5 + 0.5;
             float bendAmt = mix(1.0, 0.75, aFlower);
-            transformed.x += (sin(uGrassTime * 2.1 + gph) * 0.05 + sin(uGrassTime * 0.8 + gph * 0.5) * 0.04 + gust * 0.09) * position.y * 1.3 * bendAmt;
-            transformed.z += (cos(uGrassTime * 1.7 + gph) * 0.04 + gust * 0.03) * position.y * bendAmt;
+            transformed.x += (sin(uGrassTime * 2.1 + gph) * 0.05 + sin(uGrassTime * 0.8 + gph * 0.5) * 0.04 + gust * 0.09) * position.y * 1.3 * bendAmt * uGrassWind;
+            transformed.z += (cos(uGrassTime * 1.7 + gph) * 0.04 + gust * 0.03) * position.y * bendAmt * uGrassWind;
             transformed *= gFade;
           #endif`,
         );
@@ -547,12 +549,17 @@ export class GrassAssets {
           #include <opaque_fragment>`,
         );
     };
-    m.customProgramCacheKey = () => 'grass-wind-fade-v3';
+    m.customProgramCacheKey = () => 'grass-wind-fade-v4';
     return m;
   }
 
   update(time: number): void {
     this.time.value = time;
+  }
+
+  /** Wind strength multiplier (quality presets / settings): 0 = still air, 1 = full sway. */
+  setWind(w: number): void {
+    this.wind.value = w;
   }
 
   dispose(): void {

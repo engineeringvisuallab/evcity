@@ -25,6 +25,7 @@ import { OxygenHUD } from '../ui/OxygenHUD';
 import { WaterFX } from '../water';
 import { WeatherSystem } from '../weather';
 import { BridgeBuilder, BridgePhysics, RoadDebug } from '../roads';
+import { RoadsideView } from '../roads/RoadsideView';
 import { CombatSystem } from '../combat';
 import { CityPlan, ZONE_COLOR } from '../city/CityPlan';
 import { getWorldZoneAt, worldZoneHitColor } from '../city/WorldZones';
@@ -142,6 +143,8 @@ export class Engine {
   private signPhysics: SignPhysics;
   /** Convex road mirrors at the junctions (2 draw calls for the whole map). */
   private junctionMirrors: JunctionMirrors;
+  /** GRASS 4: tree pits, hedges, guardrails and verge shrubs beside the roads (instanced, grouped in 250 m squares). */
+  private roadside: RoadsideView;
   private lighthouseLight: LighthouseLight | null = null;
   private toast: Toast;
   /** Settings menu (gear button / Tab): day-night mode, what the screen shows, sound, minimap zoom, key help. */
@@ -320,6 +323,7 @@ export class Engine {
     this.roadDebug = new RoadDebug(roads);
     this.streetLights = new StreetLights(this.world.root, roads);
     this.junctionMirrors = new JunctionMirrors(this.world.root, roads, this.streetLights.spots, { live: Q.mirrorLive, dist: Q.mirrorLiveDist, size: Q.mirrorTex, samples: Q.antialias ? 4 : 0 });
+    this.roadside = new RoadsideView(this.world.root, this.world.terrain);
     this.world.root.add(this.roadDebug.group);
     this.rail = this.world.terrain.rail;
     this.railDebug = new RailDebug(this.rail);
@@ -1023,6 +1027,7 @@ export class Engine {
     this.signPhysics.update(dt, this.world.playerWorld.x, this.world.playerWorld.z);
       this.junctionMirrors.update(lamp);
       NightLamps.on = lamp; // vehicle headlights / tail lights
+      this.roadside.update(dt, this.camera.position.x + this.world.origin.origin.x, this.camera.position.z + this.world.origin.origin.z);
       this.lighthouseLight?.update(lamp, this.time.elapsed, fov, px);
     }
 
@@ -1486,6 +1491,7 @@ export class Engine {
     this.signPhysics.dispose();
     this.roadSigns.dispose();
     this.junctionMirrors.dispose();
+    this.roadside.dispose();
     this.lighthouseLight?.dispose();
     this.trainRider.dispose();
     this.ridePrompt.dispose();

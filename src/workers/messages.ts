@@ -46,6 +46,8 @@ export interface ChunkResult {
   water: WaterMeshData | null;
   /** STAGE 6: per-vertex road coverage for the terrain shader (null = no road here). */
   roadMask: Float32Array | null;
+  /** GRASS 4: per-vertex city greenness 0..1 (null = outside every city). */
+  cityMask: Float32Array | null;
   /** STAGE 6: asphalt ribbon for LOD0/1 (null = none). */
   road: RoadMeshData | null;
   /** STAGE 12: railway mesh for LOD0-2 (null = none in this chunk). */

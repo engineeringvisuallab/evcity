@@ -13,6 +13,7 @@ export interface BuiltChunk {
 }
 
 const zeroMasks = new Map<number, Float32Array>();
+const zeroCity = new Map<number, Float32Array>();
 
 /** Turns worker output into a three.js mesh. Index buffers are shared per LOD (same arrays, separate GPU buffers). */
 export class TerrainChunkBuilder {
@@ -31,6 +32,13 @@ export class TerrainChunkBuilder {
       zeroMasks.set(vtotal, mask);
     }
     geo.setAttribute('aRoad', new THREE.BufferAttribute(mask, 2));
+    // City greenness (GRASS 4): one float per vertex; chunks outside every city share one all-zero array per vertex count.
+    let city = data.cityMask;
+    if (!city) {
+      city = zeroCity.get(vtotal) ?? new Float32Array(vtotal);
+      zeroCity.set(vtotal, city);
+    }
+    geo.setAttribute('aCity', new THREE.BufferAttribute(city, 1));
     geo.setIndex(new THREE.BufferAttribute(data.holeIndices ?? buildIndices(data.vertsPerSide), 1));
 
     // Bounds are known from the worker, no need to scan the vertices.

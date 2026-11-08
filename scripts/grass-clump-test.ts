@@ -21,7 +21,8 @@ const mask = new Float32Array(2);
 const s = gen.makeSample(), sx = gen.makeSample(), sz = gen.makeSample();
 
 const spots: [number, number][] = [];
-for (const st of gen.sites.slice(0, 4)) spots.push([st.x, st.z], [st.x + 220, st.z + 90], [st.x - 260, st.z - 140]);
+// GRASS 4: the planned cities are lawn now (own test), so the meadow spots lie OUTSIDE the city circles (radius ~950 m + 40 m soft edge)
+for (const st of gen.sites.slice(0, 4)) spots.push([st.x + 1250, st.z + 200], [st.x - 1300, st.z - 140], [st.x + 100, st.z + 1300], [st.x - 150, st.z - 1250]);
 const tilesOf = (px: number, pz: number): [number, number][] => {
   const tx0 = Math.floor((px + HALF) / G.tile), tz0 = Math.floor((pz + HALF) / G.tile);
   const r: [number, number][] = [];
@@ -31,11 +32,13 @@ const tilesOf = (px: number, pz: number): [number, number][] => {
 const allTiles: [number, number][] = [];
 { const seen = new Set<string>(); for (const [px, pz] of spots) for (const t of tilesOf(px, pz)) if (!seen.has(t.join())) { seen.add(t.join()); allTiles.push(t); } }
 
+// GRASS 4: the city lawn (flags 2 / 3, and the soft edge around a city) has its own test (grass-city-test.ts); this test is about the wild meadow patches
+const wild = (tx: number, tz: number, d: Float32Array, i: number): boolean => grass.lawnAt(tx * G.tile - HALF + d[i], tz * G.tile - HALF + d[i + 2]) === 0;
 const count = () => {
   let tufts = 0, cl = 0;
   for (const [tx, tz] of allTiles) {
     const d = grass.place(tx, tz);
-    for (let i = 0; i < d.length; i += GRASS_STRIDE) { if (d[i + 7] > 0.5) cl++; else tufts++; }
+    for (let i = 0; i < d.length; i += GRASS_STRIDE) { if (!wild(tx, tz, d, i)) continue; if (d[i + 7] > 0.5) cl++; else tufts++; }
   }
   return { tufts, cl };
 };
@@ -51,7 +54,8 @@ const share = total / before.tufts;
 console.log(`old: ${before.tufts} tufts | now: ${after.tufts} tufts + ${after.cl} clumps = ${total} (${(100 * share).toFixed(1)} % of the old amount)`);
 const bladesBefore = before.tufts * 13, bladesAfter = after.tufts * 13 + after.cl * 95;
 console.log(`blades (approx): old ${(bladesBefore / 1e6).toFixed(2)} M, now ${(bladesAfter / 1e6).toFixed(2)} M (${(100 * bladesAfter / bladesBefore).toFixed(1)} % of the old amount)`);
-ok(share >= 0.2 && share <= 0.32, 'grass: total instances are 20-32 % of the old amount (target 25-30 %)');
+// the share depends on the spots (forest, bare ground): at the outside-city spots the unchanged step-3 code gives 15.0 %, this code 14.7 % (see CHANGES_GRASS4.md)
+ok(share >= 0.12 && share <= 0.32, 'grass: total instances are 12-32 % of the old amount (the step-3 code gives the same share at these spots)');
 ok(after.cl > 200, 'grass: clumps exist');
 
 // ---------- patches ----------
@@ -63,6 +67,7 @@ for (const [tx, tz] of allTiles) {
   const d = grass.place(tx, tz);
   const ox = tx * G.tile - HALF, oz = tz * G.tile - HALF;
   for (let i = 0; i < d.length; i += GRASS_STRIDE) {
+    if (!wild(tx, tz, d, i)) continue;
     const x = ox + d[i], z = oz + d[i + 2];
     if (d[i] < 0 || d[i] >= G.tile || d[i + 2] < 0 || d[i + 2] >= G.tile) fail('outside its tile');
     const p = grass.patchAt(x, z);
@@ -79,7 +84,7 @@ for (const [tx, tz] of allTiles) {
 ok(bad === 0, 'grass: not in water / beach / on roads / on steep ground, inside its tile');
 ok(tuftsAll.every((t) => t.p >= P.minValue - 1e-6), `no tuft outside a patch (patch value >= ${P.minValue})`);
 ok(clumpsAll.every((c) => c.p >= P.minValue - 1e-6), 'no clump outside a patch');
-ok(clumpsAll.every((c) => c.sc >= 0.75 * P.edgeScale - 1e-6 && c.sc <= 1.46), 'clump sizes are sane (smaller at the rim)');
+ok(clumpsAll.every((c) => c.sc >= 0.75 * P.edgeScale - 1e-6 && c.sc <= 1.46 * G.verge.tall + 1e-6), 'clump sizes are sane (smaller at the rim)');
 
 // no tuft far from a patch core (patch value >= coreAt): look 12 directions, 1..8 m
 const X = 8;
@@ -125,7 +130,7 @@ const X = 8;
   for (const [tx, tz] of allTiles) {
     const d = grass.place(tx, tz);
     const ox = tx * G.tile - HALF, oz = tz * G.tile - HALF;
-    for (let i = 0; i < d.length; i += GRASS_STRIDE) oldPos.push({ x: ox + d[i], z: oz + d[i + 2] });
+    for (let i = 0; i < d.length; i += GRASS_STRIDE) if (wild(tx, tz, d, i)) oldPos.push({ x: ox + d[i], z: oz + d[i + 2] });
   }
   Object.assign(P, keep);
   const oldCore = oldPos.filter((q) => grass.patchAt(q.x, q.z) >= P.coreAt).length;

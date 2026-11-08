@@ -6,6 +6,7 @@ import { CityPlan } from '../src/city/CityPlan';
 import { TreePlacer } from '../src/vegetation/TreePlacement';
 import { TREE_KIND_COUNT, TREE_STRIDE } from '../src/vegetation/TreeTypes';
 import { chunkOriginX, chunkOriginZ, CHUNKS_PER_SIDE } from '../src/world/WorldGrid';
+import { planCityTrees } from '../src/roads/Roadside';
 
 const V = Config.vegetation;
 const gen = new TerrainGenerator(Config.world.seed);
@@ -13,6 +14,8 @@ const plan = new CityPlan(gen.sites);
 const placer = new TreePlacer(gen, plan, Config.world.seed);
 const s = gen.makeSample();
 const mask = new Float32Array(2);
+const streetKeys = new Set<string>();
+{ const st = planCityTrees(gen.roads).trees; for (let i = 0; i < st.length; i += 7) streetKeys.add(Math.round(st[i] * 10) + ',' + Math.round(st[i + 2] * 10)); }
 let bad = 0;
 const fail = (m: string) => { if (bad++ < 15) console.log('FAIL', m); };
 
@@ -47,7 +50,10 @@ for (let cz = -margin; cz < N + margin; cz++) {
         if (!Number.isNaN(s.water) && s.h < s.water + V.waterMargin) fail(`tree in water at ${x.toFixed(0)},${z.toFixed(0)}`);
         if (s.h > V.treeLineEnd) fail(`tree above the tree line at ${x.toFixed(0)},${z.toFixed(0)} h=${s.h.toFixed(0)}`);
         gen.roads.maskAt(x, z, 1, mask);
-        if (mask[1] > 0.01) fail(`tree on a road at ${x.toFixed(0)},${z.toFixed(0)}`);
+        // GRASS 4: street trees stand in the kerbed pits of the city sidewalks (inside the ribbon on purpose, but never on the asphalt)
+        if (streetKeys.has(Math.round(x * 10) + ',' + Math.round(z * 10))) {
+          if (gen.roads.surfaceAt(x, z) === 1 || !gen.roads.cityWalkAt(x, z)) fail(`street tree not on a sidewalk at ${x.toFixed(0)},${z.toFixed(0)}`);
+        } else if (mask[1] > 0.01) fail(`tree on a road at ${x.toFixed(0)},${z.toFixed(0)}`);
         const gx = (gen.sample(x + 2, z, s), s.h);
         gen.sample(x, z, s);
         const h0 = s.h;
@@ -55,7 +61,7 @@ for (let cz = -margin; cz < N + margin; cz++) {
         const slope = Math.hypot(gx - h0, s.h - h0) / 2;
         if (slope > Math.tan((V.maxSlopeDeg * Math.PI) / 180) + 1e-6) fail(`tree on a steep slope at ${x.toFixed(0)},${z.toFixed(0)}`);
         const area = plan.areaAt(x, z);
-        if (area) {
+        if (area && !streetKeys.has(Math.round(x * 10) + ',' + Math.round(z * 10))) {
           if (V.cityZoneChance[area.kind] === undefined) { inBuilt++; fail(`tree in built-up area ${area.id} at ${x.toFixed(0)},${z.toFixed(0)}`); }
           else inGreen++;
         }

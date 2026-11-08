@@ -7,6 +7,8 @@ import { hash2D, mulberry32 } from '../world/Seed';
 import type { TreePlacer } from './TreePlacement';
 import { placementContains } from '../buildings/Placements';
 import { farmCovers } from '../farm/FarmFields';
+import { parkingContains } from '../parking/ParkingSite';
+import { getCityGreen, type CityGreen } from '../city/CityGreen';
 
 
 const V = Config.vegetation;
@@ -22,7 +24,7 @@ const smooth = (a: number, b: number, x: number): number => {
  * STAGE 7 (step 2): grass tufts of ONE tile (`grass.tile` metres square, world grid). Same method as the trees: a fixed
  * global grid of small cells (`grass.cell`), one random stream per cell, so a tuft is always at the same place whichever
  * tile asks. Meadows (noise) with bare patches, thinner inside forests; none on water, beach, roads, steep ground or
- * high up; half as many inside planned city areas.
+ * high up. GRASS 4: inside planned city areas (CityGreen) the ground is a dense green lawn everywhere that is not road / pavement / plaza / parking / plot.
  *
  * GRASS PATCHES (rework): the land is not covered evenly. A low-frequency noise (`grass.patch`) makes patches: inside, dense tufts plus big
  * CLUMPS (`grass.clump`, 60..110 blades each, own coarser grid, overlapping); outside, bare soil; at the soft rim fewer and smaller ones.
@@ -35,33 +37,33 @@ export class GrassPlacer {
   private sz: TerrainSample;
   private mask = new Float32Array(2);
   private zmask = new Float32Array(2);
+  private vmask = new Float32Array(2);
   private patchNoise: Noise2D;
   private thr = 0;
   private thrKey = -1;
   /** importance field (road sides, landmarks) of recently used tiles: 2 m nodes, shared by the tufts, the clumps and `patchAt`. */
   private gridCache = new Map<string, Float32Array>();
+  /** GRASS 4: the city greenness field (1 inside a planned city), shared with the terrain shader mask. */
+  private green: CityGreen;
   /** Quality preset: chance multiplier (1 = every tuft). */
   mul = 1;
 
-  constructor(private gen: TerrainGenerator, private plan: CityPlan, private seed: number, private trees: TreePlacer) {
+  constructor(private gen: TerrainGenerator, plan: CityPlan, private seed: number, private trees: TreePlacer) {
+    void plan; // the city test is CityGreen now (same CityPlan radius)
     this.meadow = new Noise2D((seed ^ 0x3b9d27a1) >>> 0);
     this.patchNoise = new Noise2D((seed ^ 0x2f6b1d37) >>> 0);
     this.sample = gen.makeSample();
     this.sx = gen.makeSample();
     this.sz = gen.makeSample();
+    this.green = getCityGreen(gen);
   }
 
-  /** 1 outside cities, `cityChance` inside a planned city, blending back over `cityFadeOut` metres outside it. */
-  private cityFactor(x: number, z: number): number {
-    const sites = this.gen.sites;
-    for (let i = 0; i < sites.length; i++) {
-      const d = Math.hypot(x - sites[i].x, z - sites[i].z);
-      const R = this.plan.maxRadius(i);
-      if (d >= R + V.cityFadeOut) continue;
-      if (d < R) return G.cityChance;
-      return G.cityChance + (1 - G.cityChance) * smooth(R, R + V.cityFadeOut, d);
-    }
-    return 1;
+  /**
+   * City lawn amount 0..1: 1 inside a planned city (the old `cityFactor` / CityPlan.siteAt test, no more 0.5 thinning), falling to 0 over
+   * `grass.city.edge` metres outside it, where the patchy meadow takes over again.
+   */
+  lawnAt(x: number, z: number): number {
+    return this.green.at(x, z, G.city.edge);
   }
 
   /** True on roads, rail, ports, airports and every plot / pad / field where no grass may grow (the same list for tufts and clumps). */
@@ -73,7 +75,8 @@ export class GrassPlacer {
     if (this.gen.airport.contains(x, z, 1)) return true; // airport pad
     if (this.gen.airportSea.contains(x, z, 1)) return true; // sea airport pad + causeway
     if (this.gen.army.contains(x, z, 1)) return true; // army camp
-    if (this.gen.mall.contains(x, z, 1)) return true; // City Mall plot
+    if (parkingContains(x, z, 1)) return true; // mall / EVLab parking lots
+    if (this.gen.mall.contains(x, z, 1)) return true; // City Mall plot (incl. its paved plaza)
     if (this.gen.evlab.contains(x, z, 1)) return true; // EVLab campus plot
     if (this.gen.library.contains(x, z, 1)) return true; // City Library plot
     if (this.gen.protoBuilding.contains(x, z, 1)) return true; // prototype building plot
@@ -88,6 +91,7 @@ export class GrassPlacer {
   private nearLandmark(x: number, z: number, margin: number): boolean {
     const g = this.gen;
     return (
+      parkingContains(x, z, margin) ||
       g.mall.contains(x, z, margin) ||
       g.evlab.contains(x, z, margin) ||
       g.library.contains(x, z, margin) ||
@@ -155,7 +159,8 @@ export class GrassPlacer {
   /** Patch value at (x, z) inside tile (tx, tz): the noise patch, pulled up to `boost` next to roads and landmarks. */
   private patchIn(x: number, z: number, tx: number, tz: number, grid: Float32Array): number {
     const P = G.patch;
-    const base = this.patchBase(x, z);
+    const lawn = this.lawnAt(x, z); // inside a planned city the whole ground is a patch (value 1), with a soft edge outside
+    const base = Math.max(this.patchBase(x, z), lawn);
     if (P.boost <= 0) return base;
     const n = Math.round(G.tile / P.gridStep);
     const u = (x - (tx * G.tile - HALF)) / P.gridStep;
@@ -208,9 +213,11 @@ export class GrassPlacer {
         const patch = this.patchIn(x, z, tx, tz, grid);
         if (patch < P.minValue) continue;
         const rim = smooth(P.minValue, P.coreAt, patch); // 0 at the rim .. 1 in the core
-        const lush = smooth(-0.35, 0.25, this.meadow.fbm(x / 45, z / 45, 2));
+        const lawn = this.lawnAt(x, z);
+        const lush = Math.max(smooth(-0.35, 0.25, this.meadow.fbm(x / 45, z / 45, 2)), lawn);
         let chance = (G.minChance + (G.maxChance - G.minChance) * lush) * this.mul * P.density * rim;
-        chance *= 1 - G.forestThin * this.trees.forestAt(x, z);
+        chance *= 1 - G.forestThin * this.trees.forestAt(x, z) * (1 - lawn);
+        chance *= 1 - lawn * (1 - G.city.density); // city lawn: `grass.city.density` x the open-meadow density (the 0.5 city thinning is gone)
         if (roll >= chance) continue;
 
         // 2. terrain tests
@@ -224,16 +231,26 @@ export class GrassPlacer {
         const slope = Math.hypot(this.sx.h - h, this.sz.h - h);
         if (slope >= G.maxSlope) continue;
         chance *= 1 - smooth(G.slopeFadeFrom, G.maxSlope, slope);
-        chance *= this.cityFactor(x, z);
         if (roll >= chance) continue;
         if (this.blocked(x, z)) continue;
 
-        const dry = Math.min(1, Math.max(0, smooth(G.dryFrom, G.dryTo, h) + (rDry - 0.5) * 0.2));
-        out.push(x - ox, h - 0.03, z - oz, (0.55 + 0.95 * rScale ** 1.5) * (P.edgeScale + (1 - P.edgeScale) * rim), rYaw * Math.PI * 2, 0.85 + rTint * 0.3, dry, 0);
+        const dry = Math.min(1, Math.max(0, smooth(G.dryFrom, G.dryTo, h) + (rDry - 0.5) * 0.2)) * (1 - lawn);
+        // flag 2 = city lawn tuft (short, mown; may carry a small flower), 0 = normal tuft
+        out.push(x - ox, h - 0.03, z - oz, (0.55 + 0.95 * rScale ** 1.5) * (P.edgeScale + (1 - P.edgeScale) * rim), rYaw * Math.PI * 2, 0.85 + rTint * 0.3, dry, lawn >= 0.5 ? 2 : 0);
       }
     }
     this.placeClumps(tx, tz, stride, out);
     return new Float32Array(out);
+  }
+
+  /** City lawn only: is (x, z) within `baseReach` m of a tree trunk or in the `fenceReach` m band just outside a landmark plot (where a fence stands)? */
+  private atTreeOrFence(x: number, z: number, spots: { x: number; z: number; scale: number }[]): boolean {
+    const r = G.city.baseReach;
+    for (const t of spots) {
+      const rr = r * (0.7 + 0.3 * Math.min(2, t.scale));
+      if ((x - t.x) * (x - t.x) + (z - t.z) * (z - t.z) < rr * rr) return true;
+    }
+    return !this.nearLandmark(x, z, 1) && this.nearLandmark(x, z, 1 + G.city.fenceReach);
   }
 
   /**
@@ -252,6 +269,10 @@ export class GrassPlacer {
     const s = this.sample;
     const P = G.patch;
     const grid = this.importanceGrid(tx, tz);
+    // trees of this tile (+ a margin) for the tall clumps at tree bases; only tiles that touch a city need them
+    const city = G.city;
+    const T = G.tile;
+    const spots = this.green.touches(ox, oz, ox + T, oz + T, city.edge) ? this.trees.treesInRect(ox - 3, oz - 3, ox + T + 3, oz + T + 3) : [];
     for (let j = 0; j < per; j += cs) {
       for (let i = 0; i < per; i += cs) {
         const rng = mulberry32(hash2D(this.seed ^ 0x7c1a9, gx0 + i, gz0 + j));
@@ -269,8 +290,33 @@ export class GrassPlacer {
         const patch = this.patchIn(x, z, tx, tz, grid);
         if (patch < P.minValue) continue;
         const rim = smooth(P.minValue, P.coreAt, patch);
-        let chance = P.clumpChance * smooth(0.25, 0.85, patch) * this.mul;
-        chance *= 1 - G.forestThin * this.trees.forestAt(x, z);
+        const lawn = this.lawnAt(x, z);
+        // CITY LAWN: a few small clumps scattered over the lawn; tall ones at tree bases and along plot fences (flag 3)
+        let flag = 1;
+        let sizeMul = 1;
+        let chance: number;
+        if (lawn >= 0.5) {
+          if (this.atTreeOrFence(x, z, spots)) {
+            flag = 3;
+            sizeMul = city.baseScale;
+            chance = city.baseChance;
+          } else {
+            sizeMul = city.clumpScale;
+            chance = city.clumpChance;
+          }
+          chance *= this.mul;
+        } else {
+          chance = P.clumpChance * smooth(0.25, 0.85, patch) * this.mul * (1 - lawn);
+          chance *= 1 - G.forestThin * this.trees.forestAt(x, z);
+          // HIGHWAY VERGE: next to the gravel shoulder of a country road the clumps are dense and tall (verge.reach m wide)
+          const V2 = G.verge;
+          this.gen.roads.maskAt(x, z, V2.reach / 0.6, this.vmask);
+          const verge = this.vmask[1] * (1 - lawn);
+          if (verge > 0.2) {
+            chance = Math.max(chance, V2.clumpChance * smooth(0.2, 0.7, verge) * this.mul);
+            sizeMul = 1 + (V2.tall - 1) * smooth(0.2, 0.7, verge);
+          }
+        }
         if (roll >= chance) continue;
 
         // 2. terrain tests (same rules as the tufts)
@@ -284,12 +330,11 @@ export class GrassPlacer {
         const slope = Math.hypot(this.sx.h - h, this.sz.h - h);
         if (slope >= G.maxSlope) continue;
         chance *= 1 - smooth(G.slopeFadeFrom, G.maxSlope, slope);
-        chance *= this.cityFactor(x, z);
         if (roll >= chance) continue;
         if (this.blocked(x, z)) continue;
 
-        const dry = Math.min(1, Math.max(0, smooth(G.dryFrom, G.dryTo, h) + (rDry - 0.5) * 0.2));
-        out.push(x - ox, h - 0.03, z - oz, (0.75 + 0.7 * rScale ** 1.2) * (P.edgeScale + (1 - P.edgeScale) * rim), rYaw * Math.PI * 2, 0.85 + rTint * 0.3, dry, 1);
+        const dry = Math.min(1, Math.max(0, smooth(G.dryFrom, G.dryTo, h) + (rDry - 0.5) * 0.2)) * (1 - lawn);
+        out.push(x - ox, h - 0.03, z - oz, (0.75 + 0.7 * rScale ** 1.2) * (P.edgeScale + (1 - P.edgeScale) * rim) * sizeMul, rYaw * Math.PI * 2, 0.85 + rTint * 0.3, dry, flag);
       }
     }
   }

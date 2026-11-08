@@ -1,6 +1,7 @@
 import { Config } from '../core/Config';
 import { chunkOriginX, chunkOriginZ } from '../world/WorldGrid';
 import { buildRoadMask, buildRoadMesh, type RoadMeshData } from '../roads/RoadMesh';
+import { buildCityMask } from '../city/CityGreen';
 import { buildRailMesh, type RailMeshData } from '../rail/RailMesh';
 import { TunnelHoles, terrainTrianglesWithHoles } from '../rail/RailTunnel';
 import { buildPortMesh, getPortLayout, type PortMeshData } from '../port';
@@ -31,6 +32,8 @@ export interface ChunkMeshData {
   /** null when the chunk has no water at all. */
   water: WaterMeshData | null;
   roadMask: Float32Array | null;
+  /** GRASS 4: per-vertex city greenness 0..1 (one float per vertex incl. skirts) for the terrain shader, or null = outside every city. */
+  cityMask: Float32Array | null;
   road: RoadMeshData | null;
   /** STAGE 12: railway (ballast, rails, sleepers, overhead line, viaducts, portals, platforms) for LOD0-2, or null. */
   rail: RailMeshData | null;
@@ -143,6 +146,7 @@ export function buildChunkMeshData(
   minH -= skirtDepth;
 
   const roadMask = buildRoadMask(gen.roads, cx, cz, n, total);
+  const cityMask = buildCityMask(gen, cx, cz, n, total);
   // lattice heights for the road ribbon: the chunk's own padded grid where it reaches, the generator beyond it
   const outside = new Map<number, number>();
   const lattice = (li: number, lj: number): number => {
@@ -178,7 +182,7 @@ export function buildChunkMeshData(
       holeIndices = all;
     }
   }
-  return { heights, positions, normals, minHeight: minH, maxHeight: maxH, water, roadMask, road, rail, port, holeIndices };
+  return { heights, positions, normals, minHeight: minH, maxHeight: maxH, water, roadMask, cityMask, road, rail, port, holeIndices };
 }
 
 /** Water exists where the ground is below the water level. Quads touching a wet vertex are emitted. */

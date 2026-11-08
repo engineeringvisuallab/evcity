@@ -66,7 +66,7 @@ export function buildRoadMesh(roads: RoadNetwork, cx: number, cz: number, lod: n
     const i = roads.segmentPoint(s);
     const j = (i + 1) % r.xs.length;
     const segLen = Math.hypot(r.xs[j] - r.xs[i], r.zs[j] - r.zs[i]);
-    const half = r.halfWidth + r.shoulder;
+    const half = roads.segmentHalf(s); // asphalt + shoulder (a city road: asphalt + sidewalk)
     const pieces = exact ? Math.max(1, Math.ceil(segLen / (step * 0.5))) : 1;
     const cols = exact ? Math.max(3, Math.ceil((2 * half) / (step * 0.5)) + 1) : 2;
     plan.push({ s, pieces, cols });
@@ -93,7 +93,8 @@ export function buildRoadMesh(roads: RoadNetwork, cx: number, cz: number, lod: n
     const i = roads.segmentPoint(s);
     const n = r.xs.length;
     const j = (i + 1) % n;
-    const half = r.halfWidth + r.shoulder;
+    const half = roads.segmentHalf(s);
+    const city = roads.segmentCity(s);
     const segLen = Math.hypot(r.xs[j] - r.xs[i], r.zs[j] - r.zs[i]);
     const onDeck = r.bridgeOf[i] >= 0 || r.bridgeOf[j] >= 0;
     const base = v;
@@ -117,7 +118,8 @@ export function buildRoadMesh(roads: RoadNetwork, cx: number, cz: number, lod: n
         info[v * 4] = u;
         info[v * 4 + 1] = sAlong;
         // local streets (tier 4) are flagged for the shader by +100: footpath + kerb instead of gravel shoulder, own markings
-        info[v * 4 + 2] = r.earth ? r.halfWidth + 2000 : r.tier === 4 ? r.halfWidth + 100 : r.halfWidth;
+        // GRASS 4: roads of tier 1-3 inside a planned city are flagged +4000 (city style: paved sidewalk, kerb, striped median kerb)
+        info[v * 4 + 2] = r.earth ? r.halfWidth + 2000 : r.tier === 4 ? r.halfWidth + 100 : city ? r.halfWidth + 4000 : r.halfWidth;
         info[v * 4 + 3] = endD;
         v++;
       }

@@ -39,6 +39,9 @@ const color = new THREE.Color();
 const GREEN: [number, number, number] = [0.25, 0.42, 0.12];
 const DRY: [number, number, number] = [0.46, 0.42, 0.2];
 const YELLOW: [number, number, number] = [0.42, 0.5, 0.15];
+const STRAW: [number, number, number] = [0.62, 0.55, 0.27];
+/** City lawn: a fresher, slightly brighter green than the wild meadow. */
+const LAWN: [number, number, number] = [0.22, 0.44, 0.11];
 
 /** Smooth 2D value noise in 0..1 (integer-lattice hash, smoothstep blend): decides where the flower patches are. Deterministic, no state. */
 function vnoise(x: number, z: number): number {
@@ -185,10 +188,19 @@ export class GrassManager {
       const h2 = hh * 7.31 - Math.floor(hh * 7.31);
       const h3 = hh * 31.7 - Math.floor(hh * 31.7);
       const dry = data[o + 6];
+      const flag = data[o + 7];
       let type: number;
-      if (data[o + 7] > 0.5) {
-        // a big grass clump (tussock): two shapes, mixed by the hash
+      if (flag > 0.5 && flag < 1.5 || flag > 2.5) {
+        // a big grass clump (tussock): two shapes, mixed by the hash (flag 3 = tall clump at a tree base / fence in the city)
         type = h1 < 0.55 ? GrassType.tussock : GrassType.tussockWide;
+        types[i] = type;
+        counts[type]++;
+        continue;
+      }
+      if (flag > 1.5) {
+        // CITY LAWN tuft (flag 2): short fine lawn, a few broad-leaf tufts, and small white / pink flowers (daisy, clover, buttercup) in the near ring
+        if (lod === 0 && h2 < G.city.flowerShare) type = h3 < 0.5 ? GrassType.daisy : h3 < 0.8 ? GrassType.clover : GrassType.buttercup;
+        else type = h1 < 0.82 ? GrassType.lawn : h1 < 0.94 ? GrassType.clump : GrassType.wild;
         types[i] = type;
         counts[type]++;
         continue;
@@ -234,6 +246,8 @@ export class GrassManager {
       // size variation inside a type (each type already has its own shape / height)
       const grow = 0.8 + 0.5 * h2;
       const wide = type === GrassType.lawn ? 1.1 : type === GrassType.wild ? 0.95 : 1;
+      const lawnTuft = data[o + 7] > 1.5 && data[o + 7] < 2.5;
+      const hMul = lawnTuft ? G.city.height : 1; // mown city lawn: short
       // width: far rings have fewer tufts, each a bit wider. height: Config.grass.heightScale, width: Config.grass.widthScale (both 2x bigger than step 3)
       if (type >= GrassType.tussock) {
         // clump: its own size (model scale 0.75..1.45 x clump.width / clump.height), the far rings make it a bit wider
@@ -241,18 +255,25 @@ export class GrassManager {
         dummy.scale.set(cw, sc * grow * G.clump.height, cw);
       } else {
         const w = sc * wide * ring.size * G.widthScale;
-        dummy.scale.set(w, sc * grow * G.heightScale, w);
+        dummy.scale.set(w, sc * grow * G.heightScale * hMul, w);
       }
       dummy.updateMatrix();
       mesh.setMatrixAt(slot, dummy.matrix);
       const dry = data[o + 6];
       const t = data[o + 5] * (0.9 + h2 * 0.2); // brightness varies tuft to tuft
-      // brighter tufts lean yellow-green (like sun-lit, drier grass), darker ones deep green
-      const u = Math.min(1, Math.max(0, (t - 0.85) / 0.3)) * 0.55;
+      // COLOUR VARIATION: every tuft is fresh green, yellow-green or straw (shares: Config grass.look). A hash of the tuft's position picks the class;
+      // brighter tufts lean yellow-green like sun-lit, drier grass. The city lawn has no straw.
+      const cityLawn = data[o + 7] > 1.5;
+      const hc = Math.sin(data[o] * 39.3468 + data[o + 2] * 17.1313 + 5.7) * 43758.5453;
+      const pick = hc - Math.floor(hc);
+      const straw = cityLawn ? 0 : pick < G.look.strawShare ? 0.55 + 0.3 * h2 : 0;
+      const yellowCls = pick > 1 - G.look.yellowShare ? 0.45 + 0.35 * h2 : 0;
+      const u = Math.min(1, Math.max(0, Math.max((t - 0.85) / 0.3 * 0.55, yellowCls)));
+      const base: [number, number, number] = cityLawn ? LAWN : GREEN;
       color.setRGB(
-        (GREEN[0] + (YELLOW[0] - GREEN[0]) * u + (DRY[0] - GREEN[0]) * dry) * t,
-        (GREEN[1] + (YELLOW[1] - GREEN[1]) * u + (DRY[1] - GREEN[1]) * dry) * t,
-        (GREEN[2] + (YELLOW[2] - GREEN[2]) * u + (DRY[2] - GREEN[2]) * dry) * t,
+        (base[0] + (YELLOW[0] - base[0]) * u + (STRAW[0] - base[0]) * straw + (DRY[0] - base[0]) * dry) * t,
+        (base[1] + (YELLOW[1] - base[1]) * u + (STRAW[1] - base[1]) * straw + (DRY[1] - base[1]) * dry) * t,
+        (base[2] + (YELLOW[2] - base[2]) * u + (STRAW[2] - base[2]) * straw + (DRY[2] - base[2]) * dry) * t,
         THREE.SRGBColorSpace,
       );
       mesh.setColorAt(slot, color);
