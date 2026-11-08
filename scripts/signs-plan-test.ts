@@ -1,7 +1,7 @@
 // ROAD SIGNS Step 3 test: npx tsx scripts/signs-plan-test.ts
 //   Part A  a small hand-made road network (runs anywhere): checks arrows (left / ahead / right), km, dead-end roads, the "behind you" rule, styles.
 //   Part B  the real game map (needs the game's node_modules, ~10 s): builds the plan, prints the numbers and a list of boards, checks the rules.
-import { planRoadSigns, isOverhead, SIGN_RULES, type PlanNet, type PlanRoad, type PlannedSign } from '../src/signs/SignPlan';
+import { planRoadSigns, isOverhead, overheadAt, SIGN_RULES, type PlanNet, type PlanRoad, type PlannedSign } from '../src/signs/SignPlan';
 import type { Destination } from '../src/signs/SignDestinations';
 
 let fails = 0;
@@ -78,7 +78,16 @@ function partA(): void {
   }
   ok(plan.signs.every((q) => q.rows.length >= 1 && q.rows.length <= SIGN_RULES.maxRows), 'every board has 1..4 rows');
   ok(plan.signs.every((q) => q.rows.every((r) => (r.km ?? 0) > 0)), 'every row has a positive distance');
-  ok(isOverhead({ kind: 'local', lanes: 4 }) && isOverhead({ kind: 'highway', lanes: 2 }) && !isOverhead({ kind: 'collector', lanes: 2 }), 'style rule: highway / arterial / 4+ lanes = overhead, else side');
+  ok(isOverhead({ kind: 'local', lanes: 4 }) && isOverhead({ kind: 'highway', lanes: 2 }) && !isOverhead({ kind: 'collector', lanes: 2 }), 'overhead is possible on highway / arterial / 4+ lane roads only');
+  ok(
+    overheadAt({ kind: 'highway', lanes: 4 }, false) &&
+      overheadAt({ kind: 'arterial', lanes: 2 }, false) &&
+      overheadAt({ kind: 'local', lanes: 4 }, true) &&
+      !overheadAt({ kind: 'local', lanes: 4 }, false) &&
+      !overheadAt({ kind: 'collector', lanes: 2 }, true) &&
+      !overheadAt({ kind: 'local', lanes: 2 }, true),
+    'style rule: highway / arterial always overhead; 4+ lane city road overhead only at a special junction; small roads always side',
+  );
 }
 
 function boardText(q: PlannedSign): string {
@@ -113,7 +122,18 @@ async function partB(): Promise<void> {
   ok(signs.every((q) => q.rows.every((r) => (r.km ?? 0) <= 20)), 'no distance above 20 km');
   ok(signs.every((q) => q.style === 'side' || isOverhead(byId.get(q.roadId)!)), 'overhead boards only on highway / arterial / 4+ lane roads');
   ok(signs.every((q) => q.purpose === 'advance' || q.style === 'side'), 'confirm boards are always side boards');
-  ok(signs.every((q) => (q.style === 'overhead') === isOverhead(byId.get(q.roadId)!) || q.purpose === 'confirm'), 'advance boards on big roads are overhead, on small roads side');
+  ok(
+    signs.every((q) => {
+      if (q.purpose !== 'advance') return true;
+      const r = byId.get(q.roadId)!;
+      if (r.kind === 'highway' || r.kind === 'arterial') return q.style === 'overhead';
+      if (r.lanes < 4) return q.style === 'side';
+      return true; // 4+ lane city road: either, decided by the junction
+    }),
+    'advance boards: highway / arterial overhead, roads under 4 lanes side',
+  );
+  const wideCity = signs.filter((q) => q.purpose === 'advance' && q.roadKind !== 'highway' && q.roadKind !== 'arterial' && q.lanes >= 4);
+  console.log(`4+ lane city roads: ${wideCity.filter((q) => q.style === 'overhead').length} overhead (special junction), ${wideCity.filter((q) => q.style === 'side').length} side`);
   ok(signs.every((q) => q.style !== 'side' || q.sideOk), 'every side board has a free spot');
   ok(signs.every((q) => !net.padAt(q.x, q.z)), 'no board inside a junction');
   ok(

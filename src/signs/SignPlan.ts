@@ -6,8 +6,9 @@
 //   confirm  stands a little AFTER a junction on a long main road: "yes, you are going the right way" - ahead arrow, remaining km.
 //
 // Two styles (the rule of the handoff: ONE board per place, the one that is needed there):
-//   overhead  highway / arterial, or any road with 4+ lanes: a gantry over the carriageway (Step 4 builds it; until then a side board shows it)
-//   side      everything else, and every confirm board
+//   overhead  highway / arterial always; a 4+ lane city road only at a SPECIAL junction (a 4-way, or one where a highway / arterial meets it):
+//             a gantry over the carriageway (Step 4 builds it; until then a side board shows it)
+//   side      everything else (small roads, 4+ lane city roads at ordinary junctions), and every confirm board
 //
 // How the rows are chosen at a junction (pad P) for a driver who arrives along arm A:
 //   1. every destination goes to the arm of P that reaches it with the least driving (the arm's cost = its own length + road distance from its far
@@ -130,14 +131,23 @@ interface Arm {
   heading: number;
 }
 
+/** Can this road carry an overhead board at all? (highway / arterial, or a road with 4+ lanes) */
 export function isOverhead(r: { kind: string; lanes: number }): boolean {
   return r.kind === 'highway' || r.kind === 'arterial' || r.lanes >= 4;
 }
-function advanceDistance(r: { kind: string; lanes: number }): number {
+/**
+ * The style of an advance board for a driver on road r. Highway / arterial: always overhead. A 4+ lane city road: overhead only at a special
+ * junction (`special`: a 4-way, or a highway / arterial among its arms), otherwise a side board. Small roads: side.
+ */
+export function overheadAt(r: { kind: string; lanes: number }, special: boolean): boolean {
+  if (r.kind === 'highway' || r.kind === 'arterial') return true;
+  return r.lanes >= 4 && special;
+}
+function advanceDistance(r: { kind: string; lanes: number }, style: SignStyle): number {
   const a = SIGN_RULES.advanceM;
   if (r.kind === 'highway') return a.highway;
   if (r.kind === 'arterial') return a.arterial;
-  if (r.lanes >= 4) return a.wide;
+  if (style === 'overhead') return a.wide;
   return r.kind === 'collector' ? a.collector : a.local;
 }
 function signColor(r: { kind: string }): SignColor {
@@ -302,13 +312,14 @@ export function planRoadSigns(net: PlanNet, destinations: readonly Destination[]
       }
 
       // ---- where it stands: D metres before the junction along this approach road
-      const style: SignStyle = isOverhead(road) ? 'overhead' : 'side';
+      const special = pa.length >= 4 || pa.some((q) => ['highway', 'arterial'].includes(roadById.get(q.roadId)?.kind ?? ''));
+      const style: SignStyle = overheadAt(road, special) ? 'overhead' : 'side';
       const dMax = a.len - R.minGapM;
       if (dMax < R.minAdvanceM) {
         skip('advance: block too short');
         continue;
       }
-      const dPref = Math.min(advanceDistance(road), dMax);
+      const dPref = Math.min(advanceDistance(road, style), dMax);
       const tryD = (dd: number): Spot | null => {
         const q = spotAt(net, road, a.s0 + a.dir * dd, (a.dir * -1) as 1 | -1, style);
         return q ? { ...q, d: dd } : null;
