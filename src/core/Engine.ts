@@ -577,7 +577,13 @@ export class Engine {
       suprimHud: new SuprimHUD(container),
       toast: (t) => this.toast.show(t, 3200),
       project: this.project,
-      onDriverEjected: (person, door) => this.people.adopt(person, door, 'flee'),
+      onDriverEjected: (person, door, car) => {
+        // a driver pulled out of his car does not run: he tries to get it back (a person thrown out otherwise runs away)
+        if (car) {
+          this.people.adopt(person, door, 'idle');
+          this.people.startRetake(person, car);
+        } else this.people.adopt(person, door, 'flee');
+      },
     });
 
     // --- people + traffic (STAGE 9) ---
@@ -591,6 +597,7 @@ export class Engine {
     this.trafficLights = new TrafficLightLayer(this.world.root, this.trafficSignals);
     this.traffic = new TrafficManager({ graph, plan: new CityPlan(this.world.terrain.sites), vehicles: this.vehicles, people: this.people, player: this.player, terrainPhysics: this.world.terrainPhysics, stops: this.busStops, signals: this.trafficSignals });
     this.vehicles.setPeople(this.people);
+    this.people.onRetake = (p, car) => this.traffic.resume(car, p); // the owner of a stolen car got it back: he drives off again
     // --- Gold economy: accidents (vehicle crash / run over people) are fined, killing a criminal is rewarded ---
     this.economy = new Economy(container);
     this.vehicles.onPersonHit = (p, died) => this.economy.personHit(p, died);

@@ -33,7 +33,7 @@ export interface VehicleManagerDeps {
   /** World position -> screen pixels (null if behind the camera). */
   project: (world: THREE.Vector3) => { x: number; y: number } | null;
   /** The driver the player pulled out of his seat: where does he go now? */
-  onDriverEjected: (person: Person, door: THREE.Vector3) => void;
+  onDriverEjected: (person: Person, door: THREE.Vector3, car?: Vehicle) => void;
 }
 
 /**
@@ -321,14 +321,9 @@ export class VehicleManager {
       this.tmp.y = this.d.vehicle.terrain.heightAt(this.tmp.x, this.tmp.z);
       this.d.player.getWorldPosition(this.tmp2);
       old.heading = Math.atan2(this.tmp.x - this.tmp2.x, this.tmp.z - this.tmp2.z);
-      this.d.onDriverEjected(old, this.tmp);
+      this.d.onDriverEjected(old, this.tmp, v); // the owner does not run away: he tries to get the car back
     }
-    for (const p of v.removePassengers()) {
-      // everybody else gets out of the way too
-      this.tmp.set(this.tmp.x + (Math.random() - 0.5) * 2.5, this.tmp.y, this.tmp.z + (Math.random() - 0.5) * 2.5);
-      p.heading = Math.random() * Math.PI * 2;
-      this.d.onDriverEjected(p, this.tmp);
-    }
+    // the passengers stay in their seats: they ride along with the thief (they do not get out)
     v.seatDriver('player');
     v.ai = null;
     v.coast = false;

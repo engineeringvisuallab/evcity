@@ -5,6 +5,7 @@ import type { TerrainGenerator } from '../terrain';
 import type { Obstacle } from '../traffic/AIDriver';
 import type { RoadGraph, RoadPoint } from '../traffic/RoadGraph';
 import type { VehicleManager } from '../vehicles';
+import type { Vehicle } from '../vehicles/Vehicle';
 import { Config } from '../core/Config';
 import { Person } from './Person';
 import type { RailNetwork } from '../rail/RailNetwork';
@@ -31,6 +32,10 @@ export interface PeopleDeps {
   vehicles: VehicleManager;
   player: Player;
 }
+
+/** Owner of a stolen car: gives up after this many seconds, or when the car is this far (m) away. */
+const RETAKE_GIVE_UP_S = 90;
+const RETAKE_LOSE_DIST = 95;
 
 const STATION_CLEAR = 16;
 /** Chance that somebody who has finished standing around goes to a railway station, how near (m) a station stair must be, and how many people may stand on one platform side. */
@@ -102,7 +107,7 @@ export class PeopleManager {
   }
 
   /** Put a person on the ground at a world position (thrown out of a car, or freshly spawned). */
-  adopt(p: Person, world: THREE.Vector3, task: 'idle' | 'flee' | 'wander' | 'sidewalk' | 'station' | 'work'): void {
+  adopt(p: Person, world: THREE.Vector3, task: 'idle' | 'flee' | 'wander' | 'sidewalk' | 'station' | 'work' | 'retake'): void {
     p.vehicle = null;
     p.world.copy(world);
     p.task = task;
@@ -160,6 +165,7 @@ export class PeopleManager {
         }
       } else {
         this.think(p, dt);
+        if (p.vehicle) continue; // he just climbed back into his car (the vehicle owns the body now)
       }
       this.place(p);
       p.model.update(dt, p.speed, p.mode);
@@ -238,7 +244,7 @@ export class PeopleManager {
   // ------------------------------------------------------------------ behaviour
   private think(p: Person, dt: number): void {
     // a fast vehicle coming at us -> get out of its way
-    if (p.task !== 'flee' && p.task !== 'attack' && !(p.task === 'station' && p.stPhase !== 'toFoot') && this.dodge(p)) p.task = 'flee';
+    if (p.task !== 'flee' && p.task !== 'attack' && p.task !== 'retake' && !(p.task === 'station' && p.stPhase !== 'toFoot') && this.dodge(p)) p.task = 'flee';
     if (this.combat && p.role !== 'civilian' && p.task !== 'attack') this.checkAggro(p, dt);
 
     switch (p.task) {
@@ -260,6 +266,9 @@ export class PeopleManager {
         break;
       case 'attack':
         this.attack(p, dt);
+        break;
+      case 'retake':
+        this.retake(p, dt);
         break;
       case 'wander':
         this.wander(p, dt);
@@ -718,7 +727,7 @@ export class PeopleManager {
   }
 
   /** One shot of an armed person at the player. The player never dies: a hit only flashes the screen. */
-  private npcShoot(p: Person, dist: number): void {
+  private npcShoot(p: Person, dist: number, harmless = false): void {
     const c = this.combat!;
     const C = Config.combat;
     const w = weaponSpec(p.weapon!);
@@ -736,7 +745,7 @@ export class PeopleManager {
     const pellets = w.pellets > 1 ? 3 : 1;
     let hit = false;
     for (let i = 0; i < pellets; i++) {
-      const ok = Math.random() < hitChance * (w.pellets > 1 ? 0.6 : 1);
+      const ok = !harmless && Math.random() < hitChance * (w.pellets > 1 ? 0.6 : 1); // harmless: every shot goes wide
       hit = hit || ok;
       const miss = ok ? 0 : 1 + Math.random() * 2.5;
       const a = Math.random() * Math.PI * 2;
@@ -747,6 +756,137 @@ export class PeopleManager {
     c.effects.muzzleFlash(muzzle);
     c.audio.shot(w.id, dist);
     if (hit) c.playerHit(C.npcDamage);
+  }
+
+  // ------------------------------------------------------------------ the owner of a stolen car
+  /** Called (by the Engine) when the empty stolen car is reached: the owner sits down again and drives off. True = done, false = he cannot (no road close by). */
+  onRetake: ((p: Person, car: Vehicle) => boolean) | null = null;
+
+  /**
+   * The player took this person's car by force. He does not run away: he runs after the car and tugs at the door while it stands, shoots at
+   * it when the player drives off (the shots go wide: nothing happens to the player), and climbs back in if the player leaves it empty.
+   */
+  startRetake(p: Person, car: Vehicle): void {
+    p.stolen = car;
+    p.retakeT = 0;
+    p.tryT = 1.2;
+    p.losT = 0;
+    p.hasLos = false;
+    p.fireT = 0.6 + Math.random() * 0.6;
+    p.burstLeft = 0;
+    p.timer = 0;
+    p.task = 'retake';
+    this.giveGun(p, 'pistol'); // the role stays 'civilian': he is the victim, not a criminal
+  }
+
+  private endRetake(p: Person): void {
+    p.stolen = null;
+    p.weapon = null;
+    p.model.setGun(null);
+    p.model.setAiming(false);
+    p.task = 'idle';
+    p.timer = 2;
+    p.speed = 0;
+    p.mode = 'idle';
+  }
+
+  /** Run straight at (tx, tz); sidestep a little when something blocks the way. */
+  private chase(p: Person, tx: number, tz: number, speed: number, dt: number): void {
+    const want = Math.atan2(tx - p.world.x, tz - p.world.z);
+    for (const off of [0, 0.9, -0.9, 1.8, -1.8]) {
+      const h = want + off;
+      const nx = p.world.x + Math.sin(h) * speed * dt;
+      const nz = p.world.z + Math.cos(h) * speed * dt;
+      if (!this.passable(nx, nz)) continue;
+      p.heading = h;
+      p.world.x = nx;
+      p.world.z = nz;
+      p.world.y = this.d.terrain.heightAt(nx, nz);
+      p.speed = speed;
+      p.mode = 'run';
+      p.model.setAiming(false);
+      return;
+    }
+    p.speed = 0;
+    p.mode = 'idle';
+  }
+
+  private retake(p: Person, dt: number): void {
+    const car = p.stolen;
+    const vm = this.d.vehicles;
+    p.retakeT += dt;
+    if (!car || p.retakeT > RETAKE_GIVE_UP_S || !vm.vehicles.includes(car) || car.state === 'wrecked') {
+      this.endRetake(p);
+      return;
+    }
+    car.physWorld(this.tmpV);
+    const cx = this.tmpV.x;
+    const cz = this.tmpV.z;
+    const dist = Math.hypot(cx - p.world.x, cz - p.world.z);
+    if (dist > RETAKE_LOSE_DIST) {
+      this.endRetake(p);
+      return;
+    }
+    const run = Config.people.run;
+
+    if (vm.driver !== car) {
+      // the player got out: run to the door and climb in again
+      if (car.driver !== null) {
+        this.endRetake(p);
+        return;
+      }
+      if (dist < 2.4) {
+        if (this.onRetake?.(p, car)) {
+          p.stolen = null;
+          p.weapon = null;
+          p.model.setGun(null);
+          p.model.setAiming(false);
+        } else this.endRetake(p);
+        return;
+      }
+      this.chase(p, cx, cz, run, dt);
+      return;
+    }
+
+    // the player sits in it
+    const speed = Math.abs(car.forwardSpeed);
+    if (dist < 3.4 && speed < 2.5) {
+      // at the door: tugs at the handle. The player keeps the car; nothing else happens.
+      p.heading = Math.atan2(cx - p.world.x, cz - p.world.z);
+      p.speed = 0;
+      p.mode = 'idle';
+      p.model.setAiming(false);
+      p.tryT -= dt;
+      if (p.tryT <= 0) {
+        p.tryT = 2.2 + Math.random() * 1.6;
+        car.openDoor(0.45);
+      }
+      return;
+    }
+    const c = this.combat;
+    if (!c) {
+      this.chase(p, cx, cz, run, dt); // no guns in this build: only run after it
+      return;
+    }
+    c.playerWorld(this.tmpA);
+    const dx = this.tmpA.x - p.world.x;
+    const dz = this.tmpA.z - p.world.z;
+    const pd = Math.hypot(dx, dz);
+    p.losT -= dt;
+    if (p.losT <= 0) {
+      p.losT = 0.25;
+      this.eyes(p, this.tmpB);
+      p.hasLos = pd < Config.combat.fireRange && !c.blocked(this.tmpB, this.tmpA);
+    }
+    if (p.hasLos && speed > 4) {
+      // the player is driving off: stop, aim and shoot (the bullets go wide). While the car stands he runs to the door instead.
+      p.heading = Math.atan2(dx, dz);
+      p.speed = 0;
+      p.mode = 'idle';
+      p.model.setAiming(true);
+      p.fireT -= dt;
+      if (p.fireT <= 0) this.npcShoot(p, pd, true);
+    } else this.chase(p, cx, cz, run, dt);
   }
 
   // ------------------------------------------------------------------ being shot
@@ -808,7 +948,7 @@ export class PeopleManager {
 
   /** Run away from the player for a while. */
   private panic(p: Person): void {
-    if (p.dead || p.task === 'attack') return;
+    if (p.dead || p.task === 'attack' || p.task === 'retake') return; // (the owner of a stolen car is angry, not scared)
     if (p.task === 'flee' && p.timer > 2) return; // already running
     const pw = this.tmpA;
     if (this.combat) this.combat.playerWorld(pw);
@@ -827,7 +967,7 @@ export class PeopleManager {
   private alarm(at: THREE.Vector3, except: Person | null): void {
     const R = Config.combat.alarmRadius;
     for (const q of this.onFoot) {
-      if (q === except || q.dead || q.task === 'attack') continue;
+      if (q === except || q.dead || q.task === 'attack' || q.task === 'retake') continue;
       if (Math.hypot(q.world.x - at.x, q.world.z - at.z) > R) continue;
       if (q.role === 'civilian') this.panic(q);
       else this.startAttack(q);

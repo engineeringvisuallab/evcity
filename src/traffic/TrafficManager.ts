@@ -3,6 +3,7 @@ import type { Player } from '../characters';
 import { Config } from '../core/Config';
 import { PhysicsConfig } from '../physics/PhysicsConfig';
 import type { PeopleManager } from '../people/PeopleManager';
+import type { Person } from '../people/Person';
 import type { TerrainPhysics } from '../terrain';
 import type { CityPlan } from '../city/CityPlan';
 import { getWorldZoneAt } from '../city/WorldZones';
@@ -102,7 +103,9 @@ export class TrafficManager {
       if (v.driver === null) {
         // the player got out: the empty car goes away once he has walked off (never in front of his eyes)
         v.abandonedFor += dt;
-        if (dist > 30 || v.abandonedFor > 90) this.remove(v);
+        // ... unless its owner is running back to it to take it again
+        const owner = this.d.people.onFoot.some((q) => q.stolen === v && q.task === 'retake');
+        if (owner ? v.abandonedFor > 75 : dist > 30 || v.abandonedFor > 90) this.remove(v);
         continue;
       }
       if (v.ai) {
@@ -165,6 +168,33 @@ export class TrafficManager {
       car.setEnabled(true);
       return;
     }
+  }
+
+  /**
+   * The owner of a stolen car got it back (the player left it empty): he sits down again and drives off along the nearest road.
+   * False = no road close by (nothing changes; the owner gives up).
+   */
+  resume(car: Vehicle, driver: Person): boolean {
+    const g = this.d.graph;
+    car.physWorld(V3);
+    const near = g.nearestSpot(V3.x, V3.z, 25);
+    if (!near || car.state === 'wrecked' || car.driver !== null) return false;
+    g.at(near.roadId, near.s, 1, 0, tmpPt);
+    car.forwardVector(F3);
+    const dir: 1 | -1 = tmpPt.hx * F3.x + tmpPt.hz * F3.z >= 0 ? 1 : -1;
+    const spec = car.spec;
+    const route = new RouteBuilder(g, Math.random, near.roadId, near.s, dir, 0.7 + Math.random() * 0.28, {
+      roadOk: (k) => canUseRoad(spec.use, k),
+      placeOk: (x, z) => canUsePlace(spec.use, getWorldZoneAt(x, z).kind, this.d.plan.areaAt(x, z)?.kind ?? null),
+    });
+    route.start();
+    this.d.people.dispose(driver);
+    car.seatDriver(driver);
+    car.abandonedFor = 0;
+    car.coast = false;
+    car.ai = new AIDriver(car, route, this.d.signals);
+    car.setEnabled(true);
+    return true;
   }
 
   /** A vehicle that may use this kind of road in this kind of zone, by weight (null = nothing suits this place). */

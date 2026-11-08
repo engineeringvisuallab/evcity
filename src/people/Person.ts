@@ -17,6 +17,7 @@ export type PersonTask =
   | 'work' // farm work in a crop field (the pose + the movement come from FarmCrew through PeopleManager.workHook)
   | 'flee' // running away (a vehicle came too close / was thrown out of a car / gunfire)
   | 'attack' // armed: walks towards the player and shoots
+  | 'retake' // the owner of a car the player took by force: runs after it, tugs at the door, shoots when the player drives off (harmless), climbs back in when it is empty
   | 'dead' // lying on the ground
   | 'driving'; // sitting in a vehicle (the vehicle owns the body)
 
@@ -69,6 +70,10 @@ export class Person {
   deadT = 0;
   /** Police only: seconds since nobody was wanted any more. */
   idleT = 0;
+  /** Task 'retake': the car that was taken from this person, seconds spent on it, seconds until the next tug at the door. */
+  stolen: Vehicle | null = null;
+  retakeT = 0;
+  tryT = 0;
   /** Walking speed of this person (m/s). */
   readonly pace = 1.1 + Math.random() * 0.5;
 
