@@ -1,32 +1,46 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { Appearance } from './PersonModel';
+import { buildSkinnedBody } from './SkinnedHuman';
 
 /**
- * A realistic-shaped low-poly human (no model files): rounded torso with shoulders, neck, an egg-shaped head with
- * face (eyes, brows, nose, mouth, ears), hair, tapered arms with elbows + hands, thighs / knees / shins and shoes.
- *
- * All the shapes are built ONCE and shared by every person (merged per colour slot), so dozens of people are still
- * only ~16 meshes each. Faces +Z, feet at y = 0 when `pivot` sits at y = 0.9. Total height ~1.8 m.
+ * A realistic-shaped human (no model files). Two builders share one rig interface:
+ *  - buildHuman (default): ONE continuous skinned mesh on a 17-bone skeleton (SkinnedHuman.ts), smooth joints.
+ *  - buildHumanRigid (fallback, set USE_SKINNED_BODY = false): ~16 rigid pieces (rounded torso, egg head, tapered arms,
+ *    thighs / shins, shoes) merged per colour slot.
+ * Faces +Z, feet at y = 0 when `pivot` sits at y = 0.9. Total height ~1.8 m.
  */
+
+/** true = skinned body (smooth bending joints); false = the old rigid body. */
+export const USE_SKINNED_BODY = true;
 
 export interface HumanRig {
   /** At the hips. Add to your root group and set `pivot.position.y = 0.9`. */
   pivot: THREE.Group;
   /** Hip joints (swing the whole leg) and knee joints (bend the shin backwards, rotation.x > 0). */
-  legL: THREE.Group;
-  legR: THREE.Group;
-  shinL: THREE.Group;
-  shinR: THREE.Group;
+  legL: THREE.Object3D;
+  legR: THREE.Object3D;
+  shinL: THREE.Object3D;
+  shinR: THREE.Object3D;
   /** Shoulder joints (swing the whole arm) and elbow joints (bend the forearm forwards, rotation.x < 0). */
-  armL: THREE.Group;
-  armR: THREE.Group;
-  foreL: THREE.Group;
-  foreR: THREE.Group;
+  armL: THREE.Object3D;
+  armR: THREE.Object3D;
+  foreL: THREE.Object3D;
+  foreR: THREE.Object3D;
+  /** Skinned body only: extra bones for the natural secondary motion (see HumanMotion.ts). */
+  hips?: THREE.Object3D;
+  spine?: THREE.Object3D;
+  chest?: THREE.Object3D;
+  neck?: THREE.Object3D;
+  head?: THREE.Object3D;
+  handL?: THREE.Object3D;
+  handR?: THREE.Object3D;
+  footL?: THREE.Object3D;
+  footR?: THREE.Object3D;
 }
 
 /** Where a gun sits in the right forearm group (in the hand). */
-export const HAND_GRIP_Y = -0.28;
+export const HAND_GRIP_Y = -0.31;
 /** Elbow bend while standing (rad). */
 export const ELBOW_REST = -0.12;
 
@@ -220,6 +234,16 @@ function geoms(): Geoms {
  * The geometry is shared and must NOT be disposed by the caller.
  */
 export function buildHuman(look: Appearance, mat: (colour: number) => THREE.Material): HumanRig {
+  if (!USE_SKINNED_BODY) return buildHumanRigid(look, mat);
+  const g = geoms();
+  const rig = buildSkinnedBody(look, mat, { hair: g.hair, hairBeard: g.hairBeard, cap: g.cap, helmet: g.helmet, topi: g.topi });
+  rig.foreL.rotation.x = ELBOW_REST;
+  rig.foreR.rotation.x = ELBOW_REST;
+  return rig;
+}
+
+/** The old body: rigid pieces (kept as a fallback, see USE_SKINNED_BODY). */
+function buildHumanRigid(look: Appearance, mat: (colour: number) => THREE.Material): HumanRig {
   const g = geoms();
   const bodyType = look.bodyType ?? 'average';
   // Use mild proportion differences rather than scaling the complete rig. This keeps

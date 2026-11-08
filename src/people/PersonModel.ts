@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { makeGun } from '../combat/GunModel';
 import type { WeaponId } from '../combat/Weapons';
-import { buildHuman, kneeFlex, ELBOW_REST, HAND_GRIP_Y } from './HumanBody';
+import { buildHuman, kneeFlex, ELBOW_REST, HAND_GRIP_Y, type HumanRig } from './HumanBody';
+import { gait, relax, resetPose } from './HumanMotion';
 import { Umbrella, holdArm } from '../weather/Umbrella';
 
 /** Everything that makes one person look different from another. */
@@ -155,19 +156,21 @@ export const BIKE_PILLION_POSE: SeatPose = { lean: 0.4, thigh: -0.66, knee: 1.32
 export class PersonModel {
   readonly root = new THREE.Group();
   private pivot: THREE.Group; // at the hips
-  private legL: THREE.Group;
-  private legR: THREE.Group;
-  private shinL: THREE.Group;
-  private shinR: THREE.Group;
-  private armL: THREE.Group;
-  private armR: THREE.Group;
-  private foreL: THREE.Group;
-  private foreR: THREE.Group;
+  private rig: HumanRig;
+  private idleT = Math.random() * 20;
+  private legL: THREE.Object3D;
+  private legR: THREE.Object3D;
+  private shinL: THREE.Object3D;
+  private shinR: THREE.Object3D;
+  private armL: THREE.Object3D;
+  private armR: THREE.Object3D;
+  private foreL: THREE.Object3D;
+  private foreR: THREE.Object3D;
   private phase = Math.random() * 6;
   private seated = false;
   /** Shoes live in their own joint at the ankle (built on first use) so a bike rider's soles can stay flat on the pegs. */
-  private footL: THREE.Group | null = null;
-  private footR: THREE.Group | null = null;
+  private footL: THREE.Object3D | null = null;
+  private footR: THREE.Object3D | null = null;
   private legRestX = 0.11;
   private gun: THREE.Group | null = null;
   private aiming = false;
@@ -181,7 +184,11 @@ export class PersonModel {
 
   constructor(readonly look: Appearance) {
     const rig = buildHuman(look, mat);
+    this.rig = rig;
     this.pivot = rig.pivot;
+    // the skinned body already has ankle bones; the rigid one builds them on first use (splitFeet)
+    this.footL = rig.footL ?? null;
+    this.footR = rig.footR ?? null;
     this.legL = rig.legL;
     this.legR = rig.legR;
     this.shinL = rig.shinL;
@@ -261,6 +268,7 @@ export class PersonModel {
 
   setSeated(on: boolean, pose: SeatPose = SIT_POSE): void {
     this.seated = on;
+    if (on) resetPose(this.rig);
     if (on && this.umbrella) {
       this.umbrella.open = 0;
       this.umbrella.root.visible = false;
@@ -314,6 +322,7 @@ export class PersonModel {
       return; // lying: no walking animation
     }
     const k = Math.min(1, 14 * dt);
+    this.idleT += dt;
     const ease = (g: THREE.Object3D, target: number) => {
       g.rotation.x += (target - g.rotation.x) * k;
     };
@@ -330,7 +339,9 @@ export class PersonModel {
       const elbow = mode === 'run' ? -1.0 : -0.3;
       ease(this.foreL, elbow);
       ease(this.foreR, this.gun ? -0.1 : elbow);
+      gait(this.rig, this.phase, amp, mode === 'run', k);
     } else {
+      relax(this.rig, this.idleT, k, true);
       ease(this.legL, 0);
       ease(this.legR, 0);
       ease(this.shinL, 0);

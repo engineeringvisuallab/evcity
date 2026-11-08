@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { makeGun } from '../combat/GunModel';
 import type { WeaponId } from '../combat/Weapons';
 import { ENGINEER_LOOK } from '../people/PersonModel';
-import { buildHuman, kneeFlex, ELBOW_REST, HAND_GRIP_Y } from '../people/HumanBody';
+import { buildHuman, kneeFlex, ELBOW_REST, HAND_GRIP_Y, type HumanRig } from '../people/HumanBody';
+import { gait, relax } from '../people/HumanMotion';
 import { Umbrella, holdArm } from '../weather/Umbrella';
 
 export type PlayerState = 'idle' | 'walk' | 'run' | 'air' | 'swim' | 'wade';
@@ -14,14 +15,16 @@ export type PlayerState = 'idle' | 'walk' | 'run' | 'air' | 'swim' | 'wade';
 export class PlayerModel {
   readonly root = new THREE.Group();
   private pivot: THREE.Group; // at the hips; tilts forward when swimming
-  private legL: THREE.Group;
-  private legR: THREE.Group;
-  private shinL: THREE.Group;
-  private shinR: THREE.Group;
-  private armL: THREE.Group;
-  private armR: THREE.Group;
-  private foreL: THREE.Group;
-  private foreR: THREE.Group;
+  private rig: HumanRig;
+  private clock = 0;
+  private legL: THREE.Object3D;
+  private legR: THREE.Object3D;
+  private shinL: THREE.Object3D;
+  private shinR: THREE.Object3D;
+  private armL: THREE.Object3D;
+  private armR: THREE.Object3D;
+  private foreL: THREE.Object3D;
+  private foreR: THREE.Object3D;
   private phase = 0;
   private swimBlend = 0;
   private gun: THREE.Group | null = null;
@@ -38,6 +41,7 @@ export class PlayerModel {
       this.mats.push(m);
       return m;
     });
+    this.rig = rig;
     this.pivot = rig.pivot;
     this.legL = rig.legL;
     this.legR = rig.legR;
@@ -86,6 +90,7 @@ export class PlayerModel {
 
   update(dt: number, horizSpeed: number, state: PlayerState): void {
     const k = Math.min(1, 14 * dt);
+    this.clock += dt;
     const ease = (g: THREE.Object3D, target: number) => {
       g.rotation.x += (target - g.rotation.x) * k;
     };
@@ -105,6 +110,7 @@ export class PlayerModel {
       const elbow = state === 'run' ? -1.0 : -0.3;
       ease(this.foreL, elbow);
       ease(this.foreR, this.gun ? -0.1 : elbow);
+      gait(this.rig, this.phase, amp, state === 'run', k);
     } else if (state === 'air') {
       ease(this.legL, -0.6);
       ease(this.legR, 0.35);
@@ -114,6 +120,7 @@ export class PlayerModel {
       ease(this.armR, -0.9);
       ease(this.foreL, -0.4);
       ease(this.foreR, this.gun ? -0.1 : -0.4);
+      relax(this.rig, this.clock, k, false);
     } else if (state === 'swim') {
       this.phase += dt * 4;
       ease(this.armL, this.phase % (Math.PI * 2) - Math.PI);
@@ -124,6 +131,7 @@ export class PlayerModel {
       ease(this.shinR, 0.25 + Math.max(0, Math.sin(this.phase * 3)) * 0.3);
       ease(this.foreL, -0.15);
       ease(this.foreR, -0.15);
+      relax(this.rig, this.clock, k, false);
     } else {
       ease(this.legL, 0);
       ease(this.legR, 0);
@@ -133,6 +141,7 @@ export class PlayerModel {
       ease(this.armR, 0);
       ease(this.foreL, ELBOW_REST);
       ease(this.foreR, this.gun ? -0.05 : ELBOW_REST);
+      relax(this.rig, this.clock, k, true);
     }
     if (this.aiming && state !== 'swim') {
       ease(this.armR, -1.5);
