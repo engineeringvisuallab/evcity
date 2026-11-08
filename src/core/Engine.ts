@@ -50,7 +50,7 @@ import { LazyInfra } from '../engineering/LazyInfra';
 import { Minimap, type MapMarker, type MapState } from '../ui/Minimap';
 import { VehicleMenu } from '../ui/VehicleMenu';
 import { VehicleHUD } from '../ui/VehicleHUD';
-import { type Vehicle, VehicleManager, SEDAN, JEEP, HYPERCAR, EVHYPAR, EVBIKE, BIKE, RICKSHAW, AUTO, BUS, SPECS } from '../vehicles';
+import { type Vehicle, VehicleManager, NightLamps, SEDAN, JEEP, HYPERCAR, EVHYPAR, EVBIKE, BIKE, RICKSHAW, AUTO, BUS, SPECS } from '../vehicles';
 import { VehicleModel } from '../vehicles/VehicleModel';
 import { PeopleManager, PersonModel, ENGINEER_LOOK } from '../people';
 import { RoadGraph, TrafficLightLayer, TrafficManager, TrafficSignals } from '../traffic';
@@ -59,6 +59,7 @@ import { GoldConfig } from '../economy/Gold';
 import { InputManager } from '../input/InputManager';
 import { VoiceManager } from '../audio/VoiceManager';
 import { Environment, LighthouseLight, StreetLights } from '../environment';
+import { JunctionMirrors } from '../roads/JunctionMirrors';
 import { Toast } from '../ui/Toast';
 import { SuprimHUD } from '../ui/SuprimHUD';
 import { SettingsMenu } from '../ui/SettingsMenu';
@@ -134,6 +135,8 @@ export class Engine {
   private trafficLights: TrafficLightLayer;
   /** Day / night: street lights on every road + the lighthouse lantern (both follow environment.lampOn). */
   private streetLights: StreetLights;
+  /** Convex road mirrors at the junctions (2 draw calls for the whole map). */
+  private junctionMirrors: JunctionMirrors;
   private lighthouseLight: LighthouseLight | null = null;
   private toast: Toast;
   /** Settings menu (gear button / Tab): day-night mode, what the screen shows, sound, minimap zoom, key help. */
@@ -309,6 +312,7 @@ export class Engine {
     this.bridgePhysics = new BridgePhysics(physics, this.world.origin, roads.bridges, roads.roads);
     this.roadDebug = new RoadDebug(roads);
     this.streetLights = new StreetLights(this.world.root, roads);
+    this.junctionMirrors = new JunctionMirrors(this.world.root, roads, this.streetLights.spots);
     this.world.root.add(this.roadDebug.group);
     this.rail = this.world.terrain.rail;
     this.railDebug = new RailDebug(this.rail);
@@ -974,6 +978,8 @@ export class Engine {
       const fov = this.camera.fov;
       const px = this.renderer.domElement.height;
       this.streetLights.update(lamp, fov, px);
+      this.junctionMirrors.update(lamp);
+      NightLamps.on = lamp; // vehicle headlights / tail lights
       this.lighthouseLight?.update(lamp, this.time.elapsed, fov, px);
     }
 
@@ -1428,6 +1434,7 @@ export class Engine {
     this.busStops.dispose();
     this.trafficLights.dispose();
     this.streetLights.dispose();
+    this.junctionMirrors.dispose();
     this.lighthouseLight?.dispose();
     this.trainRider.dispose();
     this.ridePrompt.dispose();

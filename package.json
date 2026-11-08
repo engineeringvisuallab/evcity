@@ -27,6 +27,7 @@
     "test:farm-crew": "tsx scripts/farm-crew-test.ts",
     "gen:farm": "tsx scripts/gen-farm-fields.ts",
     "test:roads": "tsx scripts/road-test.ts",
+    "test:mirrors": "tsx scripts/mirror-test.ts",
     "test:port": "tsx scripts/port-test.ts",
     "test:airport": "tsx scripts/airport-test.ts && tsx scripts/airport-site-test.ts",
     "test:drive": "tsx scripts/drive-test.ts",

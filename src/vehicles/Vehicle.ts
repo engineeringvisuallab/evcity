@@ -9,6 +9,7 @@ import type { FloatingOrigin } from '../world/FloatingOrigin';
 import { clamp } from '../utils/math';
 import { Powertrain } from './Powertrain';
 import { VehicleModel } from './VehicleModel';
+import { VehicleLights } from './VehicleLights';
 import { BIKE_PILLION_POSE, BIKE_RIDER_POSE, ENGINEER_LOOK, PersonModel } from '../people/PersonModel';
 import type { Person } from '../people/Person';
 import type { AIDriver } from '../traffic/AIDriver';
@@ -210,6 +211,7 @@ export class Vehicle implements OrbitTarget {
 
   private throttle = 0;
   private brake = 0;
+  private readonly lights: VehicleLights;
   private steerAngle = 0;
   private handbrake = false;
   private wheelsOnGround = 0;
@@ -339,6 +341,7 @@ export class Vehicle implements OrbitTarget {
 
     this.powertrain = new Powertrain(s);
     this.model = new VehicleModel(s);
+    this.lights = new VehicleLights(this.model.root, s);
     d.scene.add(this.model.root);
 
     this.prevPos.copy(local);
@@ -1696,8 +1699,12 @@ export class Vehicle implements OrbitTarget {
     this.currQuat.set(r.x, r.y, r.z, r.w);
   }
 
-  update(alpha: number): void {
+  /** dist = distance to the player (m): far vehicles skip the headlight beam. */
+  update(alpha: number, dist = 0): void {
     this.syncModel(alpha);
+    // headlights / tail lights (only visible at night): on while somebody drives, off when empty, parked or wrecked
+    const driven = this.driver !== null || this.tourInput !== null || this.ai !== null;
+    this.lights.update(driven && !this.coast && this.state !== 'wrecked' && this.enabled, this.brake > 0.05 || this.handbrake, dist);
   }
 
   private syncModel(alpha: number): void {
@@ -1778,6 +1785,7 @@ export class Vehicle implements OrbitTarget {
 
   dispose(): void {
     this.d.scene.remove(this.model.root);
+    this.lights.dispose();
     this.model.dispose();
     this.d.physics.world.removeVehicleController(this.controller);
     this.d.physics.world.removeRigidBody(this.body);

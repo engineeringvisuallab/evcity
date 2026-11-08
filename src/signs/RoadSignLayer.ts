@@ -7,7 +7,7 @@
 // Later steps add: the real destination table + road distances (Step 2), the placement rules (Step 3), the overhead gantry (Step 4).
 import * as THREE from 'three';
 import type { RoadNetwork, RoadSpec } from '../roads';
-import { BOARD_PX_PER_M, BOARD_W_M, boardHeightM, drawSignCanvas } from './SignCanvas';
+import { BOARD_W_M, boardHeightM, drawSignCanvas } from './SignCanvas';
 import type { SignColor, SignRow } from './SignFormat';
 
 export interface SideSignSpec {

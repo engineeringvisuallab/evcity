@@ -2,6 +2,7 @@
 export { Vehicle } from './Vehicle';
 export type { DriveInput, VehicleTelemetry } from './Vehicle';
 export { VehicleManager } from './VehicleManager';
+export { NightLamps } from './VehicleLights';
 export { Powertrain } from './Powertrain';
 export { SEDAN, JEEP, HYPERCAR, EVHYPAR, BIKE, EVBIKE, RICKSHAW, AUTO, BUS, TANK, SPECS, wheelDefs, groundY } from './VehicleSpec';
 export type { VehicleSpec } from './VehicleSpec';

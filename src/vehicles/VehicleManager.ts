@@ -272,7 +272,7 @@ export class VehicleManager {
       const near = dist < PhysicsConfig.activeRadius * 0.9 && this.d.terrainPhysics.hasColliderAt(this.tmp.x, this.tmp.z);
       if (v.occupied || near) v.setEnabled(true);
       else if (dist > PhysicsConfig.activeRadius * 1.1) v.setEnabled(false);
-      v.update(alpha);
+      v.update(alpha, dist);
     }
     this.audio.update(dt, this.vehicles, this.driver, focus, this.d.project, this.d.input.isDown('KeyH')); // H = horn / bell
 
