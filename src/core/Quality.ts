@@ -31,20 +31,65 @@ export interface QualitySettings {
   fpsCap: number;
   /** Lowest resolution factor the dynamic resolution may use. */
   minScale: number;
+
+  // ---- entity counts / densities (high = the original game values) ----
+  /** Chance multipliers of the placement in the chunk workers (trees, rocks, grass tufts). 1 = every one of the original set; lower = a thinner subset of the SAME set. */
+  treeMul: number;
+  rockMul: number;
+  grassMul: number;
+  /** Chunks up to this LOD get trees and rocks (see Config.vegetation.maxLod). */
+  treeMaxLod: number;
+  /** Grass draw radius (m); the LOD rings and the fade-out are squeezed to fit. */
+  grassRadius: number;
+  /** Blades per tuft model multiplier (Config.vegetation.grass.bladeDensity). */
+  grassBlades: number;
+  /** People on foot / AI cars / buses around the player. */
+  peopleTarget: number;
+  trafficTarget: number;
+  maxBuses: number;
+  /** Bird flocks (of 12), land animals, predators, dolphins, fish schools. */
+  flockCount: number;
+  landAnimals: number;
+  predators: number;
+  dolphins: number;
+  fishSchools: number;
+  /** Street lamp spacing multiplier (1 = original, 1.5 = a lamp every 1.5x as far). */
+  lampStepMul: number;
+  /** Radius multiplier of the crop plants / farm crew around the player. */
+  farmMul: number;
+  /** Engineering sites farther than this x siteShowDist are disposed again to free memory (0 = never; they are rebuilt when the player returns). */
+  siteDisposeMul: number;
+  /** Engineering sites: merge their static meshes into few draw calls (same picture); ?merge=0 switches it off for comparing. */
+  siteMerge: boolean;
+  /** Engineering sites: meshes with a bounding radius below this (m) stop casting a sun shadow (0 = all keep it). */
+  siteShadowMinR: number;
+  /** Cap of the texture anisotropy (sharpness at grazing angles; cheaper on small GPUs). */
+  maxAniso: number;
+  /** The sun shadow map is redrawn every n-th frame (1 = every frame). */
+  shadowInterval: number;
 }
 
 export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
   low: {
     tier: 'low', maxDpr: 1.5, maxPixels: 1_300_000, antialias: false, powerPreference: 'default',
     shadowMapSize: 1024, shadowExtent: 200, lodDistances: [220, 520, 1100, 2000], siteShowDist: 700, fpsCap: 30, minScale: 0.6,
+    treeMul: 0.35, rockMul: 0.35, grassMul: 0.6, treeMaxLod: 1, grassRadius: 120, grassBlades: 0.6,
+    peopleTarget: 12, trafficTarget: 5, maxBuses: 1, flockCount: 4, landAnimals: 24, predators: 2, dolphins: 3, fishSchools: 4,
+    lampStepMul: 1.6, farmMul: 0.65, siteDisposeMul: 2.5, siteMerge: true, siteShadowMinR: 1.2, maxAniso: 2, shadowInterval: 2,
   },
   medium: {
     tier: 'medium', maxDpr: 1.25, maxPixels: 2_800_000, antialias: false, powerPreference: 'default',
     shadowMapSize: 2048, shadowExtent: 280, lodDistances: [300, 700, 1400, 2600], siteShowDist: 1300, fpsCap: 60, minScale: 0.6,
+    treeMul: 0.65, rockMul: 0.65, grassMul: 0.85, treeMaxLod: 1, grassRadius: 145, grassBlades: 0.8,
+    peopleTarget: 22, trafficTarget: 8, maxBuses: 2, flockCount: 8, landAnimals: 42, predators: 3, dolphins: 5, fishSchools: 7,
+    lampStepMul: 1.25, farmMul: 0.85, siteDisposeMul: 0, siteMerge: true, siteShadowMinR: 0.5, maxAniso: 4, shadowInterval: 1,
   },
   high: {
     tier: 'high', maxDpr: 2, maxPixels: 8_300_000, antialias: true, powerPreference: 'high-performance',
     shadowMapSize: 4096, shadowExtent: 350, lodDistances: [380, 900, 1900, 3600], siteShowDist: 2400, fpsCap: 60, minScale: 0.7,
+    treeMul: 1, rockMul: 1, grassMul: 1, treeMaxLod: 1, grassRadius: 170, grassBlades: 1,
+    peopleTarget: 34, trafficTarget: 12, maxBuses: 3, flockCount: 12, landAnimals: 64, predators: 4, dolphins: 8, fishSchools: 10,
+    lampStepMul: 1, farmMul: 1, siteDisposeMul: 0, siteMerge: true, siteShadowMinR: 0, maxAniso: 16, shadowInterval: 1,
   },
 };
 
@@ -119,6 +164,11 @@ export function initQuality(): QualitySettings {
   const tier = choice === 'auto' ? detectTier() : choice;
   const p = PRESETS[tier];
   Object.assign(Q, p, { lodDistances: [...p.lodDistances] });
+  try {
+    if (new URLSearchParams(location.search).get('merge') === '0') Q.siteMerge = false; // A/B test of the mesh merging
+  } catch {
+    /* ignore */
+  }
   Config.environment.shadowMapSize = p.shadowMapSize;
   Config.environment.shadowExtent = p.shadowExtent;
   if (tier !== 'high') {
@@ -127,6 +177,23 @@ export function initQuality(): QualitySettings {
     });
     // same fog (about 95 % at the load radius) at the shorter radius: hides the pop-in of chunks
     Config.environment.fogDensity *= PRESETS.high.lodDistances[3] / p.lodDistances[3];
+  }
+  // entity counts (main thread; the chunk workers get treeMul / rockMul / grassMul / treeMaxLod in their request messages, see ChunkLoader)
+  Config.people.target = p.peopleTarget;
+  Config.traffic.target = p.trafficTarget;
+  Config.traffic.maxBuses = p.maxBuses;
+  Config.vegetation.maxLod = p.treeMaxLod;
+  const G = Config.vegetation.grass;
+  Config.vegetation.grass.bladeDensity = p.grassBlades;
+  if (p.grassRadius !== PRESETS.high.grassRadius) {
+    const r = p.grassRadius;
+    G.radius = r;
+    G.keep = r + 20;
+    G.fadeEnd = r - 2;
+    G.fadeStart = r - 30;
+    // the near ring keeps its size; the middle ring is squeezed in proportion, the last ring ends at the radius
+    G.lods[1].to = Math.round(G.lods[1].to * Math.min(1, (r - 40) / (PRESETS.high.grassRadius - 40)) + 0.0001);
+    G.lods[2].to = r;
   }
   (Q as { choice?: QualityChoice }).choice = choice;
   return Q;

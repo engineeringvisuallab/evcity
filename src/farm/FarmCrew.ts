@@ -22,6 +22,7 @@
 //   haul            pickup shuttling on the bank lane                        (levelled paddy: farmers carrying baskets on their heads)
 //   graze           a herdsman with the cows
 import * as THREE from 'three';
+import { Q } from '../core/Quality';
 import type { PeopleManager } from '../people/PeopleManager';
 import { Person } from '../people/Person';
 import type { TerrainGenerator } from '../terrain/TerrainGenerator';
@@ -39,8 +40,8 @@ export interface CrewDeps {
   terrain: TerrainGenerator;
 }
 
-const CREW_R = 165; // people: a field is up to ~50 m wide, and PeopleManager removes anybody beyond 240 m
-const VEH_R = 200; // vehicles (physics is active within 300 m)
+const CREW_R = Math.round(165 * Q.farmMul); // people: a field is up to ~50 m wide, and PeopleManager removes anybody beyond 240 m
+const VEH_R = Math.round(200 * Q.farmMul); // vehicles (physics is active within 300 m)
 const HYST = 25;
 
 interface Worker { p: Person; f: Field; s: WSpec; t: number; ph: number }

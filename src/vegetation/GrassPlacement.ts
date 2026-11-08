@@ -30,6 +30,8 @@ export class GrassPlacer {
   private sx: TerrainSample;
   private sz: TerrainSample;
   private mask = new Float32Array(2);
+  /** Quality preset: chance multiplier (1 = every tuft). */
+  mul = 1;
 
   constructor(private gen: TerrainGenerator, private plan: CityPlan, private seed: number, private trees: TreePlacer) {
     this.meadow = new Noise2D((seed ^ 0x3b9d27a1) >>> 0);
@@ -78,7 +80,7 @@ export class GrassPlacer {
 
         // 1. chance from noise only (most cells stop here)
         const patch = smooth(-0.35, 0.25, this.meadow.fbm(x / 45, z / 45, 2));
-        let chance = G.minChance + (G.maxChance - G.minChance) * patch;
+        let chance = (G.minChance + (G.maxChance - G.minChance) * patch) * this.mul;
         chance *= 1 - G.forestThin * this.trees.forestAt(x, z);
         if (roll >= chance) continue;
 

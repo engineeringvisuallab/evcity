@@ -35,6 +35,8 @@ export class TreePlacer {
   private sz: TerrainSample;
   private mask = new Float32Array(2);
   private tanMax = Math.tan((V.maxSlopeDeg * Math.PI) / 180);
+  /** Quality preset: chance multiplier (1 = the full forest). The same roll is used, so a lower value only removes trees, never moves them. */
+  mul = 1;
 
   constructor(private gen: TerrainGenerator, private plan: CityPlan, private seed: number) {
     this.forestNoise = new Noise2D((seed ^ 0x7e3d1a5b) >>> 0);
@@ -124,7 +126,7 @@ export class TreePlacer {
 
         // 1. cheap chance test first (noise only): most cells stop here
         const f = this.forestAt(x, z);
-        let chance = V.scatterChance + (V.forestChance - V.scatterChance) * f;
+        let chance = (V.scatterChance + (V.forestChance - V.scatterChance) * f) * this.mul;
         if (roll >= chance) continue;
 
         // 2. terrain tests

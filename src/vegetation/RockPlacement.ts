@@ -28,6 +28,8 @@ export class RockPlacer {
   private sx: TerrainSample;
   private sz: TerrainSample;
   private mask = new Float32Array(2);
+  /** Quality preset: chance multiplier (1 = all rocks). */
+  mul = 1;
 
   constructor(private gen: TerrainGenerator, private trees: TreePlacer, private seed: number) {
     this.clump = new Noise2D((seed ^ 0x51a7c3e9) >>> 0);
@@ -94,7 +96,7 @@ export class RockPlacer {
         // clumps: rock fields with empty ground between them
         const clump = 0.25 + 1.0 * smooth(-0.15, 0.35, this.clump.fbm(x / 110, z / 110, 2));
         // most cells stop here without touching the terrain (even the steepest, rockiest cell has at most maxChance)
-        if (roll >= R.maxChance * clump) continue;
+        if (roll >= R.maxChance * clump * this.mul) continue;
 
         this.gen.sample(x, z, s);
         const h = s.h;
@@ -105,7 +107,7 @@ export class RockPlacer {
         this.gen.sample(x, z + 1.5, this.sz);
         const slope = Math.hypot(this.sx.h - h, this.sz.h - h) / 1.5;
         let chance = R.baseChance + R.outcropChance * smooth(0.35, 0.8, slope) + R.alpineChance * smooth(240, 380, h);
-        chance = Math.min(R.maxChance, chance) * clump * this.trees.cityFactor(x, z);
+        chance = Math.min(R.maxChance, chance) * clump * this.trees.cityFactor(x, z) * this.mul;
         if (roll >= chance) continue;
         if (this.nearRoad(x, z)) continue;
 

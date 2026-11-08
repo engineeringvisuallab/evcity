@@ -5,7 +5,7 @@ import { Config } from '../core/Config';
 import { GrassPlacer } from '../vegetation/GrassPlacement';
 import { RockPlacer } from '../vegetation/RockPlacement';
 import { TreePlacer } from '../vegetation/TreePlacement';
-import type { ChunkRequest, ChunkResult, GrassRequest, GrassResult } from './messages';
+import type { ChunkRequest, ChunkResult, GrassRequest, GrassResult, WorldDensity } from './messages';
 
 /**
  * Chunk generation worker. Runs off the main thread so the game never freezes.
@@ -35,11 +35,22 @@ function ensureGenerator(seed: number): TerrainGenerator {
   return generator;
 }
 
+/** Preset densities from the main thread (the worker's own Config is never touched). Deterministic: the same numbers always give the same world. */
+let maxLod = Config.vegetation.maxLod;
+function applyDensity(d: WorldDensity | undefined): void {
+  if (!d) return;
+  treePlacer!.mul = d.treeMul;
+  rockPlacer!.mul = d.rockMul;
+  grassPlacer!.mul = d.grassMul;
+  maxLod = d.treeMaxLod;
+}
+
 ctx.onmessage = (e: MessageEvent<ChunkRequest | GrassRequest>) => {
   const req = e.data;
 
   if (req.type === 'grass') {
     ensureGenerator(req.seed);
+    applyDensity(req.dens);
     const data = grassPlacer!.place(req.tx, req.tz, req.stride);
     const out: GrassResult = { type: 'grass', tx: req.tx, tz: req.tz, stride: req.stride, data };
     ctx.postMessage(out, [data.buffer as ArrayBuffer]);
@@ -48,9 +59,10 @@ ctx.onmessage = (e: MessageEvent<ChunkRequest | GrassRequest>) => {
   if (req.type !== 'generate') return;
 
   const gen = ensureGenerator(req.seed);
+  applyDensity(req.dens);
   const m = buildChunkMeshData(gen, req.cx, req.cz, req.vertsPerSide, req.skirtDepth, req.lod);
 
-  const withPlants = req.lod <= Config.vegetation.maxLod;
+  const withPlants = req.lod <= maxLod;
   const trees = withPlants ? treePlacer!.place(req.cx, req.cz) : null;
   const rocks = withPlants ? rockPlacer!.place(req.cx, req.cz) : null;
 

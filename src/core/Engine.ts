@@ -46,7 +46,7 @@ import { EVLabManager } from '../evlab';
 import { EngineeringBoundary } from '../zones';
 import { LibraryManager } from '../library';
 import { BuildingManager, FillBuildings, PlacedBuildings, setBuildingTextureQuality } from '../buildings';
-import { InfraManager } from '../engineering/InfraManager';
+import { LazyInfra } from '../engineering/LazyInfra';
 import { Minimap, type MapMarker, type MapState } from '../ui/Minimap';
 import { VehicleMenu } from '../ui/VehicleMenu';
 import { VehicleHUD } from '../ui/VehicleHUD';
@@ -66,6 +66,9 @@ import { HudSettings } from '../ui/HudSettings';
 import type { TimeMode } from '../environment/DayNight';
 import { PhysicsWorld } from '../physics/PhysicsWorld';
 import { DebugPanel } from '../ui/DebugPanel';
+import { PerfOverlay } from '../ui/PerfOverlay';
+import { ContextGuard } from './ContextGuard';
+import { bindVisibility } from './Lifecycle';
 import { HUD } from '../ui/HUD';
 import { Subtitles } from '../ui/Subtitles';
 import { WorldManager } from '../world/WorldManager';
@@ -97,6 +100,12 @@ function mapSize(kind: string): { len?: number; wide?: number } {
  */
 /** The same vehicle can be called from the N menu only once per minute. */
 const SUMMON_COOLDOWN_MS = 60_000;
+
+/** What Engine.prepare() has started (see there). */
+export interface EnginePrep {
+  bus: EventBus<EngineEvents>;
+  ready: Promise<[PhysicsWorld, unknown, unknown, Catalog]>;
+}
 
 export class Engine {
   readonly time = new Time();
@@ -171,7 +180,7 @@ export class Engine {
   readonly placedBuildings: PlacedBuildings;
   readonly fillBuildings: FillBuildings;
   /** SWTP (water treatment) + STP (sewage treatment) plants with their narrated tour (Y). */
-  readonly infra: InfraManager;
+  readonly infra: LazyInfra;
   private infraFreeFly = false;
   private mapStops: { x: number; z: number }[] = [];
   private minimap: Minimap;
@@ -236,20 +245,35 @@ export class Engine {
   private tmpVec = new THREE.Vector3();
   readonly environment: Environment;
   private debug: DebugPanel;
+  /** F2 / ?perf=1: FPS, draw calls, memory ... + a "Copy report" button. */
+  private perf: PerfOverlay;
   private hud: HUD;
   readonly voice: VoiceManager;
   private loop: GameLoop;
+  private started = false;
+  private ctxGuard: ContextGuard;
+  private unbindVisibility: () => void;
+  private shadowTick = 0;
 
-  static async create(container: HTMLElement): Promise<Engine> {
+  /**
+   * Starts the downloads that do not need the page: Rapier WASM (a separate .wasm file, streamed), the Bangla fonts (the mall's canvas signs need them)
+   * and the shop catalog (or demo data). main.ts calls this as soon as the engine chunk has arrived, so they overlap with the splash intro.
+   */
+  static prepare(): EnginePrep {
     const bus = new EventBus<EngineEvents>();
-    // Rapier WASM, the Bangla fonts (the mall's canvas signs need them) and the shop catalog (or demo data) are independent: load them together
-    const [physics, , , catalog] = await Promise.all([
+    const ready = Promise.all([
       PhysicsWorld.create(bus),
       document.fonts.load('700 48px "Noto Sans Bengali"', 'কখগ').catch(() => undefined),
       document.fonts.load('500 48px "Noto Sans Bengali"', 'কখগ').catch(() => undefined),
       loadCatalog(),
     ]);
-    return new Engine(container, bus, physics, catalog);
+    ready.catch(() => undefined); // the error is reported by create()
+    return { bus, ready };
+  }
+
+  static async create(container: HTMLElement, prep: EnginePrep = Engine.prepare()): Promise<Engine> {
+    const [physics, , , catalog] = await prep.ready;
+    return new Engine(container, prep.bus, physics, catalog);
   }
 
   private constructor(
@@ -462,6 +486,21 @@ export class Engine {
     });
 
     this.debug = new DebugPanel(container);
+    this.perf = new PerfOverlay(container, this.renderer, () => ({
+      tier: Q.tier,
+      choice: currentChoice(),
+      renderMode: this.renderQuality,
+      dynScale: this.dynRes.scale,
+      sitesBuilt: this.infra ? this.infra.builtCount : 0,
+      sitesTotal: this.infra ? this.infra.total : 0,
+      chunksLoaded: this.world.chunks.loadedCount,
+      chunksPending: this.world.chunks.pendingCount,
+      bodies: this.physics.bodyCount,
+      colliders: this.physics.colliderCount,
+      people: this.people ? this.people.count : 0,
+      cars: this.vehicles ? this.vehicles.vehicles.length : 0,
+      aiCars: this.traffic ? this.traffic.aiCount : 0,
+    }));
     this.hud = new HUD(container);
     this.toast = new Toast(container);
     this.ridePrompt = new RidePrompt(container);
@@ -632,7 +671,8 @@ export class Engine {
     this.animals = new AnimalManager(this.world.root, this.world.terrain, this.world.seed.value);
     this.voice = new VoiceManager(new Subtitles(container));
     // --- SWTP + STP engineering plants (walls / tanks are solid; Y = narrated camera tour) ---
-    this.infra = new InfraManager({
+    const infraSites = this.world.terrain.infra;
+    this.infra = new LazyInfra({
       root: this.world.root,
       physics,
       origin: this.world.origin,
@@ -644,7 +684,7 @@ export class Engine {
       clock: () => this.airplanes.time,
       lazy: true, // sites are built when the player comes near (fast start-up)
       canStart: () => !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.planeRider.riding && !this.playerJet.riding && !this.mall.inside && !this.library.inside && !this.agro.inside,
-    });
+    }, infraSites.length, infraSites.map((s) => ({ id: s.id, name: s.nameBn, color: s.color, mark: s.mark, category: '', stops: 0 })));
     // the tour owns the camera: park the player (free-fly mode) while it runs, bring the player camera back afterwards
     this.infra.onTour = (active) => {
       this.tour.setTouring(active);
@@ -702,6 +742,8 @@ export class Engine {
         setMapZoom: (z) => this.setMapZoom(z),
         getDebug: () => this.debug.isVisible,
         setDebug: (on) => this.debug.setVisible(on),
+        getPerf: () => this.perf.isVisible,
+        setPerf: (on) => this.perf.setVisible(on),
         getGold: () => this.economy.balance,
       },
       this.hudSettings,
@@ -715,6 +757,17 @@ export class Engine {
     window.addEventListener('resize', this.onResize);
     this.loop = new GameLoop(this.time, this.fixedUpdate, this.render);
     this.loop.maxFps = Q.fpsCap;
+    // WebGL context lost (iOS memory pressure, GPU reset): stop drawing, show a message, restart when the browser gives the context back
+    this.ctxGuard = new ContextGuard(this.renderer.domElement, container, () => this.loop.stop(), () => {
+      if (this.started && !document.hidden) this.loop.start();
+    });
+    // tab hidden / screen locked: no simulation, no drawing, audio and voice paused
+    this.unbindVisibility = bindVisibility(
+      () => this.loop.stop(),
+      () => {
+        if (this.started && !this.ctxGuard.isLost) this.loop.start();
+      },
+    );
     this.applyRenderScale(); // the preset's pixel-ratio cap and pixel budget
   }
 
@@ -743,9 +796,24 @@ export class Engine {
     }
   }
 
+  /** Resolves when the terrain around the player is in (or after `timeoutMs`): the splash waits for it so the first picture is not an empty field. */
+  firstChunksReady(minChunks = 9, timeoutMs = 12000): Promise<void> {
+    return new Promise((resolve) => {
+      const t0 = performance.now();
+      const poll = (): void => {
+        const ch = this.world.chunks;
+        if (ch.loadedCount >= minChunks || (ch.loadedCount > 0 && ch.pendingCount === 0) || performance.now() - t0 > timeoutMs) resolve();
+        else window.setTimeout(poll, 150);
+      };
+      poll();
+    });
+  }
+
   start(): void {
     this.bus.emit('engine:ready', undefined);
-    this.loop.start();
+    this.started = true;
+    if (!document.hidden) this.loop.start();
+    void this.infra.load(); // the engineering sites' code (0.5 MB) is fetched now, after the first picture is up
     const tierName = { low: 'নিচু', medium: 'মাঝারি', high: 'উঁচু' }[Q.tier];
     this.toast.show(`⚙️ গ্রাফিক্স: ${tierName}${currentChoice() === 'auto' ? ' (অটো)' : ''} · Tab চেপে সেটিংস থেকে বদলানো যায়`, 4200);
   }
@@ -770,8 +838,10 @@ export class Engine {
 
   /** Once per rendered frame. Order matters: input -> camera -> world streaming -> draw. */
   private render = (dt: number, alpha: number): void => {
+    this.perf.frame(dt);
     if (this.renderQuality === 0) this.dynRes.sample(dt);
     if (this.input.wasPressed('F3')) this.debug.toggle();
+    if (this.input.wasPressed('F2')) this.perf.toggle();
     if (this.input.wasPressed('KeyM')) this.setMuted(!this.voice.isMuted);
     if (this.input.wasPressed('Tab')) this.settingsMenu.toggle(); // the settings menu (the gear button does the same)
     if (this.input.wasPressed('Digit1')) this.world.terrainMaterials.setWireframe(!this.world.terrainMaterials.isWireframe);
@@ -945,7 +1015,13 @@ export class Engine {
       aiCars: this.traffic.aiCount,
     }));
 
+    if (Q.shadowInterval > 1) {
+      // weak devices: the sun shadow map is redrawn only every n-th frame (the shadow box still follows the camera in texel steps)
+      this.renderer.shadowMap.autoUpdate = false;
+      this.renderer.shadowMap.needsUpdate = this.shadowTick++ % Q.shadowInterval === 0;
+    }
     this.renderer.render(this.scene, this.camera);
+    this.perf.update(dt); // after the draw: renderer.info holds this frame's numbers
     this.input.endFrame();
   };
 
@@ -1048,7 +1124,7 @@ export class Engine {
     for (const t of this.trains.markers()) others.push({ x: t.x, z: t.z, heading: t.heading, kind: 'train' });
     this.world.origin.toWorld(this.camera.position, this.tmpVec);
     const camera = { x: this.tmpVec.x, y: this.tmpVec.y, z: this.tmpVec.z };
-    return { me, camera, hours: this.environment.hours, viewHeading: view, others, stops: this.mapStops, mall: this.mall.position, library: this.library.position, building: this.protoBuilding.position, buildings: this.placedBuildings.markers, agro: this.agro.position, infra: this.infra.plants.map((pl) => ({ x: pl.site.x, z: pl.site.z, id: pl.site.id, color: pl.site.color, mark: pl.site.mark })) };
+    return { me, camera, hours: this.environment.hours, viewHeading: view, others, stops: this.mapStops, mall: this.mall.position, library: this.library.position, building: this.protoBuilding.position, buildings: this.placedBuildings.markers, agro: this.agro.position, infra: this.world.terrain.infra.map((s) => ({ x: s.x, z: s.z, id: s.id, color: s.color, mark: s.mark })) };
   }
 
   /** The player's vehicle crossed a stop line while its light was red: a Gold fine (no police case). */
@@ -1297,6 +1373,8 @@ export class Engine {
       // high / 4K: chosen by the player on purpose, left as it was
       ratio = this.renderQuality === 1 ? Math.min(Math.max(dpr, 1.5), 2) : Math.min(Math.max(dpr, 3840 / w), 3);
     }
+    // Safari / iOS refuse canvases of more than ~16.7 M pixels (blank or lost context): stay below that in every mode
+    ratio = Math.min(ratio, Math.sqrt(14_000_000 / (w * h)));
     this.renderer.setPixelRatio(ratio);
     this.renderer.setSize(w, this.container.clientHeight);
   }
@@ -1320,6 +1398,9 @@ export class Engine {
     this.loop.stop();
     window.removeEventListener('resize', this.onResize);
     this.tour.dispose();
+    this.perf.dispose();
+    this.unbindVisibility();
+    this.ctxGuard.dispose();
     this.settingsMenu.dispose();
     this.waterFx.dispose();
     this.oxygenHud.dispose();

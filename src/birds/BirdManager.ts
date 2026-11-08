@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { TerrainGenerator } from '../terrain';
 import { clamp } from '../utils/math';
 import { mulberry32 } from '../world/Seed';
+import { Q } from '../core/Quality';
 import { createBirdGeometry, createBirdMaterial } from './BirdModel';
 
 interface Kind {
@@ -79,7 +80,7 @@ export class BirdManager {
     const colors: THREE.Color[] = [];
     const scales: number[] = [];
     const bird: number[] = [];
-    for (const ki of FLOCK_KINDS) {
+    for (const ki of FLOCK_KINDS.slice(0, Q.flockCount)) { // the preset keeps the first flocks (all four kinds are in the first four)
       const kind = KINDS[ki];
       const count = Math.round(between(kind.count[0], kind.count[1]));
       const off = new Float32Array(count * 3);

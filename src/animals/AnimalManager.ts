@@ -4,6 +4,7 @@ import type { TerrainSample } from '../terrain/Lakes';
 import { BUILT_UP_KINDS, getWorldZoneAt, type WorldZoneKind } from '../city/WorldZones';
 import { placementContains } from '../buildings/Placements';
 import { mulberry32 } from '../world/Seed';
+import { Q } from '../core/Quality';
 import { buildAnimal, buildFishGeometry, buildFishMaterial, variantCount, type Rig } from './AnimalModel';
 import { HABITAT, PREDATOR_ZONES, SPECIES, type HabitatKey, type Species, type SpeciesDef } from './Species';
 
@@ -60,10 +61,10 @@ const NEAR_MIN = 70; // new animals appear in this ring around the player (m)
 const NEAR_MAX = 300;
 const GONE = 480; // animals farther than this from the player are removed
 const SHOW = 260; // animals farther than this are hidden and not posed
-const MAX_LAND = 64;
-const MAX_PREDATORS = 4;
-const MAX_DOLPHINS = 8;
-const FISH_SCHOOLS = 10;
+const MAX_LAND = Q.landAnimals; // 64 on the high preset
+const MAX_PREDATORS = Q.predators; // 4
+const MAX_DOLPHINS = Q.dolphins; // 8
+const FISH_SCHOOLS = Q.fishSchools; // 10
 const FISH_PER = 12;
 const WORLD_LIMIT = 4700;
 const SAFARI = { x: 3000, z: 1900, r: 800 };

@@ -4,6 +4,7 @@
 //   within 240 m    people + machines (tractor, combine, drone, farmers, cows) - 1 per frame, animated
 // Children of `root` use ABSOLUTE world coordinates (like every other manager); each field sits in its own group (position + yaw).
 import * as THREE from 'three';
+import { Q } from '../core/Quality';
 import type { TerrainGenerator } from '../terrain/TerrainGenerator';
 import { ACT_BN, STAGE_BN, cropById } from './CropDefs';
 import { buildActors, type Actor } from './FarmActors';
@@ -25,8 +26,8 @@ export interface FarmDeps {
 }
 
 const GROUND_R = 1300;
-const PLANT_R = 380;
-const ACTOR_R = 240;
+const PLANT_R = Math.round(380 * Q.farmMul); // crop plants (instanced) within this distance
+const ACTOR_R = Math.round(240 * Q.farmMul); // farmers + machines
 const HYST = 80;
 
 interface Live {

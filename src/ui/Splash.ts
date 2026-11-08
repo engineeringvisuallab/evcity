@@ -58,6 +58,8 @@ export class Splash {
   readonly introDone: Promise<void>;
   private introEndedAt = 0;
   private progress = 0.04;
+  /** The bar creeps towards this value between real steps (so it never looks frozen on a slow phone). */
+  private cap = 0.12;
   private creep: number | undefined;
 
   constructor(parent: HTMLElement = document.body) {
@@ -89,10 +91,17 @@ export class Splash {
       window.setTimeout(done, INTRO_FALLBACK_MS);
     });
 
-    // The engine gives no granular progress, so creep towards ~90% and jump to 100% when it is ready.
+    // Real steps come from setStage(); in between the bar creeps slowly towards the next step's value.
     this.creep = window.setInterval(() => {
-      this.setProgress(this.progress + (0.9 - this.progress) * 0.08);
+      this.setProgress(this.progress + (this.cap - this.progress) * 0.08);
     }, 350);
+  }
+
+  /** A real loading step is done: jump to `p` (0..1), show what comes next, and creep towards `p + 0.12` until the next step. */
+  setStage(p: number, label: string): void {
+    this.setProgress(p);
+    this.cap = Math.min(0.97, p + 0.12);
+    this.label.textContent = label;
   }
 
   setProgress(p: number): void {

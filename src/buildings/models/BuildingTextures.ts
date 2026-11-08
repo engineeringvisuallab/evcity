@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { SURFACE_SPEC, type Surface } from './SurfaceMap';
+import { Q } from '../../core/Quality';
 
 import brickUrl from './textures/brick.jpg';
 import plasterUrl from './textures/plaster.jpg';
@@ -41,7 +42,7 @@ let maxAniso = 8;
 
 /** Optional: call once with the renderer to get sharper textures at grazing angles. */
 export function setBuildingTextureQuality(renderer: THREE.WebGLRenderer): void {
-  maxAniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  maxAniso = Math.min(8, Q.maxAniso, renderer.capabilities.getMaxAnisotropy());
 }
 
 function loadTexture(url: string): THREE.Texture {

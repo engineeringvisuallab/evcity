@@ -59,7 +59,7 @@ export class TourUI {
     });
 
     Object.assign(this.overlay.style, {
-      position: 'fixed', inset: '0', zIndex: '80', display: 'none', alignItems: 'center', justifyContent: 'center',
+      position: 'fixed', inset: '0', zIndex: '950', display: 'none', alignItems: 'center', justifyContent: 'center',
       padding: '20px', background: 'rgba(3,10,14,.74)', backdropFilter: 'blur(6px)', pointerEvents: 'auto',
     });
     Object.assign(this.panel.style, {

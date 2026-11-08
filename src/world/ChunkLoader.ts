@@ -1,10 +1,16 @@
 import { Config } from '../core/Config';
-import type { ChunkRequest, ChunkResult, GrassRequest, GrassResult } from '../workers/messages';
+import { Q } from '../core/Quality';
+import type { ChunkRequest, ChunkResult, GrassRequest, GrassResult, WorldDensity } from '../workers/messages';
 import { chunkKey } from './WorldGrid';
 
 export interface IChunkLoader {
   request(cx: number, cz: number, lod: number): Promise<ChunkResult>;
   dispose(): void;
+}
+
+/** The preset's densities, sent with every request (the workers cannot see the main thread's Q / Config). */
+function density(): WorldDensity {
+  return { treeMul: Q.treeMul, rockMul: Q.rockMul, grassMul: Q.grassMul, treeMaxLod: Q.treeMaxLod };
 }
 
 /** Small pool of Web Workers that generate chunk data. */
@@ -55,6 +61,7 @@ export class ChunkLoader implements IChunkLoader {
         seed: this.seed,
         vertsPerSide: Config.lod.vertsPerSide[lod],
         skirtDepth: Config.terrain.skirtDepth[lod],
+        dens: density(),
       };
       this.workers[this.next++ % this.workers.length].postMessage(msg);
     });
@@ -65,7 +72,7 @@ export class ChunkLoader implements IChunkLoader {
     const id = `${tx},${tz},${stride}`;
     return new Promise<GrassResult>((resolve, reject) => {
       this.grassPending.set(id, { resolve, reject });
-      const msg: GrassRequest = { type: 'grass', tx, tz, seed: this.seed, stride };
+      const msg: GrassRequest = { type: 'grass', tx, tz, seed: this.seed, stride, dens: density() };
       this.workers[this.next++ % this.workers.length].postMessage(msg);
     });
   }

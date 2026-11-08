@@ -6,6 +6,16 @@ import type { TreeChunkData } from '../vegetation/TreeTypes';
 
 /** Messages between the main thread and chunk.worker.ts. */
 
+/** Quality-preset values the worker needs (the worker has its OWN copy of Config: a change of Config in the main thread never reaches it). Missing = the original game values. */
+export interface WorldDensity {
+  /** Chance multipliers (0..1) of trees / rocks / grass tufts: a thinner subset of the same deterministic set. */
+  treeMul: number;
+  rockMul: number;
+  grassMul: number;
+  /** Chunks up to this LOD get trees and rocks. */
+  treeMaxLod: number;
+}
+
 export interface ChunkRequest {
   type: 'generate';
   key: string;
@@ -15,6 +25,7 @@ export interface ChunkRequest {
   seed: number;
   vertsPerSide: number;
   skirtDepth: number;
+  dens?: WorldDensity;
 }
 
 export interface ChunkResult {
@@ -57,6 +68,7 @@ export interface GrassRequest {
   seed: number;
   /** only every `stride`-th cell of the tile's cell grid gets a tuft (1 = all; far LOD rings use 2 and 5). */
   stride: number;
+  dens?: WorldDensity;
 }
 
 export interface GrassResult {

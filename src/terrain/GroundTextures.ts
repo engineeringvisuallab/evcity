@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Q } from '../core/Quality';
 
 /**
  * Real-looking, TILEABLE ground textures painted once at start-up on a canvas (no files to download):
@@ -199,7 +200,7 @@ function tex(cv: HTMLCanvasElement): THREE.CanvasTexture {
   t.generateMipmaps = true;
   t.minFilter = THREE.LinearMipmapLinearFilter;
   t.magFilter = THREE.LinearFilter;
-  t.anisotropy = 8;
+  t.anisotropy = Math.min(8, Q.maxAniso);
   t.needsUpdate = true;
   return t;
 }

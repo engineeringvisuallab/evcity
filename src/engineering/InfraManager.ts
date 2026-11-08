@@ -12,6 +12,7 @@ import type { InputManager } from '../input/InputManager';
 import { getInfrastructureDef, InfraTour, registerBuiltinInfrastructure, type Infrastructure, type Narrator } from './index';
 import type { InfraSite } from './InfraSites';
 import { Q } from '../core/Quality';
+import { optimizeInfrastructure, type OptimizeReport } from './core/optimize';
 
 export interface InfraDeps {
   root: THREE.Object3D; // world.root: children use ABSOLUTE world coordinates
@@ -28,6 +29,8 @@ export interface InfraDeps {
   clock?: () => number;
   /** Build each plant only when the player comes within its draw distance (fast start-up). Default false = build all at once (the tests rely on it). */
   lazy?: boolean;
+  /** Merge static meshes / drop small shadow casters of each built plant (render cost). Default = same as `lazy` (the game); the tests build the plain scene. */
+  optimize?: boolean;
 }
 
 export interface Plant {
@@ -39,6 +42,8 @@ export interface Plant {
   waterRel: number;
   /** Only lazy plants: false until the plant has been built. */
   readonly built?: boolean;
+  /** Lazy plants only: free the built site again (memory) so it is rebuilt when needed. */
+  unbuild?: () => void;
 }
 
 const ANIM_DIST = 900; // plant animation (flow dots, rotors, plumes) runs only this close
@@ -57,6 +62,13 @@ export class InfraManager {
   private readonly hint: HTMLDivElement;
   private hintText = '';
   private readonly p = new THREE.Vector3();
+  /** Rapier bodies of each built lazy site (removed again when the site is unbuilt). */
+  private readonly siteBodies = new Map<string, RAPIER.RigidBody[]>();
+  private idleBusy = false;
+  private readonly prevPw = new THREE.Vector3();
+  private havePrev = false;
+  /** Player speed (m/s, smoothed): a fast plane / jet needs a longer build lead. */
+  private speed = 0;
 
   constructor(private d: InfraDeps) {
     registerBuiltinInfrastructure();
@@ -73,6 +85,13 @@ export class InfraManager {
 
   get touring(): boolean {
     return this.active !== null;
+  }
+
+  /** How many plants are built right now (all of them when not lazy). */
+  get builtCount(): number {
+    let n = 0;
+    for (const pl of this.plants) if (pl.built !== false) n++;
+    return n;
   }
 
   /** The Tour menu: one entry per engineering site in the world. */
@@ -106,10 +125,30 @@ export class InfraManager {
   /** A plant that is built the first time its infra / tour is used (InfraDeps.lazy): start-up does not pay for sites the player never visits. */
   private lazyPlant(site: InfraSite): Plant {
     let real: Plant | null = null;
-    const get = (): Plant => (real ??= this.build(site));
+    const get = (): Plant => {
+      if (!real) {
+        const n0 = this.bodies.length;
+        real = this.build(site);
+        this.siteBodies.set(site.id, this.bodies.slice(n0));
+      }
+      return real;
+    };
     return {
       site,
       get built() { return real !== null; },
+      unbuild: () => {
+        if (!real) return;
+        real.infra.root.removeFromParent();
+        real.infra.dispose();
+        const world = this.d.physics.world;
+        for (const b of this.siteBodies.get(site.id) ?? []) {
+          world.removeRigidBody(b); // its colliders go with it
+          const i = this.bodies.indexOf(b);
+          if (i >= 0) this.bodies.splice(i, 1);
+        }
+        this.siteBodies.delete(site.id);
+        real = null;
+      },
       get infra() { return get().infra; },
       get tour() { return get().tour; },
       get riverReach() { return get().riverReach; },
@@ -144,6 +183,8 @@ export class InfraManager {
     const def = getInfrastructureDef(site.id);
     if (!def) throw new Error(`infrastructure ${site.id} is not registered`);
     const infra = def.create({ withEnvironment: false, groundY, riverReach: reach, waterRel, skirtDepth: site.deep, clock: this.d.clock });
+    // render optimisation (game only): merge static meshes, small meshes stop casting shadows on weak devices. The aircraft factory follows the game clock: not merged.
+    if (this.d.optimize ?? this.d.lazy) this.lastReport = optimizeInfrastructure(infra, { merge: Q.siteMerge, shadowMinRadius: Q.siteShadowMinR, skipMerge: site.id === 'aircraft' });
     infra.setLabelsVisible(false);
     infra.root.position.set(site.x, site.floorY, site.z);
     infra.root.rotation.y = site.yaw;
@@ -195,19 +236,36 @@ export class InfraManager {
     let nearest: Plant | null = null;
     let nd = Infinity;
     let builtNow = false; // at most one lazy plant is built per frame
+    // player speed (a jet needs a longer lead than a walker)
+    if (this.havePrev && dt > 0) this.speed += (Math.min(400, Math.hypot(pw.x - this.prevPw.x, pw.z - this.prevPw.z) / dt) - this.speed) * Math.min(1, dt * 2);
+    this.prevPw.copy(pw);
+    this.havePrev = true;
+    const show = Q.siteShowDist;
+    const buildDist = show * 1.3 + this.speed * 4; // start building early (in an idle moment) so the site is ready before it is shown
+    const disposeDist = Q.siteDisposeMul > 0 ? show * Q.siteDisposeMul : 0;
     for (const pl of this.plants) {
       const dist = Math.hypot(pw.x - pl.site.x, pw.z - pl.site.z);
       if (pl.built === false) {
-        if (dist < Q.siteShowDist && !builtNow) {
-          builtNow = true;
-          void pl.infra; // the player came near: build it now
-        } else {
+        if (dist < show) {
+          if (!builtNow) {
+            builtNow = true;
+            void pl.infra; // safety net: the player is already here, build it now (never later than the show distance)
+          }
+        } else if (dist < buildDist) this.buildWhenIdle(pl);
+        if (pl.built === false) {
           if (dist < nd) {
             nd = dist;
             nearest = pl;
           }
           continue; // not built, nothing to draw
         }
+      } else if (disposeDist > 0 && dist > disposeDist && this.active !== pl && pl.unbuild) {
+        pl.unbuild(); // low tier: free the far site (memory); it is rebuilt when the player comes back
+        if (dist < nd) {
+          nd = dist;
+          nearest = pl;
+        }
+        continue;
       }
       pl.infra.root.visible = dist < Q.siteShowDist || this.active === pl;
       if (pl.infra.root.visible && pl.infra.update && (dist < ANIM_DIST || this.active === pl)) pl.infra.update(dt); // spinning rotors, flowing dots, plumes
@@ -236,6 +294,20 @@ export class InfraManager {
       this.hint.textContent = text;
       this.hint.style.display = text ? 'block' : 'none';
     }
+  }
+
+  /** Builds a lazy site in a moment when the browser is idle (one at a time): the hitch of a big site does not land in the middle of a busy frame. */
+  private buildWhenIdle(pl: Plant): void {
+    if (this.idleBusy) return;
+    this.idleBusy = true;
+    const run = (): void => {
+      this.idleBusy = false;
+      if (this.disposed) return;
+      void pl.infra; // builds it (no-op when the safety net got there first)
+    };
+    const w = globalThis as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+    if (typeof w.requestIdleCallback === 'function') w.requestIdleCallback(run, { timeout: 1500 });
+    else setTimeout(run, 60); // Safari has no requestIdleCallback
   }
 
   /** After the camera controller: while a tour runs the tour owns the camera. `camera` is the game camera (origin-local coordinates). */
@@ -276,7 +348,12 @@ export class InfraManager {
     this.onTour(false);
   }
 
+  private disposed = false;
+  /** What the last built site's optimisation did (for tests / the performance report). */
+  lastReport: OptimizeReport | null = null;
+
   dispose(): void {
+    this.disposed = true;
     this.active?.tour.stop();
     for (const b of this.bodies) this.d.physics.world.removeRigidBody(b);
     for (const pl of this.plants) {

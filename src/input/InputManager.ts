@@ -3,7 +3,7 @@ import type { Bus } from '../core/EventBus';
 /** The arrow keys work like W A S D everywhere (walking, cars, boats, helicopters, free camera). */
 const ARROW_ALIAS: Record<string, string> = { KeyW: 'ArrowUp', KeyS: 'ArrowDown', KeyA: 'ArrowLeft', KeyD: 'ArrowRight' };
 
-const BLOCKED_WHEN_LOCKED = new Set(['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'F3', 'Digit1', 'Digit2']);
+const BLOCKED_WHEN_LOCKED = new Set(['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'F2', 'F3', 'Digit1', 'Digit2']);
 
 /** Keyboard + mouse (pointer lock). Other modules poll it; nobody else touches DOM events. */
 export class InputManager {

@@ -16,6 +16,8 @@ export interface SettingsHooks {
   setMapZoom(zoom: number): void;
   getDebug(): boolean;
   setDebug(on: boolean): void;
+  getPerf?(): boolean;
+  setPerf?(on: boolean): void;
   getGold(): number;
 }
 
@@ -24,7 +26,7 @@ const CSS = `
   color:#fff; font-size:22px; line-height:1; cursor:pointer; pointer-events:auto; box-shadow:0 4px 16px rgba(0,0,0,.28); transition:transform .15s ease,filter .15s ease; order:1; }
 .evs-gear:hover { filter:brightness(1.15); transform:translateY(-1px); }
 .evs-gear:focus-visible, .evs-btn:focus-visible, .evs-switch:focus-visible, .evs-close:focus-visible { outline:3px solid #fff; outline-offset:3px; }
-.evs-overlay { position:fixed; inset:0; z-index:90; display:none; align-items:center; justify-content:center; padding:16px; background:rgba(3,10,14,.74);
+.evs-overlay { position:fixed; inset:0; z-index:950; display:none; align-items:center; justify-content:center; padding:16px; background:rgba(3,10,14,.74);
   backdrop-filter:blur(6px); pointer-events:auto; font-family:${UI_FONT}; color:#fff; }
 .evs-panel { width:min(640px,96vw); max-height:min(88vh,860px); overflow:auto; border-radius:20px; border:1px solid rgba(255,255,255,.2);
   background:linear-gradient(155deg,#172b30,#0b171b); padding:22px 24px 20px; box-shadow:0 24px 70px rgba(0,0,0,.5); }
@@ -194,6 +196,7 @@ export class SettingsMenu {
     this.setSwitch('oxygen', v.infiniteOxygen);
     this.waterButtons.forEach((b, i) => b.classList.toggle('on', i === v.waterQuality));
     this.setSwitch('debug', this.hooks.getDebug());
+    this.setSwitch('perf', this.hooks.getPerf?.() ?? false);
     const z = this.hooks.getMapZoom();
     this.zoomButtons.forEach((b, i) => b.classList.toggle('on', i === z));
     this.goldValue.textContent = `${bnDigits(Math.floor(this.hooks.getGold()).toLocaleString('en-US'))} গোল্ড`;
@@ -311,6 +314,7 @@ export class SettingsMenu {
         sec.appendChild(this.row(t.label, t.desc, this.makeSwitch(t.key, () => this.store.set(t.key, !this.store.values[t.key]))));
       }
       sec.appendChild(this.row('FPS ও ডিবাগ তথ্য', 'উন্নয়নকারীদের জন্য (F3)', this.makeSwitch('debug', () => this.hooks.setDebug(!this.hooks.getDebug()))));
+      if (this.hooks.setPerf) sec.appendChild(this.row('পারফরম্যান্স রিপোর্ট', 'FPS, ড্র কল, মেমরি + "Copy report" বাটন (F2)', this.makeSwitch('perf', () => this.hooks.setPerf?.(!this.hooks.getPerf?.()))));
       const gold = document.createElement('div');
       gold.className = 'evs-gold';
       const gl = document.createElement('span');

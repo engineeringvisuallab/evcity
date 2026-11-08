@@ -1,10 +1,12 @@
 import type { InfraManager } from '../engineering/InfraManager';
+import type { LazyInfra } from '../engineering/LazyInfra';
 import { TourUI } from '../ui/TourUI';
 import { bn } from '../i18n';
 
 export interface TourManagerDeps {
   container: HTMLElement;
-  infra: InfraManager;
+  /** LazyInfra until the engineering code has arrived (same calls). */
+  infra: InfraManager | LazyInfra;
 }
 
 /**

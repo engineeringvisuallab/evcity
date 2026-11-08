@@ -42,6 +42,7 @@ const CSS = `
   background:rgba(15,23,42,.88);border:2px solid #22d3ee;border-radius:16px;padding:10px 18px;color:#fff;font-family:${UI_FONT};
   font-size:15px;pointer-events:none;transition:opacity 1.2s;box-shadow:0 4px 18px rgba(0,0,0,.35)}
 .evmall-banner b{color:#22d3ee}
+@media (max-width:700px){.evmall-banner{top:176px;max-width:90vw;font-size:13px;padding:8px 12px}.evmall-help{bottom:150px;max-width:60vw}}
 .evmall-help{position:fixed;left:12px;bottom:12px;z-index:50;display:none;background:rgba(15,23,42,.72);color:#fff;border-radius:10px;
   padding:6px 10px;font:12px ${UI_FONT};pointer-events:none}
 `;

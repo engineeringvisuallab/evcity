@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Config } from '../core/Config';
+import { Q } from '../core/Quality';
 import { mulberry32 } from '../world/Seed';
 import { TREE_KIND_COUNT, TreeKind } from './TreeTypes';
 
@@ -424,7 +425,7 @@ function makeAtlas(): THREE.DataTexture | null {
   tex.minFilter = THREE.LinearMipmapLinearFilter;
   tex.magFilter = THREE.LinearFilter;
   tex.wrapT = THREE.RepeatWrapping; // the bark tile repeats along long trunks
-  tex.anisotropy = 16;
+  tex.anisotropy = Math.min(16, Q.maxAniso);
   tex.needsUpdate = true;
   return tex;
 }

@@ -14,6 +14,7 @@
 import * as THREE from 'three';
 import type { RoadNetwork } from '../roads';
 import type { RoadKind } from '../roads/RoadTypes';
+import { Q } from '../core/Quality';
 
 export interface LampSpot {
   /** Foot of the pole (world metres). */
@@ -88,13 +89,14 @@ export function planStreetLights(roads: RoadNetwork): LampSpot[] {
     const n = r.xs.length;
     if (n < 2) continue;
     let side = r.id % 2 ? 1 : -1; // neighbouring roads do not all start on the same side
-    let target = c.step * 0.5;
+    const step = c.step * Q.lampStepMul; // 1 on the high preset
+    let target = step * 0.5;
     let i = 0;
     while (target < r.length) {
       while (i < n - 2 && r.cum[i + 1] < target) i++;
       const seg = r.cum[i + 1] - r.cum[i];
       const f = seg > 1e-6 ? Math.min(1, Math.max(0, (target - r.cum[i]) / seg)) : 0;
-      target += c.step;
+      target += step;
       const x = r.xs[i] + (r.xs[i + 1] - r.xs[i]) * f;
       const z = r.zs[i] + (r.zs[i + 1] - r.zs[i]) * f;
       const y = r.ys[i] + (r.ys[i + 1] - r.ys[i]) * f;
