@@ -41,12 +41,12 @@ void main() {
   float len = uLen * (0.7 + 0.6 * aSeed.w) * spd * (1.0 + 0.35 * big);
   float pxw = dist * uPx;
   float w0 = uWidth * (0.7 + 0.5 * aSeed.z) * (1.0 + 1.3 * big);
-  float w = max(w0, pxw);
+  float w = max(w0, pxw * 1.7);
   vec3 pos = P + d * (position.y * len) + side * (position.x * w);
   float fr = length(rel.xz) / (0.5 * uBox.x);
   float fy = abs(rel.y - 0.15 * uBox.y) / (0.5 * uBox.y);
   float fade = (1.0 - smoothstep(0.55, 1.0, fr)) * (1.0 - smoothstep(0.7, 1.0, fy));
-  vA = uAlpha * fade * smoothstep(0.7, 2.8, dist) * (0.45 + 0.55 * aSeed.w) * min(1.0, w0 / w) * (1.0 + 0.5 * big);
+  vA = uAlpha * fade * smoothstep(0.7, 2.8, dist) * (0.45 + 0.55 * aSeed.w) * clamp(sqrt(w0 / w) * 1.6, 0.0, 1.0) * (1.0 + 0.5 * big);
   vX = position.x;
   vY = position.y;
   gl_Position = projectionMatrix * viewMatrix * vec4(pos, 1.0);
@@ -61,14 +61,14 @@ varying float vA;
 varying float vX;
 varying float vY;
 void main() {
-  float wy = mix(0.18, 1.0, smoothstep(0.0, 0.82, vY));
+  float wy = mix(0.55, 1.0, smoothstep(0.0, 0.7, vY));
   float ax = abs(vX) * 2.0 / wy;
-  float e = 1.0 - smoothstep(0.0, 1.0, ax);
-  float core = 1.0 - smoothstep(0.0, 0.55, ax);
-  float tail = smoothstep(0.0, 0.55, vY);
+  float e = 1.0 - smoothstep(0.35, 1.0, ax);
+  float core = 1.0 - smoothstep(0.0, 0.8, ax);
+  float tail = smoothstep(0.0, 0.5, vY);
   float tip = 1.0 - smoothstep(0.93, 1.0, vY);
   float bead = smoothstep(0.72, 0.9, vY);
-  float a = vA * e * (0.35 + 0.65 * core) * (0.25 + 0.75 * tail) * tip * (1.0 + 0.7 * bead);
+  float a = vA * e * (0.6 + 0.4 * core) * (0.4 + 0.6 * tail) * tip * (1.0 + 0.7 * bead);
   gl_FragColor = vec4(uColor * (1.0 + 0.35 * bead), clamp(a, 0.0, 0.9));
 }
 `;
@@ -81,8 +81,8 @@ export interface StreakLayerSpec {
   alpha: number;
 }
 
-const NEAR: Omit<StreakLayerSpec, 'max'> = { box: new THREE.Vector3(26, 18, 26), len: 0.9, width: 0.009, alpha: 0.62 };
-const FAR: Omit<StreakLayerSpec, 'max'> = { box: new THREE.Vector3(90, 50, 90), len: 2.6, width: 0.03, alpha: 0.26 };
+const NEAR: Omit<StreakLayerSpec, 'max'> = { box: new THREE.Vector3(26, 18, 26), len: 0.9, width: 0.009, alpha: 0.85 };
+const FAR: Omit<StreakLayerSpec, 'max'> = { box: new THREE.Vector3(90, 50, 90), len: 2.6, width: 0.03, alpha: 0.4 };
 
 class Layer {
   readonly mesh: THREE.Mesh;

@@ -46,8 +46,8 @@ export interface RainProfile {
 /** 0 = low (old PC / phone: almost free), 1 = medium, 2 = high. */
 export const RAIN_PROFILES: readonly RainProfile[] = [
   { near: 450, far: 0, wetQ: 1, splash: 0, waterRipples: false, beach: false, lightning: false },
-  { near: 1800, far: 800, wetQ: 2, splash: 500, waterRipples: true, beach: true, lightning: true },
-  { near: 3600, far: 2400, wetQ: 3, splash: 1200, waterRipples: true, beach: true, lightning: true },
+  { near: 2600, far: 1000, wetQ: 2, splash: 500, waterRipples: true, beach: true, lightning: true },
+  { near: 4400, far: 2800, wetQ: 3, splash: 1200, waterRipples: true, beach: true, lightning: true },
 ];
 
 const smooth = (a: number, b: number, x: number): number => {
