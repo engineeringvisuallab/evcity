@@ -371,12 +371,10 @@ export class Engine {
     // --- road sign boards (Bangla + English). STEP 1: three test boards next to the road nearest to the start point ---
     this.roadSigns = new RoadSignLayer(this.world.root);
     console.info('[RoadSigns]', this.roadSigns.addStep1TestSigns(roads, (x, z) => this.world.terrain.heightAt(x, z), this.startPoint.x, this.startPoint.z));
-    // STEP 3: the plan for the whole map (numbers in the console) + a few planned boards near the start to check them by eye
+    // STEP 3: the plan for the whole map; STEP 4 + 5: every planned board is built (gantries on highways / arterials, side boards elsewhere), the text is drawn only near the player
     const signPlan = planRoadSigns(roads);
     console.info('[RoadSigns]', signPlan.summary);
-    console.info('[RoadSigns]', this.roadSigns.addPlannedPreview(signPlan.signs, (x, z) => this.world.terrain.heightAt(x, z), this.startPoint.x, this.startPoint.z));
-    // STEP 4: overhead gantries - the planned overhead boards nearest to the start + one 3-board demo gantry, to check the model by eye
-    console.info('[RoadSigns]', this.roadSigns.addStep4TestGantries(roads, signPlan.signs, (x, z) => this.world.terrain.heightAt(x, z), this.startPoint.x, this.startPoint.z));
+    console.info('[RoadSigns]', this.roadSigns.addPlanned(roads, signPlan.signs, (x, z) => this.world.terrain.heightAt(x, z)));
 
     // --- parking lots (asphalt, bay lines; no signboards) ---
     this.parking = new ParkingLots({ root: this.world.root, terrain: this.world.terrain });
@@ -991,6 +989,7 @@ export class Engine {
       const px = this.renderer.domElement.height;
       this.streetLights.update(lamp, fov, px);
       this.roadSigns.update(lamp);
+      this.roadSigns.updateField(this.world.playerWorld.x, this.world.playerWorld.z);
       this.junctionMirrors.update(lamp);
       NightLamps.on = lamp; // vehicle headlights / tail lights
       this.lighthouseLight?.update(lamp, this.time.elapsed, fov, px);

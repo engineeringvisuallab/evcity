@@ -1,12 +1,12 @@
-// ROAD SIGNS - 3D layer (Step 1: one kind of board, the SIDE sign, plus a few test boards near the spawn).
-//
-// A side sign = two posts + a flat board; the face carries Bangla + English names, an arrow and the distance (SignCanvas.ts).
-// Traffic drives on the LEFT (as in Bangladesh), so a board stands on the LEFT edge of the road, outside the gravel shoulder, and looks back
+// ROAD SIGNS - 3D layer. Step 1: SIDE sign (two posts + a flat board; Bangla + English names, an arrow and the distance, SignCanvas.ts).
+// Traffic drives on the LEFT (as in Bangladesh), so a side board stands on the LEFT edge of the road, outside the gravel shoulder, and looks back
 // at the drivers who come towards it (turned a few degrees towards the road).
+// Step 4: the OVERHEAD GANTRY: two round posts on the road edges, a frame across ALL lanes and 1..3 panels that fill the whole width, each over the
+// lanes of its direction (layout maths in GantryLayout.ts).
+// Step 5: the WHOLE MAP (addPlanned): every board of the plan (SignPlan.ts) is built once, but the text is only drawn near the player (updateField):
+//   - far away a board is hidden, a little nearer it is a plain green / blue board, close up the Bangla + English face is drawn on a canvas texture,
+//   - when the player leaves again the texture is freed, so only a few dozen textures exist at any time (FPS and memory stay flat).
 // Children use ABSOLUTE world coordinates (parent = world.root, which the floating origin moves), like StreetLights / StationSignLayer.
-// Step 2 added the real destination table + road distances, Step 3 the placement plan, Step 4 (this file too) the OVERHEAD GANTRY:
-// two round posts on the road edges, a frame across ALL lanes and 1..3 panels that fill the whole width, each over the lanes of its direction
-// (layout maths in GantryLayout.ts).
 import * as THREE from 'three';
 import type { RoadNetwork, RoadSpec } from '../roads';
 import { BOARD_PX_PER_M, BOARD_W_M, boardHeightM, drawSignCanvas } from './SignCanvas';
@@ -56,6 +56,42 @@ export interface GantryResult {
   fits: boolean;
 }
 
+/** Colours of a board without its text (what you see from far away). */
+const BOARD_COLOR: Record<SignColor, number> = { green: 0x0a6a3c, blue: 0x0b4f9e };
+
+/**
+ * When a board is hidden / drawn / freed, by distance from the player (m). Gantries are big, so they are seen and read from further away.
+ * `unpaint` is larger than `paint`, so a player standing at the border does not make the texture flicker on and off.
+ */
+export const SIGN_FIELD = {
+  gantry: { show: 800, paint: 380, unpaint: 600 },
+  side: { show: 500, paint: 230, unpaint: 380 },
+  /** At most this many boards get their texture drawn in one frame (a canvas costs a few ms). */
+  paintPerFrame: 3,
+};
+
+/** One drawable face of a board: the material always exists, the canvas texture only while the player is near (or always, for the test boards). */
+interface FaceSlot {
+  mat: THREE.MeshBasicMaterial;
+  rows: SignRow[];
+  color: SignColor;
+  widthPx?: number;
+  heightRows?: number;
+  tex: THREE.CanvasTexture | null;
+}
+
+/** A board of the plan that is hidden / painted by distance. */
+interface FieldEntry {
+  group: THREE.Group;
+  x: number;
+  z: number;
+  showR2: number;
+  paintR2: number;
+  unpaintR2: number;
+  slots: FaceSlot[];
+  painted: boolean;
+}
+
 /** Point, height and unit tangent of a road at distance s from its start. */
 function roadPointAt(r: RoadSpec, s: number): { x: number; y: number; z: number; tx: number; tz: number; i: number } {
   const sc = Math.max(0, Math.min(r.length, s));
@@ -71,13 +107,6 @@ function roadPointAt(r: RoadSpec, s: number): { x: number; y: number; z: number;
   return { x: r.xs[i] + (r.xs[i + 1] - r.xs[i]) * f, y: r.ys[i] + (r.ys[i + 1] - r.ys[i]) * f, z: r.zs[i] + (r.zs[i + 1] - r.zs[i]) * f, tx, tz, i };
 }
 
-/** Real places of the map for the STEP 4 demo gantry (the km are straight-line, as in Step 1). */
-const DEMO_PLACES = {
-  central: { en: 'Central City', bn: 'কেন্দ্রীয় শহর', x: 0, z: 0 },
-  airport: { en: 'Airport', bn: 'বিমানবন্দর', x: 2500, z: -3828 },
-  seaport: { en: 'Seaport', bn: 'সমুদ্রবন্দর', x: 1740, z: 2920 },
-};
-
 /** Height of the lower edge of the board above the ground (m). */
 const CLEARANCE = 2.0;
 const POST_R = 0.05;
@@ -85,12 +114,14 @@ const POST_BELOW = 0.8;
 
 export class RoadSignLayer {
   readonly group = new THREE.Group();
-  private faceMats: THREE.MeshBasicMaterial[] = [];
-  private textures: THREE.CanvasTexture[] = [];
+  private slots: FaceSlot[] = [];
+  private entries: FieldEntry[] = [];
   private geos: THREE.BufferGeometry[] = [];
   private metal = new THREE.MeshLambertMaterial({ color: 0x4d5258 });
   private concrete = new THREE.MeshLambertMaterial({ color: 0x9a9a95 });
   private count = 0;
+  /** 1 by day, down to 0.6 at night (the boards are a little darker). */
+  private nightK = 1;
 
   constructor(private root: THREE.Object3D) {
     this.group.name = 'road-signs';
@@ -101,19 +132,71 @@ export class RoadSignLayer {
     return this.count;
   }
 
-  /** Builds one side sign. Returns false when there is no DOM to draw the text (headless). */
-  addSideSign(spec: SideSignSpec): boolean {
-    const canvas = drawSignCanvas(spec.rows, spec.color);
-    if (!canvas) return false;
-    const tex = new THREE.CanvasTexture(canvas);
+  /** Boards that are visible right now / have their text drawn right now (for the console and the debug panel). */
+  get fieldStats(): { total: number; visible: number; painted: number } {
+    let visible = 0;
+    let painted = 0;
+    for (const e of this.entries) {
+      if (e.group.visible) visible++;
+      if (e.painted) painted++;
+    }
+    return { total: this.entries.length, visible, painted };
+  }
+
+  // ----- faces: a material that is a plain board colour until a texture is drawn into it -----
+
+  private newSlot(rows: SignRow[], color: SignColor, widthPx?: number, heightRows?: number): FaceSlot {
+    const mat = new THREE.MeshBasicMaterial({ color: BOARD_COLOR[color], polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    const slot: FaceSlot = { mat, rows, color, widthPx, heightRows, tex: null };
+    this.slots.push(slot);
+    this.tint(slot);
+    return slot;
+  }
+
+  private tint(s: FaceSlot): void {
+    if (s.tex) s.mat.color.setScalar(this.nightK);
+    else s.mat.color.setHex(BOARD_COLOR[s.color]).multiplyScalar(this.nightK);
+  }
+
+  /** Draws the text of a face into a canvas texture. Does nothing when there is no DOM (headless) or the face is already drawn. */
+  private paint(s: FaceSlot): boolean {
+    if (s.tex) return true;
+    const c = drawSignCanvas(s.rows, s.color, { widthPx: s.widthPx, heightRows: s.heightRows });
+    if (!c) return false;
+    const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = 8;
-    this.textures.push(tex);
+    s.tex = tex;
+    s.mat.map = tex;
+    s.mat.needsUpdate = true;
+    this.tint(s);
+    return true;
+  }
 
+  /** Frees the texture of a face (it becomes a plain coloured board again). */
+  private unpaint(s: FaceSlot): void {
+    if (!s.tex) return;
+    s.tex.dispose();
+    s.tex = null;
+    s.mat.map = null;
+    s.mat.needsUpdate = true;
+    this.tint(s);
+  }
+
+  private register(group: THREE.Group, x: number, z: number, radii: { show: number; paint: number; unpaint: number }, slots: FaceSlot[]): void {
+    this.entries.push({ group, x, z, showR2: radii.show * radii.show, paintR2: radii.paint * radii.paint, unpaintR2: radii.unpaint * radii.unpaint, slots, painted: false });
+    group.visible = false; // updateField shows it when the player is near
+  }
+
+  /**
+   * Builds one side sign. `lazy` = false (the Step 1 test boards): text drawn at once, always visible; returns false when there is no DOM to draw it (headless).
+   * `lazy` = true (the plan of Step 5): hidden and plain until the player is near, see updateField.
+   */
+  addSideSign(spec: SideSignSpec, lazy = false): boolean {
+    if (!lazy && typeof document === 'undefined') return false;
+    const slot = this.newSlot(spec.rows, spec.color);
     const W = BOARD_W_M;
     const H = boardHeightM(spec.rows.length);
-    const faceMat = new THREE.MeshBasicMaterial({ map: tex, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
-    this.faceMats.push(faceMat);
 
     const g = new THREE.Group();
     g.name = 'side-sign';
@@ -124,7 +207,7 @@ export class RoadSignLayer {
     this.geos.push(bodyGeo, faceGeo);
     const body = new THREE.Mesh(bodyGeo, this.metal);
     body.position.set(0, CLEARANCE + H / 2, -0.03);
-    const face = new THREE.Mesh(faceGeo, faceMat);
+    const face = new THREE.Mesh(faceGeo, slot.mat);
     face.position.set(0, CLEARANCE + H / 2, 0.004);
     g.add(body, face);
 
@@ -142,6 +225,8 @@ export class RoadSignLayer {
     g.rotation.y = Math.atan2(spec.fx, spec.fz); // local +Z (the face) -> (fx, fz)
     this.group.add(g);
     this.count++;
+    if (lazy) this.register(g, spec.x, spec.z, SIGN_FIELD.side, [slot]);
+    else this.paint(slot);
     return true;
   }
 
@@ -243,28 +328,24 @@ export class RoadSignLayer {
 
   /**
    * Builds one OVERHEAD GANTRY: two round posts on concrete bases (one on each road edge), a frame (top and bottom pipe + a sign body) across ALL lanes,
-   * and 1..3 panels whose faces together cover the whole width between the posts. Returns null when there is no DOM to draw the text (headless).
+   * and 1..3 panels whose faces together cover the whole width between the posts. `lazy` as in addSideSign. Returns null when there is no DOM and `lazy` is false.
    * Local frame (group rotated so that +Z = the way the boards face = back at the driver, +X = the driver's right): the lowest part of the gantry is
    * `GANTRY.clearanceM` above the road surface; the panels sit on the front of the sign body.
    */
-  addGantry(spec: GantrySpec): GantryResult | null {
+  addGantry(spec: GantrySpec, lazy = false): GantryResult | null {
     if (spec.boards.length === 0) return null;
+    if (!lazy && typeof document === 'undefined') return null;
     const lay = layoutGantry(spec.edge, spec.boards.length);
-    // too many panels for this road: the extra ones are merged into the last panel (at most maxRows rows)
+    // too many panels for this road: the extra ones are merged into the last panel (at most 4 rows)
     const panels: GantryBoard[] = spec.boards.slice(0, lay.n).map((b) => ({ rows: b.rows.slice(), color: b.color }));
     for (const extra of spec.boards.slice(lay.n)) panels[lay.n - 1].rows.push(...extra.rows);
     for (const p of panels) p.rows = p.rows.slice(0, 4);
     const heightRows = Math.max(...panels.map((p) => p.rows.length));
 
-    // draw every face first; if any fails (no DOM) nothing is built. The pixel density is the same horizontally and vertically.
+    // the pixel density of the faces is the same horizontally and vertically
     const hs = GANTRY.heightScale;
     const pxPerM = BOARD_PX_PER_M / hs;
-    const faces: HTMLCanvasElement[] = [];
-    for (const p of panels) {
-      const c = drawSignCanvas(p.rows, p.color, { widthPx: lay.panelW * pxPerM, heightRows });
-      if (!c) return null;
-      faces.push(c);
-    }
+    const slots = panels.map((p) => this.newSlot(p.rows, p.color, lay.panelW * pxPerM, heightRows));
 
     const g = new THREE.Group();
     g.name = 'gantry';
@@ -311,16 +392,10 @@ export class RoadSignLayer {
 
     // the panels on the front of the sign body, side by side over the whole width
     const faceZ = GANTRY.bodyDepthM / 2 + 0.004;
-    for (let i = 0; i < panels.length; i++) {
-      const tex = new THREE.CanvasTexture(faces[i]);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.anisotropy = 8;
-      this.textures.push(tex);
-      const faceMat = new THREE.MeshBasicMaterial({ map: tex, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
-      this.faceMats.push(faceMat);
+    for (let i = 0; i < slots.length; i++) {
       const faceGeo = new THREE.PlaneGeometry(lay.panelW, faceH);
       this.geos.push(faceGeo);
-      const face = new THREE.Mesh(faceGeo, faceMat);
+      const face = new THREE.Mesh(faceGeo, slots[i].mat);
       face.position.set(lay.xs[i], bodyMid, faceZ);
       g.add(face);
     }
@@ -329,136 +404,103 @@ export class RoadSignLayer {
     g.rotation.y = Math.atan2(-spec.hx, -spec.hz); // local +Z (the faces) -> back at the driver = -(hx, hz); local +X -> his right
     this.group.add(g);
     this.count++;
+    if (lazy) this.register(g, spec.x, spec.z, SIGN_FIELD.gantry, slots);
+    else for (const s of slots) this.paint(s);
     return { placed: lay.n, merged: lay.merged, span: lay.span, fits: lay.fits };
   }
 
   /**
-   * STEP 4 TEST ONLY: gantries near the player start to check the model by eye.
-   *  (a) up to `count` of the planned OVERHEAD boards (SignPlan.ts) nearest to (px, pz), each as a full-width gantry on its real road, at least 150 m apart;
-   *  (b) one demo gantry with THREE panels (left / ahead / right) on the road nearest to (px, pz), about 260 m ahead of the point nearest to the player.
+   * STEP 5: builds EVERY board of the plan on the whole map: overhead boards as gantries (panels from splitPanels, full width of their road),
+   * side boards on the left edge of their road. All of them start hidden and plain; updateField shows them and draws the text when the player is near.
    * Returns a short text for the console.
    */
-  addStep4TestGantries(net: RoadNetwork, plan: readonly PlannedSign[], groundAt: (x: number, z: number) => number, px: number, pz: number, count = 3, maxDist = 2500): string {
+  addPlanned(net: RoadNetwork, plan: readonly PlannedSign[], groundAt: (x: number, z: number) => number): string {
     const byId = new Map<number, RoadSpec>(net.roads.map((r) => [r.id, r]));
-    // the two post positions of a gantry at road point (x, z) with driver heading (hx, hz): left = (hz, -hx)
-    const feet = (x: number, z: number, hx: number, hz: number, edge: number): { l: [number, number]; r: [number, number] } => ({
-      l: [x + hz * edge, z - hx * edge],
-      r: [x - hz * edge, z + hx * edge],
-    });
-    const build = (road: RoadSpec, x: number, y: number, z: number, hx: number, hz: number, boards: GantryBoard[]): GantryResult | null => {
-      const edge = gantryEdge(road.halfWidth, road.shoulder);
-      const f = feet(x, z, hx, hz, edge);
-      return this.addGantry({ x, y, z, hx, hz, edge, footLeftY: groundAt(f.l[0], f.l[1]), footRightY: groundAt(f.r[0], f.r[1]), boards });
-    };
-
-    const lines: string[] = [];
-    // (a) planned overhead boards
-    const cand = plan
-      .filter((q) => q.style === 'overhead')
-      .map((q) => ({ q, d: Math.hypot(q.x - px, q.z - pz) }))
-      .filter((c) => c.d <= maxDist)
-      .sort((a, b) => a.d - b.d);
-    const picked: PlannedSign[] = [];
-    for (const c of cand) {
-      if (picked.length >= count) break;
-      if (picked.some((o) => Math.hypot(o.x - c.q.x, o.z - c.q.z) < 150)) continue;
-      picked.push(c.q);
-    }
-    for (const q of picked) {
-      const road = byId.get(q.roadId);
-      if (!road) continue;
-      const y = roadPointAt(road, q.s).y;
-      const res = build(road, q.x, y, q.z, q.hx, q.hz, splitPanels(q.rows).map((rows) => ({ rows, color: q.color })));
-      if (!res) continue;
-      lines.push(`#${q.id} ${q.purpose} ${q.roadName} (${q.roadKind}, ${q.lanes} lanes, ${res.placed} panels, ${res.span.toFixed(1)} m wide) at x=${q.x.toFixed(0)} z=${q.z.toFixed(0)}: ${q.rows.map((r) => `${r.arrow} ${r.en} ${(r.km ?? 0).toFixed(1)}`).join(' | ')}`);
-    }
-
-    // (b) three-board demo on the road nearest to the player (a normal road, not earthen, not a roundabout)
-    let best: RoadSpec | null = null;
-    let bestI = -1;
-    let bestD = Infinity;
-    for (const road of net.roads) {
-      if (road.earth || road.kind === 'roundabout') continue;
-      for (let i = 0; i < road.xs.length; i++) {
-        if (road.bridgeOf[i] >= 0) continue;
-        const d = Math.hypot(road.xs[i] - px, road.zs[i] - pz);
-        if (d < bestD) {
-          bestD = d;
-          best = road;
-          bestI = i;
+    let gantries = 0;
+    let panels = 0;
+    let sides = 0;
+    let noRoad = 0;
+    let noSpot = 0;
+    let tooNarrow = 0;
+    for (const q of plan) {
+      if (q.style === 'overhead') {
+        const road = byId.get(q.roadId);
+        if (!road) {
+          noRoad++;
+          continue;
         }
-      }
+        const y = roadPointAt(road, q.s).y;
+        const edge = gantryEdge(road.halfWidth, road.shoulder);
+        // left of the driver (hx, hz) is (hz, -hx)
+        const res = this.addGantry(
+          {
+            x: q.x,
+            y,
+            z: q.z,
+            hx: q.hx,
+            hz: q.hz,
+            edge,
+            footLeftY: groundAt(q.x + q.hz * edge, q.z - q.hx * edge),
+            footRightY: groundAt(q.x - q.hz * edge, q.z + q.hx * edge),
+            boards: splitPanels(q.rows).map((rows) => ({ rows, color: q.color })),
+          },
+          true,
+        );
+        if (!res) continue;
+        gantries++;
+        panels += res.placed;
+        if (!res.fits) tooNarrow++;
+      } else if (q.sideOk) {
+        if (this.addSideSign({ x: q.sx, y: groundAt(q.sx, q.sz), z: q.sz, fx: q.fx, fz: q.fz, rows: q.rows, color: q.color }, true)) sides++;
+      } else noSpot++;
     }
-    let demo = 'no road for the 3-panel demo';
-    if (best) {
-      const r: RoadSpec = best;
-      const s0 = r.cum[bestI];
-      const dir: 1 | -1 = s0 + 330 <= r.length ? 1 : -1;
-      const edge = gantryEdge(r.halfWidth, r.shoulder);
-      const P = DEMO_PLACES;
-      const boards: GantryBoard[] = [
-        { color: 'green', rows: [{ en: P.seaport.en, bn: P.seaport.bn, arrow: 'left', km: 4.4 }] },
-        { color: 'green', rows: [{ en: P.central.en, bn: P.central.bn, arrow: 'ahead', km: 1.2 }, { en: P.airport.en, bn: P.airport.bn, arrow: 'ahead', km: 5.1 }] },
-        { color: 'green', rows: [{ en: P.airport.en, bn: P.airport.bn, arrow: 'right', km: 5.1 }] },
-      ];
-      let s = s0 + dir * 260;
-      for (let tries = 0; tries < 30; tries++, s += dir * 10) {
-        const p = roadPointAt(r, s);
-        if (r.bridgeOf[p.i] >= 0 || r.bridgeOf[Math.min(r.bridgeOf.length - 1, p.i + 1)] >= 0) continue;
-        const hx = p.tx * dir;
-        const hz = p.tz * dir;
-        const f = feet(p.x, p.z, hx, hz, edge);
-        // posts must not stand on another road or in a junction, and the beam centre not inside a junction
-        if (net.surfaceAt(f.l[0], f.l[1]) === 1 || net.surfaceAt(f.r[0], f.r[1]) === 1 || net.padAt(p.x, p.z)) continue;
-        const res = build(r, p.x, p.y, p.z, hx, hz, boards);
-        if (res) demo = `3-panel demo on road ${r.name} (${r.kind}, ${r.lanes} lanes) at x=${p.x.toFixed(0)} z=${p.z.toFixed(0)}: ${res.placed} panels over ${res.span.toFixed(1)} m${res.fits ? '' : ' (DOES NOT FIT the road)'}`;
-        break;
-      }
-    }
-    return `Step 4 test gantries: ${lines.length} planned overhead gantries placed. ${lines.join(' ;; ')} || ${demo}`;
+    return `Step 5: ${gantries} gantries (${panels} panels) + ${sides} side boards placed on the whole map (${plan.length} planned; no road ${noRoad}, no free side spot ${noSpot}, gantry too narrow ${tooNarrow}). Text is drawn only within ${SIGN_FIELD.gantry.paint} m (gantries) / ${SIGN_FIELD.side.paint} m (side boards) of the player.`;
   }
 
   /**
-   * STEP 3 PREVIEW ONLY: shows a few boards of the plan (SignPlan.ts) near (px, pz) so the rows, arrows and km can be checked by eye.
-   * Only the planned SIDE boards are shown here (the overhead ones are the gantries of Step 4), on the left edge of the road, at most `maxDist` m from the player;
-   * two chosen boards are never closer than 40 m. Returns a short text for the console.
+   * Once per rendered frame with the player's ABSOLUTE world position: hides the far boards, draws the text of the near ones (at most
+   * SIGN_FIELD.paintPerFrame per call) and frees the text of the ones the player has left.
    */
-  addPlannedPreview(plan: readonly PlannedSign[], groundAt: (x: number, z: number) => number, px: number, pz: number, count = 6, maxDist = 1500): string {
-    const cand = plan
-      .filter((q) => q.style === 'side' && q.sideOk)
-      .map((q) => ({ q, d: Math.hypot(q.sx - px, q.sz - pz) }))
-      .filter((c) => c.d <= maxDist)
-      .sort((a, b) => a.d - b.d);
-    const picked: PlannedSign[] = [];
-    for (const c of cand) {
-      if (picked.length >= count) break;
-      if (picked.some((o) => Math.hypot(o.sx - c.q.sx, o.sz - c.q.sz) < 40)) continue;
-      picked.push(c.q);
+  updateField(px: number, pz: number): void {
+    let budget = SIGN_FIELD.paintPerFrame;
+    for (const e of this.entries) {
+      const dx = e.x - px;
+      const dz = e.z - pz;
+      const d2 = dx * dx + dz * dz;
+      const vis = d2 < e.showR2;
+      if (e.group.visible !== vis) e.group.visible = vis;
+      if (e.painted) {
+        if (d2 > e.unpaintR2) {
+          for (const s of e.slots) this.unpaint(s);
+          e.painted = false;
+        }
+      } else if (vis && d2 < e.paintR2 && budget > 0) {
+        let all = true;
+        for (const s of e.slots) all = this.paint(s) && all;
+        e.painted = all;
+        budget--;
+      }
     }
-    const lines: string[] = [];
-    for (const q of picked) {
-      if (!this.addSideSign({ x: q.sx, y: groundAt(q.sx, q.sz), z: q.sz, fx: q.fx, fz: q.fz, rows: q.rows, color: q.color })) continue;
-      lines.push(`#${q.id} ${q.purpose}/${q.style} ${q.roadName} at x=${q.sx.toFixed(0)} z=${q.sz.toFixed(0)}: ${q.rows.map((r) => `${r.arrow} ${r.en} ${(r.km ?? 0).toFixed(1)}`).join(' | ')}`);
-    }
-    return `Step 3 preview: ${lines.length} planned side boards placed. ${lines.join(' ;; ')}`;
   }
 
   /** Once per rendered frame. lampOn = 0 (day) .. 1 (night): the boards are a little darker at night. */
   update(lampOn: number): void {
-    const k = 1 - 0.4 * Math.min(1, Math.max(0, lampOn));
-    for (const m of this.faceMats) m.color.setScalar(k);
+    this.nightK = 1 - 0.4 * Math.min(1, Math.max(0, lampOn));
+    for (const s of this.slots) this.tint(s);
   }
 
   dispose(): void {
     this.root.remove(this.group);
     for (const g of this.geos) g.dispose();
-    for (const t of this.textures) t.dispose();
-    for (const m of this.faceMats) m.dispose();
+    for (const s of this.slots) {
+      s.tex?.dispose();
+      s.mat.dispose();
+    }
     this.metal.dispose();
     this.concrete.dispose();
     this.geos.length = 0;
-    this.textures.length = 0;
-    this.faceMats.length = 0;
+    this.slots.length = 0;
+    this.entries.length = 0;
     this.count = 0;
   }
 }
