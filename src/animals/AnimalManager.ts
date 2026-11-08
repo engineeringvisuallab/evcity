@@ -2,16 +2,22 @@ import * as THREE from 'three';
 import type { TerrainGenerator } from '../terrain';
 import type { TerrainSample } from '../terrain/Lakes';
 import { BUILT_UP_KINDS, getWorldZoneAt, type WorldZoneKind } from '../city/WorldZones';
-import { placementContains } from '../buildings/Placements';
+import { BUILDING_PLACEMENTS, placementContains } from '../buildings/Placements';
+import { CityPlan } from '../city/CityPlan';
+import { Config } from '../core/Config';
+import { FARM_INDEX, farmCovers } from '../farm/FarmFields';
+import type { Field } from '../farm/FarmPlan';
+import { TreePlacer } from '../vegetation/TreePlacement';
 import { mulberry32 } from '../world/Seed';
 import { Q } from '../core/Quality';
 import { buildAnimal, buildFishGeometry, buildFishMaterial, variantCount, type Rig } from './AnimalModel';
-import { HABITAT, PREDATOR_ZONES, SPECIES, type HabitatKey, type Species, type SpeciesDef } from './Species';
+import { sm } from './AnimalRig';
+import { HABITAT, HABITATS_OF, PREDATOR_ZONES, SPECIES, type HabitatKey, type Species, type SpeciesDef } from './Species';
 
 /**
- * Wildlife of the whole world. Every species lives where it belongs (see Species.ts HABITAT):
- *  - farmland + villages: cows, buffaloes, goats, sheep, horses, chickens, ducks (at ponds), dogs, cats, rabbits
- *  - forest: deer, wild boar, elephants, bears, peacocks;  wetland: buffaloes, crocodiles, hippos, ducks;  mountain: wild goats, bears
+ * Wildlife of the whole world. Every species lives where it REALLY belongs, judged by what the player sees (habitatAt), not by the abstract zone map:
+ *  - beside the real crop fields (FarmFields) and the real village houses: cows, buffaloes, goats, sheep, horses, chickens, ducks (at ponds), dogs, cats, rabbits
+ *  - where the forest noise really grows dense trees: deer, wild boar, elephants, bears, peacocks;  at a real river / lake shore: buffaloes, crocodiles, hippos, ducks;  high ground: wild goats, bears
  *  - the safari park (L key): zebras, giraffes, elephants, rhinos, hippos, lions, leopards;  sea: dolphin pods;  every water: fish
  *  - hunters (tiger, lion, leopard, wolf, fox) stalk their prey (Species.hunts), charge, pounce and eat; the herd runs
  * Animals live on dry, gentle, unbuilt land near the player (not on buildings, roads, inside engineering areas or the agro site)
@@ -68,6 +74,8 @@ const FISH_SCHOOLS = Q.fishSchools; // 10
 const FISH_PER = 12;
 const WORLD_LIMIT = 4700;
 const SAFARI = { x: 3000, z: 1900, r: 800 };
+/** Real village houses (Placements.ts): the village animals live around them. */
+const VILLAGE_HOUSES = new Set(['mud-hut', 'bamboo-hut', 'house-tin', 'house-semi-pucca', 'village-bazaar']);
 
 const WALK4 = [0, Math.PI, Math.PI, 0];
 const GALLOP4 = [0, 0.35, Math.PI * 0.85, Math.PI * 1.15];
@@ -77,6 +85,12 @@ export class AnimalManager {
   private rnd: () => number;
   private s: TerrainSample;
   private s2: TerrainSample;
+  private s3: TerrainSample;
+  private s4: TerrainSample;
+  private mask = new Float32Array(2);
+  private trees: TreePlacer;
+  private fieldBuf: Field[] = [];
+  private homes: { x: number; z: number; r: number }[];
   private spawnTimer = 0.2;
   private time = 0;
   private nextGroup = 1;
@@ -98,6 +112,10 @@ export class AnimalManager {
     this.rnd = mulberry32(seed ^ 0x7a11d11f);
     this.s = terrain.makeSample();
     this.s2 = terrain.makeSample();
+    this.s3 = terrain.makeSample();
+    this.s4 = terrain.makeSample();
+    this.trees = new TreePlacer(terrain, new CityPlan(terrain.sites), seed); // the SAME forest field the tree chunks use
+    this.homes = BUILDING_PLACEMENTS.filter((b) => VILLAGE_HOUSES.has(b.id)).map((b) => ({ x: b.x, z: b.z, r: Math.max(b.W, b.D) / 2 }));
     const nFish = FISH_SCHOOLS * FISH_PER;
     this.fishMesh = new THREE.InstancedMesh(this.fishGeo, this.fishMat, nFish);
     this.fishMesh.frustumCulled = false;
@@ -114,25 +132,79 @@ export class AnimalManager {
 
   private dist(a: Animal, x: number, z: number): number { return Math.hypot(a.x - x, a.z - z); }
 
-  /** Habitat key of a place: the zone kind, or 'safari' inside the safari park. */
-  private habitat(x: number, z: number): { key: HabitatKey; kind: WorldZoneKind } {
-    const kind = getWorldZoneAt(x, z).kind;
-    if (kind === 'park' && Math.hypot(x - SAFARI.x, z - SAFARI.z) < SAFARI.r) return { key: 'safari', kind };
-    return { key: kind, kind };
+  /** Tree density 0..1 at a point = what the tree chunks really plant there (forest noise x city plan x tree line). */
+  private forestDensity(x: number, z: number, h: number): number {
+    const V = Config.vegetation;
+    if (h >= V.treeLineEnd) return 0;
+    return this.trees.forestAt(x, z) * this.trees.cityFactor(x, z) * (1 - sm(V.treeLineStart, V.treeLineEnd, h));
+  }
+
+  /** Is there real water (river, lake, pond: at least 0.4 m deep) within r metres? */
+  private waterWithin(x: number, z: number, r: number): boolean {
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2;
+      this.terrain.sample(x + Math.cos(a) * r, z + Math.sin(a) * r, this.s4);
+      if (!Number.isNaN(this.s4.water) && this.s4.water - this.s4.h >= 0.4) return true;
+    }
+    return false;
   }
 
   /**
-   * Can this species stand here? Fills this.s with the terrain sample. Land animals: dry, gentle, unbuilt ground (no buildings, no
-   * agro site, no engineering area, no sea). Swimmers (duck, buffalo, hippo, crocodile, elephant) may also stand in water up to
-   * their depth. On a spawn the spot must not be on asphalt.
+   * What is this land REALLY (what the player sees there)? null = nobody lives here: open land without trees, fields or houses, built-up
+   * land, the sea. `loose` = the wider limits an animal that already lives here may roam to (so it does not stick at an invisible edge).
+   * `wet` = also test for the shore of a real river / lake / pond (only the water lovers ask: it costs a few terrain samples).
    */
-  private okCell(def: SpeciesDef, x: number, z: number, spawn: boolean): boolean {
+  private habitatAt(x: number, z: number, loose: boolean, wet = false, allowed?: ReadonlySet<HabitatKey>): HabitatKey | null {
+    const ok = (k: HabitatKey): boolean => !allowed || allowed.has(k); // several habitats can overlap: report the one this species lives in
+    const kind = getWorldZoneAt(x, z).kind;
+    if (kind === 'sea') return null;
+    if (kind === 'park') return Math.hypot(x - SAFARI.x, z - SAFARI.z) < SAFARI.r ? 'safari' : 'park';
+    if (BUILT_UP_KINDS.has(kind) && kind !== 'village') return null;
+    const s = this.s3;
+    this.terrain.sample(x, z, s);
+    const h = s.h;
+    if (wet && ((!Number.isNaN(s.water) && h < s.water + 0.25) || this.waterWithin(x, z, loose ? 18 : 12))) return 'wetland';
+    const k = loose ? 1.8 : 1;
+    if (ok('village')) for (const hm of this.homes) if (Math.hypot(x - hm.x, z - hm.z) < hm.r + 55 * k) return 'village';
+    const fields = ok('farm') ? FARM_INDEX.near(x, z, 170, this.fieldBuf) : [];
+    for (const f of fields) {
+      const dx = x - f.cx, dz = z - f.cz, c = Math.cos(f.yaw), sn = Math.sin(f.yaw);
+      const lx = Math.abs(dx * c - dz * sn) - f.w / 2, lz = Math.abs(dx * sn + dz * c) - f.d / 2;
+      if (Math.hypot(Math.max(lx, 0), Math.max(lz, 0)) < 45 * k) return 'farm';
+    }
+    if (ok('forest') && this.forestDensity(x, z, h) >= (loose ? 0.22 : 0.45)) return 'forest';
+    if (ok('mountain') && h >= (loose ? 110 : 150)) return 'mountain';
+    return null;
+  }
+
+  /** The habitat of a place as this species sees it (tests / debug). */
+  habitatForTest(x: number, z: number, sp: Species): HabitatKey | null { return this.habitatAt(x, z, true, SPECIES[sp].needsWater === true || sp === 'buffalo', HABITATS_OF[sp]); }
+
+  /** Ground an animal must never stand on: crop fields, buildings, roads, the railway, airports, the port, the army camp, building plots. */
+  blockedForTest(x: number, z: number): boolean { return this.blocked(x, z); }
+
+  private blocked(x: number, z: number): boolean {
+    const g = this.terrain;
+    if (g.railForm.inCorridor(x, z, 3) || g.portForm.inFootprint(x, z, 4)) return true;
+    if (g.airport.contains(x, z, 4) || g.airportSea.contains(x, z, 4) || g.army.contains(x, z, 4) || g.mall.contains(x, z, 4)) return true;
+    if (g.evlab.contains(x, z, 4) || g.library.contains(x, z, 4) || g.protoBuilding.contains(x, z, 4) || g.agro.contains(x, z, 12)) return true;
+    for (const s of g.infra) if (s.contains(x, z, 6)) return true;
+    if (farmCovers(x, z, 1.5) || placementContains(x, z, 3)) return true;
+    g.roads.maskAt(x, z, 1, this.mask);
+    return this.mask[1] > 0.01;
+  }
+
+  /**
+   * Can this species stand here? Fills this.s with the terrain sample. Land animals: dry, gentle, unbuilt ground (no buildings, crops, roads, rail,
+   * agro site, engineering area, no sea). Swimmers (duck, buffalo, hippo, crocodile, elephant) may also stand in water up to their depth.
+   * Farm and village animals stay near their home; every species stays inside a habitat of its own kind (a zebra never leaves the safari park).
+   */
+  private okCell(def: SpeciesDef, x: number, z: number, spawn: boolean, a?: Animal): boolean {
     if (Math.abs(x) > WORLD_LIMIT || Math.abs(z) > WORLD_LIMIT) return false;
     const kind = getWorldZoneAt(x, z).kind;
     if (kind === 'sea') return false;
     if (BUILT_UP_KINDS.has(kind) && !(kind === 'village' && (HABITAT.village?.[def.id] || def.id === 'fox'))) return false;
-    if (this.terrain.agro.contains(x, z, 12)) return false;
-    if (placementContains(x, z, 3)) return false;
+    if (this.blocked(x, z)) return false;
     const s = this.s;
     this.terrain.sample(x, z, s);
     const inWater = !Number.isNaN(s.water) && s.h < s.water + 0.25;
@@ -141,7 +213,10 @@ export class AnimalManager {
       if (!inWater && s.h < 0.9) return false;
     } else if (inWater || s.h < 1.2) return false;
     if (spawn && this.terrain.roads.surfaceAt(x, z) === 1) return false;
-    return true;
+    if (a && (def.role === 'domestic' || def.role === 'bird') && Math.hypot(x - a.homeX, z - a.homeZ) > def.roam * 1.7) return false;
+    const wet = def.needsWater === true || def.id === 'buffalo';
+    const hk = this.habitatAt(x, z, !spawn, wet, HABITATS_OF[def.id]);
+    return hk !== null && HABITATS_OF[def.id].has(hk);
   }
 
   /** Nearest water cell (depth 0.5 .. maxDepth) around a point, or null. */
@@ -210,33 +285,64 @@ export class AnimalManager {
     for (const o of this.animals) if (o.target === a) { o.target = null; if (o.state === 'stalk' || o.state === 'chase' || o.state === 'attack') this.setState(o, 'wander'); }
   }
 
+  /** Where to try a new group: beside a real crop field, beside real village houses, or anywhere in the ring around the player (forest, mountain, park, water ...). */
+  private spawnPoint(px: number, pz: number): { x: number; z: number } {
+    const roll = this.rnd();
+    if (roll < 0.3) {
+      const fields = FARM_INDEX.near(px, pz, NEAR_MAX + 60, this.fieldBuf);
+      if (fields.length) {
+        const f = fields[Math.floor(this.rnd() * fields.length)];
+        const ang = this.rnd() * Math.PI * 2, d = Math.max(f.w, f.d) / 2 + this.r(6, 38);
+        return { x: f.cx + Math.cos(ang) * d, z: f.cz + Math.sin(ang) * d };
+      }
+    } else if (roll < 0.45) {
+      const near = this.homes.filter((h) => Math.hypot(h.x - px, h.z - pz) < NEAR_MAX + 60);
+      if (near.length) {
+        const h = near[Math.floor(this.rnd() * near.length)];
+        const ang = this.rnd() * Math.PI * 2, d = h.r + this.r(5, 32);
+        return { x: h.x + Math.cos(ang) * d, z: h.z + Math.sin(ang) * d };
+      }
+    }
+    const ang = this.rnd() * Math.PI * 2, d = this.r(NEAR_MIN, NEAR_MAX);
+    return { x: px + Math.cos(ang) * d, z: pz + Math.sin(ang) * d };
+  }
+
   /** One group (herd, flock, pair) of a species that fits the place, somewhere in the ring around the player. */
   private trySpawnGroup(px: number, pz: number, onlyNew = false): boolean {
-    for (let attempt = 0; attempt < 20; attempt++) {
-      const ang = this.rnd() * Math.PI * 2;
-      const d = this.r(NEAR_MIN, NEAR_MAX);
-      let cx = px + Math.cos(ang) * d, cz = pz + Math.sin(ang) * d;
-      const hab = this.habitat(cx, cz);
-      const table = HABITAT[hab.key];
-      if (!table) continue;
+    for (let attempt = 0; attempt < 24; attempt++) {
+      const pt = this.spawnPoint(px, pz);
+      let cx = pt.x, cz = pt.z;
+      const dp = Math.hypot(cx - px, cz - pz);
+      if (dp < NEAR_MIN || dp > GONE - 40) continue;
+      const land = this.habitatAt(cx, cz, false);
+      // a real water edge beside this spot: the water lovers (crocodile, hippo, duck, buffalo) live there
+      const wetSpot = land === 'safari' || land === 'park' ? null : this.findWater(cx, cz, SPECIES.duck, 40);
+      const keys: HabitatKey[] = [];
+      if (land) keys.push(land);
+      if (wetSpot) keys.push('wetland');
+      if (keys.length === 0) continue;
       // species that fit here (population cap, a water place for the water lovers)
-      const options: { sp: Species; w: number; wx: number; wz: number }[] = [];
+      const options: { sp: Species; w: number; wx: number; wz: number; key: HabitatKey }[] = [];
       let total = 0;
-      let water: { x: number; z: number } | null | undefined;
-      for (const k of Object.keys(table) as Species[]) {
-        const def = SPECIES[k], w = table[k] ?? 0;
-        if (w <= 0 || this.count(k) >= def.cap || (onlyNew && this.count(k) > 0)) continue;
-        let wx = cx, wz = cz;
-        if (def.needsWater) {
-          if (water === undefined) water = this.findWater(cx, cz, def, 40);
-          if (!water) continue;
-          wx = water.x; wz = water.z;
+      for (const key of keys) {
+        const table = HABITAT[key];
+        if (!table) continue;
+        for (const k of Object.keys(table) as Species[]) {
+          const def = SPECIES[k], w = table[k] ?? 0;
+          if (w <= 0 || this.count(k) >= def.cap || (onlyNew && this.count(k) > 0) || options.some((o) => o.sp === k)) continue;
+          let wx = cx, wz = cz;
+          if (key === 'wetland' && wetSpot) { wx = wetSpot.x; wz = wetSpot.z; }
+          else if (def.needsWater) {
+            const wp = this.findWater(cx, cz, def, 40);
+            if (!wp) continue;
+            wx = wp.x; wz = wp.z;
+          }
+          if (!this.okCell(def, wx, wz, true)) continue;
+          // rare species get a better chance while few of them live here (so the place shows its variety, not only the commonest animal)
+          const wt = (w * (def.needsWater ? 3 : 1)) / (1 + this.count(k) * 0.35);
+          options.push({ sp: k, w: wt, wx, wz, key });
+          total += wt;
         }
-        if (!this.okCell(def, wx, wz, true)) continue;
-        // rare species get a better chance while few of them live here (so the zone shows its variety, not only the commonest animal)
-        const wt = (w * (def.needsWater ? 3 : 1)) / (1 + this.count(k) * 0.35);
-        options.push({ sp: k, w: wt, wx, wz });
-        total += wt;
       }
       if (options.length === 0) continue;
       let pick = this.rnd() * total;
@@ -253,7 +359,7 @@ export class AnimalManager {
         if (this.okCell(def, dx, dz, true)) { this.make(chosen.sp, dx, dz, this.rnd() * 6.28, grp); made++; }
       }
       if (made === 0) continue;
-      this.trySpawnHunter(chosen.sp, hab.key, cx, cz);
+      this.trySpawnHunter(chosen.sp, chosen.key, cx, cz);
       return true;
     }
     return false;
@@ -321,7 +427,7 @@ export class AnimalManager {
     const step = speed * dt;
     if (step <= 0) { a.speed = 0; return; }
     const nx = a.x + Math.sin(a.heading) * step, nz = a.z + Math.cos(a.heading) * step;
-    if (this.okCell(a.def, nx, nz, false)) {
+    if (this.okCell(a.def, nx, nz, false, a)) {
       const s = this.s;
       const inWater = !Number.isNaN(s.water) && s.h < s.water + 0.25;
       if (inWater || Math.abs(s.h - a.gy) / Math.max(step, 0.3) < 0.8) {
@@ -369,11 +475,12 @@ export class AnimalManager {
         let cx = 0, cz = 0, n = 0;
         for (const o of this.animals) if (o !== a && o.group === a.group && o.state !== 'dead' && this.dist(o, a.x, a.z) < 60) { cx += o.x; cz += o.z; n++; }
         if (n > 0) { cx /= n; cz /= n; } else { cx = a.x; cz = a.z; }
-        if (Math.hypot(a.x - a.homeX, a.z - a.homeZ) > def.roam * 2.5) { cx = a.homeX; cz = a.homeZ; }
+        const leash = def.role === 'domestic' || def.role === 'bird' ? 1.2 : 2.5; // farm / village animals stay close to home
+        if (Math.hypot(a.x - a.homeX, a.z - a.homeZ) > def.roam * leash) { cx = a.homeX; cz = a.homeZ; }
         const w = def.roam * 0.5;
         tx = cx + this.r(-w, w); tz = cz + this.r(-w, w);
       }
-      if (this.okCell(def, tx, tz, true)) { a.tx = tx; a.tz = tz; return; }
+      if (this.okCell(def, tx, tz, true, a)) { a.tx = tx; a.tz = tz; return; }
     }
     const ang = this.rnd() * 6.28;
     a.tx = a.x + Math.cos(ang) * 8; a.tz = a.z + Math.sin(ang) * 8;

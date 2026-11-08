@@ -6,9 +6,10 @@ import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
 import { Config } from '../src/core/Config';
 import { AnimalManager } from '../src/animals/AnimalManager';
 import { buildAnimal, variantCount } from '../src/animals/AnimalModel';
-import { ALL_SPECIES, HABITAT, SPECIES } from '../src/animals/Species';
+import { ALL_SPECIES, HABITAT, HABITATS_OF, SPECIES } from '../src/animals/Species';
 import { BUILT_UP_KINDS, getWorldZoneAt, rasterizeWorldZones } from '../src/city/WorldZones';
 import { placementContains } from '../src/buildings/Placements';
+import { FARM_FIELDS } from '../src/farm/FarmFields';
 
 const g = new TerrainGenerator(Config.world.seed);
 const s = g.makeSample();
@@ -38,8 +39,8 @@ const centre = (kind: string): { x: number; z: number } | null => {
   return cells.length ? cells[Math.floor(cells.length / 2)] : null;
 };
 const places: [string, { x: number; z: number } | null][] = [
-  ['farmland', centre('farmland')], ['village', centre('village')], ['forest', centre('forest')], ['wetland', centre('wetland')],
-  ['mountain', centre('mountain')], ['park', centre('park')], ['safari', { x: 3000, z: 1900 }], ['coast', centre('coast')],
+  ['crop field', { x: FARM_FIELDS[300].cx, z: FARM_FIELDS[300].cz }], ['hill field', { x: FARM_FIELDS[10].cx, z: FARM_FIELDS[10].cz }],
+  ['village', { x: -2240, z: -1470 }], ['park', centre('park')], ['safari', { x: 3000, z: 1900 }],
 ];
 const seenAll = new Set<string>();
 let kills = 0;
@@ -67,6 +68,9 @@ for (const [name, p] of places) {
       const k = getWorldZoneAt(a.x, a.z).kind;
       if (k === 'sea' || (BUILT_UP_KINDS.has(k) && !(k === 'village' && (HABITAT.village?.[a.sp] || a.sp === 'fox')))) bump(`zone ${k} ${a.sp}`);
       if (placementContains(a.x, a.z, 0)) bump(`building ${a.sp}`);
+      if (a.state !== 'dead' && m.blockedForTest(a.x, a.z)) bump(`crop / road / rail / pad ${a.sp}`);
+      const hk = m.habitatForTest(a.x, a.z, a.sp);
+      if (!(SPECIES[a.sp].swim !== undefined && hk === null) && (hk === null || !HABITATS_OF[a.sp].has(hk))) bump(`habitat ${hk} ${a.sp}`);
       g.sample(a.x, a.z, s);
       if (SPECIES[a.sp].swim === undefined && !Number.isNaN(s.water) && s.h < s.water - 0.1 && a.state !== 'dead') bump(`water ${a.sp}`);
     }

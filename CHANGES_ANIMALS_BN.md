@@ -31,3 +31,8 @@ Ek shathe sorbochcho ~64 land animal + dolphin; 260 m-er baire hide + pose bondh
 
 ## Test
 `npm run test:animals` -- protita zone-e 6 minute simulation (kon animal ashe, building/shohor/pani-te ache kina, shikar hoy kina), dolphin, mach.
+
+## Update: asol jayga + bhalo shape
+- **Position fix**: ager code animal ke abstract `WorldZones` label diye boshato (jar sathe gach/field/ghor-bari-r kono mil chhilo na: `forest` zone-e gach onno zone-er cheye beshi na, 495 crop field-er 208 ta `mountain` zone-e, `wetland`-er 91% jaygay kache pani nei, safari circle-er 64% park na). Ekhon `AnimalManager.habitatAt` jeta chokhe dekha jay seta dhore: asol crop field-er pashe (goru, mohish, chagol, bheda, ghora), asol gram-er ghor-er pashe (murgi, biral, kukur, chagol), jekhane gach asholei ghono (horin, shukor, hati, bhaluk, moyur), asol nodi/pukur-er pare (kumir, jalahosti, hash), uchu pahar, park, ar safari (African animal park chhere jay na). Crop-er upor, rasta, rail, building plot-e kokhono jay na. Ghor-er/khamar-er animal bari-r kache thake.
+- **Shape fix**: shoulder + haunch muscle, mota tapered leg (cap lukano), chhoto paw/hoof (pancake na), neck blend, dolphin-er thut chhoto.
+- Test: `npm run test:animals`.

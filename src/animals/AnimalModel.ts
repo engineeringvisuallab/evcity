@@ -48,33 +48,35 @@ interface QuadSpec {
   swing?: number;
   /** Super-ellipse exponent of the muzzle (boxy muzzles). */
   boxy?: number;
+  /** Shoulder / haunch muscle size (1 = default, 0 = none). */
+  mus?: number;
 }
 
 /** Leg thickness factor per foot type (the table gives slim values). */
 const LEG_K = { hoof: 1.5, paw: 1.4, pad: 1.0, toe: 1.2 };
 
 const QUAD: Partial<Record<Species, QuadSpec>> = {
-  cow: { L: 1.55, H: 1.3, cd: 0.66, cw: 0.48, rd: 0.62, rw: 0.5, waist: 0.25, drop: 0.0, hump: 0.13, hind: 0.2, lw: 0.07, foot: 'hoof', neck: [0.5, 0.17, 0.11, 0.42], head: [0.46, 0.12, 0.15, 0.5, 0.78, 0.7, 0.55], tail: ['rope', 0.95, 0.025], ears: ['flap', 1], eyes: 'side' },
-  buffalo: { L: 1.9, H: 1.38, cd: 0.78, cw: 0.62, rd: 0.7, rw: 0.62, waist: 0.15, drop: -0.05, hump: 0.04, hind: 0.15, lw: 0.085, foot: 'hoof', neck: [0.5, 0.24, 0.16, 0.12], head: [0.55, 0.15, 0.17, 0.5, 0.85, 0.7, 0.75], tail: ['rope', 0.85, 0.03], ears: ['flap', 1.1], eyes: 'side' },
-  goat: { L: 0.8, H: 0.72, cd: 0.34, cw: 0.2, rd: 0.3, rw: 0.22, waist: 0.35, drop: 0.0, hind: 0.3, lw: 0.028, foot: 'hoof', neck: [0.3, 0.07, 0.045, 0.75], head: [0.24, 0.055, 0.075, 0.55, 0.7, 0.6, 0.35], tail: ['stub', 0.14, 0.03], ears: ['flap', 0.9], eyes: 'side' },
-  sheep: { L: 0.85, H: 0.78, cd: 0.46, cw: 0.36, rd: 0.44, rw: 0.38, waist: 0.05, drop: 0.0, hind: 0.2, lw: 0.03, foot: 'hoof', neck: [0.26, 0.1, 0.06, 0.55], head: [0.22, 0.06, 0.08, 0.55, 0.7, 0.62, 0.5], tail: ['stub', 0.2, 0.05], ears: ['flap', 0.9], eyes: 'side', boxy: 2.6 },
-  horse: { L: 1.55, H: 1.5, cd: 0.62, cw: 0.4, rd: 0.58, rw: 0.46, waist: 0.3, drop: 0.02, hind: 0.32, lw: 0.06, foot: 'hoof', neck: [0.78, 0.17, 0.095, 0.9], head: [0.58, 0.095, 0.15, 0.55, 0.62, 0.6, 0.45], tail: ['rope', 0.85, 0.04], ears: ['long', 0.8], eyes: 'side' },
-  dog: { L: 0.7, H: 0.58, cd: 0.27, cw: 0.15, rd: 0.22, rw: 0.17, waist: 0.5, drop: 0.0, hind: 0.35, lw: 0.027, foot: 'paw', neck: [0.22, 0.07, 0.05, 0.85], head: [0.2, 0.055, 0.065, 0.5, 0.65, 0.6, 0.3], tail: ['curl', 0.3, 0.02], ears: ['flap', 0.8], eyes: 'front' },
-  cat: { L: 0.36, H: 0.25, cd: 0.13, cw: 0.09, rd: 0.12, rw: 0.1, waist: 0.4, drop: 0.04, hind: 0.45, lw: 0.016, foot: 'paw', neck: [0.1, 0.035, 0.03, 0.6], head: [0.09, 0.04, 0.036, 0.22, 0.6, 0.55, 0.15], tail: ['whip', 0.3, 0.012], ears: ['point', 1.5], eyes: 'front' },
-  deer: { L: 1.1, H: 0.92, cd: 0.4, cw: 0.23, rd: 0.38, rw: 0.26, waist: 0.4, drop: 0.03, hind: 0.32, lw: 0.03, foot: 'hoof', neck: [0.5, 0.1, 0.06, 0.95], head: [0.27, 0.06, 0.075, 0.6, 0.62, 0.55, 0.45], tail: ['stub', 0.14, 0.03], ears: ['long', 0.85], eyes: 'side' },
-  boar: { L: 1.15, H: 0.82, cd: 0.52, cw: 0.34, rd: 0.44, rw: 0.34, waist: 0.1, drop: -0.08, hump: 0.07, hind: 0.2, lw: 0.04, foot: 'hoof', neck: [0.24, 0.17, 0.13, 0.05], head: [0.46, 0.1, 0.12, 0.65, 0.55, 0.5, 0.4], tail: ['curl', 0.28, 0.018], ears: ['point', 1.3], eyes: 'side' },
+  cow: { L: 1.55, H: 1.3, cd: 0.66, cw: 0.48, rd: 0.62, rw: 0.5, waist: 0.25, drop: 0.0, hump: 0.13, hind: 0.2, lw: 0.078, foot: 'hoof', neck: [0.5, 0.17, 0.11, 0.42], head: [0.46, 0.12, 0.15, 0.5, 0.78, 0.7, 0.55], tail: ['rope', 0.95, 0.025], ears: ['flap', 1], eyes: 'side' },
+  buffalo: { L: 1.9, H: 1.38, cd: 0.78, cw: 0.62, rd: 0.7, rw: 0.62, waist: 0.15, drop: -0.05, hump: 0.04, hind: 0.15, lw: 0.09, foot: 'hoof', neck: [0.5, 0.24, 0.16, 0.12], head: [0.55, 0.15, 0.17, 0.5, 0.85, 0.7, 0.75], tail: ['rope', 0.85, 0.03], ears: ['flap', 1.1], eyes: 'side' },
+  goat: { L: 0.8, H: 0.72, cd: 0.34, cw: 0.2, rd: 0.3, rw: 0.22, waist: 0.35, drop: 0.0, hind: 0.3, lw: 0.033, foot: 'hoof', neck: [0.3, 0.07, 0.045, 0.75], head: [0.24, 0.055, 0.075, 0.55, 0.7, 0.6, 0.35], tail: ['stub', 0.14, 0.03], ears: ['flap', 0.9], eyes: 'side' },
+  sheep: { L: 0.85, H: 0.78, cd: 0.46, cw: 0.36, rd: 0.44, rw: 0.38, waist: 0.05, drop: 0.0, hind: 0.2, lw: 0.036, foot: 'hoof', neck: [0.26, 0.1, 0.06, 0.55], head: [0.22, 0.06, 0.08, 0.55, 0.7, 0.62, 0.5], tail: ['stub', 0.2, 0.05], ears: ['flap', 0.9], eyes: 'side', boxy: 2.6 },
+  horse: { L: 1.55, H: 1.5, cd: 0.62, cw: 0.4, rd: 0.58, rw: 0.46, waist: 0.3, drop: 0.02, hind: 0.32, lw: 0.066, foot: 'hoof', neck: [0.78, 0.17, 0.095, 0.9], head: [0.58, 0.095, 0.15, 0.55, 0.62, 0.6, 0.45], tail: ['rope', 0.85, 0.04], ears: ['long', 0.8], eyes: 'side' },
+  dog: { L: 0.7, H: 0.58, cd: 0.27, cw: 0.15, rd: 0.22, rw: 0.17, waist: 0.5, drop: 0.0, hind: 0.35, lw: 0.033, foot: 'paw', neck: [0.22, 0.07, 0.05, 0.85], head: [0.2, 0.055, 0.065, 0.5, 0.65, 0.6, 0.3], tail: ['curl', 0.3, 0.02], ears: ['flap', 0.8], eyes: 'front' },
+  cat: { L: 0.36, H: 0.25, cd: 0.13, cw: 0.09, rd: 0.12, rw: 0.1, waist: 0.4, drop: 0.04, hind: 0.45, lw: 0.02, foot: 'paw', neck: [0.1, 0.035, 0.03, 0.6], head: [0.09, 0.04, 0.036, 0.22, 0.6, 0.55, 0.15], tail: ['whip', 0.3, 0.012], ears: ['point', 1.5], eyes: 'front' },
+  deer: { L: 1.1, H: 0.92, cd: 0.4, cw: 0.23, rd: 0.38, rw: 0.26, waist: 0.4, drop: 0.03, hind: 0.32, lw: 0.034, foot: 'hoof', neck: [0.5, 0.1, 0.06, 0.95], head: [0.27, 0.06, 0.075, 0.6, 0.62, 0.55, 0.45], tail: ['stub', 0.14, 0.03], ears: ['long', 0.85], eyes: 'side' },
+  boar: { L: 1.15, H: 0.82, cd: 0.52, cw: 0.34, rd: 0.44, rw: 0.34, waist: 0.1, drop: -0.08, hump: 0.07, hind: 0.2, lw: 0.046, foot: 'hoof', neck: [0.24, 0.17, 0.13, 0.05], head: [0.46, 0.1, 0.12, 0.65, 0.55, 0.5, 0.4], tail: ['curl', 0.28, 0.018], ears: ['point', 1.3], eyes: 'side' },
   rabbit: { L: 0.3, H: 0.2, cd: 0.14, cw: 0.1, rd: 0.17, rw: 0.12, waist: 0.1, drop: 0.2, hind: 0.7, lw: 0.012, foot: 'paw', neck: [0.06, 0.04, 0.035, 0.5], head: [0.09, 0.035, 0.04, 0.4, 0.7, 0.7, 0.3], tail: ['ball', 0.05, 0.03], ears: ['long', 1.5], eyes: 'side' },
   elephant: { L: 2.5, H: 2.45, cd: 1.3, cw: 1.0, rd: 1.22, rw: 1.0, waist: 0.1, drop: -0.03, hind: 0.1, lw: 0.2, foot: 'pad', neck: [0.5, 0.52, 0.42, 0.25], head: [0.95, 0.42, 0.5, 0.2, 0.6, 0.7, 0.55], tail: ['rope', 1.2, 0.04], ears: ['big', 1], eyes: 'side', swing: 0.3 },
-  zebra: { L: 1.5, H: 1.35, cd: 0.6, cw: 0.36, rd: 0.56, rw: 0.42, waist: 0.3, drop: 0.0, hind: 0.3, lw: 0.05, foot: 'hoof', neck: [0.66, 0.15, 0.09, 0.8], head: [0.52, 0.09, 0.13, 0.55, 0.65, 0.62, 0.45], tail: ['rope', 0.7, 0.035], ears: ['long', 0.8], eyes: 'side' },
+  zebra: { L: 1.5, H: 1.35, cd: 0.6, cw: 0.36, rd: 0.56, rw: 0.42, waist: 0.3, drop: 0.0, hind: 0.3, lw: 0.056, foot: 'hoof', neck: [0.66, 0.15, 0.09, 0.8], head: [0.52, 0.09, 0.13, 0.55, 0.65, 0.62, 0.45], tail: ['rope', 0.7, 0.035], ears: ['long', 0.8], eyes: 'side' },
   giraffe: { L: 1.7, H: 3.0, cd: 0.82, cw: 0.4, rd: 0.58, rw: 0.36, waist: 0.2, drop: -0.2, hump: 0.2, hind: 0.12, lw: 0.07, foot: 'hoof', neck: [1.95, 0.2, 0.085, 1.2], head: [0.46, 0.085, 0.11, 0.6, 0.65, 0.65, 0.45], tail: ['rope', 0.95, 0.025], ears: ['long', 0.9], eyes: 'side', swing: 0.4 },
   rhino: { L: 2.3, H: 1.65, cd: 1.0, cw: 0.78, rd: 0.92, rw: 0.8, waist: 0.05, drop: -0.04, hump: 0.12, hind: 0.1, lw: 0.14, foot: 'pad', neck: [0.5, 0.38, 0.3, 0.12], head: [0.95, 0.24, 0.3, 0.6, 0.62, 0.55, 0.55], tail: ['rope', 0.6, 0.03], ears: ['point', 0.9], eyes: 'side', swing: 0.32 },
   hippo: { L: 2.3, H: 1.35, cd: 1.1, cw: 0.95, rd: 1.05, rw: 0.95, waist: 0.0, drop: -0.02, hind: 0.0, lw: 0.17, foot: 'pad', neck: [0.3, 0.45, 0.4, 0.0], head: [0.82, 0.3, 0.27, 0.55, 1.0, 0.85, 0.3], tail: ['stub', 0.25, 0.04], ears: ['round', 0.5], eyes: 'side', swing: 0.28, boxy: 3.2 },
-  tiger: { L: 1.45, H: 0.98, cd: 0.54, cw: 0.4, rd: 0.46, rw: 0.38, waist: 0.4, drop: 0.02, hind: 0.38, lw: 0.075, foot: 'paw', neck: [0.3, 0.2, 0.16, 0.35], head: [0.42, 0.2, 0.2, 0.35, 0.6, 0.55, 0.3], tail: ['whip', 1.0, 0.05], ears: ['round', 0.9], eyes: 'front' },
-  lion: { L: 1.5, H: 1.12, cd: 0.6, cw: 0.42, rd: 0.5, rw: 0.4, waist: 0.4, drop: 0.0, hind: 0.38, lw: 0.08, foot: 'paw', neck: [0.3, 0.2, 0.17, 0.35], head: [0.42, 0.2, 0.2, 0.33, 0.62, 0.55, 0.3], tail: ['whip', 0.95, 0.045], ears: ['round', 0.85], eyes: 'front' },
-  leopard: { L: 1.05, H: 0.7, cd: 0.36, cw: 0.26, rd: 0.34, rw: 0.26, waist: 0.5, drop: 0.03, hind: 0.4, lw: 0.05, foot: 'paw', neck: [0.22, 0.12, 0.1, 0.3], head: [0.29, 0.13, 0.125, 0.3, 0.62, 0.55, 0.25], tail: ['whip', 0.85, 0.035], ears: ['round', 0.85], eyes: 'front' },
-  wolf: { L: 1.0, H: 0.85, cd: 0.38, cw: 0.23, rd: 0.33, rw: 0.23, waist: 0.5, drop: 0.0, hind: 0.35, lw: 0.04, foot: 'paw', neck: [0.3, 0.1, 0.075, 0.6], head: [0.3, 0.075, 0.085, 0.5, 0.55, 0.5, 0.3], tail: ['bush', 0.45, 0.07], ears: ['point', 1.4], eyes: 'front' },
-  fox: { L: 0.55, H: 0.4, cd: 0.19, cw: 0.12, rd: 0.17, rw: 0.13, waist: 0.4, drop: 0.0, hind: 0.38, lw: 0.02, foot: 'paw', neck: [0.14, 0.05, 0.04, 0.5], head: [0.17, 0.045, 0.05, 0.5, 0.45, 0.45, 0.25], tail: ['bush', 0.4, 0.07], ears: ['point', 1.7], eyes: 'front' },
-  bear: { L: 1.45, H: 1.12, cd: 0.7, cw: 0.55, rd: 0.66, rw: 0.55, waist: 0.1, drop: 0.0, hump: 0.12, hind: 0.2, lw: 0.1, foot: 'paw', neck: [0.3, 0.27, 0.22, 0.2], head: [0.38, 0.14, 0.15, 0.4, 0.6, 0.55, 0.45], tail: ['stub', 0.1, 0.05], ears: ['round', 0.7], eyes: 'front' },
+  tiger: { L: 1.45, H: 0.98, cd: 0.54, cw: 0.4, rd: 0.46, rw: 0.38, waist: 0.4, drop: 0.02, hind: 0.38, lw: 0.098, foot: 'paw', neck: [0.3, 0.2, 0.16, 0.35], head: [0.42, 0.2, 0.2, 0.35, 0.6, 0.55, 0.3], tail: ['whip', 1.0, 0.05], ears: ['round', 0.9], eyes: 'front' },
+  lion: { L: 1.5, H: 1.12, cd: 0.6, cw: 0.42, rd: 0.5, rw: 0.4, waist: 0.4, drop: 0.0, hind: 0.38, lw: 0.105, foot: 'paw', neck: [0.3, 0.2, 0.17, 0.35], head: [0.42, 0.2, 0.2, 0.33, 0.62, 0.55, 0.3], tail: ['whip', 0.95, 0.045], ears: ['round', 0.85], eyes: 'front' },
+  leopard: { L: 1.05, H: 0.7, cd: 0.36, cw: 0.26, rd: 0.34, rw: 0.26, waist: 0.5, drop: 0.03, hind: 0.4, lw: 0.065, foot: 'paw', neck: [0.22, 0.12, 0.1, 0.3], head: [0.29, 0.13, 0.125, 0.3, 0.62, 0.55, 0.25], tail: ['whip', 0.85, 0.035], ears: ['round', 0.85], eyes: 'front' },
+  wolf: { L: 1.0, H: 0.85, cd: 0.38, cw: 0.23, rd: 0.33, rw: 0.23, waist: 0.5, drop: 0.0, hind: 0.35, lw: 0.048, foot: 'paw', neck: [0.3, 0.1, 0.075, 0.6], head: [0.3, 0.075, 0.085, 0.5, 0.55, 0.5, 0.3], tail: ['bush', 0.45, 0.07], ears: ['point', 1.4], eyes: 'front' },
+  fox: { L: 0.55, H: 0.4, cd: 0.19, cw: 0.12, rd: 0.17, rw: 0.13, waist: 0.4, drop: 0.0, hind: 0.38, lw: 0.025, foot: 'paw', neck: [0.14, 0.05, 0.04, 0.5], head: [0.17, 0.045, 0.05, 0.5, 0.45, 0.45, 0.25], tail: ['bush', 0.4, 0.07], ears: ['point', 1.7], eyes: 'front' },
+  bear: { L: 1.45, H: 1.12, cd: 0.7, cw: 0.55, rd: 0.66, rw: 0.55, waist: 0.1, drop: 0.0, hump: 0.12, hind: 0.2, lw: 0.118, foot: 'paw', neck: [0.3, 0.27, 0.22, 0.2], head: [0.38, 0.14, 0.15, 0.4, 0.6, 0.55, 0.45], tail: ['stub', 0.1, 0.05], ears: ['round', 0.7], eyes: 'front' },
   crocodile: { L: 1.75, H: 0.45, cd: 0.32, cw: 0.56, rd: 0.34, rw: 0.6, waist: 0.0, drop: 0.0, hind: 0.0, lw: 0.045, foot: 'toe', neck: [0.1, 0.2, 0.18, 0.0], head: [0.85, 0.15, 0.09, 0.72, 0.62, 0.62, 0.0], tail: ['croc', 1.6, 0.22], ears: ['none', 0], eyes: 'side', splay: 1.0, swing: 0.45, boxy: 3.0 },
 };
 
@@ -261,6 +263,15 @@ function buildQuad(sp: Species, variant: number): Rig {
   // ---- torso (+ shoulder mane of the lion, back ridge of the crocodile)
   mesh(body, cachedGeo(`${key}:body`, () => {
     const parts: THREE.BufferGeometry[] = [loft(smooth(T.st, 3), { seg: 16, tile: 1.6 })];
+    // shoulder blade + haunch muscle: the legs grow out of these masses instead of hanging under a tube
+    const mus = croc ? 0 : s.mus ?? 1;
+    if (mus > 0) {
+      const tF0 = 0.77, tH0 = 0.2;
+      for (const x of [-1, 1]) {
+        parts.push(ball(s.cw * 0.2 * mus + 0.01, T.depth(tF0) * 0.37 * mus, L * 0.125, x * s.cw * 0.27, T.top(tF0) - T.depth(tF0) * 0.56, -L / 2 + tF0 * L - L * 0.015, 1));
+        parts.push(ball(s.rw * 0.23 * mus + 0.01, T.depth(tH0) * 0.42 * mus, L * 0.17, x * s.rw * 0.27, T.top(tH0) - T.depth(tH0) * 0.56, -L / 2 + tH0 * L + L * 0.01, 1));
+      }
+    }
     if (sp === 'lion') parts.push(ball(0.3, 0.28, 0.3, 0, T.top(0.78) - 0.22, -L / 2 + L * 0.78, 0.6));
     if (croc) {
       for (let i = 0; i < 13; i++) {
@@ -287,7 +298,7 @@ function buildQuad(sp: Species, variant: number): Rig {
       { z: nl * 0.7, w: lerp(nw0, nw1, 0.8), h: lerp(nw0, nw1, 0.8) * 1.15, y: 0 },
       { z: nl, w: nw1, h: nw1 * 1.1, y: 0 },
     ];
-    const parts: THREE.BufferGeometry[] = [loft(smooth(st, 3), { seg: 12, tile: 1.6 })];
+    const parts: THREE.BufferGeometry[] = [loft(smooth(st, 3), { seg: 12, tile: 1.6 }), ball(nw0 * 1.08, nw0 * 1.32, nw0 * 1.5, 0, -nw0 * 0.05, -nl * 0.12, 1)];
     const hr = s.head[0];
     if (sp === 'lion') parts.push(ball(hr * 0.78, hr * 0.78, hr * 0.62, 0, 0, nl * 0.9, 0.5), ball(hr * 0.9, hr * 0.7, hr * 0.7, 0, -hr * 0.12, nl * 0.55, 0.5));
     if (sp === 'zebra') parts.push(...maneRow(nl * 0.95, nw0 * 1.25, nw1 * 1.25, 9, 0.12, -0.1));
@@ -386,7 +397,7 @@ function buildQuad(sp: Species, variant: number): Rig {
       lo = total - up2;
     }
     const hip = new THREE.Group();
-    const px = (front ? s.cw : s.rw) * (croc ? 0.5 : 0.31);
+    const px = (front ? s.cw : s.rw) * (croc ? 0.5 : 0.26);
     hip.position.set(side * px, pivot, -L / 2 + (front ? tF : tH) * L);
     group.add(hip);
     const thigh = new THREE.Group();
@@ -398,18 +409,29 @@ function buildQuad(sp: Species, variant: number): Rig {
     thigh.add(kn);
     const fk = front ? 'F' : 'H';
     mesh(thigh, cachedGeo(`${key}:up${fk}`, () => {
+      // starts INSIDE a round hip / shoulder ball (the cap is hidden), then tapers to the knee
       const st: Station[] = front
-        ? [{ z: 0, w: lw * 1.3, h: lw * 1.5, y: 0 }, { z: up2 * 0.45, w: lw * 1.05, h: lw * 1.25, y: 0 }, { z: up2, w: lw * 0.78, h: lw * 0.85, y: 0 }]
-        : [{ z: 0, w: lw * 1.3, h: lw * 1.9, y: -lw * 0.2 }, { z: up2 * 0.4, w: lw * 1.2, h: lw * 1.7, y: -lw * 0.2 }, { z: up2, w: lw * 0.75, h: lw * 0.85, y: 0 }];
-      return hang(loft(smooth(st, 2), { seg: 10, tile: 1.4 }));
+        ? [
+          { z: -lw * 0.25, w: lw * 1.12, h: lw * 1.3, y: 0 }, { z: up2 * 0.28, w: lw * 1.08, h: lw * 1.28, y: 0 },
+          { z: up2 * 0.72, w: lw * 0.86, h: lw * 0.98, y: 0 }, { z: up2, w: lw * 0.72, h: lw * 0.82, y: 0 },
+        ]
+        : [
+          { z: -lw * 0.25, w: lw * 1.2, h: lw * 1.55, y: -lw * 0.25 }, { z: up2 * 0.26, w: lw * 1.25, h: lw * 1.75, y: -lw * 0.28 },
+          { z: up2 * 0.7, w: lw * 0.92, h: lw * 1.2, y: -lw * 0.08 }, { z: up2, w: lw * 0.72, h: lw * 0.86, y: 0 },
+        ];
+      const hipBall = front ? ball(lw * 1.2, lw * 1.4, lw * 1.45, 0, lw * 0.1, 0, 1) : ball(lw * 1.3, lw * 1.55, lw * 1.9, 0, lw * 0.1, -lw * 0.2, 1);
+      return merge([hang(loft(smooth(st, 2), { seg: 10, tile: 1.4 })), hipBall]);
     }), M.fur);
     mesh(kn, cachedGeo(`${key}:lo${fk}`, () => {
-      const st: Station[] = [{ z: 0, w: lw * 0.76, h: lw * 0.86, y: 0 }, { z: lo * 0.4, w: lw * 0.56, h: lw * 0.64, y: 0 }, { z: lo, w: lw * 0.62, h: lw * 0.7, y: 0 }];
-      const parts: THREE.BufferGeometry[] = [hang(loft(smooth(st, 2), { seg: 10, tile: 1.4 }))];
-      if (s.foot === 'hoof') parts.push(ball(lw * 0.78, footH * 0.55, lw * 1.0, 0, -lo - footH * 0.1, lw * 0.15, 0.22));
-      else if (s.foot === 'paw') parts.push(ball(lw * 1.35, footH * 0.75, lw * 2.1, 0, -lo - footH * 0.1, lw * 0.9, 1));
-      else if (s.foot === 'pad') parts.push(ball(lw * 1.22, footH * 0.7, lw * 1.3, 0, -lo - footH * 0.05, lw * 0.1, 0.78));
-      else parts.push(ball(lw * 1.2, footH * 0.5, lw * 2.6, 0, -lo - footH * 0.1, lw * 1.2, 0.85));
+      const st: Station[] = [
+        { z: -lw * 0.1, w: lw * 0.74, h: lw * 0.86, y: 0 }, { z: lo * 0.18, w: lw * 0.52, h: lw * 0.6, y: 0 },
+        { z: lo * 0.8, w: lw * 0.47, h: lw * 0.52, y: 0 }, { z: lo, w: lw * 0.6, h: lw * 0.66, y: 0 },
+      ];
+      const parts: THREE.BufferGeometry[] = [hang(loft(smooth(st, 2), { seg: 10, tile: 1.4 })), ball(lw * 0.78, lw * 0.8, lw * 0.86, 0, 0, 0, 1)];
+      if (s.foot === 'hoof') parts.push(ball(lw * 0.6, footH * 0.55, lw * 0.78, 0, -lo - footH * 0.3, lw * 0.14, 0.2));
+      else if (s.foot === 'paw') parts.push(ball(lw * 0.82, footH * 0.95, lw * 1.2, 0, -lo - footH * 0.1, lw * 0.5, 1));
+      else if (s.foot === 'pad') parts.push(ball(lw * 1.05, footH * 0.85, lw * 1.12, 0, -lo - footH * 0.05, lw * 0.1, 0.78));
+      else parts.push(ball(lw * 1.1, footH * 0.5, lw * 2.2, 0, -lo - footH * 0.1, lw * 1.0, 0.85));
       return merge(parts);
     }), M.fur);
     // standing pose: the thigh points forward-down, the shank back-down (hind legs); front legs are straight pillars

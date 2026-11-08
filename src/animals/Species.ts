@@ -1,5 +1,3 @@
-import type { WorldZoneKind } from '../city/WorldZones';
-
 /**
  * Every animal of the game (data only): where it lives, how it behaves, how fast it is.
  * AnimalModel builds the body, AnimalManager spawns and drives them.
@@ -90,32 +88,46 @@ export const SPECIES: Record<Species, SpeciesDef> = {
 
 export const ALL_SPECIES = Object.keys(SPECIES) as Species[];
 
-/** 'safari' = the park zone around the safari park (Africa-style big game); the other keys are the world zone kinds. */
-export type HabitatKey = WorldZoneKind | 'safari';
-
 /**
- * Where each species lives (relative weights: a bigger number = commoner there). Built-up zones (city, industry, airport,
- * port) have no wildlife at all; birds already fly over them.
+ * Where an animal lives = the REAL land cover the player sees, not the abstract zone map (AnimalManager.habitatAt decides):
+ *  farm     - open land beside the real crop fields (FarmFields), never on the crops
+ *  village  - around the real village houses (mud huts, bamboo huts, tin houses ...)
+ *  forest   - where the forest noise really grows dense trees (the same field the tree placer uses)
+ *  mountain - high bare ground above the farms
+ *  wetland  - the edge of a real river / lake / pond
+ *  park     - the green park zones of the city
+ *  safari   - the safari park (L key): only the park cells inside its circle; African animals never leave it
  */
+export type HabitatKey = 'farm' | 'village' | 'forest' | 'mountain' | 'wetland' | 'park' | 'safari';
+
+/** Relative weights per habitat: a bigger number = commoner there. Built-up land (city, industry, airport, port) has no wildlife at all. */
 export const HABITAT: Partial<Record<HabitatKey, Partial<Record<Species, number>>>> = {
-  farmland: { cow: 4, buffalo: 2, goat: 3, sheep: 2, horse: 1.2, chicken: 2, dog: 1, deer: 1, rabbit: 2, duck: 1, peacock: 0.5 },
+  farm: { cow: 4, buffalo: 2, goat: 3, sheep: 2, horse: 1.2, dog: 0.6, rabbit: 2, duck: 1, peacock: 0.5, deer: 0.5 },
   village: { cow: 3, goat: 3, chicken: 5, dog: 2, cat: 2.5, duck: 2, sheep: 1, buffalo: 1 },
-  forest: { deer: 4, boar: 3, elephant: 1.5, bear: 0.8, peacock: 2, rabbit: 1, hippo: 0.3 },
-  wetland: { buffalo: 2, crocodile: 2.5, hippo: 1.2, duck: 3.5, deer: 1.5, boar: 1.5, elephant: 0.5 },
+  forest: { deer: 4, boar: 3, elephant: 1.5, bear: 0.8, peacock: 2, rabbit: 1 },
+  mountain: { goat: 3, deer: 2, boar: 1, bear: 1.2, sheep: 1 },
+  wetland: { buffalo: 2, crocodile: 2.5, hippo: 1.2, duck: 3.5 },
   park: { deer: 3, rabbit: 2, duck: 3, peacock: 1.5, horse: 0.6, dog: 0.6, cat: 0.6 },
   safari: { zebra: 4, giraffe: 2.5, elephant: 1.6, rhino: 1.4, hippo: 1.2, deer: 1.2, boar: 0.6 },
-  mountain: { goat: 3, deer: 2, boar: 1, bear: 1.2, sheep: 1 },
-  coast: { dog: 1, goat: 1, cow: 1, duck: 1.5, cat: 0.6 },
 };
 
-/** Where a predator may live (the zone kinds, 'safari' = the safari park). */
+/** Where a predator may live. */
 export const PREDATOR_ZONES: Partial<Record<Species, readonly HabitatKey[]>> = {
-  tiger: ['forest', 'wetland', 'park', 'mountain', 'farmland'],
-  lion: ['safari', 'park'],
-  leopard: ['forest', 'mountain', 'farmland', 'safari'],
-  wolf: ['mountain', 'forest', 'farmland'],
-  fox: ['farmland', 'forest', 'village', 'park'],
+  tiger: ['forest', 'mountain', 'wetland'],
+  lion: ['safari'],
+  leopard: ['forest', 'mountain', 'safari'],
+  wolf: ['mountain', 'forest'],
+  fox: ['farm', 'forest', 'village', 'park'],
 };
+
+/** Every habitat a species may stand in (a walking animal that reaches the edge of these turns back). */
+export const HABITATS_OF: Record<Species, ReadonlySet<HabitatKey>> = (() => {
+  const out = {} as Record<Species, Set<HabitatKey>>;
+  for (const sp of Object.keys(SPECIES) as Species[]) out[sp] = new Set<HabitatKey>();
+  for (const k of Object.keys(HABITAT) as HabitatKey[]) for (const sp of Object.keys(HABITAT[k] ?? {}) as Species[]) if ((HABITAT[k]?.[sp] ?? 0) > 0) out[sp].add(k);
+  for (const sp of Object.keys(PREDATOR_ZONES) as Species[]) for (const k of PREDATOR_ZONES[sp] ?? []) out[sp].add(k);
+  return out;
+})();
 
 /** The prey animals (and domestic ones) that predators attack. */
 export const isPredator = (sp: Species): boolean => SPECIES[sp].role === 'predator';
