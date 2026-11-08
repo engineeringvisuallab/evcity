@@ -51,7 +51,7 @@ import { LazyInfra } from '../engineering/LazyInfra';
 import { Minimap, type MapMarker, type MapState } from '../ui/Minimap';
 import { VehicleMenu } from '../ui/VehicleMenu';
 import { VehicleHUD } from '../ui/VehicleHUD';
-import { type Vehicle, VehicleManager, NightLamps, SEDAN, JEEP, HYPERCAR, EVHYPAR, EVBIKE, RICKSHAW, AUTO, BUS, SPECS } from '../vehicles';
+import { type Vehicle, VehicleManager, NightLamps, SEDAN, JEEP, HYPERCAR, EVHYPAR, RICKSHAW, AUTO, BUS, SPECS } from '../vehicles';
 import { VehicleModel } from '../vehicles/VehicleModel';
 import { PeopleManager, PersonModel, ENGINEER_LOOK } from '../people';
 import { RoadGraph, TrafficLightLayer, TrafficManager, TrafficSignals } from '../traffic';
@@ -665,7 +665,7 @@ export class Engine {
     this.vehicleMenu = new VehicleMenu(
       container,
       [
-        { id: 'evbike', icon: '🛵' }, { id: 'rickshaw', icon: '🚲' }, { id: 'auto', icon: '🛺' },
+        { id: 'rickshaw', icon: '🚲' }, { id: 'auto', icon: '🛺' },
         { id: 'sedan', icon: '🚗' }, { id: 'jeep', icon: '🚙' }, { id: 'hypercar', icon: '🏎️' }, { id: 'evhypar', icon: '🚘' }, { id: 'suprim', icon: '🛸' },
         { id: 'bus', icon: '🚌' }, { id: 'tank', icon: '🪖' },
         { id: 'tractor', icon: '🚜' }, { id: 'combine', icon: '🌾' }, { id: 'pickup', icon: '🛻' },
@@ -736,12 +736,12 @@ export class Engine {
     // a war tank is parked next to the helicopter (F to get in; left mouse button fires the cannon)
     const tk = this.slot(EVLAB_SLOTS.tank.s, EVLAB_SLOTS.tank.n, 0, -1);
     this.vehicles.setTankHome(tk.x, tk.z, tk.yaw);
-    // one parked, driverless copy of every road vehicle waits in the EVLAB PARKING lot (F to get in): the eight small ones nose-in to the road
+    // one parked, driverless copy of every road vehicle waits in the EVLAB PARKING lot (F to get in): the small ones nose-in to the road
     // (row A), the bus along the road behind them (row B)
     const S = EVLAB_SLOTS;
     const park = (spec: typeof SEDAN, sl: { s: number; n: number }, ds: number, dn: number) => ({ spec, ...this.slot(sl.s, sl.n, ds, dn) });
     this.vehicles.setParked([
-      park(EVBIKE, S.evbike, 0, -1), park(RICKSHAW, S.rickshaw, 0, -1), park(AUTO, S.auto, 0, -1),
+      park(RICKSHAW, S.rickshaw, 0, -1), park(AUTO, S.auto, 0, -1),
       park(SEDAN, S.sedan, 0, -1), park(JEEP, S.jeep, 0, -1), park(HYPERCAR, S.hypercar, 0, -1), park(EVHYPAR, S.evhypar, 0, -1),
       park(BUS, S.bus, 1, 0),
     ]);

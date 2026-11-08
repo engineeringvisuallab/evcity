@@ -89,7 +89,6 @@ const SH = EVLAB_LOT.s0 - 48;
 
 /** Row A (nose to the road): the eight small road vehicles. Row B: bus (along the road), tank and helicopter pad. */
 export const EVLAB_SLOTS = {
-  evbike: { s: 56.5 + SH, n: 16.6 },
   rickshaw: { s: 60.5 + SH, n: 16.8 },
   auto: { s: 64.5 + SH, n: 16.8 },
   sedan: { s: 68.5 + SH, n: 17.2 },

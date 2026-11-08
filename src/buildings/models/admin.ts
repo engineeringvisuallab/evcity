@@ -314,11 +314,10 @@ export function buildPoliceStation(seed = 0): BuiltBuilding {
   flagPole(k, 10, 10, 10);
   k.cyl(22, 0.06, -4, 0.15, 0.1, 14, 0xb7bcc2, 6);
   for (let i = 1; i < 6; i++) k.box(22, 2 * i, -4, 1.2 - i * 0.12, 0.05, 0.05, 0xb7bcc2);
-  // vehicles: police jeeps, seized motorbikes, prison van
+  // vehicles: police jeeps, prison van
   vehicle(k, -14, 10, 0.4, 'jeep', 0x1a3a5a, 0x2f5f8a);
   vehicle(k, -4, 8, -0.2, 'jeep', 0x1a3a5a, 0xf4efe4);
   vehicle(k, 18, 12, 0.1, 'van', 0x2b3037, 0xf4efe4);
-  for (let i = 0; i < 5; i++) { k.box(-22 + i * 1.0, 0.1, -20, 0.5, 0.9, 1.7, i % 2 ? 0x24323b : 0x7d3a2a); }
   k.tree(-24, 18, 6, 0x3f7a35); k.tree(24, -20, 6, 0x4b8a42);
   return k.finish(W, D, top + 2.5);
 }

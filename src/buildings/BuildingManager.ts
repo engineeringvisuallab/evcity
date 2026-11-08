@@ -35,7 +35,6 @@ const BOXES: readonly (readonly [number, number, number, number, number, number]
   [-14, 10, 1, 2.2, 2.6, 0.4], // jeep
   [-4, 8, 1, 2.2, 2.6, -0.2], // jeep
   [18, 12, 1, 2.6, 2.8, 0.1], // prison van
-  [-20, -20, 2.3, 0.9, 1.1, 0], // seized motorbikes
 ];
 const CYLS: readonly (readonly [number, number, number, number])[] = [
   [-24, 18, 0.4, 5], // tree
