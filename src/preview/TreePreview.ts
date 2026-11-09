@@ -6,7 +6,7 @@ import { TREE_KIND_COUNT } from '../vegetation/TreeTypes';
  * Dev-only viewer for every tree model (not part of the game build). Open /preview-trees.html while `npm run dev` is running.
  * Drag = turn, wheel = zoom, buttons = pick a tree / all in a row / near or far detail level.
  */
-const NAMES = ['broadleaf', 'pine', 'acacia (old "palm")', 'oak', 'vase', 'slender', 'Sal', 'Segun', 'Koroi', 'Bot (banyan)', 'Shimul', 'Narikel', 'Khejur', 'Tal', 'Kola', 'Krishnachura', 'Debdaru'];
+const NAMES = ['broadleaf', 'pine', 'acacia (old "palm")', 'oak', 'vase', 'slender', 'Sal', 'Segun', 'Koroi', 'Bot (banyan)', 'Shimul', 'Narikel', 'Khejur', 'Tal', 'Kola', 'Krishnachura', 'Debdaru', 'Bamboo (bash jhar)'];
 const SPACING = 36;
 
 export function startTreePreview(host: HTMLElement): void {

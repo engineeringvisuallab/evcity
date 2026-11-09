@@ -80,7 +80,7 @@ import { ContextGuard } from './ContextGuard';
 import { bindVisibility } from './Lifecycle';
 import { HUD } from '../ui/HUD';
 import { Subtitles } from '../ui/Subtitles';
-import { MissionManager } from '../missions';
+import { MissionManager, MissionMarkers } from '../missions';
 import { WorldManager } from '../world/WorldManager';
 import { Config } from './Config';
 import { EventBus, type Bus, type EngineEvents } from './EventBus';
@@ -155,6 +155,8 @@ export class Engine {
   private toast: Toast;
   /** STAGE 13: missions (field / meeting / presentation). Only asks, checks and tracks: the world never changes. */
   private missions!: MissionManager;
+  /** The green cylinder at every mission place (drawing only). */
+  private missionMarkers!: MissionMarkers;
   /** Settings menu (gear button / Tab): day-night mode, what the screen shows, sound, minimap zoom, key help. */
   private hudSettings = new HudSettings();
   private settingsMenu!: SettingsMenu;
@@ -714,6 +716,7 @@ export class Engine {
     this.cityPlan = new CityPlan(this.world.terrain.sites);
     this.minimap = new Minimap(container, this.world.seed.value, this.world.terrain.sites, this.cityPlan, this.rail);
     this.missions = new MissionManager({ parent: container, lockTarget: this.renderer.domElement, chipTop: () => this.minimap.infoBottom, toast: (t, ms) => this.toast.show(t, ms ?? 3400) });
+    this.missionMarkers = new MissionMarkers(this.world.root, (x, z) => this.world.terrain.heightAt(x, z));
     // the parked fleet (see EVLAB_SLOTS): the helicopter stands on its pad in the EVLAB parking lot
     {
       const h = this.slot(EVLAB_SLOTS.heli.s, EVLAB_SLOTS.heli.n, 0, -1);
@@ -1037,6 +1040,7 @@ export class Engine {
       const ms = this.mapState(); // `me` = what you control (on foot, car, helicopter, boat): missions use the same position as the map
       this.missions.update(dt, ms.me.x, ms.me.z);
       ms.missions = this.missions.pins();
+      this.missionMarkers.update(dt, ms.missions);
       this.minimap.update(dt, ms);
     }
     this.updateAreaLabel();
@@ -1502,6 +1506,7 @@ export class Engine {
     window.removeEventListener('resize', this.onResize);
     this.tour.dispose();
     this.missions.dispose();
+    this.missionMarkers.dispose();
     this.perf.dispose();
     this.unbindVisibility();
     this.ctxGuard.dispose();

@@ -8,26 +8,30 @@ import { atlasTexture, growTree, lerp, Mesh, V3, type Style } from './TreeAssets
  * krishnachura. Same idea as the forest trees (TreeAssets): code-made, ONE geometry per model, one painted atlas made on a canvas at start-up (no files).
  *
  * Atlas = a strip of 448 px tiles + a 64 px plain white strip at the end (the colour source of fruit balls):
- *   0 ring bark (coconut, palmyra)   1 diamond leaf-scar bark (date)   2 banana pseudostem   3 rough bark (krishnachura)
- *   4 pinnate frond (coconut, date)  5 palmyra fan leaf                6 banana leaf            7 feathery leaf spray (krishnachura)   8 flower cluster
+ *   0 ring bark (coconut, palmyra)   1 diamond leaf-scar bark (date)   2 banana pseudostem   3 rough bark (krishnachura)   4 bamboo culm
+ *   5 pinnate frond (coconut, date)  6 palmyra fan leaf                7 banana leaf            8 feathery leaf spray (krishnachura)   9 flower cluster   10 bamboo leaf spray
  * Fronds and banana leaves are bent strips (Mesh.ribbon) so a leaf arches like a real one; the painted leaflets give them their feathery edge.
  */
 
-export const PALM_BARK_TILES = 4;
+export const PALM_BARK_TILES = 5;
 const TW = 448;
-const AW = 4096;
+const AW = 4992;
 /** Atlas width in tiles (fractional: the last 64 px are the plain strip). */
 export const PALM_TILES = AW / TW;
 const T_RING = 0;
 const T_DIAMOND = 1;
 const T_SHEATH = 2;
 const T_ROUGH = 3;
-const T_FROND = 4;
-const T_FAN = 5;
-const T_BANANA = 6;
-const T_FEATHER = 7;
-const T_BLOOM = 8;
-const T_PLAIN = 9;
+/** Bamboo culm (bash): green with a pale node ring once per tile; a bark tile (left of the leaf tiles). */
+const T_BAMBOO = 4;
+const T_FROND = 5;
+const T_FAN = 6;
+const T_BANANA = 7;
+const T_FEATHER = 8;
+const T_BLOOM = 9;
+/** Bamboo leaf spray: a twig with narrow pointed leaves (a leaf tile, tip at the top). */
+const T_BLEAF = 10;
+const T_PLAIN = 11;
 
 type Ctx = CanvasRenderingContext2D;
 
@@ -381,6 +385,93 @@ function paintFeather(c: Ctx): void {
   });
 }
 
+/** Bamboo culm (bash): fresh green, fine fibres, a pale raised ring + dark line at the node (once per tile, at the wrap line) and a waxy white bloom under it. */
+function paintBamboo(c: Ctx): void {
+  const r = mulberry32(5151);
+  inTile(c, T_BAMBOO, () => {
+    c.fillStyle = hsl(80, 44, 40);
+    c.fillRect(0, 0, 512, 512);
+    for (let i = 0; i < 420; i++) {
+      const x = r() * 512, w = 1 + r() * 3.5, len = 120 + r() * 380, y = r() * 512;
+      c.fillStyle = hsl(66 + r() * 34, 28 + r() * 26, 26 + r() * 32, 0.12 + r() * 0.2);
+      for (const dy of WRAP) c.fillRect(x, y + dy, w, len);
+    }
+    // the internode ages from fresh green (under the node) to a little yellower (just below the next node)
+    const age = c.createLinearGradient(0, 0, 0, 512);
+    age.addColorStop(0, 'rgba(210,225,150,0.22)');
+    age.addColorStop(0.2, 'rgba(210,225,150,0)');
+    age.addColorStop(0.8, 'rgba(200,190,90,0)');
+    age.addColorStop(1, 'rgba(200,190,90,0.2)');
+    c.fillStyle = age;
+    c.fillRect(0, 0, 512, 512);
+    for (const y of [0, 512]) {
+      const wax = c.createLinearGradient(0, y + 16, 0, y + 110);
+      wax.addColorStop(0, 'rgba(225,235,225,0.34)');
+      wax.addColorStop(1, 'rgba(225,235,225,0)');
+      c.fillStyle = wax;
+      c.fillRect(0, y + 16, 512, 94);
+      c.fillStyle = hsl(62, 26, 66, 0.92); // the node ring
+      c.fillRect(0, y - 14, 512, 30);
+      c.fillStyle = 'rgba(255,255,230,0.35)';
+      c.fillRect(0, y - 14, 512, 7);
+      c.fillStyle = 'rgba(38,40,16,0.85)'; // the dark line under the ring
+      c.fillRect(0, y + 16, 512, 6);
+    }
+  });
+}
+
+/** One narrow pointed bamboo leaf, base at (0, 0), tip along +x. */
+function bambooLeaf(c: Ctx, x: number, y: number, ang: number, len: number, wid: number, fill: string): void {
+  c.save();
+  c.translate(x, y);
+  c.rotate(ang);
+  c.fillStyle = fill;
+  c.beginPath();
+  c.moveTo(0, 0);
+  c.quadraticCurveTo(len * 0.42, -wid, len, 0);
+  c.quadraticCurveTo(len * 0.42, wid * 0.85, 0, 0);
+  c.fill();
+  c.strokeStyle = 'rgba(190,215,120,0.55)';
+  c.lineWidth = 1.6;
+  c.beginPath();
+  c.moveTo(0, 0);
+  c.lineTo(len * 0.94, 0);
+  c.stroke();
+  c.restore();
+}
+
+/** Bamboo leaf spray: a thin twig (base bottom centre, tip at the top) with two rows of narrow, slightly drooping lance leaves. */
+function paintBambooLeaf(c: Ctx): void {
+  const r = mulberry32(8282);
+  inTile(c, T_BLEAF, () => {
+    const P = (s: number): [number, number] => [256 + 46 * Math.sin(s * 1.7), 500 - 472 * s];
+    c.lineCap = 'round';
+    c.strokeStyle = hsl(82, 30, 34);
+    c.lineWidth = 3.2;
+    c.beginPath();
+    c.moveTo(...P(0));
+    for (let i = 1; i <= 20; i++) c.lineTo(...P(i / 20));
+    c.stroke();
+    const leaf = (bx: number, by: number, ang: number, len: number): void => {
+      bambooLeaf(c, bx, by, ang, len, 9 + r() * 5, hsl(90 + r() * 14, 50 + r() * 10, 27 + r() * 14));
+    };
+    for (let i = 0; i < 13; i++) {
+      const s = 0.07 + 0.88 * (i / 12);
+      const [bx, by] = P(s);
+      const L = (150 + 90 * Math.sin(Math.PI * (0.12 + 0.8 * s))) * (0.85 + 0.3 * r());
+      for (const side of [-1, 1]) {
+        // the leaf leaves the twig at ~35-50 degrees and hangs a little (canvas y grows downwards, "up" = -pi/2)
+        const ang = -Math.PI / 2 + side * (0.62 + r() * 0.3) + side * 0.25 * s;
+        leaf(bx, by, ang, L);
+        if (r() < 0.55) leaf(bx, by, ang + side * 0.2, L * 0.7); // a second, smaller leaf at the same node
+      }
+    }
+    const [tx, ty] = P(1);
+    leaf(tx, ty + 8, -Math.PI / 2 + 0.05, 150);
+    leaf(tx, ty + 8, -Math.PI / 2 - 0.25, 120);
+  });
+}
+
 /** Krishnachura flower cluster: ~two dozen open flowers (four red petals + one larger petal with a cream stripe) and a few buds. */
 function paintBloom(c: Ctx): void {
   const r = mulberry32(5252);
@@ -445,11 +536,13 @@ export function makePalmAtlas(): THREE.DataTexture | null {
   paintDiamond(c);
   paintSheath(c);
   paintRough(c);
+  paintBamboo(c);
   paintFrond(c);
   paintFan(c);
   paintBanana(c);
   paintFeather(c);
   paintBloom(c);
+  paintBambooLeaf(c);
   c.fillStyle = '#ffffff';
   c.fillRect(T_PLAIN * TW, 0, AW - T_PLAIN * TW, TW);
   return atlasTexture(c, AW, TW, PALM_TILES, PALM_BARK_TILES);
@@ -664,6 +757,59 @@ function banana(detail: number): THREE.BufferGeometry {
   return m.build();
 }
 
+/**
+ * Bamboo clump (bash jhar): about 26 green culms (10-14 m) rise from a clump 2.8 m wide, lean outwards and arch over at the top. Every culm has pale
+ * node rings (bark tile) and, in its upper half, drooping sprays of narrow lance leaves; the tips carry thick leafy tufts. One clump = one tree
+ * (scale 1 = a grown clump, ~12 m high and ~8 m across at the crown). Groves of many clumps are made by the placement (bamboo grove + homesteads).
+ */
+function bamboo(detail: number): THREE.BufferGeometry {
+  const r = mulberry32(8181);
+  const m = new Mesh(PALM_TILES);
+  const near = detail === 0;
+  const culms = near ? 26 : 13;
+  const P = near ? 8 : 5;
+  const seg = near ? 6 : 4;
+  const sprays = near ? 9 : 4;
+  const cardK = near ? 1 : 1.55; // far version: fewer, bigger cards
+  for (let i = 0; i < culms; i++) {
+    const a = i * 2.399 + r() * 0.5;
+    const rad = (0.15 + 1.25 * Math.sqrt((i + 0.5) / culms)) * (0.85 + 0.3 * r());
+    const foot = V3(Math.cos(a) * rad, -0.1, Math.sin(a) * rad);
+    const H = (9.5 + 4.5 * r()) * (1 - 0.1 * (rad / 1.4));
+    const heading = a + (r() - 0.5) * 0.9; // mostly outward, a little sideways
+    const ang = 0.08 + 0.1 * r() + 0.05 * rad;
+    const spine = arch(foot, ang, heading, H + 0.1, 0.14 + 0.08 * r(), P);
+    const base = 0.052 + 0.02 * r();
+    const radii = spine.map((_, k) => base * (1 - 0.72 * Math.pow(k / (P - 1), 0.9)));
+    const old = r() < 0.28; // some older, yellower culms
+    m.tube(spine, radii, seg, 1, T_BAMBOO, old ? [1.18, 1.06, 0.72] : GREEN_VAR(r, 0.92, 1.08));
+
+    const at = (t: number): THREE.Vector3 => {
+      const f = t * (P - 1);
+      const k = Math.min(P - 2, Math.floor(f));
+      return spine[k].clone().lerp(spine[k + 1], f - k);
+    };
+    const side = V3(Math.cos(heading), 0, Math.sin(heading));
+    // side sprays on the upper half of the culm: each one hangs outwards and down
+    for (let s = 0; s < sprays; s++) {
+      const t = 0.4 + 0.58 * ((s + 0.5) / sprays);
+      const az = heading + (r() - 0.5) * 3.4 + (s % 2 ? Math.PI * 0.5 : -Math.PI * 0.5);
+      const out = V3(Math.cos(az), -0.3 - 0.35 * r(), Math.sin(az));
+      const len = (1.15 + 0.7 * r()) * cardK;
+      m.leafAlong(at(t), out, len, len * 0.85, V3(0, 1, 0).addScaledVector(side, 0.3), T_BLEAF, lerp(0.88, 1.12, r()), GREEN_VAR(r, 0.88, 1.12));
+    }
+    // the tip: a thick tuft of three sprays fanned out
+    const tip = spine[P - 1];
+    for (let q = 0; q < 3; q++) {
+      const az = heading + (q - 1) * 1.7 + (r() - 0.5) * 0.6;
+      const out = V3(Math.cos(az) * 0.8, -0.1 - 0.4 * r(), Math.sin(az) * 0.8);
+      const len = (1.4 + 0.6 * r()) * cardK;
+      m.leafAlong(tip, out, len, len * 0.9, V3(0, 1, 0), T_BLEAF, lerp(0.9, 1.15, r()), GREEN_VAR(r, 0.9, 1.12));
+    }
+  }
+  return m.build();
+}
+
 /** Krishnachura (flamboyant, "Radhachura/Krishnachura"): wide flat umbrella of feathery leaves, covered with red flowers. */
 const STYLE_KRISHNA: Style = {
   seed: 1515, trunkH: 6.6, trunkR: 0.38, trunkBend: 0.14, primary: 6, startFrac: 0.72, spread: [1.0, 1.3], limbLen: 5, fork: 2,
@@ -677,8 +823,9 @@ export const PALM_MAKERS: Record<number, (detail: number) => THREE.BufferGeometr
   [TreeKind.datePalm]: datePalm,
   [TreeKind.palmyra]: palmyra,
   [TreeKind.banana]: banana,
+  [TreeKind.bamboo]: bamboo,
   [TreeKind.krishnachura]: (d) => growTree(STYLE_KRISHNA, d),
 };
 
 // kept for tools that want to know how a tile is laid out
-export const PALM_TILE_INDEX = { ring: T_RING, diamond: T_DIAMOND, sheath: T_SHEATH, rough: T_ROUGH, frond: T_FROND, fan: T_FAN, banana: T_BANANA, feather: T_FEATHER, bloom: T_BLOOM, plain: T_PLAIN } as const;
+export const PALM_TILE_INDEX = { ring: T_RING, diamond: T_DIAMOND, sheath: T_SHEATH, rough: T_ROUGH, bamboo: T_BAMBOO, frond: T_FROND, fan: T_FAN, banana: T_BANANA, feather: T_FEATHER, bloom: T_BLOOM, bambooLeaf: T_BLEAF, plain: T_PLAIN } as const;

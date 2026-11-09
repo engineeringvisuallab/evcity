@@ -10,6 +10,7 @@ import { farmCovers } from '../farm/FarmFields';
 import { streetTreesInChunk } from '../roads/Roadside';
 import { TREE_KIND_COUNT, TREE_TRUNK, TreeKind, type TreeChunkData } from './TreeTypes';
 import { homesteadFactor } from './Homesteads';
+import { WORLD_REGIONS } from '../city/WorldRegions';
 
 /**
  * STAGE 7 (step 1): where do forest trees stand?  Pure function of (seed, chunk): runs in the chunk worker.
@@ -25,6 +26,13 @@ import { homesteadFactor } from './Homesteads';
  */
 
 const V = Config.vegetation;
+const B = V.bamboo;
+const D = V.dense;
+/** The forest districts of the world map: the dense jungle (ghono bon) grows here. */
+const FOREST_REGIONS = WORLD_REGIONS.filter((r) => r.kind === 'forest');
+
+/** One placed tree (world coordinates; y = foot height). */
+type PlacedTree = { kind: number; x: number; y: number; z: number; scale: number; yaw: number; tint: number };
 
 const smooth = (a: number, b: number, x: number): number => {
   const t = x <= a ? 0 : x >= b ? 1 : (x - a) / (b - a);
@@ -56,6 +64,8 @@ function bigKind(h: number, u: number, gi: number, gj: number): number {
 export class TreePlacer {
   private forestNoise: Noise2D;
   private kindNoise: Noise2D;
+  private bambooNoise: Noise2D;
+  private denseNoise: Noise2D;
   private sample: TerrainSample;
   private sx: TerrainSample;
   private sz: TerrainSample;
@@ -67,17 +77,54 @@ export class TreePlacer {
   constructor(private gen: TerrainGenerator, private plan: CityPlan, private seed: number) {
     this.forestNoise = new Noise2D((seed ^ 0x7e3d1a5b) >>> 0);
     this.kindNoise = new Noise2D((seed ^ 0x2c9f4e67) >>> 0);
+    this.bambooNoise = new Noise2D((seed ^ 0x51b0a3d9) >>> 0);
+    this.denseNoise = new Noise2D((seed ^ 0x6d1e5c27) >>> 0);
     this.sample = gen.makeSample();
     this.sx = gen.makeSample();
     this.sz = gen.makeSample();
     this.sw = gen.makeSample();
   }
 
-  /** Forest density 0..1 at a point (before terrain tests). */
+  /** Forest density 0..1 at a point (before terrain tests): the forest patches; in the dense jungle (ghono bon) it is pushed to 1. */
   forestAt(x: number, z: number): number {
+    const f = this.forestBase(x, z);
+    const dz = this.denseAt(x, z);
+    return dz > 0 ? f + (1 - f) * dz : f;
+  }
+
+  /** The forest patches alone (noise). */
+  private forestBase(x: number, z: number): number {
     const k = 1 / V.forestScale;
     const n = this.forestNoise.fbm(x * k, z * k, 3) + this.forestNoise.noise(x / 55, z / 55) * 0.12;
     return smooth(-0.12, 0.3, n);
+  }
+
+  /**
+   * DENSE FOREST (ghono bon) 0..1 at a point: 1 deep inside a forest district of the world map, fading out over `dense.fade` m towards its edge
+   * (the edge is made ragged by noise, so it is not a straight line). 0 everywhere else (cheap: 4 rectangle tests, noise only near a district).
+   */
+  denseAt(x: number, z: number): number {
+    let best = -1e9;
+    for (const r of FOREST_REGIONS) {
+      const d = Math.min(x - r.minX, r.maxX - x, z - r.minZ, r.maxZ - z); // > 0 inside, < 0 outside
+      if (d > best) best = d;
+    }
+    if (best < -D.fade * 0.9) return 0;
+    const d = best + this.denseNoise.noise(x / 110, z / 110) * D.fade * 0.45;
+    return smooth(-D.fade * 0.4, D.fade, d);
+  }
+
+  /** BAMBOO GROVE density 0..1 (patches of the noise field, see Config.vegetation.bamboo). */
+  private bambooAt(x: number, z: number): number {
+    return smooth(B.from, B.full, this.bambooNoise.fbm(x / B.scale, z / B.scale, 2));
+  }
+
+  /** Which global cell, and where is its chunk: the same maths as cellTree. */
+  private cellOf(gi: number, gj: number): { ox: number; oz: number; i: number; j: number } {
+    const perSide = Math.round(Config.world.chunkSize / V.cellSize);
+    const cx = Math.floor(gi / perSide);
+    const cz = Math.floor(gj / perSide);
+    return { ox: chunkOriginX(cx), oz: chunkOriginZ(cz), i: gi - cx * perSide, j: gj - cz * perSide };
   }
 
   /** 0..1 multiplier from city plans: 1 far from cities, 0 in built-up areas, `cityZoneChance` in green zones. */
@@ -160,7 +207,7 @@ export class TreePlacer {
     R.rHKind = rng();
     R.rHScale = rng();
     R.rHYaw = rng();
-    return this.forestTree(gi, gj, ox, oz, i, j) ?? this.homeTree(ox, oz, i, j);
+    return this.bambooTree(gi, gj, ox, oz, i, j) ?? this.forestTree(gi, gj, ox, oz, i, j) ?? this.homeTree(ox, oz, i, j);
   }
 
   /** Foot height of a tree: the ground minus the sink, and on a slope a bit more for thick trunks (slope = rise / run). */
@@ -176,8 +223,11 @@ export class TreePlacer {
     const z = oz + (j + jz) * cell;
 
     // 1. cheap chance test first (noise only): most cells stop here
-    const f = this.forestAt(x, z);
-    let chance = (V.scatterChance + (V.forestChance - V.scatterChance) * f) * this.mul;
+    const dz = this.denseAt(x, z); // dense jungle (ghono bon) 0..1
+    const f0 = this.forestBase(x, z);
+    const f = dz > 0 ? f0 + (1 - f0) * dz : f0;
+    const base = V.scatterChance + (V.forestChance - V.scatterChance) * f;
+    let chance = (dz > 0 ? base + (D.chance - base) * dz : base) * this.mul;
     if (roll >= chance) return null;
 
     // 2. terrain tests
@@ -206,7 +256,7 @@ export class TreePlacer {
     const pineChance = smooth(V.pineFrom, V.pineFull, h);
     const palmChance = h < V.palmBelow ? 0.45 * smooth(-0.1, 0.35, this.kindNoise.fbm(x / 260 + 40, z / 260, 2)) : 0;
     // BIG forest trees only in the heart of a forest and on ground that is not too steep (their trunks and buttresses need room)
-    const bigChance = V.bigTreeChance * smooth(0.25, 0.75, f) * (1 - pineChance) * (1 - smooth(this.tanMax * 0.45, this.tanMax * 0.75, slope));
+    const bigChance = (V.bigTreeChance + (D.bigChance - V.bigTreeChance) * dz) * smooth(0.25, 0.75, f) * (1 - pineChance) * (1 - smooth(this.tanMax * 0.45, this.tanMax * 0.75, slope));
     if (rKind < pineChance) kind = TreeKind.pine;
     else if (rKind > 1 - palmChance) kind = TreeKind.palm;
     else if (rBig < bigChance) kind = bigKind(h, rVar, gi, gj);
@@ -259,7 +309,8 @@ export class TreePlacer {
 
     const u = R.rHKind;
     let kind: number;
-    if (bank) kind = u < 0.4 ? TreeKind.coconut : u < 0.62 ? TreeKind.banana : u < 0.8 ? TreeKind.datePalm : TreeKind.palmyra;
+    if (R.rYaw < (bank ? B.bankShare : B.homestead)) kind = TreeKind.bamboo; // a bamboo clump behind the house / on the pond bank
+    else if (bank) kind = u < 0.4 ? TreeKind.coconut : u < 0.62 ? TreeKind.banana : u < 0.8 ? TreeKind.datePalm : TreeKind.palmyra;
     else if (u < 0.36) kind = TreeKind.coconut;
     else if (u < 0.58) kind = TreeKind.banana;
     else if (u < 0.72) kind = TreeKind.datePalm;
@@ -267,13 +318,99 @@ export class TreePlacer {
     else kind = R.rVar < 0.3 ? TreeKind.krishnachura : R.rVar < 0.6 ? TreeKind.broadleaf : R.rVar < 0.85 ? TreeKind.vase : TreeKind.oak; // shade trees (krishnachura, mango, jackfruit ...)
     const t = R.rHScale;
     const scale =
-      kind === TreeKind.coconut ? 0.65 + 0.5 * t
+      kind === TreeKind.bamboo ? B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * t
+      : kind === TreeKind.coconut ? 0.65 + 0.5 * t
       : kind === TreeKind.banana ? 0.8 + 0.4 * t
       : kind === TreeKind.datePalm ? 0.7 + 0.5 * t
       : kind === TreeKind.palmyra ? 0.75 + 0.5 * t
       : kind === TreeKind.krishnachura ? 0.8 + 0.4 * t
       : 0.5 + 0.7 * t ** 1.5;
     return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: R.rHYaw * Math.PI * 2, tint: 0.85 + R.rTint * 0.3 };
+  }
+
+  /**
+   * BAMBOO GROVE clump of one cell (bash jhar): low, damp land with a high bamboo noise value. Its own random stream (independent of the forest trees, so no
+   * other tree moves). A grove cell tries to put a clump first; inside the dense jungle groves are rare (the jungle has its own bamboo thickets).
+   */
+  private bambooTree(gi: number, gj: number, ox: number, oz: number, i: number, j: number): PlacedTree | null {
+    const rng = mulberry32(hash2D(this.seed ^ 0xba3b00, gi, gj));
+    const roll = rng(), jx = rng(), jz = rng(), rs = rng(), ry = rng(), rt = rng();
+    const cell = V.cellSize;
+    const x = ox + (i + jx) * cell;
+    const z = oz + (j + jz) * cell;
+    const f = this.bambooAt(x, z);
+    if (f <= 0) return null;
+    let chance = B.chance * f * this.mul;
+    if (roll >= chance) return null;
+    const dz = this.denseAt(x, z);
+    if (dz > 0) chance *= 1 - 0.75 * dz;
+    if (roll >= chance) return null;
+
+    const s = this.sample;
+    this.gen.sample(x, z, s);
+    const h = s.h;
+    if (h < V.seaMargin || h > B.maxHeight) return null;
+    if (!Number.isNaN(s.water) && h < s.water + V.waterMargin) return null;
+    this.gen.sample(x + 2, z, this.sx);
+    this.gen.sample(x, z + 2, this.sz);
+    const slope = Math.hypot(this.sx.h - h, this.sz.h - h) / 2;
+    if (slope > this.tanMax * B.slopeMax) return null;
+    chance *= this.cityFactor(x, z);
+    if (roll >= chance) return null;
+    if (this.nearRoad(x, z)) return null;
+    const scale = B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * rs ** 1.1;
+    return { kind: TreeKind.bamboo, x, y: this.footY(h, slope, TreeKind.bamboo, scale), z, scale, yaw: ry * Math.PI * 2, tint: 0.88 + rt * 0.24 };
+  }
+
+  /**
+   * DENSE FOREST UNDERSTORY (ghono bon): the SECOND tree of a cell, only inside the dense jungle. It stands on the opposite half of the cell from the canopy
+   * tree (so the two trunks never overlap), is mostly young (small shade trees, some bamboo thickets on low land, a few young big trees), and so the forest
+   * has layers: giants, middle trees, young trees. Own random stream: no other tree moves.
+   */
+  private cellTree2(gi: number, gj: number): PlacedTree | null {
+    const { ox, oz, i, j } = this.cellOf(gi, gj);
+    const cell = V.cellSize;
+    const r0 = mulberry32(hash2D(this.seed ^ 0x5eed7, gi, gj)); // the canopy tree's stream: roll, jx, jz
+    r0();
+    const pjx = r0(), pjz = r0();
+    const rng = mulberry32(hash2D(this.seed ^ 0xd3a5e1, gi, gj));
+    const roll = rng(), jx = rng(), jz = rng(), rk = rng(), rs = rng(), ry = rng(), rt = rng(), rb = rng(), rv = rng();
+    const ux = (pjx + 0.5 + (jx - 0.5) * 0.3 + 1) % 1;
+    const uz = (pjz + 0.5 + (jz - 0.5) * 0.3 + 1) % 1;
+    const x = ox + (i + ux) * cell;
+    const z = oz + (j + uz) * cell;
+    const dz = this.denseAt(x, z);
+    if (dz <= 0.02) return null;
+    let chance = D.understory * dz * this.mul;
+    if (roll >= chance) return null;
+
+    const s = this.sample;
+    this.gen.sample(x, z, s);
+    const h = s.h;
+    if (h < V.seaMargin) return null;
+    if (!Number.isNaN(s.water) && h < s.water + V.waterMargin) return null;
+    const line = 1 - smooth(V.treeLineStart, V.treeLineEnd, h);
+    if (line <= 0) return null;
+    this.gen.sample(x + 2, z, this.sx);
+    this.gen.sample(x, z + 2, this.sz);
+    const slope = Math.hypot(this.sx.h - h, this.sz.h - h) / 2;
+    if (slope > this.tanMax) return null;
+    chance *= line * (1 - smooth(this.tanMax * 0.6, this.tanMax, slope)) * this.cityFactor(x, z);
+    if (roll >= chance) return null;
+    if (this.nearRoad(x, z)) return null;
+
+    let kind: number;
+    const pineChance = smooth(V.pineFrom, V.pineFull, h);
+    const flat = slope < this.tanMax * 0.6;
+    if (rk < pineChance) kind = TreeKind.pine;
+    else if (h < B.maxHeight && rb < D.bambooShare && slope < this.tanMax * B.slopeMax) kind = TreeKind.bamboo;
+    else if (rb > 1 - D.bigShare && flat) kind = bigKind(h, rv, gi, gj);
+    else kind = rv < 0.3 ? TreeKind.slender : rv < 0.58 ? TreeKind.vase : rv < 0.84 ? TreeKind.broadleaf : TreeKind.oak;
+
+    const big = kind >= TreeKind.sal && kind <= TreeKind.shimul;
+    const young = D.understoryScale[0] + (D.understoryScale[1] - D.understoryScale[0]) * rs ** 1.4;
+    const scale = big ? V.bigTreeScale[0] + 0.3 * rs : kind === TreeKind.bamboo ? B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * rs : kind === TreeKind.pine ? 0.5 + 0.9 * rs : young;
+    return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: ry * Math.PI * 2, tint: 0.8 + rt * 0.3 };
   }
 
   /** Is there open water within `d` metres (4 compass points)? Used for the bank palms. */
@@ -301,6 +438,8 @@ export class TreePlacer {
       for (let i = 0; i < perSide; i++) {
         const t = this.cellTree(gx0 + i, gz0 + j);
         if (t) lists[t.kind].push(t.x - ox, t.y, t.z - oz, t.scale, t.yaw, t.tint);
+        const u = this.cellTree2(gx0 + i, gz0 + j); // dense jungle: the understory tree
+        if (u) lists[u.kind].push(u.x - ox, u.y, u.z - oz, u.scale, u.yaw, u.tint);
       }
     }
     // GRASS 4: street trees in the kerbed pits of the city sidewalks (Roadside.ts) join the normal trees: same instancing, LOD and colliders
@@ -324,6 +463,8 @@ export class TreePlacer {
       for (let gi = gi0; gi <= gi1; gi++) {
         const t = this.cellTree(gi, gj);
         if (t && t.x >= x0 && t.x <= x1 && t.z >= z0 && t.z <= z1) out.push({ x: t.x, z: t.z, scale: t.scale, kind: t.kind });
+        const u = this.cellTree2(gi, gj);
+        if (u && u.x >= x0 && u.x <= x1 && u.z >= z0 && u.z <= z1) out.push({ x: u.x, z: u.z, scale: u.scale, kind: u.kind });
       }
     }
     return out;

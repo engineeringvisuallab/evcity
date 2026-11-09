@@ -193,6 +193,19 @@ export const Config = {
     homestead: { reach: 32, chance: 0.42 },
     /** POND / LAKE / RIVER BANKS: palms and banana on low land within `reach` m of water. `chance` per 10 m cell, `maxHeight` = only land lower than this (m above sea level). */
     bank: { reach: 9, chance: 0.12, maxHeight: 40 },
+    /**
+     * BAMBOO GROVES (bash jhar): patches of low, damp land (noise wavelength `scale` m; the patch starts where the noise passes `from` and is full at `full`)
+     * covered with bamboo clumps: `chance` per 10 m cell in the heart of a grove. Only land lower than `maxHeight` m, gentle slopes (`slopeMax` = share of the
+     * normal slope limit). Scale range of a clump (1 = grown, ~12 m). `homestead` / `bankShare` = the share of bamboo among the homestead / bank trees.
+     */
+    bamboo: { scale: 300, from: 0.14, full: 0.4, chance: 0.62, maxHeight: 60, slopeMax: 0.55, clumpScale: [0.7, 1.15] as [number, number], homestead: 0.14, bankShare: 0.2 },
+    /**
+     * DENSE FOREST (ghono bon): the forest districts of the world map (WorldRegions kind 'forest') are covered with a jungle: nearly every 10 m cell has a
+     * canopy tree (`chance`, `bigChance` = share of the five big forest trees), and a second, younger tree grows in the shade of it (`understory` chance per
+     * cell, scale range, `bambooShare` of them are bamboo clumps on low land, `bigShare` = young big trees). The jungle fades out over `fade` m at the district edge
+     * (a ragged edge). Lower `understory` (and `chance`) if the frame rate drops: they are the number of trees.
+     */
+    dense: { fade: 260, chance: 0.96, bigChance: 0.62, understory: 0.9, understoryScale: [0.3, 0.85] as [number, number], bambooShare: 0.1, bigShare: 0.1 },
     /** Tree chance (0..1 of the normal chance) inside a planned city area, by zone kind. Unlisted zones get no trees. */
     cityZoneChance: { green: 0.6, recreation: 0.7 } as Record<string, number>,
     /** Outside the plan of a city the forest grows back over this distance (m). */

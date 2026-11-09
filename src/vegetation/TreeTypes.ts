@@ -21,11 +21,13 @@ export const TreeKind = {
   /** City / roadside trees: krishnachura (flamboyant, flowering, own atlas) and debdaru (ashoka, slim column). */
   krishnachura: 15,
   debdaru: 16,
+  /** Bamboo clump (bash jhar, palm atlas): one clump of ~26 arching culms, 10-14 m. Made into groves by the placement. */
+  bamboo: 17,
 } as const;
-export const TREE_KIND_COUNT = 17;
+export const TREE_KIND_COUNT = 18;
 
-/** Kinds drawn with the palm atlas (palms, banana, flowering krishnachura); every other kind uses the forest-tree atlas. */
-export const usesPalmAtlas = (kind: number): boolean => kind >= TreeKind.coconut && kind <= TreeKind.krishnachura;
+/** Kinds drawn with the palm atlas (palms, banana, flowering krishnachura, bamboo); every other kind uses the forest-tree atlas. */
+export const usesPalmAtlas = (kind: number): boolean => (kind >= TreeKind.coconut && kind <= TreeKind.krishnachura) || kind === TreeKind.bamboo;
 
 /**
  * Trunk of each kind at scale 1: radius `r` (m) and collider height `h` (m, only the part a person / car can touch), and `climb` = how high
@@ -50,6 +52,8 @@ export const TREE_TRUNK: Record<number, { r: number; h: number; climb: number }>
   [TreeKind.banana]: { r: 0.3, h: 3, climb: 0 },
   [TreeKind.krishnachura]: { r: 0.36, h: 4, climb: 8 },
   [TreeKind.debdaru]: { r: 0.22, h: 5, climb: 8 },
+  /** A bamboo clump is a solid mass of culms about 2.4 m wide at the foot: one round collider, not climbable (the culms are thin and bend). */
+  [TreeKind.bamboo]: { r: 1.0, h: 5, climb: 0 },
 };
 
 /** Stable id of a tree inside its chunk (the same at every LOD): kind + chunk-local position rounded to 0.5 m. */

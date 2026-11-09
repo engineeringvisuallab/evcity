@@ -3,3 +3,4 @@ export { MissionManager, MISSION_KIND_ICON } from './MissionManager';
 export type { MissionDeps } from './MissionManager';
 export { MISSIONS, MISSION_BY_ID } from './MissionData';
 export type { Mission, MissionKind, MissionPin, MissionQuestion } from './MissionTypes';
+export { MissionMarkers } from './MissionMarkers';
