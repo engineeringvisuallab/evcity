@@ -7,6 +7,7 @@ import type { RailNetwork } from '../rail';
 import { bn, bnDigits, bnSigned } from '../i18n';
 import type { MinimapRequest, MinimapResult } from '../workers/minimap.worker';
 import { UI_FONT } from './theme';
+import type { MissionPin } from '../missions/MissionTypes';
 
 export type MapMarkerKind = 'foot' | 'car' | 'heli' | 'boat' | 'train';
 
@@ -45,6 +46,8 @@ export interface MapState {
   infra?: { x: number; z: number; id: string; color: string; mark: string }[];
   /** Fuel stations / charging points (world x, z): `fuel` = pump symbol, `charge` = lightning bolt, `both` = the two side by side (every small station gives fuel AND charge). */
   stations?: { x: number; z: number; kind: 'fuel' | 'charge' | 'both' }[];
+  /** Missions (STAGE 13): every mission pin; the tracked one pulses and gets a dashed line, an edge arrow and the distance. */
+  missions?: MissionPin[];
   /** The camera's world position: shown as numbers under the map. */
   camera?: { x: number; y: number; z: number };
   /** Time of day in hours (0 .. 24): shown as a faint clock next to the map. */
@@ -547,6 +550,9 @@ export class Minimap {
       }
     }
 
+    // MISSIONS (STAGE 13): a pin for every mission, always visible at every zoom. The tracked one is the tracker: dashed line, pulsing ring, edge arrow + distance.
+    if (s.missions && s.missions.length) this.drawMissions(c, S, X, Z, s.missions);
+
     // other vehicles
     for (const o of s.others) if (MAP_CLUTTER || o.kind === 'train') this.drawMarker(c, X(o.x), Z(o.z), o, false);
 
@@ -578,6 +584,96 @@ export class Minimap {
     c.textBaseline = 'top';
     c.strokeText(bn.map.north, S / 2, 5 * this.dpr);
     c.fillText(bn.map.north, S / 2, 5 * this.dpr);
+  }
+
+  /** Where the camera chip / mission chip may start (px from the top), so other UI can sit under the map. */
+  get infoBottom(): number {
+    return 14 + this.px + 8 + 30;
+  }
+
+  private drawMissions(c: CanvasRenderingContext2D, S: number, X: (x: number) => number, Z: (z: number) => number, pins: MissionPin[]): void {
+    const d = this.dpr;
+    const COLOR = { field: '#f97316', meeting: '#8b5cf6', presentation: '#ec4899' } as const;
+    const MARK = { field: '!', meeting: 'M', presentation: 'P' } as const;
+    const r0 = (this.zoom === 0 ? 7.5 : this.zoom === 1 ? 6.5 : 5.5) * d;
+    const inset = 12 * d;
+    const sorted = [...pins].sort((a, b) => Number(a.active) - Number(b.active)); // the tracked one is drawn last = on top
+    for (const p of sorted) {
+      const px = X(p.x);
+      const pz = Z(p.z);
+      const r = p.active ? r0 * 1.35 : r0;
+      const inside = px > -r && pz > -r && px < S + r && pz < S + r;
+      if (p.active) {
+        // dashed line from you to the target
+        c.save();
+        c.strokeStyle = 'rgba(250,204,21,0.9)';
+        c.lineWidth = 1.6 * d;
+        c.setLineDash([5 * d, 4 * d]);
+        c.lineDashOffset = -this.t * 14 * d;
+        c.beginPath();
+        c.moveTo(S / 2, S / 2);
+        c.lineTo(px, pz);
+        c.stroke();
+        c.restore();
+      }
+      if (inside) {
+        if (p.active) {
+          const pulse = (this.t * 1.2) % 1;
+          c.strokeStyle = `rgba(250,204,21,${(1 - pulse).toFixed(2)})`;
+          c.lineWidth = 2.2 * d;
+          c.beginPath();
+          c.arc(px, pz, r + pulse * 16 * d, 0, Math.PI * 2);
+          c.stroke();
+        }
+        c.fillStyle = p.done ? '#64748b' : COLOR[p.kind];
+        c.strokeStyle = p.active ? '#facc15' : '#fff';
+        c.lineWidth = (p.active ? 2.4 : 1.6) * d;
+        c.beginPath();
+        c.roundRect(px - r, pz - r, 2 * r, 2 * r, 3 * d);
+        c.fill();
+        c.stroke();
+        c.fillStyle = '#fff';
+        c.font = `800 ${Math.round(r * 1.35)}px ${UI_FONT}`;
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+        c.fillText(p.done ? '\u2713' : MARK[p.kind], px, pz + r * 0.05);
+      } else if (p.active) {
+        // off the map: an arrow on the border that points to the target, with the distance
+        const ang = Math.atan2(pz - S / 2, px - S / 2);
+        // clamp to the square edge
+        const k = Math.min((S / 2 - inset) / Math.max(Math.abs(Math.cos(ang)), 1e-6), (S / 2 - inset) / Math.max(Math.abs(Math.sin(ang)), 1e-6));
+        const ax = S / 2 + Math.cos(ang) * k;
+        const az = S / 2 + Math.sin(ang) * k;
+        c.save();
+        c.translate(ax, az);
+        c.rotate(ang);
+        c.fillStyle = '#facc15';
+        c.strokeStyle = '#1b2a3a';
+        c.lineWidth = 1.6 * d;
+        c.beginPath();
+        c.moveTo(9 * d, 0);
+        c.lineTo(-6 * d, 7 * d);
+        c.lineTo(-3 * d, 0);
+        c.lineTo(-6 * d, -7 * d);
+        c.closePath();
+        c.fill();
+        c.stroke();
+        c.restore();
+      }
+      if (p.active && p.distance !== undefined && Number.isFinite(p.distance)) {
+        const label = p.distance >= 1000 ? `${(p.distance / 1000).toFixed(1)} km` : `${Math.round(p.distance / 5) * 5} m`;
+        const lx = Math.max(24 * d, Math.min(S - 24 * d, inside ? px : S / 2 + Math.cos(Math.atan2(pz - S / 2, px - S / 2)) * (S / 2 - 34 * d)));
+        const lz = Math.max(14 * d, Math.min(S - 14 * d, inside ? pz + r + 9 * d : S / 2 + Math.sin(Math.atan2(pz - S / 2, px - S / 2)) * (S / 2 - 34 * d)));
+        c.font = `700 ${11 * d}px ${UI_FONT}`;
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+        c.strokeStyle = 'rgba(0,0,0,0.8)';
+        c.lineWidth = 3 * d;
+        c.strokeText(label, lx, lz);
+        c.fillStyle = '#fde047';
+        c.fillText(label, lx, lz);
+      }
+    }
   }
 
   private drawMarker(c: CanvasRenderingContext2D, x: number, y: number, m: MapMarker, me: boolean): void {

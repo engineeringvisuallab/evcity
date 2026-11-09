@@ -80,6 +80,7 @@ import { ContextGuard } from './ContextGuard';
 import { bindVisibility } from './Lifecycle';
 import { HUD } from '../ui/HUD';
 import { Subtitles } from '../ui/Subtitles';
+import { MissionManager } from '../missions';
 import { WorldManager } from '../world/WorldManager';
 import { Config } from './Config';
 import { EventBus, type Bus, type EngineEvents } from './EventBus';
@@ -152,6 +153,8 @@ export class Engine {
   private roadside: RoadsideView;
   private lighthouseLight: LighthouseLight | null = null;
   private toast: Toast;
+  /** STAGE 13: missions (field / meeting / presentation). Only asks, checks and tracks: the world never changes. */
+  private missions!: MissionManager;
   /** Settings menu (gear button / Tab): day-night mode, what the screen shows, sound, minimap zoom, key help. */
   private hudSettings = new HudSettings();
   private settingsMenu!: SettingsMenu;
@@ -710,6 +713,7 @@ export class Engine {
     // --- the always-on site map (top-right) ---
     this.cityPlan = new CityPlan(this.world.terrain.sites);
     this.minimap = new Minimap(container, this.world.seed.value, this.world.terrain.sites, this.cityPlan, this.rail);
+    this.missions = new MissionManager({ parent: container, lockTarget: this.renderer.domElement, chipTop: () => this.minimap.infoBottom, toast: (t, ms) => this.toast.show(t, ms ?? 3400) });
     // the parked fleet (see EVLAB_SLOTS): the helicopter stands on its pad in the EVLAB parking lot
     {
       const h = this.slot(EVLAB_SLOTS.heli.s, EVLAB_SLOTS.heli.n, 0, -1);
@@ -1028,7 +1032,13 @@ export class Engine {
     this.birds.update(dt, this.time.elapsed, this.world.playerWorld);
     this.animals.update(dt, this.time.elapsed, this.world.playerWorld);
     if (this.input.wasPressed('KeyU')) this.setMapZoom((this.minimap.zoomLevel + 1) % 3); // (N = the vehicle menu)
-    this.minimap.update(dt, this.mapState());
+    if (this.input.wasPressed('Backslash')) this.missions.toggle(); // \ opens the mission list (the Missions button does the same)
+    {
+      const ms = this.mapState(); // `me` = what you control (on foot, car, helicopter, boat): missions use the same position as the map
+      this.missions.update(dt, ms.me.x, ms.me.z);
+      ms.missions = this.missions.pins();
+      this.minimap.update(dt, ms);
+    }
     this.updateAreaLabel();
     this.bridgePhysics.update(dt, this.world.playerWorld.x, this.world.playerWorld.z);
     this.railPhysics.update(dt, this.world.playerWorld.x, this.world.playerWorld.z);
@@ -1491,6 +1501,7 @@ export class Engine {
     this.loop.stop();
     window.removeEventListener('resize', this.onResize);
     this.tour.dispose();
+    this.missions.dispose();
     this.perf.dispose();
     this.unbindVisibility();
     this.ctxGuard.dispose();
