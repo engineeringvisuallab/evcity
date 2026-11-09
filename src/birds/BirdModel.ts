@@ -1,66 +1,46 @@
 import * as THREE from 'three';
+import { buildBirdData } from './BirdShapes';
 
 /**
- * One low-poly bird, faces +Z, wings along X, wingspan 1 (scaled per instance).
- * `aWing` = how far along the wing a vertex is (0 = body, 1 = wing tip): the vertex shader lifts it by sin(time),
- * so every bird flaps on the GPU and the whole flock is ONE draw call.
+ * One bird model by species name ('crow', 'egret', 'swallow', 'dove', 'kite', 'eagle', 'kingfisher', 'parrot', 'heron', 'hornbill').
+ * Faces +Z, wings along X, wingspan 1 (scaled per instance). The shapes are in BirdShapes.ts (body, head, beak, eyes, tail, legs, feathered wings).
+ * Attributes: `color` = per-vertex plumage colour, `aWing` = how far along the wing a vertex is (0 = body, 1 = wing tip):
+ * the vertex shader flaps it, so every bird of a species is ONE instanced draw call.
  */
-export function createBirdGeometry(): THREE.BufferGeometry {
-  const pos: number[] = [];
-  const wing: number[] = [];
-  const tri = (a: number[], b: number[], c: number[], wa = 0, wb = 0, wc = 0) => {
-    pos.push(...a, ...b, ...c);
-    wing.push(wa, wb, wc);
-  };
-  // body: a stretched bipyramid (nose, tail, ring of four)
-  const nose = [0, 0, 0.5];
-  const tail = [0, 0.01, -0.42];
-  const ring = [[0, 0.09, 0.05], [0.07, 0, 0.05], [0, -0.07, 0.05], [-0.07, 0, 0.05]];
-  for (let i = 0; i < 4; i++) {
-    const a = ring[i];
-    const b = ring[(i + 1) % 4];
-    tri(nose, a, b);
-    tri(tail, b, a);
-  }
-  // wings: root -> mid -> tip, swept back, each side two quads (4 triangles)
-  for (const s of [1, -1]) {
-    const r0 = [0.05 * s, 0.02, 0.3];
-    const r1 = [0.05 * s, 0.02, -0.25];
-    const m0 = [0.28 * s, 0.05, 0.22];
-    const m1 = [0.28 * s, 0.05, -0.28];
-    const t0 = [0.5 * s, 0.07, 0.0];
-    const t1 = [0.46 * s, 0.07, -0.3];
-    tri(r0, m0, r1, 0, 0.56, 0);
-    tri(m0, m1, r1, 0.56, 0.56, 0);
-    tri(m0, t0, m1, 0.56, 1, 0.56);
-    tri(t0, t1, m1, 1, 1, 0.56);
-  }
-  // tail feathers
-  tri([0, 0.01, -0.38], [0.11, 0.01, -0.64], [-0.11, 0.01, -0.64]);
-
+export function createBirdGeometry(name = 'crow'): THREE.BufferGeometry {
+  const d = buildBirdData(name);
   const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.setAttribute('aWing', new THREE.Float32BufferAttribute(wing, 1));
+  g.setAttribute('position', new THREE.Float32BufferAttribute(d.pos, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(d.col, 3));
+  g.setAttribute('aWing', new THREE.Float32BufferAttribute(d.wing, 1));
+  g.setIndex(d.index);
   g.computeVertexNormals();
   return g;
 }
 
-/** Lambert material (sun + fog like everything else) with the flapping injected into the vertex shader. */
+/**
+ * Lambert material (sun + fog like everything else) using the plumage vertex colours (the per-bird instance colour only tints them a little),
+ * with the flapping injected into the vertex shader.
+ */
 export function createBirdMaterial(uTime: { value: number }): THREE.MeshLambertMaterial {
-  const m = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+  const m = new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide, vertexColors: true });
   m.onBeforeCompile = (sh) => {
     sh.uniforms.uTime = uTime;
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute float aWing;\nattribute vec3 aBird;\nuniform float uTime;')
+      .replace('#include <common>', '#include <common>\nattribute float aWing;\nattribute vec4 aBird;\nuniform float uTime;')
       .replace(
         '#include <begin_vertex>',
         `#include <begin_vertex>
-        // aBird = (phase, flap rate rad/s, flap amplitude). Birds alternate between gliding and flapping bursts.
-        float burst = smoothstep(-0.3, 0.4, sin(uTime * 0.35 + aBird.x * 3.0));
-        float amp = mix(0.1, aBird.z, burst);
-        float fl = sin(uTime * aBird.y + aBird.x);
-        transformed.y += fl * aWing * amp;
-        transformed.z += fl * aWing * aWing * amp * 0.25;`,
+        // aBird = (phase, flap rate rad/s, flap amplitude, glide). glide 0 = flaps all the time, 1 = mostly soars with a few flapping bursts.
+        float burst = mix(1.0, smoothstep(-0.3, 0.4, sin(uTime * 0.35 + aBird.x * 3.0)), aBird.w);
+        float amp = mix(0.06, aBird.z, burst);
+        // the wing tip lags behind the shoulder, like a real downstroke
+        float fl = sin(uTime * aBird.y + aBird.x - aWing * aWing * 0.8);
+        float lift = fl * amp * aWing;
+        transformed.y += lift - fl * amp * 0.05 * (1.0 - aWing);
+        // a raised or lowered wing is shorter when seen from above
+        transformed.x -= sign(transformed.x) * lift * lift * 1.2;
+        transformed.z += fl * aWing * aWing * amp * 0.2;`,
       );
   };
   return m;

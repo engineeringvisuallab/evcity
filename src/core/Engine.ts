@@ -181,7 +181,7 @@ export class Engine {
   readonly tankCannon: TankCannon;
   /** Felled trees (tank, blasts). */
   readonly treeDestruction: TreeDestruction;
-  /** Flocks of birds wandering over the world around the player. */
+  /** Flocks and single birds (10 species) flying over the world around the player. */
   readonly birds: BirdManager;
   /** Wildlife: deer herds, tigers / lions hunting them, fish schools. L = go to the safari park. */
   readonly animals: AnimalManager;
