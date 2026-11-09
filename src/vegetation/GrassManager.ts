@@ -264,6 +264,18 @@ export class GrassManager {
     const h3 = hh * 31.7 - Math.floor(hh * 31.7);
     const dry = data[o + 6];
     const flag = data[o + 7];
+    const type0 = this.pick(data, o, wx, wz, lod, hh, h1, h2, h3, dry, flag);
+    if (G.whiteFlowers) return type0;
+    // NO WHITE GRASS: daisy (white petals), clover (white pom-pom) and the pale seed-head grass become plain green grass (keeping the EXTRA offset)
+    const extra = type0 >= EXTRA ? EXTRA : 0;
+    const base = type0 - extra;
+    if (base === GrassType.daisy || base === GrassType.clover) return GrassType.lawn + extra;
+    if (base === GrassType.seed) return GrassType.wild + extra;
+    return type0;
+  }
+
+  /** Real choice of the model; typeOf() wraps it and removes the white kinds (Config grass.whiteFlowers = false). */
+  private pick(data: Float32Array, o: number, wx: number, wz: number, lod: number, hh: number, h1: number, h2: number, h3: number, dry: number, flag: number): number {
     let type: number;
     if (flag > 3.5) {
       // DENSE extra single grass (flag 4): plain grass kinds only, never a flower and never a clump

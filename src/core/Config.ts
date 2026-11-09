@@ -344,8 +344,8 @@ export const Config = {
       /** Blades per tuft model are multiplied by this (1 = full quality; 0.6 for weak GPUs). */
       bladeDensity: 1,
       /** Wildflowers: share of tufts that carry flowers inside a flower patch / scattered in the open meadow. Patches are ~12-30 m wide. */
-      flowerInPatch: 0.14,
-      flowerScatter: 0.006,
+      flowerInPatch: 0.05, // was 0.14: far fewer flowers
+      flowerScatter: 0.002, // was 0.006
       /** Steepest ground (rise / run) with grass; it thins out from `slopeFadeFrom`. The terrain shader turns to rock at ~0.5. */
       maxSlope: 0.45,
       slopeFadeFrom: 0.28,
@@ -365,7 +365,7 @@ export const Config = {
        *   flowerShare  share of lawn tufts that carry a small flower (daisy, clover, buttercup)
        *   edge         metres over which the lawn blends into the normal patchy meadow outside the city
        */
-      city: { density: 1, height: 0.6, clumpChance: 0, clumpScale: 0.8, baseChance: 0, baseScale: 1.3, baseReach: 1.6, fenceReach: 1.4, flowerShare: 0.05, edge: 40 },
+      city: { density: 1, height: 0.6, clumpChance: 0, clumpScale: 0.8, baseChance: 0, baseScale: 1.3, baseReach: 1.6, fenceReach: 1.4, flowerShare: 0.02, edge: 40 },
       /**
        * HIGHWAY VERGE outside cities: beyond the gravel shoulder the road side is a grass patch (patch value forced up, like the road-side boost) with
        * tall clumps; `reach` = width (m) of the strip next to the shoulder, `clumpChance` per clump cell inside it, `tall` = clump height multiplier.
@@ -380,6 +380,8 @@ export const Config = {
        * SINGLE GRASS: every tuft model has only `blades[0]..blades[1]` blades (3-5 leaves per grass), so the ground can be covered with very many
        * of them cheaply (`cell` 0.2 m). Used for the four grass kinds; flowers keep their own base. enabled false = the old many-blade tufts.
        */
+      /** false = NO white things in the grass: no daisy, no clover (white pom-pom), no pale seed-head grass (they become plain green grass). Coloured flowers stay. */
+      whiteFlowers: false,
       single: { enabled: true, blades: [3, 5] as [number, number] },
       /** No grass is made while the camera is higher than this above the ground (m): free-fly / helicopter. */
       maxAboveGround: 25,
