@@ -2,6 +2,7 @@ import { UI_FONT } from './theme';
 import { bnDigits } from '../i18n';
 import { Config } from '../core/Config';
 import { currentChoice, setQualityChoice, type QualityChoice } from '../core/Quality';
+import { SHADOW_NAMES_BN, type ShadowChoice, type ShadowLevel } from '../core/ShadowQuality';
 import type { TimeMode } from '../environment/DayNight';
 import type { HudOptions, HudSettings } from './HudSettings';
 import { getToolbar } from './Toolbar';
@@ -18,6 +19,9 @@ export interface SettingsHooks {
   setDebug(on: boolean): void;
   getPerf?(): boolean;
   setPerf?(on: boolean): void;
+  /** Sun shadow: the picked choice and the level that is running now (they differ in auto mode). */
+  getShadow?(): { choice: ShadowChoice; level: ShadowLevel };
+  setShadow?(choice: ShadowChoice): void;
   getGold(): number;
 }
 
@@ -123,6 +127,8 @@ export class SettingsMenu {
   private rainModeButtons: HTMLButtonElement[] = [];
   private rainLevelButtons: HTMLButtonElement[] = [];
   private rainQualityButtons: HTMLButtonElement[] = [];
+  private shadowButtons = new Map<ShadowChoice, HTMLButtonElement>();
+  private shadowNote = document.createElement('div');
   private goldValue = document.createElement('span');
   private open_ = false;
   private relock = false;
@@ -202,6 +208,16 @@ export class SettingsMenu {
     this.rainLevelButtons.forEach((b, i) => b.classList.toggle('on', i === v.rainLevel));
     this.rainQualityButtons.forEach((b, i) => b.classList.toggle('on', i === v.rainQuality));
     this.setSwitch('umbrella', v.rainUmbrella);
+    const sh = this.hooks.getShadow?.();
+    if (sh) {
+      for (const [id, b] of this.shadowButtons) b.classList.toggle('on', id === sh.choice);
+      this.shadowNote.textContent =
+        sh.choice === 'auto'
+          ? `অটো: এখন ছায়া "${SHADOW_NAMES_BN[sh.level]}" চলছে। গেম ধীর হলে ছায়া নিজেই কমবে বা বন্ধ হবে; ভালো পিসিতে নিজেই বাড়বে।`
+          : sh.choice === 'off'
+            ? 'ছায়া বন্ধ: গেম অনেক হালকা চলবে (পুরনো পিসির জন্য সবচেয়ে ভালো)।'
+            : `ছায়া "${SHADOW_NAMES_BN[sh.level]}" — গেম এটা নিজে বদলাবে না।`;
+    }
     this.setSwitch('debug', this.hooks.getDebug());
     this.setSwitch('perf', this.hooks.getPerf?.() ?? false);
     const z = this.hooks.getMapZoom();
@@ -362,6 +378,38 @@ export class SettingsMenu {
       gnote.className = 'evs-note';
       gnote.textContent = 'বদলালে গেম একবার রিলোড হবে। ফোন বা পিসি গরম / ধীর হলে "নিচু" বাছুন। রেজোলিউশন FPS দেখে নিজে কমে-বাড়ে।';
       sec.appendChild(gnote);
+    }
+
+    // --- shadow: off / low / medium / high / auto (no reload) ---
+    if (this.hooks.setShadow) {
+      const { sec } = this.section('🌑 ছায়া (Shadow)');
+      const grid = document.createElement('div');
+      grid.className = 'evs-zoom';
+      grid.style.gridTemplateColumns = 'repeat(auto-fit,minmax(104px,1fr))';
+      const choices: [ShadowChoice, string, string][] = [
+        ['auto', '🔄 অটো', 'পিসি দেখে নিজে'],
+        ['off', 'বন্ধ', 'সবচেয়ে হালকা'],
+        ['low', 'নিচু', 'ছোট ছায়া'],
+        ['medium', 'মাঝারি', 'ভালো ছায়া'],
+        ['high', 'উঁচু', 'সেরা ছায়া'],
+      ];
+      for (const [c, label, sub] of choices) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'evs-btn';
+        b.innerHTML = '<span></span><small></small>';
+        (b.children[0] as HTMLElement).textContent = label;
+        (b.children[1] as HTMLElement).textContent = sub;
+        b.addEventListener('click', () => {
+          this.hooks.setShadow?.(c);
+          this.refresh();
+        });
+        this.shadowButtons.set(c, b);
+        grid.appendChild(b);
+      }
+      this.shadowNote.className = 'evs-note';
+      sec.append(grid, this.shadowNote);
+      panel.appendChild(sec);
     }
 
     // --- water ---

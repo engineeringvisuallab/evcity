@@ -8,6 +8,8 @@ export interface PerfExtra {
   /** Render mode: 0 normal, 1 high, 2 = 4K. */
   renderMode: number;
   dynScale: number;
+  /** Sun shadow: the running level and the picked choice. */
+  shadow: string;
   sitesBuilt: number;
   sitesTotal: number;
   chunksLoaded: number;
@@ -192,6 +194,7 @@ export class PerfOverlay {
     L.push(`pixel ratio ${r.getPixelRatio().toFixed(2)} | dyn-res scale ${x.dynScale.toFixed(2)} | render mode ${modeName}`);
     L.push(`canvas ${c.width}x${c.height} (${((c.width * c.height) / 1e6).toFixed(2)} MP) | css ${c.clientWidth}x${c.clientHeight} | dpr ${(window.devicePixelRatio || 1).toFixed(2)}`);
     L.push(`preset ${x.tier} | choice ${x.choice}`);
+    L.push(`shadow ${x.shadow}`);
     L.push(`GPU ${this.gpu.name}${this.gpu.masked ? ' (masked)' : ''} | ${this.gpu.webgl} | max tex ${this.gpu.maxTexture} | aniso ${this.gpu.maxAniso}`);
     L.push(`sites built ${x.sitesBuilt}/${x.sitesTotal} | chunks loaded ${x.chunksLoaded} (pending ${x.chunksPending})`);
     L.push(`physics bodies ${x.bodies} | colliders ${x.colliders} | people ${x.people} | cars ${x.cars} (AI ${x.aiCars})`);

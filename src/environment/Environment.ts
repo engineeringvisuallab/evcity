@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Config } from '../core/Config';
+import type { ShadowLevel, ShadowSpec } from '../core/ShadowQuality';
 import type { SkyUniforms } from '../water';
 import { DayNight, type TimeMode } from './DayNight';
 
@@ -85,6 +86,8 @@ export class Environment {
   private cloud = 0;
   private rainK = 0;
   private flash = 0;
+  /** false when the sun shadow is switched off (nothing to move then). */
+  private shadowOn = true;
 
   constructor(scene: THREE.Scene) {
     const horizon = this.horizon;
@@ -266,6 +269,33 @@ export class Environment {
     this.sun.intensity *= dim;
   }
 
+  /** Sun shadow level (settings menu / auto mode). 'off' = no shadow pass at all and no shadow code in the shaders; the others resize the shadow box. */
+  applyShadow(level: ShadowLevel, spec: ShadowSpec): void {
+    const E = Config.environment;
+    const sh = this.sun.shadow;
+    if (level === 'off') {
+      this.sun.castShadow = false; // the light leaves the shadow list: the shadow pass is skipped and the materials recompile without shadow lookups
+    } else {
+      E.shadowMapSize = spec.size;
+      E.shadowExtent = spec.extent;
+      sh.mapSize.set(spec.size, spec.size);
+      const cam = sh.camera;
+      cam.left = -spec.extent;
+      cam.right = spec.extent;
+      cam.top = spec.extent;
+      cam.bottom = -spec.extent;
+      cam.updateProjectionMatrix();
+      sh.radius = spec.radius;
+      this.sun.castShadow = true;
+    }
+    // free the old shadow map: it is made again (new size) when the next shadow pass runs
+    if (sh.map) {
+      sh.map.dispose();
+      sh.map = null;
+    }
+    this.shadowOn = level !== 'off';
+  }
+
   /** Call every frame after the camera moved. */
   update(camera: THREE.Object3D, dt = 0): void {
     this.dayNight.update(dt);
@@ -274,6 +304,13 @@ export class Environment {
     const c = camera.position;
     this.sky.position.copy(c);
 
+    if (!this.shadowOn) {
+      // no shadow box to snap: the light just stays above the camera
+      this.sun.target.position.copy(c);
+      this.sun.position.copy(c).addScaledVector(this.lightDir, 1200);
+      this.sun.target.updateMatrixWorld();
+      return;
+    }
     // Shadow box follows the camera, snapped to shadow-map texels in light space (no shimmering).
     const texel = (2 * Config.environment.shadowExtent) / Config.environment.shadowMapSize;
     this.right.set(0, 1, 0).cross(this.lightDir).normalize();

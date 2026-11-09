@@ -94,7 +94,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
     peopleTarget: 12, trafficTarget: 5, maxBuses: 1, flockCount: 4, landAnimals: 24, predators: 2, dolphins: 3, fishSchools: 4,
     lampStepMul: 1.6, roadsideMul: 0.55, grassWind: 0.6, lightFxDist: 45, farmMul: 0.65, siteDisposeMul: 2.5, siteMerge: true, siteShadowMinR: 1.2, maxAniso: 2, shadowInterval: 2,
     signRadiusMul: 0.6, signPaintPerFrame: 1,
-    mirrorLive: 1, mirrorLiveDist: 30, mirrorTex: 256,
+    mirrorLive: 0, mirrorLiveDist: 30, mirrorTex: 256, // low: no extra scene render for the road mirrors (the painted picture stays)
   },
   medium: {
     tier: 'medium', maxDpr: 1.25, maxPixels: 2_800_000, antialias: false, powerPreference: 'default',
@@ -120,6 +120,8 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
 export const Q: QualitySettings = { ...PRESETS.high, lodDistances: [...PRESETS.high.lodDistances] };
 
 const KEY = 'evcity.quality';
+const KEY_CAP = 'evcity.tierCap';
+const TIER_ORDER: readonly QualityTier[] = ['low', 'medium', 'high'];
 const isChoice = (v: unknown): v is QualityChoice => v === 'auto' || v === 'low' || v === 'medium' || v === 'high';
 
 export function getQualityChoice(): QualityChoice {
@@ -141,9 +143,32 @@ export function getQualityChoice(): QualityChoice {
 export function setQualityChoice(c: QualityChoice): void {
   try {
     localStorage.setItem(KEY, c);
+    localStorage.removeItem(KEY_CAP); // a new pick starts fresh: auto looks at the device again
   } catch {
     /* ignore */
   }
+}
+
+/** The highest class auto may use on this device (set by SlowDeviceWatch when the game could not hold the speed even at its lowest settings). */
+function getTierCap(): QualityTier | null {
+  try {
+    const v = localStorage.getItem(KEY_CAP);
+    return v === 'low' || v === 'medium' ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The game is too slow for this class: the next start (auto) uses the class below. Returns the new class, or null when there is none. */
+export function noteSlowDevice(): QualityTier | null {
+  const lower = TIER_ORDER[TIER_ORDER.indexOf(Q.tier) - 1];
+  if (!lower) return null;
+  try {
+    localStorage.setItem(KEY_CAP, lower);
+  } catch {
+    /* ignore */
+  }
+  return lower;
 }
 
 function gpuName(): string {
@@ -177,7 +202,15 @@ export function detectTier(): QualityTier {
   if (/swiftshader|llvmpipe|software|basic render/i.test(gpu)) return 'low';
   let tier: QualityTier = 'high';
   if (cores <= 4 || (mem !== undefined && mem <= 4)) tier = 'medium';
-  if (tier === 'high' && /intel/i.test(gpu) && !/arc/i.test(gpu)) tier = 'medium'; // integrated Intel graphics
+  const intelIgpu = /intel/i.test(gpu) && !/arc/i.test(gpu); // integrated Intel graphics
+  if (tier === 'high' && intelIgpu) tier = 'medium';
+  // low-end PCs: 2 cores or 2 GB, integrated Intel graphics together with a small CPU / RAM, the old entry-level GPUs
+  if (cores <= 2 || (mem !== undefined && mem <= 2)) tier = 'low';
+  else if (intelIgpu && (cores <= 4 || (mem !== undefined && mem <= 4))) tier = 'low';
+  else if (/\bmx\s?\d{2,3}\b|geforce\s*(gt\s?)?(7[0-4]\d|10[23]0)\b|radeon\s*(r[2-5]|hd\s?[2-6]\d{3})\b/i.test(gpu)) tier = 'low';
+  // the game itself found this PC too slow last time (see SlowDeviceWatch): not higher than that class
+  const cap = getTierCap();
+  if (cap && TIER_ORDER.indexOf(tier) > TIER_ORDER.indexOf(cap)) tier = cap;
   return tier;
 }
 
@@ -193,7 +226,10 @@ export function initQuality(): QualitySettings {
     /* ignore */
   }
   Config.environment.shadowMapSize = p.shadowMapSize;
-  Config.environment.shadowExtent = p.shadowExtent;
+  Config.environment.shadowExtent = p.shadowExtent; // the live shadow level is set by ShadowManager (settings menu / auto) once the engine runs
+  // slow frames: fewer physics catch-up steps per picture (the game runs a little slower instead of getting even slower)
+  if (tier === 'low') Config.loop.maxSubSteps = 3;
+  else if (tier === 'medium') Config.loop.maxSubSteps = 4;
   if (tier !== 'high') {
     p.lodDistances.forEach((d, i) => {
       Config.lod.distances[i] = d;
@@ -268,6 +304,45 @@ export class DynamicResolution {
       }
     } else {
       this.good = 0;
+    }
+  }
+}
+
+/**
+ * Auto class only. When the shadows are off, the resolution is at its lowest and the game STILL runs far below its FPS target for ~15 s,
+ * this PC is too weak for the class: it is remembered, and the next start uses the class below. `onSlow` is told once (the game shows a message).
+ */
+export class SlowDeviceWatch {
+  private acc = 0;
+  private frames = 0;
+  private warm = 20; // seconds ignored at the start (shader compile, chunk start-up)
+  private bad = 0;
+  private fired = false;
+
+  constructor(
+    private target: number,
+    private onSlow: (lower: QualityTier) => void,
+  ) {}
+
+  /** `floor` = shadows off and resolution at the minimum (nothing left to lower at run time). */
+  sample(dt: number, floor: boolean): void {
+    if (this.fired || dt <= 0 || dt > 0.5) return;
+    if (this.warm > 0) {
+      this.warm -= dt;
+      return;
+    }
+    this.acc += dt;
+    this.frames++;
+    if (this.acc < 3) return;
+    const fps = this.frames / this.acc;
+    this.acc = 0;
+    this.frames = 0;
+    if (floor && fps < this.target * 0.6) this.bad++;
+    else this.bad = Math.max(0, this.bad - 1);
+    if (this.bad >= 5) {
+      this.fired = true;
+      const lower = noteSlowDevice();
+      if (lower) this.onSlow(lower);
     }
   }
 }

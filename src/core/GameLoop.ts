@@ -10,6 +10,7 @@ export class GameLoop {
   private last = 0;
   private rafId = 0;
   private running = false;
+  private prevRaf = 0;
   /** 0 = no limit. Frames (physics + picture) are skipped to stay at this rate: less heat and battery use. */
   maxFps = 0;
 
@@ -23,6 +24,7 @@ export class GameLoop {
     if (this.running) return;
     this.running = true;
     this.last = performance.now();
+    this.prevRaf = 0;
     this.rafId = requestAnimationFrame(this.tick);
   }
 
@@ -34,7 +36,11 @@ export class GameLoop {
   private tick = (now: number): void => {
     if (!this.running) return;
     this.rafId = requestAnimationFrame(this.tick);
-    if (this.maxFps > 0 && now - this.last < 1000 / this.maxFps - 2) return;
+    // FPS cap: a frame is drawn when it is at most half a screen refresh early. On a 120 / 144 Hz screen the old fixed 2 ms rule skipped one
+    // frame too many and a 60 FPS cap gave only 48 FPS (which also looked like a slow PC to the auto graphics).
+    const refresh = this.prevRaf > 0 ? Math.min(now - this.prevRaf, 50) : 0;
+    this.prevRaf = now;
+    if (this.maxFps > 0 && now - this.last < 1000 / this.maxFps - Math.max(2, refresh / 2)) return;
 
     const frame = Math.min((now - this.last) / 1000, Config.loop.maxFrameTime);
     this.last = now;

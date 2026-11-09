@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { Q, DynamicResolution, currentChoice } from './Quality';
+import { Q, DynamicResolution, SlowDeviceWatch, currentChoice } from './Quality';
+import { ShadowManager, SHADOW_NAMES_BN } from './ShadowQuality';
 import { CameraController } from '../camera/CameraController';
 import { OrbitCamera } from '../camera/OrbitCamera';
 import { DriverCamera } from '../camera/DriverCamera';
@@ -286,6 +287,10 @@ export class Engine {
   private ctxGuard: ContextGuard;
   private unbindVisibility: () => void;
   private shadowTick = 0;
+  /** Sun shadow level: off / low / medium / high / auto (settings menu). In auto it lowers itself when the FPS drops and comes back on a good PC. */
+  private shadows!: ShadowManager;
+  /** Auto class only: remembers a PC that is too slow even at the lowest settings (next start uses the lighter class). */
+  private slowWatch: SlowDeviceWatch | null = null;
 
   /**
    * Starts the downloads that do not need the page: Rapier WASM (a separate .wasm file, streamed), the Bangla fonts (the mall's canvas signs need them)
@@ -323,6 +328,15 @@ export class Engine {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.environment = new Environment(this.scene); // sky, sun + shadows, fog
+    this.shadows = new ShadowManager({
+      apply: (level, spec) => this.environment.applyShadow(level, spec),
+      notify: (text) => this.toast?.show(text, 4200),
+    });
+    if (currentChoice() === 'auto') {
+      this.slowWatch = new SlowDeviceWatch(Q.fpsCap || 60, (lower) => {
+        this.toast?.show(`🐢 এই পিসিতে গেম ধীর — পরের বার থেকে \"${lower === 'low' ? 'নিচু' : 'মাঝারি'}\" গ্রাফিক্সে চলবে। এখনই চাইলে সেটিংস → গ্রাফিক্স`, 9000);
+      });
+    }
 
     const c = Config.camera;
     this.camera = new THREE.PerspectiveCamera(c.fov, container.clientWidth / container.clientHeight, c.near, c.far);
@@ -530,6 +544,7 @@ export class Engine {
       choice: currentChoice(),
       renderMode: this.renderQuality,
       dynScale: this.dynRes.scale,
+      shadow: `${this.shadows.level} | choice ${this.shadows.choice}`,
       sitesBuilt: this.infra ? this.infra.builtCount : 0,
       sitesTotal: this.infra ? this.infra.total : 0,
       chunksLoaded: this.world.chunks.loadedCount,
@@ -812,6 +827,11 @@ export class Engine {
         setDebug: (on) => this.debug.setVisible(on),
         getPerf: () => this.perf.isVisible,
         setPerf: (on) => this.perf.setVisible(on),
+        getShadow: () => ({ choice: this.shadows.choice, level: this.shadows.level }),
+        setShadow: (c) => {
+          this.shadows.setChoice(c);
+          this.toast?.show(`🌑 ছায়া: ${c === 'auto' ? `অটো (এখন ${SHADOW_NAMES_BN[this.shadows.level]})` : SHADOW_NAMES_BN[this.shadows.level]}`, 2600);
+        },
         getGold: () => this.economy.balance,
       },
       this.hudSettings,
@@ -907,7 +927,12 @@ export class Engine {
   /** Once per rendered frame. Order matters: input -> camera -> world streaming -> draw. */
   private render = (dt: number, alpha: number): void => {
     this.perf.frame(dt);
-    if (this.renderQuality === 0) this.dynRes.sample(dt);
+    if (this.renderQuality === 0) {
+      // auto shadows react first (they are the cheapest thing to give up); the picture resolution only when the shadows are already off
+      this.shadows.sample(dt, Q.fpsCap || 60);
+      if (this.shadows.atFloor) this.dynRes.sample(dt);
+      this.slowWatch?.sample(dt, this.shadows.level === 'off' && this.dynRes.scale <= Q.minScale + 0.001);
+    }
     if (this.input.wasPressed('F3')) this.debug.toggle();
     if (this.input.wasPressed('F2')) this.perf.toggle();
     if (this.input.wasPressed('KeyM')) this.setMuted(!this.voice.isMuted);
@@ -1111,10 +1136,14 @@ export class Engine {
     // the few road mirrors nearest to the camera draw the real scene (a small extra render each, before the main picture)
     this.junctionMirrors.renderLive(this.renderer, this.scene, this.camera);
 
-    if (Q.shadowInterval > 1) {
-      // weak devices: the sun shadow map is redrawn only every n-th frame (the shadow box still follows the camera in texel steps)
+    const shadowEvery = this.shadows.interval;
+    if (shadowEvery > 1) {
+      // low shadow level: the sun shadow map is redrawn only every n-th frame (the shadow box still follows the camera in texel steps)
       this.renderer.shadowMap.autoUpdate = false;
-      this.renderer.shadowMap.needsUpdate = this.shadowTick++ % Q.shadowInterval === 0;
+      this.renderer.shadowMap.needsUpdate = this.shadowTick++ % shadowEvery === 0;
+    } else if (!this.renderer.shadowMap.autoUpdate) {
+      this.renderer.shadowMap.autoUpdate = true; // back to every frame (medium / high)
+      this.shadowTick = 0;
     }
     this.renderer.render(this.scene, this.camera);
     this.perf.update(dt); // after the draw: renderer.info holds this frame's numbers

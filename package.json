@@ -67,6 +67,7 @@
     "test:tree-physics": "tsx scripts/tree-physics-test.ts",
     "test:grass-rocks": "tsx scripts/grass-rock-test.ts",
     "test:quality": "tsx scripts/quality-density-test.ts",
+    "test:shadow": "tsx scripts/shadow-quality-test.ts",
     "test:infra-lazy": "tsx scripts/infra-lazy-test.ts",
     "test:site-optimize": "tsx scripts/site-optimize-test.ts",
     "test:combat": "tsx scripts/combat-test.ts",
