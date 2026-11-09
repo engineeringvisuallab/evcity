@@ -4,7 +4,7 @@ import type { Bus } from '../core/EventBus';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import type { FloatingOrigin } from '../world/FloatingOrigin';
 import { chunkOriginX, chunkOriginZ } from '../world/WorldGrid';
-import { ROCK_KIND_COUNT, RockKind, TREE_KIND_COUNT, TREE_STRIDE, TREE_TRUNK, treeKey, type TreeChunkData } from './TreeTypes';
+import { ROCK_KIND_COUNT, RockKind, TREE_KIND_COUNT, TREE_STRIDE, TREE_TRUNK, treeKey, treeWidth, type TreeChunkData } from './TreeTypes';
 
 /** Trunk collider per kind: see TREE_TRUNK (TreeTypes.ts). */
 const TRUNK = TREE_TRUNK;
@@ -111,7 +111,7 @@ export class TreePhysics {
         if (!b) buckets.set(id, (b = []));
         const scale = d[o + 3];
         const h = Math.min(spec.h * scale, 5);
-        const radius = spec.r * scale;
+        const radius = spec.r * (isRock ? scale : treeWidth(k, scale));
         // relative to the cell centre (x, z); y is the ground height (the body sits at y = 0)
         if (!isRock) pending.push({ id, off: b.length, key: treeKey(k, lx, lz) });
         b.push(lx - (ci + 0.5) * size, d[o + 1], lz - (cj + 0.5) * size, radius, h / 2, isRock ? -1 : k, scale);

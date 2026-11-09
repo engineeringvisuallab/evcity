@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Config } from '../core/Config';
 import type { RockAssets } from './RockAssets';
 import type { TreeAssets } from './TreeAssets';
-import { ROCK_KIND_COUNT, TREE_KIND_COUNT, TREE_STRIDE, type TreeChunkData } from './TreeTypes';
+import { ROCK_KIND_COUNT, TREE_KIND_COUNT, TREE_STRIDE, TreeKind, treeWidth, type TreeChunkData } from './TreeTypes';
 
 const dummy = new THREE.Object3D();
 
@@ -30,7 +30,7 @@ export class TreeChunkBuilder {
     if (trees) {
       const meshes: (THREE.InstancedMesh | null)[] = [];
       for (let k = 0; k < TREE_KIND_COUNT; k++) {
-        const mesh = this.instanced(trees[k], this.assets.geometries[k][detail], this.assets.materialFor(k), `trees kind${k}`, lod, 1, 1.01, 0.96, true);
+        const mesh = this.instanced(trees[k], this.assets.geometries[k][detail], this.assets.materialFor(k), `trees kind${k}`, lod, 1, 1.01, 0.96, true, k);
         meshes.push(mesh);
         if (mesh) (group ??= this.makeGroup()).add(mesh);
       }
@@ -50,6 +50,7 @@ export class TreeChunkBuilder {
     tg: number,
     tb: number,
     hue = false,
+    treeKind = -1,
   ): THREE.InstancedMesh | null {
     const count = data ? data.length / TREE_STRIDE : 0;
     if (!data || count === 0) return null;
@@ -59,7 +60,9 @@ export class TreeChunkBuilder {
       const o = i * TREE_STRIDE;
       dummy.position.set(data[o], data[o + 1], data[o + 2]);
       dummy.rotation.set(0, data[o + 4], 0);
-      dummy.scale.setScalar(data[o + 3]);
+      const sc = data[o + 3];
+      const wd = treeKind === TreeKind.bamboo ? treeWidth(treeKind, sc) : sc; // tall jungle bamboo: height scale sc, slimmer width
+      dummy.scale.set(wd, sc, wd);
       dummy.updateMatrix();
       mesh.setMatrixAt(i, dummy.matrix);
       const t = data[o + 5];

@@ -198,7 +198,9 @@ export const Config = {
      * covered with bamboo clumps: `chance` per 10 m cell in the heart of a grove. Only land lower than `maxHeight` m, gentle slopes (`slopeMax` = share of the
      * normal slope limit). Scale range of a clump (1 = grown, ~12 m). `homestead` / `bankShare` = the share of bamboo among the homestead / bank trees.
      */
-    bamboo: { scale: 300, from: 0.14, full: 0.4, chance: 0.62, maxHeight: 60, slopeMax: 0.55, clumpScale: [0.7, 1.15] as [number, number], homestead: 0.14, bankShare: 0.2 },
+    bamboo: { scale: 300, from: 0.14, full: 0.4, chance: 0.62, maxHeight: 60, slopeMax: 0.55, clumpScale: [0.7, 1.15] as [number, number], homestead: 0.14, bankShare: 0.2,
+      /** BAMBOO IN THE DENSE JUNGLE: a clump there is `jungleTall[0]..[1]` times taller (random per clump), fading in with the jungle density (0 outside, full inside); 1 = no change. Its width grows much slower (see `treeWidth`). */
+      jungleTall: [3, 5] as [number, number] },
     /**
      * DENSE FOREST (ghono bon): the forest districts of the world map (WorldRegions kind 'forest') are covered with a jungle: nearly every 10 m cell has a
      * canopy tree (`chance`, `bigChance` = share of the five big forest trees), and a second, younger tree grows in the shade of it (`understory` chance per

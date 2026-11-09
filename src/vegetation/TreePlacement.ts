@@ -358,7 +358,9 @@ export class TreePlacer {
     chance *= this.cityFactor(x, z);
     if (roll >= chance) return null;
     if (this.nearRoad(x, z)) return null;
-    const scale = B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * rs ** 1.1;
+    // inside the dense jungle (ghono jangal) the clumps are 3-5x taller, the more the denser the jungle; outside it they stay as before
+    const tall = B.jungleTall[0] + (B.jungleTall[1] - B.jungleTall[0]) * ((rs * 13.37 + 0.31) % 1);
+    const scale = (B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * rs ** 1.1) * (1 + (tall - 1) * smooth(0.1, 0.6, dz));
     return { kind: TreeKind.bamboo, x, y: this.footY(h, slope, TreeKind.bamboo, scale), z, scale, yaw: ry * Math.PI * 2, tint: 0.88 + rt * 0.24 };
   }
 
@@ -407,9 +409,11 @@ export class TreePlacer {
     else if (rb > 1 - D.bigShare && flat) kind = bigKind(h, rv, gi, gj);
     else kind = rv < 0.3 ? TreeKind.slender : rv < 0.58 ? TreeKind.vase : rv < 0.84 ? TreeKind.broadleaf : TreeKind.oak;
 
+    // jungle bamboo: 3-5x taller than a grove clump (random per clump), full inside the jungle
+    const bambooScale = (B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * rs) * (1 + (B.jungleTall[0] + (B.jungleTall[1] - B.jungleTall[0]) * ((rs * 13.37 + 0.31) % 1) - 1) * smooth(0.1, 0.6, dz));
     const big = kind >= TreeKind.sal && kind <= TreeKind.shimul;
     const young = D.understoryScale[0] + (D.understoryScale[1] - D.understoryScale[0]) * rs ** 1.4;
-    const scale = big ? V.bigTreeScale[0] + 0.3 * rs : kind === TreeKind.bamboo ? B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * rs : kind === TreeKind.pine ? 0.5 + 0.9 * rs : young;
+    const scale = big ? V.bigTreeScale[0] + 0.3 * rs : kind === TreeKind.bamboo ? bambooScale : kind === TreeKind.pine ? 0.5 + 0.9 * rs : young;
     return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: ry * Math.PI * 2, tint: 0.8 + rt * 0.3 };
   }
 

@@ -4,7 +4,7 @@ import type { FloatingOrigin } from '../world/FloatingOrigin';
 import { chunkOriginX, chunkOriginZ, worldToChunkCoord, chunkKey } from '../world/WorldGrid';
 import { treeMeshes } from './TreeChunkBuilder';
 import type { TreePhysics } from './TreePhysics';
-import { TREE_KIND_COUNT, TREE_STRIDE, treeKey, type TreeChunkData } from './TreeTypes';
+import { TREE_KIND_COUNT, TREE_STRIDE, treeKey, treeWidth, type TreeChunkData } from './TreeTypes';
 
 interface ChunkTrees {
   cx: number;
@@ -135,7 +135,7 @@ export class TreeDestruction {
       mesh.instanceMatrix.needsUpdate = true;
     }
     this.d.physics.removeTree(key, kind, data[o], data[o + 2]);
-    if (mesh) this.spawnFalling(mesh, wx, data[o + 1], wz, data[o + 3], data[o + 4], push);
+    if (mesh) this.spawnFalling(mesh, wx, data[o + 1], wz, data[o + 3], data[o + 4], push, treeWidth(kind, data[o + 3]));
   }
 
   /** The chunk was rebuilt: felled trees stay gone. */
@@ -157,12 +157,12 @@ export class TreeDestruction {
     }
   }
 
-  private spawnFalling(src: THREE.InstancedMesh, wx: number, y: number, wz: number, scale: number, yaw: number, push: { x: number; z: number }): void {
+  private spawnFalling(src: THREE.InstancedMesh, wx: number, y: number, wz: number, scale: number, yaw: number, push: { x: number; z: number }, width = scale): void {
     if (this.falling.length >= MAX_FALLING) this.drop(0);
     const grp = new THREE.Group();
     const mesh = new THREE.Mesh(src.geometry, src.material);
     mesh.rotation.y = yaw;
-    mesh.scale.setScalar(scale);
+    mesh.scale.set(width, scale, width);
     mesh.castShadow = true;
     grp.add(mesh);
     this.d.scene.add(grp);
@@ -195,7 +195,7 @@ export class TreeDestruction {
       f.grp.quaternion.copy(Q.setFromAxisAngle(f.axis, ang));
       f.grp.position.set(f.w.x - o.x, f.w.y, f.w.z - o.z);
       const left = f.life - f.t;
-      if (left < 1.5) f.mesh.scale.setScalar(f.mesh.scale.x * Math.max(0.01, 1 - 2.5 * dt)); // shrinks away at the end
+      if (left < 1.5) f.mesh.scale.multiplyScalar(Math.max(0.01, 1 - 2.5 * dt)); // shrinks away at the end
     }
   }
 

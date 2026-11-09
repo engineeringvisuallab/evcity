@@ -56,6 +56,12 @@ export const TREE_TRUNK: Record<number, { r: number; h: number; climb: number }>
   [TreeKind.bamboo]: { r: 1.0, h: 5, climb: 0 },
 };
 
+/**
+ * Horizontal scale of a tree whose placement scale (= height scale) is `s`. Normal trees are scaled evenly. A bamboo clump above scale 1.2 (the tall
+ * jungle bamboo, 3-5x taller) gets thicker only slowly, so it stays a tall slim clump instead of a 40 m wide monster.
+ */
+export const treeWidth = (kind: number, s: number): number => (kind === TreeKind.bamboo && s > 1.2 ? 1.2 * Math.pow(s / 1.2, 0.4) : s);
+
 /** Stable id of a tree inside its chunk (the same at every LOD): kind + chunk-local position rounded to 0.5 m. */
 export const treeKey = (kind: number, x: number, z: number): string => `${kind}:${Math.round(x * 2)}:${Math.round(z * 2)}`;
 
