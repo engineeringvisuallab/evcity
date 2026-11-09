@@ -20,8 +20,8 @@ export const Config = {
      * so 0.50..0.64 was about half of the land; 0.30..0.44 makes soil the main ground (~80 %), with green patches in between.
      * Lower both = more soil, higher = more green.
      */
-    soilFrom: 0.6,
-    soilTo: 0.74,
+    soilFrom: 0.3,
+    soilTo: 0.44,
     /**
      * GREEN CITY GROUND: inside the planned city areas (CityPlan: distance to the site hub < maxRadius) the ground is lawn green, not brown soil.
      * The chunk worker builds a per-vertex greenness mask (`aCity`): 1 inside the city, falling to 0 over `fadeOut` metres outside it.
@@ -359,8 +359,8 @@ export const Config = {
         dryPatchShare: 0.55,
         patchScale: 16,
         patchAt: 0.64,
-        heightMul: 1,
-        clumpHeight: 0.28,
+        heightMul: 3,
+        clumpHeight: 0.84,
       },
       /** No grass is made while the camera is higher than this above the ground (m): free-fly / helicopter. */
       maxAboveGround: 70,

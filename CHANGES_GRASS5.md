@@ -1,6 +1,6 @@
 # CHANGES_GRASS5 - textured grass cards, dark green, dense everywhere
 
-Terrain mesh, elevation and coordinates are NOT touched (no change in src/terrain/Terrain{Generator,MeshData,ChunkBuilder,Physics}.ts). Only the terrain shader colour changed.
+Terrain is untouched: no terrain file and no terrain setting changed. Only the grass layer changed.
 
 ## What changed
 - `public/assets/grass-atlas.webp` (new): 42 grass clusters cut from the two grass sheets (35 green, 7 dry/straw), 8 x 6 cells.
@@ -8,8 +8,8 @@ Terrain mesh, elevation and coordinates are NOT touched (no change in src/terrai
 - `src/vegetation/GrassCards.ts` (new): card geometry (3 / 2 / 2 crossed quads per LOD ring = 6 / 4 / 4 triangles) + one alpha-tested atlas material (wind, size fade, dark root).
 - `GrassAssets.ts`: tufts (lawn, wild, clump, seed) and clumps (tussock, tussockWide) use the card geometry; flowers keep their 3D models.
 - `GrassManager.ts`: per-instance atlas cell (`aCell`), size in metres from the cluster height, dark-green / straw tint through the instance colour.
-- `Config.ts`: new `vegetation.grass.cards` knobs; patch `coverage` 0.22 -> 0.9, `minValue` 0.25 -> 0.05, `coreAt` 0.85 -> 0.35 (grass nearly everywhere); `terrain.soilFrom/soilTo` 0.30/0.44 -> 0.60/0.74 (only occasional soil).
-- `TerrainMaterial.ts`: ground colour under the grass is dark green (colours only).
+- `Config.ts`: new `vegetation.grass.cards` knobs; patch `coverage` 0.22 -> 0.9, `minValue` 0.25 -> 0.05, `coreAt` 0.85 -> 0.35 (grass nearly everywhere); .
+- Terrain is unchanged (TerrainMaterial.ts and terrain.soilFrom/soilTo are back to the original). Cards are 3x bigger (`heightMul` 3, `clumpHeight` 0.84).
 
 ## Knobs (Config.vegetation.grass.cards)
 `enabled` (false = old blade models), `greenTint` (darker = smaller numbers), `dryTint`, `brightness`, `dryShare` / `dryPatchShare` (straw clusters), `heightMul`, `clumpHeight`, `alphaCut`, `rootDark`.
