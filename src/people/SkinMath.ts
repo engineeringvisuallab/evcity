@@ -67,59 +67,74 @@ export interface Ring {
   rz: number;
   cx: number;
   cz: number;
+  /** Superellipse exponent: 2 = ellipse (default), > 2 squarer (jaw, cheekbones). */
+  n?: number;
 }
 
 /** Profile table rows: [y, half width, half depth, forward offset], ascending y. */
 export type Table = [number, number, number, number][];
 
-/** Torso: crotch -> hips -> waist -> chest -> shoulder slope -> base of the neck. */
+/** Shoulder / hip joint half distance (m). Real adult male: shoulders ~0.5 m wide over the deltoids. */
+export const SHOULDER_X = 0.205;
+export const HIP_X = 0.09;
+/** The head sits this much higher than the old rigid body, so a bit of neck shows above the collar. */
+export const HEAD_LIFT = 0.03;
+
+/** Torso: crotch -> hips -> waist -> chest -> sloping shoulder line -> base of the neck. */
 export const TORSO: Table = [
-  [0.84, 0.15, 0.105, 0],
-  [0.9, 0.17, 0.112, -0.005],
-  [0.97, 0.16, 0.106, 0],
-  [1.04, 0.148, 0.098, 0],
-  [1.14, 0.16, 0.102, 0.004],
-  [1.24, 0.18, 0.11, 0.008],
-  [1.34, 0.2, 0.122, 0.012],
-  [1.42, 0.205, 0.118, 0.008],
-  [1.47, 0.175, 0.098, 0.002],
-  [1.52, 0.095, 0.072, 0],
-  [1.56, 0.055, 0.055, 0],
+  [0.78, 0.085, 0.06, -0.004],
+  [0.84, 0.145, 0.095, -0.006],
+  [0.9, 0.172, 0.105, -0.012],
+  [0.98, 0.15, 0.1, -0.004],
+  [1.04, 0.136, 0.094, 0],
+  [1.14, 0.15, 0.098, 0.004],
+  [1.24, 0.168, 0.106, 0.008],
+  [1.34, 0.184, 0.116, 0.012],
+  [1.42, 0.194, 0.114, 0.008],
+  [1.46, 0.205, 0.104, 0.004],
+  [1.485, 0.21, 0.096, 0.002],
+  [1.509, 0.15, 0.08, 0],
+  [1.531, 0.1, 0.068, 0],
+  [1.55, 0.062, 0.058, 0],
+  [1.56, 0.056, 0.056, 0],
 ];
 
-/** Arm (hanging down): wrist -> forearm -> elbow -> biceps -> deltoid. */
+/** Arm (hanging down): wrist -> forearm -> elbow -> biceps -> deltoid (its top ends level with the shoulder line). */
 export const ARM: Table = [
-  [0.89, 0.03, 0.027, 0],
-  [0.95, 0.036, 0.032, 0],
-  [1.02, 0.042, 0.038, 0],
-  [1.09, 0.047, 0.045, 0],
-  [1.15, 0.044, 0.045, 0],
-  [1.22, 0.047, 0.048, 0],
-  [1.3, 0.053, 0.054, 0],
-  [1.38, 0.059, 0.058, 0],
-  [1.45, 0.062, 0.06, 0],
-  [1.49, 0.05, 0.048, 0],
+  [0.89, 0.028, 0.025, 0],
+  [0.95, 0.033, 0.03, 0],
+  [1.02, 0.039, 0.036, 0],
+  [1.09, 0.044, 0.042, 0],
+  [1.15, 0.041, 0.042, 0],
+  [1.22, 0.045, 0.045, 0],
+  [1.3, 0.05, 0.05, 0],
+  [1.38, 0.054, 0.054, 0],
+  [1.43, 0.057, 0.056, 0],
+  [1.46, 0.056, 0.055, 0],
+  [1.48, 0.048, 0.047, 0],
+  [1.492, 0.03, 0.03, 0],
+  [1.5, 0.012, 0.012, 0],
 ];
 
 /** Leg: ankle -> calf -> knee -> thigh -> hip. */
 export const LEG: Table = [
-  [0.09, 0.036, 0.042, 0.004],
-  [0.14, 0.04, 0.044, 0.002],
-  [0.22, 0.047, 0.052, -0.004],
-  [0.31, 0.056, 0.062, -0.008],
+  [0.09, 0.04, 0.046, 0.004],
+  [0.14, 0.043, 0.048, 0.002],
+  [0.22, 0.049, 0.054, -0.004],
+  [0.31, 0.057, 0.062, -0.008],
   [0.4, 0.056, 0.062, 0],
   [0.45, 0.059, 0.064, 0.004],
   [0.52, 0.064, 0.07, 0.004],
-  [0.64, 0.078, 0.086, 0.002],
-  [0.76, 0.088, 0.096, 0],
-  [0.86, 0.092, 0.1, -0.004],
-  [0.93, 0.09, 0.098, -0.006],
+  [0.64, 0.08, 0.09, 0.003],
+  [0.76, 0.092, 0.102, 0.002],
+  [0.86, 0.098, 0.108, 0.002],
+  [0.93, 0.096, 0.108, 0.002],
 ];
 
 /** Neck (a plain thin tube). */
 export const NECK: Table = [
   [1.5, 0.05, 0.052, 0.004],
-  [1.63, 0.048, 0.05, 0.006],
+  [1.66, 0.048, 0.05, 0.006],
 ];
 
 /** Interpolate a table at height y (clamped at both ends). Returns [rx, rz, cz]. */
@@ -180,9 +195,12 @@ export function tubeData(rings: Ring[], seg: number, caps = true): TubeData {
     for (let j = 0; j < seg; j++) {
       const th = (j / seg) * Math.PI * 2;
       const i = (r * seg + j) * 3;
-      pos[i] = q.cx + q.rx * Math.cos(th);
+      const c = Math.cos(th);
+      const sn = Math.sin(th);
+      const e = 2 / (q.n ?? 2);
+      pos[i] = q.cx + q.rx * Math.sign(c) * Math.abs(c) ** e;
       pos[i + 1] = q.y;
-      pos[i + 2] = q.cz + q.rz * Math.sin(th);
+      pos[i + 2] = q.cz + q.rz * Math.sign(sn) * Math.abs(sn) ** e;
     }
   }
   const idx: number[] = [];
@@ -230,7 +248,7 @@ export function torsoW(y: number): Weights {
 /** Neck tube: held by the chest at the bottom, follows the head at the top. */
 export function neckW(y: number): Weights {
   const wc = 0.5 * (1 - sstep(1.47, 1.53, y));
-  const wh = sstep(1.56, 1.64, y);
+  const wh = sstep(1.58, 1.66, y);
   return [
     [BONE.chest, wc],
     [BONE.neck, 1 - wc - wh],
@@ -286,6 +304,14 @@ export function skirtW(x: number, y: number, hem: number, k: number): Weights {
     [BONE.hips, 0],
     [BONE.hips, 0],
   ];
+}
+
+/** Boot shaft: the foot holds the lower part, the shin carries the collar (the boot flexes at the ankle). */
+export function bootW(side: Side, y: number): Weights {
+  const shin = side === 'L' ? BONE.shinL : BONE.shinR;
+  const foot = side === 'L' ? BONE.footL : BONE.footR;
+  const t = sstep(0.1, 0.2, y);
+  return [[foot, 1 - t], [shin, t], [foot, 0], [foot, 0]];
 }
 
 /** Everything on this part follows one bone. */

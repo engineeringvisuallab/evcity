@@ -37,7 +37,7 @@ export interface HumanRig {
   handR?: THREE.Object3D;
   footL?: THREE.Object3D;
   footR?: THREE.Object3D;
-  /** Skinned body only: eyelid groups (scale.y 0.02 open .. 1 closed), far-away mesh switch, and release of the skeleton's GPU texture. */
+  /** Skinned body only: eyelid groups (scale.y 0.3 resting .. 1 closed), far-away mesh switch, and release of the skeleton's GPU texture. */
   eyelids?: THREE.Object3D[];
   setLod?: (level: 0 | 1) => void;
   dispose?: () => void;
@@ -115,7 +115,7 @@ const band = (y: number, height: number, grow: number): THREE.BufferGeometry => 
 
 // head: an egg (ellipsoid) centred at HEAD_Y
 const HEAD_Y = 0.76;
-const HEAD_R: V3 = [0.098, 0.125, 0.11];
+const HEAD_R: V3 = [0.084, 0.125, 0.105];
 const grow = (k: number): V3 => [HEAD_R[0] * k, HEAD_R[1] * k, HEAD_R[2] * k];
 
 interface Geoms {
@@ -213,7 +213,7 @@ function geoms(): Geoms {
     sph([0.013, 0.012, 0.12], [0, 0.89, 0], 8, 5), // ridge
   ], false);
 
-  const topi = new THREE.CylinderGeometry(0.09, 0.103, 0.07, 14, 1);
+  const topi = new THREE.CylinderGeometry(0.082, 0.092, 0.07, 14, 1);
   topi.translate(0, 0.855, 0);
 
   // ---- arms: sleeve (shirt) / forearm + hand (skin) ----

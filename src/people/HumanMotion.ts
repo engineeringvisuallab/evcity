@@ -90,7 +90,7 @@ export function blink(rig: HumanRig, dt: number): void {
       u.next = Math.random() < 0.15 ? 0.12 : 2 + Math.random() * 4;
     } else c = Math.sin(((u.t as number) / dur) * Math.PI);
   }
-  const s = Math.max(0.02, c);
+  const s = Math.max(0.3, c);
   for (const l of lids) l.scale.y = s;
 }
 
@@ -99,5 +99,5 @@ export function closeEyes(rig: HumanRig, closed: boolean): void {
   const lids = rig.eyelids;
   if (!lids) return;
   (lids[0].userData as { t?: number }).t = closed ? -2 : -1;
-  for (const l of lids) l.scale.y = closed ? 1 : 0.02;
+  for (const l of lids) l.scale.y = closed ? 1 : 0.3;
 }

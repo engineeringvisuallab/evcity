@@ -1,4 +1,5 @@
 import { ARM, BONE_COUNT, LEG, NECK, TORSO, armW, legW, neckW, skinArrays, skirtW, slice, torsoW, tubeData, type Ring, type Weights } from '../src/people/SkinMath';
+import { SLOTS, buildParts, buildStripes, type Outfit } from '../src/people/BodyParts';
 
 /** Skinned human maths: every tube is closed + outward facing, indices are valid, every vertex's weights sum to 1. */
 function volume(rings: Ring[], seg: number): { v: number; tris: number; verts: number; maxIdx: number; pos: Float32Array } {
@@ -50,6 +51,43 @@ if (!(hemL.some(([b, w]) => b === 11 && w > 0.5) && hemR.some(([b, w]) => b === 
   fail++;
   console.log('FAIL skirt hem does not follow the legs');
 } else console.log('OK   skirt hem follows the left / right thigh');
+// the real parts the game builds: every body type x LOD x outfit
+const volumeOf = (pos: Float32Array, idx: number[]): number => {
+  let v = 0;
+  for (let i = 0; i < idx.length; i += 3) {
+    const a = idx[i] * 3, b = idx[i + 1] * 3, c = idx[i + 2] * 3;
+    v += (pos[a] * (pos[b + 1] * pos[c + 2] - pos[b + 2] * pos[c + 1]) - pos[a + 1] * (pos[b] * pos[c + 2] - pos[b + 2] * pos[c]) + pos[a + 2] * (pos[b] * pos[c + 1] - pos[b + 1] * pos[c])) / 6;
+  }
+  return v;
+};
+for (const type of ['slim', 'average', 'stocky'] as const) {
+  for (const lod of [0, 1] as const) {
+    for (const outfit of ['shirt', 'panjabi', 'lungi'] as Outfit[]) {
+      const parts = buildParts(type, lod, outfit);
+      const used = new Set(parts.map((p) => p.slot));
+      let bad = 0;
+      let n = 0;
+      for (const p of parts) {
+        n += p.idx.length / 3;
+        if (p.closed && volumeOf(p.pos, p.idx) <= 0) bad++;
+        if (Math.max(...p.idx) >= p.pos.length / 3) bad++;
+        for (let i = 0; i < p.pos.length / 3; i++) {
+          let sum = 0;
+          for (let k = 0; k < 4; k++) {
+            sum += p.skinWeight[i * 4 + k];
+            if (p.skinIndex[i * 4 + k] >= BONE_COUNT) bad++;
+          }
+          if (Math.abs(sum - 1) > 1e-5) bad++;
+        }
+      }
+      const ok = used.size === SLOTS && bad === 0;
+      if (!ok) fail++;
+      if (type === 'average' && outfit === 'shirt') console.log(`${ok ? 'OK  ' : 'FAIL'} body ${type} lod${lod}: ${parts.length} parts, ${n} triangles`);
+      else if (!ok) console.log(`FAIL body ${type} lod${lod} ${outfit}: slots ${used.size}/${SLOTS}, ${bad} bad`);
+    }
+  }
+}
+if (buildStripes('average').length !== 4) fail++;
 console.log(`tube triangles (without face / hands / shoes): ${tris}`);
 if (fail) {
   console.error(`${fail} check(s) failed`);
