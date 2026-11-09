@@ -170,16 +170,16 @@ export const Config = {
     scatterChance: 0.035,
     /** Size (m) of the forest patches (noise wavelength). */
     forestScale: 520,
-    /** No tree on ground steeper than this (degrees), the chance fades out from 60 % of it. */
-    maxSlopeDeg: 33,
+    /** No tree on ground steeper than this (degrees), the chance fades out from 60 % of it. Was 33: over 60 % of the ground above 200 m is steeper than that, so the hills were bare. */
+    maxSlopeDeg: 42,
     /** Free ground (m) above the water surface / above sea level (beach). */
     waterMargin: 1.5,
     seaMargin: 3.5,
     /** Free ground (m) around asphalt, shoulder and junction pads. */
     roadClear: 4,
-    /** Trees thin out between these heights (m) and stop above the second one (snow line is ~340 m). */
-    treeLineStart: 230,
-    treeLineEnd: 330,
+    /** Trees thin out between these heights (m) and stop above the second one (snow line is ~340 m). Was 230 / 330: the upper half of the hills was bare. */
+    treeLineStart: 320,
+    treeLineEnd: 420,
     /** Pines replace broadleaf trees between these heights (m); palms grow below `palmBelow` (m). */
     pineFrom: 70,
     pineFull: 150,

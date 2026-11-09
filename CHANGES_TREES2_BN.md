@@ -6,6 +6,11 @@ Eta `evcity_1.zip` (main game) er sathe merge kora: step 1 (notun gach model) + 
 - Main game e Player.ts, PlayerModel.ts, Engine.ts, i18n/bn.ts alada bodlechhilo: 3-way merge kora, kono conflict hoy ni. Baki file main e bodlay ni, tai shorashori nilam.
 - Merged project e `tsc --noEmit`, `tree-test`, `tree-climb-test` pass.
 
+## Pahar e gach nei keno (notun)
+- Karon duto: (1) gach e dhalu 33 degree er beshi hole bad chhilo, kintu 200 m er upore jomir 60-70% er beshi dhalu ei cheye steep; (2) tree line 230-330 m chhilo, tar upore ekdom gach nei. Tai pahar faka chhilo.
+- Ekhon `maxSlopeDeg` 42, `treeLineStart/End` 320/420. 300 m er upore gach 41 theke ~3000 holo, mot gach 81k theke 93k (chunk per avg 183 -> 226). FPS dekhe niyo, beshi lagle `treeLineStart` komao.
+- Snow line ~340 m, tai 340 er upore kichu gach barfer upor dekhabe.
+
 ## Size ar trunk (notun)
 - Street gach ager cheye 1.5 gun boro (`STREET_KIND` scale). Krishnachura 0.75-1.05, Debdaru 0.82-1.25, khejur 0.9-1.25, narikel 0.75-1.05.
 - Mukut uchute: Krishnachura trunk 4.2 -> 6.6 m, mukut kendro 7.4 -> 10 m (`PalmAssets.ts`); Debdaru trunk 9 -> 11 m, pata 3 m uchu theke shuru (`TreeAssets.ts`). Scale 1 e Krishnachura mukut er tola ~7.5 m, tai gari/truck er upor diye jay.
