@@ -14,7 +14,7 @@ Eta `evcity_1.zip` (main game) er sathe merge kora: step 1 (notun gach model) + 
 ## Size ar trunk (notun)
 - Street gach ager cheye 1.5 gun boro (`STREET_KIND` scale). Krishnachura 0.75-1.05, Debdaru 0.82-1.25, khejur 0.9-1.25, narikel 0.75-1.05.
 - Mukut uchute: Krishnachura trunk 4.2 -> 6.6 m, mukut kendro 7.4 -> 10 m (`PalmAssets.ts`); Debdaru trunk 9 -> 11 m, pata 3 m uchu theke shuru (`TreeAssets.ts`). Scale 1 e Krishnachura mukut er tola ~7.5 m, tai gari/truck er upor diye jay.
-- Median gach: ekhono road er majhkhane double yellow line er upor (tumi bad dite bolo ni, pore road er median boro korbe). Median boro korle `Roadside.ts` er median block ta ar `MEDIAN_TREE_STEP` dekhe nio.
+- Median gach: choto (scale 0.42-0.62, Debdaru / khejur), proti 4-5 ta r por ekta boro Krishnachura (`MEDIAN_SMALL`, `nextBig`). Ekhono road er majhkhane double yellow line er upor (tumi bad dite bolo ni, pore road er median boro korbe). Median boro korle `Roadside.ts` er median block ta ar `MEDIAN_TREE_STEP` dekhe nio.
 - Roundabout er majhkhane boro Krishnachura boshanor code likhechhi, kintu ei game e **kono roundabout nei**, tai ekhon kichu boshe na. 4-way junction er thik majhkhane gach boshale ta traffic er moddhe porbe, tai boshai ni.
 
 ## Footpath e gach (notun)
