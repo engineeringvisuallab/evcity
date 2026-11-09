@@ -82,7 +82,9 @@ function blade(b: Builder, o: BladeOpts): void {
     return [o.cx + o.dx * out, o.h * t - o.droop * 0.35 * t * t * t, o.cz + o.dz * out];
   };
   const P0 = at(0), P1 = at(0.45), P2 = at(0.8), P3 = at(1);
-  const w0 = o.w, w1 = o.w * 0.86, w2 = o.w * 0.48;
+  // SLIM blades: the half width is multiplied by `look.bladeWidth` and tapers faster to a fine point (thin, smooth grass, not broad leaves)
+  const bw = o.w * Config.vegetation.grass.look.bladeWidth;
+  const w0 = bw, w1 = bw * 0.78, w2 = bw * 0.36;
   const c = (k: number): RGB => [k * o.tint[0], k * o.tint[1], k * o.tint[2]];
   const nl = bladeNormal(-tx, -tz, 0.38), nr = bladeNormal(tx, tz, 0.38), nm = bladeNormal(0, 0, 0);
   const L0 = [P0[0] - tx * w0, P0[1], P0[2] - tz * w0], R0 = [P0[0] + tx * w0, P0[1], P0[2] + tz * w0];

@@ -7,6 +7,10 @@
 - Ghash er rong dark green: `GREEN` [0.13, 0.28, 0.07] (ager [0.25, 0.42, 0.12]), lawn o dark; holud / khor rong er ghash o kom (`look.yellowShare` 0.12, `strawShare` 0.04).
 - Files: Config.ts, Quality.ts, GrassAssets.ts, GrassManager.ts (+ ager ta er GrassPlacement.ts, workers, ChunkLoader)
 
+## Update: shoru, chikon ghash
+- Blade er chowra `look.bladeWidth` = 0.42 gun (GrassAssets `blade()`), ar agar dik aro soru (tapering). Tuft er chowra `widthScale` 1.1 -> 0.8.
+- Mota broad-leaf `clump` model er bhag 26% -> 8% (shoru `wild` ar `lawn` beshi).
+
 ## 1. Meadow er shadharon ghash (single grass)
 - Ghonotto: prottek accepted cell e ekhon `grass.dense` ta tuft (ager 1 ta). High = 3x, medium = 2x, low = 1x (`Quality.ts` e `grassDense`, ar `Config.vegetation.grass.dense` = 3 default).
   Extra tuft gulo oi cell er bhitore, same terrain/slope test, deterministic. Dur er LOD ring e `dense / stride^2` (kom-pokkhe 1), tai dur er ring ta near ring er subset-i thake.

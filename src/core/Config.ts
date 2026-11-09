@@ -274,7 +274,7 @@ export const Config = {
         lawnWidthScale: 2.2,
       },
       /** Width of every tuft = its height scale x this. */
-      widthScale: 1.1, // was 2.2 when the grass was 3x lower: the tuft is 3x taller but only ~1.5x wider, so the blades stand more upright instead of splaying
+      widthScale: 0.8, // was 2.2 when the grass was 3x lower: the tuft is 3x taller but only ~1.5x wider, so the blades stand more upright instead of splaying
       /**
        * Grass LOD rings (like the trees): `to` = up to this distance (m, nearest edge of the tile), `stride` = only every n-th cell gets a tuft
        * (must divide tile / cell = 128: 1, 2, 4), `density` = blades per tuft model, `size` = width of a tuft (fewer tufts, each a bit wider).
@@ -358,7 +358,7 @@ export const Config = {
        * COLOUR: every tuft is fresh green, yellow-green or straw (`strawShare` of the tufts lean to straw outside the city, `yellowShare` to yellow-green).
        * `rootDark` = brightness of the blade at the root (0..1, 1 = no darkening), `wind` = global wind sway multiplier (0 = still air; the sway grows with blade height, so short lawn moves little anyway).
        */
-      look: { strawShare: 0.04, yellowShare: 0.12, rootDark: 0.45, wind: 1 },
+      look: { bladeWidth: 0.42, strawShare: 0.04, yellowShare: 0.12, rootDark: 0.45, wind: 1 },
       /**
        * SINGLE GRASS: every tuft model has only `blades[0]..blades[1]` blades (3-5 leaves per grass), so the ground can be covered with very many
        * of them cheaply (`cell` 0.2 m). Used for the four grass kinds; flowers keep their own base. enabled false = the old many-blade tufts.

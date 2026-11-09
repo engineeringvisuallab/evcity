@@ -259,7 +259,7 @@ export class GrassManager {
     let type: number;
     if (flag > 3.5) {
       // DENSE extra single grass (flag 4): plain grass kinds only, never a flower and never a clump
-      type = h1 < 0.32 ? GrassType.wild : h1 < 0.62 ? GrassType.lawn : h1 < 0.88 ? GrassType.clump : GrassType.seed;
+      type = h1 < 0.45 ? GrassType.wild : h1 < 0.83 ? GrassType.lawn : h1 < 0.91 ? GrassType.clump : GrassType.seed;
       if (dry > 0.5 && type === GrassType.lawn) type = GrassType.wild;
       return type + EXTRA;
     }
@@ -282,7 +282,7 @@ export class GrassManager {
       // 70 % the dominant species of the patch, 30 % a random other flower so the meadow is mixed, not a single colour
       return h3 < 0.7 ? dominant : GrassType.daisy + Math.floor(((h3 - 0.7) / 0.3) * 6) % 6;
     }
-    type = h1 < 0.32 ? GrassType.wild : h1 < 0.62 ? GrassType.lawn : h1 < 0.88 ? GrassType.clump : GrassType.seed;
+    type = h1 < 0.45 ? GrassType.wild : h1 < 0.83 ? GrassType.lawn : h1 < 0.91 ? GrassType.clump : GrassType.seed;
     if (dry > 0.5 && type === GrassType.lawn) type = GrassType.wild;
     return type;
   }
