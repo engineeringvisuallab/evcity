@@ -1,4 +1,4 @@
-// Dense single grass: dense = 10 gives ~10x the tufts of dense = 1 (meadow only, flag 4 extras), the far rings stay a subset of the near ring,
+// Dense single grass: dense = 5 gives ~5x the tufts of dense = 1 (meadow only, flag 4 extras), the far rings stay a subset of the near ring,
 // and the same call twice gives the same result. Run: npx tsx scripts/grass-dense-test.ts
 import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
 import { Config } from '../src/core/Config';
@@ -20,15 +20,15 @@ let tiles: [number, number][] = [[200, 200], [150, 260], [250, 120], [100, 300]]
 let total1 = 0, total10 = 0, t10 = 0;
 for (const [tx, tz] of tiles) {
   grass.dense = 1; const a1 = grass.place(tx, tz, 1);
-  grass.dense = 10; const t0 = performance.now(); const a10 = grass.place(tx, tz, 1); t10 += performance.now() - t0;
+  grass.dense = 5; const t0 = performance.now(); const a10 = grass.place(tx, tz, 1); t10 += performance.now() - t0;
   const a10b = grass.place(tx, tz, 1);
   const s1 = stat(a1), s10 = stat(a10);
-  console.log(`tile ${tx},${tz}: dense1 ${s1.single}+${s1.extra}  dense10 ${s10.single}+${s10.extra}`);
+  console.log(`tile ${tx},${tz}: dense1 ${s1.single}+${s1.extra}  dense5 ${s10.single}+${s10.extra}`);
   total1 += a1.length / GRASS_STRIDE; total10 += a10.length / GRASS_STRIDE;
   check(a10.length === a10b.length && a10.every((v, i) => v === a10b[i]), `tile ${tx},${tz}: deterministic`);
   check(s10.single === s1.single, `tile ${tx},${tz}: primary tufts unchanged by dense`);
   for (const stride of [2, 4]) { const far = keys(grass.place(tx, tz, stride)); const near = keys(a10); let miss = 0; for (const k of far) if (!near.has(k)) miss++; check(miss === 0, `tile ${tx},${tz}: stride ${stride} ring is a subset of the near ring`); }
 }
-if (total1 > 0) { const r = total10 / total1; console.log('ratio', r.toFixed(2)); check(r > 7 && r < 10.5, 'dense 10 is about 8-10x the tufts of dense 1'); }
-console.log('avg place time per tile (dense 10):', (t10 / tiles.length).toFixed(0), 'ms');
+if (total1 > 0) { const r = total10 / total1; console.log('ratio', r.toFixed(2)); check(r > 4 && r < 5.1, 'dense 5 is about 5x the tufts of dense 1'); }
+console.log('avg place time per tile (dense 5):', (t10 / tiles.length).toFixed(0), 'ms');
 process.exit(bad ? 1 : 0);

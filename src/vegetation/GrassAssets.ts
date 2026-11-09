@@ -483,9 +483,12 @@ export class GrassAssets {
   /** index = GrassType (ring 0) */
   readonly geometries: THREE.BufferGeometry[];
   readonly material: THREE.MeshLambertMaterial;
+  /** Same shader for the extra (dense) tufts, but with its own, much shorter fade distance (Config grass.denseFade). */
+  readonly extraMaterial: THREE.MeshLambertMaterial;
   private time = { value: 0 };
   private wind = { value: Config.vegetation.grass.look.wind };
   private fade = { value: new THREE.Vector2(Config.vegetation.grass.fadeStart, Config.vegetation.grass.fadeEnd) };
+  private extraFade = { value: new THREE.Vector2(Config.vegetation.grass.denseFade[0], Config.vegetation.grass.denseFade[1]) };
 
   constructor() {
     Config.vegetation.grass.lods.forEach((lod, i) => {
@@ -499,16 +502,17 @@ export class GrassAssets {
       this.lodGeometries.push(list);
     });
     this.geometries = this.lodGeometries[0];
-    this.material = this.makeMaterial();
+    this.material = this.makeMaterial(this.fade, '');
+    this.extraMaterial = this.makeMaterial(this.extraFade, '-x');
   }
 
   /** Wind sway + distance fade in the vertex shader; the sun shining THROUGH the blades (translucency) in the fragment shader. */
-  private makeMaterial(): THREE.MeshLambertMaterial {
+  private makeMaterial(fade: { value: THREE.Vector2 }, key: string): THREE.MeshLambertMaterial {
     const m = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     m.onBeforeCompile = (shader) => {
       shader.uniforms.uGrassTime = this.time;
       shader.uniforms.uGrassWind = this.wind;
-      shader.uniforms.uGrassFade = this.fade;
+      shader.uniforms.uGrassFade = fade;
       shader.vertexShader = shader.vertexShader
         .replace('#include <common>', '#include <common>\nuniform float uGrassTime;\nuniform float uGrassWind;\nuniform vec2 uGrassFade;\nattribute float aFlower;\nvarying float vFlower;')
         // flower parts keep their own colour: undo the per-instance green / dry tint for them
@@ -553,7 +557,7 @@ export class GrassAssets {
           #include <opaque_fragment>`,
         );
     };
-    m.customProgramCacheKey = () => 'grass-wind-fade-v4';
+    m.customProgramCacheKey = () => 'grass-wind-fade-v4' + key;
     return m;
   }
 
@@ -569,5 +573,6 @@ export class GrassAssets {
   dispose(): void {
     for (const g of new Set(this.lodGeometries.flat())) g.dispose();
     this.material.dispose();
+    this.extraMaterial.dispose();
   }
 }

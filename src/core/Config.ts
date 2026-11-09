@@ -242,11 +242,16 @@ export const Config = {
       tile: 32,
       cell: 0.2,
       /**
-       * DENSE SINGLE GRASS: every accepted meadow cell grows `dense` single tufts instead of one (10 = 10x the old density; same cell test, terrain test and
-       * deterministic jitter, so the far rings stay a subset of the near ring). The Quality preset sets the value the workers use (low 3, medium 6, high 10).
+       * DENSE SINGLE GRASS: every accepted meadow cell grows `dense` single tufts instead of one (5 = 5x the old density; same cell test, terrain test and
+       * deterministic jitter, so the far rings stay a subset of the near ring). The Quality preset sets the value the workers use (low 2, medium 3, high 5).
        * Far rings (stride > 1) get dense / stride^2 (at least 1). Not applied to the mown city lawn.
        */
-      dense: 10,
+      dense: 5,
+      /**
+       * The extra (dense) tufts fade out with the camera distance: full size inside `denseFade[0]` m, shrunk to nothing at `denseFade[1]` m (smooth, no
+       * pop), and a tile's extra tufts are not drawn at all when the tile is farther than `denseFade[1]` m. So the 5x density costs only near the player.
+       */
+      denseFade: [10, 24] as [number, number],
       /** Tiles within `radius` (m) of the player exist, tiles beyond `keep` are removed. */
       radius: 115,
       keep: 135,
@@ -353,7 +358,7 @@ export const Config = {
        * COLOUR: every tuft is fresh green, yellow-green or straw (`strawShare` of the tufts lean to straw outside the city, `yellowShare` to yellow-green).
        * `rootDark` = brightness of the blade at the root (0..1, 1 = no darkening), `wind` = global wind sway multiplier (0 = still air; the sway grows with blade height, so short lawn moves little anyway).
        */
-      look: { strawShare: 0.12, yellowShare: 0.3, rootDark: 0.45, wind: 1 },
+      look: { strawShare: 0.04, yellowShare: 0.12, rootDark: 0.45, wind: 1 },
       /**
        * SINGLE GRASS: every tuft model has only `blades[0]..blades[1]` blades (3-5 leaves per grass), so the ground can be covered with very many
        * of them cheaply (`cell` 0.2 m). Used for the four grass kinds; flowers keep their own base. enabled false = the old many-blade tufts.

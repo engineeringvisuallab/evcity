@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Config } from '../core/Config';
 import type { GrassResult } from '../workers/messages';
 import type { GrassAssets } from './GrassAssets';
-import { GRASS_STRIDE, GrassType } from './TreeTypes';
+import { GRASS_STRIDE, GRASS_TYPE_COUNT, GrassType } from './TreeTypes';
 
 const G = Config.vegetation.grass;
 /** Height of the tallest point of a grass model at scale 1 (cached): the tufts are scaled so this point reaches the wanted height in metres. */
@@ -66,14 +66,16 @@ function grassLod(d: number, current?: number): number {
   return L.length - 1;
 }
 
+/** Type index offset of the extra (dense) tufts: they get their own InstancedMesh per model, with the short-fade material. */
+const EXTRA = GRASS_TYPE_COUNT;
 const dummy = new THREE.Object3D();
 const color = new THREE.Color();
-const GREEN: [number, number, number] = [0.25, 0.42, 0.12];
+const GREEN: [number, number, number] = [0.13, 0.28, 0.07]; // DARK green meadow (was [0.25, 0.42, 0.12])
 const DRY: [number, number, number] = [0.46, 0.42, 0.2];
-const YELLOW: [number, number, number] = [0.42, 0.5, 0.15];
+const YELLOW: [number, number, number] = [0.24, 0.34, 0.09];
 const STRAW: [number, number, number] = [0.62, 0.55, 0.27];
 /** City lawn: a fresher, slightly brighter green than the wild meadow. */
-const LAWN: [number, number, number] = [0.22, 0.44, 0.11];
+const LAWN: [number, number, number] = [0.12, 0.31, 0.07];
 
 /** Smooth 2D value noise in 0..1 (integer-lattice hash, smoothstep blend): decides where the flower patches are. Deterministic, no state. */
 function vnoise(x: number, z: number): number {
@@ -201,12 +203,17 @@ export class GrassManager {
       );
     }
 
-    // remove tiles that are clearly out of range (keep > radius = no flicker)
+    // remove tiles that are clearly out of range (keep > radius = no flicker); the extra (dense) tufts of a tile are only drawn while it is near
     for (const t of [...this.tiles.values()]) {
       const x0 = t.tx * T - HALF;
       const z0 = t.tz * T - HALF;
       const d = Math.hypot(Math.max(x0 - px, 0, px - (x0 + T)), Math.max(z0 - pz, 0, pz - (z0 + T)));
-      if (d > G.keep) this.remove(t);
+      if (d > G.keep) {
+        this.remove(t);
+        continue;
+      }
+      const show = d < G.denseFade[1] + 2;
+      for (const m of t.meshes) if (m && m.userData.extra && m.visible !== show) m.visible = show;
     }
   }
 
@@ -234,8 +241,8 @@ export class GrassManager {
       key, tx, tz, lod, data, count, geoms, ring: G.lods[lod],
       ox: tx * G.tile - HALF, oz: tz * G.tile - HALF,
       phase: 0, i: 0,
-      types: new Uint8Array(count), counts: new Array<number>(geoms.length).fill(0),
-      meshes: [], next: new Array<number>(geoms.length).fill(0),
+      types: new Uint8Array(count), counts: new Array<number>(geoms.length * 2).fill(0),
+      meshes: [], next: new Array<number>(geoms.length * 2).fill(0),
     };
   }
 
@@ -254,7 +261,7 @@ export class GrassManager {
       // DENSE extra single grass (flag 4): plain grass kinds only, never a flower and never a clump
       type = h1 < 0.32 ? GrassType.wild : h1 < 0.62 ? GrassType.lawn : h1 < 0.88 ? GrassType.clump : GrassType.seed;
       if (dry > 0.5 && type === GrassType.lawn) type = GrassType.wild;
-      return type;
+      return type + EXTRA;
     }
     if ((flag > 0.5 && flag < 1.5) || (flag > 2.5 && flag < 3.5)) {
       // a big grass clump (tussock): two shapes, mixed by the hash (flag 3 = tall clump at a tree base / fence in the city)
@@ -284,9 +291,10 @@ export class GrassManager {
   private fillOne(j: InstallJob, i: number): void {
     const { data, geoms, ring } = j;
     const o = i * GRASS_STRIDE;
-    const type = j.types[i];
-    const mesh = j.meshes[type] as THREE.InstancedMesh;
-    const slot = j.next[type]++;
+    const slot0 = j.types[i];
+    const type = slot0 >= EXTRA ? slot0 - EXTRA : slot0; // the model
+    const mesh = j.meshes[slot0] as THREE.InstancedMesh;
+    const slot = j.next[slot0]++;
     const hh = Math.sin(data[o] * 12.9898 + data[o + 2] * 78.233) * 43758.5453;
     const h2 = hh * 7.31 - Math.floor(hh * 7.31);
     const sc = data[o + 3];
@@ -351,13 +359,15 @@ export class GrassManager {
         if (performance.now() >= until) return false;
       }
       // 2. one InstancedMesh per model that occurs
-      for (let t = 0; t < j.geoms.length; t++) {
+      for (let t = 0; t < j.geoms.length * 2; t++) {
         if (j.counts[t] === 0) {
           j.meshes.push(null);
           continue;
         }
-        const mesh = new THREE.InstancedMesh(j.geoms[t], this.assets.material, j.counts[t]);
+        const extra = t >= EXTRA;
+        const mesh = new THREE.InstancedMesh(j.geoms[extra ? t - EXTRA : t], extra ? this.assets.extraMaterial : this.assets.material, j.counts[t]);
         mesh.name = `grass ${j.key} type${t}`;
+        mesh.userData.extra = extra;
         j.meshes.push(mesh);
       }
       j.phase = 1;
