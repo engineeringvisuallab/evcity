@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { Config } from '../core/Config';
 import type { GrassResult } from '../workers/messages';
 import type { GrassAssets } from './GrassAssets';
-import { CELLS_DRY, CELLS_LOW, CELLS_MID, CELLS_TALL, CELL_HEIGHT } from './GrassAtlasData';
 import { GRASS_STRIDE, GrassType } from './TreeTypes';
 
 const G = Config.vegetation.grass;
@@ -44,16 +43,6 @@ function grassLod(d: number, current?: number): number {
     if (d < limit) return i;
   }
   return L.length - 1;
-}
-
-const pickCell = (list: number[], h: number): number => list[Math.min(list.length - 1, Math.floor(h * list.length))];
-/** Atlas cell of a card: the class follows the grass type, dry (straw) clusters come in patches (like real meadows) and in the `seed` type. */
-function cardCell(type: number, h1: number, h2: number, h3: number, dryPatch: number, cityLawn: boolean, dryAmt: number): { cell: number; dry: boolean } {
-  const C = G.cards;
-  const dryProb = cityLawn ? 0 : Math.min(1, (dryPatch > C.patchAt ? C.dryPatchShare : C.dryShare) + dryAmt);
-  if (h3 < dryProb || (type === GrassType.seed && h3 < 0.6 && !cityLawn)) return { cell: pickCell(CELLS_DRY, h1), dry: true };
-  const list = type === GrassType.lawn ? CELLS_LOW : type === GrassType.clump || type === GrassType.tussockWide ? CELLS_MID : CELLS_TALL;
-  return { cell: pickCell(list, h2), dry: false };
 }
 
 const dummy = new THREE.Object3D();
@@ -246,24 +235,12 @@ export class GrassManager {
     // 2. one InstancedMesh per type
     const meshes: (THREE.InstancedMesh | null)[] = [];
     const next = new Array<number>(geoms.length).fill(0);
-    const cellArr: (Float32Array | undefined)[] = new Array(geoms.length);
     for (let t = 0; t < geoms.length; t++) {
       if (counts[t] === 0) {
         meshes.push(null);
         continue;
       }
-      let mesh: THREE.InstancedMesh;
-      if (geoms[t].userData.card) {
-        // card cluster: own copy of the tiny shared card geometry (4-6 triangles) that carries this tile's per-instance atlas cells
-        const g = geoms[t].clone();
-        g.userData.owned = true;
-        const cells = new Float32Array(counts[t]);
-        g.setAttribute('aCell', new THREE.InstancedBufferAttribute(cells, 1));
-        cellArr[t] = cells;
-        mesh = new THREE.InstancedMesh(g, this.assets.cardMaterial, counts[t]);
-      } else {
-        mesh = new THREE.InstancedMesh(geoms[t], this.assets.material, counts[t]);
-      }
+      const mesh = new THREE.InstancedMesh(geoms[t], this.assets.material, counts[t]);
       mesh.name = `grass ${key} type${t}`;
       meshes.push(mesh);
     }
@@ -279,39 +256,10 @@ export class GrassManager {
       dummy.rotation.set(0, data[o + 4], 0);
       // SIZE (metres, not model scale): a tuft's tallest blade is 4-20 cm (blades of 1-20 cm in a tuft), a big clump 25-50 cm at the most.
       const top = topOf(geoms[type]);
-      const card = !!geoms[type].userData.card;
-      let cell = 0;
-      let cellDry = false;
-      if (card) {
-        const hq = Math.sin(data[o] * 5.1234 + data[o + 2] * 9.4321) * 43758.5453;
-        const h3 = hq - Math.floor(hq);
-        const hr = Math.sin(data[o] * 3.7 + data[o + 2] * 1.9) * 43758.5453;
-        const h1 = hr - Math.floor(hr);
-        const dp = vnoise((ox + data[o]) / G.cards.patchScale + 11, (oz + data[o + 2]) / G.cards.patchScale - 5);
-        ({ cell, dry: cellDry } = cardCell(type, h1, h2, h3, dp, data[o + 7] > 1.5 && data[o + 7] < 2.5, data[o + 6]));
-        (cellArr[type] as Float32Array)[slot] = cell;
-      }
       const wide = type === GrassType.lawn ? 1.1 : type === GrassType.wild ? 0.95 : 1;
       const lawnTuft = data[o + 7] > 1.5 && data[o + 7] < 2.5;
       const hMul = lawnTuft ? G.city.height : 1; // mown city lawn: even shorter
-      if (card) {
-        // CARD: cluster height in metres (small, dense grass), card width = height / cluster aspect (the cluster is as wide as its cell)
-        const hf = CELL_HEIGHT[cell];
-        let hm: number;
-        let wm: number;
-        if (type >= GrassType.tussock) {
-          const rel = Math.min(1, sc / 1.2);
-          hm = G.cards.clumpHeight * (0.55 + 0.45 * rel) * (0.8 + 0.2 * h2);
-          wm = ring.clumpSize;
-        } else {
-          const rel = Math.min(1, sc / 1.5);
-          const v = G.tuft.min + (1 - G.tuft.min) * (0.5 * rel + 0.5 * h2 ** 1.2);
-          hm = G.tuft.maxHeight * v * hMul * G.cards.heightMul;
-          wm = ring.size;
-        }
-        const s1 = hm / hf;
-        dummy.scale.set(s1 * wm, s1, s1 * wm);
-      } else if (type >= GrassType.tussock) {
+      if (type >= GrassType.tussock) {
         // clump: the larger its placement scale (0.75..1.45 x edge / base factors), the taller it is, never above clump.maxHeight
         const rel = Math.min(1, sc / 1.2);
         const ys = (G.clump.maxHeight * (0.55 + 0.45 * rel) * (0.8 + 0.2 * h2)) / top;
@@ -329,14 +277,6 @@ export class GrassManager {
       mesh.setMatrixAt(slot, dummy.matrix);
       const dry = data[o + 6];
       const t = data[o + 5] * (0.9 + h2 * 0.2); // brightness varies tuft to tuft
-      if (card) {
-        // the instance colour multiplies the atlas texture: dark green for green clusters, a neutral warm tint for straw ones
-        const tint = cellDry ? G.cards.dryTint : G.cards.greenTint;
-        const k = t * G.cards.brightness * (0.92 + 0.16 * h2);
-        color.setRGB(tint[0] * k, tint[1] * k * (cellDry ? 1 : 0.94 + 0.12 * h2), tint[2] * k, THREE.SRGBColorSpace);
-        mesh.setColorAt(slot, color);
-        continue;
-      }
       // COLOUR VARIATION: every tuft is fresh green, yellow-green or straw (shares: Config grass.look). A hash of the tuft's position picks the class;
       // brighter tufts lean yellow-green like sun-lit, drier grass. The city lawn has no straw.
       const cityLawn = data[o + 7] > 1.5;
@@ -379,7 +319,6 @@ export class GrassManager {
       if (!m) continue;
       this.root.remove(m);
       m.dispose(); // frees the per-tile instance buffers; the shared geometries / material stay
-      if (m.geometry.userData.owned) m.geometry.dispose(); // the per-tile card geometry copy
     }
     this.tiles.delete(t.key);
   }

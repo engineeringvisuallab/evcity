@@ -2,10 +2,6 @@ import * as THREE from 'three';
 import { Config } from '../core/Config';
 import { mulberry32 } from '../world/Seed';
 import { GRASS_TYPE_COUNT, GrassType } from './TreeTypes';
-import { buildCardGeometry, makeCardMaterial } from './GrassCards';
-
-/** Types drawn as textured cards when `grass.cards.enabled`: the four grass tufts and the two clumps (flowers keep their 3D models). */
-export const isCardType = (t: number): boolean => t <= GrassType.seed || t >= GrassType.tussock;
 
 /**
  * REALISTIC GRASS + WILDFLOWERS. Ten tuft models (TreeTypes.GrassType), all in ONE shared material:
@@ -127,8 +123,8 @@ const STYLES: Record<number, GrassStyle> = {
 };
 const FLOWER_BASE_STYLE: GrassStyle = { blades: 9, hMin: 0.14, hMax: 0.5, hPow: 1.4, wMin: 0.013, wMax: 0.022, rMin: 0.03, rMax: 0.2, lean: [0.05, 0.22], droop: [0.03, 0.14], straw: 0.05, yellow: 0.25 };
 
-function grassBlades(b: Builder, r: RNG, s: GrassStyle, density = 1): void {
-  const count = Math.max(4, Math.round(s.blades * Config.vegetation.grass.bladeDensity * density));
+function grassBlades(b: Builder, r: RNG, s: GrassStyle, density = 1, fixed = 0): void {
+  const count = fixed > 0 ? fixed : Math.max(4, Math.round(s.blades * Config.vegetation.grass.bladeDensity * density));
   for (let i = 0; i < count; i++) {
     const a = (i / count) * Math.PI * 2 + (r() - 0.5) * 0.9;
     const rad = s.rMin + (s.rMax - s.rMin) * Math.sqrt(r());
@@ -461,7 +457,11 @@ function make(type: number, density = 1): THREE.BufferGeometry {
   if (TUSSOCKS[type]) {
     tussockBlades(b, r, TUSSOCKS[type], density);
   } else if (style) {
-    grassBlades(b, r, style, density);
+    // SINGLE GRASS: 3-5 blades per tuft (same count in every LOD ring: the far rings are already thinner by their stride)
+    const sg = Config.vegetation.grass.single;
+    const n0 = sg.blades[0] + Math.floor(mulberry32(777 + type)() * (sg.blades[1] - sg.blades[0] + 1));
+    const fixed = sg.enabled ? Math.max(sg.blades[0], Math.round(n0 * density)) : 0; // far rings: down to the minimum (3 blades)
+    grassBlades(b, r, style, density, fixed);
     if (type === GrassType.seed && density >= 1) seedHeads(b, r);
   } else {
     // flower tuft: low grass + several flowers on stems
@@ -483,29 +483,14 @@ export class GrassAssets {
   /** index = GrassType (ring 0) */
   readonly geometries: THREE.BufferGeometry[];
   readonly material: THREE.MeshLambertMaterial;
-  /** Alpha-tested atlas material of the grass cards (shares time / wind / fade with `material`). */
-  readonly cardMaterial: THREE.MeshLambertMaterial;
   private time = { value: 0 };
   private wind = { value: Config.vegetation.grass.look.wind };
   private fade = { value: new THREE.Vector2(Config.vegetation.grass.fadeStart, Config.vegetation.grass.fadeEnd) };
 
   constructor() {
-    const cards = Config.vegetation.grass.cards;
-    // one card geometry per ring (3 / 2 / 2 crossed quads), shared by every card type of that ring
-    const cardGeo = cards.enabled
-      ? Config.vegetation.grass.lods.map((_, i) => {
-          const g = buildCardGeometry(cards.quads[Math.min(i, cards.quads.length - 1)]);
-          g.userData.card = true;
-          return g;
-        })
-      : [];
     Config.vegetation.grass.lods.forEach((lod, i) => {
       const list: THREE.BufferGeometry[] = [];
       for (let t = 0; t < GRASS_TYPE_COUNT; t++) {
-        if (cards.enabled && isCardType(t)) {
-          list.push(cardGeo[i]);
-          continue;
-        }
         const clump = t >= GrassType.tussock;
         // flowers exist in ring 0 only (the manager never asks for them in the far rings): share the ring 0 model, no extra geometry
         if (i > 0 && !clump && t >= GrassType.daisy) list.push(this.lodGeometries[0][t]);
@@ -515,7 +500,6 @@ export class GrassAssets {
     });
     this.geometries = this.lodGeometries[0];
     this.material = this.makeMaterial();
-    this.cardMaterial = makeCardMaterial({ time: this.time, wind: this.wind, fade: this.fade });
   }
 
   /** Wind sway + distance fade in the vertex shader; the sun shining THROUGH the blades (translucency) in the fragment shader. */
@@ -585,6 +569,5 @@ export class GrassAssets {
   dispose(): void {
     for (const g of new Set(this.lodGeometries.flat())) g.dispose();
     this.material.dispose();
-    this.cardMaterial.dispose();
   }
 }

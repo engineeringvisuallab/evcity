@@ -28,7 +28,7 @@ export const Config = {
      * The terrain shader multiplies the soil share (and the soil on slopes) by (1 - greenness * `amount`) and tints the grass colour `lawnTint`
      * towards a fresh lawn green. amount 0 = old behaviour (brown soil everywhere).
      */
-    cityGreen: { amount: 1, fadeOut: 120, lawnTint: 0.65, slopeSoilKeep: 0.25 },
+    cityGreen: { amount: 0.55, fadeOut: 120, lawnTint: 0.35, slopeSoilKeep: 0.25 },
     seaLevel: 0,
     /** Highest possible terrain point (rim mountains). Used by shader/snow line and sanity checks. */
     maxHeight: 650,
@@ -238,7 +238,7 @@ export const Config = {
     grass: {
       /** Tile size (m) and cell size (m): one tuft at most per cell. tile / cell must be a whole number (and every LOD stride must divide it). 0.25 m = 1.6x denser than 0.32 (short grass needs many tufts to cover the ground). */
       tile: 32,
-      cell: 0.25,
+      cell: 0.2,
       /** Tiles within `radius` (m) of the player exist, tiles beyond `keep` are removed. */
       radius: 115,
       keep: 135,
@@ -260,8 +260,8 @@ export const Config = {
        * Far rings have no flowers. The tuft positions of a coarse ring are a subset of the near ring, so nothing jumps when a tile changes ring.
        */
       lods: [
-        { to: 30, stride: 1, density: 1, size: 1, clumpStride: 1, clumpDensity: 1, clumpSize: 1 },
-        { to: 60, stride: 2, density: 0.5, size: 1.4, clumpStride: 1, clumpDensity: 0.6, clumpSize: 1 },
+        { to: 20, stride: 1, density: 1, size: 1, clumpStride: 1, clumpDensity: 1, clumpSize: 1 },
+        { to: 45, stride: 2, density: 0.5, size: 1.4, clumpStride: 1, clumpDensity: 0.6, clumpSize: 1 },
         { to: 115, stride: 4, density: 0.25, size: 2, clumpStride: 2, clumpDensity: 0.35, clumpSize: 1.35 },
       ] as { to: number; stride: number; density: number; size: number; clumpStride: number; clumpDensity: number; clumpSize: number }[],
       lodHysteresis: 0.12,
@@ -282,7 +282,7 @@ export const Config = {
         minValue: 0.05,
         coreAt: 0.35,
         density: 1,
-        clumpChance: 0.1, // clumps (cards) between the tufts
+        clumpChance: 0, // no big clumps: only single grass (see `single`)
         edgeScale: 0.5,
         boost: 0.9,
         roadStep: 24,
@@ -327,41 +327,22 @@ export const Config = {
        *   flowerShare  share of lawn tufts that carry a small flower (daisy, clover, buttercup)
        *   edge         metres over which the lawn blends into the normal patchy meadow outside the city
        */
-      city: { density: 0.55, height: 0.3, clumpChance: 0.1, clumpScale: 0.8, baseChance: 0.9, baseScale: 1.3, baseReach: 1.6, fenceReach: 1.4, flowerShare: 0.05, edge: 40 },
+      city: { density: 1, height: 0.6, clumpChance: 0, clumpScale: 0.8, baseChance: 0, baseScale: 1.3, baseReach: 1.6, fenceReach: 1.4, flowerShare: 0.05, edge: 40 },
       /**
        * HIGHWAY VERGE outside cities: beyond the gravel shoulder the road side is a grass patch (patch value forced up, like the road-side boost) with
        * tall clumps; `reach` = width (m) of the strip next to the shoulder, `clumpChance` per clump cell inside it, `tall` = clump height multiplier.
        */
-      verge: { reach: 7, clumpChance: 0.3, tall: 1.35, density: 1 },
+      verge: { reach: 7, clumpChance: 0, tall: 1.35, density: 1 },
       /**
        * COLOUR: every tuft is fresh green, yellow-green or straw (`strawShare` of the tufts lean to straw outside the city, `yellowShare` to yellow-green).
        * `rootDark` = brightness of the blade at the root (0..1, 1 = no darkening), `wind` = global wind sway multiplier (0 = still air; the sway grows with blade height, so short lawn moves little anyway).
        */
       look: { strawShare: 0.12, yellowShare: 0.3, rootDark: 0.45, wind: 1 },
       /**
-       * GRASS CARDS (textured clusters cut from the grass sheets, public/assets/grass-atlas.webp): replace the 3D blade models of tufts and clumps.
-       * One cluster = `quads` crossed quads per ring (4-6 triangles instead of 60-110 blades). enabled false = the old blade models.
-       *   quads      crossed quads per LOD ring (ring 0 / 1 / 2)
-       *   alphaCut   alpha test limit (0.3..0.6); rootDark = brightness at the root (0..1)
-       *   greenTint  DARK GREEN colour multiplied with the texture (sRGB 0..1); dryTint = straw clusters; brightness = global multiplier
-       *   dryShare   share of dry (straw) clusters in normal ground; dryPatchShare inside dry patches (patchScale m, patchAt = noise limit)
-       *   height     cluster height (m) = tuft.maxHeight x heightMul (small, dense grass); clumpHeight for the big clumps (m)
+       * SINGLE GRASS: every tuft model has only `blades[0]..blades[1]` blades (3-5 leaves per grass), so the ground can be covered with very many
+       * of them cheaply (`cell` 0.2 m). Used for the four grass kinds; flowers keep their own base. enabled false = the old many-blade tufts.
        */
-      cards: {
-        enabled: true,
-        quads: [4, 3, 2] as number[],
-        alphaCut: 0.5,
-        rootDark: 0.6,
-        greenTint: [0.6, 0.7, 0.5] as [number, number, number],
-        dryTint: [0.85, 0.82, 0.74] as [number, number, number],
-        brightness: 1,
-        dryShare: 0.05,
-        dryPatchShare: 0.55,
-        patchScale: 16,
-        patchAt: 0.64,
-        heightMul: 3,
-        clumpHeight: 0.84,
-      },
+      single: { enabled: true, blades: [3, 5] as [number, number] },
       /** No grass is made while the camera is higher than this above the ground (m): free-fly / helicopter. */
       maxAboveGround: 70,
     },
