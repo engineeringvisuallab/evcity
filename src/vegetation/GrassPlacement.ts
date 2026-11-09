@@ -5,6 +5,7 @@ import type { TerrainSample } from '../terrain/Lakes';
 import { Noise2D } from '../terrain/Noise';
 import { hash2D, mulberry32 } from '../world/Seed';
 import type { TreePlacer } from './TreePlacement';
+import { treeWidth } from './TreeTypes';
 import { placementContains } from '../buildings/Placements';
 import { farmCovers } from '../farm/FarmFields';
 import { parkingContains } from '../parking/ParkingSite';
@@ -186,6 +187,36 @@ export class GrassPlacer {
     return this.patchIn(x, z, tx, tz, this.importanceGrid(tx, tz));
   }
 
+  /**
+   * TREE-BASE GRASS: 0..1 per cell of tile (ox, oz) (row-major, `per` x `per` cells of `grass.cell`): 1 at a trunk, falling to 0 at `treeBase.reach` m
+   * (x 0.7..1.3 with the tree size). Trees come from the same placer as the tree meshes, so grass and trees always agree. Cheap: each tree only touches the
+   * cells inside its own ring, not every cell against every tree.
+   */
+  private treeNear(ox: number, oz: number, per: number): Float32Array {
+    const TB = G.treeBase;
+    const near = new Float32Array(per * per);
+    const M = TB.reach * 1.9; // margin: trees just outside the tile still have a ring that reaches into it
+    const T = G.tile;
+    const trees = this.trees.treesInRect(ox - M, oz - M, ox + T + M, oz + T + M);
+    for (const t of trees) {
+      const R = TB.reach * (0.7 + 0.3 * Math.min(2, treeWidth(t.kind, t.scale)));
+      const rIn = R * 0.45;
+      const i0 = Math.max(0, Math.floor((t.x - R - ox) / G.cell));
+      const i1 = Math.min(per - 1, Math.floor((t.x + R - ox) / G.cell));
+      const j0 = Math.max(0, Math.floor((t.z - R - oz) / G.cell));
+      const j1 = Math.min(per - 1, Math.floor((t.z + R - oz) / G.cell));
+      for (let j = j0; j <= j1; j++) {
+        const cz = oz + (j + 0.5) * G.cell;
+        for (let i = i0; i <= i1; i++) {
+          const cx = ox + (i + 0.5) * G.cell;
+          const v = 1 - smooth(rIn, R, Math.hypot(cx - t.x, cz - t.z));
+          if (v > near[j * per + i]) near[j * per + i] = v;
+        }
+      }
+    }
+    return near;
+  }
+
   /** Tufts and clumps of tile (tx, tz), tile-local coordinates, GRASS_STRIDE floats each. */
   place(tx: number, tz: number, stride = 1): Float32Array {
     const per = Math.round(G.tile / G.cell);
@@ -197,6 +228,8 @@ export class GrassPlacer {
     const s = this.sample;
     const P = G.patch;
     const grid = this.importanceGrid(tx, tz);
+    const TB = G.treeBase;
+    const near = TB.enabled ? this.treeNear(ox, oz, per) : null; // tree-base grass: the only place open-land grass grows
 
     // stride > 1 (far LOD rings): only every stride-th cell of the global cell grid, so these tufts are exactly a subset of the full tile
     for (let j = 0; j < per; j += stride) {
@@ -213,12 +246,13 @@ export class GrassPlacer {
         const z = oz + (j + jz) * G.cell;
 
         // 1. chance from noise only (most cells stop here): never a tuft outside a patch, fewer and smaller at its rim
-        const patch = this.patchIn(x, z, tx, tz, grid);
+        const lawn = this.lawnAt(x, z);
+        const patch = near ? Math.max(near[j * per + i], lawn) : this.patchIn(x, z, tx, tz, grid);
         if (patch < P.minValue) continue;
         const rim = smooth(P.minValue, P.coreAt, patch); // 0 at the rim .. 1 in the core
-        const lawn = this.lawnAt(x, z);
         const lush = Math.max(smooth(-0.35, 0.25, this.meadow.fbm(x / 45, z / 45, 2)), lawn);
         let chance = (G.minChance + (G.maxChance - G.minChance) * lush) * this.mul * P.density * rim;
+        if (near && lawn < 0.5) chance = TB.chance * this.mul * rim; // inside a tree ring the grass is thick (not the sparse open-land chance)
         chance *= 1 - G.forestThin * this.trees.forestAt(x, z) * (1 - lawn);
         chance *= 1 - lawn * (1 - G.city.density); // city lawn: `grass.city.density` x the open-meadow density (the 0.5 city thinning is gone)
         if (roll >= chance) continue;

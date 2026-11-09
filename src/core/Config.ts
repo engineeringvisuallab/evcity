@@ -339,6 +339,12 @@ export const Config = {
         maxHeight: 1.0, // 2x the old 0.5 m
         width: 1.8,
       },
+      /**
+       * TREE-BASE GRASS: grass does NOT grow scattered over open ground. It grows in a soft ring around every tree trunk and bamboo clump (a tuft bed, like real
+       * undergrowth), thick at the trunk and thinning out to nothing at `reach` m (x 0.7..1.3 with the tree size). Open soil between trees stays bare.
+       * `chance` = chance per cell inside the ring (cell 0.5 m); city lawn, roads and farm / plot rules are unchanged. enabled false = the old patchy meadow.
+       */
+      treeBase: { enabled: true, reach: 3.2, chance: 0.7 },
       /** Chance per cell inside a meadow / on bare patches, and the extra thinning inside forests. Higher = denser, fewer bald patches. */
       maxChance: 0.35, // SPARSE: ~1 cell in 3 grows a tuft (was 0.98 / 0.9 = every cell)
       minChance: 0.15,
