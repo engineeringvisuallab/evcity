@@ -3,7 +3,7 @@
 Three things in one pass. All three are drawing / placement only: no mission logic and no physics rules changed.
 
 ## 1. Mission place = green circular cylinder
-- NEW `src/missions/MissionMarkers.ts`: for every mission in `MissionData.ts` a see-through GREEN cylinder (70 m tall) stands exactly on the arrival circle (`place.radius`), a bright ring lies on the ground and a faint disc fills the circle. Enter the circle = "arrived".
+- NEW `src/missions/MissionMarkers.ts`: every mission place has a small green cylinder marker (1 m wide, 1.5 m high) at its centre, always visible, plus a ground ring and a faint disc on the arrival circle. The tall light pillar is off (`SHOW_WALL = false`).
 - The tracked mission pulses; a passed mission turns dim grey-green; the others are plain green. No collider: the player walks straight through.
 - Changed `src/missions/index.ts` (export) and `src/core/Engine.ts` (create after `MissionManager`, `update` next to `minimap.update`, `dispose`). New missions added to `MissionData.ts` get their cylinder automatically.
 - Tune: `HEIGHT`, `GREEN`, opacity numbers at the top / in `update()` of MissionMarkers.ts.

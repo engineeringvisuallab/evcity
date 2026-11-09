@@ -12,6 +12,11 @@ import type { MissionPin } from './MissionTypes';
  * - Nothing here touches the mission logic or the physics: it is only drawing (no collider, the player walks straight through).
  */
 
+/** The marker itself: a small green cylinder at the centre of the mission place, always there. */
+const MARK_DIAMETER = 1; // m
+const MARK_HEIGHT = 1.5; // m
+/** The tall see-through light pillar over the whole arrival circle (off: only the small marker, the ground ring and the disc are drawn). */
+const SHOW_WALL = false;
 const HEIGHT = 70; // m above the ground of the centre
 const BELOW = 25; // m the wall reaches under the centre height, so the wall is closed on a slope
 const GREEN = 0x22e06a;
@@ -23,6 +28,8 @@ interface Marker {
   wall: THREE.Mesh;
   ring: THREE.Mesh;
   disc: THREE.Mesh;
+  mark: THREE.Mesh;
+  markMat: THREE.MeshBasicMaterial;
   wallMat: THREE.MeshBasicMaterial;
   ringMat: THREE.MeshBasicMaterial;
   discMat: THREE.MeshBasicMaterial;
@@ -69,6 +76,7 @@ export class MissionMarkers {
       wall.position.y = (HEIGHT - BELOW) / 2;
       wall.renderOrder = 5;
       wall.frustumCulled = false;
+      wall.visible = SHOW_WALL;
       g.add(wall);
 
       // the ring on the ground (flat, follows the centre height: good on flat mission sites)
@@ -89,8 +97,16 @@ export class MissionMarkers {
       disc.frustumCulled = false;
       g.add(disc);
 
+      // the small marker: 1 m wide, 1.5 m high, standing on the ground at the centre
+      const markMat = new THREE.MeshBasicMaterial({ color: GREEN, transparent: true, opacity: 0.9 });
+      const mark = new THREE.Mesh(new THREE.CylinderGeometry(MARK_DIAMETER / 2, MARK_DIAMETER / 2, MARK_HEIGHT, 32), markMat);
+      mark.position.y = MARK_HEIGHT / 2;
+      mark.renderOrder = 7;
+      mark.frustumCulled = false;
+      g.add(mark);
+
       this.group.add(g);
-      this.markers.push({ id: m.id, group: g, wall, ring, disc, wallMat, ringMat, discMat });
+      this.markers.push({ id: m.id, group: g, wall, ring, disc, mark, wallMat, ringMat, discMat, markMat });
     }
     root.add(this.group);
   }
@@ -107,6 +123,8 @@ export class MissionMarkers {
       mk.wallMat.color.setHex(col);
       mk.ringMat.color.setHex(col);
       mk.discMat.color.setHex(col);
+      mk.markMat.color.setHex(col);
+      mk.markMat.opacity = done ? 0.55 : active ? 0.7 + 0.3 * pulse : 0.95;
       mk.wallMat.opacity = done ? 0.14 : active ? 0.34 + 0.2 * pulse : 0.3;
       mk.ringMat.opacity = done ? 0.5 : active ? 0.75 + 0.25 * pulse : 0.85;
       mk.discMat.opacity = done ? 0.05 : active ? 0.1 + 0.1 * pulse : 0.1;
@@ -119,6 +137,8 @@ export class MissionMarkers {
       mk.wall.geometry.dispose();
       mk.ring.geometry.dispose();
       mk.disc.geometry.dispose();
+      mk.mark.geometry.dispose();
+      mk.markMat.dispose();
       mk.wallMat.dispose();
       mk.ringMat.dispose();
       mk.discMat.dispose();
