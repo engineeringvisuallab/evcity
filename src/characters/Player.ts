@@ -320,6 +320,14 @@ export class Player {
     let nx = t.x + m.x;
     let ny = t.y + m.y;
     let nz = t.z + m.z;
+    // STAND STILL: on foot, on the ground, no key pressed and not being pushed / jumping -> the man does not move at all (no slow slide down a slope).
+    // As soon as a key is pressed (wl > 0) the normal movement below is used.
+    const standStill = !this.swimming && this.grounded && wl === 0 && desired.y <= 0 && Math.hypot(this.vel.x, this.vel.z) < 1.5;
+    if (standStill) {
+      nx = t.x;
+      nz = t.z;
+      ny = t.y;
+    }
     // invisible wall at the edge of the playable area
     if (Math.abs(nx + origin.origin.x) > P.bound) nx = t.x;
     if (Math.abs(nz + origin.origin.z) > P.bound) nz = t.z;
@@ -341,8 +349,8 @@ export class Player {
     this.body.setNextKinematicTranslation({ x: nx, y: ny, z: nz });
 
     // velocity actually achieved (walls and slopes slow us down)
-    this.vel.x = m.x / dt;
-    this.vel.z = m.z / dt;
+    this.vel.x = standStill ? 0 : m.x / dt;
+    this.vel.z = standStill ? 0 : m.z / dt;
     if (this.grounded && this.vel.y <= 0) this.vel.y = 0;
     if (desired.y > 0 && m.y < desired.y * 0.5) this.vel.y = 0; // bumped the ceiling
 

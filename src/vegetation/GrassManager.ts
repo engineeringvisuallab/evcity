@@ -70,12 +70,12 @@ function grassLod(d: number, current?: number): number {
 const EXTRA = GRASS_TYPE_COUNT;
 const dummy = new THREE.Object3D();
 const color = new THREE.Color();
-const GREEN: [number, number, number] = [0.07, 0.22, 0.05]; // FIXED dark green durba (smooth, always the same colour)
+const GREEN: [number, number, number] = [0.098, 0.308, 0.07]; // 40% less dark; FIXED dark green durba (smooth, always the same colour)
 const DRY: [number, number, number] = [0.46, 0.42, 0.2];
 const YELLOW: [number, number, number] = [0.24, 0.34, 0.09];
 const STRAW: [number, number, number] = [0.62, 0.55, 0.27];
 /** City lawn: a fresher, slightly brighter green than the wild meadow. */
-const LAWN: [number, number, number] = [0.08, 0.24, 0.055];
+const LAWN: [number, number, number] = [0.112, 0.336, 0.077];
 
 /** Smooth 2D value noise in 0..1 (integer-lattice hash, smoothstep blend): decides where the flower patches are. Deterministic, no state. */
 function vnoise(x: number, z: number): number {

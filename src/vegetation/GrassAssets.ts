@@ -548,22 +548,6 @@ export class GrassAssets {
             vec4 gip = modelViewMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
             float gFade = 1.0 - smoothstep(uGrassFade.x, uGrassFade.y, length(gip.xyz));
             float gph = instanceMatrix[3].x * 0.9 + instanceMatrix[3].z * 0.7;
-            // blade height in metres (the tip moves most, the root stays fixed in the ground)
-            float wh = position.y * length(instanceMatrix[1].xyz);
-            // WIND in WORLD space (so every tuft leans the same way): a gust wave travelling across the meadow + slow sway of each tuft
-            vec2 wdir = vec2(0.8, 0.6);
-            float along = dot(instanceMatrix[3].xz, wdir);
-            float gust = sin(uGrassTime * 1.4 + along * 0.11) * 0.5 + 0.5;
-            vec2 sw = wdir * (gust * 0.75 + sin(uGrassTime * 2.3 + gph) * 0.18) + vec2(-wdir.y, wdir.x) * sin(uGrassTime * 1.7 + gph * 0.7) * 0.12;
-            // fast flutter, every blade a little different (position.xz is its place in the tuft): the "jhir jhir"
-            float fx = sin(uGrassTime * 9.0 + gph * 3.0 + position.x * 40.0 + position.z * 31.0) * 0.16;
-            float fz = sin(uGrassTime * 12.0 + gph * 2.0 + position.z * 37.0 - position.x * 29.0) * 0.12;
-            vec2 off = (sw + vec2(fx, fz)) * wh * 0.9 * mix(1.0, 0.75, aFlower) * uGrassWind;
-            // world offset -> tuft (model) space: the tuft is turned and scaled
-            vec3 gc0 = instanceMatrix[0].xyz;
-            vec3 gc2 = instanceMatrix[2].xyz;
-            transformed.x += off.x * gc0.x / dot(gc0, gc0) + off.y * gc0.z / dot(gc0, gc0);
-            transformed.z += off.x * gc2.x / dot(gc2, gc2) + off.y * gc2.z / dot(gc2, gc2);
             transformed *= gFade;
           #endif`,
         );
@@ -585,7 +569,7 @@ export class GrassAssets {
           #include <opaque_fragment>`,
         );
     };
-    m.customProgramCacheKey = () => 'grass-wind-fade-v5' + key;
+    m.customProgramCacheKey = () => 'grass-fade-v6' + key;
     return m;
   }
 
