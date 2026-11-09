@@ -48,8 +48,8 @@ export const TREE_TRUNK: Record<number, { r: number; h: number; climb: number }>
   [TreeKind.datePalm]: { r: 0.28, h: 4, climb: 9 },
   [TreeKind.palmyra]: { r: 0.28, h: 5, climb: 18 },
   [TreeKind.banana]: { r: 0.3, h: 3, climb: 0 },
-  [TreeKind.krishnachura]: { r: 0.36, h: 3.5, climb: 6 },
-  [TreeKind.debdaru]: { r: 0.22, h: 5, climb: 6 },
+  [TreeKind.krishnachura]: { r: 0.36, h: 4, climb: 8 },
+  [TreeKind.debdaru]: { r: 0.22, h: 5, climb: 8 },
 };
 
 /** Stable id of a tree inside its chunk (the same at every LOD): kind + chunk-local position rounded to 0.5 m. */

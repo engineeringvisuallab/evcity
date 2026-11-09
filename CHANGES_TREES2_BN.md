@@ -6,14 +6,20 @@ Eta `evcity_1.zip` (main game) er sathe merge kora: step 1 (notun gach model) + 
 - Main game e Player.ts, PlayerModel.ts, Engine.ts, i18n/bn.ts alada bodlechhilo: 3-way merge kora, kono conflict hoy ni. Baki file main e bodlay ni, tai shorashori nilam.
 - Merged project e `tsc --noEmit`, `tree-test`, `tree-climb-test` pass.
 
+## Size ar trunk (notun)
+- Street gach ager cheye 1.5 gun boro (`STREET_KIND` scale). Krishnachura 0.75-1.05, Debdaru 0.82-1.25, khejur 0.9-1.25, narikel 0.75-1.05.
+- Mukut uchute: Krishnachura trunk 4.2 -> 6.6 m, mukut kendro 7.4 -> 10 m (`PalmAssets.ts`); Debdaru trunk 9 -> 11 m, pata 3 m uchu theke shuru (`TreeAssets.ts`). Scale 1 e Krishnachura mukut er tola ~7.5 m, tai gari/truck er upor diye jay.
+- Median gach: ekhono road er majhkhane double yellow line er upor (tumi bad dite bolo ni, pore road er median boro korbe). Median boro korle `Roadside.ts` er median block ta ar `MEDIAN_TREE_STEP` dekhe nio.
+- Roundabout er majhkhane boro Krishnachura boshanor code likhechhi, kintu ei game e **kono roundabout nei**, tai ekhon kichu boshe na. 4-way junction er thik majhkhane gach boshale ta traffic er moddhe porbe, tai boshai ni.
+
 ## Footpath e gach (notun)
 - Age pit er kendro asphalt theke 1.0 m chhilo, 1.2 m pit 0.4-1.6 m jure thakto, mane 3 m footpath er thik majhkhane. Ekhon `roadside.pitOffset = 0.75`: pit footpath er kerb er pashe (0.15-1.35 m), majhkhane 1.65 m hatar jaygay khali. Pedestrian ~1.85 m e hate, lamp 2.1 m e, tai kono dhakka nei.
 - Ulto dike (barir dike) nite chaile `pitOffset` ~2.3 koro, kintu tokhon lamp ar pedestrian er line bodlate hobe.
 - Gach er list ar pit ekii loop theke ase, tai ager street gach er upor notun gach double hoy na (purono gach protisthapon, joma noy).
 
 ## Ki hoyeche
-1. **City road**: footpath e Debdaru / Krishnachura / palm (khejur, narikel), road onujayi pattern (`Roadside.ts`, `STREET_THEMES`). Gach er gap 18-24 m.
-2. **Median**: freeway median e Debdaru ba khejur, proti 11-15 m (junction er 16 m bad). Road er upor dariye thake.
+1. **City road**: footpath e Debdaru / Krishnachura / palm (khejur, narikel), road onujayi pattern (`Roadside.ts`, `STREET_THEMES`). Gach er gap 45-60 m (age 18-24 chhilo, 2.5 gun dure).
+2. **Median**: freeway median e Debdaru ba khejur, proti 27-38 m (age 11-15, 2.5 gun dure; junction er 16 m bad). Road er upor dariye thake.
 3. **Forest er boro gach**: sal, segun, koroi, bot, shimul, jongoler bhetore. Nichu jomi: sob; pahar: sal, shimul, segun (`bigKind`). Scale 0.55-1.15.
 4. **Gram**: rural bari (mud-hut, bamboo-hut, house-tin, baganbari ityadi) er 32 m er moddhe narikel, kola, khejur, tal, chhaya gach (`Homesteads.ts`). Pukur/lake/nodir 6-7 m er moddhe, 40 m er niche jomite palm o kola.
 5. **Position**: dhalu jomite gacher gora slope x trunk radius nichu (max 1.4 m). Street gach chunk er sima theke bairey jay na.

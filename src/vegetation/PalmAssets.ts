@@ -666,8 +666,8 @@ function banana(detail: number): THREE.BufferGeometry {
 
 /** Krishnachura (flamboyant, "Radhachura/Krishnachura"): wide flat umbrella of feathery leaves, covered with red flowers. */
 const STYLE_KRISHNA: Style = {
-  seed: 1515, trunkH: 4.2, trunkR: 0.38, trunkBend: 0.18, primary: 6, startFrac: 0.55, spread: [1.0, 1.3], limbLen: 5, fork: 2,
-  kids: [3, 3], lenRatio: [0.55, 0.5], droop: -0.1, crownY: 7.4, rx: 6.5, ry: 2.4, cards: 7, clusterR: 1.5, card: [1.5, 2.2], warm: 0.2, flat: 0.5,
+  seed: 1515, trunkH: 6.6, trunkR: 0.38, trunkBend: 0.14, primary: 6, startFrac: 0.72, spread: [1.0, 1.3], limbLen: 5, fork: 2,
+  kids: [3, 3], lenRatio: [0.55, 0.5], droop: -0.1, crownY: 10, rx: 6.5, ry: 2.4, cards: 7, clusterR: 1.5, card: [1.5, 2.2], warm: 0.2, flat: 0.5,
   tiles: PALM_TILES, barkTile: T_ROUGH, leafTile: T_FEATHER, bloomTile: T_BLOOM, bloom: 12, farScale: 1.7,
 };
 

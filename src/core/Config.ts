@@ -122,7 +122,7 @@ export const Config = {
     roadside: {
       sidewalk: 3,
       /** Tree pits: spacing range (m) along each sidewalk, pit side (m, kerbed square), distance of the pit centre from the asphalt edge (m). */
-      treeSpacing: [18, 24] as [number, number],
+      treeSpacing: [45, 60] as [number, number],
       /** Street tree size (scale of the normal tree models; small young trees) and colour multiplier (low = deep dark green; normal forest trees are 0.82-1.14). */
       streetTree: { scale: [0.42, 0.6] as [number, number], tint: [0.58, 0.7] as [number, number] },
       pitSize: 1.2,

@@ -15,7 +15,7 @@ import { TreeKind } from '../vegetation/TreeTypes';
  *   CITY (roads inside a planned city: the ribbon has a paved sidewalk, see RoadNetwork.segmentCity):
  *     - tree pits: a square kerbed pit every `treeSpacing` m on both sides, centred `pitOffset` m from the kerb, with a street tree in it
  *       (debdaru, krishnachura, date palm / coconut: an avenue pattern per road, see STREET_THEMES)
- *     - median trees: a debdaru or a date palm every 11..15 m on the median strip of the freeway arms (between the hedge pieces)
+ *     - median trees: a debdaru or a date palm every 27..38 m on the median strip of the freeway arms (between the hedge pieces)
  *     - hedges: low flowering hedge along the median of the freeway arms inside the city, and along the open edges of the mall / EVLab parking lots
  *   COUNTRY (everything else, tier 1-3, no bridge deck, no earth track):
  *     - W-beam guardrail (posts every `postStep` m) on embankment sides (the ground beside the road drops by more than `dropMin` m) and on the
@@ -119,12 +119,12 @@ function cityPoint(roads: RoadNetwork, r: RoadSpec, w: Walker): boolean {
 const STREET_THEMES = ['DKDKDKDP', 'KKPKKPKK', 'PDPDPDPK', 'DDKDDKDD'];
 /** Street tree kinds: size range (scale of the model, 1 = full grown), tint range. Palm atlas kinds keep the natural colour. */
 const STREET_KIND = {
-  D: { kind: TreeKind.debdaru, scale: [0.55, 0.85], tint: [0.82, 0.98] },
-  K: { kind: TreeKind.krishnachura, scale: [0.5, 0.7], tint: [0.9, 1.05] },
-  Pd: { kind: TreeKind.datePalm, scale: [0.6, 0.85], tint: [0.9, 1.05] },
-  Pc: { kind: TreeKind.coconut, scale: [0.5, 0.7], tint: [0.9, 1.05] },
+  D: { kind: TreeKind.debdaru, scale: [0.82, 1.25], tint: [0.82, 0.98] },
+  K: { kind: TreeKind.krishnachura, scale: [0.75, 1.05], tint: [0.9, 1.05] },
+  Pd: { kind: TreeKind.datePalm, scale: [0.9, 1.25], tint: [0.9, 1.05] },
+  Pc: { kind: TreeKind.coconut, scale: [0.75, 1.05], tint: [0.9, 1.05] },
 } as const;
-const MEDIAN_TREE_STEP: [number, number] = [11, 15];
+const MEDIAN_TREE_STEP: [number, number] = [27.5, 37.5];
 
 const cache = new WeakMap<RoadNetwork, { pits: number[]; trees: number[]; byChunk: Map<string, number[]> }>();
 
@@ -195,9 +195,28 @@ export function planCityTrees(roads: RoadNetwork): { pits: number[]; trees: numb
         if (nearPad(w.x, w.z, 16)) continue; // the median ends at junctions (the shader fades the kerb there too)
         const K = pickM < 0.55 ? STREET_KIND.D : STREET_KIND.Pd;
         // trunk on the centre line, on the finished road surface (the median strip is part of the deck, not natural ground)
-        push([w.x, w.y - Config.vegetation.sink * 0.4, w.z, K.scale[0] + 0.1 + (K.scale[1] - K.scale[0]) * scale, yawRnd * Math.PI * 2, K.tint[0] + (K.tint[1] - K.tint[0]) * tint, K.kind, 1], w.x, w.z);
+        push([w.x, w.y - Config.vegetation.sink * 0.4, w.z, K.scale[0] + 0.15 + (K.scale[1] - K.scale[0]) * scale, yawRnd * Math.PI * 2, K.tint[0] + (K.tint[1] - K.tint[0]) * tint, K.kind, 1], w.x, w.z);
       }
     }
+  }
+  // ROUNDABOUT ISLANDS: one big krishnachura in the middle of every roundabout whose island is big enough (nothing drives there)
+  for (const r of roads.roads) {
+    if (r.kind !== 'roundabout' || !r.closed || r.xs.length < 6) continue;
+    let cx = 0;
+    let cz = 0;
+    for (let i = 0; i < r.xs.length; i++) {
+      cx += r.xs[i];
+      cz += r.zs[i];
+    }
+    cx /= r.xs.length;
+    cz /= r.xs.length;
+    let R = 0;
+    for (let i = 0; i < r.xs.length; i++) R += Math.hypot(r.xs[i] - cx, r.zs[i] - cz);
+    R /= r.xs.length;
+    if (R - r.halfWidth - r.shoulder < 3.5) continue;
+    const rng = mulberry32(hash2D(seed ^ 0x40ad, r.id, 3));
+    const K = STREET_KIND.K;
+    push([cx, 0, cz, K.scale[1] + 0.25 + rng() * 0.2, rng() * Math.PI * 2, K.tint[0] + (K.tint[1] - K.tint[0]) * rng(), K.kind, 0], cx, cz);
   }
   const out = { pits, trees, byChunk };
   cache.set(roads, out);

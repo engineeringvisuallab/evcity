@@ -956,8 +956,8 @@ const STYLE_SHIMUL: Style = {
 };
 /** Debdaru (ashoka): a slim dark column with drooping leaves, the classic avenue tree. */
 const STYLE_DEBDARU: Style = {
-  seed: 1616, trunkH: 9, trunkR: 0.22, trunkBend: 0.03, primary: 16, startFrac: 0.12, spread: [0.12, 0.3], limbLen: 3.4, fork: 0,
-  kids: [2, 2], lenRatio: [0.5, 0.45], droop: 0.35, crownY: 6.2, rx: 1.9, ry: 5.2, cards: 6, clusterR: 0.7, card: [0.8, 1.2], warm: 0.1,
+  seed: 1616, trunkH: 11, trunkR: 0.22, trunkBend: 0.03, primary: 16, startFrac: 0.3, spread: [0.12, 0.3], limbLen: 3.4, fork: 0,
+  kids: [2, 2], lenRatio: [0.5, 0.45], droop: 0.35, crownY: 9.2, rx: 1.9, ry: 4.6, cards: 6, clusterR: 0.7, card: [0.8, 1.2], warm: 0.1,
 };
 const sal = (detail: number): THREE.BufferGeometry => growTree(STYLE_SAL, detail);
 const segun = (detail: number): THREE.BufferGeometry => growTree(STYLE_SEGUN, detail);
