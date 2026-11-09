@@ -180,11 +180,13 @@ export const Config = {
   vegetation: {
     /** Chunks up to this LOD get trees (0 = nearest only). LOD 0 uses the detailed models, higher LODs the simple ones. */
     maxLod: 1,
+    /** Trees and rocks cast shadows into the shadow map. false = no tree shadows (the shadow pass draws every tree a second time: the biggest tree cost, makes the PC hot). */
+    treeShadows: false,
     /** Placement grid (m). One tree at most per cell, jittered inside it. 500 / cellSize must be a whole number. */
     cellSize: 10,
     /** Chance (0..1) of a tree per cell: in the middle of a forest / in open land. */
-    forestChance: 0.55,
-    scatterChance: 0.035,
+    forestChance: 0.4, // was 0.55: fewer trees in forests
+    scatterChance: 0.02, // was 0.035: fewer lone trees
     /** Size (m) of the forest patches (noise wavelength). */
     forestScale: 520,
     /** No tree on ground steeper than this (degrees), the chance fades out from 60 % of it. Was 33: over 60 % of the ground above 200 m is steeper than that, so the hills were bare. */
@@ -224,7 +226,7 @@ export const Config = {
      * cell, scale range, `bambooShare` of them are bamboo clumps on low land, `bigShare` = young big trees). The jungle fades out over `fade` m at the district edge
      * (a ragged edge). Lower `understory` (and `chance`) if the frame rate drops: they are the number of trees.
      */
-    dense: { fade: 260, chance: 0.96, bigChance: 0.62, understory: 0.9, understoryScale: [0.3, 0.85] as [number, number], bambooShare: 0.1, bigShare: 0.1 },
+    dense: { fade: 260, chance: 0.75, bigChance: 0.62, understory: 0.4, understoryScale: [0.3, 0.85] as [number, number], bambooShare: 0.1, bigShare: 0.1 },
     /** Tree chance (0..1 of the normal chance) inside a planned city area, by zone kind. Unlisted zones get no trees. */
     cityZoneChance: { green: 0.6, recreation: 0.7 } as Record<string, number>,
     /** Outside the plan of a city the forest grows back over this distance (m). */
@@ -234,8 +236,8 @@ export const Config = {
     /** Trunks are sunk this far (m) into the ground so coarse LOD terrain never leaves them floating. */
     sink: 0.35,
     /** Trunk colliders (Rapier cylinders): created for trees within `collideRadius` (m) of the player, removed beyond `collideKeep`. */
-    collideRadius: 80,
-    collideKeep: 110,
+    collideRadius: 50,
+    collideKeep: 70,
     /** Trees are grouped in squares of this size (m) - one fixed body per square. Chunk size / this must be a whole number. */
     collideCell: 50,
     /** Max squares given colliders per physics update (5 Hz), so walking into a forest never hitches. */

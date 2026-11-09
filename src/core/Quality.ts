@@ -90,7 +90,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
   low: {
     tier: 'low', maxDpr: 1.5, maxPixels: 1_300_000, antialias: false, powerPreference: 'default',
     shadowMapSize: 1024, shadowExtent: 200, lodDistances: [220, 520, 1100, 2000], siteShowDist: 700, fpsCap: 30, minScale: 0.6,
-    treeMul: 0.35, rockMul: 0.35, grassMul: 0.6, grassDense: 1, treeMaxLod: 1, grassRadius: 35, grassBlades: 0.6,
+    treeMul: 0.3, rockMul: 0.3, grassMul: 0.6, grassDense: 1, treeMaxLod: 1, grassRadius: 35, grassBlades: 0.6,
     peopleTarget: 12, trafficTarget: 5, maxBuses: 1, flockCount: 4, landAnimals: 24, predators: 2, dolphins: 3, fishSchools: 4,
     lampStepMul: 1.6, roadsideMul: 0.55, grassWind: 0, lightFxDist: 45, farmMul: 0.65, siteDisposeMul: 2.5, siteMerge: true, siteShadowMinR: 1.2, maxAniso: 2, shadowInterval: 2,
     signRadiusMul: 0.6, signPaintPerFrame: 1,
@@ -99,7 +99,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
   medium: {
     tier: 'medium', maxDpr: 1.25, maxPixels: 2_800_000, antialias: false, powerPreference: 'default',
     shadowMapSize: 2048, shadowExtent: 280, lodDistances: [300, 700, 1400, 2600], siteShowDist: 1300, fpsCap: 60, minScale: 0.6,
-    treeMul: 0.65, rockMul: 0.65, grassMul: 0.85, grassDense: 1, treeMaxLod: 1, grassRadius: 35, grassBlades: 0.8,
+    treeMul: 0.5, rockMul: 0.5, grassMul: 0.85, grassDense: 1, treeMaxLod: 1, grassRadius: 35, grassBlades: 0.8,
     peopleTarget: 22, trafficTarget: 8, maxBuses: 2, flockCount: 8, landAnimals: 42, predators: 3, dolphins: 5, fishSchools: 7,
     lampStepMul: 1.25, roadsideMul: 0.8, grassWind: 0, lightFxDist: 80, farmMul: 0.85, siteDisposeMul: 0, siteMerge: true, siteShadowMinR: 0.5, maxAniso: 4, shadowInterval: 1,
     signRadiusMul: 0.8, signPaintPerFrame: 2,
@@ -108,7 +108,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
   high: {
     tier: 'high', maxDpr: 2, maxPixels: 8_300_000, antialias: true, powerPreference: 'high-performance',
     shadowMapSize: 4096, shadowExtent: 350, lodDistances: [380, 900, 1900, 3600], siteShowDist: 2400, fpsCap: 60, minScale: 0.7,
-    treeMul: 1, rockMul: 1, grassMul: 1, grassDense: 1, treeMaxLod: 1, grassRadius: 35, grassBlades: 1,
+    treeMul: 0.7, rockMul: 0.7, grassMul: 1, grassDense: 1, treeMaxLod: 1, grassRadius: 35, grassBlades: 1,
     peopleTarget: 34, trafficTarget: 12, maxBuses: 3, flockCount: 12, landAnimals: 64, predators: 4, dolphins: 8, fishSchools: 10,
     lampStepMul: 1, roadsideMul: 1, grassWind: 0, lightFxDist: 130, farmMul: 1, siteDisposeMul: 0, siteMerge: true, siteShadowMinR: 0, maxAniso: 16, shadowInterval: 1,
     signRadiusMul: 1, signPaintPerFrame: 3,

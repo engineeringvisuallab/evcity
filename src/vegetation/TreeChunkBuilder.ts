@@ -76,7 +76,7 @@ export class TreeChunkBuilder {
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     mesh.computeBoundingSphere();
-    mesh.castShadow = lod === 0;
+    mesh.castShadow = lod === 0 && Config.vegetation.treeShadows; // tree shadows off by default (Config vegetation.treeShadows)
     mesh.receiveShadow = lod === 0;
     mesh.matrixAutoUpdate = false;
     mesh.updateMatrix();
