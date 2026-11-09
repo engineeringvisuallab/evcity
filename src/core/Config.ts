@@ -349,11 +349,11 @@ export const Config = {
        */
       cards: {
         enabled: true,
-        quads: [3, 2, 2] as number[],
-        alphaCut: 0.42,
-        rootDark: 0.5,
-        greenTint: [0.5, 0.66, 0.42] as [number, number, number],
-        dryTint: [0.95, 0.88, 0.78] as [number, number, number],
+        quads: [4, 3, 2] as number[],
+        alphaCut: 0.5,
+        rootDark: 0.6,
+        greenTint: [0.6, 0.7, 0.5] as [number, number, number],
+        dryTint: [0.85, 0.82, 0.74] as [number, number, number],
         brightness: 1,
         dryShare: 0.05,
         dryPatchShare: 0.55,

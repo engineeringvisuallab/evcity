@@ -42,7 +42,7 @@ export function grassAtlas(): THREE.Texture {
   atlas.generateMipmaps = true;
   atlas.minFilter = THREE.LinearMipmapLinearFilter;
   atlas.magFilter = THREE.LinearFilter;
-  atlas.anisotropy = 4;
+  atlas.anisotropy = 8;
   return atlas;
 }
 
@@ -91,7 +91,7 @@ export function makeCardMaterial(u: CardUniforms): THREE.MeshLambertMaterial {
         '#include <color_fragment>',
         `#include <color_fragment>
         {
-          vec4 gt = texture2D(uAtlas, vCardUv);
+          vec4 gt = texture2D(uAtlas, vCardUv, -0.6); // negative mip bias: keeps the blades sharp
           if (gt.a < ${C.alphaCut.toFixed(2)}) discard;
           float gRoot = mix(${C.rootDark.toFixed(2)}, 1.0, smoothstep(0.0, 0.55, vCardY));
           diffuseColor.rgb *= gt.rgb * gRoot;
