@@ -5,6 +5,17 @@ import type { GrassAssets } from './GrassAssets';
 import { GRASS_STRIDE, GrassType } from './TreeTypes';
 
 const G = Config.vegetation.grass;
+/** Height of the tallest point of a grass model at scale 1 (cached): the tufts are scaled so this point reaches the wanted height in metres. */
+const tops = new WeakMap<THREE.BufferGeometry, number>();
+function topOf(g: THREE.BufferGeometry): number {
+  let t = tops.get(g);
+  if (t === undefined) {
+    g.computeBoundingBox();
+    t = Math.max(0.05, g.boundingBox ? g.boundingBox.max.y : 1);
+    tops.set(g, t);
+  }
+  return t;
+}
 const HALF = Config.world.size / 2;
 /** Tiles exist a little beyond the playable area, like the terrain chunk margin rings. */
 const LIMIT = HALF + Config.world.chunkSize * Config.world.chunkMargin;
@@ -243,19 +254,24 @@ export class GrassManager {
       const sc = data[o + 3];
       dummy.position.set(data[o], data[o + 1], data[o + 2]);
       dummy.rotation.set(0, data[o + 4], 0);
-      // size variation inside a type (each type already has its own shape / height)
-      const grow = 0.8 + 0.5 * h2;
+      // SIZE (metres, not model scale): a tuft's tallest blade is 4-20 cm (blades of 1-20 cm in a tuft), a big clump 25-50 cm at the most.
+      const top = topOf(geoms[type]);
       const wide = type === GrassType.lawn ? 1.1 : type === GrassType.wild ? 0.95 : 1;
       const lawnTuft = data[o + 7] > 1.5 && data[o + 7] < 2.5;
-      const hMul = lawnTuft ? G.city.height : 1; // mown city lawn: short
-      // width: far rings have fewer tufts, each a bit wider. height: Config.grass.heightScale, width: Config.grass.widthScale (both 2x bigger than step 3)
+      const hMul = lawnTuft ? G.city.height : 1; // mown city lawn: even shorter
       if (type >= GrassType.tussock) {
-        // clump: its own size (model scale 0.75..1.45 x clump.width / clump.height), the far rings make it a bit wider
-        const cw = sc * ring.clumpSize * G.clump.width;
-        dummy.scale.set(cw, sc * grow * G.clump.height, cw);
+        // clump: the larger its placement scale (0.75..1.45 x edge / base factors), the taller it is, never above clump.maxHeight
+        const rel = Math.min(1, sc / 1.2);
+        const ys = (G.clump.maxHeight * (0.55 + 0.45 * rel) * (0.8 + 0.2 * h2)) / top;
+        const cw = ys * ring.clumpSize * G.clump.width;
+        dummy.scale.set(cw, ys, cw);
       } else {
-        const w = sc * wide * ring.size * G.widthScale;
-        dummy.scale.set(w, sc * grow * G.heightScale * hMul, w);
+        // tuft: height from the placement scale (small at the rim of a patch) and the hash; the far rings make a tuft a bit wider (fewer tufts)
+        const rel = Math.min(1, sc / 1.5);
+        const v = G.tuft.min + (1 - G.tuft.min) * (0.5 * rel + 0.5 * h2 ** 1.2);
+        const ys = (G.tuft.maxHeight * v * hMul) / top;
+        const w = ys * wide * ring.size * G.widthScale;
+        dummy.scale.set(w, ys, w);
       }
       dummy.updateMatrix();
       mesh.setMatrixAt(slot, dummy.matrix);

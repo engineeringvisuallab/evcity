@@ -236,29 +236,33 @@ export const Config = {
     },
     /** Grass: tufts in tiles around the player (made by the chunk workers on request), fading out with distance. */
     grass: {
-      /** Tile size (m) and cell size (m): one tuft at most per cell. tile / cell must be a whole number. 0.32 m = ~2.4x denser than the old 0.5 m. */
+      /** Tile size (m) and cell size (m): one tuft at most per cell. tile / cell must be a whole number (and every LOD stride must divide it). 0.25 m = 1.6x denser than 0.32 (short grass needs many tufts to cover the ground). */
       tile: 32,
-      cell: 0.32,
+      cell: 0.25,
       /** Tiles within `radius` (m) of the player exist, tiles beyond `keep` are removed. */
-      radius: 170,
-      keep: 190,
+      radius: 115,
+      keep: 135,
       maxInFlight: 6,
       /** Tufts shrink to nothing between these camera distances (m): only at the very edge, so the meadow is always there (like the trees). */
-      fadeStart: 140,
-      fadeEnd: 168,
-      /** Height of every tuft is multiplied by this (the very old grass reached 2+ m). Step 3 used 0.35; now 2x bigger = 0.7: a meadow is ~0.2-0.6 m, tall seed / wild grass up to ~1.8 m. */
-      heightScale: 0.7,
-      /** Width of every tuft is multiplied by this (1 = as before; 2 = twice as wide, so the meadow is 2x bigger and fuller). */
-      widthScale: 2,
+      fadeStart: 92,
+      fadeEnd: 112,
+      /**
+       * SIZE OF THE GRASS. Short, dense grass: a tuft's TALLEST blade is `tuft.maxHeight` m at most (so the blades of a meadow are 1-20 cm); `tuft.min` = the
+       * shortest tuft as a share of that (0.2 -> 4 cm). Big clumps (tussocks) are at most `clump.maxHeight` (0.5 m). `widthScale` = how wide a tuft is relative
+       * to its height scale (blades lean outwards, so 2.2 gives natural short grass; higher = flatter, wider mats).
+       */
+      tuft: { maxHeight: 0.2, min: 0.2 },
+      /** Width of every tuft = its height scale x this. */
+      widthScale: 2.2,
       /**
        * Grass LOD rings (like the trees): `to` = up to this distance (m, nearest edge of the tile), `stride` = only every n-th cell gets a tuft
-       * (must divide tile / cell = 100: 1, 2, 5), `density` = blades per tuft model, `size` = width of a tuft (fewer tufts, each a bit wider).
+       * (must divide tile / cell = 128: 1, 2, 4), `density` = blades per tuft model, `size` = width of a tuft (fewer tufts, each a bit wider).
        * Far rings have no flowers. The tuft positions of a coarse ring are a subset of the near ring, so nothing jumps when a tile changes ring.
        */
       lods: [
-        { to: 40, stride: 1, density: 1, size: 1, clumpStride: 1, clumpDensity: 1, clumpSize: 1 },
-        { to: 80, stride: 2, density: 0.5, size: 1.4, clumpStride: 1, clumpDensity: 0.6, clumpSize: 1 },
-        { to: 170, stride: 5, density: 0.25, size: 2.2, clumpStride: 2, clumpDensity: 0.35, clumpSize: 1.35 },
+        { to: 30, stride: 1, density: 1, size: 1, clumpStride: 1, clumpDensity: 1, clumpSize: 1 },
+        { to: 60, stride: 2, density: 0.5, size: 1.4, clumpStride: 1, clumpDensity: 0.6, clumpSize: 1 },
+        { to: 115, stride: 4, density: 0.25, size: 2, clumpStride: 2, clumpDensity: 0.35, clumpSize: 1.35 },
       ] as { to: number; stride: number; density: number; size: number; clumpStride: number; clumpDensity: number; clumpSize: number }[],
       lodHysteresis: 0.12,
       /**
@@ -278,7 +282,7 @@ export const Config = {
         minValue: 0.25,
         coreAt: 0.85,
         density: 1,
-        clumpChance: 0.75,
+        clumpChance: 0.14, // only a few big clumps (they are at most 0.5 m high)
         edgeScale: 0.5,
         boost: 0.9,
         roadStep: 24,
@@ -291,9 +295,9 @@ export const Config = {
        */
       clump: {
         cell: 1.6,
-        /** Size of a clump = its model scale (0.75..1.45) times these. */
-        width: 1,
-        height: 1,
+        /** A clump is at most `maxHeight` m high (50 cm); its width = its height scale x `width` (the far rings make it a bit wider). */
+        maxHeight: 0.5,
+        width: 1.8,
       },
       /** Chance per cell inside a meadow / on bare patches, and the extra thinning inside forests. Higher = denser, fewer bald patches. */
       maxChance: 0.98,
@@ -323,12 +327,12 @@ export const Config = {
        *   flowerShare  share of lawn tufts that carry a small flower (daisy, clover, buttercup)
        *   edge         metres over which the lawn blends into the normal patchy meadow outside the city
        */
-      city: { density: 0.55, height: 0.55, clumpChance: 0.1, clumpScale: 0.8, baseChance: 0.9, baseScale: 1.3, baseReach: 1.6, fenceReach: 1.4, flowerShare: 0.05, edge: 40 },
+      city: { density: 0.55, height: 0.3, clumpChance: 0.1, clumpScale: 0.8, baseChance: 0.9, baseScale: 1.3, baseReach: 1.6, fenceReach: 1.4, flowerShare: 0.05, edge: 40 },
       /**
        * HIGHWAY VERGE outside cities: beyond the gravel shoulder the road side is a grass patch (patch value forced up, like the road-side boost) with
        * tall clumps; `reach` = width (m) of the strip next to the shoulder, `clumpChance` per clump cell inside it, `tall` = clump height multiplier.
        */
-      verge: { reach: 7, clumpChance: 0.8, tall: 1.35, density: 1 },
+      verge: { reach: 7, clumpChance: 0.3, tall: 1.35, density: 1 },
       /**
        * COLOUR: every tuft is fresh green, yellow-green or straw (`strawShare` of the tufts lean to straw outside the city, `yellowShare` to yellow-green).
        * `rootDark` = brightness of the blade at the root (0..1, 1 = no darkening), `wind` = global wind sway multiplier (0 = still air; the sway grows with blade height, so short lawn moves little anyway).

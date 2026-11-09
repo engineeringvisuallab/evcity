@@ -37,3 +37,11 @@ Changed: `src/core/Config.ts`, `src/core/Engine.ts`, `src/missions/index.ts`, `s
 
 ## Not verified
 three.js was not available where this was written: the code type-checks (no errors in the changed files) but was NOT run. The look of the bamboo (leaf spray painting, culm curve, colours), the green of the pillar, and the frame rate in the jungle still need your eyes. Send me a screenshot and I will adjust.
+
+## 4. Grass: dense and short (added later)
+- Tufts: the TALLEST blade of a tuft is 4-20 cm (`Config.vegetation.grass.tuft.maxHeight = 0.2`, `min = 0.2`), so the blades of the meadow are 1-20 cm. Mown city lawn is shorter (`city.height` 0.3 = max 6 cm).
+- Big clumps (tussocks): at most 0.5 m (`clump.maxHeight`), and only a few (`patch.clumpChance` 0.75 -> 0.14, highway verge `clumpChance` 0.8 -> 0.3).
+- Denser: `cell` 0.32 -> 0.25 m (1.6x more tuft positions); LOD strides 1 / 2 / 4 (must divide tile / cell = 128). Because the grass is short it is only drawn up to 115 m (was 170): `radius` 115, `keep` 135, fade 92-112, LOD rings 30 / 60 / 115 m. The total instance count stays about the same.
+- `GrassManager.ts` now scales every model so its tallest point reaches the wanted height in metres (it measures the model once), so heights no longer depend on the old model scale. `heightScale` is gone; `widthScale` now means width relative to the height scale (2.2).
+- If the meadow looks too thin: `cell` 0.25 -> 0.2 (strides 1 / 2 / 5 then; costs 1.6x more instances). Too tall / short: `tuft.maxHeight`.
+- Changed files: `src/core/Config.ts`, `src/vegetation/GrassManager.ts`. Not run in a game, same as above.
