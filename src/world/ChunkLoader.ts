@@ -10,7 +10,7 @@ export interface IChunkLoader {
 
 /** The preset's densities, sent with every request (the workers cannot see the main thread's Q / Config). */
 function density(): WorldDensity {
-  return { treeMul: Q.treeMul, rockMul: Q.rockMul, grassMul: Q.grassMul, treeMaxLod: Q.treeMaxLod };
+  return { treeMul: Q.treeMul, rockMul: Q.rockMul, grassMul: Q.grassMul, grassDense: Q.grassDense, treeMaxLod: Q.treeMaxLod };
 }
 
 /** Small pool of Web Workers that generate chunk data. */

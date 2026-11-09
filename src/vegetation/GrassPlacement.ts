@@ -47,6 +47,8 @@ export class GrassPlacer {
   private green: CityGreen;
   /** Quality preset: chance multiplier (1 = every tuft). */
   mul = 1;
+  /** Single tufts per accepted meadow cell (Quality preset; Config.vegetation.grass.dense). */
+  dense = G.dense;
 
   constructor(private gen: TerrainGenerator, plan: CityPlan, private seed: number, private trees: TreePlacer) {
     void plan; // the city test is CityGreen now (same CityPlan radius)
@@ -237,6 +239,27 @@ export class GrassPlacer {
         const dry = Math.min(1, Math.max(0, smooth(G.dryFrom, G.dryTo, h) + (rDry - 0.5) * 0.2)) * (1 - lawn);
         // flag 2 = city lawn tuft (short, mown; may carry a small flower), 0 = normal tuft
         out.push(x - ox, h - 0.03, z - oz, (0.55 + 0.95 * rScale ** 1.5) * (P.edgeScale + (1 - P.edgeScale) * rim), rYaw * Math.PI * 2, 0.85 + rTint * 0.3, dry, lawn >= 0.5 ? 2 : 0);
+
+        // DENSE single grass: extra tufts in the same cell (flag 4 = never a flower). Their random numbers come after the first seven, one fixed set of
+        // five per extra, so extra k is always the same tuft and a far ring (fewer extras) is a subset of the near ring. Not on the mown city lawn.
+        if (lawn < 0.5) {
+          const total = stride === 1 ? this.dense : Math.max(1, Math.round(this.dense / (stride * stride)));
+          if (total > 1) {
+            const gx = this.sx.h - h; // ground slope per metre, so an extra tuft off the cell centre still sits on the ground
+            const gz = this.sz.h - h;
+            const edge = P.edgeScale + (1 - P.edgeScale) * rim;
+            for (let k = 1; k < total; k++) {
+              const ex = rng();
+              const ez = rng();
+              const es = rng();
+              const ey = rng();
+              const et = rng();
+              const dx = (ex - jx) * G.cell;
+              const dz = (ez - jz) * G.cell;
+              out.push(x - ox + dx, h + gx * dx + gz * dz - 0.03, z - oz + dz, (0.55 + 0.95 * es ** 1.5) * edge, ey * Math.PI * 2, 0.85 + et * 0.3, dry, 4);
+            }
+          }
+        }
       }
     }
     this.placeClumps(tx, tz, stride, out);

@@ -239,6 +239,12 @@ export const Config = {
       /** Tile size (m) and cell size (m): one tuft at most per cell. tile / cell must be a whole number (and every LOD stride must divide it). 0.25 m = 1.6x denser than 0.32 (short grass needs many tufts to cover the ground). */
       tile: 32,
       cell: 0.2,
+      /**
+       * DENSE SINGLE GRASS: every accepted meadow cell grows `dense` single tufts instead of one (10 = 10x the old density; same cell test, terrain test and
+       * deterministic jitter, so the far rings stay a subset of the near ring). The Quality preset sets the value the workers use (low 3, medium 6, high 10).
+       * Far rings (stride > 1) get dense / stride^2 (at least 1). Not applied to the mown city lawn.
+       */
+      dense: 10,
       /** Tiles within `radius` (m) of the player exist, tiles beyond `keep` are removed. */
       radius: 115,
       keep: 135,
@@ -251,9 +257,17 @@ export const Config = {
        * shortest tuft as a share of that (0.2 -> 4 cm). Big clumps (tussocks) are at most `clump.maxHeight` (0.5 m). `widthScale` = how wide a tuft is relative
        * to its height scale (blades lean outwards, so 2.2 gives natural short grass; higher = flatter, wider mats).
        */
-      tuft: { maxHeight: 0.2, min: 0.2 },
+      tuft: {
+        /** Meadow single grass: tallest blade 0.6 m (3x the old 0.2 m), so blades are ~3-60 cm. */
+        maxHeight: 0.6,
+        min: 0.2,
+        /** Wildflowers keep 2x the old height (0.4 m). Mown city lawn keeps its old size (0.2 m, then x `city.height`) and its old width scale. */
+        flowerMaxHeight: 0.4,
+        lawnMaxHeight: 0.2,
+        lawnWidthScale: 2.2,
+      },
       /** Width of every tuft = its height scale x this. */
-      widthScale: 2.2,
+      widthScale: 1.1, // was 2.2 when the grass was 3x lower: the tuft is 3x taller but only ~1.5x wider, so the blades stand more upright instead of splaying
       /**
        * Grass LOD rings (like the trees): `to` = up to this distance (m, nearest edge of the tile), `stride` = only every n-th cell gets a tuft
        * (must divide tile / cell = 128: 1, 2, 4), `density` = blades per tuft model, `size` = width of a tuft (fewer tufts, each a bit wider).
@@ -296,7 +310,7 @@ export const Config = {
       clump: {
         cell: 1.6,
         /** A clump is at most `maxHeight` m high (50 cm); its width = its height scale x `width` (the far rings make it a bit wider). */
-        maxHeight: 0.5,
+        maxHeight: 1.0, // 2x the old 0.5 m
         width: 1.8,
       },
       /** Chance per cell inside a meadow / on bare patches, and the extra thinning inside forests. Higher = denser, fewer bald patches. */

@@ -12,6 +12,8 @@ export interface WorldDensity {
   treeMul: number;
   rockMul: number;
   grassMul: number;
+  /** Single grass tufts per accepted meadow cell (missing = Config.vegetation.grass.dense). */
+  grassDense?: number;
   /** Chunks up to this LOD get trees and rocks. */
   treeMaxLod: number;
 }

@@ -30,6 +30,27 @@ interface Tile {
   meshes: (THREE.InstancedMesh | null)[];
 }
 
+/** A tile being built over several frames (see GrassManager.stepJob). */
+interface InstallJob {
+  key: string;
+  tx: number;
+  tz: number;
+  lod: number;
+  data: Float32Array;
+  count: number;
+  geoms: THREE.BufferGeometry[];
+  ring: (typeof G.lods)[number];
+  ox: number;
+  oz: number;
+  /** 0 = choosing the models, 1 = writing the matrices and colours */
+  phase: 0 | 1;
+  i: number;
+  types: Uint8Array;
+  counts: number[];
+  meshes: (THREE.InstancedMesh | null)[];
+  next: number[];
+}
+
 export interface GrassSource {
   requestGrass(tx: number, tz: number, stride: number): Promise<GrassResult>;
 }
@@ -82,6 +103,8 @@ export class GrassManager {
   private ready: { key: string; tx: number; tz: number; lod: number; data: Float32Array }[] = [];
   private timer = 1;
   private disposed = false;
+  /** The tile whose meshes are being built right now (spread over several frames: a dense tile has ~10x more instances). */
+  private job: InstallJob | null = null;
 
   constructor(
     private root: THREE.Object3D,
@@ -111,15 +134,27 @@ export class GrassManager {
       this.timer = 0;
       this.evaluate(px, py, pz, groundAt);
     }
-    // tile meshes are built within a small time budget per frame (at least one), so a long meadow fills in fast when driving
+    // tile meshes are built within a small time budget per frame; one dense tile takes several frames, so there is no single long hitch
     const t0 = performance.now();
-    do {
-      const r = this.ready.shift();
-      if (!r) break;
-      this.pending.delete(r.key); // a tile counts as pending until its mesh exists, so it is never requested twice
-      // a tile whose ring changed while the worker was busy is dropped (it is asked again with the right ring)
-      if (this.wanted.get(r.key) === r.lod && this.tiles.get(r.key)?.lod !== r.lod) this.install(r.key, r.tx, r.tz, r.lod, r.data);
-    } while (this.ready.length > 0 && performance.now() - t0 < 4);
+    const until = t0 + (this.ready.length > 2 ? 9 : 5);
+    while (performance.now() < until) {
+      if (!this.job) {
+        const r = this.ready.shift();
+        if (!r) break;
+        // a tile whose ring changed while the worker was busy is dropped (it is asked again with the right ring)
+        if (this.wanted.get(r.key) === r.lod && this.tiles.get(r.key)?.lod !== r.lod) {
+          this.job = this.startJob(r.key, r.tx, r.tz, r.lod, r.data);
+          if (this.job === null) this.pending.delete(r.key);
+        } else this.pending.delete(r.key);
+        continue;
+      }
+      if (this.stepJob(this.job, until)) {
+        const j = this.job;
+        this.job = null;
+        this.pending.delete(j.key); // a tile counts as pending until its mesh exists, so it is never requested twice
+        this.finishJob(j);
+      }
+    }
   }
 
   private evaluate(px: number, py: number, pz: number, groundAt: (x: number, z: number) => number): void {
@@ -129,6 +164,7 @@ export class GrassManager {
       for (const t of [...this.tiles.values()]) this.remove(t);
       for (const r of this.ready) this.pending.delete(r.key);
       this.ready.length = 0;
+      this.dropJob();
       return;
     }
 
@@ -174,137 +210,185 @@ export class GrassManager {
     }
   }
 
-  private install(key: string, tx: number, tz: number, lod: number, data: Float32Array): void {
+  /** Forget the tile being built (its meshes are freed). */
+  private dropJob(): void {
+    const j = this.job;
+    if (!j) return;
+    this.pending.delete(j.key);
+    for (const m of j.meshes) m?.dispose();
+    this.job = null;
+  }
+
+  /** Start building a tile: nothing heavy happens here (an empty tile is installed at once and returns null). */
+  private startJob(key: string, tx: number, tz: number, lod: number, data: Float32Array): InstallJob | null {
     const count = data.length / GRASS_STRIDE;
-    const ring = G.lods[lod];
-    const geoms = this.assets.lodGeometries[lod];
-    const old = this.tiles.get(key); // the same tile in another ring: swapped in the same frame, so there is never a gap
     if (count === 0) {
       // keep an empty marker so the tile is not requested again
+      const old = this.tiles.get(key);
       if (old) this.remove(old);
       this.tiles.set(key, { key, tx, tz, lod, meshes: [] });
+      return null;
+    }
+    const geoms = this.assets.lodGeometries[lod];
+    return {
+      key, tx, tz, lod, data, count, geoms, ring: G.lods[lod],
+      ox: tx * G.tile - HALF, oz: tz * G.tile - HALF,
+      phase: 0, i: 0,
+      types: new Uint8Array(count), counts: new Array<number>(geoms.length).fill(0),
+      meshes: [], next: new Array<number>(geoms.length).fill(0),
+    };
+  }
+
+  /** Which grass / flower model a tuft uses (grass kinds by a hash, wildflowers inside meadow patches). */
+  private typeOf(data: Float32Array, o: number, ox: number, oz: number, lod: number): number {
+    const wx = ox + data[o];
+    const wz = oz + data[o + 2];
+    const hh = Math.sin(data[o] * 12.9898 + data[o + 2] * 78.233) * 43758.5453;
+    const h1 = hh - Math.floor(hh);
+    const h2 = hh * 7.31 - Math.floor(hh * 7.31);
+    const h3 = hh * 31.7 - Math.floor(hh * 31.7);
+    const dry = data[o + 6];
+    const flag = data[o + 7];
+    let type: number;
+    if (flag > 3.5) {
+      // DENSE extra single grass (flag 4): plain grass kinds only, never a flower and never a clump
+      type = h1 < 0.32 ? GrassType.wild : h1 < 0.62 ? GrassType.lawn : h1 < 0.88 ? GrassType.clump : GrassType.seed;
+      if (dry > 0.5 && type === GrassType.lawn) type = GrassType.wild;
+      return type;
+    }
+    if ((flag > 0.5 && flag < 1.5) || (flag > 2.5 && flag < 3.5)) {
+      // a big grass clump (tussock): two shapes, mixed by the hash (flag 3 = tall clump at a tree base / fence in the city)
+      return h1 < 0.55 ? GrassType.tussock : GrassType.tussockWide;
+    }
+    if (flag > 1.5) {
+      // CITY LAWN tuft (flag 2): short fine lawn, a few broad-leaf tufts, and small white / pink flowers (daisy, clover, buttercup) in the near ring
+      if (lod === 0 && h2 < G.city.flowerShare) return h3 < 0.5 ? GrassType.daisy : h3 < 0.8 ? GrassType.clover : GrassType.buttercup;
+      return h1 < 0.82 ? GrassType.lawn : h1 < 0.94 ? GrassType.clump : GrassType.wild;
+    }
+    // flower patches (value noise, ~25 m) with one dominant species per patch (another noise, ~60 m); never on dry high ground
+    const patch = vnoise(wx / 22, wz / 22);
+    const inPatch = patch > 0.64;
+    const flowerChance = (inPatch ? G.flowerInPatch * Math.min(1, (patch - 0.64) / 0.12 + 0.35) : G.flowerScatter) * (1 - dry);
+    if (lod === 0 && h2 < flowerChance) {
+      const sp = vnoise(wx / 55 + 40, wz / 55 - 17);
+      const dominant = sp < 0.2 ? GrassType.daisy : sp < 0.38 ? GrassType.buttercup : sp < 0.52 ? GrassType.lavender : sp < 0.68 ? GrassType.poppy : sp < 0.84 ? GrassType.cornflower : GrassType.clover;
+      // 70 % the dominant species of the patch, 30 % a random other flower so the meadow is mixed, not a single colour
+      return h3 < 0.7 ? dominant : GrassType.daisy + Math.floor(((h3 - 0.7) / 0.3) * 6) % 6;
+    }
+    type = h1 < 0.32 ? GrassType.wild : h1 < 0.62 ? GrassType.lawn : h1 < 0.88 ? GrassType.clump : GrassType.seed;
+    if (dry > 0.5 && type === GrassType.lawn) type = GrassType.wild;
+    return type;
+  }
+
+  /** Write the matrix and colour of one tuft / clump. */
+  private fillOne(j: InstallJob, i: number): void {
+    const { data, geoms, ring } = j;
+    const o = i * GRASS_STRIDE;
+    const type = j.types[i];
+    const mesh = j.meshes[type] as THREE.InstancedMesh;
+    const slot = j.next[type]++;
+    const hh = Math.sin(data[o] * 12.9898 + data[o + 2] * 78.233) * 43758.5453;
+    const h2 = hh * 7.31 - Math.floor(hh * 7.31);
+    const sc = data[o + 3];
+    const flag = data[o + 7];
+    dummy.position.set(data[o], data[o + 1], data[o + 2]);
+    dummy.rotation.set(0, data[o + 4], 0);
+    // SIZE (metres, not model scale): a meadow tuft's tallest blade is up to tuft.maxHeight (0.6 m), a flower up to tuft.flowerMaxHeight (0.4 m),
+    // a big clump up to clump.maxHeight (1 m); the mown city lawn keeps its old 0.2 m x city.height.
+    const top = topOf(geoms[type]);
+    const wide = type === GrassType.lawn ? 1.1 : type === GrassType.wild ? 0.95 : 1;
+    const lawnTuft = flag > 1.5 && flag < 2.5;
+    if (type >= GrassType.tussock) {
+      // clump: the larger its placement scale (0.75..1.45 x edge / base factors), the taller it is, never above clump.maxHeight
+      const rel = Math.min(1, sc / 1.2);
+      const ys = (G.clump.maxHeight * (0.55 + 0.45 * rel) * (0.8 + 0.2 * h2)) / top;
+      const cw = ys * ring.clumpSize * G.clump.width;
+      dummy.scale.set(cw, ys, cw);
+    } else {
+      // tuft: height from the placement scale (small at the rim of a patch) and the hash; the far rings make a tuft a bit wider (fewer tufts)
+      const rel = Math.min(1, sc / 1.5);
+      const v = G.tuft.min + (1 - G.tuft.min) * (0.5 * rel + 0.5 * h2 ** 1.2);
+      const isFlower = type >= GrassType.daisy && type <= GrassType.clover;
+      const maxH = lawnTuft ? G.tuft.lawnMaxHeight * G.city.height : isFlower ? G.tuft.flowerMaxHeight : G.tuft.maxHeight;
+      const ys = (maxH * v) / top;
+      const w = ys * wide * ring.size * (lawnTuft ? G.tuft.lawnWidthScale : G.widthScale);
+      dummy.scale.set(w, ys, w);
+    }
+    dummy.updateMatrix();
+    mesh.setMatrixAt(slot, dummy.matrix);
+    const dry = data[o + 6];
+    const t = data[o + 5] * (0.9 + h2 * 0.2); // brightness varies tuft to tuft
+    // COLOUR VARIATION: every tuft is fresh green, yellow-green or straw (shares: Config grass.look). A hash of the tuft's position picks the class;
+    // brighter tufts lean yellow-green like sun-lit, drier grass. The city lawn has no straw.
+    const cityLawn = flag > 1.5 && flag < 3.5;
+    const hc = Math.sin(data[o] * 39.3468 + data[o + 2] * 17.1313 + 5.7) * 43758.5453;
+    const pick = hc - Math.floor(hc);
+    const straw = cityLawn ? 0 : pick < G.look.strawShare ? 0.55 + 0.3 * h2 : 0;
+    const yellowCls = pick > 1 - G.look.yellowShare ? 0.45 + 0.35 * h2 : 0;
+    const u = Math.min(1, Math.max(0, Math.max(((t - 0.85) / 0.3) * 0.55, yellowCls)));
+    const base: [number, number, number] = cityLawn ? LAWN : GREEN;
+    color.setRGB(
+      (base[0] + (YELLOW[0] - base[0]) * u + (STRAW[0] - base[0]) * straw + (DRY[0] - base[0]) * dry) * t,
+      (base[1] + (YELLOW[1] - base[1]) * u + (STRAW[1] - base[1]) * straw + (DRY[1] - base[1]) * dry) * t,
+      (base[2] + (YELLOW[2] - base[2]) * u + (STRAW[2] - base[2]) * straw + (DRY[2] - base[2]) * dry) * t,
+      THREE.SRGBColorSpace,
+    );
+    mesh.setColorAt(slot, color);
+  }
+
+  /** Do some of the work of a tile until `until` (performance.now ms); true when the tile is complete. */
+  private stepJob(j: InstallJob, until: number): boolean {
+    const CHUNK = 1024;
+    if (j.phase === 0) {
+      // 1. choose the model of every tuft
+      while (j.i < j.count) {
+        const end = Math.min(j.count, j.i + CHUNK);
+        for (; j.i < end; j.i++) {
+          const type = this.typeOf(j.data, j.i * GRASS_STRIDE, j.ox, j.oz, j.lod);
+          j.types[j.i] = type;
+          j.counts[type]++;
+        }
+        if (performance.now() >= until) return false;
+      }
+      // 2. one InstancedMesh per model that occurs
+      for (let t = 0; t < j.geoms.length; t++) {
+        if (j.counts[t] === 0) {
+          j.meshes.push(null);
+          continue;
+        }
+        const mesh = new THREE.InstancedMesh(j.geoms[t], this.assets.material, j.counts[t]);
+        mesh.name = `grass ${j.key} type${t}`;
+        j.meshes.push(mesh);
+      }
+      j.phase = 1;
+      j.i = 0;
+    }
+    while (j.i < j.count) {
+      const end = Math.min(j.count, j.i + CHUNK);
+      for (; j.i < end; j.i++) this.fillOne(j, j.i);
+      if (performance.now() >= until) return j.i >= j.count;
+    }
+    return true;
+  }
+
+  /** Put the finished tile into the scene (the same tile in another ring is swapped in the same frame, so there is never a gap). */
+  private finishJob(j: InstallJob): void {
+    if (this.wanted.get(j.key) !== j.lod) {
+      for (const m of j.meshes) m?.dispose(); // went out of range / changed ring while it was being built
       return;
     }
-    const ox = tx * G.tile - HALF;
-    const oz = tz * G.tile - HALF;
-    // 1. choose the type of every tuft (grass kinds by a hash, wildflowers inside meadow patches)
-    const types = new Uint8Array(count);
-    const counts = new Array<number>(geoms.length).fill(0);
-    for (let i = 0; i < count; i++) {
-      const o = i * GRASS_STRIDE;
-      const wx = ox + data[o];
-      const wz = oz + data[o + 2];
-      const hh = Math.sin(data[o] * 12.9898 + data[o + 2] * 78.233) * 43758.5453;
-      const h1 = hh - Math.floor(hh);
-      const h2 = hh * 7.31 - Math.floor(hh * 7.31);
-      const h3 = hh * 31.7 - Math.floor(hh * 31.7);
-      const dry = data[o + 6];
-      const flag = data[o + 7];
-      let type: number;
-      if (flag > 0.5 && flag < 1.5 || flag > 2.5) {
-        // a big grass clump (tussock): two shapes, mixed by the hash (flag 3 = tall clump at a tree base / fence in the city)
-        type = h1 < 0.55 ? GrassType.tussock : GrassType.tussockWide;
-        types[i] = type;
-        counts[type]++;
-        continue;
-      }
-      if (flag > 1.5) {
-        // CITY LAWN tuft (flag 2): short fine lawn, a few broad-leaf tufts, and small white / pink flowers (daisy, clover, buttercup) in the near ring
-        if (lod === 0 && h2 < G.city.flowerShare) type = h3 < 0.5 ? GrassType.daisy : h3 < 0.8 ? GrassType.clover : GrassType.buttercup;
-        else type = h1 < 0.82 ? GrassType.lawn : h1 < 0.94 ? GrassType.clump : GrassType.wild;
-        types[i] = type;
-        counts[type]++;
-        continue;
-      }
-      // flower patches (value noise, ~25 m) with one dominant species per patch (another noise, ~60 m); never on dry high ground
-      const patch = vnoise(wx / 22, wz / 22);
-      const inPatch = patch > 0.64;
-      const flowerChance = (inPatch ? G.flowerInPatch * Math.min(1, (patch - 0.64) / 0.12 + 0.35) : G.flowerScatter) * (1 - dry);
-      if (lod === 0 && h2 < flowerChance) {
-        const sp = vnoise(wx / 55 + 40, wz / 55 - 17);
-        const dominant = sp < 0.2 ? GrassType.daisy : sp < 0.38 ? GrassType.buttercup : sp < 0.52 ? GrassType.lavender : sp < 0.68 ? GrassType.poppy : sp < 0.84 ? GrassType.cornflower : GrassType.clover;
-        // 70 % the dominant species of the patch, 30 % a random other flower so the meadow is mixed, not a single colour
-        type = h3 < 0.7 ? dominant : GrassType.daisy + Math.floor(((h3 - 0.7) / 0.3) * 6) % 6;
-      } else {
-        type = h1 < 0.32 ? GrassType.wild : h1 < 0.62 ? GrassType.lawn : h1 < 0.88 ? GrassType.clump : GrassType.seed;
-        if (dry > 0.5 && type === GrassType.lawn) type = GrassType.wild;
-      }
-      types[i] = type;
-      counts[type]++;
-    }
-    // 2. one InstancedMesh per type
-    const meshes: (THREE.InstancedMesh | null)[] = [];
-    const next = new Array<number>(geoms.length).fill(0);
-    for (let t = 0; t < geoms.length; t++) {
-      if (counts[t] === 0) {
-        meshes.push(null);
-        continue;
-      }
-      const mesh = new THREE.InstancedMesh(geoms[t], this.assets.material, counts[t]);
-      mesh.name = `grass ${key} type${t}`;
-      meshes.push(mesh);
-    }
-    for (let i = 0; i < count; i++) {
-      const o = i * GRASS_STRIDE;
-      const type = types[i];
-      const mesh = meshes[type] as THREE.InstancedMesh;
-      const slot = next[type]++;
-      const hh = Math.sin(data[o] * 12.9898 + data[o + 2] * 78.233) * 43758.5453;
-      const h2 = hh * 7.31 - Math.floor(hh * 7.31);
-      const sc = data[o + 3];
-      dummy.position.set(data[o], data[o + 1], data[o + 2]);
-      dummy.rotation.set(0, data[o + 4], 0);
-      // SIZE (metres, not model scale): a tuft's tallest blade is 4-20 cm (blades of 1-20 cm in a tuft), a big clump 25-50 cm at the most.
-      const top = topOf(geoms[type]);
-      const wide = type === GrassType.lawn ? 1.1 : type === GrassType.wild ? 0.95 : 1;
-      const lawnTuft = data[o + 7] > 1.5 && data[o + 7] < 2.5;
-      const hMul = lawnTuft ? G.city.height : 1; // mown city lawn: even shorter
-      if (type >= GrassType.tussock) {
-        // clump: the larger its placement scale (0.75..1.45 x edge / base factors), the taller it is, never above clump.maxHeight
-        const rel = Math.min(1, sc / 1.2);
-        const ys = (G.clump.maxHeight * (0.55 + 0.45 * rel) * (0.8 + 0.2 * h2)) / top;
-        const cw = ys * ring.clumpSize * G.clump.width;
-        dummy.scale.set(cw, ys, cw);
-      } else {
-        // tuft: height from the placement scale (small at the rim of a patch) and the hash; the far rings make a tuft a bit wider (fewer tufts)
-        const rel = Math.min(1, sc / 1.5);
-        const v = G.tuft.min + (1 - G.tuft.min) * (0.5 * rel + 0.5 * h2 ** 1.2);
-        const ys = (G.tuft.maxHeight * v * hMul) / top;
-        const w = ys * wide * ring.size * G.widthScale;
-        dummy.scale.set(w, ys, w);
-      }
-      dummy.updateMatrix();
-      mesh.setMatrixAt(slot, dummy.matrix);
-      const dry = data[o + 6];
-      const t = data[o + 5] * (0.9 + h2 * 0.2); // brightness varies tuft to tuft
-      // COLOUR VARIATION: every tuft is fresh green, yellow-green or straw (shares: Config grass.look). A hash of the tuft's position picks the class;
-      // brighter tufts lean yellow-green like sun-lit, drier grass. The city lawn has no straw.
-      const cityLawn = data[o + 7] > 1.5;
-      const hc = Math.sin(data[o] * 39.3468 + data[o + 2] * 17.1313 + 5.7) * 43758.5453;
-      const pick = hc - Math.floor(hc);
-      const straw = cityLawn ? 0 : pick < G.look.strawShare ? 0.55 + 0.3 * h2 : 0;
-      const yellowCls = pick > 1 - G.look.yellowShare ? 0.45 + 0.35 * h2 : 0;
-      const u = Math.min(1, Math.max(0, Math.max((t - 0.85) / 0.3 * 0.55, yellowCls)));
-      const base: [number, number, number] = cityLawn ? LAWN : GREEN;
-      color.setRGB(
-        (base[0] + (YELLOW[0] - base[0]) * u + (STRAW[0] - base[0]) * straw + (DRY[0] - base[0]) * dry) * t,
-        (base[1] + (YELLOW[1] - base[1]) * u + (STRAW[1] - base[1]) * straw + (DRY[1] - base[1]) * dry) * t,
-        (base[2] + (YELLOW[2] - base[2]) * u + (STRAW[2] - base[2]) * straw + (DRY[2] - base[2]) * dry) * t,
-        THREE.SRGBColorSpace,
-      );
-      mesh.setColorAt(slot, color);
-    }
+    const old = this.tiles.get(j.key);
     if (old) this.remove(old);
-    for (const mesh of meshes) {
+    for (const mesh of j.meshes) {
       if (!mesh) continue;
       mesh.instanceMatrix.needsUpdate = true;
       if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
       mesh.computeBoundingSphere();
       mesh.castShadow = false;
       mesh.receiveShadow = false;
-      this.place(mesh, tx, tz);
+      this.place(mesh, j.tx, j.tz);
     }
-    this.tiles.set(key, { key, tx, tz, lod, meshes });
+    this.tiles.set(j.key, { key: j.key, tx: j.tx, tz: j.tz, lod: j.lod, meshes: j.meshes });
   }
 
   private place(mesh: THREE.InstancedMesh, tx: number, tz: number): void {
@@ -325,6 +409,7 @@ export class GrassManager {
 
   dispose(): void {
     this.disposed = true;
+    this.dropJob();
     for (const t of [...this.tiles.values()]) this.remove(t);
     this.ready.length = 0;
     this.pending.clear();

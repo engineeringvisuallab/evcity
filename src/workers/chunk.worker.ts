@@ -42,6 +42,7 @@ function applyDensity(d: WorldDensity | undefined): void {
   treePlacer!.mul = d.treeMul;
   rockPlacer!.mul = d.rockMul;
   grassPlacer!.mul = d.grassMul;
+  grassPlacer!.dense = d.grassDense ?? Config.vegetation.grass.dense;
   maxLod = d.treeMaxLod;
 }
 
