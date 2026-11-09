@@ -53,7 +53,7 @@ import { LazyInfra } from '../engineering/LazyInfra';
 import { Minimap, type MapMarker, type MapState } from '../ui/Minimap';
 import { VehicleMenu } from '../ui/VehicleMenu';
 import { VehicleHUD } from '../ui/VehicleHUD';
-import { type Vehicle, VehicleManager, NightLamps, SEDAN, JEEP, HYPERCAR, EVHYPAR, RICKSHAW, AUTO, BUS, SPECS } from '../vehicles';
+import { type Vehicle, VehicleManager, NightLamps, CabinState, SEDAN, JEEP, HYPERCAR, EVHYPAR, RICKSHAW, AUTO, BUS, SPECS } from '../vehicles';
 import { VehicleModel } from '../vehicles/VehicleModel';
 import { PeopleManager, PersonModel, ENGINEER_LOOK } from '../people';
 import { RoadGraph, TrafficLightLayer, TrafficManager, TrafficSignals } from '../traffic';
@@ -1021,6 +1021,7 @@ export class Engine {
       const shelter = this.mall.inside || this.agro.inside ? 1 : this.trainRider.riding ? 0.7 : 0;
       this.weather.update(dt, this.time.elapsed, this.camera, this.world.origin.origin.x, this.world.origin.origin.z, this.renderer.domElement.height, shelter);
       this.people.setRain(this.weather.intensity);
+      CabinState.rain = this.weather.intensity; // wipers sweep while it rains
       this.player.model.setUmbrella(this.weather.umbrellaWanted && this.hudSettings.values.rainUmbrella && this.player.active && !this.player.inVehicle && !shelter);
     }
     this.world.update(dt, this.time.elapsed, this.camera, this.cameraController.isFreeFly);

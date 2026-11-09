@@ -11,7 +11,7 @@ import { Powertrain } from './Powertrain';
 import { CARGO_CAP } from './FuelAreas';
 import { ENERGY, consumptionFactor, rangeKm, type EnergyKind } from './Energy';
 import { VehicleModel } from './VehicleModel';
-import { VehicleLights } from './VehicleLights';
+import { NightLamps, VehicleLights } from './VehicleLights';
 import { BIKE_PILLION_POSE, BIKE_RIDER_POSE, ENGINEER_LOOK, PersonModel } from '../people/PersonModel';
 import type { Person } from '../people/Person';
 import type { AIDriver } from '../traffic/AIDriver';
@@ -457,6 +457,14 @@ export class Vehicle implements OrbitTarget {
     const s = this.spec.seat;
     const root = this.model.root;
     root.updateWorldMatrix(true, false);
+    const ce = this.model.cockpit?.eye;
+    if (ce) {
+      // cars with a real cockpit: the eye was placed together with the dash, windscreen and header
+      pos.copy(ce);
+      root.localToWorld(pos);
+      root.getWorldQuaternion(quat);
+      return true;
+    }
     // seated, the eyes are ~0.78 m above the hips (body scale 1 = 1.8 m) and a little in front of them
     const k = s.scale * ENGINEER_LOOK.scale;
     const lean = this.spec.balance ? BIKE_RIDER_POSE.lean : 0; // a tucked rider's head is ahead of his hips
@@ -473,6 +481,7 @@ export class Vehicle implements OrbitTarget {
   /** Show or hide the seated player (hidden in the driver's-eye view: the camera sits inside his head). */
   setPlayerVisible(on: boolean): void {
     if (this.playerSeat) this.playerSeat.root.visible = on;
+    this.model.setDriverView(!on); // hidden player = driver's-eye view: clear glass, live cluster
   }
 
   /** Put a person (or the player) behind the wheel. */
@@ -1736,6 +1745,10 @@ export class Vehicle implements OrbitTarget {
   /** dist = distance to the player (m): far vehicles skip the headlight beam. */
   update(alpha: number, dist = 0): void {
     this.syncModel(alpha);
+    if (this.model.cockpit) {
+      this.model.setCabinLight(0.42 - 0.3 * NightLamps.on); // inside gets dimmer at night
+      if (this.driver === 'player') this.model.cockpitFrame(this.telemetry());
+    }
     // headlights / tail lights (only visible at night): on while somebody drives, off when empty, parked or wrecked
     const driven = this.driver !== null || this.tourInput !== null || this.ai !== null;
     this.lights.update(driven && !this.coast && this.state !== 'wrecked' && this.enabled, this.brake > 0.05 || this.handbrake, dist);

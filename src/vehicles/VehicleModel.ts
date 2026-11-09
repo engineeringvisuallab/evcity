@@ -4,6 +4,7 @@ import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeom
 import { groundY, wheelDefs, type VehicleSpec } from './VehicleSpec';
 import { EV_TEAL, makeLogoTexture, type LogoStyle } from './EVCityLogo';
 import { carEnv } from './CarEnv';
+import { Cockpit, COCKPITS, type CockpitKit, type CockpitState } from './Cockpit';
 
 type AnyMat = THREE.MeshLambertMaterial | THREE.MeshStandardMaterial;
 
@@ -189,6 +190,13 @@ export class VehicleModel {
   private wingG: { g: THREE.Group; sx: number }[] = [];
   private armG: { g: THREE.Group; sx: number; bar: THREE.Mesh; pod: THREE.Group; rotor: THREE.Group; disc: THREE.Mesh; glow: THREE.Mesh; glowM: THREE.MeshBasicMaterial; discM: THREE.MeshBasicMaterial }[] = [];
   private rotorAngle = 0;
+  /** Real cockpit (dash, live speedometer, steering wheel, seats, windscreen, wipers) of the enclosed cars and the bus. */
+  cockpit: Cockpit | null = null;
+  /** Cabin materials that are lit from inside (they dim at night). */
+  private cabinMats: THREE.MeshLambertMaterial[] = [];
+  private cabinLevel = -1;
+  /** Window glass: nearly clear in the driver's-eye view. */
+  private glassMats: (THREE.MeshPhysicalMaterial | THREE.MeshLambertMaterial)[] = [];
 
   constructor(private spec: VehicleSpec) {
     this.gy = groundY(spec);
@@ -218,6 +226,13 @@ export class VehicleModel {
     return m;
   }
 
+  /** Interior material: Lambert + a little emissive of its own colour, so faces that look DOWN (the roof lining) are not pitch black. */
+  private cabin(c: number): THREE.MeshLambertMaterial {
+    const m = this.mat(c, { emissive: c, emissiveIntensity: 0.42 });
+    this.cabinMats.push(m);
+    return m;
+  }
+
   /** Physically based material (reflects the shared sky cube): paint, glass, chrome, rubber. */
   private pbr(c: number, extra: THREE.MeshPhysicalMaterialParameters = {}): THREE.MeshPhysicalMaterial {
     const m = new THREE.MeshPhysicalMaterial({ color: c, envMap: carEnv(), ...extra });
@@ -232,7 +247,58 @@ export class VehicleModel {
 
   /** Dark tinted, glossy window glass (you still see the people inside). */
   private carGlass(): THREE.MeshPhysicalMaterial {
-    return this.pbr(0x0b1722, { metalness: 0.15, roughness: 0.04, transparent: true, opacity: 0.58, envMapIntensity: 1.6 });
+    const m = this.pbr(0x0b1722, { metalness: 0.15, roughness: 0.04, transparent: true, opacity: 0.58, envMapIntensity: 1.6 });
+    m.userData.baseOpacity = 0.58;
+    this.glassMats.push(m);
+    return m;
+  }
+
+  /** Builds the real cockpit from COCKPITS[kind]. `driverOnly`: only the driver's seat (the bus has its own passenger seats). */
+  private buildCockpit(driverOnly = false): void {
+    const spec = this.spec;
+    const d = COCKPITS[spec.look.kind];
+    if (!d) return;
+    const gy = this.gy;
+    const hip = (s: { x: number; y: number; z: number }) => ({ x: s.x, h: s.y - gy, z: s.z });
+    const s0 = spec.seat;
+    const list = (driverOnly ? [s0] : [s0, ...(spec.seats ?? [])]).map(hip);
+    const kit: CockpitKit = {
+      root: this.root,
+      gy,
+      cabin: (c) => this.cabin(c),
+      mat: (c, e) => this.mat(c, e),
+      geo: (g) => {
+        this.geos.push(g);
+        return g;
+      },
+      part: (o) => {
+        this.parts.push({ obj: o, stage: 4 });
+      },
+    };
+    this.cockpit = new Cockpit(kit, d, { x: s0.x, h: s0.y - gy, z: s0.z, scale: s0.scale }, list);
+    this.setCabinLight(0.42);
+  }
+
+  /** Cabin ambient (0 = dark, ~0.42 = day). Cheap: does nothing unless the level changed. */
+  setCabinLight(level: number): void {
+    if (Math.abs(level - this.cabinLevel) < 0.02) return;
+    this.cabinLevel = level;
+    for (const m of this.cabinMats) m.emissiveIntensity = level;
+  }
+
+  /** The driver's-eye view: window glass nearly clear, the cluster redraws. */
+  setDriverView(on: boolean): void {
+    for (const m of this.glassMats) {
+      const base = (m.userData.baseOpacity as number | undefined) ?? m.opacity;
+      m.userData.baseOpacity = base;
+      m.opacity = on ? Math.min(base, 0.1) : base;
+    }
+    this.cockpit?.setActive(on);
+  }
+
+  /** Once per frame for the vehicle the player drives. */
+  cockpitFrame(s: CockpitState): void {
+    this.cockpit?.update(s);
   }
 
   private chromeMat(): THREE.MeshPhysicalMaterial {
@@ -545,7 +611,7 @@ export class VehicleModel {
     const trim = this.pbr(spec.look.accent, { metalness: 0.1, roughness: 0.5 });
     const glass = this.carGlass();
     const dark = this.pbr(0x0f1114, { roughness: 0.6, metalness: 0.1 });
-    const interior = this.mat(0x23262b);
+    const interior = this.cabin(0x2a2e34);
     const chrome = this.chromeMat();
     const plate = this.mat(0xe9e6d8);
     const lightF = this.pbr(0xeef5ff, { emissive: 0xaecdff, emissiveIntensity: 0.55, roughness: 0.04, metalness: 0 });
@@ -649,39 +715,15 @@ export class VehicleModel {
 
     // ---- interior seen through the glass ----
     this.box(1.3, 0.02, 1.75, interior, 0, H(0.905), -0.2, 4); // floor / seat tops
-    this.box(1.3, 0.12, 0.3, interior, 0, H(0.97), 0.68, 4); // dashboard
-    const sw = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.016, 8, 20), dark);
-    this.geos.push(sw.geometry);
-    sw.position.set(-0.42, H(1.0), 0.56); // right-hand drive
-    sw.rotation.x = -2.53;
-    this.root.add(sw);
-    this.parts.push({ obj: sw, stage: 4 });
-    const seats = [spec.seat, ...(spec.seats ?? [])];
-    for (const st of seats) {
-      // the back must stay under the glass (the rear seats sit where the rear window slopes down)
-      const zb = st.z - 0.3;
-      const top = Math.min(1.3, sectionAt(SEDAN_CABIN, zb).ht - 0.14);
-      const hgt = top - 0.9;
-      const back = this.box(0.46, hgt, 0.08, interior, st.x, H(0.9 + hgt / 2), zb, 4);
-      back.rotation.x = -0.12;
-      if (top > 1.25) this.box(0.2, 0.12, 0.07, interior, st.x, H(top + 0.02), zb, 4); // head restraint
-    }
+    this.buildCockpit(); // dash, live speedometer, steering wheel, seats, windscreen, wipers, headliner, mirror
 
     // ---- real car inside: seat cushions, console, gear lever, hand brake, steering column, gauges, screen, vents, door trim, mirror, dome light ----
-    const seatCloth = this.mat(0x3a3f46);
-    const dialM = this.mat(0x9fffe9, { emissive: 0x27c9a6 });
     const PT = (x: number, h: number, z: number): number[] => [x, H(h), z];
-    for (const st of seats) this.box(0.46, 0.09, 0.5, seatCloth, st.x, H(0.955), st.z, 4); // seat cushion
-    this.box(0.2, 0.14, 0.75, interior, 0, H(0.97), 0.15, 4); // centre console
+    this.box(0.2, 0.14, 0.6, interior, 0, H(0.97), 0.05, 4); // centre console
     this.tube(PT(0, 1.03, 0.2), PT(0, 1.17, 0.14), 0.012, chrome, 4); // gear lever
     this.box(0.04, 0.04, 0.04, dark, 0, H(1.18), 0.14, 4); // gear knob
     this.tube(PT(0.1, 1.04, -0.05), PT(0.1, 1.09, 0.1), 0.01, chrome, 4); // hand brake
-    this.tube(PT(-0.42, 0.97, 0.63), PT(-0.42, 1.0, 0.56), 0.03, dark, 4); // steering column
-    this.box(0.26, 0.07, 0.012, dialM, -0.42, H(0.99), 0.528, 4); // instrument cluster (speedometer)
-    this.box(0.22, 0.12, 0.015, dialM, 0.12, H(1.02), 0.528, 4); // centre screen
-    for (const vx of [-0.1, 0.3, 0.55]) this.box(0.1, 0.03, 0.012, dark, vx, H(0.99), 0.526, 4); // air vents
-    this.box(0.2, 0.05, 0.02, dark, 0, H(1.2), 0.45, 4); // rear-view mirror
-    this.box(0.12, 0.01, 0.2, ledStrip, 0, H(1.19), -0.2, 4); // dome light
+    this.box(0.12, 0.01, 0.2, ledStrip, 0, H(1.335), -0.2, 4); // dome light
     for (const sx of [1, -1]) for (const z of [0.15, -0.65]) this.box(0.05, 0.06, 0.5, interior, sx * 0.7, H(0.97), z, 4); // door trim + armrest
     // ---- real car underneath: chassis rails, axles, differential, drive shaft, springs, fuel tank, exhaust ----
     const steelM = this.pbr(0x3b4046, { metalness: 0.7, roughness: 0.5 });
@@ -709,7 +751,7 @@ export class VehicleModel {
     const trim = this.pbr(spec.look.accent, { metalness: 0.1, roughness: 0.5 });
     const glass = this.carGlass();
     const dark = this.pbr(0x0f1114, { roughness: 0.6, metalness: 0.1 });
-    const interior = this.mat(0x23262b);
+    const interior = this.cabin(0x2d3136);
     const chrome = this.chromeMat();
     const plate = this.mat(0xe9e6d8);
     const lamp = this.pbr(0xeef5ff, { emissive: 0xaecdff, emissiveIntensity: 0.6, roughness: 0.04, metalness: 0 });
@@ -834,18 +876,7 @@ export class VehicleModel {
 
     // ---- interior seen through the glass ----
     this.box(1.6, 0.02, 2.3, interior, 0, H(1.06), -0.7, 4); // floor / seat tops
-    this.box(1.6, 0.2, 0.34, interior, 0, H(1.1), 0.42, 4); // dashboard
-    const sw = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.017, 8, 20), dark);
-    this.geos.push(sw.geometry);
-    sw.position.set(-0.45, H(1.24), 0.2); // right-hand drive
-    sw.rotation.x = -2.3;
-    this.root.add(sw);
-    this.parts.push({ obj: sw, stage: 4 });
-    for (const q of [spec.seat, ...(spec.seats ?? [])]) {
-      const back = this.box(0.5, 0.55, 0.1, interior, q.x, H(1.35), q.z - 0.32, 4);
-      back.rotation.x = -0.12;
-      this.box(0.22, 0.14, 0.08, interior, q.x, H(1.7), q.z - 0.32, 4); // head restraint
-    }
+    this.buildCockpit(); // dash, live speedometer, steering wheel, seats, windscreen, wipers, headliner, mirror
   }
 
   /** EVCity Volt GT: low, wide electric hypercar. Gloss graphite paint, glass canopy, teal LED signature, active rear wing, diffuser. */
@@ -855,7 +886,7 @@ export class VehicleModel {
     const carbon = this.pbr(spec.look.accent, { metalness: 0.4, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.08 });
     const glass = this.carGlass();
     const dark = this.pbr(0x090b0d, { roughness: 0.55, metalness: 0.1 });
-    const interior = this.mat(0x1b1e22);
+    const interior = this.cabin(0x23272c);
     const chrome = this.chromeMat();
     const plate = this.mat(0xe9e6d8);
     const lamp = this.pbr(0xeef7ff, { emissive: 0xaecdff, emissiveIntensity: 0.7, roughness: 0.04, metalness: 0 });
@@ -929,18 +960,7 @@ export class VehicleModel {
 
     // ---- interior seen through the glass ----
     this.box(1.2, 0.02, 1.5, interior, 0, H(0.56), -0.2, 4); // floor / seat bases
-    this.box(1.3, 0.1, 0.3, interior, 0, H(0.7), 0.82, 4); // dashboard
-    const sw = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.014, 8, 20), dark);
-    this.geos.push(sw.geometry);
-    sw.position.set(-0.38, H(0.84), 0.55); // right-hand drive
-    sw.rotation.x = -2.5;
-    this.root.add(sw);
-    this.parts.push({ obj: sw, stage: 4 });
-    for (const st of [spec.seat, ...(spec.seats ?? [])]) {
-      const back = this.box(0.42, 0.46, 0.09, interior, st.x, H(0.8), st.z - 0.3, 4); // bucket seat back
-      back.rotation.x = -0.28;
-      this.box(0.22, 0.12, 0.08, interior, st.x, H(1.08), st.z - 0.38, 4); // head restraint
-    }
+    this.buildCockpit(); // dash, live speedometer, steering wheel, bucket seats, windscreen
   }
 
   /** Painted text decal (flat plane a hair off the body). "EV" is teal, the rest white. w:h = 4:1. */
@@ -986,7 +1006,7 @@ export class VehicleModel {
     const glass = this.carGlass();
     const roofGlass = this.pbr(0x070d14, { metalness: 0.2, roughness: 0.03, transparent: true, opacity: 0.8, envMapIntensity: 1.8 });
     const dark = this.pbr(0x0b0d10, { roughness: 0.6, metalness: 0.1 });
-    const interior = this.mat(0x23262b);
+    const interior = this.cabin(0x2a2e34);
     const chrome = this.chromeMat();
     const plate = this.mat(0xe9e6d8);
     const lamp = this.pbr(0xeef5ff, { emissive: 0xaecdff, emissiveIntensity: 0.7, roughness: 0.04, metalness: 0 });
@@ -1069,19 +1089,7 @@ export class VehicleModel {
 
     // ---- interior seen through the glass ----
     this.box(1.7, 0.02, 2.5, interior, 0, H(0.5), -0.55, 4); // floor
-    this.box(1.7, 0.2, 0.4, interior, 0, H(1.0), 1.0, 4); // dashboard
-    const sw = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.016, 8, 20), dark);
-    this.geos.push(sw.geometry);
-    sw.position.set(-0.48, H(1.2), 0.78); // right-hand drive
-    sw.rotation.x = -2.4;
-    this.root.add(sw);
-    this.parts.push({ obj: sw, stage: 4 });
-    for (const q of [spec.seat, ...(spec.seats ?? [])]) {
-      this.box(0.5, 0.12, 0.5, interior, q.x, H(0.62), q.z, 4); // seat cushion
-      const back = this.box(0.5, 0.6, 0.1, interior, q.x, H(0.95), q.z - 0.3, 4);
-      back.rotation.x = -0.28; // reclined sport seats
-      this.box(0.22, 0.14, 0.08, interior, q.x, H(1.3), q.z - 0.4, 4); // head restraint
-    }
+    this.buildCockpit(); // dash, live speedometer, steering wheel, sport seats, windscreen, wipers, mirror
   }
 
   /**
@@ -1636,10 +1644,11 @@ export class VehicleModel {
     const trim = this.mat(0x2b3238);
     const teal = this.mat(EV_TEAL, { emissive: 0x0d6f5d });
     const glass = this.mat(0x0f1a22, { transparent: true, opacity: 0.55 });
+    glass.userData.baseOpacity = 0.55;
+    this.glassMats.push(glass);
     const lampW = this.mat(0xf2fbff, { emissive: 0xa9dcff });
     const tail = this.mat(0xd01818, { emissive: 0x4d0505 });
     const seatM = this.mat(0x15857a);
-    const seatD = this.mat(0x222c33);
     const pole = this.mat(0xd2d9dd);
     const floorM = this.mat(0x30373d);
     const WZ = [3.5, -2.4]; // axles
@@ -1742,21 +1751,17 @@ export class VehicleModel {
     const seats = [...(this.spec.seats ?? []), this.spec.seat];
     for (const st of seats) {
       const isDriver = st === this.spec.seat;
-      const sm = isDriver ? seatD : seatM;
       const sy = st.y - this.gy; // hips height above the ground
       this.rbox(0.46, 0.34, 0.4, 0.04, trim, st.x, sy - 0.38, st.z, 4); // pedestal
-      this.rbox(0.5, 0.12, 0.5, 0.04, sm, st.x, sy - 0.1, st.z, 4); // cushion
-      this.rbox(0.5, 0.58, 0.1, 0.04, sm, st.x, sy + 0.2, st.z - 0.27, 4); // back
-      this.rbox(0.32, 0.14, 0.08, 0.03, sm, st.x, sy + 0.55, st.z - 0.27, 4); // headrest
+      if (isDriver) continue; // the driver's seat comes from the cockpit (shaped seat, belt)
+      this.rbox(0.5, 0.12, 0.5, 0.04, seatM, st.x, sy - 0.1, st.z, 4); // cushion
+      this.rbox(0.5, 0.58, 0.1, 0.04, seatM, st.x, sy + 0.2, st.z - 0.27, 4); // back
+      this.rbox(0.32, 0.14, 0.08, 0.03, seatM, st.x, sy + 0.55, st.z - 0.27, 4); // headrest
     }
     for (const [x, z] of [[0.95, 2.45], [0.95, 3.85], [0.95, 0.35], [0.95, -0.95], [-0.4, 4.4]] as const) this.ucyl(0.022, 0.022, 1.55, pole, x, 1.68, z, 'y', 4, this.root, 8);
     this.ucyl(0.02, 0.02, 9.2, pole, 0.55, 2.42, 0, 'z', 4, this.root, 8);
     this.ucyl(0.02, 0.02, 9.2, pole, -0.55, 2.42, 0, 'z', 4, this.root, 8);
-    this.rbox(2.3, 0.5, 0.55, 0.05, dark, 0, 1.5, 4.8, 4); // dashboard
-    this.rbox(0.5, 0.18, 0.04, 0.02, teal, 0.5, 1.8, 4.55, 4); // screen
-    const sw = new THREE.TorusGeometry(0.19, 0.02, 6, 18);
-    sw.rotateX(-0.9);
-    this.reg(this.mesh(sw, dark, -0.62, this.gy + 1.88, 4.3), 4, this.root);
+    this.buildCockpit(true); // dash, live speedometer, steering wheel, driver's seat, windscreen, wipers, ceiling
 
     // ---- real bus underneath: chassis frame, axles, rear diesel engine, drive shaft, exhaust, tanks, air suspension ----
     const steel = this.pbr(0x3b4046, { metalness: 0.7, roughness: 0.5 });
@@ -1782,13 +1787,11 @@ export class VehicleModel {
     this.rbox(0.5, 0.16, 0.3, 0.03, steel, 0, 0.28, 3.4, 1); // steering box / front axle gear
 
     // ---- driver cab: steering column, pedals, gear lever, hand brake, gauges, inside mirror ----
-    this.utube([-0.62, 1.5, 4.55], [-0.62, 1.86, 4.34], 0.035, dark, 4); // steering column
     this.rbox(0.14, 0.04, 0.1, 0.01, dark, -0.5, 0.96, 4.4, 4); // brake pedal
     this.rbox(0.07, 0.04, 0.15, 0.01, dark, -0.74, 0.96, 4.4, 4); // accelerator
     this.utube([-0.2, 0.98, 4.3], [-0.2, 1.3, 4.25], 0.015, pole, 4); // gear lever
     this.ucyl(0.03, 0.03, 0.05, dark, -0.2, 1.33, 4.25, 'y', 4, this.root, 8);
     this.utube([-0.12, 0.98, 4.1], [-0.12, 1.22, 4.2], 0.012, pole, 4); // hand brake
-    for (const gx of [-0.72, -0.52]) this.ucyl(0.07, 0.07, 0.02, lampW, gx, 1.62, 4.52, 'z', 4, this.root, 12); // speedometer, fuel gauge
     this.rbox(0.3, 0.1, 0.02, 0.01, dark, 0, 2.3, 5.15, 4); // inside mirror
     this.rbox(0.02, 1.0, 0.7, 0.01, glass, -0.28, 1.65, 3.85, 4); // driver safety screen
     // ---- passenger area: more seats (bench at the back), overhead lights, stop buttons, grab straps, fare box, door steps ----
@@ -2268,6 +2271,7 @@ export class VehicleModel {
 
   /** Burnt out: everything left on the wreck turns black. */
   char(): void {
+    this.cockpit?.char();
     for (const m of this.mats) {
       m.color.multiplyScalar(0.12);
       m.emissive.setHex(0x000000);
@@ -2278,6 +2282,7 @@ export class VehicleModel {
   }
 
   dispose(): void {
+    this.cockpit?.dispose();
     for (const g of this.geos) g.dispose();
     for (const m of this.mats) m.dispose();
   }
