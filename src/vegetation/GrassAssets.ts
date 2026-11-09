@@ -20,18 +20,33 @@ import { GRASS_TYPE_COUNT, GrassType } from './TreeTypes';
 
 type RNG = () => number;
 type RGB = [number, number, number];
+/** FIXED blade tint: always the same dark green (no straw / yellow blades). The real colour comes from the per-tuft colour in GrassManager. */
+const FIXED_TINT: RGB = [1, 1, 1];
 
 class Builder {
   pos: number[] = [];
   nor: number[] = [];
   col: number[] = [];
   fl: number[] = [];
+  idx: number[] = [];
 
+  /** A vertex that is NOT shared: pushed together with its own index (flowers, stems: 3 vertices per triangle). */
   vert(p: ArrayLike<number>, n: THREE.Vector3, c: RGB, flower: number): void {
+    this.shared(p, n, c, flower);
+    this.idx.push(this.pos.length / 3 - 1);
+  }
+
+  /** A vertex that triangles share through `face` (grass blades: 5 vertices for 3 triangles, smooth normals, fewer vertices). Returns its index. */
+  shared(p: ArrayLike<number>, n: THREE.Vector3, c: RGB, flower: number): number {
     this.pos.push(p[0], p[1], p[2]);
     this.nor.push(n.x, n.y, n.z);
     this.col.push(c[0], c[1], c[2]);
     this.fl.push(flower);
+    return this.pos.length / 3 - 1;
+  }
+
+  face(a: number, b: number, c: number): void {
+    this.idx.push(a, b, c);
   }
 
   tri(a: ArrayLike<number>, b: ArrayLike<number>, c: ArrayLike<number>, n: THREE.Vector3, ca: RGB, cb: RGB = ca, cc: RGB = ca, flower = 0): void {
@@ -46,6 +61,7 @@ class Builder {
     g.setAttribute('normal', new THREE.Float32BufferAttribute(this.nor, 3));
     g.setAttribute('color', new THREE.Float32BufferAttribute(this.col, 3));
     g.setAttribute('aFlower', new THREE.Float32BufferAttribute(this.fl, 1));
+    g.setIndex(this.idx);
     g.computeBoundingSphere();
     return g;
   }
@@ -74,28 +90,30 @@ interface BladeOpts {
   tip: number;
 }
 
-/** One curved blade: root -> middle -> upper -> pointed tip (5 triangles). */
+/**
+ * One smooth blade = 3 TRIANGLES and only 5 VERTICES (indexed): a quad from the root to the middle (2 triangles) + a pointed tip (1 triangle).
+ * Normals are per vertex (shared by the triangles), so the blade is shaded smoothly. The root is dark, the tip bright.
+ */
 function blade(b: Builder, o: BladeOpts): void {
   const tx = -o.dz, tz = o.dx; // sideways
   const at = (t: number): [number, number, number] => {
     const out = o.lean * t * t + o.droop * t * t * t;
     return [o.cx + o.dx * out, o.h * t - o.droop * 0.35 * t * t * t, o.cz + o.dz * out];
   };
-  const P0 = at(0), P1 = at(0.45), P2 = at(0.8), P3 = at(1);
-  // SLIM blades: the half width is multiplied by `look.bladeWidth` and tapers faster to a fine point (thin, smooth grass, not broad leaves)
+  const P0 = at(0), P1 = at(0.55), P3 = at(1);
   const bw = o.w * Config.vegetation.grass.look.bladeWidth;
-  const w0 = bw, w1 = bw * 0.78, w2 = bw * 0.36;
+  const w0 = bw, w1 = bw * 0.62;
   const c = (k: number): RGB => [k * o.tint[0], k * o.tint[1], k * o.tint[2]];
   const nl = bladeNormal(-tx, -tz, 0.38), nr = bladeNormal(tx, tz, 0.38), nm = bladeNormal(0, 0, 0);
-  const L0 = [P0[0] - tx * w0, P0[1], P0[2] - tz * w0], R0 = [P0[0] + tx * w0, P0[1], P0[2] + tz * w0];
-  const L1 = [P1[0] - tx * w1, P1[1], P1[2] - tz * w1], R1 = [P1[0] + tx * w1, P1[1], P1[2] + tz * w1];
-  const L2 = [P2[0] - tx * w2, P2[1], P2[2] - tz * w2], R2 = [P2[0] + tx * w2, P2[1], P2[2] + tz * w2];
-  const k0 = o.root, k1 = o.root + (o.tip - o.root) * 0.45, k2 = o.root + (o.tip - o.root) * 0.8;
-  b.vert(L0, nl, c(k0), 0); b.vert(R0, nr, c(k0), 0); b.vert(R1, nr, c(k1), 0);
-  b.vert(L0, nl, c(k0), 0); b.vert(R1, nr, c(k1), 0); b.vert(L1, nl, c(k1), 0);
-  b.vert(L1, nl, c(k1), 0); b.vert(R1, nr, c(k1), 0); b.vert(R2, nr, c(k2), 0);
-  b.vert(L1, nl, c(k1), 0); b.vert(R2, nr, c(k2), 0); b.vert(L2, nl, c(k2), 0);
-  b.vert(L2, nl, c(k2), 0); b.vert(R2, nr, c(k2), 0); b.vert(P3, nm, c(o.tip), 0);
+  const kMid = o.root + (o.tip - o.root) * 0.55;
+  const L0 = b.shared([P0[0] - tx * w0, P0[1], P0[2] - tz * w0], nl, c(o.root), 0);
+  const R0 = b.shared([P0[0] + tx * w0, P0[1], P0[2] + tz * w0], nr, c(o.root), 0);
+  const L1 = b.shared([P1[0] - tx * w1, P1[1], P1[2] - tz * w1], nl, c(kMid), 0);
+  const R1 = b.shared([P1[0] + tx * w1, P1[1], P1[2] + tz * w1], nr, c(kMid), 0);
+  const T = b.shared(P3, nm, c(o.tip), 0);
+  b.face(L0, R0, R1);
+  b.face(L0, R1, L1);
+  b.face(L1, R1, T);
 }
 
 interface GrassStyle {
@@ -132,9 +150,7 @@ function grassBlades(b: Builder, r: RNG, s: GrassStyle, density = 1, fixed = 0):
     const rad = s.rMin + (s.rMax - s.rMin) * Math.sqrt(r());
     const h = s.hMin + Math.pow(r(), s.hPow) * (s.hMax - s.hMin);
     const da = a + (r() - 0.5) * 1.1;
-    const k = r();
-    // per-blade tint: fresh green / yellow-green / straw
-    const tint: RGB = k < s.straw ? [1.5, 1.2, 0.62] : k < s.straw + s.yellow ? [1.2, 1.08, 0.78] : [0.9 + r() * 0.14, 1.0 + r() * 0.06, 0.88 + r() * 0.16];
+    const tint = FIXED_TINT;
     blade(b, {
       cx: Math.cos(a) * rad,
       cz: Math.sin(a) * rad,
@@ -145,8 +161,8 @@ function grassBlades(b: Builder, r: RNG, s: GrassStyle, density = 1, fixed = 0):
       droop: (s.droop[0] + r() * (s.droop[1] - s.droop[0])) * (0.5 + h),
       w: s.wMin + r() * (s.wMax - s.wMin),
       tint,
-      root: Config.vegetation.grass.look.rootDark * (0.49 + r() * 0.22),
-      tip: 1.0 + r() * 0.2,
+      root: Config.vegetation.grass.look.rootDark * 0.6,
+      tip: 1.0,
     });
   }
 }
@@ -184,8 +200,7 @@ function tussockBlades(b: Builder, r: RNG, s: TussockStyle, density = 1): void {
     const rad = s.baseR * f * (0.85 + 0.3 * r());
     const h = (s.hMin + (s.hMax - s.hMin) * (1 - f * 0.65) * (0.65 + 0.35 * r())) * (1 - 0.1 * r());
     const da = a + (r() - 0.5) * 0.5;
-    const k = r();
-    const tint: RGB = k < s.straw ? [1.5, 1.2, 0.62] : k < s.straw + s.yellow ? [1.2, 1.08, 0.78] : [0.9 + r() * 0.14, 1.0 + r() * 0.06, 0.88 + r() * 0.16];
+    const tint = FIXED_TINT;
     blade(b, {
       cx: Math.cos(a) * rad,
       cz: Math.sin(a) * rad,
@@ -196,8 +211,8 @@ function tussockBlades(b: Builder, r: RNG, s: TussockStyle, density = 1): void {
       droop: (s.arch[0] + r() * (s.arch[1] - s.arch[0])) * (0.4 + h) * (0.4 + 0.6 * f),
       w: s.wMin + r() * (s.wMax - s.wMin),
       tint,
-      root: Config.vegetation.grass.look.rootDark * (0.49 + r() * 0.22),
-      tip: 1.0 + r() * 0.2,
+      root: Config.vegetation.grass.look.rootDark * 0.6,
+      tip: 1.0,
     });
   }
 }
@@ -467,7 +482,7 @@ function make(type: number, density = 1): THREE.BufferGeometry {
     if (type === GrassType.seed && density >= 1) seedHeads(b, r);
   } else {
     // flower tuft: low grass + several flowers on stems
-    grassBlades(b, r, FLOWER_BASE_STYLE);
+    grassBlades(b, r, FLOWER_BASE_STYLE, 1, 4);
     const f = FLOWERS[type];
     const count = f.stems[0] + Math.floor(r() * (f.stems[1] - f.stems[0] + 1));
     for (let i = 0; i < count; i++) {
@@ -533,11 +548,22 @@ export class GrassAssets {
             vec4 gip = modelViewMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
             float gFade = 1.0 - smoothstep(uGrassFade.x, uGrassFade.y, length(gip.xyz));
             float gph = instanceMatrix[3].x * 0.9 + instanceMatrix[3].z * 0.7;
-            // slow wind gusts that travel across the meadow (waves of bending) + the small fast flutter of each tuft
-            float gust = sin(uGrassTime * 0.9 + instanceMatrix[3].x * 0.045 + instanceMatrix[3].z * 0.03) * 0.5 + 0.5;
-            float bendAmt = mix(1.0, 0.75, aFlower);
-            transformed.x += (sin(uGrassTime * 2.1 + gph) * 0.05 + sin(uGrassTime * 0.8 + gph * 0.5) * 0.04 + gust * 0.09) * position.y * 1.3 * bendAmt * uGrassWind;
-            transformed.z += (cos(uGrassTime * 1.7 + gph) * 0.04 + gust * 0.03) * position.y * bendAmt * uGrassWind;
+            // blade height in metres (the tip moves most, the root stays fixed in the ground)
+            float wh = position.y * length(instanceMatrix[1].xyz);
+            // WIND in WORLD space (so every tuft leans the same way): a gust wave travelling across the meadow + slow sway of each tuft
+            vec2 wdir = vec2(0.8, 0.6);
+            float along = dot(instanceMatrix[3].xz, wdir);
+            float gust = sin(uGrassTime * 1.4 + along * 0.11) * 0.5 + 0.5;
+            vec2 sw = wdir * (gust * 0.75 + sin(uGrassTime * 2.3 + gph) * 0.18) + vec2(-wdir.y, wdir.x) * sin(uGrassTime * 1.7 + gph * 0.7) * 0.12;
+            // fast flutter, every blade a little different (position.xz is its place in the tuft): the "jhir jhir"
+            float fx = sin(uGrassTime * 9.0 + gph * 3.0 + position.x * 40.0 + position.z * 31.0) * 0.16;
+            float fz = sin(uGrassTime * 12.0 + gph * 2.0 + position.z * 37.0 - position.x * 29.0) * 0.12;
+            vec2 off = (sw + vec2(fx, fz)) * wh * 0.9 * mix(1.0, 0.75, aFlower) * uGrassWind;
+            // world offset -> tuft (model) space: the tuft is turned and scaled
+            vec3 gc0 = instanceMatrix[0].xyz;
+            vec3 gc2 = instanceMatrix[2].xyz;
+            transformed.x += off.x * gc0.x / dot(gc0, gc0) + off.y * gc0.z / dot(gc0, gc0);
+            transformed.z += off.x * gc2.x / dot(gc2, gc2) + off.y * gc2.z / dot(gc2, gc2);
             transformed *= gFade;
           #endif`,
         );
@@ -559,7 +585,7 @@ export class GrassAssets {
           #include <opaque_fragment>`,
         );
     };
-    m.customProgramCacheKey = () => 'grass-wind-fade-v4' + key;
+    m.customProgramCacheKey = () => 'grass-wind-fade-v5' + key;
     return m;
   }
 

@@ -265,8 +265,8 @@ export const Config = {
        * to its height scale (blades lean outwards, so 2.2 gives natural short grass; higher = flatter, wider mats).
        */
       tuft: {
-        /** Meadow single grass: tallest blade 0.6 m (3x the old 0.2 m), so blades are ~3-60 cm. */
-        maxHeight: 0.6,
+        /** Meadow single grass: tallest blade 0.8 m. */
+        maxHeight: 0.8,
         min: 0.2,
         /** Wildflowers keep 2x the old height (0.4 m). Mown city lawn keeps its old size (0.2 m, then x `city.height`) and its old width scale. */
         flowerMaxHeight: 0.4,
@@ -358,7 +358,7 @@ export const Config = {
        * COLOUR: every tuft is fresh green, yellow-green or straw (`strawShare` of the tufts lean to straw outside the city, `yellowShare` to yellow-green).
        * `rootDark` = brightness of the blade at the root (0..1, 1 = no darkening), `wind` = global wind sway multiplier (0 = still air; the sway grows with blade height, so short lawn moves little anyway).
        */
-      look: { bladeWidth: 0.28, strawShare: 0.04, yellowShare: 0.12, rootDark: 0.45, wind: 1 },
+      look: { bladeWidth: 0.28, strawShare: 0, yellowShare: 0, rootDark: 0.45, wind: 0 },
       /**
        * SINGLE GRASS: every tuft model has only `blades[0]..blades[1]` blades (3-5 leaves per grass), so the ground can be covered with very many
        * of them cheaply (`cell` 0.2 m). Used for the four grass kinds; flowers keep their own base. enabled false = the old many-blade tufts.

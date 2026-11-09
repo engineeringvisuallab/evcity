@@ -70,12 +70,12 @@ function grassLod(d: number, current?: number): number {
 const EXTRA = GRASS_TYPE_COUNT;
 const dummy = new THREE.Object3D();
 const color = new THREE.Color();
-const GREEN: [number, number, number] = [0.13, 0.28, 0.07]; // DARK green meadow (was [0.25, 0.42, 0.12])
+const GREEN: [number, number, number] = [0.07, 0.22, 0.05]; // FIXED dark green durba (smooth, always the same colour)
 const DRY: [number, number, number] = [0.46, 0.42, 0.2];
 const YELLOW: [number, number, number] = [0.24, 0.34, 0.09];
 const STRAW: [number, number, number] = [0.62, 0.55, 0.27];
 /** City lawn: a fresher, slightly brighter green than the wild meadow. */
-const LAWN: [number, number, number] = [0.12, 0.31, 0.07];
+const LAWN: [number, number, number] = [0.08, 0.24, 0.055];
 
 /** Smooth 2D value noise in 0..1 (integer-lattice hash, smoothstep blend): decides where the flower patches are. Deterministic, no state. */
 function vnoise(x: number, z: number): number {
@@ -324,16 +324,16 @@ export class GrassManager {
     }
     dummy.updateMatrix();
     mesh.setMatrixAt(slot, dummy.matrix);
-    const dry = data[o + 6];
-    const t = data[o + 5] * (0.9 + h2 * 0.2); // brightness varies tuft to tuft
+    const dry = 0; // FIXED colour: no dry / straw / yellow grass, even on high ground
+    const t = 1; // FIXED brightness: every tuft has the same dark green
     // COLOUR VARIATION: every tuft is fresh green, yellow-green or straw (shares: Config grass.look). A hash of the tuft's position picks the class;
     // brighter tufts lean yellow-green like sun-lit, drier grass. The city lawn has no straw.
     const cityLawn = flag > 1.5 && flag < 3.5;
     const hc = Math.sin(data[o] * 39.3468 + data[o + 2] * 17.1313 + 5.7) * 43758.5453;
     const pick = hc - Math.floor(hc);
-    const straw = cityLawn ? 0 : pick < G.look.strawShare ? 0.55 + 0.3 * h2 : 0;
-    const yellowCls = pick > 1 - G.look.yellowShare ? 0.45 + 0.35 * h2 : 0;
-    const u = Math.min(1, Math.max(0, Math.max(((t - 0.85) / 0.3) * 0.55, yellowCls)));
+    const straw = 0;
+    const u = 0;
+    void pick;
     const base: [number, number, number] = cityLawn ? LAWN : GREEN;
     color.setRGB(
       (base[0] + (YELLOW[0] - base[0]) * u + (STRAW[0] - base[0]) * straw + (DRY[0] - base[0]) * dry) * t,
