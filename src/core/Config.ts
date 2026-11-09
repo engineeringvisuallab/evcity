@@ -257,25 +257,25 @@ export const Config = {
     grass: {
       /** Tile size (m) and cell size (m): one tuft at most per cell. tile / cell must be a whole number (and every LOD stride must divide it). 0.25 m = 1.6x denser than 0.32 (short grass needs many tufts to cover the ground). */
       tile: 32,
-      cell: 0.4, // was 0.2: 4x fewer cells (blades are 3x wider now, so the ground is still covered). 32 / 0.4 = 80, strides 1, 2, 4 divide it
+      cell: 0.5, // was 0.2: 6x fewer cells. 32 / 0.5 = 64, strides 1, 2, 4 divide it
       /**
        * DENSE SINGLE GRASS: every accepted meadow cell grows `dense` single tufts instead of one (7.5 = 7.5x the old density, may be fractional; same cell test, terrain test and
        * deterministic jitter, so the far rings stay a subset of the near ring). The Quality preset sets the value the workers use (low 3, medium 4.5, high 7.5).
        * Far rings (stride > 1) get dense / stride^2 (at least 1). Not applied to the mown city lawn.
        */
-      dense: 2, // was 7.5
+      dense: 1, // 1 = no extra tufts at all (was 7.5)
       /**
        * The extra (dense) tufts fade out with the camera distance: full size inside `denseFade[0]` m, shrunk to nothing at `denseFade[1]` m (smooth, no
        * pop), and a tile's extra tufts are not drawn at all when the tile is farther than `denseFade[1]` m. So the 5x density costs only near the player.
        */
       denseFade: [8, 18] as [number, number],
       /** Tiles within `radius` (m) of the player exist, tiles beyond `keep` are removed. */
-      radius: 70,
-      keep: 90,
-      maxInFlight: 6,
+      radius: 35, // only grass within 35 m exists (was 115)
+      keep: 45,
+      maxInFlight: 2, // at most 2 tiles asked from the workers at once (was 6): no CPU spikes
       /** Tufts shrink to nothing between these camera distances (m): only at the very edge, so the meadow is always there (like the trees). */
-      fadeStart: 50,
-      fadeEnd: 68,
+      fadeStart: 22,
+      fadeEnd: 33,
       /**
        * SIZE OF THE GRASS. Short, dense grass: a tuft's TALLEST blade is `tuft.maxHeight` m at most (so the blades of a meadow are 1-20 cm); `tuft.min` = the
        * shortest tuft as a share of that (0.2 -> 4 cm). Big clumps (tussocks) are at most `clump.maxHeight` (0.5 m). `widthScale` = how wide a tuft is relative
@@ -298,9 +298,9 @@ export const Config = {
        * Far rings have no flowers. The tuft positions of a coarse ring are a subset of the near ring, so nothing jumps when a tile changes ring.
        */
       lods: [
-        { to: 14, stride: 1, density: 1, size: 1, clumpStride: 1, clumpDensity: 1, clumpSize: 1 },
-        { to: 32, stride: 2, density: 0.5, size: 1.4, clumpStride: 1, clumpDensity: 0.6, clumpSize: 1 },
-        { to: 70, stride: 4, density: 0.25, size: 2, clumpStride: 2, clumpDensity: 0.35, clumpSize: 1.35 },
+        { to: 10, stride: 1, density: 1, size: 1, clumpStride: 1, clumpDensity: 1, clumpSize: 1 },
+        { to: 20, stride: 2, density: 0.5, size: 1.4, clumpStride: 1, clumpDensity: 0.6, clumpSize: 1 },
+        { to: 35, stride: 4, density: 0.25, size: 2, clumpStride: 2, clumpDensity: 0.35, clumpSize: 1.35 },
       ] as { to: number; stride: number; density: number; size: number; clumpStride: number; clumpDensity: number; clumpSize: number }[],
       lodHysteresis: 0.12,
       /**
@@ -338,8 +338,8 @@ export const Config = {
         width: 1.8,
       },
       /** Chance per cell inside a meadow / on bare patches, and the extra thinning inside forests. Higher = denser, fewer bald patches. */
-      maxChance: 0.98,
-      minChance: 0.9,
+      maxChance: 0.35, // SPARSE: ~1 cell in 3 grows a tuft (was 0.98 / 0.9 = every cell)
+      minChance: 0.15,
       forestThin: 0.3,
       /** Blades per tuft model are multiplied by this (1 = full quality; 0.6 for weak GPUs). */
       bladeDensity: 1,
@@ -382,7 +382,9 @@ export const Config = {
        */
       single: { enabled: true, blades: [3, 5] as [number, number] },
       /** No grass is made while the camera is higher than this above the ground (m): free-fly / helicopter. */
-      maxAboveGround: 70,
+      maxAboveGround: 25,
+      /** While the camera moves faster than this (m/s, ~43 km/h) NO new grass tile is asked from the workers (car / plane / free-fly): existing tiles just fall out of range. */
+      maxSpeed: 12,
     },
   },
 

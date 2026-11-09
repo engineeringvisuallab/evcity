@@ -104,6 +104,10 @@ export class GrassManager {
   private wanted = new Map<string, number>();
   private ready: { key: string; tx: number; tz: number; lod: number; data: Float32Array }[] = [];
   private timer = 1;
+  /** Last camera position seen by evaluate() (5 Hz) and the speed (m/s) from it: fast travel makes no new grass tiles. */
+  private lastX = NaN;
+  private lastZ = NaN;
+  private speed = 0;
   private disposed = false;
   /** The tile whose meshes are being built right now (spread over several frames: a dense tile has ~10x more instances). */
   private job: InstallJob | null = null;
@@ -138,7 +142,7 @@ export class GrassManager {
     }
     // tile meshes are built within a small time budget per frame; one dense tile takes several frames, so there is no single long hitch
     const t0 = performance.now();
-    const until = t0 + (this.ready.length > 2 ? 9 : 5);
+    const until = t0 + (this.ready.length > 2 ? 4 : 2); // small build budget per frame (was 9 / 5 ms)
     while (performance.now() < until) {
       if (!this.job) {
         const r = this.ready.shift();
@@ -161,6 +165,9 @@ export class GrassManager {
 
   private evaluate(px: number, py: number, pz: number, groundAt: (x: number, z: number) => number): void {
     this.wanted.clear();
+    this.speed = Number.isNaN(this.lastX) ? 0 : Math.hypot(px - this.lastX, pz - this.lastZ) / 0.2;
+    this.lastX = px;
+    this.lastZ = pz;
     const high = py - groundAt(px, pz) > G.maxAboveGround;
     if (high) {
       for (const t of [...this.tiles.values()]) this.remove(t);
@@ -191,8 +198,9 @@ export class GrassManager {
       }
     }
     need.sort((a, b) => a.d - b.d);
+    const fast = this.speed > G.maxSpeed; // fast travel: no new tiles (they would be left behind at once), the CPU / GPU rests
     for (const n of need) {
-      if (this.pending.size >= G.maxInFlight) break;
+      if (fast || this.pending.size >= G.maxInFlight) break;
       this.pending.set(n.key, n.lod);
       this.source.requestGrass(n.tx, n.tz, G.lods[n.lod].stride).then(
         (res) => {
