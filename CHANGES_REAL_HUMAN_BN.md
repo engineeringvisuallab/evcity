@@ -1,19 +1,30 @@
-# Real manus step 1: skinned body (smooth joint) + natural walk
+# Real manus: skinned body + natural motion + shooting + hit/death + LOD
 
-## Ki bodlalo
-- `src/people/SkinnedHuman.ts` (notun): manus ekhon ekta continuous `SkinnedMesh`, 17 ta bone (Mixamo nam: mixamorigHips, Spine, Spine2, Neck, Head, Left/RightArm, ForeArm, Hand, UpLeg, Leg, Foot). Kolchi, kuni, kandh e ar gap/overlap nei, joint skin er moto bend hoy.
-- `src/people/SkinMath.ts` (notun): body er ring table, tube builder, skin weight (pure math, three.js lage na).
-- `src/people/HumanMotion.ts` (notun): natural gait. Pelvis twist, shoulder counter-rotation, matha steady, pa heel->toe roll, stance pa er upor hip bob (pa ar bhashe na), idle e breathing + weight shift + majhe majhe pashe takano.
-- `src/people/HumanBody.ts`: `buildHuman` ekhon skinned body dey. Rig interface same (pivot, armL, foreL, legL, shinL...) tai `PlayerModel`/`PersonModel`/gun/umbrella/farm work/seated/fall sob agey r moto kaj kore. Extra bone gulo optional field (spine, chest, neck, head, handL/R, footL/R).
-- `PlayerModel.ts`, `PersonModel.ts`: gait/relax call, type `Group` -> `Object3D` (bone er jonno).
-- Gun ekhon hand er grip e (`HAND_GRIP_Y = -0.31`).
+## Step 1 (body + walk)
+- `src/people/SkinnedHuman.ts`: manus ekta continuous `SkinnedMesh`, 17 bone (Mixamo nam). Joint skin er moto bend hoy, gap nei.
+- `src/people/SkinMath.ts`: ring table, tube builder, skin weight (pure math).
+- `src/people/HumanMotion.ts`: pelvis twist, shoulder counter-rotation, matha steady, pa heel->toe roll, hip bob, breathing, weight shift, pashe takano, blink.
+- `src/people/HumanBody.ts`: `buildHuman` skinned body dey. `USE_SKINNED_BODY = false` korle ager rigid body fire ashe.
 
-## Fallback
-`src/people/HumanBody.ts` er `USE_SKINNED_BODY = false` korle ager rigid body fire ashe.
+## Step 2 (baki gulo)
+- **Chokh:** eyelid + natural blink (2-6 sec, majhe majhe double blink). Mara gele chokh bondho thake.
+- **Gun dhora (`src/people/HumanAim.ts`):**
+  - Right hand grip chest er kache, gun camera pitch onujayi uthe/name, wrist ghure gun ke aim e rakhe.
+  - Left hand two-bone IK diye foregrip e boshe (elbow natural bend).
+  - Recoil: gun uthe, hand ar chest pichone dhakka khay, tarpor settle kore.
+  - Reload: gun nambe, left hand belt theke magazine ane, gun e dhukay, rack kore (CombatSystem er ammo timer follow kore).
+  - Gun ekhon hand bone e, tracer ar muzzle flash gun er asol muzzle theke.
+- **NPC (gunman, police):** same two-hand grip + recoil. Hit lagle body jerk (flinch).
+- **Mara:** 3 rokom pora: pichone, mukh niche, pashe. Hatu bhenge jay, haat chhitke jay, matha jhule jay, chokh bondho.
+- **LOD:** 70 m er dure sasta mesh (~1.9k tri, same skeleton), 120 m er dure animation 3 frame e 1 bar. Near mesh ~5k tri.
+- **Leak fix:** manus remove hole skeleton er GPU texture free hoy (`dispose`).
 
-## Numbers
-- Body ~4k triangle (tube 1932 + head, hand, shoe), 1 shared geometry per body type (slim/average/stocky), 7 material group.
-- Hair, beard, cap, helmet, topi: head bone er static mesh. Vest stripe: chest bone er static mesh.
+## Files
+Notun: `SkinnedHuman.ts`, `SkinMath.ts`, `HumanMotion.ts`, `HumanAim.ts`, `scripts/skin-test.ts`, `scripts/human-test.ts`.
+Bodlano: `HumanBody.ts`, `PersonModel.ts`, `PlayerModel.ts`, `Player.ts` (muzzle), `Person.ts`, `PeopleManager.ts`, `CombatSystem.ts`, `package.json`.
 
 ## Test
-`npm run test:skin` (tube closed + outward, index valid, weight sum = 1). Sobar age `npm run typecheck` ar `npm run dev` e dekhe nao.
+`npm run typecheck`, `npm run test:skin` (body math), `npm run test:human` (bone, aim, reload, blink, LOD), `npm run test:combat`, `npm run test:people`, tarpor `npm run dev`.
+
+## Ekhono nei
+Rapier ragdoll (physics diye mara), kapor er fold, lungi/panjabi/saree, meye/bachcha, crouch/prone, gun swap animation.

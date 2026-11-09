@@ -47,7 +47,17 @@ interface Base {
   stripes: THREE.BufferGeometry;
 }
 
-const bases = new Map<BodyType, Base>();
+const bases = new Map<string, Base>();
+const getBase = (type: BodyType, lod: 0 | 1): Base => {
+  const key = `${type}:${lod}`;
+  let b = bases.get(key);
+  if (!b) {
+    b = buildBase(type, lod);
+    bases.set(key, b);
+  }
+  return b;
+};
+let lidGeo: THREE.BufferGeometry | null = null;
 let headCache: { hair: THREE.BufferGeometry; hairBeard: THREE.BufferGeometry; cap: THREE.BufferGeometry; helmet: THREE.BufferGeometry; topi: THREE.BufferGeometry } | null = null;
 
 const ell = (r: V3, p: V3, ws = 14, hs = 10): THREE.BufferGeometry => {
@@ -67,8 +77,12 @@ function tubeGeo(rings: Ring[], seg: number, caps = true): THREE.BufferGeometry 
   return g;
 }
 
-function buildBase(type: BodyType): Base {
+function buildBase(type: BodyType, lod: 0 | 1): Base {
   const P = propsOf(type);
+  // lod 1 = far version: same parts and materials, fewer segments (about 40% of the triangles)
+  const segB = lod ? 10 : SEG_BODY;
+  const segL = lod ? 7 : SEG_LIMB;
+  const E = (r: V3, p: V3, ws = 14, hs = 10): THREE.BufferGeometry => ell(r, p, lod ? Math.max(5, Math.round(ws * 0.5)) : ws, lod ? Math.max(3, Math.round(hs * 0.5)) : hs);
   const lists: THREE.BufferGeometry[][] = Array.from({ length: SLOTS }, () => []);
 
   /** Skin the geometry with `fn` and put it in material slot `slot`. */
@@ -82,10 +96,10 @@ function buildBase(type: BodyType): Base {
   const body = { sx: P.torsoX, sz: P.torsoZ };
 
   // ---- torso: trousers round the hips, shirt over the chest (the shirt hangs over the waistband), belt, neck ----
-  add(tubeGeo(slice(TORSO, 0.84, 1.0, body), SEG_BODY), PANTS, (_x, y) => torsoW(y));
-  add(tubeGeo(slice(TORSO, 0.985, 1.56, { ...body, grow: 0.008 }), SEG_BODY), SHIRT, (_x, y) => torsoW(y));
-  add(tubeGeo(slice(TORSO, 0.955, 0.995, { ...body, grow: 0.007 }), SEG_BODY, false), DARK, (_x, y) => torsoW(y));
-  add(tubeGeo(slice(NECK, 1.5, 1.63), 12), SKIN, (_x, y) => neckW(y));
+  add(tubeGeo(slice(TORSO, 0.84, 1.0, body), segB), PANTS, (_x, y) => torsoW(y));
+  add(tubeGeo(slice(TORSO, 0.985, 1.56, { ...body, grow: 0.008 }), segB), SHIRT, (_x, y) => torsoW(y));
+  add(tubeGeo(slice(TORSO, 0.955, 0.995, { ...body, grow: 0.007 }), segB, false), DARK, (_x, y) => torsoW(y));
+  add(tubeGeo(slice(NECK, 1.5, 1.63), lod ? 7 : 12), SKIN, (_x, y) => neckW(y));
 
   // ---- arms and legs ----
   const shoulderX = 0.285 * P.shoulder;
@@ -99,29 +113,29 @@ function buildBase(type: BodyType): Base {
     const arm = { sx: P.armX, sz: P.armZ, cx: ax };
 
     // short sleeve (shirt) over the upper arm, bare forearm
-    add(tubeGeo(slice(ARM, 1.215, 1.49, { ...arm, grow: 0.004 }), SEG_LIMB), SHIRT, (_x, y) => armW(side, y));
-    add(tubeGeo(slice(ARM, 0.89, 1.225, arm), SEG_LIMB), SKIN, (_x, y) => armW(side, y));
+    add(tubeGeo(slice(ARM, 1.215, 1.49, { ...arm, grow: 0.004 }), segL), SHIRT, (_x, y) => armW(side, y));
+    add(tubeGeo(slice(ARM, 0.89, 1.225, arm), segL), SKIN, (_x, y) => armW(side, y));
     // deltoid cap that closes the gap between the neck slope and the arm
-    add(ell([0.082, 0.055, 0.072], [sx * 0.235 * P.shoulder, 1.455, 0], 12, 8), SHIRT, () => [
+    add(E([0.082, 0.055, 0.072], [sx * 0.235 * P.shoulder, 1.455, 0], 12, 8), SHIRT, () => [
       [BONE.chest, 0.6], [side === 'L' ? BONE.armL : BONE.armR, 0.4], [BONE.chest, 0], [BONE.chest, 0],
     ]);
     // hand: palm, fingers, thumb on the inner side
-    add(ell([0.033, 0.045, 0.017], [ax, 0.835, 0.002], 10, 8), SKIN, () => solid(hand));
-    add(ell([0.029, 0.045, 0.013], [ax, 0.775, 0.004], 10, 8), SKIN, () => solid(hand));
-    add(ell([0.011, 0.032, 0.012], [ax - sx * 0.034, 0.82, 0.016], 8, 6), SKIN, () => solid(hand));
+    add(E([0.033, 0.045, 0.017], [ax, 0.835, 0.002], 10, 8), SKIN, () => solid(hand));
+    add(E([0.029, 0.045, 0.013], [ax, 0.775, 0.004], 10, 8), SKIN, () => solid(hand));
+    add(E([0.011, 0.032, 0.012], [ax - sx * 0.034, 0.82, 0.016], 8, 6), SKIN, () => solid(hand));
 
     // trousers: one tube hip -> ankle
-    add(tubeGeo(slice(LEG, 0.09, 0.93, { sx: P.legX, sz: P.legZ, cx: lx }), SEG_BODY), PANTS, (_x, y) => legW(side, y));
+    add(tubeGeo(slice(LEG, 0.09, 0.93, { sx: P.legX, sz: P.legZ, cx: lx }), segB), PANTS, (_x, y) => legW(side, y));
     // shoe + ankle shaft
-    add(ell([0.05 * P.legX, 0.042, 0.125], [lx, 0.047, 0.05], 14, 9), SHOES, () => solid(foot));
-    add(ell([0.044 * P.legX, 0.045, 0.048], [lx, 0.105, -0.005], 10, 7), SHOES, () => solid(foot));
+    add(E([0.05 * P.legX, 0.042, 0.125], [lx, 0.047, 0.05], 14, 9), SHOES, () => solid(foot));
+    add(E([0.044 * P.legX, 0.045, 0.048], [lx, 0.105, -0.005], 10, 7), SHOES, () => solid(foot));
   }
 
   // ---- head: cranium + jaw, nose, ears, eyes, brows, mouth ----
   const hx = P.headX;
   const hz = P.headZ;
   const headW = (): Weights => solid(BONE.head);
-  const hs = (r: V3, p: V3, a = 10, b = 8): THREE.BufferGeometry => ell([r[0] * hx, r[1], r[2] * hz], [p[0] * hx, p[1], p[2] * hz], a, b);
+  const hs = (r: V3, p: V3, a = 10, b = 8): THREE.BufferGeometry => E([r[0] * hx, r[1], r[2] * hz], [p[0] * hx, p[1], p[2] * hz], a, b);
   add(hs([0.098, 0.125, 0.11], [0, 1.66, 0], 18, 14), SKIN, headW);
   add(hs([0.078, 0.075, 0.085], [0, 1.605, 0.022], 14, 10), SKIN, headW);
   add(hs([0.017, 0.022, 0.02], [0, 1.652, 0.106]), SKIN, headW);
@@ -139,7 +153,7 @@ function buildBase(type: BodyType): Base {
 
   // ---- reflective vest bands (static, follow the chest bone) ----
   const chestY = J.chest;
-  const bandAt = (y: number): THREE.BufferGeometry => tubeGeo(slice(TORSO, y - 0.0275, y + 0.0275, { ...body, grow: 0.016 }), SEG_BODY, false);
+  const bandAt = (y: number): THREE.BufferGeometry => tubeGeo(slice(TORSO, y - 0.0275, y + 0.0275, { ...body, grow: 0.016 }), segB, false);
   const front = at(TORSO, 1.3);
   const strapZ = (front[2] + front[1]) * P.torsoZ + 0.016;
   const straps = [-1, 1].map((sx) => {
@@ -173,11 +187,7 @@ const toHex = (r: number, g: number, b: number): number => (Math.round(r) << 16)
 export function buildSkinnedBody(look: Appearance, mat: (colour: number) => THREE.Material, hp: HeadParts): HumanRig {
   const type: BodyType = look.bodyType ?? 'average';
   const P = propsOf(type);
-  let base = bases.get(type);
-  if (!base) {
-    base = buildBase(type);
-    bases.set(type, base);
-  }
+  const base = getBase(type, 0);
   const heads = headParts(hp);
 
   // ---- skeleton (rest pose, hips joint at y = 0.9 like the old rig) ----
@@ -241,11 +251,37 @@ export function buildSkinnedBody(look: Appearance, mat: (colour: number) => THRE
   else if (look.headwear === 'topi') addHead(heads.topi, look.headwearColor);
   if (look.vest) solidMesh(base.stripes, 0xe5e4d7, chest);
 
+  // ---- eyelids: a skin-coloured shell over each eye; scale.y = 0.02 (open, hidden) .. 1 (closed), see HumanMotion.blink ----
+  if (!lidGeo) {
+    lidGeo = new THREE.SphereGeometry(1, 10, 7);
+    lidGeo.deleteAttribute('uv');
+    lidGeo.scale(0.0138, 0.0108, 0.0094);
+    lidGeo.translate(0, -0.0108, 0); // the group origin is the top of the eye
+  }
+  const eyelids: THREE.Object3D[] = [];
+  for (const sx of [-1, 1]) {
+    const g = new THREE.Group();
+    g.position.set(sx * 0.037 * P.headX, 1.675 + 0.0108 - J.head, 0.1 * P.headZ);
+    g.scale.y = 0.02;
+    head.add(g);
+    g.add(new THREE.Mesh(lidGeo, mat(look.skin)));
+    eyelids.push(g);
+  }
+
+  let lod: 0 | 1 = 0;
+  const setLod = (level: 0 | 1): void => {
+    if (level === lod) return;
+    lod = level;
+    mesh.geometry = getBase(type, level).geometry;
+  };
+  const dispose = (): void => skeleton.dispose();
+
   return {
     pivot,
     legL: limbs.L.leg, legR: limbs.R.leg, shinL: limbs.L.shin, shinR: limbs.R.shin,
     armL: limbs.L.arm, armR: limbs.R.arm, foreL: limbs.L.fore, foreR: limbs.R.fore,
     hips, spine, chest, neck, head,
     handL: limbs.L.hand, handR: limbs.R.hand, footL: limbs.L.foot, footR: limbs.R.foot,
+    eyelids, setLod, dispose,
   };
 }

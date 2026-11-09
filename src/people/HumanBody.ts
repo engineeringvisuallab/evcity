@@ -37,6 +37,10 @@ export interface HumanRig {
   handR?: THREE.Object3D;
   footL?: THREE.Object3D;
   footR?: THREE.Object3D;
+  /** Skinned body only: eyelid groups (scale.y 0.02 open .. 1 closed), far-away mesh switch, and release of the skeleton's GPU texture. */
+  eyelids?: THREE.Object3D[];
+  setLod?: (level: 0 | 1) => void;
+  dispose?: () => void;
 }
 
 /** Where a gun sits in the right forearm group (in the hand). */

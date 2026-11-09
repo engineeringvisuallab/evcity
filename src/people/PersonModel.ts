@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { makeGun } from '../combat/GunModel';
 import type { WeaponId } from '../combat/Weapons';
 import { buildHuman, kneeFlex, ELBOW_REST, HAND_GRIP_Y, type HumanRig } from './HumanBody';
-import { gait, relax, resetPose } from './HumanMotion';
+import { blink, closeEyes, gait, relax, resetPose } from './HumanMotion';
+import { AimController } from './HumanAim';
 import { Umbrella, holdArm } from '../weather/Umbrella';
 
 /** Everything that makes one person look different from another. */
@@ -174,6 +175,11 @@ export class PersonModel {
   private legRestX = 0.11;
   private gun: THREE.Group | null = null;
   private aiming = false;
+  private aimer = new AimController();
+  /** 0 = back, 1 = face down, 2 = on the side: how this person falls when shot. */
+  private deathStyle = 0;
+  private flinch = 0;
+  private lod: 0 | 1 = 0;
   private fall = 0; // 0 = standing ... 1 = lying on the ground
   private work: WorkPose | null = null;
   private workT = Math.random() * 6;
@@ -206,14 +212,43 @@ export class PersonModel {
   /** Put a gun in the right hand (null = no gun). */
   setGun(id: WeaponId | null): void {
     if (this.gun) {
-      this.foreR.remove(this.gun);
+      this.gun.removeFromParent();
       this.gun = null;
     }
     if (id) {
       this.gun = makeGun(id);
-      this.gun.position.set(0, HAND_GRIP_Y, 0);
-      this.foreR.add(this.gun);
+      const hand = this.rig.handR; // skinned body: the gun sits in the hand bone (two-hand grip, see HumanAim)
+      if (hand) {
+        this.gun.position.set(0, -0.05, 0);
+        hand.add(this.gun);
+      } else {
+        this.gun.position.set(0, HAND_GRIP_Y, 0);
+        this.foreR.add(this.gun);
+      }
     }
+    this.aimer.setGun(id, this.rig.handR ? this.gun : null);
+  }
+
+  /** One shot was fired: the gun kicks up. */
+  kick(strength = 1): void {
+    this.aimer.kick(strength);
+  }
+
+  /** Got hit but not dead: the body jerks. */
+  hit(): void {
+    this.flinch = 1;
+  }
+
+  /** Far away from the camera: the cheaper mesh (same skeleton, same animation). */
+  setLod(level: 0 | 1): void {
+    if (level === this.lod) return;
+    this.lod = level;
+    this.rig.setLod?.(level);
+  }
+
+  /** Release the skeleton's GPU texture (the person leaves the world for good). */
+  dispose(): void {
+    this.rig.dispose?.();
   }
 
   /** Arm raised, pointing the gun forward. */
@@ -242,9 +277,11 @@ export class PersonModel {
   }
 
   /** Fall down (true) / stand up (false). Animated in update(). */
-  setDead(dead: boolean): void {
+  setDead(dead: boolean, style = 0): void {
     this.fallTarget = dead ? 1 : 0;
+    this.deathStyle = style;
     if (dead) this.aiming = false;
+    closeEyes(this.rig, dead);
   }
 
   get isSeated(): boolean {
@@ -311,8 +348,24 @@ export class PersonModel {
     if (this.seated) return;
     if (this.fall !== this.fallTarget) {
       this.fall += Math.sign(this.fallTarget - this.fall) * Math.min(Math.abs(this.fallTarget - this.fall), dt * 3);
-      this.pivot.rotation.x = -Math.PI / 2 * this.fall; // falls on its back
-      this.pivot.position.y = 0.9 + (0.14 - 0.9) * this.fall;
+      const f = this.fall;
+      const st = this.deathStyle;
+      this.pivot.rotation.x = st === 2 ? 0 : (st === 1 ? 1 : -1) * (Math.PI / 2) * f; // back / face down
+      this.pivot.rotation.z = st === 2 ? (Math.PI / 2) * f : 0; // on the side
+      this.pivot.position.y = 0.9 + (0.14 - 0.9) * f;
+      if (this.rig.chest) {
+        // the knees buckle, the arms fly out, the head lolls
+        const sin = Math.sin(f * Math.PI);
+        this.legL.rotation.x = -0.25 * f;
+        this.legR.rotation.x = 0.1 * f;
+        this.shinL.rotation.x = 0.9 * f + 0.3 * sin;
+        this.shinR.rotation.x = 0.5 * f;
+        this.armL.rotation.set(-0.5 * f, 0, -1.2 * f);
+        this.armR.rotation.set(-0.2 * f, 0, 1.0 * f);
+        this.foreL.rotation.x = -0.4 * f;
+        this.foreR.rotation.x = -0.3 * f;
+        this.rig.head!.rotation.set((st === 1 ? -0.4 : 0.35) * f, 0.3 * f, 0.2 * f);
+      }
     }
     if (this.fall > 0) {
       if (this.umbrella) {
@@ -323,6 +376,11 @@ export class PersonModel {
     }
     const k = Math.min(1, 14 * dt);
     this.idleT += dt;
+    if (this.lod === 0) blink(this.rig, dt);
+    if (this.armL.rotation.z !== 0 && !this.aimer.active) {
+      this.armL.rotation.z *= 1 - k;
+      this.armR.rotation.z *= 1 - k;
+    }
     const ease = (g: THREE.Object3D, target: number) => {
       g.rotation.x += (target - g.rotation.x) * k;
     };
@@ -360,6 +418,13 @@ export class PersonModel {
       ease(this.foreL, -0.15);
     } else if (this.gun && mode === 'idle') {
       ease(this.armR, -0.35); // gun held low
+    }
+    this.aimer.update(this.rig, dt, this.aiming, 0);
+    if (this.flinch > 0.01 && this.rig.chest && this.rig.head) {
+      this.flinch *= Math.exp(-9 * dt);
+      this.rig.chest.rotation.x -= this.flinch * 0.07;
+      this.rig.head.rotation.x -= this.flinch * 0.05;
+      this.pivot.position.y -= this.flinch * 0.03;
     }
     if (this.umbrella) {
       const o = this.umbrella.update(dt, this.umbrellaWant && !this.aiming && !this.work);

@@ -76,6 +76,9 @@ export class Person {
   stolen: Vehicle | null = null;
   retakeT = 0;
   tryT = 0;
+  /** Far away from the camera the animation runs only every 3rd frame: time collected since the last update, frame counter. */
+  animAcc = 0;
+  animTick = Math.floor(Math.random() * 3);
   /** Walking speed of this person (m/s). */
   readonly pace = 1.1 + Math.random() * 0.5;
 

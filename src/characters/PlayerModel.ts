@@ -3,7 +3,8 @@ import { makeGun } from '../combat/GunModel';
 import type { WeaponId } from '../combat/Weapons';
 import { ENGINEER_LOOK } from '../people/PersonModel';
 import { buildHuman, kneeFlex, ELBOW_REST, HAND_GRIP_Y, type HumanRig } from '../people/HumanBody';
-import { gait, relax } from '../people/HumanMotion';
+import { blink, gait, relax } from '../people/HumanMotion';
+import { AimController } from '../people/HumanAim';
 import { Umbrella, holdArm } from '../weather/Umbrella';
 
 export type PlayerState = 'idle' | 'walk' | 'run' | 'air' | 'swim' | 'wade';
@@ -30,6 +31,8 @@ export class PlayerModel {
   private gun: THREE.Group | null = null;
   private gunId: WeaponId | null = null;
   private aiming = false;
+  private aimer = new AimController();
+  private aimPitch = 0;
   private mats: THREE.Material[] = [];
   /** RAIN: the umbrella (built on the first rain). */
   private umbrella: Umbrella | null = null;
@@ -59,15 +62,45 @@ export class PlayerModel {
   setGun(id: WeaponId | null): void {
     if (id === this.gunId) return;
     if (this.gun) {
-      this.foreR.remove(this.gun);
+      this.gun.removeFromParent();
       this.gun = null;
     }
     this.gunId = id;
     if (id) {
       this.gun = makeGun(id);
-      this.gun.position.set(0, HAND_GRIP_Y, 0);
-      this.foreR.add(this.gun);
+      const hand = this.rig.handR; // skinned body: the gun sits in the hand bone, so the wrist can turn it
+      if (hand) {
+        this.gun.position.set(0, -0.05, 0);
+        hand.add(this.gun);
+      } else {
+        this.gun.position.set(0, HAND_GRIP_Y, 0);
+        this.foreR.add(this.gun);
+      }
     }
+    this.aimer.setGun(id, this.rig.handR ? this.gun : null);
+  }
+
+  /** Camera pitch (rad, + = up): the gun follows it while aiming. */
+  setAimPitch(pitch: number): void {
+    this.aimPitch = pitch;
+  }
+
+  /** One shot was fired: the gun kicks up (strength ~0.5 pistol .. 1.6 shotgun). */
+  kick(strength = 1): void {
+    this.aimer.kick(strength);
+  }
+
+  /** Reload animation: -1 = not reloading, else progress 0..1. */
+  setReload(progress: number): void {
+    this.aimer.setReload(progress);
+  }
+
+  /** Scene-space position of the muzzle of the gun in the hand (false while no aim pose is active). */
+  muzzleWorld(out: THREE.Vector3, gunLength: number): boolean {
+    if (!this.gun || !this.aimer.active) return false;
+    this.gun.updateWorldMatrix(true, false);
+    out.set(0, -gunLength * 1.3, 0.02).applyMatrix4(this.gun.matrixWorld);
+    return true;
   }
 
   /** RAIN: umbrella up / down (it also folds by itself while swimming or aiming). */
@@ -91,6 +124,7 @@ export class PlayerModel {
   update(dt: number, horizSpeed: number, state: PlayerState): void {
     const k = Math.min(1, 14 * dt);
     this.clock += dt;
+    blink(this.rig, dt);
     const ease = (g: THREE.Object3D, target: number) => {
       g.rotation.x += (target - g.rotation.x) * k;
     };
@@ -149,6 +183,7 @@ export class PlayerModel {
       ease(this.foreR, 0);
       ease(this.foreL, -0.15);
     }
+    this.aimer.update(this.rig, dt, this.aiming && state !== 'swim', this.aimPitch);
     if (this.umbrella) {
       const o = this.umbrella.update(dt, this.umbrellaWant && !this.aiming && state !== 'swim');
       holdArm(this.armL, this.foreL, o);
@@ -158,5 +193,6 @@ export class PlayerModel {
   /** The body geometry is shared by everyone (HumanBody.ts): only the materials belong to this model. */
   dispose(): void {
     for (const m of this.mats) m.dispose();
+    this.rig.dispose?.();
   }
 }

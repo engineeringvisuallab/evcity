@@ -26,6 +26,7 @@ export function gait(rig: HumanRig, phase: number, amp: number, run: boolean, k:
   ease(rig.head, 'y', -s * twist * 0.8, k); // the head keeps looking ahead
   ease(rig.chest, 'x', run ? 0.16 : 0.04, k); // lean forward when running
   ease(rig.head, 'x', run ? -0.12 : -0.02, k);
+  ease(rig.head, 'z', 0, k);
   ease(rig.pivot, 'z', Math.cos(phase) * 0.02 * (amp / 0.55), k); // small side-to-side hip sway
   ease(rig.chest, 'z', -Math.cos(phase) * 0.015 * (amp / 0.55), k);
 
@@ -49,6 +50,7 @@ export function relax(rig: HumanRig, t: number, k: number, breathe = true): void
   ease(rig.pivot, 'z', breathe ? Math.sin(t * 0.37) * 0.012 : 0, k); // slow weight shift
   ease(rig.chest, 'y', 0, k);
   ease(rig.chest, 'z', 0, k);
+  ease(rig.head, 'z', 0, k);
   ease(rig.chest, 'x', 0.012 * b, k);
   ease(rig.head, 'x', breathe ? Math.sin(t * 0.5) * 0.03 : 0, k);
   ease(rig.head, 'y', breathe ? Math.sin(t * 0.23) * 0.12 * Math.max(0, Math.sin(t * 0.11)) : 0, k); // now and then glances sideways
@@ -64,4 +66,38 @@ export function resetPose(rig: HumanRig): void {
   rig.pivot.rotation.y = 0;
   rig.pivot.rotation.z = 0;
   for (const b of [rig.chest, rig.head]) b?.rotation.set(0, 0, 0);
+}
+
+/** Natural blinking (every 2-6 s, sometimes twice in a row). Call every frame for people close to the camera. */
+export function blink(rig: HumanRig, dt: number): void {
+  const lids = rig.eyelids;
+  if (!lids) return;
+  const u = lids[0].userData as { t?: number; next?: number };
+  if (u.t === -2) return; // eyes shut (dead)
+  if (u.next === undefined) {
+    u.next = 1 + Math.random() * 4;
+    u.t = -1;
+  }
+  let c = 0;
+  if ((u.t as number) < 0) {
+    u.next -= dt;
+    if (u.next <= 0) u.t = 0;
+  } else {
+    u.t = (u.t as number) + dt;
+    const dur = 0.17;
+    if ((u.t as number) >= dur) {
+      u.t = -1;
+      u.next = Math.random() < 0.15 ? 0.12 : 2 + Math.random() * 4;
+    } else c = Math.sin(((u.t as number) / dur) * Math.PI);
+  }
+  const s = Math.max(0.02, c);
+  for (const l of lids) l.scale.y = s;
+}
+
+/** Eyes shut for good (dead) or normal again. */
+export function closeEyes(rig: HumanRig, closed: boolean): void {
+  const lids = rig.eyelids;
+  if (!lids) return;
+  (lids[0].userData as { t?: number }).t = closed ? -2 : -1;
+  for (const l of lids) l.scale.y = closed ? 1 : 0.02;
 }

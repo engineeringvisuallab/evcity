@@ -263,6 +263,7 @@ export class Player {
 
   /** Where the gun muzzle is, floating-origin local. */
   getMuzzle(out: THREE.Vector3, gunLength: number): THREE.Vector3 {
+    if (this.model.muzzleWorld(out, gunLength)) return out; // the real muzzle of the gun in the hands
     const h = this.aimOn ? this.aimHeading : this.heading;
     const x = 0.29;
     const z = 0.5 + gunLength;

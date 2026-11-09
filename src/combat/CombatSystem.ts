@@ -127,6 +127,14 @@ export class CombatSystem {
     const onFoot = !player.inVehicle;
     player.model.setGun(onFoot ? id : null);
     if (out && onFoot) {
+      // the gun follows the camera's pitch; the reload animation follows the ammo timer
+      this.d.camera.getWorldDirection(this.dir);
+      player.model.setAimPitch(Math.asin(Math.max(-1, Math.min(1, this.dir.y))));
+      player.model.setReload(this.ammo.isReloading() ? this.ammo.reloadProgress() : -1);
+    } else {
+      player.model.setReload(-1);
+    }
+    if (out && onFoot) {
       const yaw = orbit.yaw;
       player.setAim(true, Math.atan2(-Math.sin(yaw), -Math.cos(yaw)));
     } else if (this.shownWeapon !== null) {
@@ -367,6 +375,7 @@ export class CombatSystem {
       }
     }
     this.effects.muzzleFlash(this.muzzle);
+    if (!player.inVehicle) player.model.kick(spec.pellets > 1 ? 1.6 : Math.min(1.3, 0.5 + spec.damage / 50));
     this.audio.shot(this.weapon, 0);
     // the shot is a crime in the eyes of everybody close by: they run / armed people shoot back
     people.alarmAt(this.tmpW.set(this.start.x + origin.origin.x, this.start.y, this.start.z + origin.origin.z));

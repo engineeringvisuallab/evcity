@@ -125,6 +125,7 @@ export class PeopleManager {
   /** Person leaves the world for good (also called for the driver of a removed car). */
   dispose(p: Person): void {
     p.model.root.removeFromParent();
+    p.model.dispose();
     const i = this.onFoot.indexOf(p);
     if (i >= 0) this.onFoot.splice(i, 1);
   }
@@ -176,7 +177,17 @@ export class PeopleManager {
       }
       this.place(p);
       p.model.setUmbrella(this.rain > 0.1 + 0.08 * p.umbrellaRoll && p.umbrellaRoll < 0.8 && !p.dead);
-      p.model.update(dt, p.speed, p.mode);
+      // far away: the cheaper mesh, and the animation only every 3rd frame (the same skeleton, nobody sees the difference)
+      p.model.setLod(dist > 70 ? 1 : 0);
+      if (dist > 120) {
+        p.animAcc += dt;
+        if (++p.animTick % 3 === 0) {
+          p.model.update(p.animAcc, p.speed, p.mode);
+          p.animAcc = 0;
+        }
+      } else {
+        p.model.update(dt, p.speed, p.mode);
+      }
     }
     if (this.combat) this.updatePolice(dt, focus);
   }
@@ -763,6 +774,7 @@ export class PeopleManager {
     }
     c.effects.muzzleFlash(muzzle);
     c.audio.shot(w.id, dist);
+    p.model.kick(w.pellets > 1 ? 1.5 : Math.min(1.3, 0.5 + w.damage / 50));
     if (hit) c.playerHit(C.npcDamage);
   }
 
@@ -936,6 +948,7 @@ export class PeopleManager {
       this.alarm(p.world, p);
       return true;
     }
+    p.model.hit();
     if (byPlayer && w) w.add(p.role === 'police' ? C.wanted.shootPolice : p.role === 'thug' ? 0 : C.wanted.woundCivilian);
     // reaction: armed people shoot back, everybody else runs
     if (p.role === 'civilian') this.panic(p);
@@ -951,7 +964,8 @@ export class PeopleManager {
     p.deadT = 0;
     p.health = 0;
     p.model.setAiming(false);
-    p.model.setDead(true);
+    const r = Math.random();
+    p.model.setDead(true, r < 0.5 ? 0 : r < 0.8 ? 1 : 2); // falls on his back / face down / on his side
   }
 
   /** Run away from the player for a while. */
