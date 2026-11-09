@@ -375,7 +375,7 @@ export const Config = {
        * COLOUR: every tuft is fresh green, yellow-green or straw (`strawShare` of the tufts lean to straw outside the city, `yellowShare` to yellow-green).
        * `rootDark` = brightness of the blade at the root (0..1, 1 = no darkening), `wind` = global wind sway multiplier (0 = still air; the sway grows with blade height, so short lawn moves little anyway).
        */
-      look: { bladeWidth: 0.84, // was 0.28, x3 wider blades strawShare: 0, yellowShare: 0, rootDark: 0.6, wind: 0 },
+      look: { bladeWidth: 0.84, strawShare: 0, yellowShare: 0, rootDark: 0.6, wind: 0 }, // bladeWidth was 0.28, now x3 wider
       /**
        * SINGLE GRASS: every tuft model has only `blades[0]..blades[1]` blades (3-5 leaves per grass), so the ground can be covered with very many
        * of them cheaply (`cell` 0.2 m). Used for the four grass kinds; flowers keep their own base. enabled false = the old many-blade tufts.
