@@ -20,8 +20,8 @@ export const Config = {
      * so 0.50..0.64 was about half of the land; 0.30..0.44 makes soil the main ground (~80 %), with green patches in between.
      * Lower both = more soil, higher = more green.
      */
-    soilFrom: 0.3,
-    soilTo: 0.44,
+    soilFrom: 0.8, // grass everywhere: almost no brown soil any more (was 0.30 / 0.44; 0.50 / 0.64 originally)
+    soilTo: 0.95,
     /**
      * GREEN CITY GROUND: inside the planned city areas (CityPlan: distance to the site hub < maxRadius) the ground is lawn green, not brown soil.
      * The chunk worker builds a per-vertex greenness mask (`aCity`): 1 inside the city, falling to 0 over `fadeOut` metres outside it.
@@ -242,11 +242,11 @@ export const Config = {
       tile: 32,
       cell: 0.2,
       /**
-       * DENSE SINGLE GRASS: every accepted meadow cell grows `dense` single tufts instead of one (5 = 5x the old density; same cell test, terrain test and
-       * deterministic jitter, so the far rings stay a subset of the near ring). The Quality preset sets the value the workers use (low 2, medium 3, high 5).
+       * DENSE SINGLE GRASS: every accepted meadow cell grows `dense` single tufts instead of one (7.5 = 7.5x the old density, may be fractional; same cell test, terrain test and
+       * deterministic jitter, so the far rings stay a subset of the near ring). The Quality preset sets the value the workers use (low 3, medium 4.5, high 7.5).
        * Far rings (stride > 1) get dense / stride^2 (at least 1). Not applied to the mown city lawn.
        */
-      dense: 5,
+      dense: 7.5,
       /**
        * The extra (dense) tufts fade out with the camera distance: full size inside `denseFade[0]` m, shrunk to nothing at `denseFade[1]` m (smooth, no
        * pop), and a tile's extra tufts are not drawn at all when the tile is farther than `denseFade[1]` m. So the 5x density costs only near the player.
@@ -298,7 +298,7 @@ export const Config = {
        */
       patch: {
         scale: 40,
-        coverage: 0.9,
+        coverage: 1, // 1 = no bare patches: grass on every surface that is not road / building / water / steep rock
         edge: 0.2,
         minValue: 0.05,
         coreAt: 0.35,
@@ -322,7 +322,7 @@ export const Config = {
       },
       /** Chance per cell inside a meadow / on bare patches, and the extra thinning inside forests. Higher = denser, fewer bald patches. */
       maxChance: 0.98,
-      minChance: 0.6,
+      minChance: 0.9,
       forestThin: 0.3,
       /** Blades per tuft model are multiplied by this (1 = full quality; 0.6 for weak GPUs). */
       bladeDensity: 1,
@@ -358,7 +358,7 @@ export const Config = {
        * COLOUR: every tuft is fresh green, yellow-green or straw (`strawShare` of the tufts lean to straw outside the city, `yellowShare` to yellow-green).
        * `rootDark` = brightness of the blade at the root (0..1, 1 = no darkening), `wind` = global wind sway multiplier (0 = still air; the sway grows with blade height, so short lawn moves little anyway).
        */
-      look: { bladeWidth: 0.42, strawShare: 0.04, yellowShare: 0.12, rootDark: 0.45, wind: 1 },
+      look: { bladeWidth: 0.28, strawShare: 0.04, yellowShare: 0.12, rootDark: 0.45, wind: 1 },
       /**
        * SINGLE GRASS: every tuft model has only `blades[0]..blades[1]` blades (3-5 leaves per grass), so the ground can be covered with very many
        * of them cheaply (`cell` 0.2 m). Used for the four grass kinds; flowers keep their own base. enabled false = the old many-blade tufts.

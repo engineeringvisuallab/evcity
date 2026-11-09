@@ -136,6 +136,7 @@ export class GrassPlacer {
   /** The noise part of the patch value only (0 = bare soil .. 1 = core), without road sides / landmarks. */
   patchBase(x: number, z: number): number {
     const P = G.patch;
+    if (P.coverage >= 1) return 1; // no bare patches: the whole land is grass
     const t = this.threshold();
     return smooth(t, t + P.edge, this.patchNoise.fbm(x / P.scale, z / P.scale, 2));
   }
@@ -243,17 +244,19 @@ export class GrassPlacer {
         // DENSE single grass: extra tufts in the same cell (flag 4 = never a flower). Their random numbers come after the first seven, one fixed set of
         // five per extra, so extra k is always the same tuft and a far ring (fewer extras) is a subset of the near ring. Not on the mown city lawn.
         if (lawn < 0.5) {
-          const total = stride === 1 ? this.dense : Math.max(1, Math.round(this.dense / (stride * stride)));
-          if (total > 1) {
+          const total = stride === 1 ? this.dense : 1; // far rings: no extras (they are not drawn there anyway)
+          const extras = total - 1; // may be fractional (7.5 -> 6.5 extras: the last one only in some cells)
+          if (extras > 0) {
             const gx = this.sx.h - h; // ground slope per metre, so an extra tuft off the cell centre still sits on the ground
             const gz = this.sz.h - h;
             const edge = P.edgeScale + (1 - P.edgeScale) * rim;
-            for (let k = 1; k < total; k++) {
+            for (let k = 0; k < Math.ceil(extras); k++) {
               const ex = rng();
               const ez = rng();
               const es = rng();
               const ey = rng();
               const et = rng();
+              if (k + 1 > extras && (ex * 13.7) % 1 >= extras - k) continue; // the fractional last extra
               const dx = (ex - jx) * G.cell;
               const dz = (ez - jz) * G.cell;
               out.push(x - ox + dx, h + gx * dx + gz * dz - 0.03, z - oz + dz, (0.55 + 0.95 * es ** 1.5) * edge, ey * Math.PI * 2, 0.85 + et * 0.3, dry, 4);

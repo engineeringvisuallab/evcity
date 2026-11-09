@@ -11,6 +11,12 @@
 - Blade er chowra `look.bladeWidth` = 0.42 gun (GrassAssets `blade()`), ar agar dik aro soru (tapering). Tuft er chowra `widthScale` 1.1 -> 0.8.
 - Mota broad-leaf `clump` model er bhag 26% -> 8% (shoru `wild` ar `lawn` beshi).
 
+## Update: sob jaygay ghash, 70% durba, aro chikon, 7.5x
+- Ghash sob jaygay: `patch.coverage` = 1 (khali patch nei), `minChance` 0.9, ar brown mati prai nei (`terrain.soilFrom/soilTo` 0.8 / 0.95). Road, bari, jol ar khara pahar e ghash hoy na (ager moto).
+- 70% durba: meadow er tuft er 70% `lawn` (durba, shoru dhoroner ghash) model, 18% `wild`, baki 12% clump / seed.
+- Aro chikon: `look.bladeWidth` 0.42 -> 0.28.
+- Ghonotto ager (5x) er 1.5 gun = 7.5x (`grass.dense` = 7.5; Quality: high 7.5, medium 4.5, low 3). Dur er ring e extra tuft nei.
+
 ## 1. Meadow er shadharon ghash (single grass)
 - Ghonotto: prottek accepted cell e ekhon `grass.dense` ta tuft (ager 1 ta). High = 3x, medium = 2x, low = 1x (`Quality.ts` e `grassDense`, ar `Config.vegetation.grass.dense` = 3 default).
   Extra tuft gulo oi cell er bhitore, same terrain/slope test, deterministic. Dur er LOD ring e `dense / stride^2` (kom-pokkhe 1), tai dur er ring ta near ring er subset-i thake.
