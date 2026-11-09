@@ -273,6 +273,21 @@ export function armW(side: Side, y: number): Weights {
   ];
 }
 
+/**
+ * Long garment (panjabi / lungi): the waist follows the pelvis, the lower part follows the thigh of the SAME side (by the sign of x),
+ * so the hem swings with the legs and a seated person's skirt follows the knees. `k` = how much of the hem follows the legs.
+ */
+export function skirtW(x: number, y: number, hem: number, k: number): Weights {
+  if (y > 0.97) return torsoW(y);
+  const t = sstep(0.97, hem, y) * k * sstep(0, 0.07, Math.abs(x));
+  return [
+    [BONE.hips, 1 - t],
+    [x < 0 ? BONE.legL : BONE.legR, t],
+    [BONE.hips, 0],
+    [BONE.hips, 0],
+  ];
+}
+
 /** Everything on this part follows one bone. */
 export const solid = (bone: number): Weights => [[bone, 1], [bone, 0], [bone, 0], [bone, 0]];
 

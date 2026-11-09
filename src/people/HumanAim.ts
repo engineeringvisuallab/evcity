@@ -91,13 +91,13 @@ const armSol: ArmSolution = { q: new THREE.Quaternion(), bend: 0 };
  */
 export function aimPose(
   rig: HumanRig,
-  a: { blend: number; pitch: number; recoil: number; reload: number; gun: THREE.Object3D; support: THREE.Vector3; mag: THREE.Vector3 },
+  a: { blend: number; pitch: number; recoil: number; reload: number; lower: number; gun: THREE.Object3D; support: THREE.Vector3; mag: THREE.Vector3 },
 ): void {
   const { chest, head, handR, handL, spine, hips } = rig;
   if (!chest || !head || !handR || !handL || !spine || !hips) return;
   const b = a.blend;
   const rl = a.reload;
-  const env = rl >= 0 ? sstep(0, 0.2, rl) * (1 - sstep(0.85, 1, rl)) : 0; // gun lowered while reloading
+  const env = Math.max(rl >= 0 ? sstep(0, 0.2, rl) * (1 - sstep(0.85, 1, rl)) : 0, a.lower); // gun lowered while reloading / swapping
   const pitch = a.pitch + a.recoil * 0.09 - env * 0.55;
 
   // torso: lean back a little for high shots, forward for low ones, pushed back by the recoil
@@ -161,6 +161,8 @@ export class AimController {
   private blend = 0;
   private recoil = 0;
   private reload = -1;
+  private swapT = -1;
+  private swapDone: (() => void) | null = null;
   private readonly support = new THREE.Vector3();
   private readonly mag = new THREE.Vector3();
 
@@ -175,6 +177,13 @@ export class AimController {
   /** One shot: the gun kicks up. */
   kick(strength = 1): void {
     this.recoil = Math.min(1.4, this.recoil + 0.7 * strength);
+  }
+
+  /** Weapon swap: the gun goes down, `mid` is called at the lowest point (put the new gun in the hand), then it comes up again. */
+  startSwap(mid: () => void): void {
+    this.swapDone?.(); // an unfinished swap: finish it first
+    this.swapT = 0;
+    this.swapDone = mid;
   }
 
   /** -1 = not reloading, else progress 0..1. */
@@ -201,15 +210,31 @@ export class AimController {
         }
       }
       this.recoil = 0;
+      if (this.swapDone) {
+        this.swapDone();
+        this.swapDone = null;
+        this.swapT = -1;
+      }
       return;
     }
     this.recoil *= Math.exp(-13 * dt);
+    let lower = 0;
+    if (this.swapT >= 0) {
+      const SWAP = 0.4;
+      this.swapT += dt;
+      if (this.swapT >= SWAP / 2 && this.swapDone) {
+        this.swapDone();
+        this.swapDone = null;
+      }
+      if (this.swapT >= SWAP) this.swapT = -1;
+      else lower = Math.sin((this.swapT / SWAP) * Math.PI);
+    }
     if (!this.gun) return;
     // old twist from the previous frame must not leak into the normal pose while blending out
     for (const o of [rig.armL, rig.armR, rig.foreL, rig.foreR]) {
       o.rotation.y *= 0.5;
       o.rotation.z *= 0.5;
     }
-    aimPose(rig, { blend: this.blend, pitch: clamp(pitch, -0.9, 0.9), recoil: this.recoil, reload: this.reload, gun: this.gun, support: this.support, mag: this.mag });
+    aimPose(rig, { blend: this.blend, pitch: clamp(pitch, -0.9, 0.9), recoil: this.recoil, reload: this.reload, lower, gun: this.gun, support: this.support, mag: this.mag });
   }
 }

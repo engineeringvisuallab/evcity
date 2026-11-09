@@ -19,7 +19,13 @@
 - **LOD:** 70 m er dure sasta mesh (~1.9k tri, same skeleton), 120 m er dure animation 3 frame e 1 bar. Near mesh ~5k tri.
 - **Leak fix:** manus remove hole skeleton er GPU texture free hoy (`dispose`).
 
+## Step 3
+- **Crouch:** `C` dhore rakhle (jekhane pani te na) hatu bhenge boshe, hip nichu, pith samne jhuke, speed adhek. Physics capsule er size ager moto, tai nichu jayga diye jawa jabe na.
+- **Gun swap (Q):** aim kora obosthay gun nambe, notun gun ta nicher bindu te hate boshe, tarpor uthbe.
+- **Lungi ar panjabi:** `Appearance.outfit`. Panjabi = lomba dhila shirt hatu porjonto, shada pyjama. Lungi = komor theke mid-calf porjonto, khali pa. Kapor er hem same dike er thigh er sathe dole, boshe thakle hatur sathe ashe. Random manus er moddhe ~12% panjabi (topi wala der 45%), ~15% lungi.
+
 ## Files
+Step 3 e bodlano: `SkinnedHuman.ts`, `SkinMath.ts`, `HumanAim.ts`, `PersonModel.ts`, `PlayerModel.ts`, `Player.ts`.
 Notun: `SkinnedHuman.ts`, `SkinMath.ts`, `HumanMotion.ts`, `HumanAim.ts`, `scripts/skin-test.ts`, `scripts/human-test.ts`.
 Bodlano: `HumanBody.ts`, `PersonModel.ts`, `PlayerModel.ts`, `Player.ts` (muzzle), `Person.ts`, `PeopleManager.ts`, `CombatSystem.ts`, `package.json`.
 
@@ -27,4 +33,4 @@ Bodlano: `HumanBody.ts`, `PersonModel.ts`, `PlayerModel.ts`, `Player.ts` (muzzle
 `npm run typecheck`, `npm run test:skin` (body math), `npm run test:human` (bone, aim, reload, blink, LOD), `npm run test:combat`, `npm run test:people`, tarpor `npm run dev`.
 
 ## Ekhono nei
-Rapier ragdoll (physics diye mara), kapor er fold, lungi/panjabi/saree, meye/bachcha, crouch/prone, gun swap animation.
+Rapier ragdoll (physics diye mara), kapor er fold, saree/salwar/hijab, meye/bachcha, prone (shuye pora), NPC der gun swap/crouch.

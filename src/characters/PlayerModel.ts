@@ -33,6 +33,8 @@ export class PlayerModel {
   private aiming = false;
   private aimer = new AimController();
   private aimPitch = 0;
+  private crouchWant = false;
+  private crouch = 0;
   private mats: THREE.Material[] = [];
   /** RAIN: the umbrella (built on the first rain). */
   private umbrella: Umbrella | null = null;
@@ -61,11 +63,23 @@ export class PlayerModel {
   /** Gun in the right hand (null = hands empty). */
   setGun(id: WeaponId | null): void {
     if (id === this.gunId) return;
+    const had = this.gun !== null;
+    this.gunId = id;
+    // swapping one gun for another while aiming: the gun goes down, the new one comes up
+    if (had && id && this.aimer.active) {
+      this.aimer.startSwap(() => {
+        if (this.gunId === id) this.mountGun(id);
+      });
+      return;
+    }
+    this.mountGun(id);
+  }
+
+  private mountGun(id: WeaponId | null): void {
     if (this.gun) {
       this.gun.removeFromParent();
       this.gun = null;
     }
-    this.gunId = id;
     if (id) {
       this.gun = makeGun(id);
       const hand = this.rig.handR; // skinned body: the gun sits in the hand bone, so the wrist can turn it
@@ -78,6 +92,11 @@ export class PlayerModel {
       }
     }
     this.aimer.setGun(id, this.rig.handR ? this.gun : null);
+  }
+
+  /** Crouch (hold C): knees bent, hips low, back leaning forward (the physics capsule keeps its size). */
+  setCrouch(on: boolean): void {
+    this.crouchWant = on;
   }
 
   /** Camera pitch (rad, + = up): the gun follows it while aiming. */
@@ -176,6 +195,27 @@ export class PlayerModel {
       ease(this.foreL, ELBOW_REST);
       ease(this.foreR, this.gun ? -0.05 : ELBOW_REST);
       relax(this.rig, this.clock, k, true);
+    }
+    this.crouch += ((this.crouchWant && state !== 'swim' && state !== 'air' ? 1 : 0) - this.crouch) * Math.min(1, 9 * dt);
+    const cb = this.crouch;
+    if (cb > 0.002 && this.rig.spine && this.rig.head && this.rig.footL && this.rig.footR) {
+      // thighs forward, shins back, feet flat, hips back and low (hip height 0.58 m), the back leans forward
+      const mix = (o: THREE.Object3D, to: number): void => {
+        o.rotation.x += (to - o.rotation.x) * cb;
+      };
+      mix(this.legL, -1.05 + 0.25 * this.legL.rotation.x);
+      mix(this.legR, -1.05 + 0.25 * this.legR.rotation.x);
+      mix(this.shinL, 1.75 + 0.3 * this.shinL.rotation.x);
+      mix(this.shinR, 1.75 + 0.3 * this.shinR.rotation.x);
+      mix(this.rig.footL, -0.7);
+      mix(this.rig.footR, -0.7);
+      mix(this.rig.head, -0.2);
+      this.rig.spine.rotation.x = 0.3 * cb;
+      this.pivot.position.y += (0.9 - 0.317 - this.pivot.position.y) * cb;
+      this.pivot.position.z = -0.17 * cb;
+    } else if (this.rig.spine) {
+      this.rig.spine.rotation.x = 0;
+      this.pivot.position.z = 0;
     }
     if (this.aiming && state !== 'swim') {
       ease(this.armR, -1.5);

@@ -23,6 +23,8 @@ export interface Appearance {
   beard?: boolean;
   /** Small per-person proportion variation; omitted looks use average proportions. */
   bodyType?: 'slim' | 'average' | 'stocky';
+  /** shirt = shirt + trousers (default); panjabi = long loose shirt over a pyjama; lungi = wrapped skirt (trouser colour) with bare calves. */
+  outfit?: 'shirt' | 'panjabi' | 'lungi';
 }
 
 export type PersonMode = 'idle' | 'walk' | 'run';
@@ -63,11 +65,12 @@ export function randomAppearance(r: () => number): Appearance {
     };
   }
   if (archetype < 0.37) {
+    const panjabi = r() < 0.45; // the traditional look: long panjabi over a white pyjama
     return {
-      skin, hair, shirt: pick([0x2f7d5b, 0x347b5a, 0x4a8065], r),
-      pants: pick([0x202c3d, 0x303b4a, 0x2f4a7a], r), shoes: pick([0x28231f, 0x3a2a1a], r),
+      skin, hair, shirt: panjabi ? pick([0xf2efe6, 0xdcd6c4, 0xcfe0d4, 0xb9c9e0], r) : pick([0x2f7d5b, 0x347b5a, 0x4a8065], r),
+      pants: panjabi ? 0xe9e5d8 : pick([0x202c3d, 0x303b4a, 0x2f4a7a], r), shoes: pick([0x28231f, 0x3a2a1a], r),
       scale: height, headwear: 'topi', headwearColor: pick([0xf2efe6, 0xe4dfd0], r),
-      vest: false, beard: r() < 0.68, bodyType,
+      vest: false, beard: r() < 0.68, bodyType, outfit: panjabi ? 'panjabi' : 'shirt',
     };
   }
   if (archetype < 0.56) {
@@ -88,11 +91,14 @@ export function randomAppearance(r: () => number): Appearance {
   }
 
   const roll = r();
+  const outfitRoll = r();
+  const outfit: NonNullable<Appearance['outfit']> = outfitRoll < 0.18 ? 'lungi' : outfitRoll < 0.3 ? 'panjabi' : 'shirt';
   return {
     skin,
     hair,
     shirt: pick(SHIRT, r),
-    pants: pick(PANTS, r),
+    pants: outfit === 'lungi' ? pick([0x3d5a99, 0x2f6f5a, 0x7a2f3a, 0x555a8a, 0x8a6a3a], r) : outfit === 'panjabi' ? 0xe9e5d8 : pick(PANTS, r),
+    outfit,
     shoes: pick(SHOES, r),
     scale: height,
     headwear: roll < 0.12 ? 'topi' : roll < 0.3 ? 'cap' : 'none',

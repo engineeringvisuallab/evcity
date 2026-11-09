@@ -1,4 +1,4 @@
-import { ARM, BONE_COUNT, LEG, NECK, TORSO, armW, legW, neckW, skinArrays, slice, torsoW, tubeData, type Ring, type Weights } from '../src/people/SkinMath';
+import { ARM, BONE_COUNT, LEG, NECK, TORSO, armW, legW, neckW, skinArrays, skirtW, slice, torsoW, tubeData, type Ring, type Weights } from '../src/people/SkinMath';
 
 /** Skinned human maths: every tube is closed + outward facing, indices are valid, every vertex's weights sum to 1. */
 function volume(rings: Ring[], seg: number): { v: number; tris: number; verts: number; maxIdx: number; pos: Float32Array } {
@@ -41,6 +41,15 @@ for (const side of ['L', 'R'] as const) {
   check('arm' + side, slice(ARM, 0.89, 1.225, { cx }), 12, (_x, y) => armW(side, y));
   check('leg' + side, slice(LEG, 0.09, 0.93, { cx: side === 'L' ? -0.095 : 0.095 }), 18, (_x, y) => legW(side, y));
 }
+// panjabi / lungi skirts: closed, outward, weights sum to 1, and the hem follows the thigh of the same side
+const skirt: Ring[] = [0.31, 0.55, 0.75, 0.9, 0.99, 1.06].map((y) => ({ y, rx: 0.17, rz: 0.12, cx: 0, cz: 0 }));
+check('skirt', skirt, 18, (x, y) => skirtW(x, y, 0.31, 0.85));
+const hemL = skirtW(-0.15, 0.31, 0.31, 0.85);
+const hemR = skirtW(0.15, 0.31, 0.31, 0.85);
+if (!(hemL.some(([b, w]) => b === 11 && w > 0.5) && hemR.some(([b, w]) => b === 14 && w > 0.5))) {
+  fail++;
+  console.log('FAIL skirt hem does not follow the legs');
+} else console.log('OK   skirt hem follows the left / right thigh');
 console.log(`tube triangles (without face / hands / shoes): ${tris}`);
 if (fail) {
   console.error(`${fail} check(s) failed`);

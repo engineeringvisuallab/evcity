@@ -109,6 +109,36 @@ ok(closed > 0 && closed < 100, `blinks now and then (${closed} of 600 frames wit
 closeEyes(rig, true);
 ok(rig.eyelids!.every((l) => l.scale.y === 1), 'dead: eyes stay shut');
 
+// ---- outfits: panjabi and lungi build, bind and animate without NaN ----
+for (const outfit of ['panjabi', 'lungi'] as const) {
+  const r2 = buildHuman({ ...look, outfit }, (c) => new THREE.MeshLambertMaterial({ color: c }));
+  const root2 = new THREE.Group();
+  root2.add(r2.pivot);
+  root2.updateMatrixWorld(true);
+  const m2 = r2.pivot.children.find((c) => (c as THREE.SkinnedMesh).isSkinnedMesh) as THREE.SkinnedMesh;
+  for (let i = 0; i < 60; i++) {
+    r2.legL.rotation.x = Math.sin(i * 0.2) * 0.6;
+    r2.legR.rotation.x = -Math.sin(i * 0.2) * 0.6;
+    gait(r2, i * 0.2, 0.6, false, 0.3);
+  }
+  root2.updateMatrixWorld(true);
+  const mm = m2.geometry.index!.count / 3;
+  ok(m2.skeleton.bones.length === 17 && mm > tris && (m2.geometry.groups?.length ?? 0) === 7, `${outfit}: skinned, ${mm} triangles, 7 material groups`);
+  r2.dispose?.();
+}
+
+// ---- gun swap: the new gun is mounted exactly once, at the lowest point ----
+const swapAimer = new AimController();
+swapAimer.setGun(id, gun);
+for (let i = 0; i < 60; i++) swapAimer.update(rig, 1 / 60, true, 0);
+let mounted = 0;
+swapAimer.startSwap(() => mounted++);
+for (let i = 0; i < 60; i++) swapAimer.update(rig, 1 / 60, true, 0);
+ok(mounted === 1, `gun swap: the new gun is mounted once (${mounted})`);
+swapAimer.startSwap(() => mounted++);
+for (let i = 0; i < 240; i++) swapAimer.update(rig, 1 / 60, false, 0); // aim ends before the lowest point
+ok(mounted === 2, 'gun swap: finishes even if the aim pose ends in between');
+
 rig.dispose?.();
 for (const m of mats) m.dispose();
 if (fail) {

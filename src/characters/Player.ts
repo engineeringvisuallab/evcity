@@ -175,6 +175,10 @@ export class Player {
     } else this.drownTime = Math.max(0, this.drownTime - dt * 2);
     let speed = this.swimming ? (sprint ? P.swimSprint : P.swim) * (this.headUnder ? 0.88 : 1) : sprint ? P.run : P.walk;
     if (!this.swimming && submerge > 0.2) speed *= 1 - 0.35 * Math.min(1, submerge / 1.1); // wading is slower
+    // hold C on foot: crouch (slow, low) - the capsule keeps its size, so low gaps still stop you
+    const crouch = !this.swimming && this.grounded && !this.inVehicle && input.isDown('KeyC');
+    if (crouch) speed = Math.min(speed, P.walk * 0.5);
+    this.model.setCrouch(crouch);
 
     // --- horizontal velocity ---
     const rate = this.swimming ? 4 : this.grounded ? 14 : 3;
@@ -251,7 +255,7 @@ export class Player {
     else if (!this.grounded) this.state = 'air';
     else if (this.horizSpeed < 0.4) this.state = 'idle';
     else if (submerge > 0.3) this.state = 'wade';
-    else this.state = sprint ? 'run' : 'walk';
+    else this.state = sprint && !crouch ? 'run' : 'walk';
   }
 
   /** Aim / shoot: face `heading` (radians, 0 = +Z) and raise the gun arm. */
@@ -275,6 +279,7 @@ export class Player {
   /** Get into / out of a vehicle: the model is hidden and the capsule removed from the physics world while inside. */
   setInVehicle(on: boolean): void {
     this.inVehicle = on;
+    this.model.setCrouch(false);
     this.body.setEnabled(!on);
     this.model.root.visible = !on;
     this.vel.set(0, 0, 0);

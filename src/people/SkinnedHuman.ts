@@ -3,7 +3,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import type { Appearance } from './PersonModel';
 import type { HumanRig } from './HumanBody';
 import {
-  ARM, BONE, J, LEG, NECK, TORSO, armW, at, legW, neckW, propsOf, skinArrays, slice, solid, torsoW, tubeData,
+  ARM, BONE, J, LEG, NECK, TORSO, armW, at, legW, neckW, propsOf, skinArrays, skirtW, slice, solid, torsoW, tubeData,
   type BodyType, type Ring, type V3, type Weights,
 } from './SkinMath';
 
@@ -28,6 +28,8 @@ export interface HeadParts {
   topi: THREE.BufferGeometry;
 }
 
+type Outfit = NonNullable<Appearance['outfit']>;
+
 // material slots (index into the material array and the geometry groups)
 const SKIN = 0;
 const SHIRT = 1;
@@ -48,11 +50,11 @@ interface Base {
 }
 
 const bases = new Map<string, Base>();
-const getBase = (type: BodyType, lod: 0 | 1): Base => {
-  const key = `${type}:${lod}`;
+const getBase = (type: BodyType, lod: 0 | 1, outfit: Outfit): Base => {
+  const key = `${type}:${lod}:${outfit}`;
   let b = bases.get(key);
   if (!b) {
-    b = buildBase(type, lod);
+    b = buildBase(type, lod, outfit);
     bases.set(key, b);
   }
   return b;
@@ -77,7 +79,7 @@ function tubeGeo(rings: Ring[], seg: number, caps = true): THREE.BufferGeometry 
   return g;
 }
 
-function buildBase(type: BodyType, lod: 0 | 1): Base {
+function buildBase(type: BodyType, lod: 0 | 1, outfit: Outfit): Base {
   const P = propsOf(type);
   // lod 1 = far version: same parts and materials, fewer segments (about 40% of the triangles)
   const segB = lod ? 10 : SEG_BODY;
@@ -100,6 +102,20 @@ function buildBase(type: BodyType, lod: 0 | 1): Base {
   add(tubeGeo(slice(TORSO, 0.985, 1.56, { ...body, grow: 0.008 }), segB), SHIRT, (_x, y) => torsoW(y));
   add(tubeGeo(slice(TORSO, 0.955, 0.995, { ...body, grow: 0.007 }), segB, false), DARK, (_x, y) => torsoW(y));
   add(tubeGeo(slice(NECK, 1.5, 1.63), lod ? 7 : 12), SKIN, (_x, y) => neckW(y));
+
+  // ---- long garments: panjabi (shirt colour, to the knees, loose) or lungi (trouser colour, wrapped to mid-calf, bare calves) ----
+  if (outfit !== 'shirt') {
+    const top = at(TORSO, 1.06);
+    const topRing: Ring = { y: 1.06, rx: top[0] * P.torsoX + 0.006, rz: top[1] * P.torsoZ + 0.006, cx: 0, cz: top[2] };
+    const mk = (y: number, rx: number, rz: number): Ring => ({ y, rx: rx * P.torsoX, rz: rz * P.torsoZ, cx: 0, cz: 0 });
+    if (outfit === 'panjabi') {
+      const rings = [mk(0.55, 0.21, 0.16), mk(0.7, 0.2, 0.15), mk(0.85, 0.188, 0.132), mk(0.985, 0.168, 0.116), topRing];
+      add(tubeGeo(rings, segB), SHIRT, (x, y) => skirtW(x, y, 0.55, 0.55));
+    } else {
+      const rings = [mk(0.31, 0.15, 0.11), mk(0.55, 0.165, 0.115), mk(0.75, 0.172, 0.12), mk(0.9, 0.185, 0.128), mk(0.99, 0.165, 0.115), topRing];
+      add(tubeGeo(rings, segB), PANTS, (x, y) => skirtW(x, y, 0.31, 0.85));
+    }
+  }
 
   // ---- arms and legs ----
   const shoulderX = 0.285 * P.shoulder;
@@ -125,7 +141,12 @@ function buildBase(type: BodyType, lod: 0 | 1): Base {
     add(E([0.011, 0.032, 0.012], [ax - sx * 0.034, 0.82, 0.016], 8, 6), SKIN, () => solid(hand));
 
     // trousers: one tube hip -> ankle
-    add(tubeGeo(slice(LEG, 0.09, 0.93, { sx: P.legX, sz: P.legZ, cx: lx }), segB), PANTS, (_x, y) => legW(side, y));
+    if (outfit === 'lungi') {
+      add(tubeGeo(slice(LEG, 0.09, 0.32, { sx: P.legX, sz: P.legZ, cx: lx }), segB), SKIN, (_x, y) => legW(side, y)); // bare calves
+      add(tubeGeo(slice(LEG, 0.31, 0.93, { sx: P.legX, sz: P.legZ, cx: lx }), segB), PANTS, (_x, y) => legW(side, y)); // (hidden under the lungi)
+    } else {
+      add(tubeGeo(slice(LEG, 0.09, 0.93, { sx: P.legX, sz: P.legZ, cx: lx }), segB), PANTS, (_x, y) => legW(side, y));
+    }
     // shoe + ankle shaft
     add(E([0.05 * P.legX, 0.042, 0.125], [lx, 0.047, 0.05], 14, 9), SHOES, () => solid(foot));
     add(E([0.044 * P.legX, 0.045, 0.048], [lx, 0.105, -0.005], 10, 7), SHOES, () => solid(foot));
@@ -187,7 +208,8 @@ const toHex = (r: number, g: number, b: number): number => (Math.round(r) << 16)
 export function buildSkinnedBody(look: Appearance, mat: (colour: number) => THREE.Material, hp: HeadParts): HumanRig {
   const type: BodyType = look.bodyType ?? 'average';
   const P = propsOf(type);
-  const base = getBase(type, 0);
+  const outfit: Outfit = look.outfit ?? 'shirt';
+  const base = getBase(type, 0, outfit);
   const heads = headParts(hp);
 
   // ---- skeleton (rest pose, hips joint at y = 0.9 like the old rig) ----
@@ -272,7 +294,7 @@ export function buildSkinnedBody(look: Appearance, mat: (colour: number) => THRE
   const setLod = (level: 0 | 1): void => {
     if (level === lod) return;
     lod = level;
-    mesh.geometry = getBase(type, level).geometry;
+    mesh.geometry = getBase(type, level, outfit).geometry;
   };
   const dispose = (): void => skeleton.dispose();
 
