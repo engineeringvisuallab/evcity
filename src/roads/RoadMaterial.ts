@@ -121,10 +121,12 @@ const FRAG_COLOR = /* glsl */ `
     float track = 1.0 - smoothstep(0.0, 0.32, abs(lc - 0.85));
     road *= 1.0 - track * 0.075;
     road *= 1.0 - (1.0 - smoothstep(0.0, 0.3, lc)) * 0.035 * (0.5 + evcRdNoise(vec2(s * 0.3, lane)));
-    float pnD = evcRdNoise(vec2(u * 0.32 + 11.0, s * 0.07));
-    road *= 1.0 - smoothstep(0.63, 0.645, pnD) * 0.10;
-    float cnD = evcRdNoise(vec2(u * 1.9 + 4.0, s * 0.35));
-    road *= 1.0 - (1.0 - smoothstep(0.0, 0.025, abs(cnD - 0.5))) * 0.16;
+    // ROADS CLEANUP: the old sharp-edged "repair patches" and noise iso-line "cracks" drew swirly dark contour lines on the wide roads.
+    // Now: very soft, faint tone drift (no hard edge) and a few thin, faint hairline cracks that run mostly ALONG the road.
+    float pnD = evcRdNoise(vec2(u * 0.12 + 11.0, s * 0.05));
+    road *= 1.0 - smoothstep(0.45, 0.80, pnD) * 0.035;
+    float cnD = evcRdNoise(vec2(u * 0.6 + 4.0, s * 0.45));
+    road *= 1.0 - (1.0 - smoothstep(0.0, 0.006, abs(cnD - 0.5))) * 0.05 * fadeEdge;
     float outside = smoothstep(hw - 0.12, hw + 0.12, au);
     // outside the asphalt: paved footpath inside a city (tier 4 streets and city roads), gravel shoulder in the country
     vec3 beyond = (isCityMain || isLocalRd) ? evcSidewalk(max(au - hw, 0.0), u, s) : gravel;
@@ -262,6 +264,6 @@ export class RoadMaterial extends THREE.MeshLambertMaterial {
       // RAIN: wet asphalt (darker, shiny, puddles, rain rings)
       patchWet(shader, { darken: 0.4, gloss: 1.0, puddle: 1.0 });
     };
-    this.customProgramCacheKey = () => 'evc-road-v15-city-yellow-median-wet';
+    this.customProgramCacheKey = () => 'evc-road-v16-soft-wear';
   }
 }
