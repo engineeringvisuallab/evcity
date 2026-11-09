@@ -20,8 +20,8 @@ export const Config = {
      * so 0.50..0.64 was about half of the land; 0.30..0.44 makes soil the main ground (~80 %), with green patches in between.
      * Lower both = more soil, higher = more green.
      */
-    soilFrom: 0.8, // grass everywhere: almost no brown soil any more (was 0.30 / 0.44; 0.50 / 0.64 originally)
-    soilTo: 0.95,
+    soilFrom: 0.3, // soil is the main ground again: grass only in patches (was 0.8 / 0.95 = grass everywhere, too heavy for the PC)
+    soilTo: 0.44,
     /**
      * GREEN CITY GROUND: inside the planned city areas (CityPlan: distance to the site hub < maxRadius) the ground is lawn green, not brown soil.
      * The chunk worker builds a per-vertex greenness mask (`aCity`): 1 inside the city, falling to 0 over `fadeOut` metres outside it.
@@ -257,25 +257,25 @@ export const Config = {
     grass: {
       /** Tile size (m) and cell size (m): one tuft at most per cell. tile / cell must be a whole number (and every LOD stride must divide it). 0.25 m = 1.6x denser than 0.32 (short grass needs many tufts to cover the ground). */
       tile: 32,
-      cell: 0.2,
+      cell: 0.4, // was 0.2: 4x fewer cells (blades are 3x wider now, so the ground is still covered). 32 / 0.4 = 80, strides 1, 2, 4 divide it
       /**
        * DENSE SINGLE GRASS: every accepted meadow cell grows `dense` single tufts instead of one (7.5 = 7.5x the old density, may be fractional; same cell test, terrain test and
        * deterministic jitter, so the far rings stay a subset of the near ring). The Quality preset sets the value the workers use (low 3, medium 4.5, high 7.5).
        * Far rings (stride > 1) get dense / stride^2 (at least 1). Not applied to the mown city lawn.
        */
-      dense: 7.5,
+      dense: 2, // was 7.5
       /**
        * The extra (dense) tufts fade out with the camera distance: full size inside `denseFade[0]` m, shrunk to nothing at `denseFade[1]` m (smooth, no
        * pop), and a tile's extra tufts are not drawn at all when the tile is farther than `denseFade[1]` m. So the 5x density costs only near the player.
        */
-      denseFade: [10, 24] as [number, number],
+      denseFade: [8, 18] as [number, number],
       /** Tiles within `radius` (m) of the player exist, tiles beyond `keep` are removed. */
-      radius: 115,
-      keep: 135,
+      radius: 70,
+      keep: 90,
       maxInFlight: 6,
       /** Tufts shrink to nothing between these camera distances (m): only at the very edge, so the meadow is always there (like the trees). */
-      fadeStart: 92,
-      fadeEnd: 112,
+      fadeStart: 50,
+      fadeEnd: 68,
       /**
        * SIZE OF THE GRASS. Short, dense grass: a tuft's TALLEST blade is `tuft.maxHeight` m at most (so the blades of a meadow are 1-20 cm); `tuft.min` = the
        * shortest tuft as a share of that (0.2 -> 4 cm). Big clumps (tussocks) are at most `clump.maxHeight` (0.5 m). `widthScale` = how wide a tuft is relative
@@ -283,7 +283,7 @@ export const Config = {
        */
       tuft: {
         /** Meadow single grass: tallest blade 0.8 m. */
-        maxHeight: 0.8,
+        maxHeight: 0.64, // was 0.8, x0.8 = a bit smaller
         min: 0.2,
         /** Wildflowers keep 2x the old height (0.4 m). Mown city lawn keeps its old size (0.2 m, then x `city.height`) and its old width scale. */
         flowerMaxHeight: 0.4,
@@ -298,9 +298,9 @@ export const Config = {
        * Far rings have no flowers. The tuft positions of a coarse ring are a subset of the near ring, so nothing jumps when a tile changes ring.
        */
       lods: [
-        { to: 20, stride: 1, density: 1, size: 1, clumpStride: 1, clumpDensity: 1, clumpSize: 1 },
-        { to: 45, stride: 2, density: 0.5, size: 1.4, clumpStride: 1, clumpDensity: 0.6, clumpSize: 1 },
-        { to: 115, stride: 4, density: 0.25, size: 2, clumpStride: 2, clumpDensity: 0.35, clumpSize: 1.35 },
+        { to: 14, stride: 1, density: 1, size: 1, clumpStride: 1, clumpDensity: 1, clumpSize: 1 },
+        { to: 32, stride: 2, density: 0.5, size: 1.4, clumpStride: 1, clumpDensity: 0.6, clumpSize: 1 },
+        { to: 70, stride: 4, density: 0.25, size: 2, clumpStride: 2, clumpDensity: 0.35, clumpSize: 1.35 },
       ] as { to: number; stride: number; density: number; size: number; clumpStride: number; clumpDensity: number; clumpSize: number }[],
       lodHysteresis: 0.12,
       /**
@@ -315,9 +315,9 @@ export const Config = {
        */
       patch: {
         scale: 40,
-        coverage: 1, // 1 = no bare patches: grass on every surface that is not road / building / water / steep rock
+        coverage: 0.3, // only 30 % of the land has grass (patches), the rest is bare soil (was 1 = grass everywhere)
         edge: 0.2,
-        minValue: 0.05,
+        minValue: 0.25,
         coreAt: 0.35,
         density: 1,
         clumpChance: 0, // no big clumps: only single grass (see `single`)
@@ -375,7 +375,7 @@ export const Config = {
        * COLOUR: every tuft is fresh green, yellow-green or straw (`strawShare` of the tufts lean to straw outside the city, `yellowShare` to yellow-green).
        * `rootDark` = brightness of the blade at the root (0..1, 1 = no darkening), `wind` = global wind sway multiplier (0 = still air; the sway grows with blade height, so short lawn moves little anyway).
        */
-      look: { bladeWidth: 0.28, strawShare: 0, yellowShare: 0, rootDark: 0.6, wind: 0 },
+      look: { bladeWidth: 0.84, // was 0.28, x3 wider blades strawShare: 0, yellowShare: 0, rootDark: 0.6, wind: 0 },
       /**
        * SINGLE GRASS: every tuft model has only `blades[0]..blades[1]` blades (3-5 leaves per grass), so the ground can be covered with very many
        * of them cheaply (`cell` 0.2 m). Used for the four grass kinds; flowers keep their own base. enabled false = the old many-blade tufts.
