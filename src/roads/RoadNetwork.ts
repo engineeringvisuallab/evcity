@@ -7,6 +7,7 @@ import type { BridgeSpec, CulvertSpec, JunctionSpec, PadSpec, RoadInfo, RoadKind
 import { buildJunctionPads } from './Junctions';
 import { planLocalStreets } from './LocalRoads';
 import { CityPlan } from '../city/CityPlan';
+import { sectionFor } from './RoadSection';
 import type { LocalAreaStat } from './LocalRoads';
 
 /** Natural terrain WITHOUT roads (hills, rivers, lakes, sea). Roads are planned on top of this. */
@@ -851,7 +852,7 @@ export class RoadNetwork {
         if (onBridge) continue;
         const firstSide = rnd(par.id + 7, i) < 0.5 ? -1 : 1;
         for (const side of [firstSide, -firstSide]) {
-          const off = par.halfWidth + par.shoulder + 1.4;
+          const off = par.planHalfWidth + par.shoulder + 1.4; // plan width: the earth tracks do not move when a road gets wider (ROADS STEP 1)
           const sx = par.xs[i] + par.nx[i] * side * off;
           const sz = par.zs[i] + par.nz[i] * side * off;
           if (this.pads.some((p) => Math.hypot(p.x - sx, p.z - sz) < p.rCore + 90)) continue;
@@ -1426,6 +1427,9 @@ export class RoadNetwork {
       nx[i] = tz; // left normal (x right, z south -> left of travel direction)
       nz[i] = -tx;
     }
+    // ROADS STEP 1: the cross-section (median, lane width, half width) comes from Config.city.roadSections through roads/RoadSection.ts.
+    const oldLanes = raw.lanes ?? K.lanes;
+    const sec = sectionFor(raw.kind, raw.tier, oldLanes, raw.earth);
     const road: RoadSpec = {
       id,
       tier: raw.tier,
@@ -1434,9 +1438,13 @@ export class RoadNetwork {
       earth: raw.earth,
       closed: raw.closed,
       step: K.step,
-      halfWidth: raw.halfWidth ?? K.halfWidth,
+      halfWidth: sec ? sec.halfWidth : raw.halfWidth ?? K.halfWidth,
+      medianHalf: sec ? sec.medianHalf : 0,
+      laneW: sec ? sec.laneW : (raw.halfWidth ?? K.halfWidth) / Math.max(1, Math.round(Math.max(2, oldLanes) / 2)),
+      shyOuter: sec ? sec.shyOuter : 0,
+      planHalfWidth: raw.halfWidth ?? K.halfWidth,
       shoulder: raw.shoulder ?? K.shoulder,
-      lanes: raw.lanes ?? K.lanes,
+      lanes: sec ? sec.lanesPerDir * 2 : oldLanes,
       speedKmh: raw.speedKmh ?? K.speedKmh,
       maxGrade: raw.tier === 4 ? Config.city.localRoads.rampGrade : K.maxGrade,
       xs,

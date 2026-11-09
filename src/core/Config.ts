@@ -71,6 +71,23 @@ export const Config = {
 
   /** STAGE 10: the city (local streets, then buildings). */
   city: {
+    /**
+     * ROADS STEP 1: the cross-section of every road kind, ONE source (roads/RoadSection.ts reads it, scripts/road-section-check.ts checks it).
+     * Metres. A DIVIDED section (median) is built from these numbers: halfWidth = median half + median-side shy + lanes x laneW + kerb-side shy.
+     *   highway   = every old 4-lane main road, now 3 + 3 lanes with a 2.0 m planted median.
+     *   arterial  = 2 + 2 lanes with a 1.5 m median (was one wide 11 m carriageway).
+     *   avenue    = the 4-lane downtown streets, now 3 + 3 lanes of 3.25 m (40 km/h town street) with a 1.5 m median.
+     * collector and local keep their old half width (terrain, junction pads, street plan and buildings were made for it), so they are
+     * "undivided": only lane and footpath numbers are listed, for the checks.
+     * footpath (verge + walk + kerb) is the TARGET used in Step 3 (raised footpath). In Step 1 the drawn footpath is still roadside.sidewalk.
+     */
+    roadSections: {
+      highway: { lanesPerDir: 3, laneW: 3.5, shyMedian: 0.5, shyOuter: 0.5, medianClear: 2.0, medianKerb: 0.2, kerbH: 0.15, kerbW: 0.2, verge: 1.5, walk: 2.0, fall: 0.02, designKmh: 100 },
+      arterial: { lanesPerDir: 2, laneW: 3.5, shyMedian: 0.5, shyOuter: 0.5, medianClear: 1.5, medianKerb: 0.15, kerbH: 0.15, kerbW: 0.2, verge: 1.5, walk: 2.0, fall: 0.02, designKmh: 70 },
+      avenue: { lanesPerDir: 3, laneW: 3.25, shyMedian: 0.5, shyOuter: 0.5, medianClear: 1.5, medianKerb: 0.15, kerbH: 0.15, kerbW: 0.2, verge: 1.5, walk: 2.0, fall: 0.02, designKmh: 40 },
+      collector: { lanesPerDir: 1, laneW: 3.25, kerbH: 0.15, kerbW: 0.2, verge: 1.5, walk: 2.0, fall: 0.02, designKmh: 50 },
+      local: { lanesPerDir: 1, laneW: 3.0, kerbH: 0.15, kerbW: 0.2, verge: 1.2, walk: 2.0, fall: 0.02, designKmh: 30 },
+    },
     localRoads: {
       /** City sites that get local streets so far (Stage 10B step 1 = site 0 only; sites 1 and 2 follow). */
       sites: [0] as number[],

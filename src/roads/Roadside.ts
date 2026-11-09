@@ -181,7 +181,7 @@ export function planCityTrees(roads: RoadNetwork): { pits: number[]; trees: numb
       }
     }
     // MEDIAN: the freeway arms (broad roads) have a median strip along the centre line: a debdaru or a date palm every 11..15 m
-    if (r.halfWidth > 6) {
+    if (r.medianHalf > 0) {
       const rngM = mulberry32(hash2D(seed ^ 0x3ed1a, r.id, 7));
       let sm = 16 + rngM() * 10;
       w.reset();
@@ -276,7 +276,7 @@ export function planRoadside(gen: TerrainGenerator): RoadsidePlan & { stats: Roa
 
   // ---------- hedges on the median of the freeway arms inside the city ----------
   for (const r of roads.roads) {
-    if (r.earth || r.halfWidth <= 6 || r.xs.length < 2) continue;
+    if (r.earth || r.medianHalf <= 0 || r.xs.length < 2) continue; // only roads that really have a median (ROADS STEP 1; was: halfWidth > 6)
     const w = new Walker(r);
     const rng = mulberry32(hash2D(seed ^ 0x4ed9e, r.id, 3));
     for (let s = 14; s < r.length - 14; s += HD.step) {

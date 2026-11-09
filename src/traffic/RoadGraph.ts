@@ -1,5 +1,6 @@
 import type { RoadNetwork } from '../roads';
 import type { RoadSpec } from '../roads';
+import { isDual, laneCentre, passShift } from '../roads/RoadSection';
 
 export interface RoadPoint {
   x: number;
@@ -230,17 +231,14 @@ export class RoadGraph {
   /** Lane centre offset from the road centreline for left-hand traffic (kerb-side lane). */
   laneOffset(roadId: number): number {
     const r = this.roads[roadId];
-    return r.halfWidth * (1 - 1 / Math.max(2, r.lanes));
+    return laneCentre(r, 0); // ROADS STEP 1: from the road cross-section (median, lane width); undivided roads keep the old formula
   }
 
   /** Overtaking data for (road, s): sideways shift into the passing lane and whether that lane carries oncoming traffic (shift 0 = never overtake here). */
   passInfo(roadId: number, s: number): { shift: number; oncoming: boolean } {
     const r = this.roads[roadId];
     if (r.halfWidth < 2.6 || this.onBridge(roadId, s)) return { shift: 0, oncoming: false };
-    const L = Math.max(2, r.lanes);
-    const laneW = (2 * r.halfWidth) / L;
-    const dual = L >= 4 && r.kind === 'highway';
-    return { shift: -laneW, oncoming: !dual };
+    return { shift: -passShift(r), oncoming: !isDual(r) }; // a divided road (median) never has oncoming cars in the passing lane
   }
 
   /** Cruise speed limit (m/s) of a road. */

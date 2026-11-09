@@ -642,7 +642,7 @@ export class RailNetwork {
           if (this.ctx.roadBlocked(px, pz)) c += u === 0 ? 3 : 1;
         }
         const nr = this.ctx.nearestRoad(x, z, 40);
-        if (nr && nr.d < nr.road.halfWidth + nr.road.shoulder + 14) c += 1;
+        if (nr && nr.d < nr.road.planHalfWidth + nr.road.shoulder + 14) c += 1;
         if (this.wetAt(x, z)) c += 6;
       }
       return c;
@@ -868,7 +868,7 @@ export class RailNetwork {
             yMax = Math.max(yMax, nr.y);
             yMin = Math.min(yMin, nr.y);
             roads.add(nr.road.id);
-            if (nr.onBridge && nr.d < nr.road.halfWidth + 12) bridge = true;
+            if (nr.onBridge && nr.d < nr.road.planHalfWidth + 12) bridge = true;
           }
         }
       }
@@ -989,7 +989,7 @@ export class RailNetwork {
           const rx = c.road.xs[c.i + 1] - c.road.xs[c.i];
           const rz = c.road.zs[c.i + 1] - c.road.zs[c.i];
           const sin = Math.abs(p.dx * rz - p.dz * rx) / (Math.hypot(rx, rz) || 1);
-          const half = Math.min(70, (c.road.halfWidth + c.road.shoulder + 5) / Math.max(0.3, sin) + 6);
+          const half = Math.min(70, (c.road.planHalfWidth + c.road.shoulder + 5) / Math.max(0.3, sin) + 6);
           return { a: c.s - half, b: c.s + half, y: c.y, bridge: c.onBridge };
         });
       let kind: Window['kind'] = 'free';

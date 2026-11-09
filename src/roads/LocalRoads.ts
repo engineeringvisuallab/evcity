@@ -221,7 +221,7 @@ export function planLocalStreets(sites: CitySite[], natural: Natural, roads: Roa
   const mainVerts = new PointIndex(); // tag = road id * 100000 + vertex index
   const tAttach: number[][] = []; // where local connectors have joined a main road (spacing)
   for (const r of roads) {
-    for (let i = 0; i < r.xs.length - 1; i++) segs.add(r.xs[i], r.zs[i], r.xs[i + 1], r.zs[i + 1], r.halfWidth + r.shoulder, -(r.id + 1));
+    for (let i = 0; i < r.xs.length - 1; i++) segs.add(r.xs[i], r.zs[i], r.xs[i + 1], r.zs[i + 1], r.planHalfWidth + r.shoulder, -(r.id + 1)); // planHalfWidth: the street plan keeps the OLD road width (ROADS STEP 1)
     for (let i = 0; i < r.xs.length; i++) {
       if (r.bridgeOf[i] >= 0) bridgePts.add(r.xs[i], r.zs[i], r.id);
       if (!r.closed || r.kind !== 'roundabout') mainVerts.add(r.xs[i], r.zs[i], r.id * 100000 + i);

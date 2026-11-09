@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { patchWet } from '../weather/WetSurface';
 import { Config } from '../core/Config';
+import { DIVIDED_SECTIONS } from './RoadSection';
 
 /**
  * Concrete-grey road surfaces, slab joints, and lane markings are drawn in the shader (no textures).
@@ -25,6 +26,13 @@ vRd = aRd;
 vRdDist = length((modelViewMatrix * vec4(transformed, 1.0)).xyz);
 `;
 const SIDEWALK = Config.city.roadside.sidewalk.toFixed(3);
+// ROADS STEP 1: the divided cross-sections (median half, lane width, median-side shy, lanes per direction) come from Config.city.roadSections.
+// The shader finds the section from the road half width, so there are no magic half-width numbers for these roads any more.
+const SECTION_GLSL = `vec4 evcSection(float hw) {
+${DIVIDED_SECTIONS.map((d) => `  if (abs(hw - ${d.halfWidth.toFixed(3)}) < 0.02) return vec4(${d.medianHalf.toFixed(3)}, ${d.laneW.toFixed(3)}, ${d.shyMedian.toFixed(3)}, ${d.lanesPerDir.toFixed(1)});`).join('\n')}
+  return vec4(0.0);
+}
+`;
 const PAVER = Config.city.roadside.paver.toFixed(3);
 const FRAG_HEADER = /* glsl */ `
 varying vec4 vRd;
@@ -35,6 +43,7 @@ float evcRdNoise(vec2 p) {
   return mix(mix(evcRdHash(i), evcRdHash(i + vec2(1.0, 0.0)), f.x), mix(evcRdHash(i + vec2(0.0, 1.0)), evcRdHash(i + vec2(1.0, 1.0)), f.x), f.y);
 }
 float evcLine(float d, float w) { return 1.0 - smoothstep(w, w + 0.06, abs(d)); }
+${SECTION_GLSL}
 // Grey interlocking pavers (basket weave: pairs of ${PAVER} x ${PAVER}/2 m bricks, orientation alternating per 2x2 block); p in metres. Grout fades with distance (no shimmer).
 vec3 evcPavers(vec2 p, float dist) {
   vec2 q = p / (${PAVER} * 0.5);
@@ -73,6 +82,7 @@ const FRAG_COLOR = /* glsl */ `
   bool isCityMain = hwRaw > 3900.0 && hwRaw < 4600.0;
   bool isLocalRd = !isEarth && !isCityMain && ((hwRaw > 50.0 && hwRaw < 500.0) || (hwRaw > 1050.0 && hwRaw < 3900.0));
   float hw = isEarth ? hwRaw - 2000.0 : isCityMain ? hwRaw - 4000.0 : ((hwRaw > 50.0 && hwRaw < 500.0) ? hwRaw - 100.0 : hwRaw);
+  vec4 sec = evcSection(hw); // x > 0: divided road (median half, lane width, median-side shy, lanes per direction)
   float au = abs(u);
   float n = evcRdNoise(vec2(u * 1.7, s * 0.9)) * 0.6 + evcRdNoise(vec2(u * 6.0, s * 3.5)) * 0.4;
   // ONE asphalt colour for every road type AND the junction pads (and the far-LOD terrain road, see TerrainMaterial): only the wear detail differs.
@@ -99,6 +109,38 @@ const FRAG_COLOR = /* glsl */ `
     vec3 edgeCol = vec3(0.36, 0.34, 0.18) * (0.85 + dn * 0.3);
     float ragged = hw + (dn - 0.5) * 0.7;
     col = mix(earth, edgeCol, smoothstep(ragged - 0.25, ragged + 0.25, au));
+  } else if (sec.x > 0.0) {
+    // ---- DIVIDED ROAD (ROADS STEP 1): lanes each side of a median strip (flush concrete for now, the raised median comes in Step 2) ----
+    float medH = sec.x;
+    float laneW = sec.y;
+    float v = (au - (medH + sec.z)) / laneW;
+    float lc = abs(fract(v) - 0.5) * laneW;
+    float lane = floor(v);
+    float laneTone = (evcRdHash(vec2(lane, sign(u) + 3.0)) - 0.5) * 0.018;
+    vec3 road = asphaltBase + laneTone;
+    float track = 1.0 - smoothstep(0.0, 0.32, abs(lc - 0.85));
+    road *= 1.0 - track * 0.075;
+    road *= 1.0 - (1.0 - smoothstep(0.0, 0.3, lc)) * 0.035 * (0.5 + evcRdNoise(vec2(s * 0.3, lane)));
+    float pnD = evcRdNoise(vec2(u * 0.32 + 11.0, s * 0.07));
+    road *= 1.0 - smoothstep(0.63, 0.645, pnD) * 0.10;
+    float cnD = evcRdNoise(vec2(u * 1.9 + 4.0, s * 0.35));
+    road *= 1.0 - (1.0 - smoothstep(0.0, 0.025, abs(cnD - 0.5))) * 0.16;
+    float outside = smoothstep(hw - 0.12, hw + 0.12, au);
+    // outside the asphalt: paved footpath inside a city (tier 4 streets and city roads), gravel shoulder in the country
+    vec3 beyond = (isCityMain || isLocalRd) ? evcSidewalk(max(au - hw, 0.0), u, s) : gravel;
+    col = mix(road, beyond, outside);
+    float med = (1.0 - smoothstep(medH - 0.04, medH + 0.04, au)) * fadeMid;
+    vec3 concrete = vec3(0.56, 0.55, 0.52) + n * 0.05;
+    concrete *= 0.82 + 0.18 * smoothstep(0.0, 0.25, medH - au);
+    col = mix(col, concrete, med);
+    float wearD = 0.72 + 0.28 * evcRdNoise(vec2(u * 3.0, s * 1.3));
+    // solid yellow line on the median side, solid white line on the kerb side, dashed white lines between the lanes of one direction
+    col = mix(col, vec3(0.88, 0.68, 0.08), evcLine(au - (medH + 0.35), 0.09) * inRoad * fadeMid * wearD);
+    col = mix(col, vec3(0.86), evcLine(au - (hw - 0.45), 0.1) * inRoad * fadeEdge * wearD);
+    float ldashD = step(fract(s / 12.0), 0.25);
+    float bi = floor(v + 0.5);
+    float onLaneLine = step(1.0, bi) * step(bi, sec.w - 1.0);
+    col = mix(col, vec3(0.86), evcLine((v - bi) * laneW, 0.08) * ldashD * onLaneLine * inRoad * fadeMid * wearD);
   } else if (isLocalRd) {
     // ---- LOCAL STREET: concrete carriageway, kerb, and lighter concrete footpath with joints ----
     float walk = smoothstep(hw - 0.12, hw + 0.12, au);
@@ -169,15 +211,15 @@ const FRAG_COLOR = /* glsl */ `
   }
   if (isCityMain) {
     // CITY ROAD OF TIER 1-3: the gravel shoulder becomes the paved sidewalk, and the median is a yellow-black striped kerb
-    col = mix(col, evcSidewalk(max(au - hw, 0.0), u, s), smoothstep(hw - 0.12, hw + 0.12, au));
+    if (sec.x <= 0.0) col = mix(col, evcSidewalk(max(au - hw, 0.0), u, s), smoothstep(hw - 0.12, hw + 0.12, au));
     // MEDIAN: plain double solid yellow line (the old black-yellow striped kerb was too harsh on the eyes)
     vec3 medYellow = vec3(0.86, 0.68, 0.10);
-    float medLine = max(evcLine(au - 0.16, 0.06), evcLine(au + 0.16, 0.06));
+    float medLine = max(evcLine(au - 0.16, 0.06), evcLine(au + 0.16, 0.06)) * (sec.x > 0.0 ? 0.0 : 1.0); // divided roads have a real median strip instead
     float medWear = 0.72 + 0.28 * evcRdNoise(vec2(u * 3.0, s * 1.3));
     col = mix(col, medYellow, medLine * inRoad * fadeMid * medWear);
     float kerbM = 0.0;
     // white lane lines on arterials / collectors too (the freeway branch already has its own dashed white lines)
-    if (hw <= 6.0) col = mix(col, vec3(0.88), evcLine(au - (hw - 0.4), 0.075) * inRoad * fadeEdge * (1.0 - kerbM));
+    if (hw <= 6.0 && sec.x <= 0.0) col = mix(col, vec3(0.88), evcLine(au - (hw - 0.4), 0.075) * inRoad * fadeEdge * (1.0 - kerbM));
   }
   // Subtle transverse concrete expansion joints along normal road ribbons.
   // At junction ends fadeMid is zero, so these seams do not clutter intersections.

@@ -124,7 +124,7 @@ export class RailContext {
   pushFromRoad(x: number, z: number, dirx: number, dirz: number): [number, number] | null {
     const nr = this.nearestRoad(x, z, 60);
     if (!nr) return null;
-    const hw = nr.road.halfWidth + nr.road.shoulder;
+    const hw = nr.road.planHalfWidth + nr.road.shoulder; // the railway plan keeps the OLD road width, so widening roads does not move the railway (ROADS STEP 1)
     // main roads: keep the whole formation (flat top + slopes) clear; city streets: only room for a viaduct pier beside them
     const clear = nr.road.tier === 4 ? hw + 5 : hw + 24;
     if (nr.d >= clear) return null;
@@ -170,7 +170,7 @@ export class RailContext {
     }
     const nr = this.nearestRoad(x, z, 60);
     if (!nr) return null;
-    const hw = nr.road.halfWidth + nr.road.shoulder;
+    const hw = nr.road.planHalfWidth + nr.road.shoulder;
     const clear = nr.road.tier === 4 ? hw + 5 : hw + 24;
     if (nr.d >= clear + 2) return null;
     const sin = Math.abs(dirx * nr.tz - dirz * nr.tx);
@@ -242,7 +242,7 @@ export class RailContext {
   /** Can a viaduct pier column (half size `half`) stand at (x, z)? Not on / next to asphalt, not in a junction pad, not at a road bridge. */
   pierFree(x: number, z: number, half: number, gap: number): boolean {
     const nr = this.nearestRoad(x, z, 50);
-    if (nr && nr.d < nr.road.halfWidth + nr.road.shoulder + half + gap) return false;
+    if (nr && nr.d < nr.road.planHalfWidth + nr.road.shoulder + half + gap) return false;
     for (const p of this.terrain.roads.pads) {
       if (Math.abs(p.x - x) > p.rCore + 60 || Math.abs(p.z - z) > p.rCore + 60) continue;
       if (Math.hypot(x - p.x, z - p.z) < p.rCore + half + gap) return false;

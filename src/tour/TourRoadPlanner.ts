@@ -1,4 +1,5 @@
 import type { RoadGraph, RoadPoint, Station } from '../traffic/RoadGraph';
+import { carriagewayWidth, passShift } from '../roads/RoadSection';
 
 export interface TourRoadSpot {
   roadId: number;
@@ -169,7 +170,7 @@ export class TourRoadPlanner {
     for (let i = 0; i <= n; i++) {
       const s = start + (end - start) * (i / n);
       this.graph.at(roadId, s, dir, this.graph.laneOffset(roadId), ROAD_POINT);
-      this.appendPoint(out, ROAD_POINT.x, ROAD_POINT.y, ROAD_POINT.z, roadSpeed, road.halfWidth * 2, (road.halfWidth * 2) / Math.max(2, road.lanes), roadId);
+      this.appendPoint(out, ROAD_POINT.x, ROAD_POINT.y, ROAD_POINT.z, roadSpeed, carriagewayWidth(road) * 2, passShift(road), roadId); // width of the carriageway of both directions (the median is not road)
     }
   }
 

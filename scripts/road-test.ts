@@ -141,7 +141,7 @@ ok(wetRoad === 0, `no flooded road points off-bridge (${wetRoad})`);
 const r0 = R.roads.find((q) => q.kind === 'highway')!;
 const mid = r0.xs.length >> 1;
 ok(R.surfaceAt(r0.xs[mid], r0.zs[mid]) === 1, 'surfaceAt centreline = asphalt');
-ok(R.surfaceAt(r0.xs[mid] + r0.nx[mid] * 8.5, r0.zs[mid] + r0.nz[mid] * 8.5) === 2, 'surfaceAt shoulder = gravel');
+ok(R.surfaceAt(r0.xs[mid] + r0.nx[mid] * (r0.halfWidth + 0.7), r0.zs[mid] + r0.nz[mid] * (r0.halfWidth + 0.7)) === 2, 'surfaceAt shoulder = gravel');
 ok(R.surfaceAt(r0.xs[mid] + r0.nx[mid] * 60, r0.zs[mid] + r0.nz[mid] * 60) === 0, 'surfaceAt 60 m away = ground');
 ok(R.infoAt(r0.xs[mid], r0.zs[mid])?.kind === 'highway', 'infoAt returns road data');
 

@@ -18,8 +18,16 @@ export interface RoadSpec {
   closed: boolean;
   /** Distance between centreline points (m). */
   step: number;
-  /** Half width of the asphalt (m). */
+  /** Half width of the asphalt (m): centreline -> kerb face. A divided road (median) includes the median in it. */
   halfWidth: number;
+  /** ROADS STEP 1: centreline -> outer face of the median kerb (m); 0 = no median. See roads/RoadSection.ts. */
+  medianHalf: number;
+  /** Width of one lane (m) of a divided road (undivided roads: halfWidth / lanes per direction). */
+  laneW: number;
+  /** Paved shy strip between the kerb-side lane and the kerb (m), divided roads only. */
+  shyOuter: number;
+  /** The half width the street PLAN was made with (the old width). LocalRoads, the railway and the building tables use it, so widening a road does not move the city. */
+  planHalfWidth: number;
   /** Extra gravel shoulder on each side (m). */
   shoulder: number;
   lanes: number;

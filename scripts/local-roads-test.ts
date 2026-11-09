@@ -8,6 +8,7 @@ import { Config } from '../src/core/Config';
 import { CityPlan } from '../src/city/CityPlan';
 import { RoadGraph } from '../src/traffic/RoadGraph';
 import { RouteBuilder } from '../src/traffic/Route';
+import { sectionFor } from '../src/roads/RoadSection';
 
 let fails = 0;
 const ok = (c: boolean, msg: string): void => {
@@ -42,7 +43,11 @@ for (const r of local) {
   const own = R.localStats.find((s) => s.areaId === r.areaId);
   if (!own) badArea++;
   const grid = plan.areas.find((q) => q.id === r.areaId)?.grid;
-  if (!grid || Math.abs(r.halfWidth - grid.halfWidth) > 1e-6 || r.lanes !== grid.lanes || r.speedKmh !== grid.speedKmh) badWidth++;
+  // ROADS STEP 1: a 4-lane street becomes a divided avenue (roads/RoadSection.ts); its PLAN width stays the grid width.
+  const sec = grid ? sectionFor('local', 4, grid.lanes, false) : null;
+  const wantHalf = sec ? sec.halfWidth : grid?.halfWidth;
+  const wantLanes = sec ? sec.lanesPerDir * 2 : grid?.lanes;
+  if (!grid || Math.abs(r.halfWidth - wantHalf!) > 1e-6 || Math.abs(r.planHalfWidth - grid.halfWidth) > 1e-6 || r.lanes !== wantLanes || r.speedKmh !== grid.speedKmh) badWidth++;
   void a;
   for (let i = 1; i < r.xs.length; i++) {
     const gr = Math.abs(r.ys[i] - r.ys[i - 1]) / Math.hypot(r.xs[i] - r.xs[i - 1], r.zs[i] - r.zs[i - 1]);
