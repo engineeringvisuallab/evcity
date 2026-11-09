@@ -11,10 +11,16 @@ Eta `evcity_1.zip` (main game) er sathe merge kora: step 1 (notun gach model) + 
 - Ekhon `maxSlopeDeg` 42, `treeLineStart/End` 320/420. 300 m er upore gach 41 theke ~3000 holo, mot gach 81k theke 93k (chunk per avg 183 -> 226). FPS dekhe niyo, beshi lagle `treeLineStart` komao.
 - Snow line ~340 m, tai 340 er upore kichu gach barfer upor dekhabe.
 
+## Road gach, Krishnachura, pata er rong (notun)
+- Median theke boro gach soriyechhi: median e shudhu choto Debdaru / khejur.
+- Road er duidik shudhu je gach er pata kom chowra: Debdaru ar palm (khejur, narikel). Krishnachura road theke soriyechhi (`STREET_THEMES`).
+- Krishnachura ekhon park / green zone er (city er sobuj elaka) gach hishebe, ar gramer bari r pashe chhaya gach hishebe (`TreePlacement.ts`).
+- Sob gach er pata dark: `Config.vegetation.leafDark = [0.78, 0.84, 0.8]` (r, g, b guner). Aro dark korte ei teen ta sonkha komao. Krishnachura er phul o ektu dark dekhate pare.
+
 ## Size ar trunk (notun)
 - Street gach ager cheye 1.5 gun boro (`STREET_KIND` scale). Krishnachura 0.75-1.05, Debdaru 0.82-1.25, khejur 0.9-1.25, narikel 0.75-1.05.
 - Mukut uchute: Krishnachura trunk 4.2 -> 6.6 m, mukut kendro 7.4 -> 10 m (`PalmAssets.ts`); Debdaru trunk 9 -> 11 m, pata 3 m uchu theke shuru (`TreeAssets.ts`). Scale 1 e Krishnachura mukut er tola ~7.5 m, tai gari/truck er upor diye jay.
-- Median gach: choto (scale 0.42-0.62, Debdaru / khejur), proti 4-5 ta r por ekta boro Krishnachura (`MEDIAN_SMALL`, `nextBig`). Ekhono road er majhkhane double yellow line er upor (tumi bad dite bolo ni, pore road er median boro korbe). Median boro korle `Roadside.ts` er median block ta ar `MEDIAN_TREE_STEP` dekhe nio.
+- Median gach: choto (scale 0.42-0.62, Debdaru / khejur), `MEDIAN_SMALL`. Ekhono road er majhkhane double yellow line er upor (tumi bad dite bolo ni, pore road er median boro korbe). Median boro korle `Roadside.ts` er median block ta ar `MEDIAN_TREE_STEP` dekhe nio.
 - Roundabout er majhkhane boro Krishnachura boshanor code likhechhi, kintu ei game e **kono roundabout nei**, tai ekhon kichu boshe na. 4-way junction er thik majhkhane gach boshale ta traffic er moddhe porbe, tai boshai ni.
 
 ## Footpath e gach (notun)

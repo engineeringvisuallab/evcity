@@ -15,7 +15,7 @@ import { TreeKind } from '../vegetation/TreeTypes';
  *   CITY (roads inside a planned city: the ribbon has a paved sidewalk, see RoadNetwork.segmentCity):
  *     - tree pits: a square kerbed pit every `treeSpacing` m on both sides, centred `pitOffset` m from the kerb, with a street tree in it
  *       (debdaru, krishnachura, date palm / coconut: an avenue pattern per road, see STREET_THEMES)
- *     - median trees: a SMALL debdaru or date palm every 27..38 m (every 4th-5th one a big krishnachura) on the median strip of the freeway arms (between the hedge pieces)
+ *     - median trees: a SMALL debdaru or date palm every 27..38 m on the median strip of the freeway arms (between the hedge pieces)
  *     - hedges: low flowering hedge along the median of the freeway arms inside the city, and along the open edges of the mall / EVLab parking lots
  *   COUNTRY (everything else, tier 1-3, no bridge deck, no earth track):
  *     - W-beam guardrail (posts every `postStep` m) on embankment sides (the ground beside the road drops by more than `dropMin` m) and on the
@@ -113,10 +113,11 @@ function cityPoint(roads: RoadNetwork, r: RoadSpec, w: Walker): boolean {
 
 /**
  * Avenue patterns: every road side gets one theme (by hash), the trees follow it in order, so a street reads as a planned avenue
- * (a row of debdaru with a flowering krishnachura now and then, a krishnachura avenue, palms with debdaru between them).
- * D = debdaru (slim column), K = krishnachura (flowers), P = palm (date palm or coconut, picked per tree).
+ * (debdaru rows with a palm now and then, palms with debdaru between them). Only trees with a NARROW crown stand along roads:
+ * the wide krishnachura grows in parks / green zones and around houses instead (TreePlacement).
+ * D = debdaru (slim column), P = palm (date palm or coconut, picked per tree).
  */
-const STREET_THEMES = ['DKDKDKDP', 'KKPKKPKK', 'PDPDPDPK', 'DDKDDKDD'];
+const STREET_THEMES = ['DDPDDPDD', 'PDPDPDPD', 'DDDPDDDP', 'PPDPPDPD'];
 /** Street tree kinds: size range (scale of the model, 1 = full grown), tint range. Palm atlas kinds keep the natural colour. */
 const STREET_KIND = {
   D: { kind: TreeKind.debdaru, scale: [0.82, 1.25], tint: [0.82, 0.98] },
@@ -125,7 +126,7 @@ const STREET_KIND = {
   Pc: { kind: TreeKind.coconut, scale: [0.75, 1.05], tint: [0.9, 1.05] },
 } as const;
 const MEDIAN_TREE_STEP: [number, number] = [27.5, 37.5];
-/** Median trees are small (scale of the model); every 4th-5th one is a big krishnachura instead. */
+/** Median trees are small (scale of the model). */
 const MEDIAN_SMALL: [number, number] = [0.42, 0.62];
 
 const cache = new WeakMap<RoadNetwork, { pits: number[]; trees: number[]; byChunk: Map<string, number[]> }>();
@@ -183,8 +184,6 @@ export function planCityTrees(roads: RoadNetwork): { pits: number[]; trees: numb
     if (r.halfWidth > 6) {
       const rngM = mulberry32(hash2D(seed ^ 0x3ed1a, r.id, 7));
       let sm = 16 + rngM() * 10;
-      let nMedian = 0;
-      let nextBig = 3 + Math.floor(rngM() * 3);
       w.reset();
       while (sm < r.length - 16) {
         const gap = MEDIAN_TREE_STEP[0] + rngM() * (MEDIAN_TREE_STEP[1] - MEDIAN_TREE_STEP[0]);
@@ -197,14 +196,9 @@ export function planCityTrees(roads: RoadNetwork): { pits: number[]; trees: numb
         if (!w.at(here)) break;
         if (!cityPoint(roads, r, w)) continue;
         if (nearPad(w.x, w.z, 16)) continue; // the median ends at junctions (the shader fades the kerb there too)
-        // mostly SMALL trees (a small debdaru / date palm), and every 4th-5th one a BIG krishnachura, far apart from the next big one
-        const big = ++nMedian >= nextBig;
-        if (big) {
-          nMedian = 0;
-          nextBig = 4 + Math.floor(rngM() * 2);
-        }
-        const K = big ? STREET_KIND.K : pickM < 0.55 ? STREET_KIND.D : STREET_KIND.Pd;
-        const sc = big ? K.scale[1] + 0.1 + 0.2 * scale : MEDIAN_SMALL[0] + (MEDIAN_SMALL[1] - MEDIAN_SMALL[0]) * scale;
+        // SMALL narrow trees only (a small debdaru / date palm)
+        const K = pickM < 0.55 ? STREET_KIND.D : STREET_KIND.Pd;
+        const sc = MEDIAN_SMALL[0] + (MEDIAN_SMALL[1] - MEDIAN_SMALL[0]) * scale;
         // trunk on the centre line, on the finished road surface (the median strip is part of the deck, not natural ground)
         push([w.x, w.y - Config.vegetation.sink * 0.4, w.z, sc, yawRnd * Math.PI * 2, K.tint[0] + (K.tint[1] - K.tint[0]) * tint, K.kind, 1], w.x, w.z);
       }

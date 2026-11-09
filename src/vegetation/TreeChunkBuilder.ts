@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Config } from '../core/Config';
 import type { RockAssets } from './RockAssets';
 import type { TreeAssets } from './TreeAssets';
 import { ROCK_KIND_COUNT, TREE_KIND_COUNT, TREE_STRIDE, type TreeChunkData } from './TreeTypes';
@@ -65,7 +66,8 @@ export class TreeChunkBuilder {
       if (hue) {
         // every tree its own shade: the brighter ones lean yellow-green, the darker ones blue-green
         const u = Math.min(1, Math.max(0, (t - 0.82) / 0.32));
-        mesh.setColorAt(i, color.setRGB(t * (0.9 + 0.2 * u), t * (1.03 - 0.05 * u), t * (0.96 - 0.1 * u)));
+        const D = Config.vegetation.leafDark;
+        mesh.setColorAt(i, color.setRGB(t * (0.9 + 0.2 * u) * D[0], t * (1.03 - 0.05 * u) * D[1], t * (0.96 - 0.1 * u) * D[2]));
       } else mesh.setColorAt(i, color.setRGB(t * tr, t * tg, t * tb));
     }
     mesh.instanceMatrix.needsUpdate = true;

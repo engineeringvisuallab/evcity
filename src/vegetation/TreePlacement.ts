@@ -196,7 +196,8 @@ export class TreePlacer {
     const slopeFactor = 1 - smooth(this.tanMax * 0.6, this.tanMax, slope);
 
     // 3. fade by tree line, slope and city plan: re-use the same roll so the tree set only ever shrinks
-    chance *= line * slopeFactor * this.cityFactor(x, z);
+    const cf = this.cityFactor(x, z);
+    chance *= line * slopeFactor * cf;
     if (roll >= chance) return null;
     if (this.nearRoad(x, z)) return null;
 
@@ -209,6 +210,7 @@ export class TreePlacer {
     if (rKind < pineChance) kind = TreeKind.pine;
     else if (rKind > 1 - palmChance) kind = TreeKind.palm;
     else if (rBig < bigChance) kind = bigKind(h, rVar, gi, gj);
+    else if (cf < 0.999 && h < 150 && rVar < 0.34) kind = TreeKind.krishnachura; // parks and green zones of the city: the flowering umbrella tree
     else kind = rVar < 0.3 ? TreeKind.broadleaf : rVar < 0.58 ? TreeKind.oak : rVar < 0.82 ? TreeKind.vase : TreeKind.slender;
 
     // REAL FOREST SIZES: many young / small trees, a fair number of middle-aged ones, a few old giants (skewed, not uniform).
@@ -217,6 +219,7 @@ export class TreePlacer {
     const wide = kind === TreeKind.koroi || kind === TreeKind.bot;
     const scale = big
       ? V.bigTreeScale[0] + (V.bigTreeScale[1] - (wide ? 0.15 : 0) - V.bigTreeScale[0]) * rScale ** 1.2
+      : kind === TreeKind.krishnachura ? 0.85 + 0.45 * rScale
       : kind === TreeKind.palm ? 0.6 + 0.95 * rScale ** 1.3 : kind === TreeKind.pine ? 0.5 + 1.4 * rScale ** 1.6 : kind === TreeKind.slender ? 0.45 + 1.4 * rScale ** 1.6 : 0.35 + 1.75 * rScale ** 1.8;
     return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: rYaw * Math.PI * 2, tint: 0.82 + rTint * 0.32 };
   }
@@ -261,13 +264,14 @@ export class TreePlacer {
     else if (u < 0.58) kind = TreeKind.banana;
     else if (u < 0.72) kind = TreeKind.datePalm;
     else if (u < 0.82) kind = TreeKind.palmyra;
-    else kind = R.rVar < 0.5 ? TreeKind.broadleaf : R.rVar < 0.8 ? TreeKind.vase : TreeKind.oak; // shade trees (mango, jackfruit ...)
+    else kind = R.rVar < 0.3 ? TreeKind.krishnachura : R.rVar < 0.6 ? TreeKind.broadleaf : R.rVar < 0.85 ? TreeKind.vase : TreeKind.oak; // shade trees (krishnachura, mango, jackfruit ...)
     const t = R.rHScale;
     const scale =
       kind === TreeKind.coconut ? 0.65 + 0.5 * t
       : kind === TreeKind.banana ? 0.8 + 0.4 * t
       : kind === TreeKind.datePalm ? 0.7 + 0.5 * t
       : kind === TreeKind.palmyra ? 0.75 + 0.5 * t
+      : kind === TreeKind.krishnachura ? 0.8 + 0.4 * t
       : 0.5 + 0.7 * t ** 1.5;
     return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: R.rHYaw * Math.PI * 2, tint: 0.85 + R.rTint * 0.3 };
   }

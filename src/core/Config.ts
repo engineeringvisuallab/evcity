@@ -185,6 +185,8 @@ export const Config = {
     pineFull: 150,
     palmBelow: 35,
     /** BIG FOREST TREES (sal, segun, koroi, bot, shimul) in the middle of a forest: share among the forest trees (0..1) and scale range (1 = mature 20-30 m tree). */
+    /** Every tree colour is multiplied by this (r, g, b): the leaves were too light / yellow-green; lower = darker, red lower than green = bluer, deeper green. */
+    leafDark: [0.78, 0.84, 0.8] as [number, number, number],
     bigTreeChance: 0.45,
     bigTreeScale: [0.55, 1.15] as [number, number],
     /** HOMESTEADS (gram): coconut, date, palmyra palms and banana clumps stand around rural houses. `reach` = ring width (m) beyond the footprint, `chance` per 10 m cell next to the house (fades out to the edge of the ring). */
