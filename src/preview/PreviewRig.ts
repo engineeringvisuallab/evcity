@@ -1,13 +1,12 @@
 import * as THREE from 'three';
 import { CityLibrary } from '../library';
-import { EVLab } from '../evlab';
 import { hitsCollider, type Collider, type Structure } from '../structures';
 
 /**
- * Dev-only viewer for CityLibrary / EVLab (not part of the game build).
- * Open /preview-library.html or /preview-evlab.html while `npm run dev` is running.
+ * Dev-only viewer for CityLibrary (not part of the game build).
+ * Open /preview-library.html while `npm run dev` is running.
  */
-export function startPreview(kind: 'library' | 'evlab', host: HTMLElement): void {
+export function startPreview(_kind: 'library', host: HTMLElement): void {
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.domElement.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;touch-action:none';
@@ -15,7 +14,7 @@ export function startPreview(kind: 'library' | 'evlab', host: HTMLElement): void
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xbcd7ee);
-  scene.fog = new THREE.Fog(0xb4d4ee, kind === 'evlab' ? 250 : 60, kind === 'evlab' ? 1100 : 160);
+  scene.fog = new THREE.Fog(0xb4d4ee, 60, 160);
   const camera = new THREE.PerspectiveCamera(65, 1, 0.2, 2500);
   // three >= r155: light intensities are physical, so these are the old values x PI.
   scene.add(new THREE.HemisphereLight(0xdfeeff, 0x8a7a66, 0.9 * Math.PI));
@@ -23,10 +22,9 @@ export function startPreview(kind: 'library' | 'evlab', host: HTMLElement): void
   sun.position.set(200, 300, 150);
   scene.add(sun);
 
-  const s: Structure = kind === 'library' ? new CityLibrary() : new EVLab();
+  const s: Structure = new CityLibrary();
   scene.add(s.group);
   const lib = s instanceof CityLibrary ? s : null;
-  const lab = s instanceof EVLab ? s : null;
   if (lib) {
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshLambertMaterial({ color: 0x7e9a66 }));
     ground.rotation.x = -Math.PI / 2;
@@ -40,21 +38,10 @@ export function startPreview(kind: 'library' | 'evlab', host: HTMLElement): void
   const bar = document.createElement('div');
   bar.style.cssText = 'position:fixed;left:8px;right:8px;top:56px;display:flex;gap:6px;overflow-x:auto';
   host.appendChild(bar);
-  if (lab) {
-    const mk = (label: string, fn: () => void): void => {
-      const b = document.createElement('button');
-      b.textContent = label;
-      b.onclick = fn;
-      bar.appendChild(b);
-    };
-    mk('Overview', () => { P.x = 0; P.y = 240; P.z = 420; P.yaw = 0; P.pit = -0.5; P.fly = true; });
-    mk('Gate', () => { P.x = 0; P.y = 1.7; P.z = 335; P.yaw = 0; P.pit = 0; P.fly = false; });
-    lab.buildings.forEach((b, i) => mk(b.name, () => { const v = lab.viewpoint(i); P.x = v.x; P.z = v.z; P.yaw = v.yaw; P.pit = 0; P.y = 1.7; P.fly = false; }));
-  }
 
-  const P = { x: 0, y: 1.7, z: lib ? 20 : 340, yaw: 0, pit: 0, fly: false };
+  const P = { x: 0, y: 1.7, z: 20, yaw: 0, pit: 0, fly: false };
   const keys: Record<string, boolean> = {};
-  window.addEventListener('keydown', (e: KeyboardEvent) => { const k = e.key.toLowerCase(); keys[k] = true; if (k === 'f' && lab) { P.fly = !P.fly; if (!P.fly) P.y = 1.7; } });
+  window.addEventListener('keydown', (e: KeyboardEvent) => { const k = e.key.toLowerCase(); keys[k] = true; });
   window.addEventListener('keyup', (e: KeyboardEvent) => { keys[e.key.toLowerCase()] = false; });
   let drag = false;
   const el = renderer.domElement;
@@ -72,8 +59,6 @@ export function startPreview(kind: 'library' | 'evlab', host: HTMLElement): void
       const inside = lib.contains(x, z);
       const porch = Math.abs(x) < 2.5 && z >= 15 && z < 60;
       if (!inside && !porch) return false;
-    } else if (Math.abs(x) > 297 || z > 297 || z < -297) {
-      if (!(Math.abs(x) < 9 && z >= 290 && z < 700)) return false;
     }
     return !hitsCollider(cols, x, z);
   };
@@ -118,8 +103,8 @@ export function startPreview(kind: 'library' | 'evlab', host: HTMLElement): void
         ray.setFromCamera(new THREE.Vector2(0, 0), camera);
         const b = lib.bookAt(ray);
         label = b ? `${b.title} - ${b.author} (${b.year}) - ${b.section}` : lib.zoneAt(P.x, P.z) ?? 'Main hall';
-      } else if (lab) label = lab.zoneAt(P.x, P.z) + (P.fly ? ' (flying)' : '');
-      hud.textContent = label + '   |   WASD move, Shift run, drag to look' + (lab ? ', F fly' : '');
+      }
+      hud.textContent = label + '   |   WASD move, Shift run, drag to look';
     }
     renderer.render(scene, camera);
   });

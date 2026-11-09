@@ -42,10 +42,10 @@ import { RidePrompt } from '../ui/RidePrompt';
 import { bn } from '../i18n';
 import { MALL_DOORS } from '../mall/MallSite';
 import { ParkingLots } from '../parking/ParkingLots';
-import { CHARGE_LOTS, EVLAB_SLOTS, FUEL_LOTS, MAIN_STATION_LOT, START_LOT_POS, lotToWorld, lotYaw } from '../parking/ParkingSite';
+import { EVLAB_SLOTS, MAIN_STATION_LOT, START_LOT_POS, lotToWorld, lotYaw } from '../parking/ParkingSite';
+import { ROAD_STATION_SITES } from '../parking/RoadStationSites';
 import { StationStructures } from '../parking/StationStructures';
 import { MallManager, loadCatalog, type Catalog } from '../mall';
-import { EVLabManager } from '../evlab';
 import { EngineeringBoundary } from '../zones';
 import { LibraryManager } from '../library';
 import { BuildingManager, FillBuildings, PlacedBuildings, setBuildingTextureQuality } from '../buildings';
@@ -147,6 +147,8 @@ export class Engine {
   private streetLights: StreetLights;
   private roadSigns: RoadSignLayer;
   private signPhysics: SignPhysics;
+  /** STEP 3: colliders of the fuel stations / charge points (same class as the road signs' physics: bodies only near the player). */
+  private stationPhysics: SignPhysics;
   /** Convex road mirrors at the junctions (2 draw calls for the whole map). */
   private junctionMirrors: JunctionMirrors;
   /** GRASS 4: tree pits, hedges, guardrails and verge shrubs beside the roads (instanced, grouped in 250 m squares). */
@@ -194,8 +196,6 @@ export class Engine {
   /** All the parking around the mall: angled lot + entry road/start apron + EVLAB fleet lot across F4, the front row and the side lot on the mall side. No signboards. */
   readonly parking: ParkingLots;
   readonly stationStructures: StationStructures;
-  /** EVLab research campus (fenced, always standing on its big level plot west of the F4 road). */
-  readonly evlab: EVLabManager;
   /** Prototype fence around every engineering area (no gates). */
   readonly engBoundary: EngineeringBoundary;
   /** City Library south of the F7 road (the open field next to the spawn crossing, west of the railway viaduct): walk in and look around. */
@@ -211,10 +211,9 @@ export class Engine {
   private mapStops: { x: number; z: number }[] = [];
   /** Map symbols: the six small stations (fuel + charge), the main fuel station and the eight charge points (static). */
   private mapStations: { x: number; z: number; kind: 'fuel' | 'charge' | 'both' }[] = [
-    ...FUEL_LOTS.map((l) => ({ ...lotToWorld((l.s0 + l.s1) / 2, (l.n0 + l.n1) / 2), kind: 'both' as const })),
+    // STEP 4: the main station (static) + every road-side station (fuel + charge) and charge point along the main roads
     { ...lotToWorld((MAIN_STATION_LOT.s0 + MAIN_STATION_LOT.s1) / 2, (MAIN_STATION_LOT.n0 + MAIN_STATION_LOT.n1) / 2), kind: 'fuel' as const },
-    // Step 2: the EVLab free depot is gone; the 8 charge points (CP-01..CP-08) are the 'charge' symbols
-    ...CHARGE_LOTS.map((l) => ({ ...lotToWorld((l.s0 + l.s1) / 2, (l.n0 + l.n1) / 2), kind: 'charge' as const })),
+    ...ROAD_STATION_SITES.map((x) => ({ x: x.x, z: x.z, kind: (x.kind === 'fuel' ? 'both' : 'charge') as 'both' | 'charge' })),
   ];
   private minimap: Minimap;
   /** N key: pick any vehicle and it is brought next to the player. */
@@ -411,6 +410,8 @@ export class Engine {
     this.parking = new ParkingLots({ root: this.world.root, terrain: this.world.terrain });
     // STEP 2: light structures at the small stations and the charge points (pump / charger posts, little roofs, Bangla + English signs)
     this.stationStructures = new StationStructures({ root: this.world.root, terrain: this.world.terrain });
+    // STEP 3: pumps, columns, kiosk, pylon, charger posts and cabinets are solid (cuboids), only near the player, floating-origin local coordinates
+    this.stationPhysics = new SignPhysics(physics, this.world.origin, this.stationStructures.solidGroups);
 
     // --- City Mall (always standing there when the game starts) ---
     this.mall = new MallManager({
@@ -425,15 +426,6 @@ export class Engine {
       catalog,
       playerWorld: (out) => this.player.getWorldPosition(out),
       onFoot: () => this.player.active && !this.player.inVehicle && !this.cameraController.isFreeFly && !this.helis.pilot && !this.boats.skipper,
-    });
-
-    // --- EVLab research campus (always standing there when the game starts) ---
-    this.evlab = new EVLabManager({
-      root: this.world.root,
-      physics,
-      origin: this.world.origin,
-      terrain: this.world.terrain,
-      playerWorld: (out) => this.player.getWorldPosition(out),
     });
 
     // --- engineering areas: prototype boundary fence (closed all round; open only where a public road crosses) ---
@@ -999,7 +991,6 @@ export class Engine {
     this.helicopterBombs.update(dt);
     const canShoot = this.player.active && !this.cameraController.isFreeFly && this.input.gameplayActive && this.player.ready && !this.player.swimming;
     this.mall.update(dt);
-    this.evlab.update(this.time.elapsed);
     this.engBoundary.update();
     this.library.update(this.time.elapsed);
     this.protoBuilding.update();
@@ -1070,6 +1061,8 @@ export class Engine {
       this.roadSigns.update(lamp);
       this.roadSigns.updateField(this.world.playerWorld.x, this.world.playerWorld.z);
     this.signPhysics.update(dt, this.world.playerWorld.x, this.world.playerWorld.z);
+      this.stationPhysics.update(dt, this.world.playerWorld.x, this.world.playerWorld.z);
+      this.stationStructures.update(this.world.playerWorld.x, this.world.playerWorld.z, lamp); // builds the near sites, frees the far ones; canopy lights, kiosk windows, price displays and signs follow the day / night
       this.junctionMirrors.update(lamp);
       NightLamps.on = lamp; // vehicle headlights / tail lights
       this.roadside.update(dt, this.camera.position.x + this.world.origin.origin.x, this.camera.position.z + this.world.origin.origin.z);
@@ -1515,8 +1508,8 @@ export class Engine {
     this.oxygenHud.dispose();
     this.vehicleMenu.dispose();
     this.parking.dispose();
+    this.stationStructures.dispose();
     this.mall.dispose();
-    this.evlab.dispose();
     this.engBoundary.dispose();
     this.library.dispose();
     this.protoBuilding.dispose();
@@ -1538,6 +1531,7 @@ export class Engine {
     this.trafficLights.dispose();
     this.streetLights.dispose();
     this.signPhysics.dispose();
+    this.stationPhysics.dispose();
     this.roadSigns.dispose();
     this.junctionMirrors.dispose();
     this.roadside.dispose();

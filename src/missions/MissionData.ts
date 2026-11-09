@@ -1,5 +1,6 @@
 import type { Mission } from './MissionTypes';
 import { ENGINEERING_BY_ID } from '../city/EngineeringZones';
+import { EVLAB_PLOT, EVLAB_POS } from '../evlab/EVLabSite';
 
 /**
  * MISSIONS (data only). Add a mission = add one object here; nothing else changes.
@@ -33,6 +34,19 @@ const LINE = { P: 5e6, V: 11000 };
 const I_LINE = LINE.P / (Math.sqrt(3) * LINE.V);
 
 export const MISSIONS: readonly Mission[] = [
+  {
+    // The Presentation Hall is inside the EVLab office building (built later). Until then the pin is at the south side of the EVLab plot, near its gate.
+    id: 'present-evlab',
+    kind: 'hall',
+    title: 'Presentation at the EVLab Office',
+    place: { x: EVLAB_POS.x, z: EVLAB_PLOT.z1 - 30, radius: 45, label: 'EVLab Office (Presentation Hall)' },
+    brief: 'Go to the EVLab office. Press Enter to go into the Presentation Hall, choose a topic, and present it to the audience by reading each page aloud.',
+    arrival: 'You are at the EVLab office. Press Enter to go into the Presentation Hall.',
+    questions: [],
+    pass: 0.6,
+    badge: 'Presenter',
+    workDone: 'The audience applauded your presentation.',
+  },
   {
     id: 'drain-transport',
     kind: 'field',

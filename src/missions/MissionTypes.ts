@@ -1,6 +1,7 @@
 // MISSIONS (Stage 13): shared types. Everything the player reads or hears is English.
 
-export type MissionKind = 'field' | 'meeting' | 'presentation';
+/** field = visit a site and answer; meeting / presentation = Q&A with people; hall = give a real presentation in the Presentation Hall (voice marks). */
+export type MissionKind = 'field' | 'meeting' | 'presentation' | 'hall';
 
 /** One question. 'number' = a calculation (tolerance or range); 'text' = a short answer checked by keyword groups. */
 export interface MissionQuestion {

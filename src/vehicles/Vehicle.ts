@@ -457,6 +457,13 @@ export class Vehicle implements OrbitTarget {
     const s = this.spec.seat;
     const root = this.model.root;
     root.updateWorldMatrix(true, false);
+    const eo = this.model.eyeOverride;
+    if (eo) {
+      pos.copy(eo);
+      root.localToWorld(pos);
+      root.getWorldQuaternion(quat);
+      return true;
+    }
     const ce = this.model.cockpit?.eye;
     if (ce) {
       // cars with a real cockpit: the eye was placed together with the dash, windscreen and header
@@ -1745,13 +1752,16 @@ export class Vehicle implements OrbitTarget {
   /** dist = distance to the player (m): far vehicles skip the headlight beam. */
   update(alpha: number, dist = 0): void {
     this.syncModel(alpha);
-    if (this.model.cockpit) {
-      this.model.setCabinLight(0.42 - 0.3 * NightLamps.on); // inside gets dimmer at night
-      if (this.driver === 'player') this.model.cockpitFrame(this.telemetry());
-    }
+    if (this.model.cockpit) this.model.setCabinLight(0.42 - 0.3 * NightLamps.on); // inside gets dimmer at night
+    if (this.model.hasLiveDials && this.driver === 'player') this.model.cockpitFrame(this.telemetry());
     // headlights / tail lights (only visible at night): on while somebody drives, off when empty, parked or wrecked
     const driven = this.driver !== null || this.tourInput !== null || this.ai !== null;
-    this.lights.update(driven && !this.coast && this.state !== 'wrecked' && this.enabled, this.brake > 0.05 || this.handbrake, dist);
+    this.lights.update(driven && !this.coast && this.state !== 'wrecked' && this.enabled, this.brake > 0.05 || this.handbrake, dist, {
+      steer: this.steerAngle,
+      reverse: this.powertrain.gear < 0,
+      moving: Math.abs(this.speed) > 0.5,
+      player: this.driver === 'player',
+    });
   }
 
   private syncModel(alpha: number): void {

@@ -11,6 +11,8 @@
 //                        mall (north of it, along F4) with its own driveway.
 // Nothing here carries a signboard any more.
 
+import { ROAD_STATION_SITES } from './RoadStationSites';
+
 const UX = 0.33303786, UZ = -0.94291345; // along F4
 const NX = -0.94291345, NZ = -0.33303786; // away from the mall, across F4
 const OX = 15, OZ = -93.4;
@@ -41,37 +43,16 @@ export const SIDE_DRIVE: LotRect = { id: 'sidedrive', s0: 108, s1: 116, n0: -14.
 export const PARKING_LOTS: ReadonlyArray<LotRect> = [MALL_LOT, APRON, EVLAB_LOT, FRONT_ROW, SIDE_LOT, SIDE_DRIVE];
 
 /**
- * SMALL STATIONS (FUEL_LOTS): land kept free for fuel / charge stations (nothing is built here yet - no pumps, no roof, no paint).
- * A vehicle that stops inside one is refuelled (fuel vehicles) or charged (electric) and PAYS Gold for it (see vehicles/FuelAreas.ts). Same lot frame as the parking lots.
- * Move s0/s1 along F4 / n0/n1 across it; add another entry to add another area.
+ * A rectangle in the lot frame (used by the MAIN STATION lot). STEP 4: the small fuel stations and the charge points are no longer lots beside F4: they stand along the
+ * main roads, see RoadStationSites.ts (generated), StationLayout.ts (layout) and vehicles/FuelAreas.ts (where a vehicle fuels / charges).
  */
 export interface FuelLot { id: string; nameBn: string; s0: number; s1: number; n0: number; n1: number }
-export const FUEL_LOTS: ReadonlyArray<FuelLot> = [
-  // start side of F4 (n > 0)
-  { id: 'station-1', nameBn: 'স্টেশন ১', s0: 92, s1: 124, n0: 14, n1: 40 },
-  { id: 'station-3', nameBn: 'স্টেশন ৩', s0: 220, s1: 252, n0: 14, n1: 40 },
-  { id: 'station-5', nameBn: 'স্টেশন ৫', s0: 300, s1: 332, n0: 14, n1: 40 },
-  // mall side of F4 (n < 0)
-  { id: 'station-2', nameBn: 'স্টেশন ২', s0: 158, s1: 190, n0: -40, n1: -14.5 },
-  { id: 'station-4', nameBn: 'স্টেশন ৪', s0: 240, s1: 272, n0: -40, n1: -14.5 },
-  { id: 'station-6', nameBn: 'স্টেশন ৬', s0: 320, s1: 352, n0: -40, n1: -14.5 },
-];
 
-/**
- * CHARGE POINTS (docs/CHARGING_POINTS.md, CP-01 .. CP-08): small electric charge posts with a little roof. Same lot frame; each is a small rectangle where an electric
- * vehicle that stands still is charged (paid, like the stations). The doc's rough numbers were moved a few metres where they hit a lot, a station, the main station
- * or the mall (the original s/n are in the comment of each line). Everything is checked by scripts/charge-points-test.ts.
- */
-export const CHARGE_LOTS: ReadonlyArray<FuelLot> = [
-  { id: 'cp-01', nameBn: 'চার্জ পয়েন্ট ১ (ইভি ল্যাব)', s0: 56, s1: 64, n0: 39, n1: 43 }, // EV Lab lot, back row (doc: s 60, n 28 = the lot's drive lane)
-  { id: 'cp-02', nameBn: 'চার্জ পয়েন্ট ২', s0: -17, s1: -9, n0: 26, n1: 30 }, // doc: s 10, n 28 = inside MALL_LOT
-  { id: 'cp-03', nameBn: 'চার্জ পয়েন্ট ৩', s0: 83, s1: 89, n0: 20, n1: 24 }, // doc: s 86, n 22 (as is; the gap between the EV Lab lot and station-1)
-  { id: 'cp-04', nameBn: 'চার্জ পয়েন্ট ৪', s0: 125.5, s1: 130.5, n0: 20, n1: 24 }, // doc: s 128, n 26 (narrowed: gap between station-1 and the main station)
-  { id: 'cp-05', nameBn: 'চার্জ পয়েন্ট ৫', s0: 74, s1: 80, n0: -13.8, n1: -10.3 }, // doc: s 36, n -24 = inside the mall; now the strip beside F4 after the front row
-  { id: 'cp-06', nameBn: 'চার্জ পয়েন্ট ৬', s0: 92, s1: 98, n0: -13.8, n1: -10.3 }, // doc: s 96, n -24 = inside the mall
-  { id: 'cp-07', nameBn: 'চার্জ পয়েন্ট ৭', s0: 130, s1: 142, n0: -13.8, n1: -10.3 }, // doc: s 150, n -24 = inside the side lot (bus-size bay: 12 m)
-  { id: 'cp-08', nameBn: 'চার্জ পয়েন্ট ৮', s0: 194, s1: 206, n0: -13.8, n1: -10.3 }, // doc: s 196, n -24 (strip beside F4, bus-size bay: 12 m)
-];
+/** The road-side sites as rotated boxes (site frame: local +z at the road), for parkingContains (trees / rocks / grass keep out). */
+const SITE_BOXES = ROAD_STATION_SITES.map((s) => ({
+  x: s.x, z: s.z, rx: Math.sin(s.yaw), rz: Math.cos(s.yaw), hw: s.hw, hd: s.hd, gap: s.gap, reach: Math.hypot(s.hw, s.hd + s.gap + 0.5) + 1,
+}));
+
 
 /**
  * MAIN STATION area: the player brings the fuel loaded at the mine (see MINE_LOAD in vehicles/FuelAreas.ts) here and is paid a bonus.
@@ -92,11 +73,12 @@ export function parkingContains(x: number, z: number, margin = 0): boolean {
   for (const l of PARKING_LOTS) {
     if (s >= l.s0 - margin && s <= l.s1 + margin && n >= l.n0 - margin && n <= l.n1 + margin) return true;
   }
-  for (const l of FUEL_LOTS) {
-    if (s >= l.s0 - margin && s <= l.s1 + margin && n >= l.n0 - margin && n <= l.n1 + margin) return true;
-  }
-  for (const l of CHARGE_LOTS) {
-    if (s >= l.s0 - margin && s <= l.s1 + margin && n >= l.n0 - margin && n <= l.n1 + margin) return true;
+  // STEP 4: the road-side stations / charge points (the lot + the driveway to the road shoulder), in their own rotated frame
+  for (const p of SITE_BOXES) {
+    if (Math.abs(x - p.x) > p.reach + margin || Math.abs(z - p.z) > p.reach + margin) continue;
+    const ex = x - p.x, ez = z - p.z;
+    const lx = ex * p.rz - ez * p.rx, lz = ex * p.rx + ez * p.rz;
+    if (Math.abs(lx) <= p.hw + margin && lz >= -p.hd - margin && lz <= p.hd + p.gap + 0.5 + margin) return true;
   }
   const m = MAIN_STATION_LOT;
   if (s >= m.s0 - margin && s <= m.s1 + margin && n >= m.n0 - margin && n <= m.n1 + margin) return true;
@@ -152,7 +134,6 @@ export function buildParkingGeometry(): ParkingGeometry {
 
   for (const l of PARKING_LOTS) g.asphalt.push(rect(l));
   // the charge points and the small stations get a patch of asphalt (stations are paved from Step 2 on)
-  for (const l of [...CHARGE_LOTS, ...FUEL_LOTS]) g.asphalt.push([l.s0, l.s1, l.n0, l.n1, 4]);
 
   // ---- road-side concrete kerb strips of the two start-side lots
   for (const l of [MALL_LOT, EVLAB_LOT]) g.kerb.push([l.s0, l.s1, l.n0, l.n0 + 1.4, 4]);

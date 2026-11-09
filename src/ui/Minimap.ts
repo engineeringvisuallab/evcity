@@ -593,8 +593,8 @@ export class Minimap {
 
   private drawMissions(c: CanvasRenderingContext2D, S: number, X: (x: number) => number, Z: (z: number) => number, pins: MissionPin[]): void {
     const d = this.dpr;
-    const COLOR = { field: '#f97316', meeting: '#8b5cf6', presentation: '#ec4899' } as const;
-    const MARK = { field: '!', meeting: 'M', presentation: 'P' } as const;
+    const COLOR = { field: '#f97316', meeting: '#8b5cf6', presentation: '#ec4899', hall: '#14b8a6' } as const;
+    const MARK = { field: '!', meeting: 'M', presentation: 'P', hall: 'H' } as const;
     const r0 = (this.zoom === 0 ? 7.5 : this.zoom === 1 ? 6.5 : 5.5) * d;
     const inset = 12 * d;
     const sorted = [...pins].sort((a, b) => Number(a.active) - Number(b.active)); // the tracked one is drawn last = on top

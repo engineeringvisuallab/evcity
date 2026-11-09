@@ -67,6 +67,8 @@ export interface CockpitDef {
   seat: { w: number; back: number; recline: number; head: boolean; fabric: number; accent: number; sport: boolean };
   trim: number;
   wipers: boolean;
+  /** Which pieces to build (default all). Tractor / combine: no windscreen, no ceiling. */
+  parts?: { dash?: boolean; cluster?: boolean; wheel?: boolean; glass?: boolean; liner?: boolean; mirror?: boolean; seats?: boolean };
 }
 
 /** One entry per enclosed car that has a real cockpit. */
@@ -74,7 +76,7 @@ export const COCKPITS: Partial<Record<VehicleId, CockpitDef>> = {
   sedan: {
     maxKmh: 200,
     maxKw: 150,
-    wheel: { fwd: 0.34, up: 0.42, r: 0.19, tilt: 0.4, ratio: 4 },
+    wheel: { fwd: 0.34, up: 0.42, r: 0.19, tilt: 0.4, ratio: 2.2 },
     dash: { z0: 0.42, z1: 0.82, hTop: 0.96, hLow: 0.7, half: 0.7 },
     cluster: { w: 0.3, h: 0.13, hh: 1.04, z: 0.44 },
     screen: { x: 0.13, hh: 1.04, z: 0.5, w: 0.24, h: 0.14 },
@@ -88,7 +90,7 @@ export const COCKPITS: Partial<Record<VehicleId, CockpitDef>> = {
   jeep: {
     maxKmh: 160,
     maxKw: 150,
-    wheel: { fwd: 0.36, up: 0.4, r: 0.21, tilt: 0.5, ratio: 4 },
+    wheel: { fwd: 0.36, up: 0.4, r: 0.21, tilt: 0.5, ratio: 2.2 },
     dash: { z0: 0.3, z1: 0.62, hTop: 1.1, hLow: 0.84, half: 0.8 },
     cluster: { w: 0.3, h: 0.13, hh: 1.17, z: 0.32 },
     screen: { x: 0.14, hh: 1.17, z: 0.36, w: 0.24, h: 0.14 },
@@ -103,7 +105,7 @@ export const COCKPITS: Partial<Record<VehicleId, CockpitDef>> = {
     maxKmh: 340,
     maxKw: 600,
     eyeUp: 0.6,
-    wheel: { fwd: 0.3, up: 0.3, r: 0.145, tilt: 0.75, ratio: 3 },
+    wheel: { fwd: 0.3, up: 0.3, r: 0.145, tilt: 0.75, ratio: 2 },
     dash: { z0: 0.62, z1: 1.04, hTop: 0.75, hLow: 0.5, half: 0.66 },
     cluster: { w: 0.26, h: 0.11, hh: 0.8, z: 0.66 },
     screen: { x: 0.2, hh: 0.78, z: 0.7, w: 0.2, h: 0.12 },
@@ -115,7 +117,7 @@ export const COCKPITS: Partial<Record<VehicleId, CockpitDef>> = {
   evhypar: {
     maxKmh: 280,
     maxKw: 400,
-    wheel: { fwd: 0.34, up: 0.4, r: 0.2, tilt: 0.5, ratio: 4 },
+    wheel: { fwd: 0.34, up: 0.4, r: 0.2, tilt: 0.5, ratio: 2.2 },
     dash: { z0: 0.7, z1: 1.38, hTop: 1.03, hLow: 0.7, half: 0.88 },
     cluster: { w: 0.3, h: 0.13, hh: 1.08, z: 0.74 },
     screen: { x: 0.14, hh: 1.08, z: 0.8, w: 0.3, h: 0.16 },
@@ -125,10 +127,74 @@ export const COCKPITS: Partial<Record<VehicleId, CockpitDef>> = {
     trim: 0x23262b,
     wipers: true,
   },
+  tractor: {
+    maxKmh: 60,
+    maxKw: 80,
+    wheel: { fwd: 0.7, up: 0.42, r: 0.22, tilt: 1.1, ratio: 2.4 },
+    dash: { z0: 0.6, z1: 0.95, hTop: 1.75, hLow: 1.45, half: 0.3 },
+    cluster: { w: 0.3, h: 0.13, hh: 1.84, z: 0.63 },
+    glass: { zTop: 0, hTop: 0, zBase: 0, hBase: 0, half: 0 },
+    seat: { w: 0.5, back: 0.5, recline: 0.1, head: false, fabric: 0x1c1c1c, accent: 0x1b5e20, sport: false },
+    trim: 0x23272b,
+    wipers: false,
+    parts: { glass: false, liner: false, mirror: false, seats: false },
+  },
+  combine: {
+    maxKmh: 40,
+    maxKw: 200,
+    wheel: { fwd: 0.5, up: 0.45, r: 0.22, tilt: 1.0, ratio: 2.4 },
+    dash: { z0: 2.3, z1: 2.56, hTop: 3.0, hLow: 2.6, half: 0.8 },
+    cluster: { w: 0.34, h: 0.15, hh: 3.08, z: 2.32 },
+    glass: { zTop: 0, hTop: 0, zBase: 0, hBase: 0, half: 0 },
+    seat: { w: 0.5, back: 0.58, recline: 0.1, head: true, fabric: 0x23272c, accent: 0xf2b705, sport: false },
+    trim: 0x2d3136,
+    wipers: false,
+    parts: { glass: false, liner: false, mirror: false },
+  },
+  suprim: {
+    maxKmh: 300,
+    maxKw: 500,
+    eyeUp: 0.45,
+    wheel: { fwd: 0.3, up: 0.27, r: 0.15, tilt: 0.75, ratio: 2 },
+    dash: { z0: 0.66, z1: 1.08, hTop: 0.8, hLow: 0.55, half: 0.66 },
+    cluster: { w: 0.26, h: 0.11, hh: 0.86, z: 0.7 },
+    screen: { x: 0.2, hh: 0.84, z: 0.74, w: 0.2, h: 0.12 },
+    glass: { zTop: 0.3, hTop: 1.15, zBase: 1.15, hBase: 0.76, half: 0.64 },
+    seat: { w: 0.42, back: 0.5, recline: 0.28, head: true, fabric: 0x15181b, accent: 0x2a9bff, sport: true },
+    trim: 0x1b1e22,
+    wipers: false,
+  },
+  pickup: {
+    maxKmh: 140,
+    maxKw: 120,
+    wheel: { fwd: 0.36, up: 0.4, r: 0.21, tilt: 0.5, ratio: 2.2 },
+    dash: { z0: 0.5, z1: 0.96, hTop: 1.34, hLow: 1.0, half: 0.78 },
+    cluster: { w: 0.3, h: 0.13, hh: 1.42, z: 0.52 },
+    screen: { x: 0.15, hh: 1.42, z: 0.56, w: 0.24, h: 0.14 },
+    glass: { zTop: 0.62, hTop: 1.95, zBase: 1.0, hBase: 1.36, half: 0.84 },
+    liner: { z0: -0.4, z1: 0.62, h: 1.925, half: 0.84, drop: [0.1, 0.1], color: 0xb7b2a6 },
+    mirror: { hh: 1.78, z: 0.72 },
+    seat: { w: 0.5, back: 0.6, recline: 0.1, head: true, fabric: 0x3a3a34, accent: 0x1b5e20, sport: false },
+    trim: 0x2d3136,
+    wipers: true,
+  },
+  truck: {
+    maxKmh: 100,
+    maxKw: 250,
+    wheel: { fwd: 0.5, up: 0.45, r: 0.22, tilt: 1.0, ratio: 2.5 },
+    dash: { z0: 4.72, z1: 5.04, hTop: 1.85, hLow: 1.3, half: 1.1 },
+    cluster: { w: 0.36, h: 0.16, hh: 1.95, z: 4.76 },
+    screen: { x: 0.45, hh: 1.97, z: 4.78, w: 0.3, h: 0.18 },
+    glass: { zTop: 4.92, hTop: 2.88, zBase: 5.06, hBase: 2.0, half: 1.12 },
+    liner: { z0: 3.2, z1: 4.88, h: 2.845, half: 1.2, color: 0xcfd3d6 },
+    seat: { w: 0.5, back: 0.58, recline: 0.1, head: true, fabric: 0x222c33, accent: 0xff7a00, sport: false },
+    trim: 0x2b3238,
+    wipers: true,
+  },
   bus: {
     maxKmh: 120,
     maxKw: 250,
-    wheel: { fwd: 0.55, up: 0.43, r: 0.21, tilt: 1.0, ratio: 3.5 },
+    wheel: { fwd: 0.55, up: 0.43, r: 0.21, tilt: 1.0, ratio: 2.5 },
     dash: { z0: 4.55, z1: 5.1, hTop: 1.62, hLow: 1.2, half: 1.2 },
     cluster: { w: 0.36, h: 0.16, hh: 1.7, z: 4.58 },
     screen: { x: 0.45, hh: 1.72, z: 4.6, w: 0.34, h: 0.2 },
@@ -184,6 +250,55 @@ class Batch {
   }
 }
 
+/** A small live instrument cluster for vehicles without a cockpit (bike, auto, rickshaw). Put `mesh` on the handlebar group. */
+export class MiniCluster {
+  readonly mesh: THREE.Mesh;
+  private readonly ctx: CanvasRenderingContext2D;
+  private readonly tex: THREE.CanvasTexture;
+  private readonly mat: THREE.MeshBasicMaterial;
+  private clock = 1;
+  private active = false;
+
+  constructor(w: number, h: number, private readonly maxKmh: number, private readonly maxKw: number) {
+    const cv = document.createElement('canvas');
+    cv.width = 512;
+    cv.height = 256;
+    this.ctx = cv.getContext('2d')!;
+    this.tex = new THREE.CanvasTexture(cv);
+    this.tex.colorSpace = THREE.SRGBColorSpace;
+    this.mat = new THREE.MeshBasicMaterial({ map: this.tex, toneMapped: false });
+    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), this.mat);
+    this.mesh.castShadow = false;
+    paintCluster(this.ctx, null, maxKmh, maxKw);
+    this.tex.needsUpdate = true;
+  }
+
+  setActive(on: boolean): void {
+    this.active = on;
+    this.clock = 1;
+  }
+
+  update(s: CockpitState, dt: number): void {
+    if (!this.active) return;
+    this.clock += dt;
+    if (this.clock < 0.05) return;
+    this.clock = 0;
+    paintCluster(this.ctx, s, this.maxKmh, this.maxKw);
+    this.tex.needsUpdate = true;
+  }
+
+  char(): void {
+    this.active = false;
+    this.mat.color.setHex(0x050505);
+  }
+
+  dispose(): void {
+    this.mesh.geometry.dispose();
+    this.mat.dispose();
+    this.tex.dispose();
+  }
+}
+
 const toBn = (s: string): string => s.replace(/[0-9]/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)]);
 
 export class Cockpit {
@@ -220,10 +335,11 @@ export class Cockpit {
     const softM = kit.cabin(0x34393f);
     const accentM = kit.mat(d.seat.accent, { emissive: d.seat.accent, emissiveIntensity: 0.35 });
     const chromeM = kit.mat(0xb9c0c6, { emissive: 0x6c7378 });
+    const P = { dash: true, cluster: true, wheel: true, glass: true, liner: true, mirror: true, seats: true, ...d.parts };
     const sb = new Batch();
 
-    this.buildDash(sb, dashM, darkM, softM, accentM);
-    this.buildMirror(sb, darkM, chromeM);
+    if (P.dash) this.buildDash(sb, dashM, darkM, softM, accentM);
+    if (P.mirror) this.buildMirror(sb, darkM, chromeM);
     sb.build(this.group, kit);
 
     // instrument cluster (live canvas) + binnacle hood
@@ -234,15 +350,15 @@ export class Cockpit {
     this.clusterTex = new THREE.CanvasTexture(cv);
     this.clusterTex.colorSpace = THREE.SRGBColorSpace;
     this.textures.push(this.clusterTex);
-    this.placeScreen(hips.x, d.cluster.hh, d.cluster.z, d.cluster.w, d.cluster.h, new THREE.MeshBasicMaterial({ map: this.clusterTex, toneMapped: false }));
+    if (P.cluster) this.placeScreen(hips.x, d.cluster.hh, d.cluster.z, d.cluster.w, d.cluster.h, new THREE.MeshBasicMaterial({ map: this.clusterTex, toneMapped: false }));
     this.drawCluster(null);
 
-    if (d.screen) this.buildScreen(d.screen, d.screen.x);
+    if (d.screen && P.cluster) this.buildScreen(d.screen, d.screen.x);
 
-    this.spin = this.buildWheel(hips, darkM, softM, accentM);
-    this.buildGlass();
-    if (d.liner) this.buildLiner(d.liner);
-    this.buildSeats(seats, hips, accentM);
+    this.spin = P.wheel ? this.buildWheel(hips, darkM, softM, accentM) : new THREE.Group();
+    if (P.glass) this.buildGlass();
+    if (d.liner && P.liner) this.buildLiner(d.liner);
+    if (P.seats) this.buildSeats(seats, hips, accentM);
 
     kit.root.add(this.group, this.seatsGroup);
     kit.part(this.group);
@@ -574,125 +690,8 @@ export class Cockpit {
     }
   }
 
-  private dial(c: CanvasRenderingContext2D, cx: number, cy: number, R: number, value: number, max: number, labelStep: number, labelDiv: number, redFrom: number, color: string): void {
-    const a0 = (135 * Math.PI) / 180;
-    const sweep = (270 * Math.PI) / 180;
-    const ang = (v: number): number => a0 + (Math.min(Math.max(v, 0), max) / max) * sweep;
-    c.lineWidth = 9;
-    c.lineCap = 'butt';
-    c.strokeStyle = '#1b2733';
-    c.beginPath();
-    c.arc(cx, cy, R, a0, a0 + sweep);
-    c.stroke();
-    if (redFrom < max) {
-      c.strokeStyle = '#a8261f';
-      c.beginPath();
-      c.arc(cx, cy, R, ang(redFrom), ang(max));
-      c.stroke();
-    }
-    c.strokeStyle = color;
-    c.beginPath();
-    c.arc(cx, cy, R, a0, ang(value));
-    c.stroke();
-    c.fillStyle = '#cfe0f5';
-    c.strokeStyle = '#8aa2bd';
-    c.lineWidth = 2;
-    c.font = `500 14px ${UI_FONT}`;
-    c.textAlign = 'center';
-    c.textBaseline = 'middle';
-    for (let v = 0; v <= max + 0.001; v += labelStep) {
-      const a = ang(v);
-      c.beginPath();
-      c.moveTo(cx + Math.cos(a) * (R - 8), cy + Math.sin(a) * (R - 8));
-      c.lineTo(cx + Math.cos(a) * (R + 1), cy + Math.sin(a) * (R + 1));
-      c.stroke();
-      c.fillText(toBn(String(Math.round(v / labelDiv))), cx + Math.cos(a) * (R - 24), cy + Math.sin(a) * (R - 24));
-    }
-    // needle
-    const na = ang(value);
-    c.strokeStyle = '#ff6a3d';
-    c.lineWidth = 4;
-    c.lineCap = 'round';
-    c.beginPath();
-    c.moveTo(cx - Math.cos(na) * 10, cy - Math.sin(na) * 10);
-    c.lineTo(cx + Math.cos(na) * (R - 12), cy + Math.sin(na) * (R - 12));
-    c.stroke();
-    c.fillStyle = '#10151a';
-    c.beginPath();
-    c.arc(cx, cy, 9, 0, Math.PI * 2);
-    c.fill();
-    c.strokeStyle = '#ff6a3d';
-    c.lineWidth = 2;
-    c.stroke();
-  }
-
   private drawCluster(s: CockpitState | null): void {
-    const c = this.clusterCtx;
-    const W = 512;
-    const H = 256;
-    c.clearRect(0, 0, W, H);
-    c.fillStyle = '#04070a';
-    c.fillRect(0, 0, W, H);
-    const kmh = s ? s.kmh : 0;
-    const maxKmh = this.d.maxKmh;
-    const step = maxKmh / 10;
-    // speedometer (left)
-    this.dial(c, 138, 124, 104, kmh, maxKmh, step, 1, maxKmh * 1.01, '#4ec3ff');
-    c.fillStyle = '#ffffff';
-    c.font = `700 44px ${UI_FONT}`;
-    c.textAlign = 'center';
-    c.textBaseline = 'middle';
-    c.fillText(bnNum(kmh), 138, 138);
-    c.fillStyle = '#8aa2bd';
-    c.font = `400 14px ${UI_FONT}`;
-    c.fillText(bn.vehicle.kmh, 138, 172);
-    // rpm (fuel) or motor power (electric) dial (right)
-    const electric = s ? s.energyKind === 'electric' : false;
-    if (electric) {
-      const kw = s ? Math.abs(s.powerKw) : 0;
-      this.dial(c, 392, 140, 80, kw, this.d.maxKw, this.d.maxKw / 5, 1, this.d.maxKw * 0.9, s && s.powerKw < 0 ? '#4ee08a' : '#4ec3ff');
-      c.fillStyle = '#8aa2bd';
-      c.font = `400 13px ${UI_FONT}`;
-      c.fillText('kW', 392, 172);
-    } else {
-      const redline = s ? s.redline : 6000;
-      const maxRpm = Math.ceil(redline / 1000) * 1000;
-      this.dial(c, 392, 140, 80, s ? s.rpm : 0, maxRpm, 1000, 1000, redline * 0.92, '#ffb347');
-      c.fillStyle = '#8aa2bd';
-      c.font = `400 13px ${UI_FONT}`;
-      c.fillText(bn.vehicle.rpmUnit, 392, 176);
-    }
-    // gear
-    const g = s ? s.gear : 0;
-    const gearTxt = g === 0 ? 'N' : g < 0 ? 'R' : electric && s && s.auto ? 'D' : bnNum(g);
-    c.fillStyle = s && s.shifting ? '#ffd479' : '#ffffff';
-    c.font = `700 34px ${UI_FONT}`;
-    c.fillText(gearTxt, 392, 130);
-    // energy bar + range
-    if (s && s.energyKind) {
-      const e = Math.max(0, Math.min(1, s.energy));
-      c.fillStyle = '#1b2733';
-      c.fillRect(120, 232, 272, 9);
-      c.fillStyle = e <= 0.15 ? '#ff5a4a' : s.energyKind === 'electric' ? '#4ee08a' : '#ffb347';
-      c.fillRect(120, 232, 272 * e, 9);
-      c.fillStyle = '#cfe0f5';
-      c.font = `500 13px ${UI_FONT}`;
-      c.textAlign = 'right';
-      c.fillText(s.energyKind === 'electric' ? bn.vehicle.charge : bn.vehicle.fuel, 112, 237);
-      c.textAlign = 'left';
-      c.fillText(`≈ ${bnNum(s.rangeKm, 1)} ${bn.vehicle.km}`, 400, 237);
-    }
-    // handbrake lamp
-    if (s && s.handbrake) {
-      c.fillStyle = '#ff3b30';
-      c.beginPath();
-      c.arc(40, 36, 16, 0, Math.PI * 2);
-      c.fill();
-      c.fillStyle = '#fff';
-      c.font = `700 18px ${UI_FONT}`;
-      c.textAlign = 'center';
-      c.fillText('P', 40, 37);
-    }
+    paintCluster(this.clusterCtx, s, this.d.maxKmh, this.d.maxKw);
     this.clusterTex.needsUpdate = true;
   }
 
@@ -706,5 +705,124 @@ export class Cockpit {
     for (const t of this.textures) t.dispose();
     for (const m of this.materials) m.dispose();
     void this.screenTex;
+  }
+}
+
+function dial(c: CanvasRenderingContext2D, cx: number, cy: number, R: number, value: number, max: number, labelStep: number, labelDiv: number, redFrom: number, color: string): void {
+  const a0 = (135 * Math.PI) / 180;
+  const sweep = (270 * Math.PI) / 180;
+  const ang = (v: number): number => a0 + (Math.min(Math.max(v, 0), max) / max) * sweep;
+  c.lineWidth = 9;
+  c.lineCap = 'butt';
+  c.strokeStyle = '#1b2733';
+  c.beginPath();
+  c.arc(cx, cy, R, a0, a0 + sweep);
+  c.stroke();
+  if (redFrom < max) {
+    c.strokeStyle = '#a8261f';
+    c.beginPath();
+    c.arc(cx, cy, R, ang(redFrom), ang(max));
+    c.stroke();
+  }
+  c.strokeStyle = color;
+  c.beginPath();
+  c.arc(cx, cy, R, a0, ang(value));
+  c.stroke();
+  c.fillStyle = '#cfe0f5';
+  c.strokeStyle = '#8aa2bd';
+  c.lineWidth = 2;
+  c.font = `500 14px ${UI_FONT}`;
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  for (let v = 0; v <= max + 0.001; v += labelStep) {
+    const a = ang(v);
+    c.beginPath();
+    c.moveTo(cx + Math.cos(a) * (R - 8), cy + Math.sin(a) * (R - 8));
+    c.lineTo(cx + Math.cos(a) * (R + 1), cy + Math.sin(a) * (R + 1));
+    c.stroke();
+    c.fillText(toBn(String(Math.round(v / labelDiv))), cx + Math.cos(a) * (R - 24), cy + Math.sin(a) * (R - 24));
+  }
+  // needle
+  const na = ang(value);
+  c.strokeStyle = '#ff6a3d';
+  c.lineWidth = 4;
+  c.lineCap = 'round';
+  c.beginPath();
+  c.moveTo(cx - Math.cos(na) * 10, cy - Math.sin(na) * 10);
+  c.lineTo(cx + Math.cos(na) * (R - 12), cy + Math.sin(na) * (R - 12));
+  c.stroke();
+  c.fillStyle = '#10151a';
+  c.beginPath();
+  c.arc(cx, cy, 9, 0, Math.PI * 2);
+  c.fill();
+  c.strokeStyle = '#ff6a3d';
+  c.lineWidth = 2;
+  c.stroke();
+}
+
+function paintCluster(c: CanvasRenderingContext2D, s: CockpitState | null, maxKmh: number, maxKw: number): void {
+  const W = 512;
+  const H = 256;
+  c.clearRect(0, 0, W, H);
+  c.fillStyle = '#04070a';
+  c.fillRect(0, 0, W, H);
+  const kmh = s ? s.kmh : 0;
+  const step = maxKmh / 10;
+  // speedometer (left)
+  dial(c, 138, 124, 104, kmh, maxKmh, step, 1, maxKmh * 1.01, '#4ec3ff');
+  c.fillStyle = '#ffffff';
+  c.font = `700 44px ${UI_FONT}`;
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillText(bnNum(kmh), 138, 138);
+  c.fillStyle = '#8aa2bd';
+  c.font = `400 14px ${UI_FONT}`;
+  c.fillText(bn.vehicle.kmh, 138, 172);
+  // rpm (fuel) or motor power (electric) dial (right)
+  const electric = s ? s.energyKind === 'electric' : false;
+  if (electric) {
+    const kw = s ? Math.abs(s.powerKw) : 0;
+    dial(c, 392, 140, 80, kw, maxKw, maxKw / 5, 1, maxKw * 0.9, s && s.powerKw < 0 ? '#4ee08a' : '#4ec3ff');
+    c.fillStyle = '#8aa2bd';
+    c.font = `400 13px ${UI_FONT}`;
+    c.fillText('kW', 392, 172);
+  } else {
+    const redline = s ? s.redline : 6000;
+    const maxRpm = Math.ceil(redline / 1000) * 1000;
+    dial(c, 392, 140, 80, s ? s.rpm : 0, maxRpm, 1000, 1000, redline * 0.92, '#ffb347');
+    c.fillStyle = '#8aa2bd';
+    c.font = `400 13px ${UI_FONT}`;
+    c.fillText(bn.vehicle.rpmUnit, 392, 176);
+  }
+  // gear
+  const g = s ? s.gear : 0;
+  const gearTxt = g === 0 ? 'N' : g < 0 ? 'R' : electric && s && s.auto ? 'D' : bnNum(g);
+  c.fillStyle = s && s.shifting ? '#ffd479' : '#ffffff';
+  c.font = `700 34px ${UI_FONT}`;
+  c.fillText(gearTxt, 392, 130);
+  // energy bar + range
+  if (s && s.energyKind) {
+    const e = Math.max(0, Math.min(1, s.energy));
+    c.fillStyle = '#1b2733';
+    c.fillRect(120, 232, 272, 9);
+    c.fillStyle = e <= 0.15 ? '#ff5a4a' : s.energyKind === 'electric' ? '#4ee08a' : '#ffb347';
+    c.fillRect(120, 232, 272 * e, 9);
+    c.fillStyle = '#cfe0f5';
+    c.font = `500 13px ${UI_FONT}`;
+    c.textAlign = 'right';
+    c.fillText(s.energyKind === 'electric' ? bn.vehicle.charge : bn.vehicle.fuel, 112, 237);
+    c.textAlign = 'left';
+    c.fillText(`≈ ${bnNum(s.rangeKm, 1)} ${bn.vehicle.km}`, 400, 237);
+  }
+  // handbrake lamp
+  if (s && s.handbrake) {
+    c.fillStyle = '#ff3b30';
+    c.beginPath();
+    c.arc(40, 36, 16, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = '#fff';
+    c.font = `700 18px ${UI_FONT}`;
+    c.textAlign = 'center';
+    c.fillText('P', 40, 37);
   }
 }

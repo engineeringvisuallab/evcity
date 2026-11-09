@@ -6,7 +6,7 @@ type Recog = {
   interimResults: boolean;
   maxAlternatives: number;
   continuous: boolean;
-  onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> }) => void) | null;
+  onresult: ((e: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> }) => void) | null;
   onerror: ((e: { error?: string }) => void) | null;
   onend: (() => void) | null;
   start(): void;
@@ -21,6 +21,8 @@ const RecogCtor = (): (new () => Recog) | null => {
 
 export class MissionVoice {
   private rec: Recog | null = null;
+  private loopOn = false;
+  private loopTimer = 0;
   private voice: SpeechSynthesisVoice | null = null;
   /** true = speak the questions aloud. */
   speakOn = true;
@@ -95,6 +97,58 @@ export class MissionVoice {
     return true;
   }
 
+  /**
+   * Listens for a long time (a whole presentation). Every heard piece arrives through onSeg (final = the browser is sure of it).
+   * The browser stops listening now and then: the loop starts it again by itself. Returns the function that stops it.
+   * onState: 'on' = listening, 'error' = it cannot continue (microphone blocked ...).
+   */
+  listenLoop(onSeg: (text: string, final: boolean) => void, onState: (s: 'on' | 'error', err?: string) => void): (() => void) | null {
+    const C = RecogCtor();
+    if (!C) return null;
+    this.stopListening();
+    this.stopSpeaking();
+    this.loopOn = true;
+    const begin = (): void => {
+      if (!this.loopOn) return;
+      const r = new C();
+      r.lang = 'en-US';
+      r.interimResults = true;
+      r.maxAlternatives = 1;
+      r.continuous = true;
+      let fatal = false;
+      r.onresult = (e) => {
+        for (let i = e.resultIndex; i < e.results.length; i++) onSeg(e.results[i][0].transcript, e.results[i].isFinal);
+      };
+      r.onerror = (e) => {
+        if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') {
+          fatal = true;
+          this.loopOn = false;
+          onState('error', e.error);
+        }
+      };
+      r.onend = () => {
+        if (this.rec === r) this.rec = null;
+        if (this.loopOn && !fatal) this.loopTimer = window.setTimeout(begin, 250);
+      };
+      this.rec = r;
+      try {
+        r.start();
+        onState('on');
+      } catch {
+        this.rec = null;
+        if (this.loopOn) this.loopTimer = window.setTimeout(begin, 600);
+      }
+    };
+    begin();
+    return () => this.stopLoop();
+  }
+
+  stopLoop(): void {
+    this.loopOn = false;
+    window.clearTimeout(this.loopTimer);
+    this.stopListening();
+  }
+
   stopListening(): void {
     try {
       this.rec?.abort();
@@ -105,7 +159,7 @@ export class MissionVoice {
   }
 
   dispose(): void {
-    this.stopListening();
+    this.stopLoop();
     this.stopSpeaking();
   }
 }

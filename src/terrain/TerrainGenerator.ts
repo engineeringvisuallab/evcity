@@ -12,6 +12,7 @@ import { ArmySite } from '../army/ArmySite';
 import { AgroSite } from '../agro/AgroSite';
 import { PortFormation } from '../port/PortFormation';
 import { MallSite, MALL_PLOT } from '../mall/MallSite';
+import { StationPads } from '../parking/StationPads';
 import { EVLabSite } from '../evlab/EVLabSite';
 import { LibrarySite, LIBRARY_PLOT } from '../library/LibrarySite';
 import { ProtoSite, PROTO_PLOT } from '../buildings/ProtoSite';
@@ -79,6 +80,9 @@ export class TerrainGenerator {
   /** EVC Agro Research Institute (west farmland): a level pad for the building and the research field (applied late in sample(), same in every chunk, worker and collider). */
   readonly agro = new AgroSite();
   private agroMask = new Float32Array(2);
+  /** STEP 4: level pads of the road-side fuel stations / charge points (src/parking/RoadStationSites.ts). */
+  readonly stationPads = new StationPads();
+  private stationMask = new Float32Array(2);
   private scratch: TerrainSample = { h: 0, water: NaN, fx: 0, fz: 0 };
   /** The building pads (mall, evlab, library) only exist once their floor heights are known: roads + railway are planned on natural ground. */
   private padsReady = false;
@@ -273,6 +277,12 @@ export class TerrainGenerator {
         const k = 1 - this.infraMask[1];
         if (k > 0) out.h = site.height(x, z, out.h, k);
       }
+    }
+    // STEP 4: level pads of the road-side fuel stations / charge points (they give way to roads, like the other pads)
+    if (this.padsReady && this.stationPads.near(x, z)) {
+      this.roads.maskAt(x, z, 1, this.stationMask);
+      const k = 1 - this.stationMask[1];
+      if (k > 0) out.h = this.stationPads.height(x, z, out.h, k);
     }
   }
 

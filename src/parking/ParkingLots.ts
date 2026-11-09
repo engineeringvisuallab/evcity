@@ -106,7 +106,6 @@ export class ParkingLots {
     for (const r of L.paint) paint.rect(r[0], r[1], r[2], r[3], r[4]);
     for (const l of L.lines) paint.seg(l.a[0], l.a[1], l.b[0], l.b[1], l.w);
     for (const r of L.rings) paint.ring(r.s, r.n, r.r, r.w);
-
     this.add(asphalt.build(), 0x2d3033, -2, -2);
     this.add(kerb.build(), 0x9a9ea3, -3, -3);
     this.add(paint.build(), 0xf1f1ea, -4, -4);

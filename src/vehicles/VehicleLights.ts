@@ -5,6 +5,9 @@
 //   beam   : a long soft cone of light lying on the road in front of the car (additive plane, drawn only at night, only near the player)
 //   tail   : a short red pool behind the car
 //   glow   : 4 (or 2) additive glow points = the headlamps and the tail lamps (brighter tail lamps while braking)
+// SIGNALS (day and night): brake lamps, reverse lamps and turn indicators (blink while steering, auto-cancel) are small additive glow points with
+// per-vertex colour (black = off), updated only when the state changes.
+// HEADLIGHT: the vehicle the PLAYER drives (high quality only) also gets ONE real SpotLight on the road (see HeadlightRig).
 // A vehicle's lights are on when it is night AND somebody drives it (player, AI traffic, police / farm autopilot) AND it is not wrecked.
 import * as THREE from 'three';
 import { Q } from '../core/Quality';
@@ -45,15 +48,65 @@ const DEF: Record<VehicleId, LampDef> = {
 /** Distance (m) up to which the little glow points are drawn (headlamps of far cars stay visible at night). */
 const GLOW_DIST = 380;
 
+const AMBER = new THREE.Color(1.0, 0.55, 0.05);
+const REVERSE = new THREE.Color(1.0, 1.0, 0.95);
+const OFF = new THREE.Color(0, 0, 0);
 const HEAD = new THREE.Color(1.0, 0.95, 0.8);
 const TAIL_DIM = new THREE.Color(0.6, 0.05, 0.03);
 const TAIL_BRAKE = new THREE.Color(1.0, 0.1, 0.06);
+
+/** What the vehicle tells its lamps every frame. */
+export interface LampSignals {
+  /** Steering angle (rad, + = left). */
+  steer: number;
+  reverse: boolean;
+  moving: boolean;
+  /** True for the vehicle the player drives (gets the real spot light). */
+  player: boolean;
+}
+
+/**
+ * One real SpotLight, shared: it rides on the vehicle the player drives. Created the first time it is needed (a one-off shader recompile),
+ * then it stays in the scene graph with intensity 0 by day, so the light count never changes again.
+ */
+class HeadlightRig {
+  private light: THREE.SpotLight | null = null;
+  private owner: THREE.Object3D | null = null;
+
+  drive(root: THREE.Object3D, y: number, z: number, level: number): void {
+    if (!this.light) {
+      if (level < 0.05) return; // not needed yet
+      this.light = new THREE.SpotLight(0xfff0d6, 0, 0, 0.5, 0.7, 2);
+      this.light.castShadow = false;
+      this.light.target = new THREE.Object3D();
+    }
+    const l = this.light;
+    if (this.owner !== root) {
+      root.add(l, l.target);
+      this.owner = root;
+    }
+    l.position.set(0, y, z);
+    l.target.position.set(0, y - 1.2, z + 22);
+    l.intensity = level * 900;
+  }
+
+  /** The player left this vehicle: the light goes dark and moves up to the scene (so it never goes with a vehicle that is removed). */
+  release(root: THREE.Object3D): void {
+    if (!this.light || this.owner !== root) return;
+    this.light.intensity = 0;
+    const scene = root.parent;
+    if (scene) scene.add(this.light, this.light.target);
+    this.owner = null;
+  }
+}
+const headlightRig = new HeadlightRig();
 
 interface Shared {
   beamGeo: THREE.PlaneGeometry;
   beamMat: THREE.MeshBasicMaterial;
   tailMat: THREE.MeshBasicMaterial;
   glowMat: THREE.PointsMaterial;
+  signalMat: THREE.PointsMaterial;
   beamTex: THREE.CanvasTexture;
   glowTex: THREE.CanvasTexture;
 }
@@ -138,7 +191,18 @@ function getShared(): Shared {
     depthWrite: false,
     fog: false,
   });
-  shared = { beamGeo, beamMat, tailMat, glowMat, beamTex, glowTex };
+  const signalMat = new THREE.PointsMaterial({
+    map: glowTex,
+    size: 0.5,
+    sizeAttenuation: true,
+    vertexColors: true,
+    transparent: true,
+    opacity: 1,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    fog: false,
+  });
+  shared = { beamGeo, beamMat, tailMat, glowMat, signalMat, beamTex, glowTex };
   return shared;
 }
 
@@ -150,6 +214,16 @@ export class VehicleLights {
   private readonly colors: Float32Array;
   private readonly tailFirst: number;
   private brakeOn = false;
+  private readonly signals: THREE.Points;
+  private readonly sigGeo = new THREE.BufferGeometry();
+  private readonly sigColors: Float32Array;
+  private sigKey = -1;
+  private turn = 0;
+  private turnHold = 0;
+  private lastT = performance.now();
+  private readonly lampY: number;
+  private readonly lampZ: number;
+  private rigUsed = false;
 
   constructor(private readonly root: THREE.Object3D, spec: VehicleSpec) {
     const S = getShared();
@@ -175,6 +249,23 @@ export class VehicleLights {
       this.colors.set([TAIL_DIM.r, TAIL_DIM.g, TAIL_DIM.b], k * 3);
       k++;
     }
+    // signal lamps: front / rear indicators (left, right), then reverse and brake lamps for every tail lamp
+    const hx = Math.max(0.3, spec.half.x * 0.9);
+    const sp: number[] = [];
+    sp.push(hx, gy + D.h - 0.12, zf + 0.1, -hx, gy + D.h - 0.12, zf + 0.1, hx, gy + D.tailH, zb - 0.06, -hx, gy + D.tailH, zb - 0.06);
+    for (const x of xs) sp.push(x * 0.6, gy + D.tailH - 0.12, zb - 0.1);
+    for (const x of xs) sp.push(x, gy + D.tailH, zb - 0.1);
+    this.sigColors = new Float32Array(sp.length);
+    this.sigGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(sp), 3));
+    this.sigGeo.setAttribute('color', new THREE.BufferAttribute(this.sigColors, 3));
+    this.sigGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, gy + 1, 0), Math.max(spec.half.z, 2) + 2);
+    this.signals = new THREE.Points(this.sigGeo, S.signalMat);
+    this.signals.renderOrder = 7;
+    this.signals.visible = false;
+    root.add(this.signals);
+    this.lampY = gy + D.h;
+    this.lampZ = zf;
+
     this.glowGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     this.glowGeo.setAttribute('color', new THREE.BufferAttribute(this.colors, 3));
     this.glowGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, gy + 1, 0), Math.max(spec.half.z, 2) + 2);
@@ -203,13 +294,22 @@ export class VehicleLights {
   }
 
   /** Once per frame. lit = somebody drives it and it is not wrecked; dist = distance to the player (m). */
-  update(lit: boolean, braking: boolean, dist: number): void {
+  update(lit: boolean, braking: boolean, dist: number, sig: LampSignals): void {
     const on = NightLamps.on;
     const S = shared!;
     // shared materials: written by every vehicle with the same numbers (cheaper than a global hook, and always in step)
     S.beamMat.opacity = on * 0.9;
     S.tailMat.opacity = on * 0.55;
     S.glowMat.opacity = on;
+    this.updateSignals(lit, braking, dist, sig);
+    // the real spot light of the player's vehicle (high quality only)
+    if (sig.player && lit && Q.tier === 'high') {
+      headlightRig.drive(this.root, this.lampY, this.lampZ, on);
+      this.rigUsed = true;
+    } else if (this.rigUsed) {
+      headlightRig.release(this.root);
+      this.rigUsed = false;
+    }
     if (!lit || on < 0.02) {
       this.beam.visible = this.tail.visible = this.glow.visible = false;
       return;
@@ -226,8 +326,49 @@ export class VehicleLights {
     }
   }
 
+  /** Brake / reverse lamps and the turn indicators (they show by day too). */
+  private updateSignals(lit: boolean, braking: boolean, dist: number, sig: LampSignals): void {
+    const now = performance.now();
+    const dt = Math.min(0.2, (now - this.lastT) / 1000);
+    this.lastT = now;
+    if (!lit || dist > 110) {
+      this.signals.visible = false;
+      return;
+    }
+    // indicators: switch on when the wheel is turned while moving, stay on a moment after straightening up, blink 1.25x per second
+    if (sig.moving && Math.abs(sig.steer) > 0.16) {
+      this.turn = Math.sign(sig.steer);
+      this.turnHold = 1.3;
+    } else if (this.turnHold > 0) this.turnHold -= dt;
+    else this.turn = 0;
+    const blink = this.turn !== 0 && now % 800 < 400;
+    const left = blink && this.turn > 0;
+    const right = blink && this.turn < 0;
+    const key = (left ? 1 : 0) | (right ? 2 : 0) | (braking ? 4 : 0) | (sig.reverse ? 8 : 0);
+    this.signals.visible = key !== 0;
+    if (key === this.sigKey) return;
+    this.sigKey = key;
+    const col = (i: number, c: THREE.Color): void => {
+      this.sigColors[i * 3] = c.r;
+      this.sigColors[i * 3 + 1] = c.g;
+      this.sigColors[i * 3 + 2] = c.b;
+    };
+    col(0, left ? AMBER : OFF); // front left (+x)
+    col(1, right ? AMBER : OFF);
+    col(2, left ? AMBER : OFF); // rear left
+    col(3, right ? AMBER : OFF);
+    const lamps = (this.sigColors.length / 3 - 4) / 2;
+    for (let i = 0; i < lamps; i++) {
+      col(4 + i, sig.reverse ? REVERSE : OFF);
+      col(4 + lamps + i, braking ? TAIL_BRAKE : OFF);
+    }
+    (this.sigGeo.getAttribute('color') as THREE.BufferAttribute).needsUpdate = true;
+  }
+
   dispose(): void {
-    for (const o of [this.beam, this.tail, this.glow]) this.root.remove(o);
+    if (this.rigUsed) headlightRig.release(this.root);
+    for (const o of [this.beam, this.tail, this.glow, this.signals]) this.root.remove(o);
+    this.sigGeo.dispose();
     this.glowGeo.dispose(); // the materials, textures and the beam plane are shared by all vehicles and stay
   }
 }

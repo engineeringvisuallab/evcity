@@ -1,4 +1,5 @@
-import { CHARGE_LOTS, FUEL_LOTS, MAIN_STATION_LOT, worldToLot, type FuelLot } from '../parking/ParkingSite';
+import { MAIN_STATION_LOT, worldToLot, type FuelLot } from '../parking/ParkingSite';
+import { ROAD_STATION_SITES, type RoadStationSite } from '../parking/RoadStationSites';
 import type { VehicleId } from './VehicleSpec';
 
 /** Seconds to fill an empty fuel tank / charge an empty battery (the vehicle must stand still inside a station). */
@@ -12,23 +13,31 @@ export const STAND_STILL = 1.5;
 
 export interface Station { id: string; nameBn: string }
 
-/** The small station (see FUEL_LOTS in ParkingSite.ts) this world position is inside, or null. Every station gives fuel AND charge. */
-export function fuelAreaAt(x: number, z: number): Station | null {
-  const { s, n } = worldToLot(x, z);
-  for (const l of FUEL_LOTS) if (s >= l.s0 && s <= l.s1 && n >= l.n0 && n <= l.n1) return l;
+/** The road-side site (RoadStationSites.ts) whose lot rectangle (hw x hd, centred on the site, turned by its yaw) contains this world position, of the given kind, or null. */
+function siteAt(x: number, z: number, kind: RoadStationSite['kind']): RoadStationSite | null {
+  for (const s of ROAD_STATION_SITES) {
+    if (s.kind !== kind) continue;
+    const dx = x - s.x, dz = z - s.z;
+    if (Math.abs(dx) > 40 || Math.abs(dz) > 40) continue;
+    const rx = Math.sin(s.yaw), rz = Math.cos(s.yaw);
+    const lx = dx * rz - dz * rx, lz = dx * rx + dz * rz;
+    if (Math.abs(lx) <= s.hw && Math.abs(lz) <= s.hd) return s;
+  }
   return null;
 }
 
+/** The small fuel station (Step 4: along the main roads, RoadStationSites.ts) this world position is inside, or null. Every station gives fuel AND charge. */
+export function fuelAreaAt(x: number, z: number): Station | null {
+  return siteAt(x, z, 'fuel');
+}
+
 /**
- * Where an electric vehicle charges: every small station and every CHARGE POINT (CHARGE_LOTS in ParkingSite.ts, docs/CHARGING_POINTS.md), all paid.
- * The old FREE EV Lab depot (the whole EVLAB fleet lot) was removed in Step 2: CP-01 now stands in the lot instead.
+ * Where an electric vehicle charges: every small station and every CHARGE POINT (also RoadStationSites.ts), all paid.
+ * The old FREE EV Lab depot (the whole EVLAB fleet lot) was removed in Step 2.
  */
 export function chargeAreaAt(x: number, z: number): (Station & { free: boolean }) | null {
-  const st = fuelAreaAt(x, z);
-  if (st) return { ...st, free: false };
-  const { s, n } = worldToLot(x, z);
-  for (const l of CHARGE_LOTS) if (s >= l.s0 && s <= l.s1 && n >= l.n0 && n <= l.n1) return { id: l.id, nameBn: l.nameBn, free: false };
-  return null;
+  const st = fuelAreaAt(x, z) ?? siteAt(x, z, 'charge');
+  return st ? { id: st.id, nameBn: st.nameBn, free: false } : null;
 }
 
 // ---------------------------------------------------------------- mine -> main station delivery

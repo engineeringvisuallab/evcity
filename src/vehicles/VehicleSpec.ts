@@ -666,8 +666,8 @@ export const SUPRIM: VehicleSpec = finish({
   downforce: 1.1,
   use: USE.none(),
   look: { kind: 'suprim', body: 0xc4cad3, accent: 0x0c1118 },
-  seat: { x: -0.42, y: 0, z: 0.1, scale: 0.95 },
-  seats: [{ x: 0.42, y: 0, z: 0.1, scale: 0.95 }],
+  seat: { x: -0.42, y: 0, z: 0, scale: 0.95 },
+  seats: [{ x: 0.42, y: 0, z: 0, scale: 0.95 }],
   pax: [0, 1],
   enclosed: true,
   bulletsToKill: 18,
@@ -830,7 +830,8 @@ export const PICKUP: VehicleSpec = {
   wheelbaseHalf: 1.6,
   use: USE.none(),
   look: { kind: 'pickup', body: 0xf4f1ea, accent: 0x1b5e20 },
-  seats: [{ x: 0.45, y: 0.02, z: 0.2, scale: 0.95 }],
+  seat: { ...JEEP.seat, z: -0.05 },
+  seats: [{ x: 0.45, y: 0.02, z: -0.05, scale: 0.95 }],
   pax: [0, 1],
 };
 
@@ -866,7 +867,8 @@ export const TANKER: VehicleSpec = {
   wheelbaseHalf: 1.75,
   use: USE.none(),
   look: { kind: 'pickup', body: 0xc62828, accent: 0xf5f5f5 },
-  seats: [{ x: 0.45, y: 0.02, z: 0.2, scale: 0.95 }],
+  seat: { ...JEEP.seat, z: -0.05 },
+  seats: [{ x: 0.45, y: 0.02, z: -0.05, scale: 0.95 }],
   pax: [0, 1],
   fragile: 0.6,
 };

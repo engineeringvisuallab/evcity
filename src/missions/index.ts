@@ -4,3 +4,5 @@ export type { MissionDeps } from './MissionManager';
 export { MISSIONS, MISSION_BY_ID } from './MissionData';
 export type { Mission, MissionKind, MissionPin, MissionQuestion } from './MissionTypes';
 export { MissionMarkers } from './MissionMarkers';
+export { PresentationHall } from './PresentationHall';
+export { HALL_TOPICS, HALL_SOON, ISLAMIC_LIFE } from './HallTopics';

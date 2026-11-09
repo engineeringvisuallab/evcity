@@ -1,11 +1,12 @@
 import { UI_FONT } from '../ui/theme';
 import { MISSIONS, MISSION_BY_ID } from './MissionData';
 import type { Mission, MissionKind, MissionPin, MissionProgress, MissionQuestion } from './MissionTypes';
+import { PresentationHall } from './PresentationHall';
 import { MissionVoice, checkNumber, checkText, parseSpokenNumber } from './MissionVoice';
 
 const STORE_KEY = 'evc.missions.v1';
-export const MISSION_KIND_ICON: Record<MissionKind, string> = { field: '⚠️', meeting: '👥', presentation: '📊' };
-const KIND_NAME: Record<MissionKind, string> = { field: 'Field mission', meeting: 'Meeting', presentation: 'Presentation' };
+export const MISSION_KIND_ICON: Record<MissionKind, string> = { field: '⚠️', meeting: '👥', presentation: '📊', hall: '🎤' };
+const KIND_NAME: Record<MissionKind, string> = { field: 'Field mission', meeting: 'Meeting', presentation: 'Presentation', hall: 'Presentation Hall' };
 
 export interface MissionDeps {
   parent: HTMLElement;
@@ -44,6 +45,9 @@ export class MissionManager {
   private autoTimer = 0;
   private workTimer = 0;
   private listening = false;
+  private hall: PresentationHall;
+  /** The hall mission whose entrance you are standing at (tracked or not): ENTER opens the hall. */
+  private hallHere: Mission | null = null;
 
   // --- chip (right side, under the minimap)
   private chip = document.createElement('div');
@@ -58,6 +62,8 @@ export class MissionManager {
 
   constructor(private d: MissionDeps) {
     this.load();
+    this.hall = new PresentationHall({ parent: d.parent, lockTarget: d.lockTarget, voice: this.voice });
+    window.addEventListener('keydown', this.onEnterKey);
     this.buildChip();
     this.buildPanel();
     this.refreshChip(true);
@@ -71,13 +77,22 @@ export class MissionManager {
       const now = this.distance <= m.place.radius;
       if (now && !this.arrived) {
         this.arrived = true;
-        this.d.toast(`📍 You arrived: ${m.title}. Press START.`, 4200);
-        this.voice.speak(m.arrival ?? 'You have arrived. Press start.');
+        if (m.kind !== 'hall') {
+          this.d.toast(`📍 You arrived: ${m.title}. Press START.`, 4200);
+          this.voice.speak(m.arrival ?? 'You have arrived. Press start.');
+        }
       } else if (!now && this.arrived && !this.session) this.arrived = false;
     } else {
       this.distance = Infinity;
       this.arrived = false;
     }
+    // the entrance of a Presentation Hall: ENTER goes in (also when the mission is not tracked)
+    const here = MISSIONS.find((h) => h.kind === 'hall' && Math.hypot(h.place.x - px, h.place.z - pz) <= h.place.radius) ?? null;
+    if (here && !this.hallHere && !this.hall.isOpen) {
+      this.d.toast('🎤 Press ENTER to go into the Presentation Hall', 4200);
+      if (here.id === this.activeId) this.voice.speak(here.arrival ?? 'Press enter to go into the presentation hall.');
+    }
+    this.hallHere = here;
     this.refreshChip(false);
   }
 
@@ -95,10 +110,11 @@ export class MissionManager {
   }
 
   get isOpen(): boolean {
-    return this.panelOpen;
+    return this.panelOpen || this.hall.isOpen;
   }
 
   toggle(): void {
+    if (this.hall.isOpen) return;
     if (this.panelOpen) this.close();
     else this.session ? this.open('session') : this.open('list');
   }
@@ -106,6 +122,8 @@ export class MissionManager {
   dispose(): void {
     window.clearTimeout(this.autoTimer);
     window.clearTimeout(this.workTimer);
+    window.removeEventListener('keydown', this.onEnterKey);
+    this.hall.dispose();
     this.voice.dispose();
     this.chip.remove();
     this.panel.remove();
@@ -131,6 +149,42 @@ export class MissionManager {
     }
   }
 
+
+  // ------------------------------------------------------------------ presentation hall
+  /** ENTER at the entrance of a Presentation Hall goes in (inside the hall, the hall itself handles ENTER = leave). */
+  private onEnterKey = (e: KeyboardEvent): void => {
+    if (e.code !== 'Enter' && e.code !== 'NumpadEnter') return;
+    if (e.repeat || this.hall.isOpen || this.panelOpen || !this.hallHere) return;
+    const t = e.target as HTMLElement | null;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+    this.openHall(this.hallHere);
+  };
+
+  private openHall(m: Mission): void {
+    if (this.hall.isOpen || this.panelOpen) return;
+    this.voice.stopSpeaking();
+    const best: Record<string, number> = {};
+    for (const key of Object.keys(this.progress)) if (key.startsWith(m.id + ':')) best[key.slice(m.id.length + 1)] = this.progress[key].score;
+    this.hall.open(best, {
+      onFinished: (topicId, mark) => {
+        const prev = this.progress[`${m.id}:${topicId}`];
+        const passed = mark >= m.pass * 100;
+        this.progress[`${m.id}:${topicId}`] = { score: Math.max(prev?.score ?? 0, mark), total: 100, passed: passed || !!prev?.passed };
+        const all = Object.entries(this.progress).filter(([k]) => k.startsWith(m.id + ':')).map(([, v]) => v);
+        this.progress[m.id] = { score: Math.max(...all.map((v) => v.score)), total: 100, passed: all.some((v) => v.passed) };
+        if (passed) {
+          this.d.toast(`🏅 Badge: ${m.badge}`, 4200);
+          if (this.activeId === m.id) {
+            this.activeId = null;
+            this.arrived = false;
+          }
+        }
+        this.save();
+      },
+      onClose: () => this.refreshChip(true),
+    });
+  }
+
   // ------------------------------------------------------------------ tracker chip
   private buildChip(): void {
     const c = this.chip;
@@ -152,7 +206,7 @@ export class MissionManager {
     this.chipGo.textContent = '▶ START';
     btnCss(this.chipGo, '#15803d');
     this.chipGo.style.display = 'none';
-    this.chipGo.addEventListener('click', () => this.startActive());
+    this.chipGo.addEventListener('click', () => (this.hallHere ? this.openHall(this.hallHere) : this.startActive()));
     Object.assign(this.chipTrack.style, {
       padding: '4px 9px', borderRadius: '9px', background: 'rgba(14,22,34,0.72)', border: '1px solid rgba(255,255,255,0.25)', display: 'none',
       pointerEvents: 'none', whiteSpace: 'nowrap',
@@ -174,14 +228,14 @@ export class MissionManager {
       const ds = !Number.isFinite(dist) ? '' : dist >= 1000 ? `${(dist / 1000).toFixed(1)} km` : `${Math.round(dist / 5) * 5} m`;
       text = this.arrived ? `${MISSION_KIND_ICON[m.kind]} ${m.title} · here` : `${MISSION_KIND_ICON[m.kind]} ${m.title} · ${ds}`;
     }
-    const key = text + '|' + (this.arrived ? '1' : '0') + (this.session ? 's' : '');
+    const key = text + '|' + (this.arrived ? '1' : '0') + (this.session ? 's' : '') + (this.hallHere ? 'h' : '');
     if (key === this.chipText && !force) return;
     this.chipText = key;
     this.chipTrack.textContent = text;
     this.chipTrack.style.display = m ? 'block' : 'none';
     this.chipTrack.style.borderColor = this.arrived ? '#22c55e' : 'rgba(255,255,255,0.25)';
-    this.chipGo.style.display = m && this.arrived ? 'block' : 'none';
-    this.chipGo.textContent = this.session ? '▶ RESUME' : '▶ START';
+    this.chipGo.style.display = this.hallHere || (m && this.arrived && m.kind !== 'hall') ? 'block' : 'none';
+    this.chipGo.textContent = this.hallHere ? '⏎ ENTER HALL' : this.session ? '▶ RESUME' : '▶ START';
   }
 
   // ------------------------------------------------------------------ window
@@ -313,6 +367,10 @@ export class MissionManager {
   private startActive(): void {
     const m = this.activeId ? MISSION_BY_ID.get(this.activeId) : undefined;
     if (!m || !this.arrived) return;
+    if (m.kind === 'hall') {
+      this.openHall(m);
+      return;
+    }
     if (!this.session) this.session = { mission: m, index: 0, correct: 0, phase: 'ask', lastOk: false };
     this.refreshChip(true);
     this.open('session');
