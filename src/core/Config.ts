@@ -122,11 +122,12 @@ export const Config = {
     roadside: {
       sidewalk: 3,
       /** Tree pits: spacing range (m) along each sidewalk, pit side (m, kerbed square), distance of the pit centre from the asphalt edge (m). */
-      treeSpacing: [24, 30] as [number, number],
+      treeSpacing: [18, 24] as [number, number],
       /** Street tree size (scale of the normal tree models; small young trees) and colour multiplier (low = deep dark green; normal forest trees are 0.82-1.14). */
       streetTree: { scale: [0.42, 0.6] as [number, number], tint: [0.58, 0.7] as [number, number] },
       pitSize: 1.2,
-      pitOffset: 1.0,
+      /** Pit centre distance from the asphalt edge: 0.75 = the pit stands on the KERB side of the 3 m footpath (a 1.2 m pit then covers 0.15-1.35 m), so the walking strip (pedestrians walk at ~1.85 m) and the lamp poles (2.1 m) stay free. It was 1.0 = the pit sat in the middle of the footpath. */
+      pitOffset: 0.75,
       /** Low flowering hedge: height range (m), width (m), spacing of the instances (m) along the line, length of one hedge piece (m, a little more than the spacing so pieces overlap). */
       hedge: { hMin: 0.6, hMax: 0.9, width: 0.8, step: 2.6, pieceLen: 3.1 },
       /** Hedge / pit / shrub / guardrail instances are drawn within this distance (m) of the player (they live in 500 m chunk groups that are shown / hidden at 2 Hz). */
@@ -183,6 +184,13 @@ export const Config = {
     pineFrom: 70,
     pineFull: 150,
     palmBelow: 35,
+    /** BIG FOREST TREES (sal, segun, koroi, bot, shimul) in the middle of a forest: share among the forest trees (0..1) and scale range (1 = mature 20-30 m tree). */
+    bigTreeChance: 0.45,
+    bigTreeScale: [0.55, 1.15] as [number, number],
+    /** HOMESTEADS (gram): coconut, date, palmyra palms and banana clumps stand around rural houses. `reach` = ring width (m) beyond the footprint, `chance` per 10 m cell next to the house (fades out to the edge of the ring). */
+    homestead: { reach: 32, chance: 0.42 },
+    /** POND / LAKE / RIVER BANKS: palms and banana on low land within `reach` m of water. `chance` per 10 m cell, `maxHeight` = only land lower than this (m above sea level). */
+    bank: { reach: 9, chance: 0.12, maxHeight: 40 },
     /** Tree chance (0..1 of the normal chance) inside a planned city area, by zone kind. Unlisted zones get no trees. */
     cityZoneChance: { green: 0.6, recreation: 0.7 } as Record<string, number>,
     /** Outside the plan of a city the forest grows back over this distance (m). */
@@ -472,6 +480,8 @@ export const Config = {
     diveSprint: 3.4,
     maxSlopeDeg: 55,
     stepHeight: 0.5,
+    /** TREE CLIMBING: walk into a trunk and press Space. Up / down speed (m/s), sideways speed round the trunk (m/s), how close (m, from the trunk surface to the body centre) a trunk must be to grab it. */
+    climb: { up: 1.7, down: 2.4, around: 1.3, reach: 0.8 },
     /** Invisible wall: the player cannot leave the playable area. */
     bound: 5000,
   },

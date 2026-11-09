@@ -374,6 +374,8 @@ export class Engine {
         bus,
         input: this.input,
         getCameraYaw: () => this.orbit.yaw,
+        findTree: (wx, wz, reach) => this.world.treePhysics.findClimbable(wx, wz, reach),
+        hint: (text) => this.toast?.show(text, 5200),
         inTunnel: (x, y, z) => this.world.tunnelHoles.contains(x, y, z),
         getCameraElevation: () => this.orbit.elevation,
         isOxygenUnlimited: () => this.hudSettings.values.infiniteOxygen,

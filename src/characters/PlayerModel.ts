@@ -7,7 +7,7 @@ import { blink, gait, relax } from '../people/HumanMotion';
 import { AimController } from '../people/HumanAim';
 import { Umbrella, holdArm } from '../weather/Umbrella';
 
-export type PlayerState = 'idle' | 'walk' | 'run' | 'air' | 'swim' | 'wade';
+export type PlayerState = 'idle' | 'walk' | 'run' | 'air' | 'swim' | 'wade' | 'climb';
 
 /**
  * The procedural engineer: realistic-shaped body (see people/HumanBody.ts), yellow safety helmet, orange vest, blue trousers.
@@ -28,6 +28,9 @@ export class PlayerModel {
   private foreR: THREE.Object3D;
   private phase = 0;
   private swimBlend = 0;
+  /** Climbing a tree: how fast the body moves on the trunk (m/s, + up / - down); drives the hand-over-hand animation. */
+  climbRate = 0;
+  private climbBlend = 0;
   private gun: THREE.Group | null = null;
   private gunId: WeaponId | null = null;
   private aiming = false;
@@ -148,7 +151,23 @@ export class PlayerModel {
       g.rotation.x += (target - g.rotation.x) * k;
     };
     this.swimBlend += ((state === 'swim' ? 1 : 0) - this.swimBlend) * Math.min(1, 8 * dt);
-    this.pivot.rotation.x = this.swimBlend * 1.25;
+    this.climbBlend += ((state === 'climb' ? 1 : 0) - this.climbBlend) * Math.min(1, 8 * dt);
+    this.pivot.rotation.x = this.swimBlend * 1.25 + this.climbBlend * 0.12;
+
+    if (state === 'climb') {
+      // hugging the trunk: arms reach up and pull alternately, knees bent, feet pressed against the bark
+      this.phase += dt * Math.min(7, Math.abs(this.climbRate) * 2.6);
+      const s = Math.sin(this.phase);
+      ease(this.armL, -2.55 + s * 0.45);
+      ease(this.armR, -2.55 - s * 0.45);
+      ease(this.foreL, -0.25);
+      ease(this.foreR, this.gun ? -0.1 : -0.25);
+      ease(this.legL, -0.75 - s * 0.35);
+      ease(this.legR, -0.75 + s * 0.35);
+      ease(this.shinL, 1.05 + Math.max(0, s) * 0.3);
+      ease(this.shinR, 1.05 + Math.max(0, -s) * 0.3);
+      return;
+    }
 
     if (state === 'walk' || state === 'run' || state === 'wade') {
       this.phase += dt * (3 + horizSpeed * 0.9);

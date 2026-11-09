@@ -13,7 +13,9 @@ import { TreeKind } from '../vegetation/TreeTypes';
  * get exactly the same result.
  *
  *   CITY (roads inside a planned city: the ribbon has a paved sidewalk, see RoadNetwork.segmentCity):
- *     - tree pits: a square kerbed pit every 12..15 m on both sides, centred `pitOffset` m from the kerb, with a young street tree in it
+ *     - tree pits: a square kerbed pit every `treeSpacing` m on both sides, centred `pitOffset` m from the kerb, with a street tree in it
+ *       (debdaru, krishnachura, date palm / coconut: an avenue pattern per road, see STREET_THEMES)
+ *     - median trees: a debdaru or a date palm every 11..15 m on the median strip of the freeway arms (between the hedge pieces)
  *     - hedges: low flowering hedge along the median of the freeway arms inside the city, and along the open edges of the mall / EVLab parking lots
  *   COUNTRY (everything else, tier 1-3, no bridge deck, no earth track):
  *     - W-beam guardrail (posts every `postStep` m) on embankment sides (the ground beside the road drops by more than `dropMin` m) and on the
@@ -28,7 +30,7 @@ const sqr = (x: number): number => x * x;
 export interface RoadsidePlan {
   /** x, y, z, yaw per tree pit (4 floats). */
   pits: number[];
-  /** x, y, z, scale, yaw, tint, kind per street tree (7 floats), standing in the pits. */
+  /** x, y, z, scale, yaw, tint, kind, onRoad per street tree (8 floats), standing in the pits (onRoad = 1: a median tree, y is the road surface). */
   trees: number[];
   /** x, y, z, yaw, length scale, height scale, seed per hedge piece (7 floats). */
   hedges: number[];
@@ -109,6 +111,21 @@ function cityPoint(roads: RoadNetwork, r: RoadSpec, w: Walker): boolean {
   return roads.isCityPoint((r.xs[w.i] + r.xs[j]) / 2, (r.zs[w.i] + r.zs[j]) / 2);
 }
 
+/**
+ * Avenue patterns: every road side gets one theme (by hash), the trees follow it in order, so a street reads as a planned avenue
+ * (a row of debdaru with a flowering krishnachura now and then, a krishnachura avenue, palms with debdaru between them).
+ * D = debdaru (slim column), K = krishnachura (flowers), P = palm (date palm or coconut, picked per tree).
+ */
+const STREET_THEMES = ['DKDKDKDP', 'KKPKKPKK', 'PDPDPDPK', 'DDKDDKDD'];
+/** Street tree kinds: size range (scale of the model, 1 = full grown), tint range. Palm atlas kinds keep the natural colour. */
+const STREET_KIND = {
+  D: { kind: TreeKind.debdaru, scale: [0.55, 0.85], tint: [0.82, 0.98] },
+  K: { kind: TreeKind.krishnachura, scale: [0.5, 0.7], tint: [0.9, 1.05] },
+  Pd: { kind: TreeKind.datePalm, scale: [0.6, 0.85], tint: [0.9, 1.05] },
+  Pc: { kind: TreeKind.coconut, scale: [0.5, 0.7], tint: [0.9, 1.05] },
+} as const;
+const MEDIAN_TREE_STEP: [number, number] = [11, 15];
+
 const cache = new WeakMap<RoadNetwork, { pits: number[]; trees: number[]; byChunk: Map<string, number[]> }>();
 
 /** Tree pits and the street trees standing in them (needs only the road network: the chunk worker calls this). */
@@ -121,18 +138,29 @@ export function planCityTrees(roads: RoadNetwork): { pits: number[]; trees: numb
   const nearPad = padIndex(roads);
   const [lo, hi] = C.treeSpacing;
   const seed = Config.world.seed;
+  const push = (t: number[], px: number, pz: number): void => {
+    trees.push(...t);
+    const c = worldToChunkCoord(px, pz);
+    const ck = chunkKey(c.cx, c.cz);
+    const l = byChunk.get(ck);
+    if (l) l.push(...t);
+    else byChunk.set(ck, t.slice());
+  };
   for (const r of roads.roads) {
     if (r.earth || r.xs.length < 2) continue;
     const w = new Walker(r);
     for (const side of [-1, 1]) {
       const rng = mulberry32(hash2D(seed ^ 0x5171, r.id, side));
+      const theme = STREET_THEMES[hash2D(seed ^ 0x7a11, r.id, side) % STREET_THEMES.length];
+      let n = Math.floor(rng() * theme.length); // the pattern starts at a different place on every road side
       let s = 10 + rng() * 8;
       w.reset();
       while (s < r.length - 10) {
         const gap = lo + rng() * (hi - lo);
-        const kind = rng();
+        const pick = rng(); // palm: date palm or coconut
         const scale = rng();
         const tint = rng();
+        const yawRnd = rng();
         const here = s;
         s += gap;
         if (!w.at(here)) break;
@@ -144,14 +172,30 @@ export function planCityTrees(roads: RoadNetwork): { pits: number[]; trees: numb
         if (roads.surfaceAt(px, pz) === 1) continue; // another road's asphalt
         const yaw = Math.atan2(w.tx, w.tz);
         pits.push(px, w.y, pz, yaw);
-        const k = kind < 0.4 ? TreeKind.vase : kind < 0.75 ? TreeKind.broadleaf : TreeKind.slender;
-        const t = [px, w.y - Config.vegetation.sink, pz, ST.scale[0] + (ST.scale[1] - ST.scale[0]) * scale, rng() * Math.PI * 2, ST.tint[0] + (ST.tint[1] - ST.tint[0]) * tint, k];
-        trees.push(...t);
-        const c = worldToChunkCoord(px, pz);
-        const ck = chunkKey(c.cx, c.cz);
-        const l = byChunk.get(ck);
-        if (l) l.push(...t);
-        else byChunk.set(ck, t.slice());
+        const letter = theme[n++ % theme.length];
+        const K = letter === 'D' ? STREET_KIND.D : letter === 'K' ? STREET_KIND.K : pick < 0.6 ? STREET_KIND.Pd : STREET_KIND.Pc;
+        push([px, w.y - Config.vegetation.sink, pz, K.scale[0] + (K.scale[1] - K.scale[0]) * scale, yawRnd * Math.PI * 2, K.tint[0] + (K.tint[1] - K.tint[0]) * tint, K.kind, 0], px, pz);
+      }
+    }
+    // MEDIAN: the freeway arms (broad roads) have a median strip along the centre line: a debdaru or a date palm every 11..15 m
+    if (r.halfWidth > 6) {
+      const rngM = mulberry32(hash2D(seed ^ 0x3ed1a, r.id, 7));
+      let sm = 16 + rngM() * 10;
+      w.reset();
+      while (sm < r.length - 16) {
+        const gap = MEDIAN_TREE_STEP[0] + rngM() * (MEDIAN_TREE_STEP[1] - MEDIAN_TREE_STEP[0]);
+        const pickM = rngM();
+        const scale = rngM();
+        const tint = rngM();
+        const yawRnd = rngM();
+        const here = sm;
+        sm += gap;
+        if (!w.at(here)) break;
+        if (!cityPoint(roads, r, w)) continue;
+        if (nearPad(w.x, w.z, 16)) continue; // the median ends at junctions (the shader fades the kerb there too)
+        const K = pickM < 0.55 ? STREET_KIND.D : STREET_KIND.Pd;
+        // trunk on the centre line, on the finished road surface (the median strip is part of the deck, not natural ground)
+        push([w.x, w.y - Config.vegetation.sink * 0.4, w.z, K.scale[0] + 0.1 + (K.scale[1] - K.scale[0]) * scale, yawRnd * Math.PI * 2, K.tint[0] + (K.tint[1] - K.tint[0]) * tint, K.kind, 1], w.x, w.z);
       }
     }
   }
@@ -165,7 +209,13 @@ export function streetTreesInChunk(roads: RoadNetwork, cx: number, cz: number, o
   const l = planCityTrees(roads).byChunk.get(chunkKey(cx, cz));
   if (!l) return [];
   const out: { kind: number; v: number[] }[] = [];
-  for (let i = 0; i < l.length; i += 7) out.push({ kind: l[i + 6], v: [l[i] - ox, groundY(l[i], l[i + 2]) - Config.vegetation.sink, l[i + 2] - oz, l[i + 3], l[i + 4], l[i + 5]] });
+  for (let i = 0; i < l.length; i += 8) {
+    // onRoad (median) trees keep the road surface height they were planned with; pit trees stand on the real ground
+    const y = l[i + 7] > 0.5 ? l[i + 1] : groundY(l[i], l[i + 2]) - Config.vegetation.sink;
+    // a tree exactly on a chunk border could come out a hair outside after the float subtraction: keep it inside its chunk
+    const S = Config.world.chunkSize - 0.001;
+    out.push({ kind: l[i + 6], v: [Math.min(S, Math.max(0, l[i] - ox)), y, Math.min(S, Math.max(0, l[i + 2] - oz)), l[i + 3], l[i + 4], l[i + 5]] });
+  }
   return out;
 }
 
@@ -335,3 +385,4 @@ export function planRoadside(gen: TerrainGenerator): RoadsidePlan & { stats: Roa
   return { pits, trees, hedges, shrubs, posts, beams, stats: { pits: pits.length / 4, hedges: hedges.length / 7, shrubs: shrubs.length / 6, posts: posts.length / 4, beams: beams.length / 6, railMetres } };
 }
 void sqr;
+void ST; // the old young-street-tree sizes: street trees now use STREET_KIND

@@ -29,7 +29,7 @@ export class TreeChunkBuilder {
     if (trees) {
       const meshes: (THREE.InstancedMesh | null)[] = [];
       for (let k = 0; k < TREE_KIND_COUNT; k++) {
-        const mesh = this.instanced(trees[k], this.assets.geometries[k][detail], this.assets.material, `trees kind${k}`, lod, 1, 1.01, 0.96, true);
+        const mesh = this.instanced(trees[k], this.assets.geometries[k][detail], this.assets.materialFor(k), `trees kind${k}`, lod, 1, 1.01, 0.96, true);
         meshes.push(mesh);
         if (mesh) (group ??= this.makeGroup()).add(mesh);
       }

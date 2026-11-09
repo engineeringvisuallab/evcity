@@ -115,7 +115,7 @@ export function planStreetLights(roads: RoadNetwork): LampSpot[] {
       side = country ? oneSide : -side;
       if (inPad(x, z)) continue;
       const bid = r.bridgeOf[f < 0.5 ? i : i + 1];
-      // city road: the pole stands on the paved sidewalk, behind the tree pits (pits are centred 1 m from the kerb); open country: on the gravel shoulder
+      // city road: the pole stands on the paved sidewalk, behind the tree pits (pits are centred 0.75 m from the kerb); open country: on the gravel shoulder
       const edge = bid >= 0 ? (bridgeHalf.get(bid) ?? r.halfWidth) - 0.35 : r.halfWidth + (inCity ? Math.max(1.0, Config.city.roadside.sidewalk - 0.9) : Math.max(0.6, r.shoulder * 0.5));
       const px = x + nx * edge * side;
       const pz = z + nz * edge * side;

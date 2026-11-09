@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { Config } from '../core/Config';
 import { Q } from '../core/Quality';
 import { mulberry32 } from '../world/Seed';
-import { TREE_KIND_COUNT, TreeKind } from './TreeTypes';
+import { TREE_KIND_COUNT, TreeKind, usesPalmAtlas } from './TreeTypes';
+import { makePalmAtlas, PALM_BARK_TILES, PALM_MAKERS, PALM_TILES } from './PalmAssets';
 
 /**
  * Tree models (built from code, no files) + the shared tree material.
@@ -17,18 +18,20 @@ import { TREE_KIND_COUNT, TreeKind } from './TreeTypes';
  * Two detail levels per kind: 0 = near (LOD0 chunks), 1 = far (LOD1 chunks).
  * Kinds (TreeTypes): broadleaf = round-crowned shade tree, pine = layered conifer (high ground),
  *   palm = tall slender tree with a wide flat crown (the savanna tree of the reference picture; the old umbrella "palm" is gone).
+ * More kinds (see TreeTypes): sal, segun, koroi, bot, shimul, debdaru use the same atlas; coconut, date palm, palmyra, banana and krishnachura use a second
+ * atlas (PalmAssets.ts: fronds, fans, banana leaves, flowers) and their own material.
  */
 
-const TILES = 5;
+export const TILES = 5;
 /** Pixel size of one atlas tile: 800 -> the whole atlas is 4000 x 800 (4K wide, still inside every GPU's texture limit). The painters draw in a logical 512 space scaled by K. */
 const TILE = 800;
 const LS = 512;
 const K = TILE / LS;
-const TILE_BARK = 0;
-const TILE_LEAF = 1;
-const TILE_NEEDLE = 2;
-const TILE_LOBED = 3;
-const TILE_MASS = 4;
+export const TILE_BARK = 0;
+export const TILE_LEAF = 1;
+export const TILE_NEEDLE = 2;
+export const TILE_LOBED = 3;
+export const TILE_MASS = 4;
 
 // ---------------------------------------------------------------------------------------------------------------------
 // texture atlas (canvas, painted once)
@@ -400,26 +403,35 @@ function makeAtlas(): THREE.DataTexture | null {
   paintNeedles(c, TILE_NEEDLE);
   paintSprays(c, TILE_LOBED, true, 98765);
   paintMass(c, TILE_MASS, 4242);
-  const img = c.getImageData(0, 0, W, TILE);
+  return atlasTexture(c, W, TILE, TILES, 1);
+}
+
+/**
+ * Canvas atlas (a strip of `tiles` square tiles) -> mip-mapped texture. Transparent pixels of every leaf tile (index >= firstLeaf) are filled with the
+ * tile's average leaf colour, so the mip-maps and the soft edges do not get dark halos.
+ */
+export function atlasTexture(c: CanvasRenderingContext2D, W: number, H: number, tiles: number, firstLeaf: number): THREE.DataTexture {
+  const tw = Math.round(W / tiles);
+  const img = c.getImageData(0, 0, W, H);
   const d = img.data;
-  for (let t = 1; t < TILES; t++) {
+  for (let t = firstLeaf; t < tiles; t++) {
     let sr = 0, sg = 0, sb = 0, n = 0;
-    for (let y = 0; y < TILE; y++) {
-      for (let x = t * TILE; x < (t + 1) * TILE; x++) {
+    for (let y = 0; y < H; y++) {
+      for (let x = t * tw; x < Math.min(W, (t + 1) * tw); x++) {
         const i = (y * W + x) * 4;
         if (d[i + 3] > 200) { sr += d[i]; sg += d[i + 1]; sb += d[i + 2]; n++; }
       }
     }
     if (n === 0) continue;
     const ar = Math.round(sr / n), ag = Math.round(sg / n), ab = Math.round(sb / n);
-    for (let y = 0; y < TILE; y++) {
-      for (let x = t * TILE; x < (t + 1) * TILE; x++) {
+    for (let y = 0; y < H; y++) {
+      for (let x = t * tw; x < Math.min(W, (t + 1) * tw); x++) {
         const i = (y * W + x) * 4;
         if (d[i + 3] < 128) { d[i] = ar; d[i + 1] = ag; d[i + 2] = ab; }
       }
     }
   }
-  const tex = new THREE.DataTexture(new Uint8Array(d.buffer), W, TILE, THREE.RGBAFormat);
+  const tex = new THREE.DataTexture(new Uint8Array(d.buffer), W, H, THREE.RGBAFormat);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.generateMipmaps = true;
   tex.minFilter = THREE.LinearMipmapLinearFilter;
@@ -430,18 +442,22 @@ function makeAtlas(): THREE.DataTexture | null {
   return tex;
 }
 
+
 // ---------------------------------------------------------------------------------------------------------------------
 // geometry builder
 // ---------------------------------------------------------------------------------------------------------------------
 
-const V3 = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
+export const V3 = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 
-class Mesh {
+export class Mesh {
   private pos: number[] = [];
   private nor: number[] = [];
   private uv: number[] = [];
   private col: number[] = [];
   private idx: number[] = [];
+
+  /** `tiles` = number of tiles in the atlas the uv coordinates point into (the forest atlas has 5, the palm atlas more). */
+  constructor(private tiles = TILES) {}
 
   private vert(p: THREE.Vector3, n: THREE.Vector3, u: number, v: number, b: number, g = b, bl = b): number {
     this.pos.push(p.x, p.y, p.z);
@@ -452,7 +468,8 @@ class Mesh {
   }
 
   /** A tapered tube along a polyline (trunk / branch). Bark texture, outward normals. */
-  tube(points: THREE.Vector3[], radii: number[], seg: number, shade = 1): void {
+  tube(points: THREE.Vector3[], radii: number[], seg: number, shade = 1, bark = TILE_BARK, tint?: readonly [number, number, number]): void {
+    const tr = tint ? tint[0] : 1, tg = tint ? tint[1] : 1, tb = tint ? tint[2] : 1;
     const rings: number[][] = [];
     const total = points.length;
     // bark texture repeats along the tube so its texels stay square: (length / circumference) repeats
@@ -472,9 +489,10 @@ class Mesh {
         const th = (j / seg) * Math.PI * 2;
         const dir = a.clone().multiplyScalar(Math.cos(th)).addScaledVector(b, Math.sin(th));
         const p = points[i].clone().addScaledVector(dir, radii[i]);
-        const u = (TILE_BARK + 0.03 + 0.94 * (j / seg)) / TILES;
+        const u = (bark + 0.03 + 0.94 * (j / seg)) / this.tiles;
         const v = 0.03 + 0.94 * (i / Math.max(total - 1, 1)) * vRep;
-        ring.push(this.vert(p, dir, u, v, shade * (0.85 + 0.15 * (i / total))));
+        const sh = shade * (0.85 + 0.15 * (i / total));
+        ring.push(this.vert(p, dir, u, v, sh * tr, sh * tg, sh * tb));
       }
       rings.push(ring);
     }
@@ -505,7 +523,7 @@ class Mesh {
     const r2 = right.clone().multiplyScalar(cr).addScaledVector(up2, sr);
     const u2 = up2.clone().multiplyScalar(cr).addScaledVector(right, -sr);
     const sn = shade.clone().normalize();
-    const u0 = tile / TILES, u1 = (tile + 1) / TILES;
+    const u0 = tile / this.tiles, u1 = (tile + 1) / this.tiles;
     const tr = tint ? tint[0] : 1, tg = tint ? tint[1] : 1, tb = tint ? tint[2] : 1;
     const ids: number[] = [];
     for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
@@ -514,6 +532,70 @@ class Mesh {
       ids.push(this.vert(p, sn, su > 0 ? u1 : u0, sy > 0 ? 1 : 0, bright * tr, bright * tg, bright * tb));
     }
     this.idx.push(ids[0], ids[1], ids[2], ids[0], ids[2], ids[3]);
+  }
+
+  /** A leaf card standing on `base`, its painted tip pointing along `dir`: `len` along it, `wid` across. `face` = roughly which way the flat side looks. */
+  leafAlong(base: THREE.Vector3, dir: THREE.Vector3, len: number, wid: number, face: THREE.Vector3, tile: number, bright: number, tint?: readonly [number, number, number]): void {
+    const d = dir.clone().normalize();
+    const n = face.clone().addScaledVector(d, -face.dot(d));
+    if (n.lengthSq() < 1e-4) n.set(-d.z, 0, d.x);
+    n.normalize();
+    const centre = base.clone().addScaledVector(d, len / 2);
+    this.card(centre, n, d.clone().negate(), wid, len, tile, 0, n, bright, false, tint);
+  }
+
+  /**
+   * A bent strip along `pts` (base -> tip) with the painted tile mapped onto it (u across, v from the base at 1 to the tip at 0): palm fronds and banana
+   * leaves. `widths[i]` = strip width at point i, `up` = which way the strip faces, `vee` = how far the two edges hang below the middle (fraction of the width).
+   */
+  ribbon(pts: THREE.Vector3[], widths: number[], up: THREE.Vector3, tile: number, bright: number, vee: number, tint?: readonly [number, number, number]): void {
+    const N = pts.length;
+    const tr = tint ? tint[0] : 1, tg = tint ? tint[1] : 1, tb = tint ? tint[2] : 1;
+    const rows: number[][] = [];
+    for (let i = 0; i < N; i++) {
+      const t = pts[Math.min(i + 1, N - 1)].clone().sub(pts[Math.max(i - 1, 0)]).normalize();
+      const side = new THREE.Vector3().crossVectors(t, up);
+      if (side.lengthSq() < 1e-6) side.set(1, 0, 0);
+      side.normalize();
+      const nrm = new THREE.Vector3().crossVectors(side, t).normalize();
+      const w = widths[i];
+      const row: number[] = [];
+      for (let k = 0; k < 3; k++) {
+        const sd = k - 1;
+        const p = pts[i].clone().addScaledVector(side, (sd * w) / 2).addScaledVector(nrm, -vee * w * 0.5 * Math.abs(sd));
+        const nn = nrm.clone().addScaledVector(side, sd * vee * 0.9).normalize();
+        row.push(this.vert(p, nn, (tile + k / 2) / this.tiles, 1 - i / (N - 1), bright * tr, bright * tg, bright * tb));
+      }
+      rows.push(row);
+    }
+    for (let i = 0; i < N - 1; i++) {
+      for (let k = 0; k < 2; k++) {
+        const a0 = rows[i][k], a1 = rows[i][k + 1], b0 = rows[i + 1][k], b1 = rows[i + 1][k + 1];
+        this.idx.push(a0, a1, b0, a1, b1, b0);
+      }
+    }
+  }
+
+  /** A small lumpy ball (fruit): a few rings, solid colour `col` (it samples the plain white patch in the corner of `tile`). */
+  blob(c: THREE.Vector3, rx: number, ry: number, rz: number, tile: number, col: readonly [number, number, number], seg = 6, rings = 4): void {
+    const u = (tile + 0.07) / this.tiles;
+    const rowsIdx: number[][] = [];
+    for (let i = 0; i <= rings; i++) {
+      const a = (i / rings) * Math.PI;
+      const row: number[] = [];
+      for (let j = 0; j < seg; j++) {
+        const b = (j / seg) * Math.PI * 2;
+        const dx = Math.sin(a) * Math.cos(b), dy = Math.cos(a), dz = Math.sin(a) * Math.sin(b);
+        row.push(this.vert(V3(c.x + dx * rx, c.y + dy * ry, c.z + dz * rz), V3(dx, dy, dz), u, 0.5, col[0], col[1], col[2]));
+      }
+      rowsIdx.push(row);
+    }
+    for (let i = 0; i < rings; i++) {
+      for (let j = 0; j < seg; j++) {
+        const j2 = (j + 1) % seg;
+        this.idx.push(rowsIdx[i][j], rowsIdx[i][j2], rowsIdx[i + 1][j], rowsIdx[i][j2], rowsIdx[i + 1][j2], rowsIdx[i + 1][j]);
+      }
+    }
   }
 
   build(): THREE.BufferGeometry {
@@ -529,11 +611,11 @@ class Mesh {
   }
 }
 
-const unit = (r: () => number): THREE.Vector3 => {
+export const unit = (r: () => number): THREE.Vector3 => {
   const z = r() * 2 - 1, a = r() * Math.PI * 2, s = Math.sqrt(1 - z * z);
   return V3(s * Math.cos(a), z, s * Math.sin(a));
 };
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 /** Leaf-to-leaf colour variation: most cards are a slightly cooler or warmer green, `warmChance` of them are yellow-green (young / sunlit leaves). */
 function leafTint(r: () => number, warmChance: number): readonly [number, number, number] {
@@ -543,7 +625,7 @@ function leafTint(r: () => number, warmChance: number): readonly [number, number
 }
 
 /** A clump of leaf cards filling the shell of an ellipsoid. */
-function crown(m: Mesh, r: () => number, c: THREE.Vector3, rx: number, ry: number, rz: number, count: number, sMin: number, sMax: number, warmChance = 0.22): void {
+function crown(m: Mesh, r: () => number, c: THREE.Vector3, rx: number, ry: number, rz: number, count: number, sMin: number, sMax: number, warmChance = 0.22, tile = TILE_MASS): void {
   const yMin = c.y - ry, yMax = c.y + ry;
   for (let i = 0; i < count; i++) {
     const d = unit(r);
@@ -556,7 +638,7 @@ function crown(m: Mesh, r: () => number, c: THREE.Vector3, rx: number, ry: numbe
     const size = lerp(sMin, sMax, r());
     const t = Math.min(1, Math.max(0, (p.y - yMin) / (yMax - yMin)));
     const bright = lerp(0.72, 1.2, t * t * 0.6 + t * 0.4) + (r() - 0.5) * 0.18;
-    m.card(p, n, V3(0, 1, 0), size, size * lerp(0.85, 1.1, r()), TILE_MASS, r() * Math.PI * 2, radial, bright, r() < 0.5, leafTint(r, warmChance));
+    m.card(p, n, V3(0, 1, 0), size, size * lerp(0.85, 1.1, r()), tile, r() * Math.PI * 2, radial, bright, r() < 0.5, leafTint(r, warmChance));
   }
 }
 
@@ -570,7 +652,7 @@ function crown(m: Mesh, r: () => number, c: THREE.Vector3, rx: number, ry: numbe
  * branches). Leaf clusters sit at the tips of the finest twigs, so the crown has holes, layers and a visible skeleton, and the
  * inside of the crown is darker than its sunlit outside.
  */
-interface Style {
+export interface Style {
   seed: number;
   trunkH: number;
   trunkR: number;
@@ -600,6 +682,21 @@ interface Style {
   flat?: number;
   /** lobed (palmate, fig / oak-like) leaves instead of ovate serrated ones */
   lobed?: boolean;
+  /** Which atlas the uv coordinates point into (number of tiles; default = the forest atlas). */
+  tiles?: number;
+  /** Tile used for the bark / for the leaf sprays (defaults: forest atlas bark / ovate or lobed leaves), and a colour multiplier for the bark. */
+  barkTile?: number;
+  leafTile?: number;
+  barkTint?: readonly [number, number, number];
+  /** Flower cards per leaf cluster (sitting on top of the crown) and the tile that paints them. */
+  bloomTile?: number;
+  bloom?: number;
+  /** Big buttress roots at the foot of the trunk: how many. */
+  buttress?: number;
+  /** Banyan: thin hanging roots, and thick pillar roots that carry the big limbs down to the ground. */
+  aerial?: { hang: number; pillars: number };
+  /** Far-LOD crown: card count and card size multiplier (big trees need more / bigger cards). */
+  farScale?: number;
 }
 
 interface Grow {
@@ -608,6 +705,8 @@ interface Grow {
   s: Style;
   detail: number;
   clusters: THREE.Vector3[];
+  /** Points on level 1-2 limbs where an aerial root can hang from (banyan). */
+  hang: THREE.Vector3[];
 }
 
 const SEG = [9, 5, 4, 3];
@@ -640,16 +739,19 @@ function limb(g: Grow, start: THREE.Vector3, dir: THREE.Vector3, len: number, r0
     pts.push(p.clone());
     radii.push(r0 * (level === 0 ? 1 - 0.62 * (i / (n - 1)) : 1 - 0.8 * (i / (n - 1))));
   }
-  m.tube(pts, radii, Math.max(3, g.detail === 0 ? SEG[level] : 4), 0.82 + 0.18 * Math.min(1, level / 2));
+  m.tube(pts, radii, Math.max(3, g.detail === 0 ? SEG[level] : 4), 0.82 + 0.18 * Math.min(1, level / 2), s.barkTile ?? TILE_BARK, s.barkTint);
+  if (level >= 1 && s.aerial) g.hang.push(along(pts, 0.55).p, pts[n - 1].clone());
 
   if (level === 0 && g.detail === 0) {
-    // root flare: short buttress roots spreading over the ground
-    const roots = 5;
+    // root flare: short buttress roots spreading over the ground (tall plank-like buttresses for `buttress` kinds)
+    const roots = s.buttress ?? 5;
+    const big = s.buttress ? 2.2 : 1;
     for (let k = 0; k < roots; k++) {
       const a = (k / roots) * Math.PI * 2 + r() * 0.6;
       const ca = Math.cos(a), sa = Math.sin(a);
-      const rr = r0 * (1.5 + r() * 0.8);
-      m.tube([V3(ca * rr, -0.05, sa * rr), V3(ca * r0 * 0.9, r0 * 0.5, sa * r0 * 0.9), V3(ca * r0 * 0.5, r0 * 1.7, sa * r0 * 0.5)], [r0 * 0.2, r0 * 0.32, r0 * 0.5], 5);
+      const rr = r0 * (1.5 + r() * 0.8) * big;
+      const mid = r0 * 0.9 * (big > 1 ? 1.5 : 1);
+      m.tube([V3(ca * rr, -0.05, sa * rr), V3(ca * mid, r0 * 0.5 * big, sa * mid), V3(ca * r0 * 0.5, r0 * 1.7 * big, sa * r0 * 0.5)], [r0 * 0.2, r0 * 0.32, r0 * 0.5], 5, 1, s.barkTile ?? TILE_BARK, s.barkTint);
     }
   }
 
@@ -695,7 +797,7 @@ function limb(g: Grow, start: THREE.Vector3, dir: THREE.Vector3, len: number, r0
 function leafCluster(g: Grow, c: THREE.Vector3, cc: THREE.Vector3): void {
   const { m, r, s } = g;
   const n = s.cards;
-  const tile = s.lobed ? TILE_LOBED : TILE_LEAF;
+  const tile = s.leafTile ?? (s.lobed ? TILE_LOBED : TILE_LEAF);
   for (let i = 0; i < n; i++) {
     const d = unit(g.r);
     const rad = s.clusterR * (0.35 + 0.65 * Math.cbrt(r()));
@@ -711,21 +813,78 @@ function leafCluster(g: Grow, c: THREE.Vector3, cc: THREE.Vector3): void {
     const bright = lerp(0.5, 1.2, Math.min(1, dist * 0.7 + top * 0.35)) + (r() - 0.5) * 0.16;
     m.card(p, nrm, V3(0, 1, 0), size, size * lerp(0.9, 1.08, r()), tile, r() * Math.PI * 2, radial, bright, r() < 0.5, leafTint(r, s.warm), radial);
   }
+  // flowers: cards lying on the sunny top of the cluster (krishnachura)
+  if (s.bloomTile !== undefined) {
+    for (let i = 0; i < (s.bloom ?? 0); i++) {
+      const d = unit(g.r);
+      if (d.y < 0) d.y = -d.y * 0.3;
+      const rad = s.clusterR * (0.5 + 0.6 * Math.cbrt(r()));
+      const p = V3(c.x + d.x * rad, c.y + d.y * rad * (s.flat ?? 1) + 0.15, c.z + d.z * rad);
+      const nrm = V3(0, 1, 0).addScaledVector(unit(r), 0.45).normalize();
+      const size = lerp(0.8, 1.3, r());
+      m.card(p, nrm, V3(0, 1, 0), size, size, s.bloomTile, r() * Math.PI * 2, V3(0, 1, 0), lerp(0.95, 1.2, r()), r() < 0.5);
+    }
+  }
 }
 
-function growTree(s: Style, detail: number): THREE.BufferGeometry {
+/**
+ * Banyan roots. `hang` thin ropes drop from the limbs (some reach the ground, young ones stop short); `pillars` thick columns grow from the outer limbs
+ * to the ground and carry them, like the prop roots of a real bot gach.
+ */
+function aerialRoots(g: Grow, a: { hang: number; pillars: number }): void {
+  const { m, r, s } = g;
+  const out = g.hang.filter((p) => Math.hypot(p.x, p.z) > 2.2 && p.y > s.trunkH * 0.55 && p.y < s.crownY + 1);
+  if (out.length === 0) return;
+  for (let k = 0; k < a.hang; k++) {
+    const p = out[Math.floor(r() * out.length)];
+    const yEnd = r() < 0.5 ? -0.05 : p.y * (0.25 + r() * 0.5);
+    const rad = 0.035 + r() * 0.04;
+    const pts: THREE.Vector3[] = [];
+    const rr: number[] = [];
+    for (let i = 0; i < 4; i++) {
+      const f = i / 3;
+      pts.push(V3(p.x + (r() - 0.5) * 0.12, lerp(p.y - 0.2, yEnd, f), p.z + (r() - 0.5) * 0.12));
+      rr.push(rad * (0.7 + 0.5 * f));
+    }
+    m.tube(pts, rr, 3, 0.95, s.barkTile ?? TILE_BARK, s.barkTint);
+  }
+  const far = out.filter((p) => p.y < s.crownY).sort((x, y) => Math.hypot(y.x, y.z) - Math.hypot(x.x, x.z));
+  const taken: number[] = [];
+  for (const p of far) {
+    if (taken.length >= a.pillars) break;
+    const ang = Math.atan2(p.z, p.x);
+    if (taken.some((t) => Math.abs(Math.atan2(Math.sin(ang - t), Math.cos(ang - t))) < 0.9)) continue;
+    taken.push(ang);
+    const x = p.x * 0.97, z = p.z * 0.97;
+    m.tube([V3(x, p.y - 0.3, z), V3(x * 1.01 + (r() - 0.5) * 0.3, p.y * 0.55, z * 1.01 + (r() - 0.5) * 0.3), V3(x * 1.03, 0.6, z * 1.03), V3(x * 1.03, -0.05, z * 1.03)], [0.2, 0.28, 0.4, 0.55], 6, 1, s.barkTile ?? TILE_BARK, s.barkTint);
+  }
+}
+
+export function growTree(s: Style, detail: number): THREE.BufferGeometry {
   const r = mulberry32(s.seed);
-  const m = new Mesh();
-  const g: Grow = { m, r, s, detail, clusters: [] };
+  const m = new Mesh(s.tiles ?? TILES);
+  const g: Grow = { m, r, s, detail, clusters: [], hang: [] };
   const cc = V3(0, s.crownY, 0);
   if (detail === 0) {
     limb(g, V3(0, 0, 0), V3(0.04, 1, 0.02), s.trunkH, s.trunkR, 0);
     for (const c of g.clusters) leafCluster(g, c, cc);
+    if (s.aerial) aerialRoots(g, s.aerial);
   } else {
     // far LOD: one tube trunk, a few stubs and a handful of big leaf cards
     const seg = 5;
-    m.tube([V3(0, 0, 0), V3(0.1, s.trunkH * 0.35, 0.04), V3(0, s.trunkH * 0.7, -0.05), V3(0, s.trunkH, 0)], [s.trunkR, s.trunkR * 0.7, s.trunkR * 0.55, s.trunkR * 0.4], seg);
-    crown(m, r, cc, s.rx * 0.95, s.ry * 0.95, s.rx * 0.95, 20, 2.6, 3.8, s.warm);
+    m.tube([V3(0, 0, 0), V3(0.1, s.trunkH * 0.35, 0.04), V3(0, s.trunkH * 0.7, -0.05), V3(0, s.trunkH, 0)], [s.trunkR, s.trunkR * 0.7, s.trunkR * 0.55, s.trunkR * 0.4], seg, 1, s.barkTile ?? TILE_BARK, s.barkTint);
+    const k = s.farScale ?? 1;
+    crown(m, r, cc, s.rx * 0.95, s.ry * 0.95, s.rx * 0.95, Math.round(20 * k * k), 2.6 * k, 3.8 * k, s.warm, s.leafTile ?? TILE_MASS);
+    if (s.bloomTile !== undefined) {
+      // far flowers: cards on the upper half of the crown
+      for (let i = 0; i < Math.round(14 * k * k); i++) {
+        const d = unit(r);
+        d.y = Math.abs(d.y) * 0.8 + 0.2;
+        const p = V3(cc.x + d.x * s.rx * 0.9, cc.y + d.y * s.ry * 0.9, cc.z + d.z * s.rx * 0.9);
+        const size = lerp(2.2, 3.2, r()) * k;
+        m.card(p, V3(0, 1, 0).addScaledVector(unit(r), 0.4).normalize(), V3(0, 1, 0), size, size, s.bloomTile, r() * Math.PI * 2, V3(0, 1, 0), lerp(0.95, 1.2, r()), r() < 0.5);
+      }
+    }
   }
   return m.build();
 }
@@ -769,6 +928,44 @@ function palm(detail: number): THREE.BufferGeometry {
   return growTree(STYLE_ACACIA, detail);
 }
 
+/** Sal (Shorea robusta): the straight, tall forest tree of Bangladesh - a long clear trunk and a dense, narrow-oval dark crown. */
+const STYLE_SAL: Style = {
+  seed: 6006, trunkH: 13, trunkR: 0.55, trunkBend: 0.05, primary: 9, startFrac: 0.55, spread: [0.45, 0.8], limbLen: 5.5, fork: 1,
+  kids: [3, 2], lenRatio: [0.55, 0.5], droop: 0.1, crownY: 20, rx: 5.2, ry: 7, cards: 8, clusterR: 1.3, card: [1.2, 1.9], warm: 0.1, farScale: 1.4,
+};
+/** Segun (teak): straight trunk, wide crown of very big leaves. */
+const STYLE_SEGUN: Style = {
+  seed: 7007, trunkH: 11, trunkR: 0.5, trunkBend: 0.06, primary: 7, startFrac: 0.6, spread: [0.6, 0.95], limbLen: 5, fork: 1,
+  kids: [3, 3], lenRatio: [0.55, 0.5], droop: 0.15, crownY: 17.5, rx: 5.5, ry: 5, cards: 6, clusterR: 1.6, card: [2.2, 3.2], warm: 0.15, farScale: 1.5,
+};
+/** Koroi (rain tree): short trunk and a huge flat umbrella crown. */
+const STYLE_KOROI: Style = {
+  seed: 8008, trunkH: 6.5, trunkR: 0.7, trunkBend: 0.1, primary: 6, startFrac: 0.55, spread: [1.1, 1.4], limbLen: 8, fork: 2,
+  kids: [3, 3], lenRatio: [0.55, 0.5], droop: 0.05, crownY: 13.5, rx: 10.5, ry: 3.8, cards: 11, clusterR: 1.9, card: [1.8, 2.7], warm: 0.1, flat: 0.55, farScale: 2.4,
+};
+/** Bot (banyan): short, very thick trunk with buttresses, limbs spreading wide, hanging roots and pillar roots. */
+const STYLE_BOT: Style = {
+  seed: 9009, trunkH: 4.2, trunkR: 1.4, trunkBend: 0.12, primary: 8, startFrac: 0.4, spread: [1.05, 1.4], limbLen: 11, fork: 2,
+  kids: [3, 3], lenRatio: [0.6, 0.55], droop: 0.12, crownY: 11, rx: 14, ry: 4.4, cards: 12, clusterR: 2.1, card: [1.7, 2.6], warm: 0.08, flat: 0.6,
+  buttress: 7, aerial: { hang: 18, pillars: 3 }, farScale: 2.8,
+};
+/** Shimul (silk cotton): very tall straight trunk with big buttresses, branches in flat tiers. */
+const STYLE_SHIMUL: Style = {
+  seed: 1010, trunkH: 20, trunkR: 0.9, trunkBend: 0.03, primary: 8, startFrac: 0.7, spread: [1.1, 1.4], limbLen: 7, fork: 1,
+  kids: [3, 2], lenRatio: [0.55, 0.5], droop: 0.0, crownY: 25, rx: 7.5, ry: 4.5, cards: 10, clusterR: 1.9, card: [1.8, 2.8], warm: 0.1, flat: 0.7, buttress: 6, farScale: 1.8,
+};
+/** Debdaru (ashoka): a slim dark column with drooping leaves, the classic avenue tree. */
+const STYLE_DEBDARU: Style = {
+  seed: 1616, trunkH: 9, trunkR: 0.22, trunkBend: 0.03, primary: 16, startFrac: 0.12, spread: [0.12, 0.3], limbLen: 3.4, fork: 0,
+  kids: [2, 2], lenRatio: [0.5, 0.45], droop: 0.35, crownY: 6.2, rx: 1.9, ry: 5.2, cards: 6, clusterR: 0.7, card: [0.8, 1.2], warm: 0.1,
+};
+const sal = (detail: number): THREE.BufferGeometry => growTree(STYLE_SAL, detail);
+const segun = (detail: number): THREE.BufferGeometry => growTree(STYLE_SEGUN, detail);
+const koroi = (detail: number): THREE.BufferGeometry => growTree(STYLE_KOROI, detail);
+const bot = (detail: number): THREE.BufferGeometry => growTree(STYLE_BOT, detail);
+const shimul = (detail: number): THREE.BufferGeometry => growTree(STYLE_SHIMUL, detail);
+const debdaru = (detail: number): THREE.BufferGeometry => growTree(STYLE_DEBDARU, detail);
+
 function pine(detail: number): THREE.BufferGeometry {
   const r = mulberry32(303);
   const m = new Mesh();
@@ -796,9 +993,13 @@ function pine(detail: number): THREE.BufferGeometry {
 export class TreeAssets {
   /** [kind][detail] */
   readonly geometries: THREE.BufferGeometry[][] = [];
+  /** Forest-tree material (every kind except the palm-atlas ones). */
   readonly material: THREE.MeshLambertMaterial;
+  /** Palm material: palms, banana and krishnachura (their own atlas). */
+  readonly palmMaterial: THREE.MeshLambertMaterial;
   private time = { value: 0 };
   private atlas: THREE.DataTexture | null;
+  private palmAtlas: THREE.DataTexture | null;
 
   constructor() {
     const makers: Record<number, (d: number) => THREE.BufferGeometry> = {
@@ -808,21 +1009,39 @@ export class TreeAssets {
       [TreeKind.oak]: oak,
       [TreeKind.vase]: vase,
       [TreeKind.slender]: slender,
+      [TreeKind.sal]: sal,
+      [TreeKind.segun]: segun,
+      [TreeKind.koroi]: koroi,
+      [TreeKind.bot]: bot,
+      [TreeKind.shimul]: shimul,
+      [TreeKind.debdaru]: debdaru,
+      ...PALM_MAKERS,
     };
     for (let k = 0; k < TREE_KIND_COUNT; k++) this.geometries.push([makers[k](0), makers[k](1)]);
 
     this.atlas = makeAtlas();
+    this.palmAtlas = makePalmAtlas();
+    this.material = this.makeMaterial(this.atlas, 1, TILES, 'tree-wind-leaf2');
+    this.palmMaterial = this.makeMaterial(this.palmAtlas, PALM_BARK_TILES, PALM_TILES, 'tree-wind-palm1');
+  }
+
+  /** The material a tree kind is drawn with. */
+  materialFor(kind: number): THREE.MeshLambertMaterial {
+    return usesPalmAtlas(kind) ? this.palmMaterial : this.material;
+  }
+
+  private makeMaterial(atlas: THREE.DataTexture | null, barkTiles: number, tiles: number, cacheKey: string): THREE.MeshLambertMaterial {
     // Leaf cards are cut-outs (alpha test, soft edge with MSAA) and seen from both sides.
     const m = new THREE.MeshLambertMaterial({
-      map: this.atlas,
+      map: atlas,
       vertexColors: true,
       side: THREE.DoubleSide,
-      alphaTest: this.atlas ? 0.42 : 0,
-      alphaToCoverage: !!this.atlas,
+      alphaTest: atlas ? 0.42 : 0,
+      alphaToCoverage: !!atlas,
     });
     const wind = Config.vegetation.windStrength;
-    // everything right of the bark tile is foliage (bark u < 0.97 / TILES, leaves u >= 1 / TILES)
-    const leafEdge = (0.985 / TILES).toFixed(5);
+    // everything right of the bark tiles is foliage (bark u < (barkTiles - 0.03) / tiles, leaves u >= barkTiles / tiles)
+    const leafEdge = ((barkTiles - 0.015) / tiles).toFixed(5);
     m.onBeforeCompile = (shader) => {
       shader.uniforms.uTreeTime = this.time;
       shader.vertexShader = shader.vertexShader
@@ -878,8 +1097,8 @@ export class TreeAssets {
       const hook = shader.fragmentShader.includes('#include <opaque_fragment>') ? '#include <opaque_fragment>' : '#include <output_fragment>';
       shader.fragmentShader = shader.fragmentShader.replace(hook, light + '\n' + hook);
     };
-    m.customProgramCacheKey = () => 'tree-wind-leaf2';
-    this.material = m;
+    m.customProgramCacheKey = () => cacheKey;
+    return m;
   }
 
   update(time: number): void {
@@ -889,6 +1108,8 @@ export class TreeAssets {
   dispose(): void {
     for (const pair of this.geometries) for (const g of pair) g.dispose();
     this.material.dispose();
+    this.palmMaterial.dispose();
     this.atlas?.dispose();
+    this.palmAtlas?.dispose();
   }
 }

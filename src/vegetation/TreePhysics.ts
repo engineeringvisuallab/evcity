@@ -4,23 +4,16 @@ import type { Bus } from '../core/EventBus';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import type { FloatingOrigin } from '../world/FloatingOrigin';
 import { chunkOriginX, chunkOriginZ } from '../world/WorldGrid';
-import { ROCK_KIND_COUNT, RockKind, TREE_KIND_COUNT, TREE_STRIDE, TreeKind, treeKey, type TreeChunkData } from './TreeTypes';
+import { ROCK_KIND_COUNT, RockKind, TREE_KIND_COUNT, TREE_STRIDE, TREE_TRUNK, treeKey, type TreeChunkData } from './TreeTypes';
 
-/** Trunk collider per kind at scale 1: radius (m) and height (m, capped: only the part a person / car can touch). */
-const TRUNK: Record<number, { r: number; h: number }> = {
-  [TreeKind.broadleaf]: { r: 0.42, h: 3.4 },
-  [TreeKind.pine]: { r: 0.35, h: 3 },
-  [TreeKind.palm]: { r: 0.28, h: 5 },
-  [TreeKind.oak]: { r: 0.55, h: 3 },
-  [TreeKind.vase]: { r: 0.42, h: 3 },
-  [TreeKind.slender]: { r: 0.28, h: 4 },
-};
+/** Trunk collider per kind: see TREE_TRUNK (TreeTypes.ts). */
+const TRUNK = TREE_TRUNK;
 /** Rock collider per kind at scale 1: radius (m) and height (m), a bit smaller than the model. Rocks lower than `rocks.collideMinHeight` are skipped. */
 const ROCK: Record<number, { r: number; h: number }> = {
   [RockKind.round]: { r: 0.8, h: 0.68 },
   [RockKind.slab]: { r: 1.15, h: 0.3 },
 };
-const FLOATS = 5; // per tree in a cell: dx, y, dz (relative to the cell centre / ground), radius, half height
+const FLOATS = 7; // per tree in a cell: dx, y, dz (relative to the cell centre / ground), radius, half height, kind (-1 = rock), scale
 
 interface Cell {
   key: string;
@@ -121,7 +114,7 @@ export class TreePhysics {
         const radius = spec.r * scale;
         // relative to the cell centre (x, z); y is the ground height (the body sits at y = 0)
         if (!isRock) pending.push({ id, off: b.length, key: treeKey(k, lx, lz) });
-        b.push(lx - (ci + 0.5) * size, d[o + 1], lz - (cj + 0.5) * size, radius, h / 2);
+        b.push(lx - (ci + 0.5) * size, d[o + 1], lz - (cj + 0.5) * size, radius, h / 2, isRock ? -1 : k, scale);
       }
     }
     const keys: string[] = [];
@@ -155,6 +148,38 @@ export class TreePhysics {
       this.removeBody(cell);
       this.createBody(cell);
     }
+  }
+
+  /**
+   * The nearest trunk (kinds that can be climbed) whose surface is within `reach` m of the world point (wx, wz), or null. Only trees inside the
+   * squares that have a collider body (around the player) are known, which is all climbing needs. Result: world x / z of the trunk axis, ground
+   * height `y` (floating-origin LOCAL, like the physics bodies), trunk radius `r` and the climbable height `top` (m above the foot).
+   */
+  findClimbable(wx: number, wz: number, reach: number): { x: number; z: number; y: number; r: number; top: number; kind: number } | null {
+    let best: { x: number; z: number; y: number; r: number; top: number; kind: number } | null = null;
+    let bestD = reach;
+    const half = Config.vegetation.collideCell / 2 + reach + 1.5; // a trunk at the border of its square, plus the trunk radius
+    for (const cell of this.cells.values()) {
+      if (!cell.body || Math.abs(wx - cell.x) > half || Math.abs(wz - cell.z) > half) continue;
+      const d = cell.data;
+      for (let o = 0; o < d.length; o += FLOATS) {
+        const r = d[o + 3];
+        const kind = d[o + 5];
+        if (r <= 0 || kind < 0) continue; // felled tree / rock
+        const spec = TRUNK[kind];
+        if (!spec || spec.climb <= 0) continue;
+        const scale = d[o + 6];
+        if (r < 0.12) continue;
+        const tx = cell.x + d[o];
+        const tz = cell.z + d[o + 2];
+        const gap = Math.hypot(wx - tx, wz - tz) - r;
+        if (gap < bestD) {
+          bestD = gap;
+          best = { x: tx, z: tz, y: d[o + 1], r, top: spec.climb * scale, kind };
+        }
+      }
+    }
+    return best;
   }
 
   private dropChunk(key: string): void {

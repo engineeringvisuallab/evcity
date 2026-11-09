@@ -30,6 +30,21 @@ export interface PlayerDeps {
   onSplash?: (wx: number, wz: number, strength: number) => void;
   /** Out of breath for too long: the player passed out and was brought up to the surface. */
   onBlackout?: () => void;
+  /** TREE CLIMBING: the nearest climbable trunk whose surface is within `reach` m of the world point (TreePhysics.findClimbable). Without it nothing can be climbed. */
+  findTree?: (wx: number, wz: number, reach: number) => { x: number; z: number; y: number; r: number; top: number; kind: number } | null;
+  /** A short hint line for the player (toast). */
+  hint?: (text: string) => void;
+}
+
+/** The tree being climbed: trunk axis (world x / z), foot height, trunk radius, climbable height above the foot, the body's angle round the trunk and its height above the foot. */
+interface Climb {
+  x: number;
+  z: number;
+  base: number;
+  r: number;
+  top: number;
+  ang: number;
+  h: number;
 }
 
 const HALF = Config.player.height / 2; // capsule centre is HALF above the feet
@@ -82,6 +97,12 @@ export class Player {
   /** While aiming / shooting the body faces where the camera looks. */
   private aimOn = false;
   private aimHeading = 0;
+  /** TREE CLIMBING (null = on the ground). */
+  private climb: Climb | null = null;
+  private spaceWas = false;
+  private climbCool = 0;
+  private hintTimer = 0;
+  private hintShown = false;
 
   constructor(private d: PlayerDeps, spawnWorld: THREE.Vector3) {
     const R = d.physics.RAPIER;
@@ -118,6 +139,51 @@ export class Player {
     });
   }
 
+  /** True while hanging on a tree trunk. */
+  get climbing(): boolean {
+    return this.climb !== null;
+  }
+
+  /** Let go of the tree: `away` = metres per second pushed away from the trunk (a jump off), 0 = just drop. */
+  private releaseTree(away: number): void {
+    const c = this.climb;
+    if (!c) return;
+    this.climb = null;
+    this.climbCool = 0.6;
+    this.model.climbRate = 0;
+    this.vel.set(Math.sin(c.ang) * away, away > 0 ? 3 : 0, Math.cos(c.ang) * away);
+    this.grounded = false;
+  }
+
+  /** One fixed step on the trunk: W / S up / down, A / D round the trunk, Space jumps off, C lets go. */
+  private climbStep(dt: number, spacePressed: boolean): void {
+    const c = this.climb!;
+    const { origin, input, terrain } = this.d;
+    const P = Config.player;
+    const K = P.climb;
+    const k = (code: string): number => (input.isDown(code) ? 1 : 0);
+    const iz = k('KeyW') - k('KeyS');
+    const ix = k('KeyD') - k('KeyA');
+    const R = c.r + P.radius + 0.06;
+    const rate = iz > 0 ? iz * K.up : iz * K.down;
+    c.h = clamp(c.h + rate * dt, 0, c.top);
+    c.ang += (ix * K.around * dt) / R;
+    this.model.climbRate = rate + Math.abs(ix) * K.around * 0.5;
+    if (spacePressed) return this.releaseTree(3);
+    if (input.isDown('KeyC')) return this.releaseTree(0);
+    const px = c.x + Math.sin(c.ang) * R;
+    const pz = c.z + Math.cos(c.ang) * R;
+    const ground = terrain.heightAt(px, pz);
+    const feet = Math.max(c.base + c.h, ground); // never sink into a sloping ground beside the trunk
+    if (c.h <= 0.02 && iz < 0) return this.releaseTree(0); // back down: stand on the ground again
+    this.body.setNextKinematicTranslation({ x: px - origin.origin.x, y: feet + HALF, z: pz - origin.origin.z });
+    this.vel.set(0, 0, 0);
+    this.horizSpeed = 0;
+    this.grounded = false;
+    this.state = 'climb';
+    this.heading = Math.atan2(c.x - px, c.z - pz); // face the trunk
+  }
+
   /** Called every fixed step (60 Hz) BEFORE the physics world steps. */
   fixedUpdate(dt: number): void {
     if (!this.active || this.inVehicle) return;
@@ -131,6 +197,16 @@ export class Player {
     if (!this.ready) {
       if (this.d.terrainPhysics.hasColliderAt(wx, wz)) this.ready = true;
       else return;
+    }
+
+    // Space edge (a press, not a hold): the jump button that also grabs a tree trunk and lets go of it
+    const spaceDown = input.isDown('Space');
+    const spacePressed = spaceDown && !this.spaceWas;
+    this.spaceWas = spaceDown;
+    this.climbCool -= dt;
+    if (this.climb) {
+      this.climbStep(dt, spacePressed);
+      return;
     }
 
     // --- water ---
@@ -185,6 +261,28 @@ export class Player {
     const f = 1 - Math.exp(-rate * dt);
     this.vel.x += (wishX * speed - this.vel.x) * f;
     this.vel.z += (wishZ * speed - this.vel.z) * f;
+
+    // --- grab a tree: walk into a climbable trunk and press Space ---
+    if (this.d.findTree && !this.swimming && this.climbCool <= 0) {
+      const tr = this.d.findTree(wx, wz, P.climb.reach);
+      if (tr) {
+        if (wl > 0 && spacePressed) {
+          const dx = tr.x - wx;
+          const dz = tr.z - wz;
+          const dl = Math.hypot(dx, dz) || 1;
+          if ((dx / dl) * wishX + (dz / dl) * wishZ > 0.35) {
+            this.climb = { x: tr.x, z: tr.z, base: tr.y, r: tr.r, top: tr.top, ang: Math.atan2(wx - tr.x, wz - tr.z), h: Math.max(0.3, feetY - tr.y + 0.15) };
+            this.vel.set(0, 0, 0);
+            this.jumpCooldown = 0.3;
+            return;
+          }
+        } else if (!this.hintShown && this.grounded && this.hintTimer <= 0) {
+          this.hintShown = true; // once per session
+          this.d.hint?.('🌳 গাছের গায়ে হেঁটে গিয়ে Space চাপলে গাছে ওঠা যাবে (W/S ওঠা-নামা, A/D ঘোরা, Space লাফ, C ছাড়ো)');
+        }
+      }
+    }
+    this.hintTimer -= dt;
 
     // --- vertical velocity ---
     this.jumpCooldown -= dt;
@@ -278,6 +376,8 @@ export class Player {
 
   /** Get into / out of a vehicle: the model is hidden and the capsule removed from the physics world while inside. */
   setInVehicle(on: boolean): void {
+    this.climb = null;
+    this.model.climbRate = 0;
     this.inVehicle = on;
     this.model.setCrouch(false);
     this.body.setEnabled(!on);
@@ -335,6 +435,8 @@ export class Player {
     this.curr.copy(local);
     this.render.copy(local);
     this.vel.set(0, 0, 0);
+    this.climb = null;
+    this.model.climbRate = 0;
     this.ready = false;
     this.swimming = false;
     this.grounded = false;

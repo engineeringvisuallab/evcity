@@ -7,8 +7,50 @@ export const TreeKind = {
   oak: 3,
   vase: 4,
   slender: 5,
+  /** Big forest trees (25-30 m when full grown, scale 1 = a mature tree): sal, segun (teak), koroi (rain tree), bot (banyan), shimul (silk cotton). */
+  sal: 6,
+  segun: 7,
+  koroi: 8,
+  bot: 9,
+  shimul: 10,
+  /** Palms and banana (own texture atlas): coconut (narikel), date palm (khejur), palmyra (tal), banana (kola clump). */
+  coconut: 11,
+  datePalm: 12,
+  palmyra: 13,
+  banana: 14,
+  /** City / roadside trees: krishnachura (flamboyant, flowering, own atlas) and debdaru (ashoka, slim column). */
+  krishnachura: 15,
+  debdaru: 16,
 } as const;
-export const TREE_KIND_COUNT = 6;
+export const TREE_KIND_COUNT = 17;
+
+/** Kinds drawn with the palm atlas (palms, banana, flowering krishnachura); every other kind uses the forest-tree atlas. */
+export const usesPalmAtlas = (kind: number): boolean => kind >= TreeKind.coconut && kind <= TreeKind.krishnachura;
+
+/**
+ * Trunk of each kind at scale 1: radius `r` (m) and collider height `h` (m, only the part a person / car can touch), and `climb` = how high
+ * (m above the foot) a person can climb before the branches / crown start (0 = cannot be climbed, e.g. the banana clump).
+ * One table for the trunk colliders (TreePhysics), the slope sink of the placement (TreePlacement) and climbing (Player).
+ */
+export const TREE_TRUNK: Record<number, { r: number; h: number; climb: number }> = {
+  [TreeKind.broadleaf]: { r: 0.42, h: 3.4, climb: 5 },
+  [TreeKind.pine]: { r: 0.35, h: 3, climb: 6 },
+  [TreeKind.palm]: { r: 0.28, h: 5, climb: 8 },
+  [TreeKind.oak]: { r: 0.55, h: 3, climb: 4 },
+  [TreeKind.vase]: { r: 0.42, h: 3, climb: 3.5 },
+  [TreeKind.slender]: { r: 0.28, h: 4, climb: 6 },
+  [TreeKind.sal]: { r: 0.5, h: 5, climb: 12 },
+  [TreeKind.segun]: { r: 0.45, h: 5, climb: 10 },
+  [TreeKind.koroi]: { r: 0.7, h: 4, climb: 7 },
+  [TreeKind.bot]: { r: 1.2, h: 4, climb: 8 },
+  [TreeKind.shimul]: { r: 1.0, h: 5, climb: 14 },
+  [TreeKind.coconut]: { r: 0.2, h: 5, climb: 14 },
+  [TreeKind.datePalm]: { r: 0.28, h: 4, climb: 9 },
+  [TreeKind.palmyra]: { r: 0.28, h: 5, climb: 18 },
+  [TreeKind.banana]: { r: 0.3, h: 3, climb: 0 },
+  [TreeKind.krishnachura]: { r: 0.36, h: 3.5, climb: 6 },
+  [TreeKind.debdaru]: { r: 0.22, h: 5, climb: 6 },
+};
 
 /** Stable id of a tree inside its chunk (the same at every LOD): kind + chunk-local position rounded to 0.5 m. */
 export const treeKey = (kind: number, x: number, z: number): string => `${kind}:${Math.round(x * 2)}:${Math.round(z * 2)}`;
