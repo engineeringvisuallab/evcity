@@ -132,8 +132,8 @@ const FRAG_COLOR = /* glsl */ `
   float slope = 1.0 - nrm.y;
 
   // Real meadow: fresh green grass with yellow-green and straw patches, and darker natural brown soil showing through in patches.
-  vec3 grass = mix(vec3(0.24, 0.36, 0.12), vec3(0.40, 0.49, 0.17), nMid * 0.6 + nHi * 0.4);
-  grass = mix(grass, vec3(0.50, 0.50, 0.22), smoothstep(0.55, 0.80, evcNoise(ap * 0.05 + 3.1)) * 0.5); // sunlit yellow-green patches
+  vec3 grass = mix(vec3(0.11, 0.22, 0.06), vec3(0.19, 0.31, 0.09), nMid * 0.6 + nHi * 0.4); // DARK green ground under the grass cards
+  grass = mix(grass, vec3(0.30, 0.34, 0.12), smoothstep(0.55, 0.80, evcNoise(ap * 0.05 + 3.1)) * 0.35); // sunlit yellow-green patches
   vec3 dry   = mix(vec3(0.52, 0.45, 0.25), vec3(0.44, 0.38, 0.21), nMid);
   vec3 soil  = mix(vec3(0.31, 0.23, 0.15), vec3(0.45, 0.34, 0.22), nMid * 0.5 + nHi * 0.5);
   vec3 rock  = mix(vec3(0.34, 0.32, 0.30), vec3(0.55, 0.51, 0.46), nTri * 0.6 + nHi * 0.4);
@@ -145,7 +145,7 @@ const FRAG_COLOR = /* glsl */ `
   // CITY GREEN (GRASS 4): vCity = 0..1 greenness of the planned city (1 inside, soft edge outside). Inside a city the ground is fresh lawn green:
   // no dry straw, no brown soil (the soil share fades to 0, only a little stays on steep ground), the grass colour leans to a bright lawn green.
   float cityG = clamp(vCity, 0.0, 1.0);
-  vec3 lawn = mix(vec3(0.22, 0.40, 0.11), vec3(0.34, 0.52, 0.16), nMid * 0.6 + nHi * 0.4);
+  vec3 lawn = mix(vec3(0.10, 0.23, 0.06), vec3(0.17, 0.32, 0.09), nMid * 0.6 + nHi * 0.4);
   lawn = mix(lawn, vec3(0.40, 0.54, 0.18), smoothstep(0.55, 0.85, evcNoise(ap * 0.07 + 5.3)) * 0.35);
   grass = mix(grass, lawn, cityG * ${Config.terrain.cityGreen.lawnTint.toFixed(3)});
   vec3 col = mix(grass, dry, smoothstep(60.0, 260.0, h + (nLow - 0.5) * 120.0) * (1.0 - cityG));

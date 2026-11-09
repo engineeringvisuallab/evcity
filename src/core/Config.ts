@@ -20,8 +20,8 @@ export const Config = {
      * so 0.50..0.64 was about half of the land; 0.30..0.44 makes soil the main ground (~80 %), with green patches in between.
      * Lower both = more soil, higher = more green.
      */
-    soilFrom: 0.3,
-    soilTo: 0.44,
+    soilFrom: 0.6,
+    soilTo: 0.74,
     /**
      * GREEN CITY GROUND: inside the planned city areas (CityPlan: distance to the site hub < maxRadius) the ground is lawn green, not brown soil.
      * The chunk worker builds a per-vertex greenness mask (`aCity`): 1 inside the city, falling to 0 over `fadeOut` metres outside it.
@@ -277,12 +277,12 @@ export const Config = {
        */
       patch: {
         scale: 40,
-        coverage: 0.22,
+        coverage: 0.9,
         edge: 0.2,
-        minValue: 0.25,
-        coreAt: 0.85,
+        minValue: 0.05,
+        coreAt: 0.35,
         density: 1,
-        clumpChance: 0.14, // only a few big clumps (they are at most 0.5 m high)
+        clumpChance: 0.1, // clumps (cards) between the tufts
         edgeScale: 0.5,
         boost: 0.9,
         roadStep: 24,
@@ -338,6 +338,30 @@ export const Config = {
        * `rootDark` = brightness of the blade at the root (0..1, 1 = no darkening), `wind` = global wind sway multiplier (0 = still air; the sway grows with blade height, so short lawn moves little anyway).
        */
       look: { strawShare: 0.12, yellowShare: 0.3, rootDark: 0.45, wind: 1 },
+      /**
+       * GRASS CARDS (textured clusters cut from the grass sheets, public/assets/grass-atlas.webp): replace the 3D blade models of tufts and clumps.
+       * One cluster = `quads` crossed quads per ring (4-6 triangles instead of 60-110 blades). enabled false = the old blade models.
+       *   quads      crossed quads per LOD ring (ring 0 / 1 / 2)
+       *   alphaCut   alpha test limit (0.3..0.6); rootDark = brightness at the root (0..1)
+       *   greenTint  DARK GREEN colour multiplied with the texture (sRGB 0..1); dryTint = straw clusters; brightness = global multiplier
+       *   dryShare   share of dry (straw) clusters in normal ground; dryPatchShare inside dry patches (patchScale m, patchAt = noise limit)
+       *   height     cluster height (m) = tuft.maxHeight x heightMul (small, dense grass); clumpHeight for the big clumps (m)
+       */
+      cards: {
+        enabled: true,
+        quads: [3, 2, 2] as number[],
+        alphaCut: 0.42,
+        rootDark: 0.5,
+        greenTint: [0.5, 0.66, 0.42] as [number, number, number],
+        dryTint: [0.95, 0.88, 0.78] as [number, number, number],
+        brightness: 1,
+        dryShare: 0.05,
+        dryPatchShare: 0.55,
+        patchScale: 16,
+        patchAt: 0.64,
+        heightMul: 1,
+        clumpHeight: 0.28,
+      },
       /** No grass is made while the camera is higher than this above the ground (m): free-fly / helicopter. */
       maxAboveGround: 70,
     },
