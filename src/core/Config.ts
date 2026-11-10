@@ -618,7 +618,7 @@ export const Config = {
      * Cars use the middle / fast lane and cruise up to `limitKmh` (each driver at 70..98 % of it); cargo trucks and fuel tankers (highway-only vehicles)
      * keep to the kerb lane at their own much lower speed, `truckKmh` / `tankerKmh`.
      */
-    highway: { minLanes: 6, limitKmh: 130, truckKmh: 75, tankerKmh: 80 },
+    highway: { minLanes: 6, limitKmh: 130, truckKmh: 75, tankerKmh: 80, sportKmh: 175 },
   },
 
   lod: {

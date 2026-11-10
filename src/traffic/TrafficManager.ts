@@ -15,6 +15,8 @@ import type { BusStops } from './BusStops';
 import { AIDriver, type Obstacle } from './AIDriver';
 import { RoadGraph, type RoadPoint } from './RoadGraph';
 import { RouteBuilder, type RouteRule } from './Route';
+import { planRoute } from './RoutePlanner';
+import type { RaceCourse } from '../race/RaceCourse';
 import type { TrafficSignals } from './TrafficSignals';
 
 export interface TrafficDeps {
@@ -198,7 +200,50 @@ export class TrafficManager {
       placeOk: (x, z) => canUsePlace(spec.use, getWorldZoneAt(x, z).kind, this.d.plan.areaAt(x, z)?.kind ?? null),
       uturnOk: (section) => canUTurn(spec, section),
       highwayMax: spec.id === 'tanker' ? H.tankerKmh / 3.6 : spec.look.kind === 'truck' ? H.truckKmh / 3.6 : undefined,
+      // sports cars cruise much faster than the normal 130 km/h freeway limit (so they overtake the others)
+      highwayLimit: spec.id === 'hypercar' || spec.id === 'evhypar' ? H.sportKmh / 3.6 : undefined,
     };
+  }
+
+  /**
+   * CAR RACE: the AI racers on the starting grid of the course. They follow the planned way (F1 -> F2 -> F3) to the finish, drive fast (race limit),
+   * overtake like everybody on the freeway, wait on the line while `ai.hold` is true, and are `persistent`: normal traffic never removes them, the race does (removeRacer).
+   * Empty = there is no way from the start to the finish.
+   */
+  spawnRacers(c: RaceCourse): Vehicle[] {
+    const g = this.d.graph;
+    const out: Vehicle[] = [];
+    const plan = planRoute(g, c.startRef, c.finishRef);
+    if (!plan) return out;
+    const specs = [SPECS.hypercar, SPECS.evhypar, SPECS.sedan, SPECS.jeep, SPECS.hypercar];
+    const paints = [0xe03a2f, 0x2f7bd9, 0xf2f2f0, 0xf2b705, 0x2fbf71];
+    const H = Config.traffic.highway;
+    c.grid.forEach((slot, i) => {
+      const spec = specs[i % specs.length];
+      const rule: RouteRule = { ...this.routeRule(spec), highwayMax: undefined, highwayLimit: H.sportKmh / 3.6 };
+      const route = new RouteBuilder(g, Math.random, slot.roadId, slot.s, slot.dir, 0.88 + Math.random() * 0.1, rule);
+      route.lane = slot.lane;
+      route.plan = plan.slice();
+      route.target = { roadId: c.finishRef.roadId, s: c.finishRef.s };
+      route.start();
+      g.at(slot.roadId, slot.s, slot.dir, g.laneOffset(slot.roadId, slot.lane), tmpPt);
+      const yaw = Math.atan2(tmpPt.hx, tmpPt.hz);
+      V3.set(tmpPt.x, tmpPt.y - groundY(spec) + 0.25, tmpPt.z);
+      const driver = this.d.people.createPerson();
+      const car = this.d.vehicles.spawn(spec, V3, yaw, driver, paints[i % paints.length]);
+      car.ai = new AIDriver(car, route, this.d.signals);
+      car.ai.ignoreSignals = true;
+      car.ai.hold = true;
+      car.persistent = true;
+      car.setEnabled(true);
+      out.push(car);
+    });
+    return out;
+  }
+
+  /** CAR RACE: take a racer (and its driver) out of the world. */
+  removeRacer(v: Vehicle): void {
+    this.remove(v);
   }
 
   /**

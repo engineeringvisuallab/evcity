@@ -3,6 +3,7 @@ import type { DriveInput, Vehicle } from '../vehicles/Vehicle';
 import { clamp } from '../utils/math';
 import { RouteBuilder } from './Route';
 import { uturnBlocked } from './UTurnGap';
+import { COOLDOWN, decideExtra, LANE_W, type Other } from './Overtake';
 import type { BusStop } from './BusStops';
 import type { TrafficSignals } from './TrafficSignals';
 
@@ -38,6 +39,15 @@ export class AIDriver {
   ignoreSignals = false;
   /** 0..1: a reckless driver (rickshaw) brakes for other vehicles very late, speeds and runs red lights, so real accidents happen. */
   reckless = 0;
+  /** CAR RACE: true = the car waits (handbrake) on the start line until the race starts. */
+  hold = false;
+  /** CAR RACE: the most this driver may go (m/s), so a racer far ahead of the player waits for him (a far-away car would freeze). */
+  speedCap: number | undefined = undefined;
+  /** OVERTAKING (big freeway): lanes moved towards the median (0 = own lane), the sideways shift that follows it (m, <0 = right), lane-change cool-down (s). */
+  private extra = 0;
+  private shift = 0;
+  private laneCool = 0;
+  private readonly others: Other[] = [];
   /** Buses: the bus stop being approached, the ones already served, and how long the bus has waited there. */
   stop: BusStop | null = null;
   readonly served = new Set<number>();
@@ -88,8 +98,18 @@ export class AIDriver {
       acc += Math.hypot(pts[idx + 1].x - pts[idx].x, pts[idx + 1].z - pts[idx].z);
       idx++;
     }
-    const tx = pts[idx].x - P.x;
-    const tz = pts[idx].z - P.z;
+    let tx = pts[idx].x - P.x;
+    let tz = pts[idx].z - P.z;
+    if (this.shift !== 0) {
+      // overtaking: aim at a point `shift` metres beside the route (left normal of the path = (dz, -dx))
+      const j0 = Math.max(0, idx - 1);
+      const j1 = Math.min(pts.length - 1, idx + 1);
+      const ddx = pts[j1].x - pts[j0].x;
+      const ddz = pts[j1].z - pts[j0].z;
+      const dl = Math.hypot(ddx, ddz) || 1;
+      tx += (ddz / dl) * this.shift;
+      tz -= (ddx / dl) * this.shift;
+    }
     const along = tx * fx + tz * fz;
     const lat = tx * fz - tz * fx; // + = left of the car
     const alpha = Math.atan2(lat, Math.max(0.01, along));
@@ -156,6 +176,40 @@ export class AIDriver {
       const sl = this.signals.brakeLimit(P.x, P.z, fx, fz, speed, spec.half.z);
       if (sl < vt) vt = sl;
     }
+
+    if (this.hold) vt = 0;
+    if (this.speedCap !== undefined) vt = Math.min(vt, this.speedCap);
+    const vFree = vt; // what this driver would like to do, before other vehicles slow him down
+
+    // ---- overtaking (big freeway only): a faster car held up by a slower one takes the next lane towards the median, then comes back ----
+    if (this.route.onBigHw && !inTurn) {
+      const list = this.others;
+      list.length = 0;
+      for (const o of obstacles) {
+        if (o.ref === v || o.kind !== 'vehicle') continue;
+        const rx = o.x - P.x;
+        const rz = o.z - P.z;
+        const a = rx * fx + rz * fz;
+        if (a < -60 || a > 120) continue;
+        const l = rx * fz - rz * fx;
+        if (Math.abs(l) > 12) continue;
+        list.push({ a, l, v: o.vx * fx + o.vz * fz });
+      }
+      let nearJn = this.stop !== null;
+      let dj = Math.hypot(pts[this.head].x - P.x, pts[this.head].z - P.z);
+      for (let j = this.head; j < pts.length && dj < 140 && !nearJn; j++) {
+        if (j > this.head) dj += Math.hypot(pts[j].x - pts[j - 1].x, pts[j].z - pts[j - 1].z);
+        if (pts[j].jn || (pts[j].ut ?? 0) > 0) nearJn = true;
+      }
+      this.laneCool = Math.max(0, this.laneCool - dt);
+      const ne = decideExtra({ extra: this.extra, maxExtra: 2 - this.route.lane, vFree, speed, others: list, cooldown: this.laneCool, nearJunction: nearJn });
+      if (ne !== this.extra) {
+        this.extra = ne;
+        this.laneCool = COOLDOWN;
+      }
+    } else this.extra = 0;
+    const goalShift = -this.extra * LANE_W;
+    this.shift += clamp(goalShift - this.shift, -2 * dt, 2 * dt);
 
     // ---- things in front of the bumper ----
     let blockedByVehicle = false;

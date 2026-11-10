@@ -12,6 +12,8 @@ export interface RouteRule {
   uturnOk?(section: SectionId): boolean;
   /** Big highways: the most this vehicle cruises at there (m/s) - cargo trucks and tankers are far slower than cars. Not given = the freeway limit of Config.traffic.highway. */
   highwayMax?: number;
+  /** Big highways: the freeway limit (m/s) for THIS vehicle instead of Config.traffic.highway.limitKmh (sports cars, race cars). */
+  highwayLimit?: number;
 }
 
 /** One point of the path an AI driver follows (WORLD coordinates). */
@@ -108,7 +110,7 @@ export class RouteBuilder {
     if (this.g.isBigHighway(this.roadId)) {
       // big highway: its own, much higher limit (cars), or the lower one of a truck / tanker
       const H = Config.traffic.highway;
-      return Math.min(H.limitKmh / 3.6, this.rule?.highwayMax ?? Infinity) * this.temper;
+      return Math.min(this.rule?.highwayLimit ?? H.limitKmh / 3.6, this.rule?.highwayMax ?? Infinity) * this.temper;
     }
     return Math.min(this.g.limit(this.roadId) * 0.85, 22) * this.temper;
   }

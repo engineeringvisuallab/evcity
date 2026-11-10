@@ -87,6 +87,7 @@ import { bindVisibility } from './Lifecycle';
 import { HUD } from '../ui/HUD';
 import { Subtitles } from '../ui/Subtitles';
 import { MissionManager, MissionMarkers } from '../missions';
+import { RaceSystem, type RaceCourse } from '../race';
 import { WorldManager } from '../world/WorldManager';
 import { Config } from './Config';
 import { EventBus, type Bus, type EngineEvents } from './EventBus';
@@ -165,6 +166,12 @@ export class Engine {
   private missions!: MissionManager;
   /** The green cylinder at every mission place (drawing only). */
   private missionMarkers!: MissionMarkers;
+  /** CAR RACE on the outer freeway (north -> west): the course, the circles and the rules (src/race). */
+  private race!: RaceSystem;
+  /** The Jeep the race is driven in. */
+  private raceJeep: Vehicle | null = null;
+  /** The AI racers of the running race (they start beside the player's Jeep). */
+  private raceCars: Vehicle[] = [];
   /** Settings menu (gear button / Tab): day-night mode, what the screen shows, sound, minimap zoom, key help. */
   private hudSettings = new HudSettings();
   private settingsMenu!: SettingsMenu;
@@ -741,6 +748,7 @@ export class Engine {
     this.minimap = new Minimap(container, this.world.seed.value, this.world.terrain.sites, this.cityPlan, this.rail);
     this.missions = new MissionManager({ parent: container, lockTarget: this.renderer.domElement, chipTop: () => this.minimap.infoBottom, toast: (t, ms) => this.toast.show(t, ms ?? 3400) });
     this.missionMarkers = new MissionMarkers(this.world.root, (x, z) => this.world.terrain.heightAt(x, z));
+    this.race = new RaceSystem({ parent: container, root: this.world.root, graph, toast: (t, ms) => this.toast.show(t, ms ?? 3400), begin: (c) => this.beginRace(c), go: () => { for (const v of this.raceCars) if (v.ai) v.ai.hold = false; }, clear: () => this.clearRacers() });
     // the parked fleet (see EVLAB_SLOTS): the helicopter stands on its pad in the EVLAB parking lot
     {
       const h = this.slot(EVLAB_SLOTS.heli.s, EVLAB_SLOTS.heli.n, 0, -1);
@@ -1072,8 +1080,27 @@ export class Engine {
     {
       const ms = this.mapState(); // `me` = what you control (on foot, car, helicopter, boat): missions use the same position as the map
       this.missions.update(dt, ms.me.x, ms.me.z);
-      ms.missions = this.missions.pins();
+      ms.missions = [...this.missions.pins(), ...this.race.pins()];
       this.missionMarkers.update(dt, ms.missions);
+      {
+        // CAR RACE: the race Jeep never runs out of fuel; the race needs to know where you are and whether you still sit in the Jeep
+        const rd = this.vehicles.driver;
+        const inJeep = rd !== null && rd === this.raceJeep && rd.state === 'ok';
+        if (rd && inJeep && this.race.active) rd.energy = 1;
+        const racers = this.raceCars.map((v) => {
+          v.getWorldPosition(this.tmpA);
+          return { x: this.tmpA.x, z: this.tmpA.z };
+        });
+        if (rd && inJeep && this.race.active) {
+          // a racer far ahead of the player waits for him (a car more than ~300 m from the player would freeze)
+          const mine = this.race.remaining(ms.me.x, ms.me.z);
+          const cap = Math.max(18, rd.forwardSpeed * 1.05);
+          this.raceCars.forEach((v, i) => {
+            if (v.ai) v.ai.speedCap = mine - this.race.remaining(racers[i].x, racers[i].z) > 170 ? cap : undefined;
+          });
+        }
+        this.race.update(dt, { x: ms.me.x, z: ms.me.z, enter: this.input.gameplayActive && this.input.wasPressed('Enter'), inRaceJeep: inJeep, racers });
+      }
       this.minimap.update(dt, ms);
     }
     this.updateAreaLabel();
@@ -1246,6 +1273,38 @@ export class Engine {
   }
 
   /** Everything the site map shows: where you are (on foot / in a car / in the helicopter) and the parked vehicles. */
+  /** CAR RACE: put the player in the race Jeep on the start line (on foot, or already in a Jeep). False = not possible now (a message says why). */
+  private beginRace(c: RaceCourse): boolean {
+    const p = c.start;
+    const vm = this.vehicles;
+    const cur = vm.driver;
+    if (cur && cur.spec.id !== 'jeep') {
+      this.toast.show('The race is run in the race Jeep: get out of your vehicle first (F).', 3400);
+      return false;
+    }
+    if (!cur && (this.helis.pilot || this.boats.skipper)) {
+      this.toast.show('Leave the aircraft / boat first: the race is run in a Jeep.', 3400);
+      return false;
+    }
+    if (cur) this.raceJeep = cur; // already in a Jeep: race in it
+    else {
+      const jeep = vm.summon(SPECS.jeep, p.x, p.z, Math.atan2(p.hx, p.hz), p.y);
+      vm.enter(jeep);
+      this.raceJeep = jeep;
+    }
+    // the 5 AI racers on the starting grid (they wait on the line until GO)
+    this.clearRacers();
+    this.raceCars = this.traffic.spawnRacers(c);
+    if (this.raceCars.length === 0) this.toast.show('No AI racers this time (no road way from the start to the finish): race against the clock.', 3600);
+    return true;
+  }
+
+  /** CAR RACE: the AI racers leave (race over or cancelled). */
+  private clearRacers(): void {
+    for (const v of this.raceCars) this.traffic.removeRacer(v);
+    this.raceCars = [];
+  }
+
   private mapState(): MapState {
     const toHeading = (fx: number, fz: number) => (((Math.atan2(fx, -fz) * 180) / Math.PI) + 360) % 360;
     const viewHeading = (((-this.orbit.yaw * 180) / Math.PI) % 360 + 360) % 360;
@@ -1574,6 +1633,7 @@ export class Engine {
     this.tour.dispose();
     this.missions.dispose();
     this.missionMarkers.dispose();
+    this.race.dispose();
     this.perf.dispose();
     this.unbindVisibility();
     this.ctxGuard.dispose();

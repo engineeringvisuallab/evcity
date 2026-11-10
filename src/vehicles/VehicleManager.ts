@@ -497,7 +497,7 @@ export class VehicleManager {
     return best;
   }
 
-  private enter(v: Vehicle): void {
+  enter(v: Vehicle): void {
     // the AI driver is pulled out of the right-hand door
     const old = v.removeDriver();
     if (old && old !== 'player') {
