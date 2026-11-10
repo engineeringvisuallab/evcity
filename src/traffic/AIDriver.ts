@@ -181,8 +181,10 @@ export class AIDriver {
     if (this.speedCap !== undefined) vt = Math.min(vt, this.speedCap);
     const vFree = vt; // what this driver would like to do, before other vehicles slow him down
 
-    // ---- overtaking (big freeway only): a faster car held up by a slower one takes the next lane towards the median, then comes back ----
-    if (this.route.onBigHw && !inTurn) {
+    // ---- overtaking (every divided road with 2+ lanes per direction: freeway, arterial, avenue): a faster car held up by a slower one takes the next lane
+    // towards the median, then comes back. Never on a narrow road, a bridge, an undivided / oncoming road, near a junction (Route: pts[].pl) ----
+    const passLanes = pts[this.head].pl ?? 0;
+    if (passLanes > 0 && !inTurn) {
       const list = this.others;
       list.length = 0;
       for (const o of obstacles) {
@@ -200,22 +202,24 @@ export class AIDriver {
       for (let j = this.head; j < pts.length && dj < 140 && !nearJn; j++) {
         if (j > this.head) dj += Math.hypot(pts[j].x - pts[j - 1].x, pts[j].z - pts[j - 1].z);
         if (pts[j].jn || (pts[j].ut ?? 0) > 0) nearJn = true;
+        else if (dj < 90 && (pts[j].pl ?? 0) === 0) nearJn = true; // overtaking ends ahead (bridge, no median, narrow): do not start, go back
       }
       this.laneCool = Math.max(0, this.laneCool - dt);
-      const ne = decideExtra({ extra: this.extra, maxExtra: 2 - this.route.lane, vFree, speed, others: list, cooldown: this.laneCool, nearJunction: nearJn });
+      const ne = decideExtra({ extra: this.extra, maxExtra: Math.max(0, passLanes - this.route.lane), vFree, speed, others: list, cooldown: this.laneCool, nearJunction: nearJn });
       if (ne !== this.extra) {
         this.extra = ne;
         this.laneCool = COOLDOWN;
       }
     } else this.extra = 0;
-    const goalShift = -this.extra * LANE_W;
+    const laneStep = pts[this.head].os !== 0 ? -pts[this.head].os : LANE_W; // the lane width of THIS road (avenue 3.25, others 3.5)
+    const goalShift = -this.extra * laneStep;
     this.shift += clamp(goalShift - this.shift, -2 * dt, 2 * dt);
 
     // ---- things in front of the bumper ----
     let blockedByVehicle = false;
     const halfLen = spec.half.z;
     // on a big highway the lanes are 3.5 m apart: a vehicle in the NEXT lane is no obstacle (otherwise cars would crawl behind the trucks beside them)
-    const halfW = spec.half.x + 0.55 - (this.route.onBigHw ? 0.7 : 0);
+    const halfW = spec.half.x + 0.55 - (passLanes > 0 ? 0.7 : 0);
     for (const o of obstacles) {
       if (o.ref === v) continue;
       const rx = o.x - P.x;

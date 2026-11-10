@@ -29,6 +29,8 @@ export interface RoutePt {
   oc: boolean;
   /** The point is in / right before a junction (a car must be back in its own lane there). */
   jn: boolean;
+  /** OVERTAKING: how many lanes towards the median a car may move out of its kerb lane here (0 = no overtaking: narrow road, bridge, no median, junction). */
+  pl?: number;
   /** ROADS STEP 4: 1 = the point where a U-turn starts (the driver waits here for a gap in the traffic), 2 = a point of the half circle itself. */
   ut?: 0 | 1 | 2;
   /** U-turn start point only: radius (m) of the half circle, i.e. how far to the right of the lane the car sweeps. */
@@ -123,8 +125,9 @@ export class RouteBuilder {
   private push(x: number, z: number, y: number, vmax: number, junction = false, ut: 0 | 1 | 2 = 0, ur = 0): void {
     const n = this.pts.length;
     this.onBigHw = this.g.isBigHighway(this.roadId);
-    const pi = this.fast && !junction ? this.g.passInfo(this.roadId, this.s) : { shift: 0, oncoming: false };
-    this.pts.push({ x, z, y, vmax, os: pi.shift, oc: pi.oncoming, jn: junction || (this.fast && this.nearJunction()), ut, ur });
+    const pi = !junction ? this.g.passInfo(this.roadId, this.s) : { shift: 0, oncoming: false };
+    const pl = junction || ut > 0 ? 0 : this.g.passLanes(this.roadId, this.s);
+    this.pts.push({ x, z, y, vmax, os: pi.shift, oc: pi.oncoming, jn: junction || (this.fast && this.nearJunction()), pl, ut, ur });
     if (n >= 2) {
       // bend limit for the middle point: v = sqrt(a_lat / curvature)
       const a = this.pts[n - 2];

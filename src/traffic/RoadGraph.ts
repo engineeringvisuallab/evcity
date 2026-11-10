@@ -1,7 +1,7 @@
 import { Config } from '../core/Config';
 import type { RoadNetwork } from '../roads';
 import type { RoadSpec } from '../roads';
-import { isDual, laneCentre, lanesPerDir, passShift } from '../roads/RoadSection';
+import { isDivided, isDual, laneCentre, lanesPerDir, passShift } from '../roads/RoadSection';
 import { planMedians } from '../roads/MedianPlan';
 import type { UTurnOpening } from '../roads/UTurns';
 
@@ -252,6 +252,19 @@ export class RoadGraph {
     const r = this.roads[roadId];
     if (r.halfWidth < 2.6 || this.onBridge(roadId, s)) return { shift: 0, oncoming: false };
     return { shift: -passShift(r), oncoming: !isDual(r) }; // a divided road (median) never has oncoming cars in the passing lane
+  }
+
+  /**
+   * OVERTAKING: how many lanes towards the median a car may move out of its kerb lane at (road, s). 0 = never overtake here: a narrow road,
+   * a bridge deck, or a road WITHOUT a median (the passing lane would carry oncoming traffic). A divided road with 2 lanes per direction gives 1,
+   * a freeway / avenue with 3 gives 2. Built on passInfo (shift + oncoming).
+   */
+  passLanes(roadId: number, s: number): number {
+    const r = this.roads[roadId];
+    if (r.earth || !isDivided(r)) return 0;
+    const pi = this.passInfo(roadId, s);
+    if (pi.shift === 0 || pi.oncoming) return 0;
+    return Math.max(0, lanesPerDir(r) - 1);
   }
 
   /** A big freeway (6 lanes or more): AI traffic drives much faster here, cars in the fast lanes, trucks in the kerb lane (Config.traffic.highway). */
