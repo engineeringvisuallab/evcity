@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import type { HumanRig } from './HumanBody';
 
 /**
@@ -23,6 +24,28 @@ function headBase(head: { position: { y: number }; userData: Record<string, unkn
 
 function ease(o: { rotation: { x: number; y: number; z: number } }, axis: 'x' | 'y' | 'z', target: number, k: number): void {
   o.rotation[axis] += (target - o.rotation[axis]) * k;
+}
+
+const _pq = new THREE.Quaternion();
+const _rq = new THREE.Quaternion();
+const _hq = new THREE.Quaternion();
+const _he = new THREE.Euler();
+
+/**
+ * STEADY HEAD: the pelvis twists / sways and the chest leans and counter-rotates with every step, and each of those is eased on its own, so the head on top of
+ * them shook (worst when the frame rate dropped or was uneven). Instead of balancing it with more easing, the head is pinned in the WORLD: it always looks the
+ * way the body faces (root heading) with only the small `pitch` (forward lean), whatever the bones below it do this frame.
+ */
+function steadyHead(rig: HumanRig, pitch: number): void {
+  const head = rig.head;
+  const parent = head?.parent;
+  const root = rig.pivot.parent;
+  if (!head || !parent || !root) return;
+  parent.getWorldQuaternion(_pq); // (updates the matrices of the bones above the head first)
+  root.getWorldQuaternion(_rq);
+  _hq.setFromEuler(_he.set(pitch, 0, 0, 'YXZ'));
+  _rq.multiply(_hq);
+  head.quaternion.copy(_pq.invert().multiply(_rq));
 }
 
 /** Call every frame while walking / running, AFTER the leg / arm angles were eased (`k` = same blend factor). */
@@ -55,6 +78,7 @@ export function gait(rig: HumanRig, phase: number, amp: number, run: boolean, k:
   const want = Math.min(NECK_MAX, drop * NECK_COMP);
   const base = headBase(rig.head);
   rig.head.position.y += (base + want - rig.head.position.y) * Math.min(1, k * 1.5);
+  steadyHead(rig, run ? -0.12 : -0.02);
 }
 
 /** Call every frame when NOT walking (idle, in the air, swimming): eases everything back and adds the breathing. */

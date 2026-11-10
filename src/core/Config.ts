@@ -567,8 +567,8 @@ export const Config = {
 
   /** STAGE 9: AI traffic. Every vehicle has a driver (a person); there are no empty cars. */
   traffic: {
-    target: 12,
-    spawnEvery: 0.6,
+    target: 34,
+    spawnEvery: 0.3,
     spawnMin: 110,
     spawnMax: 260,
     /** Cars farther than this from the player are removed (the physics only runs near the player anyway). */

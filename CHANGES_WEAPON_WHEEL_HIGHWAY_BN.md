@@ -13,3 +13,7 @@
 - Cargo trucks and fuel tankers appear in AI traffic (USE.highway, weight 0.22 / 0.12) and stay on highways only.
 - Drivers look further ahead at high speed (braking distance), and freeway cars spawn already moving.
 - Cycle rickshaws and CNG autos no longer spawn on / turn onto a highway.
+
+## Traffic count + steady head
+- Config.traffic.target 12 -> 34, spawnEvery 0.6 -> 0.3; Quality presets trafficTarget 12 / 22 / 34 (low / medium / high), maxBuses 2 / 3 / 5.
+- people/HumanMotion.ts: the head is pinned in world space while walking / running (steadyHead), so pelvis twist, chest lean and hip bob no longer shake it.
