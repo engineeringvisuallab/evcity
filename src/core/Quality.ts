@@ -99,7 +99,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
   medium: {
     tier: 'medium', maxDpr: 1.25, maxPixels: 2_800_000, antialias: false, powerPreference: 'default',
     shadowMapSize: 2048, shadowExtent: 280, lodDistances: [300, 700, 1400, 2600], siteShowDist: 1300, fpsCap: 60, minScale: 0.6,
-    treeMul: 0.5, rockMul: 0.5, grassMul: 0.85, grassDense: 1, treeMaxLod: 1, grassRadius: 35, grassBlades: 0.8,
+    treeMul: 0.5, rockMul: 0.5, grassMul: 0.85, grassDense: 2, treeMaxLod: 1, grassRadius: 35, grassBlades: 0.8,
     peopleTarget: 22, trafficTarget: 8, maxBuses: 2, flockCount: 8, landAnimals: 42, predators: 3, dolphins: 5, fishSchools: 7,
     lampStepMul: 1.25, roadsideMul: 0.8, grassWind: 0, lightFxDist: 80, farmMul: 0.85, siteDisposeMul: 0, siteMerge: true, siteShadowMinR: 0.5, maxAniso: 4, shadowInterval: 1,
     signRadiusMul: 0.8, signPaintPerFrame: 2,
@@ -108,7 +108,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
   high: {
     tier: 'high', maxDpr: 2, maxPixels: 8_300_000, antialias: true, powerPreference: 'high-performance',
     shadowMapSize: 4096, shadowExtent: 350, lodDistances: [380, 900, 1900, 3600], siteShowDist: 2400, fpsCap: 60, minScale: 0.7,
-    treeMul: 0.7, rockMul: 0.7, grassMul: 1, grassDense: 1, treeMaxLod: 1, grassRadius: 35, grassBlades: 1,
+    treeMul: 0.7, rockMul: 0.7, grassMul: 1, grassDense: 3, treeMaxLod: 1, grassRadius: 35, grassBlades: 1,
     peopleTarget: 34, trafficTarget: 12, maxBuses: 3, flockCount: 12, landAnimals: 64, predators: 4, dolphins: 8, fishSchools: 10,
     lampStepMul: 1, roadsideMul: 1, grassWind: 0, lightFxDist: 130, farmMul: 1, siteDisposeMul: 0, siteMerge: true, siteShadowMinR: 0, maxAniso: 16, shadowInterval: 1,
     signRadiusMul: 1, signPaintPerFrame: 3,

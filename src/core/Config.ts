@@ -356,7 +356,7 @@ export const Config = {
        * The extra (dense) tufts fade out with the camera distance: full size inside `denseFade[0]` m, shrunk to nothing at `denseFade[1]` m (smooth, no
        * pop), and a tile's extra tufts are not drawn at all when the tile is farther than `denseFade[1]` m. So the 5x density costs only near the player.
        */
-      denseFade: [8, 18] as [number, number],
+      denseFade: [12, 26] as [number, number],
       /** Tiles within `radius` (m) of the player exist, tiles beyond `keep` are removed. */
       radius: 35, // only grass within 35 m exists (was 115)
       keep: 45,
@@ -371,7 +371,7 @@ export const Config = {
        */
       tuft: {
         /** Meadow single grass: tallest blade 0.8 m. */
-        maxHeight: 0.64, // was 0.8, x0.8 = a bit smaller
+        maxHeight: 0.95, // taller, lusher grass (was 0.64)
         min: 0.2,
         /** Wildflowers keep 2x the old height (0.4 m). Mown city lawn keeps its old size (0.2 m, then x `city.height`) and its old width scale. */
         flowerMaxHeight: 0.4,
@@ -379,7 +379,7 @@ export const Config = {
         lawnWidthScale: 2.2,
       },
       /** Width of every tuft = its height scale x this. */
-      widthScale: 0.8, // was 2.2 when the grass was 3x lower: the tuft is 3x taller but only ~1.5x wider, so the blades stand more upright instead of splaying
+      widthScale: 1.1, // wider tufts (was 0.8); was 2.2 when the grass was 3x lower: the tuft is 3x taller but only ~1.5x wider, so the blades stand more upright instead of splaying
       /**
        * Grass LOD rings (like the trees): `to` = up to this distance (m, nearest edge of the tile), `stride` = only every n-th cell gets a tuft
        * (must divide tile / cell = 128: 1, 2, 4), `density` = blades per tuft model, `size` = width of a tuft (fewer tufts, each a bit wider).
@@ -430,7 +430,7 @@ export const Config = {
        * undergrowth), thick at the trunk and thinning out to nothing at `reach` m (x 0.7..1.3 with the tree size). Open soil between trees stays bare.
        * `chance` = chance per cell inside the ring (cell 0.5 m); city lawn, roads and farm / plot rules are unchanged. enabled false = the old patchy meadow.
        */
-      treeBase: { enabled: true, reach: 3.2, chance: 0.7 },
+      treeBase: { enabled: true, reach: 4.6, chance: 0.95 }, // BIGGER + FULLER ring around trees (was reach 3.2, chance 0.7)
       /** Chance per cell inside a meadow / on bare patches, and the extra thinning inside forests. Higher = denser, fewer bald patches. */
       maxChance: 0.35, // SPARSE: ~1 cell in 3 grows a tuft (was 0.98 / 0.9 = every cell)
       minChance: 0.15,
@@ -469,14 +469,14 @@ export const Config = {
        * COLOUR: every tuft is fresh green, yellow-green or straw (`strawShare` of the tufts lean to straw outside the city, `yellowShare` to yellow-green).
        * `rootDark` = brightness of the blade at the root (0..1, 1 = no darkening), `wind` = global wind sway multiplier (0 = still air; the sway grows with blade height, so short lawn moves little anyway).
        */
-      look: { bladeWidth: 0.84, strawShare: 0, yellowShare: 0, rootDark: 0.6, wind: 0 }, // bladeWidth was 0.28, now x3 wider
+      look: { bladeWidth: 1.35, strawShare: 0, yellowShare: 0, rootDark: 0.6, wind: 0 }, // bladeWidth was 0.28, now x3 wider
       /**
        * SINGLE GRASS: every tuft model has only `blades[0]..blades[1]` blades (3-5 leaves per grass), so the ground can be covered with very many
        * of them cheaply (`cell` 0.2 m). Used for the four grass kinds; flowers keep their own base. enabled false = the old many-blade tufts.
        */
       /** false = NO white things in the grass: no daisy, no clover (white pom-pom), no pale seed-head grass (they become plain green grass). Coloured flowers stay. */
       whiteFlowers: false,
-      single: { enabled: true, blades: [3, 5] as [number, number] },
+      single: { enabled: true, blades: [6, 9] as [number, number] }, // fuller tufts (was 3-5 thin blades)
       /** No grass is made while the camera is higher than this above the ground (m): free-fly / helicopter. */
       maxAboveGround: 25,
       /** While the camera moves faster than this (m/s, ~43 km/h) NO new grass tile is asked from the workers (car / plane / free-fly): existing tiles just fall out of range. */
