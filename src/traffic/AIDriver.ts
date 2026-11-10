@@ -68,7 +68,9 @@ export class AIDriver {
     const pts = this.route.pts;
 
     // ---- keep the road ahead of us built, walk the head forward, forget what is behind ----
-    this.route.fill(this.head, 120);
+    // how far ahead the driver looks: at least 90 m, and always more than his braking distance (a car at freeway speed needs ~200 m)
+    const look = Math.max(90, 25 + ((speed * speed) / (2 * BRAKE_DECEL)) * 1.3);
+    this.route.fill(this.head, look + 30);
     const d2 = (i: number) => (pts[i].x - P.x) ** 2 + (pts[i].z - P.z) ** 2;
     while (this.head + 1 < pts.length && d2(this.head + 1) <= d2(this.head)) this.head++;
     if (this.head > 30) {
@@ -101,7 +103,7 @@ export class AIDriver {
     // ---- target speed: what the road / bends / dead end allow, braking early enough ----
     let vt = Infinity;
     let dist = Math.hypot(pts[this.head].x - P.x, pts[this.head].z - P.z);
-    for (let j = this.head; j < pts.length && dist < 90; j++) {
+    for (let j = this.head; j < pts.length && dist < look; j++) {
       if (j > this.head) dist += Math.hypot(pts[j].x - pts[j - 1].x, pts[j].z - pts[j - 1].z);
       vt = Math.min(vt, Math.sqrt(pts[j].vmax * pts[j].vmax + 2 * BRAKE_DECEL * dist));
     }
@@ -158,7 +160,8 @@ export class AIDriver {
     // ---- things in front of the bumper ----
     let blockedByVehicle = false;
     const halfLen = spec.half.z;
-    const halfW = spec.half.x + 0.55;
+    // on a big highway the lanes are 3.5 m apart: a vehicle in the NEXT lane is no obstacle (otherwise cars would crawl behind the trucks beside them)
+    const halfW = spec.half.x + 0.55 - (this.route.onBigHw ? 0.7 : 0);
     for (const o of obstacles) {
       if (o.ref === v) continue;
       const rx = o.x - P.x;

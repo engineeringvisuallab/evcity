@@ -578,6 +578,12 @@ export const Config = {
     /** What kind of vehicle appears, where, and how often: see `use` of each spec in vehicles/VehicleSpec.ts (vehicles/VehicleUse.ts). */
     /** At most this many buses at the same time. */
     maxBuses: 3,
+    /**
+     * BIG HIGHWAYS (6 lanes = 3 per direction): AI traffic drives much faster here than the road's normal speed limit.
+     * Cars use the middle / fast lane and cruise up to `limitKmh` (each driver at 70..98 % of it); cargo trucks and fuel tankers (highway-only vehicles)
+     * keep to the kerb lane at their own much lower speed, `truckKmh` / `tankerKmh`.
+     */
+    highway: { minLanes: 6, limitKmh: 130, truckKmh: 75, tankerKmh: 80 },
   },
 
   lod: {

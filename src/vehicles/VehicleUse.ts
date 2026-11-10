@@ -19,6 +19,8 @@ export interface VehicleUse {
   zones: readonly WorldZoneKind[] | 'any';
   /** Planned city areas (see city/CityPlan: residential, commercial, industrial, education ...) it may appear in / drive through INSIDE a city. */
   areas: readonly ZoneKind[] | 'any';
+  /** true = the road kinds / zones above always apply, even with ALL_VEHICLES_EVERYWHERE on (cargo trucks and fuel tankers stay on the freeway). */
+  strict?: boolean;
 }
 
 /**
@@ -29,7 +31,7 @@ export interface VehicleUse {
 export const ALL_VEHICLES_EVERYWHERE = true;
 
 export function canUseRoad(u: VehicleUse, road: RoadKind): boolean {
-  if (ALL_VEHICLES_EVERYWHERE) return true;
+  if (ALL_VEHICLES_EVERYWHERE && !u.strict) return true;
   return u.roads.includes(road);
 }
 
@@ -38,7 +40,7 @@ export function canUseRoad(u: VehicleUse, road: RoadKind): boolean {
  * everywhere else the world ZONE (farmland, village, industrial ...).
  */
 export function canUsePlace(u: VehicleUse, zone: WorldZoneKind, area: ZoneKind | null): boolean {
-  if (ALL_VEHICLES_EVERYWHERE) return true;
+  if (ALL_VEHICLES_EVERYWHERE && !u.strict) return true;
   if (area) return u.areas === 'any' || u.areas.includes(area);
   return u.zones === 'any' || u.zones.includes(zone);
 }
@@ -92,6 +94,8 @@ export const USE = {
     zones: ['farmland', 'village', 'park', 'utility', 'wetland'],
     areas: ['green', 'recreation', 'utility'],
   }),
+  /** Freeway only (cargo trucks, fuel tankers): never leaves the highway, whatever ALL_VEHICLES_EVERYWHERE says. */
+  highway: (weight: number): VehicleUse => ({ weight, roads: ['highway'], zones: 'any', areas: 'any', strict: true }),
   /** Never in AI traffic (military, special). */
   none: (): VehicleUse => ({ weight: 0, roads: ALL_ROADS, zones: 'any', areas: 'any' }),
 };

@@ -1,6 +1,7 @@
+import { Config } from '../core/Config';
 import type { RoadNetwork } from '../roads';
 import type { RoadSpec } from '../roads';
-import { isDual, laneCentre, passShift } from '../roads/RoadSection';
+import { isDual, laneCentre, lanesPerDir, passShift } from '../roads/RoadSection';
 import { planMedians } from '../roads/MedianPlan';
 import type { UTurnOpening } from '../roads/UTurns';
 
@@ -241,9 +242,9 @@ export class RoadGraph {
   }
 
   /** Lane centre offset from the road centreline for left-hand traffic (kerb-side lane). */
-  laneOffset(roadId: number): number {
+  laneOffset(roadId: number, lane = 0): number {
     const r = this.roads[roadId];
-    return laneCentre(r, 0); // ROADS STEP 1: from the road cross-section (median, lane width); undivided roads keep the old formula
+    return laneCentre(r, Math.max(0, Math.min(lane, lanesPerDir(r) - 1))); // ROADS STEP 1: from the road cross-section (median, lane width); undivided roads keep the old formula
   }
 
   /** Overtaking data for (road, s): sideways shift into the passing lane and whether that lane carries oncoming traffic (shift 0 = never overtake here). */
@@ -251,6 +252,12 @@ export class RoadGraph {
     const r = this.roads[roadId];
     if (r.halfWidth < 2.6 || this.onBridge(roadId, s)) return { shift: 0, oncoming: false };
     return { shift: -passShift(r), oncoming: !isDual(r) }; // a divided road (median) never has oncoming cars in the passing lane
+  }
+
+  /** A big freeway (6 lanes or more): AI traffic drives much faster here, cars in the fast lanes, trucks in the kerb lane (Config.traffic.highway). */
+  isBigHighway(roadId: number): boolean {
+    const r = this.roads[roadId];
+    return r.kind === 'highway' && !r.earth && r.lanes >= Config.traffic.highway.minLanes;
   }
 
   /** Cruise speed limit (m/s) of a road. */

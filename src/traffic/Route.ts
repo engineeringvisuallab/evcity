@@ -10,6 +10,8 @@ export interface RouteRule {
   placeOk(x: number, z: number): boolean;
   /** ROADS STEP 4: may this vehicle turn round in a median opening of this road section? (Not given = never.) */
   uturnOk?(section: SectionId): boolean;
+  /** Big highways: the most this vehicle cruises at there (m/s) - cargo trucks and tankers are far slower than cars. Not given = the freeway limit of Config.traffic.highway. */
+  highwayMax?: number;
 }
 
 /** One point of the path an AI driver follows (WORLD coordinates). */
@@ -56,6 +58,10 @@ export class RouteBuilder {
   plan: PlanStep[] | null = null;
   target: { roadId: number; s: number } | null = null;
   fast = false;
+  /** Big highways: which lane to drive in (0 = kerb lane, slow: trucks; 1, 2 = faster cars). On every other road the kerb lane is used. */
+  lane = 0;
+  /** The route is being built on a big highway (the driver then ignores cars in the lane next to him). */
+  onBigHw = false;
   private skipPad = -1;
   /** ROADS STEP 4: the last U-turn opening the driver has already decided about (never twice). */
   private skipOp = -1;
@@ -79,7 +85,7 @@ export class RouteBuilder {
 
   /** Seed the route with the lane point we start on. */
   start(): void {
-    const p = this.g.at(this.roadId, this.s, this.dir, this.g.laneOffset(this.roadId), this.tmp);
+    const p = this.g.at(this.roadId, this.s, this.dir, this.laneOff(this.roadId), this.tmp);
     this.lastHx = p.hx;
     this.lastHz = p.hz;
     this.push(p.x, p.z, p.y, this.cruise());
@@ -96,13 +102,25 @@ export class RouteBuilder {
     return false;
   }
 
-  private cruise(): number {
+  /** Speed (m/s) this driver cruises at on the road the route is being built on. */
+  cruise(): number {
     if (this.fast) return Math.min(Math.max(this.g.limit(this.roadId) * 1.9, 22), 42);
+    if (this.g.isBigHighway(this.roadId)) {
+      // big highway: its own, much higher limit (cars), or the lower one of a truck / tanker
+      const H = Config.traffic.highway;
+      return Math.min(H.limitKmh / 3.6, this.rule?.highwayMax ?? Infinity) * this.temper;
+    }
     return Math.min(this.g.limit(this.roadId) * 0.85, 22) * this.temper;
+  }
+
+  /** Lane centre offset of the road: on a big highway the lane this driver prefers, otherwise the kerb lane. */
+  private laneOff(roadId: number): number {
+    return this.g.laneOffset(roadId, this.g.isBigHighway(roadId) ? this.lane : 0);
   }
 
   private push(x: number, z: number, y: number, vmax: number, junction = false, ut: 0 | 1 | 2 = 0, ur = 0): void {
     const n = this.pts.length;
+    this.onBigHw = this.g.isBigHighway(this.roadId);
     const pi = this.fast && !junction ? this.g.passInfo(this.roadId, this.s) : { shift: 0, oncoming: false };
     this.pts.push({ x, z, y, vmax, os: pi.shift, oc: pi.oncoming, jn: junction || (this.fast && this.nearJunction()), ut, ur });
     if (n >= 2) {
@@ -140,7 +158,7 @@ export class RouteBuilder {
     if (this.target && this.roadId === this.target.roadId && (!this.plan || this.plan.length === 0)) {
       const ahead = (this.target.s - this.s) * this.dir;
       if (ahead <= STEP && ahead >= -STEP) {
-        const p = this.g.at(this.roadId, this.target.s, this.dir, this.g.laneOffset(this.roadId), this.tmp);
+        const p = this.g.at(this.roadId, this.target.s, this.dir, this.laneOff(this.roadId), this.tmp);
         this.lastHx = p.hx;
         this.lastHz = p.hz;
         this.push(p.x, p.z, p.y, 0);
@@ -160,13 +178,13 @@ export class RouteBuilder {
     const next = this.s + this.dir * STEP;
     if (next < 0 || next > r.length) {
       // end of the road: finish at the very end, then stop
-      const p = this.g.at(this.roadId, this.dir > 0 ? r.length : 0, this.dir, this.g.laneOffset(this.roadId), this.tmp);
+      const p = this.g.at(this.roadId, this.dir > 0 ? r.length : 0, this.dir, this.laneOff(this.roadId), this.tmp);
       this.push(p.x, p.z, p.y, 0);
       this.terminal = true;
       return;
     }
     this.s = next;
-    const p = this.g.at(this.roadId, this.s, this.dir, this.g.laneOffset(this.roadId), this.tmp);
+    const p = this.g.at(this.roadId, this.s, this.dir, this.laneOff(this.roadId), this.tmp);
     this.lastHx = p.hx;
     this.lastHz = p.hz;
     if (this.rule && !this.rule.placeOk(p.x, p.z)) {
@@ -190,6 +208,7 @@ export class RouteBuilder {
    */
   private uturnAhead(): boolean {
     if (this.fast || this.plan || this.target || !this.rule?.uturnOk) return false;
+    if (this.g.isBigHighway(this.roadId) && this.lane > 0) return false; // a fast-lane car never turns round in a median opening
     const ops = this.g.uturns(this.roadId);
     if (ops.length === 0) return false;
     const R = this.g.laneOffset(this.roadId);
@@ -287,7 +306,7 @@ export class RouteBuilder {
     // curve from where we are to the lane of the new road, TURN_RADIUS_DIST past the pad centre
     const last = this.pts[this.pts.length - 1];
     const sOut = pick.s + pick.dir * this.turnDist;
-    const q = this.g.at(pick.roadId, sOut, pick.dir, this.g.laneOffset(pick.roadId), this.tmp);
+    const q = this.g.at(pick.roadId, sOut, pick.dir, this.laneOff(pick.roadId), this.tmp);
     const p0x = last.x;
     const p0z = last.z;
     const p2x = q.x;

@@ -13,10 +13,11 @@ import { Ammo } from './Ammo';
 import { CombatEffects } from './CombatEffects';
 import type { CombatHooks } from './CombatHooks';
 import { GunAudio } from './GunAudio';
+import { GUN_NAME_EN, gunIconSvg } from './GunIcons';
 import { Wanted } from './Wanted';
 import { WEAPON_ORDER, weaponSpec, type WeaponId } from './Weapons';
 
-const dName = (id: WeaponId): string => ({ pistol: 'পিস্তল', combatPistol: 'কমব্যাট পিস্তল', heavyPistol: 'হেভি পিস্তল', revolver: 'রিভলভার', microSmg: 'মাইক্রো SMG', smg: 'SMG', ak47: 'AK-47', carbineRifle: 'কারবাইন রাইফেল', shotgun: 'শটগান', sniperRifle: 'স্নাইপার রাইফেল' } as Record<WeaponId, string>)[id] ?? id;
+const dName = (id: WeaponId): string => GUN_NAME_EN[id] ?? id;
 
 export interface CombatDeps {
   scene: THREE.Scene;
@@ -95,15 +96,23 @@ export class CombatSystem {
   }
 
   /** Every frame. `canShoot` = active gameplay, ready player and not swimming; shooting may use a vehicle's body/position. */
-  update(dt: number, canShoot: boolean): void {
+  update(dt: number, canShootIn: boolean): void {
+    let canShoot = canShootIn;
     const { input, hud, player, orbit } = this.d;
     this.wanted.update(dt);
     this.effects.update(dt);
     hud.setWanted(this.wanted.stars);
 
+    // weapon wheel: B or a click takes the highlighted gun (a click only reaches here while the mouse is captured); nothing fires while it is open
+    const wheelWasOpen = this.weaponPanel.style.display === 'flex';
+    if (wheelWasOpen && input.wasPressed('Mouse0')) this.equipWeapon(WEAPON_ORDER[this.wheelSel]);
+    else if (input.wasPressed('KeyB')) {
+      if (wheelWasOpen) this.equipWeapon(WEAPON_ORDER[this.wheelSel]);
+      else this.toggleWeaponPicker();
+    }
+    if (wheelWasOpen) canShoot = false;
     const aiming = canShoot && input.isDown('Mouse2');
     const wantFire = canShoot && (input.isDown('Mouse0') || input.wasPressed('Mouse0'));
-    if (input.wasPressed('KeyB')) this.toggleWeaponPicker();
     if (canShoot && !player.inVehicle && input.wasPressed('KeyQ')) {
       this.weaponIdx = (this.weaponIdx + 1) % WEAPON_ORDER.length;
       this.drawn = Config.combat.drawSeconds;
@@ -179,11 +188,15 @@ export class CombatSystem {
   }
 
   /**
-   * WEAPON WHEEL (B): the guns sit on a circle in the middle of the screen, over the game. Click a gun to take it in the hand; B or Esc closes the wheel. The centre shows the gun under the mouse (or the one in the hand) with its ammo.
+   * WEAPON WHEEL (B): the guns sit on a circle in the middle of the screen, over the game. The mouse wheel turns the highlight round the circle (down = next, up = previous), hovering a gun highlights it too.
+   * B or a click takes the highlighted gun in the hand and closes the wheel; Esc closes it without changing anything.
+   * Every gun shows its English name and a silhouette icon; the centre shows the highlighted gun bigger with its ammo.
    */
-  private wheelItems: { id: WeaponId; el: HTMLButtonElement }[] = [];
+  private wheelItems: { id: WeaponId; el: HTMLButtonElement; ammo: HTMLDivElement }[] = [];
   private wheelInfo = document.createElement('div');
-  private wheelHover: WeaponId | null = null;
+  /** Index (in WEAPON_ORDER) of the highlighted gun. */
+  private wheelSel = 0;
+  private wheelAcc = 0;
 
   private createWeaponPicker(parent: HTMLElement): void {
     this.weaponButton.type = 'button';
@@ -208,7 +221,7 @@ export class CombatSystem {
     Object.assign(ring.style, { position: 'absolute', inset: '9%', borderRadius: '50%', border: '2px solid rgba(255,255,255,.22)',
       background: 'radial-gradient(circle, rgba(18,36,48,.88) 0%, rgba(8,21,30,.82) 62%, rgba(8,21,30,.35) 100%)', boxShadow: '0 12px 50px rgba(0,0,0,.55)' });
     wheel.appendChild(ring);
-    // centre: name + ammo of the gun under the mouse / in the hand
+    // centre: the highlighted gun (icon, name, ammo)
     Object.assign(this.wheelInfo.style, { position: 'absolute', left: '50%', top: '50%', width: '34%', transform: 'translate(-50%,-50%)',
       textAlign: 'center', color: '#fff', pointerEvents: 'none', lineHeight: '1.35' });
     wheel.appendChild(this.wheelInfo);
@@ -218,14 +231,22 @@ export class CombatSystem {
       const b = document.createElement('button');
       b.type = 'button';
       b.dataset.w = id;
-      Object.assign(b.style, { position: 'absolute', left: `${50 + 40 * Math.cos(ang)}%`, top: `${50 + 40 * Math.sin(ang)}%`,
-        transform: 'translate(-50%,-50%)', width: '25%', minHeight: '13%', padding: '6px 4px', borderRadius: '999px',
-        border: '2px solid rgba(255,255,255,.28)', background: '#203846', color: '#fff', font: '700 13px sans-serif',
-        cursor: 'pointer', transition: 'transform .08s, background .08s, border-color .08s', lineHeight: '1.25' });
-      b.addEventListener('mouseenter', () => { this.wheelHover = id; this.refreshWheel(); });
-      b.addEventListener('mouseleave', () => { this.wheelHover = null; this.refreshWheel(); });
+      Object.assign(b.style, { position: 'absolute', left: `${50 + 41 * Math.cos(ang)}%`, top: `${50 + 41 * Math.sin(ang)}%`,
+        transform: 'translate(-50%,-50%)', width: '23%', padding: '.45em .3em .4em', borderRadius: '1.6em',
+        border: '2px solid rgba(255,255,255,.28)', background: '#203846', color: '#fff', font: '700 1em sans-serif',
+        cursor: 'pointer', transition: 'transform .08s, background .08s, border-color .08s', lineHeight: '1.2' });
+      const icon = document.createElement('div');
+      icon.style.cssText = 'height:2.5em;width:88%;margin:0 auto .15em;pointer-events:none';
+      icon.innerHTML = gunIconSvg(id);
+      const name = document.createElement('div');
+      name.textContent = dName(id);
+      name.style.cssText = 'font-size:1em;font-weight:800;white-space:nowrap;pointer-events:none';
+      const am = document.createElement('div');
+      am.style.cssText = 'font-size:.82em;font-weight:600;opacity:.75;pointer-events:none';
+      b.append(icon, name, am);
+      b.addEventListener('mouseenter', () => { this.wheelSel = i; this.refreshWheel(); });
       b.addEventListener('click', (e) => { e.stopPropagation(); this.equipWeapon(id); });
-      this.wheelItems.push({ id, el: b });
+      this.wheelItems.push({ id, el: b, ammo: am });
       wheel.appendChild(b);
     });
     this.weaponPanel.appendChild(wheel);
@@ -234,10 +255,23 @@ export class CombatSystem {
       if (this.weaponPanel.style.display !== 'flex') return;
       if (e.key === 'Escape') this.closeWheel();
     });
+    // mouse wheel turns the highlight round the circle (captured first, so the camera never zooms while the wheel is open)
+    window.addEventListener('wheel', (e) => {
+      if (this.weaponPanel.style.display !== 'flex') return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const unit = e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 100 : 1;
+      this.wheelAcc += e.deltaY * unit;
+      if (Math.abs(this.wheelAcc) < 40) return; // trackpads send many tiny steps
+      const step = this.wheelAcc > 0 ? 1 : -1;
+      this.wheelAcc = 0;
+      this.wheelSel = (this.wheelSel + step + n) % n;
+      this.refreshWheel();
+    }, { capture: true, passive: false });
     parent.append(this.weaponButton, this.weaponPanel);
   }
 
-  /** Take a gun in the hand (clicked on the wheel / number key). */
+  /** Take a gun in the hand (click on the wheel / B on the highlighted gun). */
   private equipWeapon(id: WeaponId): void {
     this.weaponIdx = WEAPON_ORDER.indexOf(id);
     this.drawn = Config.combat.drawSeconds;
@@ -249,38 +283,36 @@ export class CombatSystem {
 
   private closeWheel(): void {
     this.weaponPanel.style.display = 'none';
-    this.wheelHover = null;
+    this.wheelAcc = 0;
   }
 
-  /** Names, ammo, the gun in the hand highlighted, the centre text. */
+  /** Ammo, the highlighted gun (green), the gun in the hand (light border), the centre. */
   private refreshWheel(): void {
     const cur = this.weapon;
-    for (const { id, el } of this.wheelItems) {
-      const active = id === cur;
-      el.textContent = '';
-      const name = document.createElement('div');
-      name.textContent = dName(id);
-      const am = document.createElement('div');
-      am.textContent = `${this.ammo.mag(id)} / ${this.ammo.reserve(id)}`;
-      am.style.cssText = 'font-size:11px;font-weight:600;opacity:.75';
-      el.append(name, am);
-      const hov = id === this.wheelHover;
-      el.style.background = active ? '#1f7a4d' : hov ? '#2c5a72' : '#203846';
-      el.style.borderColor = active ? '#7dffb5' : hov ? '#9fd8ff' : 'rgba(255,255,255,.28)';
-      el.style.transform = hov ? 'translate(-50%,-50%) scale(1.08)' : 'translate(-50%,-50%)';
+    const sel = WEAPON_ORDER[this.wheelSel];
+    for (const { id, el, ammo } of this.wheelItems) {
+      const active = id === sel;
+      const inHand = id === cur;
+      ammo.textContent = `${this.ammo.mag(id)} / ${this.ammo.reserve(id)}`;
+      el.style.background = active ? '#1f7a4d' : inHand ? '#27495a' : '#203846';
+      el.style.borderColor = active ? '#7dffb5' : inHand ? 'rgba(125,255,181,.55)' : 'rgba(255,255,255,.28)';
+      el.style.transform = active ? 'translate(-50%,-50%) scale(1.08)' : 'translate(-50%,-50%)';
+      el.style.zIndex = active ? '2' : '1';
     }
-    const shown = this.wheelHover ?? cur;
     this.wheelInfo.textContent = '';
+    const ic = document.createElement('div');
+    ic.style.cssText = 'height:3.6em;width:80%;margin:0 auto .2em;opacity:.95';
+    ic.innerHTML = gunIconSvg(sel);
     const t = document.createElement('div');
-    t.textContent = dName(shown);
-    t.style.cssText = 'font-size:18px;font-weight:800';
+    t.textContent = dName(sel);
+    t.style.cssText = 'font-size:1.45em;font-weight:800';
     const a = document.createElement('div');
-    a.textContent = `গুলি ${this.ammo.mag(shown)} / ${this.ammo.reserve(shown)}`;
-    a.style.cssText = 'font-size:13px;opacity:.85';
+    a.textContent = `গুলি ${this.ammo.mag(sel)} / ${this.ammo.reserve(sel)}`;
+    a.style.cssText = 'font-size:1em;opacity:.85';
     const h = document.createElement('div');
-    h.textContent = this.wheelHover ? 'ক্লিক করে হাতে নিন' : 'হাতে আছে · B / Esc বন্ধ';
-    h.style.cssText = 'font-size:11px;opacity:.6;margin-top:4px';
-    this.wheelInfo.append(t, a, h);
+    h.textContent = sel === cur ? 'হাতে আছে · B / ক্লিক · Esc বন্ধ' : 'B / ক্লিক = হাতে নিন · Esc বন্ধ';
+    h.style.cssText = 'font-size:.85em;opacity:.6;margin-top:4px';
+    this.wheelInfo.append(ic, t, a, h);
   }
 
   private toggleWeaponPicker(): void {
@@ -289,10 +321,12 @@ export class CombatSystem {
       return;
     }
     const wheel = this.weaponPanel.querySelector('[data-wheel]') as HTMLElement;
-    const s = Math.round(Math.max(300, Math.min(560, window.innerWidth * 0.94, window.innerHeight * 0.92)));
+    const s = Math.round(Math.max(300, Math.min(660, window.innerWidth * 0.94, window.innerHeight * 0.92)));
     wheel.style.width = `${s}px`;
     wheel.style.height = `${s}px`;
-    this.wheelHover = null;
+    wheel.style.fontSize = `${Math.max(8, s / 46)}px`; // the buttons size themselves in em
+    this.wheelSel = this.weaponIdx; // starts on the gun in the hand
+    this.wheelAcc = 0;
     this.refreshWheel();
     this.weaponPanel.style.display = 'flex';
   }

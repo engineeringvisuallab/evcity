@@ -14,7 +14,7 @@ import { SPECS, canUse, canUseRoad, canUsePlace, groundY, type Vehicle, type Veh
 import type { BusStops } from './BusStops';
 import { AIDriver, type Obstacle } from './AIDriver';
 import { RoadGraph, type RoadPoint } from './RoadGraph';
-import { RouteBuilder } from './Route';
+import { RouteBuilder, type RouteRule } from './Route';
 import type { TrafficSignals } from './TrafficSignals';
 
 export interface TrafficDeps {
@@ -30,6 +30,11 @@ export interface TrafficDeps {
   /** Traffic lights: AI drivers obey them. */
   signals?: TrafficSignals;
 }
+
+/** Cargo trucks, fuel tankers and buses: they keep to the slow kerb lane of a big highway. */
+const isHeavy = (spec: VehicleSpec): boolean => spec.look.kind === 'truck' || spec.look.kind === 'bus' || spec.id === 'tanker' || (spec.cruiseMax !== undefined && spec.cruiseMax < 20);
+/** Too slow for a freeway (cycle rickshaw, CNG auto): never spawns on one and never turns onto one. */
+const isSlow = (spec: VehicleSpec): boolean => spec.cruiseMax !== undefined && spec.cruiseMax <= 14;
 
 const tmpPt: RoadPoint = { x: 0, z: 0, y: 0, hx: 0, hz: 0 };
 const V3 = new THREE.Vector3();
@@ -152,11 +157,13 @@ export class TrafficManager {
       const spec = this.pickSpec(road.kind, tmpPt.x, tmpPt.z);
       if (!spec) continue;
       const temper = 0.7 + Math.random() * 0.28;
-      const route = new RouteBuilder(g, Math.random, spot.roadId, spot.s, dir, temper, {
-        roadOk: (k) => canUseRoad(spec.use, k),
-        placeOk: (x, z) => canUsePlace(spec.use, getWorldZoneAt(x, z).kind, this.d.plan.areaAt(x, z)?.kind ?? null),
-        uturnOk: (section) => canUTurn(spec, section),
-      });
+      const route = new RouteBuilder(g, Math.random, spot.roadId, spot.s, dir, temper, this.routeRule(spec));
+      // big highway: slow / heavy vehicles keep the kerb lane, ordinary cars take the middle (careful) or the fast lane (quick drivers)
+      const hw = g.isBigHighway(spot.roadId);
+      if (hw) {
+        route.lane = isHeavy(spec) ? 0 : temper > 0.85 ? 2 : 1;
+        if (route.lane > 0) g.at(spot.roadId, spot.s, dir, g.laneOffset(spot.roadId, route.lane), tmpPt);
+      }
       route.start();
       const yaw = Math.atan2(tmpPt.hx, tmpPt.hz);
       const colour = this.paint(spec);
@@ -174,8 +181,24 @@ export class TrafficManager {
         car.ai.ignoreSignals = true;
       }
       car.setEnabled(true);
+      // on a freeway the traffic is already moving (nobody appears standing still in the fast lane)
+      if (hw) {
+        const v0 = route.pts[0].vmax * 0.8;
+        car.body.setLinvel({ x: tmpPt.hx * v0, y: 0, z: tmpPt.hz * v0 }, true);
+      }
       return;
     }
+  }
+
+  /** What road kinds / places / U-turns this vehicle's AI route may use (and its freeway speed cap). */
+  private routeRule(spec: VehicleSpec): RouteRule {
+    const H = Config.traffic.highway;
+    return {
+      roadOk: (k) => canUseRoad(spec.use, k) && !(k === 'highway' && isSlow(spec)),
+      placeOk: (x, z) => canUsePlace(spec.use, getWorldZoneAt(x, z).kind, this.d.plan.areaAt(x, z)?.kind ?? null),
+      uturnOk: (section) => canUTurn(spec, section),
+      highwayMax: spec.id === 'tanker' ? H.tankerKmh / 3.6 : spec.look.kind === 'truck' ? H.truckKmh / 3.6 : undefined,
+    };
   }
 
   /**
@@ -191,11 +214,7 @@ export class TrafficManager {
     car.forwardVector(F3);
     const dir: 1 | -1 = tmpPt.hx * F3.x + tmpPt.hz * F3.z >= 0 ? 1 : -1;
     const spec = car.spec;
-    const route = new RouteBuilder(g, Math.random, near.roadId, near.s, dir, 0.7 + Math.random() * 0.28, {
-      roadOk: (k) => canUseRoad(spec.use, k),
-      placeOk: (x, z) => canUsePlace(spec.use, getWorldZoneAt(x, z).kind, this.d.plan.areaAt(x, z)?.kind ?? null),
-      uturnOk: (section) => canUTurn(spec, section),
-    });
+    const route = new RouteBuilder(g, Math.random, near.roadId, near.s, dir, 0.7 + Math.random() * 0.28, this.routeRule(spec));
     route.start();
     this.d.people.dispose(driver);
     car.seatDriver(driver);
@@ -216,6 +235,7 @@ export class TrafficManager {
     let total = 0;
     for (const spec of Object.values(SPECS)) {
       if (!canUse(spec.use, road, zone, area)) continue;
+      if (road === 'highway' && isSlow(spec)) continue; // no cycle rickshaw / CNG auto on a freeway
       if (spec.look.kind === 'bus' && buses >= Config.traffic.maxBuses) continue;
       fits.push({ spec, w: spec.use.weight });
       total += spec.use.weight;
