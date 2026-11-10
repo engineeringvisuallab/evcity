@@ -260,6 +260,8 @@ export class Engine {
   /** STAGE 14 / 5B.2: train colliders (Rapier, near the player), overlap check with the player and vehicles, no damage. */
   private trainPhysics: TrainPhysics;
   private trainContacts: TrainContacts;
+  /** CRASH FEEL: when a vehicle was last thrown by a train (ms), so one contact is one strike. */
+  private trainStruck = new WeakMap<object, number>();
   private trainEntities: TrainEntity[] = [];
   /** STAGE 15 / Step 6: signals you see, the station board on the HUD, Bangla station announcements. */
   private signalLayer: SignalLayer;
@@ -1213,7 +1215,30 @@ export class Engine {
         list.push({ id: `vehicle-${id}`, kind: 'vehicle', obb: vehicleObb(this.tmpA.x, this.tmpA.y + (v.spec.colliderY ?? 0), this.tmpA.z, this.tmpB.x, this.tmpB.z, v.spec.half) });
       }
     }
-    this.trainContacts.check(list);
+    const hits = this.trainContacts.check(list);
+    // CRASH FEEL: a moving train does not push a vehicle along like a wall: it throws it aside / ahead and wrecks it
+    if (hits.length > 0) {
+      const now = performance.now();
+      for (const h of hits) {
+        if (h.kind !== 'vehicle' || h.trainSpeed < 2.5) continue;
+        for (const v of this.vehicles.vehicles) {
+          if (`vehicle-${this.vehicleIds.get(v)}` !== h.entity) continue;
+          if (now - (this.trainStruck.get(v) ?? -1e9) < 2500) break; // one strike per contact
+          this.trainStruck.set(v, now);
+          v.getWorldPosition(this.tmpA);
+          const nx = -h.dirZ;
+          const nz = h.dirX;
+          const side = (this.tmpA.x - h.carX) * nx + (this.tmpA.z - h.carZ) * nz >= 0 ? 1 : -1;
+          let px = h.dirX + nx * side * 0.7;
+          let pz = h.dirZ + nz * side * 0.7;
+          const pl = Math.hypot(px, pz) || 1;
+          px /= pl; pz /= pl;
+          v.blastPush(px, pz, Math.min(28, h.trainSpeed * 1.1 + 3));
+          v.blast(Math.min(120, 35 + h.trainSpeed * 5), false);
+          break;
+        }
+      }
+    }
   }
 
   /** Everything the site map shows: where you are (on foot / in a car / in the helicopter) and the parked vehicles. */

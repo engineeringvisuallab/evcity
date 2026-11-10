@@ -317,6 +317,18 @@ export const Config = {
     collideCell: 50,
     /** Max squares given colliders per physics update (5 Hz), so walking into a forest never hitches. */
     collideBuildPerTick: 8,
+    /**
+     * CRASH FEEL (trees): a trunk thinner than `passRadius` (m) or a tree lower than `passHeight` (m) has NO collider: people, cars and trains go through it
+     * (young trees, the small median trees). A trunk up to `breakRadius` (m) is knocked down by a vehicle that drives into it faster than `breakSpeed` (m/s):
+     * it falls (TreeDestruction), and the vehicle loses speed by momentum (tree mass = `treeDensity` x trunk volume, trunk `treeLen` m long per unit scale).
+     * Thicker trunks stay solid.
+     */
+    passRadius: 0.16,
+    passHeight: 1.0,
+    breakRadius: 0.45,
+    breakSpeed: 4,
+    treeDensity: 650,
+    treeLen: 4,
     /** Rocks: boulders and outcrops, placed like trees. Rocks at least `collideMinHeight` (m) tall collide (smaller ones can be stepped over). */
     rocks: {
       cellSize: 20,

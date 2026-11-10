@@ -4,7 +4,8 @@ import type { FloatingOrigin } from '../world/FloatingOrigin';
 import { chunkOriginX, chunkOriginZ, worldToChunkCoord, chunkKey } from '../world/WorldGrid';
 import { treeMeshes } from './TreeChunkBuilder';
 import type { TreePhysics } from './TreePhysics';
-import { TREE_KIND_COUNT, TREE_STRIDE, treeKey, treeWidth, type TreeChunkData } from './TreeTypes';
+import { Config } from '../core/Config';
+import { TREE_KIND_COUNT, TREE_STRIDE, TREE_TRUNK, treeKey, treeWidth, type TreeChunkData } from './TreeTypes';
 
 interface ChunkTrees {
   cx: number;
@@ -92,8 +93,37 @@ export class TreeDestruction {
     });
   }
 
+  /**
+   * CRASH FEEL: a vehicle drives into trees. Every tree inside the oriented box whose trunk is at most `Config.vegetation.breakRadius` thick falls
+   * (the trunk collider goes at once, so the vehicle is not stopped by it). Returns the mass (kg) of the trees that fell, so the vehicle can lose
+   * speed by momentum. Thicker trunks stay standing and solid.
+   */
+  crashInBox(cx: number, cz: number, fx: number, fz: number, hl: number, hw: number): number {
+    const V = Config.vegetation;
+    const reach = Math.hypot(hl, hw);
+    let mass = 0;
+    this.scan(cx - reach, cz - reach, cx + reach, cz + reach, (x, z, kind, scale) => {
+      const spec = TREE_TRUNK[kind];
+      if (!spec) return null;
+      const r = spec.r * treeWidth(kind, scale);
+      if (r > V.breakRadius || r < V.passRadius || spec.h * scale < V.passHeight) return null; // too thick: stays; too thin: there is no collider anyway
+      const rx = x - cx;
+      const rz = z - cz;
+      const along = rx * fx + rz * fz;
+      const lat = rx * fz - rz * fx;
+      if (Math.abs(along) > hl || Math.abs(lat) > hw) return null;
+      mass += V.treeDensity * Math.PI * r * r * V.treeLen * scale;
+      const s = lat >= 0 ? 1 : -1;
+      const px = fx * 0.85 + fz * 0.5 * s;
+      const pz = fz * 0.85 - fx * 0.5 * s;
+      const l = Math.hypot(px, pz) || 1;
+      return { x: px / l, z: pz / l };
+    });
+    return mass;
+  }
+
   /** Visits the trees of the chunks under the rectangle; `test` returns the fall direction or null (stays). Returns how many fell. */
-  private scan(x0: number, z0: number, x1: number, z1: number, test: (x: number, z: number) => { x: number; z: number } | null): number {
+  private scan(x0: number, z0: number, x1: number, z1: number, test: (x: number, z: number, kind: number, scale: number) => { x: number; z: number } | null): number {
     const a = worldToChunkCoord(x0, z0);
     const b = worldToChunkCoord(x1, z1);
     let n = 0;
@@ -113,7 +143,7 @@ export class TreeDestruction {
             if (wx < x0 || wx > x1 || wz < z0 || wz > z1) continue;
             const dead = this.dead.get(key);
             if (dead?.has(treeKey(k, data[o], data[o + 2]))) continue;
-            const push = test(wx, wz);
+            const push = test(wx, wz, k, data[o + 3]);
             if (!push) continue;
             this.fell(key, ch, k, i, o, wx, wz, push);
             n++;

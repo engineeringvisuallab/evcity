@@ -10,7 +10,7 @@ export interface EngineEvents {
   'chunk:unloaded': { key: string; cx: number; cz: number };
   'camera:locked': { locked: boolean };
   /** STAGE 14 / 5B.2: the player or a vehicle starts touching a train car (no damage yet). */
-  'train:overlap': { train: number; car: number; entity: string; kind: 'player' | 'vehicle'; depth: number; trainSpeed: number };
+  'train:overlap': { train: number; car: number; entity: string; kind: 'player' | 'vehicle'; depth: number; trainSpeed: number; dirX: number; dirZ: number; carX: number; carZ: number };
 }
 
 type Handler<T> = (payload: T) => void;

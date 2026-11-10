@@ -112,6 +112,7 @@ export class TreePhysics {
         const scale = d[o + 3];
         const h = Math.min(spec.h * scale, 5);
         const radius = spec.r * (isRock ? scale : treeWidth(k, scale));
+        if (!isRock && (radius < Config.vegetation.passRadius || spec.h * scale < Config.vegetation.passHeight)) continue; // CRASH FEEL: young / thin trees are not solid
         // relative to the cell centre (x, z); y is the ground height (the body sits at y = 0)
         if (!isRock) pending.push({ id, off: b.length, key: treeKey(k, lx, lz) });
         b.push(lx - (ci + 0.5) * size, d[o + 1], lz - (cj + 0.5) * size, radius, h / 2, isRock ? -1 : k, scale);

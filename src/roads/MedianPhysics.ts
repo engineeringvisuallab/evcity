@@ -68,7 +68,8 @@ export class MedianPhysics {
       const desc = R.ColliderDesc.cuboid(c.segs[o + 4], H / 2, c.segs[o + 3] / 2 + 0.05)
         .setTranslation(c.segs[o] - c.cx, c.segs[o + 1] + H / 2, c.segs[o + 2] - c.cz)
         .setRotation(q)
-        .setFriction(0.3);
+        .setFriction(0.0) // CRASH FEEL: a car that touches the median slides along it and bounces off a little; it does not stick to it
+        .setRestitution(0.2);
       world.createCollider(desc, body);
     }
     this.active.set(key, body);

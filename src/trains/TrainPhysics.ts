@@ -61,7 +61,7 @@ export class TrainPhysics {
       const body = world.createRigidBody(
         R.RigidBodyDesc.kinematicPositionBased().setTranslation(b.x - this.origin.origin.x, b.y, b.z - this.origin.origin.z).setRotation(b.q),
       );
-      world.createCollider(R.ColliderDesc.cuboid(b.hx, b.hy, b.hz).setFriction(0.8), body);
+      world.createCollider(R.ColliderDesc.cuboid(b.hx, b.hy, b.hz).setFriction(0.1), body);
       list.push(body);
     }
     this.bodies.set(id, list);

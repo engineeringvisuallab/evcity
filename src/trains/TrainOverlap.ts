@@ -20,6 +20,11 @@ export interface TrainHit {
   depth: number;
   /** Speed of the train (m/s). */
   trainSpeed: number;
+  /** Unit direction of travel of the car (x, z), and the car's centre (x, z). */
+  dirX: number;
+  dirZ: number;
+  carX: number;
+  carZ: number;
 }
 
 /** The player: an upright cylinder (feet at y, round) around the capsule. */
@@ -108,7 +113,7 @@ export class TrainContacts {
             if (far > bx.hx + Math.hypot(e.obb.hx, e.obb.hy, e.obb.hz) + 1) continue;
             const depth = obbPenetration(bx, e.obb);
             if (depth <= 0) continue;
-            const h: TrainHit = { train: t.id, car: bx.car, entity: e.id, kind: e.kind, depth, trainSpeed: t.v };
+            const h: TrainHit = { train: t.id, car: bx.car, entity: e.id, kind: e.kind, depth, trainSpeed: t.v, dirX: bx.ax[0], dirZ: bx.ax[2], carX: bx.x, carZ: bx.z };
             hits.push(h);
             const key = `${t.id}|${e.id}`;
             if (!seen.has(key)) {

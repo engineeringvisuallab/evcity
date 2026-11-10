@@ -134,6 +134,13 @@ export type VehicleEvent =
   /** The vehicle is a write-off (crash fire / burn-out) but did NOT blow up: everybody gets out alive. */
   | { type: 'totaled' };
 
+/**
+ * CRASH FEEL: the chassis slides along a wall instead of sticking to it (low friction) and rebounds a little on a hard hit (restitution, combined with the
+ * larger of the two values, so a wall that has none still gives the car this bounce). Off-centre hits make the rigid body spin by themselves.
+ */
+const CRASH_FRICTION = 0.2;
+const CRASH_BOUNCE = 0.25;
+
 /** A one-step velocity change (m/s) this big (6 g) opens a "crash window". Braking and bumps stay far below it. */
 const CRASH_TRIGGER = 1.0;
 /** The window closes after this many quiet seconds. Damage uses the NET velocity change of the whole crash, so solver pops and contact jitter do not count. */
@@ -318,7 +325,7 @@ export class Vehicle implements OrbitTarget {
     );
     // Collider has no density of its own: mass and centre of mass are set explicitly (low COM = stable car).
     this.collider = d.physics.world.createCollider(
-      R.ColliderDesc.cuboid(s.half.x, s.half.y, s.half.z).setTranslation(0, s.colliderY ?? 0, 0).setDensity(0).setFriction(0.4).setRestitution(0.05),
+      R.ColliderDesc.cuboid(s.half.x, s.half.y, s.half.z).setTranslation(0, s.colliderY ?? 0, 0).setDensity(0).setFriction(CRASH_FRICTION).setRestitution(CRASH_BOUNCE).setRestitutionCombineRule(R.CoefficientCombineRule.Max),
       this.body,
     );
     this.defs = wheelDefs(s);
