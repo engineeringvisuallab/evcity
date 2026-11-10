@@ -81,7 +81,7 @@ export function planMedians(roads: RoadNetwork): MedianPlan {
   for (const r of roads.roads) {
     const sec = dividedSectionOf(r);
     if (!sec || r.earth || r.xs.length < 2 || r.length < M.minRun) continue;
-    const kerbH = Config.city.roadSections[sec.id].kerbH;
+    const kerbH = M.height; // median kerb height (Config.city.median.height), no longer the 0.15 m of the design table
     const cur = { i: 0 };
     const count = Math.floor(r.length / M.step) + 1;
     // sample the whole road, mark the samples that are inside a junction

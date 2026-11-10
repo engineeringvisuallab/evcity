@@ -94,8 +94,16 @@ export const Config = {
       step: 3,
       /** The soil surface sits this far (m) below the kerb top. */
       soilDrop: 0.04,
-      /** Height (m) of the invisible collider above the road surface. A 150 mm kerb alone does not stop a car (wheel radius 0.33 m), so the barrier is 0.5 m (decision D4). */
-      colliderH: 0.5,
+      /** Height (m) of the median kerb (and so of the soil) above the road surface. 0.15 before, now 5x = 0.75. Used by MedianPlan, MedianView, medianSoilTop (hedges / trees stand on it). */
+      height: 0.75,
+      /** Height (m) of the invisible collider above the road surface: a little above `height` so a car cannot climb the tall kerb. */
+      colliderH: 0.85,
+      /**
+       * Grass + flowers on the median soil (brown earth with patchy grass, drawn by MedianView as ONE merged mesh per bucket, no instancing, no wind = cheap).
+       * Only buckets (about 62 m of road) within `range` m of the player are drawn; `perSeg` tufts per 3 m piece (x Quality grassMul); `blades` per tuft (2 triangles each);
+       * `flowerShare` = share of tufts with a coloured flower on a tall stem; `height` = min..max blade height (m).
+       */
+      grass: { enabled: true, range: 90, perSeg: 12, blades: 4, flowerShare: 0.2, height: [0.16, 0.4] as [number, number] },
       /** The median ends this far (m) beyond the junction pad core (rCore). Hedges stop at 9, trees at 16, so the planting is always inside the median. */
       padMargin: 8,
       /** Length (m) of the rounded nose at each end of a median piece. */

@@ -110,5 +110,5 @@ export function dividedSectionOf(r: { halfWidth: number; medianHalf: number }): 
 /** ROADS STEP 2: height (m) of the soil surface of the median above the road surface (kerb height minus soilDrop). Trees and hedges of the median stand on it. */
 export function medianSoilTop(r: { halfWidth: number; medianHalf: number }): number {
   const d = dividedSectionOf(r);
-  return d ? Config.city.roadSections[d.id].kerbH - Config.city.median.soilDrop : 0;
+  return d ? Config.city.median.height - Config.city.median.soilDrop : 0;
 }
