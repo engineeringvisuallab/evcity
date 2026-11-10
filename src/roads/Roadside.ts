@@ -5,7 +5,7 @@ import type { TerrainGenerator } from '../terrain/TerrainGenerator';
 import type { RoadNetwork } from './RoadNetwork';
 import type { RoadSpec } from './RoadTypes';
 import { medianSoilTop } from './RoadSection';
-import { padIndex } from './PadIndex';
+import { padIndex, medianPadIndex } from './PadIndex';
 import { footpathHas, footpathNear } from './FootpathPlan';
 import { crossingZoneHas, planMedians } from './MedianPlan';
 import { uturnZoneHas } from './UTurns';
@@ -124,6 +124,7 @@ export function planCityTrees(roads: RoadNetwork): { pits: number[]; trees: numb
   const trees: number[] = [];
   const byChunk = new Map<string, number[]>();
   const nearPad = padIndex(roads);
+  const nearMedPad = medianPadIndex(roads); // the median and its planting stop earlier at 6 x 6 lane junctions
   const [lo, hi] = C.treeSpacing;
   const seed = Config.world.seed;
   const push = (t: number[], px: number, pz: number): void => {
@@ -189,7 +190,7 @@ export function planCityTrees(roads: RoadNetwork): { pits: number[]; trees: numb
         const inCity = cityPoint(roads, r, w);
         // ROADS STEP 5: outside the cities the median gets a small tree at `treeKeep` of the places (the choice is a hash of the place, so the city sequence does not change)
         if (!inCity && (!CM.enabled || w.onBridge() || hash2D(seed ^ 0x6c3d, r.id, Math.floor(here)) % 1000 >= CM.treeKeep * 1000)) continue;
-        if (nearPad(w.x, w.z, 16)) continue; // the median ends at junctions (the shader fades the kerb there too)
+        if (nearMedPad(w.x, w.z, 16)) continue; // the median ends at junctions (the shader fades the kerb there too)
         if (uturnZoneHas(uturns, r.id, here, sight) || crossingZoneHas(mplan, r.id, here, 3)) continue; // ROADS STEP 4: no trunk in or beside a U-turn gap / pedestrian crossing; STEP 5: the whole sight zone
         if (lampNear(w.x, w.z, Config.city.planting.medianLamps.treeClear)) continue;
         // SMALL narrow trees only (a small debdaru / date palm)
@@ -264,6 +265,7 @@ export function planRoadside(gen: TerrainGenerator): RoadsidePlan & { stats: Roa
   const posts: number[] = [];
   const beams: number[] = [];
   const nearPad = padIndex(roads);
+  const nearMedPad = medianPadIndex(roads); // the median and its planting stop earlier at 6 x 6 lane junctions
   const sA = gen.makeSample();
   const sB = gen.makeSample();
   const seed = Config.world.seed;
@@ -284,7 +286,7 @@ export function planRoadside(gen: TerrainGenerator): RoadsidePlan & { stats: Roa
       if (!w.at(s)) continue;
       // ROADS STEP 5: outside the cities the hedge comes in blocks (hedgeOn m planted, hedgeOff m gap)
       if (!cityPoint(roads, r, w) && (!CM.enabled || w.onBridge() || s % (CM.hedgeOn + CM.hedgeOff) >= CM.hedgeOn)) continue;
-      if (nearPad(w.x, w.z, 9)) continue; // the median ends at junctions (the shader fades the kerb there too)
+      if (nearMedPad(w.x, w.z, 9)) continue; // the median ends at junctions (the shader fades the kerb there too)
       if (uturnZoneHas(uturns, r.id, s, sight) || crossingZoneHas(mplan2, r.id, s, 2)) continue; // ROADS STEP 4: no hedge in or beside a U-turn gap / pedestrian crossing; STEP 5: the whole sight zone
       hedges.push(w.x, w.y + medianSoilTop(r) + 0.03, w.z, Math.atan2(w.tx, w.tz), 1 + (rr - 0.5) * 0.1, HD.hMin / 0.75 + (rs * (HD.hMax - HD.hMin)) / 0.75, rr);
     }

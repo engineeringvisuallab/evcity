@@ -121,6 +121,12 @@ export const Config = {
       drawRange: 0.7,
       /** Physics cells (m): colliders are made per cell, only near the player. */
       cell: 125,
+      /**
+       * 6-LANE x 6-LANE JUNCTIONS (two different 3 + 3 lane roads, highway / avenue, meeting): the raised median, its hedges, trees, grass and lamps stop `extra` m earlier
+       * than at other junctions (on top of padMargin), so the junction is open. Other junctions keep the old behaviour. `minAngleDeg` = two six-lane arms closer to a straight
+       * line than this (degrees) are one road continuing and do not make a 6 x 6 junction. enabled = false brings the old behaviour back everywhere.
+       */
+      sixLaneJunction: { enabled: true, extra: 14, minAngleDeg: 30 },
     },
     /**
      * ROADS STEP 4: U-turn openings in the median of the divided roads (highway, arterial, avenue). One opening serves both directions: a car in the kerb lane swings

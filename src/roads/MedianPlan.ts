@@ -8,7 +8,7 @@ import { Config } from '../core/Config';
 import type { RoadNetwork } from './RoadNetwork';
 import type { RoadSpec } from './RoadTypes';
 import { dividedSectionOf } from './RoadSection';
-import { padIndex } from './PadIndex';
+import { medianPadIndex } from './PadIndex';
 import { padDistance, placeUTurns, type RunRange, type UTurnPlan } from './UTurns';
 import { MALL_DOORS } from '../mall/MallSite';
 import { planStreetCrossings } from './CrossingPlan';
@@ -96,7 +96,7 @@ export function planMedians(roads: RoadNetwork): MedianPlan {
   const hit = cache.get(roads);
   if (hit) return hit;
   const M = Config.city.median;
-  const nearPad = padIndex(roads);
+  const nearPad = medianPadIndex(roads); // 6 x 6 lane junctions get a longer median-free zone (Config.city.median.sixLaneJunction)
   const runs: MedianRun[] = [];
   let metres = 0;
   const base: MedianRun[] = []; // the runs before the U-turn openings are cut out
