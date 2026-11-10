@@ -225,8 +225,7 @@ export class PeopleManager {
       if (!spot) continue;
       const dir: 1 | -1 = Math.random() < 0.5 ? 1 : -1;
       const side: 1 | -1 = Math.random() < 0.5 ? 1 : -1;
-      const r = this.d.graph.roads[spot.roadId];
-      const lateral = side * (r.halfWidth + r.shoulder * 0.55 + 0.2);
+      const lateral = this.walkLateral(spot.roadId, spot.s, side);
       g.at(spot.roadId, spot.s, 1, lateral, tmpPt);
       const dist = Math.hypot(tmpPt.x - focus.x, tmpPt.z - focus.z);
       if (dist < T.spawnMin || dist > T.spawnMax) continue;
@@ -236,7 +235,7 @@ export class PeopleManager {
       p.dir = dir;
       p.side = side;
       p.heading = Math.atan2(tmpPt.hx * dir, tmpPt.hz * dir);
-      this.tmpV.set(tmpPt.x, tmpPt.y + 0.05, tmpPt.z);
+      this.tmpV.set(tmpPt.x, tmpPt.y + 0.05 + this.walkLift, tmpPt.z);
       this.adopt(p, this.tmpV, 'sidewalk');
       this.maybeArm(p);
       return;
@@ -332,6 +331,22 @@ export class PeopleManager {
     return false;
   }
 
+  /** ROADS STEP 3: set by walkLateral: how far (m) the walk line is above the road surface (the raised footpath of a city road, else 0). */
+  private walkLift = 0;
+
+  /** Lateral offset of the walk line of a sidewalk walker. City road: on the raised footpath behind the tree pits; country road: as before. */
+  private walkLateral(roadId: number, s: number, side: 1 | -1): number {
+    const g = this.d.graph;
+    const r = g.roads[roadId];
+    g.at(roadId, s, 1, side * (r.halfWidth + 0.5), tmpPt);
+    if (this.d.terrain.roads.cityWalkAt(tmpPt.x, tmpPt.z)) {
+      this.walkLift = Config.city.footpath.height;
+      return side * (r.halfWidth + Config.city.footpath.walkOffset);
+    }
+    this.walkLift = 0;
+    return side * (r.halfWidth + r.shoulder * 0.55 + 0.2);
+  }
+
   private sidewalk(p: Person, dt: number): void {
     const g = this.d.graph;
     const r = g.roads[p.roadId];
@@ -356,9 +371,9 @@ export class PeopleManager {
       return;
     }
     p.s = next;
-    const lateral = p.side * (r.halfWidth + r.shoulder * 0.55 + 0.2);
+    const lateral = this.walkLateral(p.roadId, p.s, p.side);
     g.at(p.roadId, p.s, 1, lateral, tmpPt);
-    p.world.set(tmpPt.x, tmpPt.y + 0.05, tmpPt.z);
+    p.world.set(tmpPt.x, tmpPt.y + 0.05 + this.walkLift, tmpPt.z);
     p.heading = Math.atan2(tmpPt.hx * p.dir, tmpPt.hz * p.dir);
     // now and then stop and look around
     if (Math.random() < dt * 0.02) {
@@ -396,8 +411,8 @@ export class PeopleManager {
   /** True while the person is standing at the road edge he was spawned on (sidewalk walkers only). */
   private onRoadEdge(p: Person): boolean {
     if (p.roadId < 0) return false;
-    const r = this.d.graph.roads[p.roadId];
-    this.d.graph.at(p.roadId, p.s, 1, p.side * (r.halfWidth + r.shoulder * 0.55 + 0.2), tmpPt);
+    const lat = this.walkLateral(p.roadId, p.s, p.side);
+    this.d.graph.at(p.roadId, p.s, 1, lat, tmpPt);
     return Math.hypot(tmpPt.x - p.world.x, tmpPt.z - p.world.z) < 1.5;
   }
 
@@ -433,7 +448,7 @@ export class PeopleManager {
     }
     p.world.x = nx;
     p.world.z = nz;
-    p.world.y = this.d.terrain.heightAt(nx, nz);
+    p.world.y = this.d.terrain.heightAt(nx, nz) + (this.d.terrain.roads.cityWalkAt(nx, nz) ? Config.city.footpath.height : 0); // ROADS STEP 3: the raised footpath
   }
 
   // ------------------------------------------------------------------ railway stations

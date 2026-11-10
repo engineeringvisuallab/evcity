@@ -5,6 +5,10 @@ import type { TerrainGenerator } from '../terrain/TerrainGenerator';
 import type { RoadNetwork } from './RoadNetwork';
 import type { RoadSpec } from './RoadTypes';
 import { medianSoilTop } from './RoadSection';
+import { padIndex } from './PadIndex';
+import { footpathHas } from './FootpathPlan';
+
+export { padIndex };
 import { EVLAB_LOT, MALL_LOT, SIDE_LOT, lotToWorld, parkingContains, type LotRect } from '../parking/ParkingSite';
 import { TreeKind } from '../vegetation/TreeTypes';
 
@@ -31,7 +35,7 @@ const sqr = (x: number): number => x * x;
 export interface RoadsidePlan {
   /** x, y, z, yaw per tree pit (4 floats). */
   pits: number[];
-  /** x, y, z, scale, yaw, tint, kind, onRoad per street tree (8 floats), standing in the pits (onRoad = 1: a median tree, y is the road surface). */
+  /** x, y, z, scale, yaw, tint, kind, onRoad per street tree (8 floats), standing in the pits (onRoad = 1: a median tree, y is the road surface; 2: a pit tree on the raised footpath, ROADS STEP 3; 0: any other). */
   trees: number[];
   /** x, y, z, yaw, length scale, height scale, seed per hedge piece (7 floats). */
   hedges: number[];
@@ -79,29 +83,6 @@ class Walker {
     const r = this.r;
     return r.bridgeOf[this.i] >= 0 || r.bridgeOf[Math.min(r.xs.length - 1, this.i + 1)] >= 0;
   }
-}
-
-/** Is (x, z) inside a junction pad (+ margin)? Coarse grid, built once per call of a planner. */
-export function padIndex(roads: RoadNetwork): (x: number, z: number, margin: number) => boolean {
-  const cell = 120;
-  const grid = new Map<string, number[]>();
-  const key = (cx: number, cz: number): string => cx + ',' + cz;
-  roads.pads.forEach((p, i) => {
-    const r = p.rCore + 10;
-    for (let cx = Math.floor((p.x - r) / cell); cx <= Math.floor((p.x + r) / cell); cx++)
-      for (let cz = Math.floor((p.z - r) / cell); cz <= Math.floor((p.z + r) / cell); cz++) {
-        const k = key(cx, cz);
-        const l = grid.get(k);
-        if (l) l.push(i);
-        else grid.set(k, [i]);
-      }
-  });
-  return (x, z, margin) => {
-    const l = grid.get(key(Math.floor(x / cell), Math.floor(z / cell)));
-    if (!l) return false;
-    for (const i of l) if (Math.hypot(x - roads.pads[i].x, z - roads.pads[i].z) < roads.pads[i].rCore + margin) return true;
-    return false;
-  };
 }
 
 /** City test of one road point, the same rule as RoadNetwork.buildSegments: no bridge, no earth track, tier 4 or inside a planned city. */
@@ -174,11 +155,12 @@ export function planCityTrees(roads: RoadNetwork): { pits: number[]; trees: numb
         const pz = w.z + w.nz * lat;
         if (nearPad(px, pz, 5)) continue; // junction pads have their own corners / lamps
         if (roads.surfaceAt(px, pz) === 1) continue; // another road's asphalt
+        if (!footpathHas(roads, r.id, side as 1 | -1, here)) continue; // ROADS STEP 3: pits stand on the raised footpath (full height part)
         const yaw = Math.atan2(w.tx, w.tz);
         pits.push(px, w.y, pz, yaw);
         const letter = theme[n++ % theme.length];
         const K = letter === 'D' ? STREET_KIND.D : letter === 'K' ? STREET_KIND.K : pick < 0.6 ? STREET_KIND.Pd : STREET_KIND.Pc;
-        push([px, w.y - Config.vegetation.sink, pz, K.scale[0] + (K.scale[1] - K.scale[0]) * scale, yawRnd * Math.PI * 2, K.tint[0] + (K.tint[1] - K.tint[0]) * tint, K.kind, 0], px, pz);
+        push([px, w.y - Config.vegetation.sink, pz, K.scale[0] + (K.scale[1] - K.scale[0]) * scale, yawRnd * Math.PI * 2, K.tint[0] + (K.tint[1] - K.tint[0]) * tint, K.kind, 2], px, pz); // flag 2: stands on the raised footpath (ROADS STEP 3)
       }
     }
     // MEDIAN: the freeway arms (broad roads) have a median strip along the centre line: a debdaru or a date palm every 11..15 m
@@ -236,7 +218,7 @@ export function streetTreesInChunk(roads: RoadNetwork, cx: number, cz: number, o
   const out: { kind: number; v: number[] }[] = [];
   for (let i = 0; i < l.length; i += 8) {
     // onRoad (median) trees keep the road surface height they were planned with; pit trees stand on the real ground
-    const y = l[i + 7] > 0.5 ? l[i + 1] : groundY(l[i], l[i + 2]) - Config.vegetation.sink;
+    const y = l[i + 7] > 1.5 ? groundY(l[i], l[i + 2]) + Config.city.footpath.height - Config.vegetation.sink : l[i + 7] > 0.5 ? l[i + 1] : groundY(l[i], l[i + 2]) - Config.vegetation.sink;
     // a tree exactly on a chunk border could come out a hair outside after the float subtraction: keep it inside its chunk
     const S = Config.world.chunkSize - 0.001;
     out.push({ kind: l[i + 6], v: [Math.min(S, Math.max(0, l[i] - ox)), y, Math.min(S, Math.max(0, l[i + 2] - oz)), l[i + 3], l[i + 4], l[i + 5]] });
@@ -263,7 +245,7 @@ export function planRoadside(gen: TerrainGenerator): RoadsidePlan & { stats: Roa
   const trees = planned.trees;
   // pits sit on the real ground (the same height the trees and the collider use), not on the road centre line height
   const pits = planned.pits.slice();
-  for (let i = 0; i < pits.length; i += 4) { gen.sample(pits[i], pits[i + 2], sA0(gen)); pits[i + 1] = sA0(gen).h; }
+  for (let i = 0; i < pits.length; i += 4) { gen.sample(pits[i], pits[i + 2], sA0(gen)); pits[i + 1] = sA0(gen).h + Config.city.footpath.height; }
   const hedges: number[] = [];
   const shrubs: number[] = [];
   const posts: number[] = [];

@@ -107,6 +107,31 @@ export const Config = {
       /** Physics cells (m): colliders are made per cell, only near the player. */
       cell: 125,
     },
+    /**
+     * ROADS STEP 3: the raised footpath of city roads (companion mesh on the ribbon strip beside the asphalt, collider, dropped kerbs, gully grates).
+     * Its WIDTH is still the ribbon strip of Step 1 (roadside.sidewalk = 3 m): the 3.7 m target of the design table would move buildings (decision D10).
+     */
+    footpath: {
+      /** Kerb height (m) above the road surface, kerb stone width (m), and cross-fall of the walking surface towards the road. */
+      height: 0.15,
+      kerbW: 0.2,
+      fall: 0.02,
+      /** Sample spacing (m) of the mesh and collider; the first / last piece of every run is the dropped kerb (ramp from 0 to full height over one step). */
+      step: 3,
+      /** The footpath ends this far (m) beyond the junction pad core. Tree pits stop at 5, so the pits are always inside the footpath. */
+      padMargin: 2,
+      /** Shortest footpath piece (m). */
+      minRun: 9,
+      /** Pedestrian walk line: distance (m) from the kerb face. Pits occupy 0.15..1.35 m, so people walk behind them. */
+      walkOffset: 2.2,
+      /** Gully grate spacing (m) along each kerb, and its size (m, along the road x across). */
+      gullyStep: 28,
+      gullySize: [0.55, 0.38] as [number, number],
+      /** The mesh is drawn within roadside.drawRadius x quality x this (m). */
+      drawRange: 0.6,
+      /** Physics cell size (m). */
+      cell: 125,
+    },
     localRoads: {
       /** City sites that get local streets so far (Stage 10B step 1 = site 0 only; sites 1 and 2 follow). */
       sites: [0] as number[],

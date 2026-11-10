@@ -116,7 +116,7 @@ for (let i = 0; i < medianHedges.length; i += 2) if (!inRun(medianHedges[i], med
 ok(outside === 0, `${medianHedges.length / 2} median hedge pieces, ${outside} outside a median run`);
 let treesOut = 0; let nTrees = 0;
 for (let i = 0; i < rp.trees.length; i += 8) {
-  if (rp.trees[i + 7] < 0.5) continue;
+  if (rp.trees[i + 7] !== 1) continue; // 1 = median tree
   nTrees++;
   if (!inRun(rp.trees[i], rp.trees[i + 2])) treesOut++;
 }

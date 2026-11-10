@@ -127,7 +127,7 @@ export function planStreetLights(roads: RoadNetwork): LampSpot[] {
       const tl = Math.hypot(tx, ty, tz) || 1;
       tx /= tl;
       tz /= tl;
-      out.push({ x: px, y, z: pz, ix: -nx * side, iz: -nz * side, tx, ty: ty / tl, tz, scale: c.scale, pool: c.pool });
+      out.push({ x: px, y: y + (inCity && bid < 0 ? Config.city.footpath.height : 0), z: pz, ix: -nx * side, iz: -nz * side, tx, ty: ty / tl, tz, scale: c.scale, pool: c.pool });
     }
   }
 
