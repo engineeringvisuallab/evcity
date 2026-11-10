@@ -99,11 +99,11 @@ export const Config = {
       /** Height (m) of the invisible collider above the road surface: a little above `height` so a car cannot climb the tall kerb. */
       colliderH: 0.85,
       /**
-       * Grass + flowers on the median soil (brown earth with patchy grass, drawn by MedianView as ONE merged mesh per bucket, no instancing, no wind = cheap).
-       * Only buckets (about 62 m of road) within `range` m of the player are drawn; `perSeg` tufts per 3 m piece (x Quality grassMul); `blades` per tuft (2 triangles each);
-       * `flowerShare` = share of tufts with a coloured flower on a tall stem; `height` = min..max blade height (m).
+       * Grass + flowers on the median soil: the GAME'S OWN grass (the same tuft models, wind and distance fade as the meadow grass, see GrassPlacement.placeMedian +
+       * GrassManager flag 5), so no extra meshes and no new models. `perSeg` tufts per 3 m piece of median (x Quality grassMul), `flowerShare` = share of tufts that are
+       * the game's wild flowers (buttercup, lavender, poppy, cornflower; no white ones).
        */
-      grass: { enabled: true, range: 90, perSeg: 12, blades: 4, flowerShare: 0.2, height: [0.16, 0.4] as [number, number] },
+      grass: { enabled: true, perSeg: 18, flowerShare: 0.14 },
       /** The median ends this far (m) beyond the junction pad core (rCore). Hedges stop at 9, trees at 16, so the planting is always inside the median. */
       padMargin: 8,
       /** Length (m) of the rounded nose at each end of a median piece. */
@@ -438,7 +438,7 @@ export const Config = {
        * undergrowth), thick at the trunk and thinning out to nothing at `reach` m (x 0.7..1.3 with the tree size). Open soil between trees stays bare.
        * `chance` = chance per cell inside the ring (cell 0.5 m); city lawn, roads and farm / plot rules are unchanged. enabled false = the old patchy meadow.
        */
-      treeBase: { enabled: true, reach: 4.6, chance: 0.95 }, // BIGGER + FULLER ring around trees (was reach 3.2, chance 0.7)
+      treeBase: { enabled: true, reach: 2.6, chance: 1, core: 0.75 }, // SMALLER but MUCH DENSER ring: every cell has grass, full density out to `core` x reach, then a short soft rim (was reach 3.2, chance 0.7, core 0.45)
       /** Chance per cell inside a meadow / on bare patches, and the extra thinning inside forests. Higher = denser, fewer bald patches. */
       maxChance: 0.35, // SPARSE: ~1 cell in 3 grows a tuft (was 0.98 / 0.9 = every cell)
       minChance: 0.15,

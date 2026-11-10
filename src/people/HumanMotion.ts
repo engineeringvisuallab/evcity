@@ -11,6 +11,15 @@ import type { HumanRig } from './HumanBody';
  */
 
 const HIP_HEIGHT = 0.9;
+/** HEAD STEADY: the hips rise and fall with every step (straight stance leg), which made the head bob / shake. The neck takes up part of it: the head is lifted by
+ *  NECK_COMP x the hip drop (at most NECK_MAX metres, so the skinned neck never stretches visibly), eased back to its rest height when the person stops. */
+const NECK_COMP = 0.7;
+const NECK_MAX = 0.05;
+function headBase(head: { position: { y: number }; userData: Record<string, unknown> }): number {
+  const u = head.userData as { baseY?: number };
+  if (u.baseY === undefined) u.baseY = head.position.y;
+  return u.baseY;
+}
 
 function ease(o: { rotation: { x: number; y: number; z: number } }, axis: 'x' | 'y' | 'z', target: number, k: number): void {
   o.rotation[axis] += (target - o.rotation[axis]) * k;
@@ -40,6 +49,12 @@ export function gait(rig: HumanRig, phase: number, amp: number, run: boolean, k:
   const stance = Math.cos(phase) > 0 ? rig.legL : rig.legR;
   const y = HIP_HEIGHT * Math.cos(stance.rotation.x);
   rig.pivot.position.y += (y - rig.pivot.position.y) * Math.min(1, k * 1.5);
+
+  // steady head: lift it by (part of) the hip drop this stance leg causes (computed from the leg, so crouching does not matter)
+  const drop = HIP_HEIGHT * (1 - Math.cos(stance.rotation.x));
+  const want = Math.min(NECK_MAX, drop * NECK_COMP);
+  const base = headBase(rig.head);
+  rig.head.position.y += (base + want - rig.head.position.y) * Math.min(1, k * 1.5);
 }
 
 /** Call every frame when NOT walking (idle, in the air, swimming): eases everything back and adds the breathing. */
@@ -59,6 +74,7 @@ export function relax(rig: HumanRig, t: number, k: number, breathe = true): void
     ease(rig.footR, 'x', -rig.shinR.rotation.x - 0.55 * rig.legR.rotation.x, k);
   }
   rig.pivot.position.y += (HIP_HEIGHT - rig.pivot.position.y) * Math.min(1, k * 1.5);
+  rig.head.position.y += (headBase(rig.head) - rig.head.position.y) * Math.min(1, k * 1.5);
 }
 
 /** Snap the secondary motion back to the rest pose (call when a person sits down, so no walking twist stays on the seat). */
@@ -66,6 +82,7 @@ export function resetPose(rig: HumanRig): void {
   rig.pivot.rotation.y = 0;
   rig.pivot.rotation.z = 0;
   for (const b of [rig.chest, rig.head]) b?.rotation.set(0, 0, 0);
+  if (rig.head) rig.head.position.y = headBase(rig.head);
 }
 
 /** Natural blinking (every 2-6 s, sometimes twice in a row). Call every frame for people close to the camera. */

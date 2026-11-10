@@ -10,6 +10,7 @@ import { placementContains } from '../buildings/Placements';
 import { farmCovers } from '../farm/FarmFields';
 import { parkingContains } from '../parking/ParkingSite';
 import { getCityGreen, type CityGreen } from '../city/CityGreen';
+import { MS, medianHalfAt, planMedians } from '../roads/MedianPlan';
 
 
 const V = Config.vegetation;
@@ -200,7 +201,7 @@ export class GrassPlacer {
     const trees = this.trees.treesInRect(ox - M, oz - M, ox + T + M, oz + T + M);
     for (const t of trees) {
       const R = TB.reach * (0.7 + 0.3 * Math.min(2, treeWidth(t.kind, t.scale)));
-      const rIn = R * 0.45;
+      const rIn = R * TB.core; // full density out to here, then a short soft rim
       const i0 = Math.max(0, Math.floor((t.x - R - ox) / G.cell));
       const i1 = Math.min(per - 1, Math.floor((t.x + R - ox) / G.cell));
       const j0 = Math.max(0, Math.floor((t.z - R - oz) / G.cell));
@@ -300,7 +301,61 @@ export class GrassPlacer {
       }
     }
     this.placeClumps(tx, tz, stride, out);
+    this.placeMedian(tx, tz, stride, ox, oz, out);
     return new Float32Array(out);
+  }
+
+  /** Median pieces by tile (built once): key tx * 4096 + tz -> [run, k, run, k ...]. */
+  private medianIndex: Map<number, number[]> | null = null;
+
+  /**
+   * MEDIAN GRASS: tufts of the game's own grass (flag 5) on the soil of the raised road median, standing on the soil surface (road height + median kerb - soil drop).
+   * Same deterministic hash per piece, so a tile asked twice gives the same tufts. Far rings (stride > 1) keep only every stride-th piece.
+   */
+  private placeMedian(tx: number, tz: number, stride: number, ox: number, oz: number, out: number[]): void {
+    const MG = Config.city.median.grass;
+    if (!MG.enabled) return;
+    const plan = planMedians(this.gen.roads);
+    if (!this.medianIndex) {
+      const idx = new Map<number, number[]>();
+      plan.runs.forEach((run, ri) => {
+        for (let k = 0; k < run.n - 1; k++) {
+          const mx = (run.p[k * MS] + run.p[(k + 1) * MS]) / 2;
+          const mz = (run.p[k * MS + 2] + run.p[(k + 1) * MS + 2]) / 2;
+          const key = Math.floor((mx + HALF) / G.tile) * 4096 + Math.floor((mz + HALF) / G.tile);
+          let a = idx.get(key);
+          if (!a) { a = []; idx.set(key, a); }
+          a.push(ri, k);
+        }
+      });
+      this.medianIndex = idx;
+    }
+    const list = this.medianIndex.get(tx * 4096 + tz);
+    if (!list) return;
+    const per = Math.max(1, Math.round(MG.perSeg * this.mul));
+    const drop = Config.city.median.soilDrop;
+    for (let n = 0; n < list.length; n += 2) {
+      const run = plan.runs[list[n]];
+      const k = list[n + 1];
+      if (k % stride !== 0) continue;
+      const a = k * MS;
+      const b = (k + 1) * MS;
+      const mh = Math.min(medianHalfAt(run, k), medianHalfAt(run, k + 1));
+      const uw = mh - Math.min(run.kerbW, mh * 0.5) - 0.1; // stay on the soil
+      if (uw < 0.15) continue;
+      const rng = mulberry32(hash2D(this.seed ^ 0x3ed1a, list[n] * 7919 + k, 17));
+      for (let t = 0; t < per; t++) {
+        const f = rng();
+        const u = (rng() * 2 - 1) * uw;
+        const rScale = rng();
+        const rYaw = rng();
+        const rTint = rng();
+        const x = run.p[a] + (run.p[b] - run.p[a]) * f + (run.p[a + 3] + (run.p[b + 3] - run.p[a + 3]) * f) * u;
+        const z = run.p[a + 2] + (run.p[b + 2] - run.p[a + 2]) * f + (run.p[a + 4] + (run.p[b + 4] - run.p[a + 4]) * f) * u;
+        const y = run.p[a + 1] + (run.p[b + 1] - run.p[a + 1]) * f + run.kerbH - drop - 0.02;
+        out.push(x - ox, y, z - oz, 0.7 + 0.8 * rScale ** 1.3, rYaw * Math.PI * 2, 0.85 + rTint * 0.3, 0, 5);
+      }
+    }
   }
 
   /** City lawn only: is (x, z) within `baseReach` m of a tree trunk or in the `fenceReach` m band just outside a landmark plot (where a fence stands)? */

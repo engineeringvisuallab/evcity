@@ -277,6 +277,11 @@ export class GrassManager {
   /** Real choice of the model; typeOf() wraps it and removes the white kinds (Config grass.whiteFlowers = false). */
   private pick(wx: number, wz: number, lod: number, h1: number, h2: number, h3: number, dry: number, flag: number): number {
     let type: number;
+    if (flag > 4.5) {
+      // MEDIAN grass (flag 5): the game's grass kinds, and a share of the game's wild flowers (never white ones) in the near ring
+      if (lod === 0 && h2 < Config.city.median.grass.flowerShare) return h3 < 0.3 ? GrassType.buttercup : h3 < 0.55 ? GrassType.lavender : h3 < 0.8 ? GrassType.poppy : GrassType.cornflower;
+      return h1 < 0.25 ? GrassType.wild : h1 < 0.88 ? GrassType.lawn : GrassType.clump;
+    }
     if (flag > 3.5) {
       // DENSE extra single grass (flag 4): plain grass kinds only, never a flower and never a clump
       type = h1 < 0.18 ? GrassType.wild : h1 < 0.88 ? GrassType.lawn : h1 < 0.94 ? GrassType.clump : GrassType.seed;
