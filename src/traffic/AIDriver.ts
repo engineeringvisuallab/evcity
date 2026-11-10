@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { DriveInput, Vehicle } from '../vehicles/Vehicle';
 import { clamp } from '../utils/math';
 import { RouteBuilder } from './Route';
+import { uturnBlocked } from './UTurnGap';
 import type { BusStop } from './BusStops';
 import type { TrafficSignals } from './TrafficSignals';
 
@@ -45,6 +46,8 @@ export class AIDriver {
   private flipped = 0;
   private blocked = 0;
   private steer = 0;
+  /** ROADS STEP 4: seconds this driver has waited at the start of a U-turn for a gap in the traffic. */
+  private utWait = 0;
 
   constructor(
     private veh: Vehicle,
@@ -74,7 +77,9 @@ export class AIDriver {
     }
 
     // ---- steering: pure pursuit on a point `ld` metres ahead ----
-    const ld = clamp(4.5 + Math.abs(speed) * 0.9, 5, 26);
+    // ROADS STEP 4: on the half circle of a U-turn the look-ahead is short (the radius is only 6.6 .. 10.5 m)
+    const inTurn = pts[this.head].ut === 2 || (this.head + 1 < pts.length && pts[this.head + 1].ut === 2);
+    const ld = inTurn ? clamp(3.4 + Math.abs(speed) * 0.5, 4, 7) : clamp(4.5 + Math.abs(speed) * 0.9, 5, 26);
     let idx = this.head;
     let acc = Math.hypot(pts[idx].x - P.x, pts[idx].z - P.z);
     while (acc < ld && idx + 1 < pts.length) {
@@ -126,6 +131,22 @@ export class AIDriver {
     if (this.route.terminal && this.head >= pts.length - 1) {
       const end = pts[pts.length - 1];
       if ((end.x - P.x) * fx + (end.z - P.z) * fz < 1.5) vt = 0;
+    }
+
+    // ROADS STEP 4: a U-turn starts ahead: wait at its start until the lanes the half circle sweeps are free (nobody coming up fast behind, nobody oncoming
+    // on the far carriageway, nobody standing in the swept area)
+    {
+      let dd = Math.hypot(pts[this.head].x - P.x, pts[this.head].z - P.z);
+      let ui = -1;
+      for (let j = this.head; j < pts.length && dd < 70; j++) {
+        if (j > this.head) dd += Math.hypot(pts[j].x - pts[j - 1].x, pts[j].z - pts[j - 1].z);
+        if (pts[j].ut === 2) break;
+        if (pts[j].ut === 1) { ui = j; break; }
+      }
+      if (ui >= 0 && uturnBlocked(pts[ui], ui > 0 ? pts[ui - 1] : null, fx, fz, obstacles, this.veh, this.utWait)) {
+        vt = Math.min(vt, Math.sqrt(2 * BRAKE_DECEL * 0.8 * Math.max(0, dd - 1.0)));
+        if (Math.abs(speed) < 1) this.utWait += dt;
+      } else this.utWait = 0;
     }
 
     // a red (or late yellow) traffic light ahead: stop behind its stop line (nothing to do once the car is past the line)

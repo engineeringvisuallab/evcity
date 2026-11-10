@@ -9,6 +9,7 @@ import type { TerrainPhysics } from '../terrain';
 import type { CityPlan } from '../city/CityPlan';
 import { getWorldZoneAt } from '../city/WorldZones';
 import type { RoadKind } from '../roads/RoadTypes';
+import { canUTurn } from '../roads/UTurns';
 import { SPECS, canUse, canUseRoad, canUsePlace, groundY, type Vehicle, type VehicleManager, type VehicleSpec } from '../vehicles';
 import type { BusStops } from './BusStops';
 import { AIDriver, type Obstacle } from './AIDriver';
@@ -154,6 +155,7 @@ export class TrafficManager {
       const route = new RouteBuilder(g, Math.random, spot.roadId, spot.s, dir, temper, {
         roadOk: (k) => canUseRoad(spec.use, k),
         placeOk: (x, z) => canUsePlace(spec.use, getWorldZoneAt(x, z).kind, this.d.plan.areaAt(x, z)?.kind ?? null),
+        uturnOk: (section) => canUTurn(spec, section),
       });
       route.start();
       const yaw = Math.atan2(tmpPt.hx, tmpPt.hz);
@@ -192,6 +194,7 @@ export class TrafficManager {
     const route = new RouteBuilder(g, Math.random, near.roadId, near.s, dir, 0.7 + Math.random() * 0.28, {
       roadOk: (k) => canUseRoad(spec.use, k),
       placeOk: (x, z) => canUsePlace(spec.use, getWorldZoneAt(x, z).kind, this.d.plan.areaAt(x, z)?.kind ?? null),
+      uturnOk: (section) => canUTurn(spec, section),
     });
     route.start();
     this.d.people.dispose(driver);

@@ -30,6 +30,7 @@
     "test:roads": "tsx scripts/road-test.ts",
     "test:median": "tsx scripts/median-test.ts",
     "test:footpath": "tsx scripts/footpath-test.ts",
+    "test:uturn": "tsx scripts/uturn-test.ts",
     "test:mirrors": "tsx scripts/mirror-test.ts",
     "test:carjack": "tsx scripts/carjack-test.ts",
     "test:port": "tsx scripts/port-test.ts",

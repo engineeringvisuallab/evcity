@@ -1,10 +1,15 @@
+import { Config } from '../core/Config';
 import type { RoadKind } from '../roads/RoadTypes';
+import type { SectionId } from '../roads/RoadSection';
+import type { UTurnOpening } from '../roads/UTurns';
 import { RoadGraph, type RoadPoint } from './RoadGraph';
 
 /** Where a driver may go: the route never uses a road kind / place (city area or world zone) this refuses (see vehicles/VehicleUse). */
 export interface RouteRule {
   roadOk(kind: RoadKind): boolean;
   placeOk(x: number, z: number): boolean;
+  /** ROADS STEP 4: may this vehicle turn round in a median opening of this road section? (Not given = never.) */
+  uturnOk?(section: SectionId): boolean;
 }
 
 /** One point of the path an AI driver follows (WORLD coordinates). */
@@ -20,6 +25,10 @@ export interface RoutePt {
   oc: boolean;
   /** The point is in / right before a junction (a car must be back in its own lane there). */
   jn: boolean;
+  /** ROADS STEP 4: 1 = the point where a U-turn starts (the driver waits here for a gap in the traffic), 2 = a point of the half circle itself. */
+  ut?: 0 | 1 | 2;
+  /** U-turn start point only: radius (m) of the half circle, i.e. how far to the right of the lane the car sweeps. */
+  ur?: number;
 }
 
 /** One planned junction decision: at pad `pad` leave on road `roadId` in direction `dir` (tour cars). */
@@ -48,6 +57,8 @@ export class RouteBuilder {
   target: { roadId: number; s: number } | null = null;
   fast = false;
   private skipPad = -1;
+  /** ROADS STEP 4: the last U-turn opening the driver has already decided about (never twice). */
+  private skipOp = -1;
   private tmp: RoadPoint = { x: 0, z: 0, y: 0, hx: 0, hz: 0 };
   private tmp2: RoadPoint = { x: 0, z: 0, y: 0, hx: 0, hz: 0 };
   private tmp3: RoadPoint = { x: 0, z: 0, y: 0, hx: 0, hz: 0 };
@@ -90,10 +101,10 @@ export class RouteBuilder {
     return Math.min(this.g.limit(this.roadId) * 0.85, 22) * this.temper;
   }
 
-  private push(x: number, z: number, y: number, vmax: number, junction = false): void {
+  private push(x: number, z: number, y: number, vmax: number, junction = false, ut: 0 | 1 | 2 = 0, ur = 0): void {
     const n = this.pts.length;
     const pi = this.fast && !junction ? this.g.passInfo(this.roadId, this.s) : { shift: 0, oncoming: false };
-    this.pts.push({ x, z, y, vmax, os: pi.shift, oc: pi.oncoming, jn: junction || (this.fast && this.nearJunction()) });
+    this.pts.push({ x, z, y, vmax, os: pi.shift, oc: pi.oncoming, jn: junction || (this.fast && this.nearJunction()), ut, ur });
     if (n >= 2) {
       // bend limit for the middle point: v = sqrt(a_lat / curvature)
       const a = this.pts[n - 2];
@@ -145,6 +156,7 @@ export class RouteBuilder {
         return;
       }
     }
+    if (this.uturnAhead()) return;
     const next = this.s + this.dir * STEP;
     if (next < 0 || next > r.length) {
       // end of the road: finish at the very end, then stop
@@ -169,6 +181,52 @@ export class RouteBuilder {
       const st = this.g.stations(this.roadId).find((q) => q.pad === this.skipPad);
       if (!st || Math.abs(st.s - this.s) > this.turnDist + STEP) this.skipPad = -1;
     }
+  }
+
+  /**
+   * ROADS STEP 4: an opening of the median is coming up. Some drivers (Config.city.uturn.useChance) turn round there: the route runs straight to the start of
+   * the half circle (in the kerb lane), then swings right through all lanes and the gap into the kerb lane of the other carriageway and goes on the other way.
+   * Only AI traffic (a rule that says the vehicle fits), never a tour car.
+   */
+  private uturnAhead(): boolean {
+    if (this.fast || this.plan || this.target || !this.rule?.uturnOk) return false;
+    const ops = this.g.uturns(this.roadId);
+    if (ops.length === 0) return false;
+    const R = this.g.laneOffset(this.roadId);
+    for (const op of ops) {
+      if (op.id === this.skipOp) continue;
+      const sStart = op.s - this.dir * R;
+      const ahead = (sStart - this.s) * this.dir;
+      if (ahead <= 0 || ahead > STEP) continue; // the stepping crosses each start exactly once
+      this.skipOp = op.id;
+      if (this.rnd() >= Config.city.uturn.useChance || !this.rule.uturnOk(op.section)) return false;
+      this.uturn(op, R, sStart);
+      return true;
+    }
+    return false;
+  }
+
+  private uturn(op: UTurnOpening, R: number, sStart: number): void {
+    const U = Config.city.uturn;
+    const vTurn = Math.min(U.turnSpeed, this.cruise());
+    // 1. the start of the half circle, in the kerb lane (the driver waits here until the lanes are free)
+    const p = this.g.at(this.roadId, sStart, this.dir, R, this.tmp);
+    this.push(p.x, p.z, p.y, vTurn, true, 1, R);
+    // 2. the half circle: in the frame of the OLD travel direction the car goes from lateral +R (left) to -R (right) and from sStart forward to the apex
+    //    (the middle of the gap, on the centreline) and back to sStart. (along, lateral) = (R sin t, R cos t), t = 0 .. pi.
+    const N = 14;
+    for (let i = 1; i <= N; i++) {
+      const t = (Math.PI * i) / N;
+      const q = this.g.at(this.roadId, sStart + this.dir * R * Math.sin(t), this.dir, R * Math.cos(t), this.tmp);
+      this.push(q.x, q.z, q.y, vTurn, true, 2);
+    }
+    // 3. from here on we drive the other way, in the kerb lane of the other carriageway
+    this.dir = (this.dir > 0 ? -1 : 1) as 1 | -1;
+    this.s = sStart;
+    const h = this.g.at(this.roadId, sStart, this.dir, R, this.tmp);
+    this.lastHx = h.hx;
+    this.lastHz = h.hz;
+    void op;
   }
 
   private junction(pad: number, sStation: number): void {

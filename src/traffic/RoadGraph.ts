@@ -1,6 +1,8 @@
 import type { RoadNetwork } from '../roads';
 import type { RoadSpec } from '../roads';
 import { isDual, laneCentre, passShift } from '../roads/RoadSection';
+import { planMedians } from '../roads/MedianPlan';
+import type { UTurnOpening } from '../roads/UTurns';
 
 export interface RoadPoint {
   x: number;
@@ -10,6 +12,8 @@ export interface RoadPoint {
   hx: number;
   hz: number;
 }
+
+const NO_UTURNS: readonly UTurnOpening[] = [];
 
 export interface Station {
   /** Distance along the road (m) of the junction pad centre. */
@@ -27,6 +31,8 @@ export class RoadGraph {
   private stationsByRoad: Station[][];
   private armsByPad: { roadId: number; s: number }[][] = [];
   private cumLen: number[] = [];
+  /** ROADS STEP 4: the U-turn openings of each divided road, sorted by s. */
+  private uturnsByRoad: Map<number, UTurnOpening[]>;
   totalLength = 0;
   /** Sample spots every ~30 m along every road: lets us find "a road 110-260 m from the player" without scanning splines. */
   private spotX: number[] = [];
@@ -36,6 +42,7 @@ export class RoadGraph {
 
   constructor(readonly net: RoadNetwork) {
     this.roads = net.roads;
+    this.uturnsByRoad = planMedians(net).uturns.byRoad;
     this.stationsByRoad = this.roads.map(() => []);
     for (let p = 0; p < net.pads.length; p++) {
       const pad = net.pads[p];
@@ -104,6 +111,11 @@ export class RoadGraph {
 
   stations(roadId: number): Station[] {
     return this.stationsByRoad[roadId];
+  }
+
+  /** ROADS STEP 4: the U-turn openings of a road (empty list for undivided roads). */
+  uturns(roadId: number): readonly UTurnOpening[] {
+    return this.uturnsByRoad.get(roadId) ?? NO_UTURNS;
   }
 
   arms(pad: number): { roadId: number; s: number }[] {

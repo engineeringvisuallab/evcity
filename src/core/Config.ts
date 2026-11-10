@@ -108,6 +108,37 @@ export const Config = {
       cell: 125,
     },
     /**
+     * ROADS STEP 4: U-turn openings in the median of the divided roads (highway, arterial, avenue). One opening serves both directions: a car in the kerb lane swings
+     * right through ALL lanes and the gap into the kerb lane of the opposite carriageway (a half circle of radius = kerb-lane centre). Used by roads/UTurns.ts,
+     * MedianPlan.ts (cuts the median), MedianView.ts (asphalt patch + broken yellow lines), Roadside.ts (no tree / hedge in the gap), traffic/Route.ts + AIDriver.ts.
+     */
+    uturn: {
+      enabled: true,
+      /** Wish distance (m) to the next opening along one road: random in [gapMin, gapMax]; two openings of one road are never closer than hardMin. */
+      gapMin: 500,
+      gapMax: 800,
+      hardMin: 300,
+      /** An opening is at least padMin m from a junction pad core; it prefers padMin..padMax (a car that just came out of a junction can turn back). */
+      padMin: 60,
+      padMax: 100,
+      /** Length (m) of the gap, nose tip to nose tip (rounded up to the median sample step). 12..25 m. */
+      len: { highway: 24, arterial: 20, avenue: 18 },
+      /** No bridge within this distance (m) of the gap, and the road must be straight enough (max heading change in degrees over gap + 2 x 20 m). */
+      bridgeClear: 15,
+      maxBendDeg: 20,
+      /** Median trees and hedges stop this far (m) from each nose tip (step 5 will add the real low-planting clear zone). */
+      plantClear: 8,
+      /** AI: chance (0..1) that a driver who reaches an opening turns round there, speed (m/s) of the half circle, free space (m) kept beside the vehicle's outer body, gap time (s) to traffic. */
+      useChance: 0.3,
+      turnSpeed: 5,
+      sideMargin: 3,
+      gapSeconds: 5.5,
+      /** Asphalt patch + broken yellow line of an opening: patch half width beyond the median kerb (m), the yellow line dash / gap (m), patch lift over the road (m). */
+      patchBeyond: 0.62,
+      dash: 3,
+      lift: 0.03,
+    },
+    /**
      * ROADS STEP 3: the raised footpath of city roads (companion mesh on the ribbon strip beside the asphalt, collider, dropped kerbs, gully grates).
      * Its WIDTH is still the ribbon strip of Step 1 (roadside.sidewalk = 3 m): the 3.7 m target of the design table would move buildings (decision D10).
      */

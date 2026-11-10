@@ -8,7 +8,8 @@ import { Config } from '../core/Config';
 import type { RoadNetwork } from './RoadNetwork';
 import type { RoadSpec } from './RoadTypes';
 import { dividedSectionOf } from './RoadSection';
-import { padIndex } from './Roadside';
+import { padIndex } from './PadIndex';
+import { padDistance, placeUTurns, type RunRange, type UTurnPlan } from './UTurns';
 
 /** Floats per sample in MedianRun.p: x, y, z (centreline, finished road surface), nx, nz (unit left normal), tx, tz (unit tangent), s (arc length). */
 export const MS = 8;
@@ -25,6 +26,8 @@ export interface MedianRun {
 
 export interface MedianPlan {
   runs: MedianRun[];
+  /** ROADS STEP 4: the U-turn openings. The median runs are already cut at them (a gap between two runs, each ending in a nose). */
+  uturns: UTurnPlan;
   /** Metres of median built, and metres of divided road left flat (inside junctions). */
   metres: number;
   flatMetres: number;
@@ -74,6 +77,7 @@ export function planMedians(roads: RoadNetwork): MedianPlan {
   const nearPad = padIndex(roads);
   const runs: MedianRun[] = [];
   let metres = 0;
+  const base: MedianRun[] = []; // the runs before the U-turn openings are cut out
   for (const r of roads.roads) {
     const sec = dividedSectionOf(r);
     if (!sec || r.earth || r.xs.length < 2 || r.length < M.minRun) continue;
@@ -98,11 +102,39 @@ export function planMedians(roads: RoadNetwork): MedianPlan {
       if (b - a < 2) continue;
       const len = pts[(b - 1) * MS + 7] - pts[a * MS + 7];
       if (len < M.minRun) continue;
-      runs.push({ roadId: r.id, medianHalf: sec.medianHalf, kerbW: sec.medianKerb, kerbH, n: b - a, p: pts.slice(a * MS, b * MS) });
+      base.push({ roadId: r.id, medianHalf: sec.medianHalf, kerbW: sec.medianKerb, kerbH, n: b - a, p: pts.slice(a * MS, b * MS) });
+    }
+  }
+  // ROADS STEP 4: place the U-turn openings on the whole runs, then cut every run at them
+  const ranges = new Map<number, RunRange[]>();
+  for (const u of base) {
+    const l = ranges.get(u.roadId) ?? [];
+    l.push({ roadId: u.roadId, sa: u.p[7], sb: u.p[(u.n - 1) * MS + 7] });
+    ranges.set(u.roadId, l);
+  }
+  const uturns = placeUTurns(roads.roads, ranges, padDistance(roads.pads, Config.city.uturn.padMax), M.step);
+  for (const u of base) {
+    const sa = u.p[7];
+    const sb = u.p[(u.n - 1) * MS + 7];
+    const cuts = (uturns.byRoad.get(u.roadId) ?? []).filter((o) => o.a >= sa - 1e-6 && o.b <= sb + 1e-6);
+    // pieces [lo, hi] in metres along the road
+    const pieces: [number, number][] = [];
+    let lo = sa;
+    for (const o of cuts) { pieces.push([lo, o.a]); lo = o.b; }
+    pieces.push([lo, sb]);
+    for (const [pl, ph] of pieces) {
+      let i0 = 0;
+      while (i0 < u.n && u.p[i0 * MS + 7] < pl - 1e-6) i0++;
+      let i1 = u.n - 1;
+      while (i1 >= 0 && u.p[i1 * MS + 7] > ph + 1e-6) i1--;
+      if (i1 - i0 < 1) continue;
+      const len = u.p[i1 * MS + 7] - u.p[i0 * MS + 7];
+      if (len < M.minRun - 1e-6) continue;
+      runs.push({ roadId: u.roadId, medianHalf: u.medianHalf, kerbW: u.kerbW, kerbH: u.kerbH, n: i1 - i0 + 1, p: u.p.slice(i0 * MS, (i1 + 1) * MS) });
       metres += len;
     }
   }
-  const out = { runs, metres, flatMetres: 0 };
+  const out = { runs, uturns, metres, flatMetres: 0 };
   // flatMetres = divided road length - built median length
   let divided = 0;
   for (const r of roads.roads) if (dividedSectionOf(r) && !r.earth) divided += r.length;

@@ -3,6 +3,7 @@ import { Config } from '../core/Config';
 import { Q } from '../core/Quality';
 import type { RoadNetwork } from './RoadNetwork';
 import { MS, medianHalfAt, planMedians } from './MedianPlan';
+import { frameAt, type UTurnOpening } from './UTurns';
 
 /**
  * ROADS STEP 2: the visible median: a raised kerb on each side (150 mm) with a soil strip between, as a companion mesh on top of the road ribbon.
@@ -11,6 +12,9 @@ import { MS, medianHalfAt, planMedians } from './MedianPlan';
  * Profile across the road (u = metres to the left of the centreline, h = height above the road surface), 8 points, 7 strips:
  *   (+mh,-sink) (+mh,kH) (+mh-kW,kH) (+mh-kW,kH-drop) | soil | (-mh+kW,kH-drop) (-mh+kW,kH) (-mh,kH) (-mh,-sink)
  * The rounded nose at each end narrows mh (MedianPlan.medianHalfAt).
+ *
+ * ROADS STEP 4: every U-turn opening (a gap between two runs) also gets a flat asphalt patch that hides the old pale concrete strip and the solid yellow
+ * lines of the shader across the gap, and a BROKEN yellow line on each side of it (patch = its own mesh with polygonOffset, so it never z-fights the ribbon).
  */
 const SQUARE = 250;
 const SINK = 0.06;
@@ -18,13 +22,20 @@ const KERB_TOP: [number, number, number] = [0.68, 0.67, 0.64];
 const KERB_FACE: [number, number, number] = [0.52, 0.51, 0.49];
 const SOIL: [number, number, number] = [0.26, 0.34, 0.14];
 
-interface Square { cx: number; cz: number; segs: { run: number; k: number }[]; mesh: THREE.Mesh | null }
+interface Square { cx: number; cz: number; segs: { run: number; k: number }[]; uts: UTurnOpening[]; mesh: THREE.Mesh | null; patch: THREE.Mesh | null; built: boolean }
+
+/** sRGB paint colour -> the linear colour the road shader ends up with (it does pow(col, 2.2)). */
+const lin = (r: number, g: number, b: number): [number, number, number] => [Math.pow(r, 2.2), Math.pow(g, 2.2), Math.pow(b, 2.2)];
+const PATCH_ASPHALT = lin(0.465, 0.475, 0.485);
+const PATCH_YELLOW = lin(0.88, 0.68, 0.08);
 
 export class MedianView {
   readonly group = new THREE.Group();
   private squares: Square[] = [];
   private mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+  private patchMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
   private plan;
+  private roads: RoadNetwork;
   private timer = 9;
   /** Debug HUD / measurements. */
   drawnTriangles = 0;
@@ -32,20 +43,25 @@ export class MedianView {
 
   constructor(parent: THREE.Object3D, roads: RoadNetwork) {
     this.plan = planMedians(roads);
+    this.roads = roads;
     const HALF = Config.world.size / 2;
     const map = new Map<string, Square>();
+    const squareOf = (x: number, z: number): Square => {
+      const cx = Math.floor((x + HALF) / SQUARE);
+      const cz = Math.floor((z + HALF) / SQUARE);
+      const key = cx + ',' + cz;
+      let sq = map.get(key);
+      if (!sq) { sq = { cx: cx * SQUARE - HALF + SQUARE / 2, cz: cz * SQUARE - HALF + SQUARE / 2, segs: [], uts: [], mesh: null, patch: null, built: false }; map.set(key, sq); }
+      return sq;
+    };
     this.plan.runs.forEach((run, ri) => {
       for (let k = 0; k < run.n - 1; k++) {
         const mx = (run.p[k * MS] + run.p[(k + 1) * MS]) / 2;
         const mz = (run.p[k * MS + 2] + run.p[(k + 1) * MS + 2]) / 2;
-        const cx = Math.floor((mx + HALF) / SQUARE);
-        const cz = Math.floor((mz + HALF) / SQUARE);
-        const key = cx + ',' + cz;
-        let sq = map.get(key);
-        if (!sq) { sq = { cx: cx * SQUARE - HALF + SQUARE / 2, cz: cz * SQUARE - HALF + SQUARE / 2, segs: [], mesh: null }; map.set(key, sq); }
-        sq.segs.push({ run: ri, k });
+        squareOf(mx, mz).segs.push({ run: ri, k });
       }
     });
+    for (const o of this.plan.uturns.openings) squareOf(o.x, o.z).uts.push(o);
     this.squares = [...map.values()];
     parent.add(this.group);
   }
@@ -62,10 +78,10 @@ export class MedianView {
     for (const sq of this.squares) {
       const d = Math.hypot(sq.cx - px, sq.cz - pz);
       const on = d < draw + SQUARE * 0.71;
-      if (on && !sq.mesh && built < 2) { sq.mesh = this.build(sq); built++; }
-      if (sq.mesh) {
-        sq.mesh.visible = on;
-        if (on) tris += (sq.mesh.geometry.getIndex()?.count ?? 0) / 3;
+      if (on && !sq.built && built < 2) { sq.mesh = sq.segs.length > 0 ? this.build(sq) : null; sq.patch = sq.uts.length > 0 ? this.buildPatch(sq) : null; sq.built = true; built++; }
+      if (sq.built) {
+        if (sq.mesh) { sq.mesh.visible = on; if (on) tris += (sq.mesh.geometry.getIndex()?.count ?? 0) / 3; }
+        if (sq.patch) { sq.patch.visible = on; if (on) tris += (sq.patch.geometry.getIndex()?.count ?? 0) / 3; }
         if (d > draw + SQUARE * 0.71 + 250) { this.drop(sq); continue; }
         count++;
       }
@@ -75,10 +91,66 @@ export class MedianView {
   }
 
   private drop(sq: Square): void {
-    if (!sq.mesh) return;
-    this.group.remove(sq.mesh);
-    sq.mesh.geometry.dispose();
-    sq.mesh = null;
+    if (sq.mesh) { this.group.remove(sq.mesh); sq.mesh.geometry.dispose(); sq.mesh = null; }
+    if (sq.patch) { this.group.remove(sq.patch); sq.patch.geometry.dispose(); sq.patch = null; }
+    sq.built = false;
+  }
+
+  /** ROADS STEP 4: asphalt patch + broken yellow lines of every U-turn opening of the square (flat quads lifted `uturn.lift` m over the road). */
+  private buildPatch(sq: Square): THREE.Mesh {
+    const U = Config.city.uturn;
+    const nose = Config.city.median.noseLen;
+    const pos: number[] = [];
+    const col: number[] = [];
+    const idx: number[] = [];
+    const quad = (ax: number, ay: number, az: number, bx: number, by: number, bz: number, cx: number, cy: number, cz: number, dx: number, dy: number, dz: number, c: [number, number, number]): void => {
+      const v = pos.length / 3;
+      pos.push(ax, ay, az, bx, by, bz, cx, cy, cz, dx, dy, dz);
+      for (let i = 0; i < 4; i++) col.push(c[0], c[1], c[2]);
+      idx.push(v, v + 1, v + 2, v + 2, v + 1, v + 3);
+    };
+    for (const o of sq.uts) {
+      const r = this.roads.roads[o.roadId];
+      const s0 = o.a - nose;
+      const s1 = o.b + nose;
+      const pw = o.medianHalf + U.patchBeyond;
+      const lift = U.lift;
+      const A = { x: 0, y: 0, z: 0, nx: 0, nz: 0, tx: 0, tz: 0 };
+      const B = { x: 0, y: 0, z: 0, nx: 0, nz: 0, tx: 0, tz: 0 };
+      // asphalt patch: strips of 2 m
+      const n = Math.max(1, Math.ceil((s1 - s0) / 2));
+      for (let i = 0; i < n; i++) {
+        frameAt(r, s0 + ((s1 - s0) * i) / n, A);
+        frameAt(r, s0 + ((s1 - s0) * (i + 1)) / n, B);
+        quad(A.x + A.nx * pw, A.y + lift, A.z + A.nz * pw, A.x - A.nx * pw, A.y + lift, A.z - A.nz * pw, B.x + B.nx * pw, B.y + lift, B.z + B.nz * pw, B.x - B.nx * pw, B.y + lift, B.z - B.nz * pw, PATCH_ASPHALT);
+      }
+      // broken yellow line (dash / gap = uturn.dash) on each side, where the shader's solid line was (medianHalf + 0.35 from the centreline)
+      const lw = 0.09;
+      for (const side of [-1, 1]) {
+        const u0 = side * (o.medianHalf + 0.35) - lw;
+        const u1 = side * (o.medianHalf + 0.35) + lw;
+        for (let sd = s0 + U.dash * 0.5; sd < s1 - U.dash * 0.5; sd += U.dash * 2) {
+          frameAt(r, sd, A);
+          frameAt(r, Math.min(s1, sd + U.dash), B);
+          quad(A.x + A.nx * u0, A.y + lift * 1.4, A.z + A.nz * u0, A.x + A.nx * u1, A.y + lift * 1.4, A.z + A.nz * u1, B.x + B.nx * u0, B.y + lift * 1.4, B.z + B.nz * u0, B.x + B.nx * u1, B.y + lift * 1.4, B.z + B.nz * u1, PATCH_YELLOW);
+        }
+      }
+    }
+    const geo = new THREE.BufferGeometry();
+    const nor = new Float32Array(pos.length);
+    for (let i = 1; i < nor.length; i += 3) nor[i] = 1;
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+    geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(col), 3));
+    geo.setIndex(new THREE.BufferAttribute(new Uint32Array(idx), 1));
+    geo.computeBoundingSphere();
+    const mesh = new THREE.Mesh(geo, this.patchMat);
+    mesh.name = `uturn ${Math.round(sq.cx)},${Math.round(sq.cz)}`;
+    mesh.matrixAutoUpdate = false;
+    mesh.castShadow = false;
+    mesh.receiveShadow = true;
+    this.group.add(mesh);
+    return mesh;
   }
 
   private build(sq: Square): THREE.Mesh {
@@ -158,5 +230,6 @@ export class MedianView {
     for (const sq of this.squares) this.drop(sq);
     this.group.parent?.remove(this.group);
     this.mat.dispose();
+    this.patchMat.dispose();
   }
 }
