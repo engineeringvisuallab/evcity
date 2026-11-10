@@ -29,6 +29,7 @@ import { BridgeBuilder, BridgePhysics, RoadDebug } from '../roads';
 import { MedianView } from '../roads/MedianView';
 import { MedianPhysics } from '../roads/MedianPhysics';
 import { FootpathView } from '../roads/FootpathView';
+import { UTurnSignView } from '../roads/UTurnSigns';
 import { FootpathPhysics } from '../roads/FootpathPhysics';
 import { RoadsideView } from '../roads/RoadsideView';
 import { CombatSystem } from '../combat';
@@ -233,6 +234,7 @@ export class Engine {
   private medianView: MedianView;
   private medianPhysics: MedianPhysics;
   private footpathView: FootpathView;
+  private uturnSigns: UTurnSignView;
   private footpathPhysics: FootpathPhysics;
   private roadDebug: RoadDebug;
   private railPhysics: RailPhysics;
@@ -366,6 +368,7 @@ export class Engine {
     this.medianView = new MedianView(this.world.root, roads);
     this.medianPhysics = new MedianPhysics(physics, this.world.origin, roads);
     this.footpathView = new FootpathView(this.world.root, roads);
+    this.uturnSigns = new UTurnSignView(this.world.root, roads);
     this.footpathPhysics = new FootpathPhysics(physics, this.world.origin, roads);
     this.roadDebug = new RoadDebug(roads);
     this.streetLights = new StreetLights(this.world.root, roads);
@@ -1109,6 +1112,7 @@ export class Engine {
       this.roadside.update(dt, this.camera.position.x + this.world.origin.origin.x, this.camera.position.z + this.world.origin.origin.z);
       this.medianView.update(dt, this.camera.position.x + this.world.origin.origin.x, this.camera.position.z + this.world.origin.origin.z);
       this.footpathView.update(dt, this.camera.position.x + this.world.origin.origin.x, this.camera.position.z + this.world.origin.origin.z);
+      this.uturnSigns.update(dt, this.camera.position.x + this.world.origin.origin.x, this.camera.position.z + this.world.origin.origin.z);
       this.lighthouseLight?.update(lamp, this.time.elapsed, fov, px);
     }
 
@@ -1627,6 +1631,7 @@ export class Engine {
     this.medianView.dispose();
     this.footpathPhysics.dispose();
     this.footpathView.dispose();
+    this.uturnSigns.dispose();
     this.railPhysics.dispose();
     this.portPhysics.dispose();
     this.bridgeVisuals.dispose();

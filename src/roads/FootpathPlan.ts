@@ -9,6 +9,7 @@ import { Config } from '../core/Config';
 import type { RoadNetwork } from './RoadNetwork';
 import type { RoadSpec } from './RoadTypes';
 import { padIndex } from './PadIndex';
+import { planMedians } from './MedianPlan';
 
 /** Floats per sample in FootRun.p: x, y, z (centreline, finished road surface), nx, nz (unit left normal), tx, tz (unit tangent), s (arc length). */
 export const FS = 8;
@@ -82,8 +83,11 @@ export function planFootpaths(roads: RoadNetwork): FootpathPlan {
   const runs: FootRun[] = [];
   const gullies: number[] = [];
   let metres = 0;
+  const crossingsOf = new Map<number, { s: number }[]>();
+  for (const c of planMedians(roads).crossings) { const l = crossingsOf.get(c.roadId) ?? []; l.push(c); crossingsOf.set(c.roadId, l); }
   for (const r of roads.roads) {
     if (r.earth || r.closed || r.xs.length < 2 || r.length < F.minRun) continue;
+    const crossings = crossingsOf.get(r.id) ?? [];
     const cur = { i: 0 };
     const count = Math.floor(r.length / F.step) + 1;
     const pts = new Float64Array((count + 1) * FS);
@@ -94,7 +98,10 @@ export function planFootpaths(roads: RoadNetwork): FootpathPlan {
       if (m > 0 && s - pts[(m - 1) * FS + 7] < 0.5) break;
       sampleRoad(r, s, cur, pts, m * FS);
       const x = pts[m * FS]; const z = pts[m * FS + 2];
-      city.push(cityAt(roads, r, cur.i, x, z) && !nearPad(x, z, F.padMargin));
+      // ROADS STEP 6b: a crossing (mall or street) breaks the footpath: level with the road within breakHalf m of its centre; the run ends on both sides are the dropped kerbs
+      const sHere = pts[m * FS + 7];
+      const atCrossing = crossings.some((c) => Math.abs(c.s - sHere) < Config.city.streetCrossing.breakHalf);
+      city.push(cityAt(roads, r, cur.i, x, z) && !nearPad(x, z, F.padMargin) && !atCrossing);
       m++;
     }
     const width = footWidth(r);

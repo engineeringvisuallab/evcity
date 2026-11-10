@@ -21,11 +21,61 @@ const EDGE: [number, number, number] = [0.62, 0.62, 0.60];
 
 interface Square { cx: number; cz: number; segs: { run: number; k: number }[]; gullies: number[]; mesh: THREE.Mesh | null; grates: THREE.InstancedMesh | null }
 
+/**
+ * ROADS STEP 6b: one gully grate = a cast-iron frame plate (grey) with dark slots (the slots run along the kerb) and a thin dark rim, merged into ONE geometry with vertex
+ * colours (so the instanced mesh is still one draw call). w = across the road, l = along it.
+ */
+function grateGeometry(w: number, l: number): THREE.BufferGeometry {
+  const H = 0.025;
+  const parts: { g: THREE.BufferGeometry; c: [number, number, number] }[] = [];
+  const box = (bw: number, bh: number, bl: number, x: number, y: number, z: number, c: [number, number, number]): void => {
+    const g = new THREE.BoxGeometry(bw, bh, bl);
+    g.translate(x, y, z);
+    parts.push({ g, c });
+  }
+  const IRON: [number, number, number] = [0.30, 0.31, 0.33];
+  const DARK: [number, number, number] = [0.04, 0.04, 0.045];
+  box(w, H, l, 0, 0, 0, IRON); // frame plate
+  const slots = 4;
+  const sw = w * 0.11;
+  const sl = l * 0.78;
+  for (let i = 0; i < slots; i++) box(sw, 0.004, sl, (-(slots - 1) / 2 + i) * (w * 0.2), H / 2 + 0.001, 0, DARK); // slots, a hair above the plate
+  let nv = 0;
+  let ni = 0;
+  for (const p of parts) { nv += p.g.getAttribute('position').count; ni += p.g.getIndex()!.count; }
+  const pos = new Float32Array(nv * 3);
+  const nor = new Float32Array(nv * 3);
+  const col = new Float32Array(nv * 3);
+  const idx = new Uint16Array(ni);
+  let vo = 0;
+  let io = 0;
+  for (const p of parts) {
+    const pa = p.g.getAttribute('position');
+    const na = p.g.getAttribute('normal');
+    for (let i = 0; i < pa.count; i++) {
+      pos.set([pa.getX(i), pa.getY(i), pa.getZ(i)], (vo + i) * 3);
+      nor.set([na.getX(i), na.getY(i), na.getZ(i)], (vo + i) * 3);
+      col.set(p.c, (vo + i) * 3);
+    }
+    const ia = p.g.getIndex()!;
+    for (let i = 0; i < ia.count; i++) idx[io + i] = ia.getX(i) + vo;
+    vo += pa.count;
+    io += ia.count;
+    p.g.dispose();
+  }
+  const out = new THREE.BufferGeometry();
+  out.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  out.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  out.setIndex(new THREE.BufferAttribute(idx, 1));
+  return out;
+}
+
 export class FootpathView {
   readonly group = new THREE.Group();
   private squares: Square[] = [];
   private mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
-  private grateMat = new THREE.MeshLambertMaterial({ color: 0x2b2b2d });
+  private grateMat = new THREE.MeshLambertMaterial({ vertexColors: true });
   private grateGeo: THREE.BufferGeometry;
   private plan;
   private timer = 9;
@@ -35,7 +85,7 @@ export class FootpathView {
   constructor(parent: THREE.Object3D, roads: RoadNetwork) {
     this.plan = planFootpaths(roads);
     const G = Config.city.footpath.gullySize;
-    this.grateGeo = new THREE.BoxGeometry(G[1], 0.025, G[0]); // x across the road, z along it
+    this.grateGeo = grateGeometry(G[1], G[0]); // x across the road, z along it
     const HALF = Config.world.size / 2;
     const map = new Map<string, Square>();
     const get = (x: number, z: number): Square => {

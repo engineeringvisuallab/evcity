@@ -152,6 +152,8 @@ export const Config = {
       patchBeyond: 0.62,
       dash: 3,
       lift: 0.03,
+      /** ROADS STEP 6b: the U-turn sign (blue board on a median pole), `before` m ahead of the nose of every opening for each direction; no pole within `lampClear` m of a median lamp. */
+      sign: { enabled: true, before: 40, lampClear: 4, boardBottom: 2.0, showRadius: 900 },
     },
     /**
      * ROADS STEP 5: planting of the divided roads (roads/Planting.ts, Roadside.ts, StreetLights.ts, vegetation/GrassPlacement.ts). Everything uses the game's own models
@@ -203,6 +205,14 @@ export const Config = {
       /** Physics cell size (m). */
       cell: 125,
     },
+    /**
+     * ROADS STEP 6b: zebra crossings in the middle of a block on the UNDIVIDED city roads (local streets and collectors inside a city). Divided roads keep the mall crossings of
+     * `median.crossing`. Every crossing (both kinds) breaks the raised footpath: `breakHalf` m each side of its centre the footpath is level with the road (a dropped kerb at both
+     * ends of the break), and no lamp stands there. The painted zebra reuses `median.crossing` (zebraLen, barW, barStep).
+     * `spacing` = distance (m) between two crossings of one road (min..max, hash chosen), `padClear` = nearest distance to a junction pad, `endClear` = to a road end,
+     * `gap` = length (m) of the asphalt patch along the road (hides the dashed centre line), `maxBend` = largest direction change (cos) across 12 m.
+     */
+    streetCrossing: { enabled: true, spacing: [140, 230] as [number, number], padClear: 45, endClear: 30, gap: 4, breakHalf: 2.6, minBendCos: 0.985 },
     localRoads: {
       /** City sites that get local streets so far (Stage 10B step 1 = site 0 only; sites 1 and 2 follow). */
       sites: [0] as number[],

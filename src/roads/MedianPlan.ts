@@ -11,6 +11,7 @@ import { dividedSectionOf } from './RoadSection';
 import { padIndex } from './PadIndex';
 import { padDistance, placeUTurns, type RunRange, type UTurnPlan } from './UTurns';
 import { MALL_DOORS } from '../mall/MallSite';
+import { planStreetCrossings } from './CrossingPlan';
 
 /** Floats per sample in MedianRun.p: x, y, z (centreline, finished road surface), nx, nz (unit left normal), tx, tz (unit tangent), s (arc length). */
 export const MS = 8;
@@ -33,6 +34,8 @@ export interface Crossing {
   b: number;
   x: number;
   z: number;
+  /** ROADS STEP 6b: a mid-block crossing of an undivided city road (no median opening, see CrossingPlan.ts). */
+  street?: boolean;
 }
 
 /** Is s (m along road `roadId`) inside a pedestrian crossing's opening, or within `clear` m of it? Trees / hedges stay out of it. */
@@ -173,6 +176,8 @@ export function planMedians(roads: RoadNetwork): MedianPlan {
       ranges.set(c.roadId, out);
     }
   }
+  // ROADS STEP 6b: mid-block zebra crossings on undivided city roads (no median to cut; the footpath breaks there)
+  crossings.push(...planStreetCrossings(roads));
   const uturns = placeUTurns(roads.roads, ranges, padDistance(roads.pads, Config.city.uturn.padMax), M.step);
   for (const u of base) {
     const sa = u.p[7];

@@ -17,6 +17,7 @@ import type { RoadKind } from '../roads/RoadTypes';
 import { Q } from '../core/Quality';
 import { Config } from '../core/Config';
 import { planMedianLamps } from '../roads/Planting';
+import { planMedians, crossingZoneHas } from '../roads/MedianPlan';
 
 export interface LampSpot {
   /** Foot of the pole (world metres). */
@@ -85,6 +86,7 @@ export function planStreetLights(roads: RoadNetwork): LampSpot[] {
     for (const i of l) if (Math.hypot(x - pads[i].x, z - pads[i].z) < pads[i].rCore + PAD_SKIP) return true;
     return false;
   };
+  const mplan = planMedians(roads);
   const bridgeHalf = new Map<number, number>();
   for (const b of roads.bridges) bridgeHalf.set(b.id, b.deckHalfWidth);
 
@@ -117,6 +119,7 @@ export function planStreetLights(roads: RoadNetwork): LampSpot[] {
       nz /= nl;
       side = country ? oneSide : -side;
       if (inPad(x, z)) continue;
+      if (crossingZoneHas(mplan, r.id, target - (country ? stepOpen : step), 3.5)) continue; // ROADS STEP 6b: no pole in a pedestrian crossing (the footpath is level there)
       const bid = r.bridgeOf[f < 0.5 ? i : i + 1];
       // city road: the pole stands on the paved sidewalk, behind the tree pits (pits are centred 0.75 m from the kerb); open country: on the gravel shoulder
       const edge = bid >= 0 ? (bridgeHalf.get(bid) ?? r.halfWidth) - 0.35 : r.halfWidth + (inCity ? Math.max(1.0, Config.city.roadside.sidewalk - 0.9) : Math.max(0.6, r.shoulder * 0.5));
