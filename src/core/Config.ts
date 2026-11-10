@@ -602,7 +602,7 @@ export const Config = {
 
   /** STAGE 9: AI traffic. Every vehicle has a driver (a person); there are no empty cars. */
   traffic: {
-    target: 34,
+    target: 40,
     spawnEvery: 0.3,
     spawnMin: 110,
     spawnMax: 260,
