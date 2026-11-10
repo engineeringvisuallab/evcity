@@ -63,9 +63,10 @@ for (let cz = -margin; cz < N + margin; cz++) {
         if (!Number.isNaN(s.water) && s.h < s.water + V.waterMargin) fail(`tree in water at ${x.toFixed(0)},${z.toFixed(0)} kind ${k} h=${s.h.toFixed(2)} water=${s.water.toFixed(2)}`);
         if (s.h > V.treeLineEnd) fail(`tree above the tree line at ${x.toFixed(0)},${z.toFixed(0)} h=${s.h.toFixed(0)}`);
         gen.roads.maskAt(x, z, 1, mask);
+        // ROADS STEP 6a: surfaceAt is 2 where an earth track runs beside the road and is the nearest strip (z about -3500..-3800), so only 0 (no road at all) is a failure.
         // GRASS 4: street trees stand in the kerbed pits of the city sidewalks (inside the ribbon on purpose, but never on the asphalt)
         if (isMedian) {
-          if (gen.roads.surfaceAt(x, z) !== 1) fail(`median tree not on the road at ${x.toFixed(0)},${z.toFixed(0)}`);
+          if (gen.roads.surfaceAt(x, z) === 0) fail(`median tree not on the road at ${x.toFixed(0)},${z.toFixed(0)}`);
         } else if (hasKey(streetKeys, x, z)) {
           if (gen.roads.surfaceAt(x, z) === 1 || !gen.roads.cityWalkAt(x, z)) fail(`street tree not on a sidewalk at ${x.toFixed(0)},${z.toFixed(0)}`);
         } else if (mask[1] > 0.01) fail(`tree on a road at ${x.toFixed(0)},${z.toFixed(0)}`);
@@ -81,7 +82,7 @@ for (let cz = -margin; cz < N + margin; cz++) {
           else inGreen++;
         }
         const sc = d[i + 3];
-        if (!(sc > 0.3 && sc < 2.2)) fail(`odd scale ${sc}`);
+        if (!(sc > 0.3 && sc < 6.5)) fail(`odd scale ${sc}`); // ROADS STEP 6a: limit was 2.2 (older than tree kinds 6..17, which reach about 5.6)
       }
     }
     total += n;

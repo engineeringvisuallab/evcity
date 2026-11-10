@@ -89,7 +89,7 @@ for (const a of ENGINEERING_AREAS) {
   const lay = buildFenceLayout(a, hash);
   const covered = lay.visual.reduce((t, p) => t + Math.hypot(p.bx - p.ax, p.bz - p.az), 0);
   if (Math.abs(covered + lay.gapLength - lay.perimeter) > 4) fail(`${a.id}: fence + road gaps (${Math.round(covered + lay.gapLength)} m) do not add up to the perimeter (${lay.perimeter} m)`);
-  if (lay.gapLength > lay.perimeter * 0.2) fail(`${a.id}: ${Math.round(lay.gapLength)} m of the fence is open for roads (more than 20%)`);
+  if (lay.gapLength > lay.perimeter * 0.35) fail(`${a.id}: ${Math.round(lay.gapLength)} m of the fence is open for roads (more than 35%; ROADS STEP 6a: was 20%, the roads are 6-lane now and the fence is as wide as the road)`);
   if (lay.visual.length < 20 || lay.solid.length < 10) fail(`${a.id}: fence has too few pieces`);
   for (const r of g.roads.roads) for (let i = 0; i < r.xs.length; i++) {
     const x = r.xs[i], z = r.zs[i];

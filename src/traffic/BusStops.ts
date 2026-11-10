@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { footpathNear } from '../roads/FootpathPlan';
+import { Config } from '../core/Config';
 import type { CitySite, TerrainGenerator } from '../terrain';
 import type { FloatingOrigin } from '../world/FloatingOrigin';
 import type { RoadGraph, RoadPoint } from './RoadGraph';
@@ -70,7 +72,9 @@ export class BusStops {
           g.at(r, s, dir, g.laneOffset(r), L); // bus lane
           g.at(r, s, dir, road.halfWidth + road.shoulder * 0.7 + 0.9, P); // shelter, left kerb
           const id = this.stops.length;
-          const y = this.d.terrain.heightAt(P.x, P.z);
+          // ROADS STEP 6a: on a city road the shelter stands on the raised footpath, so lift it by the kerb height (else the floor and the bench sink 0.15 m).
+          const onFoot = footpathNear(g.net, r, 1, P.x, P.z, 2.6) || footpathNear(g.net, r, -1, P.x, P.z, 2.6);
+          const y = this.d.terrain.heightAt(P.x, P.z) + (onFoot ? Config.city.footpath.height : 0);
           this.stops.push({ id, roadId: r, s, dir, x: P.x, z: P.z, y, sx: L.x, sz: L.z, hx: L.hx, hz: L.hz });
           const key = this.key(P.x, P.z);
           const list = this.cells.get(key);
