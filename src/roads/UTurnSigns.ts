@@ -1,6 +1,7 @@
 // ROADS STEP 6b: the U-turn sign mesh: two instanced meshes per 1 km square (poles, boards), built near the player only. The plan is roads/UTurnSignPlan.ts.
 import * as THREE from 'three';
 import { Config } from '../core/Config';
+import { Q } from '../core/Quality';
 import type { RoadNetwork } from './RoadNetwork';
 import { planUTurnSigns, type UTurnSign } from './UTurnSignPlan';
 
@@ -104,7 +105,7 @@ export class UTurnSignView {
     this.timer += dt;
     if (this.timer < 0.5) return;
     this.timer = 0;
-    const R = Config.city.uturn.sign.showRadius + CELL * 0.71;
+    const R = Config.city.uturn.sign.showRadius * Math.max(0.4, Q.roadsideMul) + CELL * 0.71; // lower quality presets show the signs closer
     let n = 0;
     for (const c of this.cells) {
       const d = Math.hypot(c.x - px, c.z - pz);
