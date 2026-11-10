@@ -28,7 +28,7 @@ export const Config = {
      * The terrain shader multiplies the soil share (and the soil on slopes) by (1 - greenness * `amount`) and tints the grass colour `lawnTint`
      * towards a fresh lawn green. amount 0 = old behaviour (brown soil everywhere).
      */
-    cityGreen: { amount: 0.55, fadeOut: 120, lawnTint: 0.35, slopeSoilKeep: 0.25 },
+    cityGreen: { amount: 0.55, fadeOut: 120, lawnTint: 0.35, slopeSoilKeep: 0.05 },
     seaLevel: 0,
     /** Highest possible terrain point (rim mountains). Used by shader/snow line and sanity checks. */
     maxHeight: 650,

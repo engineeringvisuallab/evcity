@@ -203,7 +203,8 @@ const FRAG_COLOR = /* glsl */ `
   col = mix(col, snow, snowAmt);
 
   // STAGE 6: concrete road surface and gravel shoulder. Far LODs use this colour; LOD0/1 also get detailed ribbons.
-  col = mix(col, vec3(0.43, 0.40, 0.34), vRoad.y * 0.9);
+  // ROADS: inside a city the strip beside the road (outside the paved footpath) is lawn green, not brown gravel
+  col = mix(col, mix(vec3(0.43, 0.40, 0.34), lawn, cityG), vRoad.y * 0.9);
   col = mix(col, vec3(0.46, 0.47, 0.48) * 0.97 + nHi * 0.025, vRoad.x);
 
   col = pow(col, vec3(2.2));              // authored in sRGB-ish values, shader works in linear
