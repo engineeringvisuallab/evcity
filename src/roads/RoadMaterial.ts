@@ -57,16 +57,16 @@ vec3 evcPavers(vec2 p, float dist) {
   float ey = min(fract(g.y), 1.0 - fract(g.y));
   float grout = 1.0 - smoothstep(0.03, 0.10, min(ex, ey * 1.0));
   float near = 1.0 - smoothstep(14.0, 55.0, dist);
-  vec3 tile = vec3(0.60, 0.60, 0.58) * (0.90 + 0.2 * id);
-  return mix(vec3(0.58), mix(tile, tile * 0.62, grout), near);
+  vec3 tile = vec3(0.80, 0.80, 0.78) * (0.92 + 0.12 * id);
+  return mix(vec3(0.78), mix(tile, tile * 0.80, grout), near);
 }
 // City sidewalk colour at distance d (m) outside the asphalt edge: kerb stone, pavers, a thin concrete edging next to the lawn strip.
 vec3 evcSidewalk(float d, float u, float s) {
   vec3 col = evcPavers(vec2(u, s), vRdDist);
   float kerbB = 1.0 - smoothstep(0.17, 0.23, d);
   float edgeB = smoothstep(${SIDEWALK} - 0.24, ${SIDEWALK} - 0.18, d);
-  col = mix(col, vec3(0.70, 0.69, 0.66), kerbB);
-  col = mix(col, vec3(0.56, 0.55, 0.52), edgeB);
+  col = mix(col, vec3(0.86, 0.85, 0.82), kerbB);
+  col = mix(col, vec3(0.72, 0.71, 0.69), edgeB);
   return col;
 }
 `;

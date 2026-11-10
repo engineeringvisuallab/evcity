@@ -148,14 +148,14 @@ export function buildShrubGeometry(): THREE.BufferGeometry {
 export function buildPitGeometry(): THREE.BufferGeometry {
   const s = Config.city.roadside.pitSize;
   const w = 0.1;
-  const kerb: Rgb = [0.62, 0.61, 0.58];
+  const kerb: Rgb = [0.80, 0.79, 0.76];
   const g = new Geo();
   const h = s / 2;
   g.box(0, 0.07, h + w / 2, s + 2 * w, 0.14, w, kerb);
   g.box(0, 0.07, -h - w / 2, s + 2 * w, 0.14, w, kerb);
   g.box(h + w / 2, 0.07, 0, w, 0.14, s, kerb);
   g.box(-h - w / 2, 0.07, 0, w, 0.14, s, kerb);
-  g.quad([-h, 0.07, h], [h, 0.07, h], [h, 0.07, -h], [-h, 0.07, -h], [0.24, 0.17, 0.1]);
+  g.quad([-h, 0.07, h], [h, 0.07, h], [h, 0.07, -h], [-h, 0.07, -h], [0.80, 0.79, 0.75]); // light stone / gravel, not dark brown soil
   return g.build();
 }
 

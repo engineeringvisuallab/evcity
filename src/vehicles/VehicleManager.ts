@@ -270,8 +270,7 @@ export class VehicleManager {
         v.tick(dt);
         this.handleEvents(v);
         this.runOver(v);
-        if (v.spec.look.kind === 'tank' && v.state !== 'wrecked') this.crushTrees(v);
-        else if (v.state !== 'wrecked') this.knockTrees(v);
+        if (v.spec.look.kind === 'tank' && v.state !== 'wrecked') this.crushTrees(v); // ONLY the tank fells trees; every other vehicle hits them like solid objects
       } else v.tickOffline(dt); // far away: fire and wreck timers keep running
     }
     for (const v of this.vehicles) {
@@ -652,29 +651,6 @@ export class VehicleManager {
     v.forwardVector(this.tmp4);
     const l = Math.hypot(this.tmp4.x, this.tmp4.z) || 1;
     this.trees.destroyInBox(this.tmp3.x, this.tmp3.z, this.tmp4.x / l, this.tmp4.z / l, v.spec.half.z + 2.4, v.spec.half.x + 0.9);
-  }
-
-  /**
-   * CRASH FEEL: a car, bus or truck that drives into thin / medium trees knocks them down instead of stopping dead: the box just ahead of the bumper is
-   * checked (so the trunk collider is gone before the body touches it) and the vehicle loses speed by momentum (m v = (m + tree) v'). Thick trunks stay
-   * solid and hurt through the normal crash damage.
-   */
-  private knockTrees(v: Vehicle): void {
-    if (!this.trees) return;
-    const sp = v.forwardSpeed;
-    const V = Config.vegetation;
-    if (sp < V.breakSpeed) return;
-    v.physWorld(this.tmp3);
-    v.forwardVector(this.tmp4);
-    const l = Math.hypot(this.tmp4.x, this.tmp4.z) || 1;
-    const fx = this.tmp4.x / l;
-    const fz = this.tmp4.z / l;
-    const hl = v.spec.half.z + 0.8 + sp * 0.06; // the box reaches a little beyond the bumper (grows with speed)
-    const mass = this.trees.crashInBox(this.tmp3.x + fx * 0.8, this.tmp3.z + fz * 0.8, fx, fz, hl, v.spec.half.x + 0.25);
-    if (mass <= 0) return;
-    const k = v.spec.mass / (v.spec.mass + mass);
-    const lv = v.body.linvel();
-    v.body.setLinvel({ x: lv.x * k, y: lv.y, z: lv.z * k }, true);
   }
 
   /** The player's vehicle hit a person (civilian / police): who, did he die. Used by the Gold economy. */

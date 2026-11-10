@@ -318,13 +318,12 @@ export const Config = {
     /** Max squares given colliders per physics update (5 Hz), so walking into a forest never hitches. */
     collideBuildPerTick: 8,
     /**
-     * CRASH FEEL (trees): a trunk thinner than `passRadius` (m) or a tree lower than `passHeight` (m) has NO collider: people, cars and trains go through it
-     * (young trees, the small median trees). A trunk up to `breakRadius` (m) is knocked down by a vehicle that drives into it faster than `breakSpeed` (m/s):
-     * it falls (TreeDestruction), and the vehicle loses speed by momentum (tree mass = `treeDensity` x trunk volume, trunk `treeLen` m long per unit scale).
-     * Thicker trunks stay solid.
+     * TREES ARE REAL: only the TANK (and blasts) fell trees. Cars, buses, trucks, people hit a trunk like a solid object (normal crash physics).
+     * Only a trunk thinner than `passRadius` (m) or a tree lower than `passHeight` (m) (saplings, tiny shrubs) has no collider.
+     * `breakRadius` / `breakSpeed` / `treeDensity` / `treeLen` are no longer used by normal vehicles (kept for TreeDestruction.crashInBox).
      */
-    passRadius: 0.16,
-    passHeight: 1.0,
+    passRadius: 0.05,
+    passHeight: 0.6,
     breakRadius: 0.45,
     breakSpeed: 4,
     treeDensity: 650,

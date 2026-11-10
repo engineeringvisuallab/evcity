@@ -14,10 +14,10 @@ import { FS, planFootpaths, rampFactor } from './FootpathPlan';
  */
 const SQUARE = 250;
 const SINK = 0.06;
-const KERB: [number, number, number] = [0.6, 0.6, 0.58];
-const KERB_FACE: [number, number, number] = [0.46, 0.46, 0.45];
-const WALK: [number, number, number] = [0.52, 0.51, 0.49];
-const EDGE: [number, number, number] = [0.4, 0.4, 0.39];
+const KERB: [number, number, number] = [0.82, 0.82, 0.80];
+const KERB_FACE: [number, number, number] = [0.66, 0.66, 0.64];
+const WALK: [number, number, number] = [0.74, 0.74, 0.72];
+const EDGE: [number, number, number] = [0.62, 0.62, 0.60];
 
 interface Square { cx: number; cz: number; segs: { run: number; k: number }[]; gullies: number[]; mesh: THREE.Mesh | null; grates: THREE.InstancedMesh | null }
 
