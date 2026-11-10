@@ -190,3 +190,21 @@ export function footpathHas(roads: RoadNetwork, roadId: number, side: 1 | -1, s:
   for (let i = 0; i < l.length; i += 2) if (s >= l[i] && s <= l[i + 1]) return true;
   return false;
 }
+
+/**
+ * ROADS STEP 5: does a full-height footpath sample of this road side lie within `maxD` m of the pit centre (x, z)? footpathHas() only compares arc lengths; on a sharp bend the pit
+ * (placed from the interpolated road normal) can land a little off the strip, so the pit planner asks this too.
+ */
+export function footpathNear(roads: RoadNetwork, roadId: number, side: 1 | -1, x: number, z: number, maxD: number): boolean {
+  const plan = planFootpaths(roads);
+  for (const u of plan.runs) {
+    if (u.roadId !== roadId || u.side !== side) continue;
+    const l = u.side * (u.hw + Config.city.roadside.pitOffset);
+    for (let k = 1; k < u.n - 1; k++) {
+      const a = k * FS;
+      if (Math.hypot(x - (u.p[a] + u.p[a + 3] * l), z - (u.p[a + 2] + u.p[a + 4] * l)) < maxD) return true;
+    }
+  }
+  return false;
+}
+

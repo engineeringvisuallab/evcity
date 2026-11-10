@@ -141,7 +141,7 @@ export const Config = {
       /** No bridge within this distance (m) of the gap, and the road must be straight enough (max heading change in degrees over gap + 2 x 20 m). */
       bridgeClear: 15,
       maxBendDeg: 20,
-      /** Median trees and hedges stop this far (m) from each nose tip (step 5 will add the real low-planting clear zone). */
+      /** Median trees and hedges stop at least this far (m) from each nose tip. The real low-planting sight zone is `planting.sightZone` (ROADS STEP 5), usually longer. */
       plantClear: 8,
       /** AI: chance (0..1) that a driver who reaches an opening turns round there, speed (m/s) of the half circle, free space (m) kept beside the vehicle's outer body, gap time (s) to traffic. */
       useChance: 0.3,
@@ -152,6 +152,31 @@ export const Config = {
       patchBeyond: 0.62,
       dash: 3,
       lift: 0.03,
+    },
+    /**
+     * ROADS STEP 5: planting of the divided roads (roads/Planting.ts, Roadside.ts, StreetLights.ts, vegetation/GrassPlacement.ts). Everything uses the game's own models
+     * (small debdaru / date palm, the flowering hedge piece, the meadow grass tufts): no new models.
+     */
+    planting: {
+      /**
+       * D7, sight zone: this far (m) on each side of a U-turn opening (measured from the nose tip) the median carries NO tree and NO hedge, only low grass (tufts x `grassScale`),
+       * so a driver can see a car waiting in the gap. Per road kind (avenue = the 40 km/h downtown street). The stopping sight distance of the audit was 46 / 104 / 183 m
+       * (40 / 70 / 100 km/h): 65 m is a compromise, raise it here if you want the full distance.
+       */
+      sightZone: { highway: 65, arterial: 65, avenue: 45 },
+      /** Scale of the median grass tufts inside a sight zone (1 = normal, normal tufts are 0.7..1.5). */
+      grassScale: 0.55,
+      /**
+       * Median OUTSIDE the cities (it had grass only): hedge blocks `hedgeOn` m long with a `hedgeOff` m gap (glare screen, deterministic), and a small tree at `treeKeep` (0..1) of the
+       * city tree places (so about every 60 m). Inside the cities the old dense planting stays.
+       */
+      countryMedian: { enabled: true, hedgeOn: 24, hedgeOff: 10, treeKeep: 0.5 },
+      /**
+       * Double-arm street lamps on the median of every divided road (one pole, an arm over each carriageway): spacing (m) along the median per road kind (x the quality lamp
+       * spacing), light pool radius (m), pole height scale. The old lamps on the outer footpath / shoulder stay (they light the kerb lane). `clearEnds` = no lamp this close (m)
+       * to the end of a median piece (nose, junction, U-turn gap); `treeClear` = no median tree this close (m) to a lamp.
+       */
+      medianLamps: { enabled: true, step: { highway: 33, arterial: 31, avenue: 28 }, pool: { highway: 12, arterial: 10.5, avenue: 9.5 }, scale: { highway: 1.25, arterial: 1.1, avenue: 1.0 }, clearEnds: 9, treeClear: 4.5 },
     },
     /**
      * ROADS STEP 3: the raised footpath of city roads (companion mesh on the ribbon strip beside the asphalt, collider, dropped kerbs, gully grates).
@@ -229,7 +254,7 @@ export const Config = {
     roadside: {
       sidewalk: 3,
       /** Tree pits: spacing range (m) along each sidewalk, pit side (m, kerbed square), distance of the pit centre from the asphalt edge (m). */
-      treeSpacing: [45, 60] as [number, number],
+      treeSpacing: [30, 42] as [number, number], // ROADS STEP 5: was [45, 60] (street trees were far apart and few)
       /** Street tree size (scale of the normal tree models; small young trees) and colour multiplier (low = deep dark green; normal forest trees are 0.82-1.14). */
       streetTree: { scale: [0.42, 0.6] as [number, number], tint: [0.58, 0.7] as [number, number] },
       pitSize: 1.2,

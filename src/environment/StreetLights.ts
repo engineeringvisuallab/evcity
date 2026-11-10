@@ -16,6 +16,7 @@ import type { RoadNetwork } from '../roads';
 import type { RoadKind } from '../roads/RoadTypes';
 import { Q } from '../core/Quality';
 import { Config } from '../core/Config';
+import { planMedianLamps } from '../roads/Planting';
 
 export interface LampSpot {
   /** Foot of the pole (world metres). */
@@ -32,6 +33,8 @@ export interface LampSpot {
   /** Pole height scale (1 = 8 m) and light pool radius (m). */
   scale: number;
   pool: number;
+  /** ROADS STEP 5: road surface height under the lamp when the pole stands higher than the road (a pole on the median soil). The light pool lies on the road. Omitted = y. */
+  roadY?: number;
 }
 
 interface Class {
@@ -129,6 +132,12 @@ export function planStreetLights(roads: RoadNetwork): LampSpot[] {
       tz /= tl;
       out.push({ x: px, y: y + (inCity && bid < 0 ? Config.city.footpath.height : 0), z: pz, ix: -nx * side, iz: -nz * side, tx, ty: ty / tl, tz, scale: c.scale, pool: c.pool });
     }
+  }
+
+  // ROADS STEP 5: double-arm lamps on the median of every divided road (one pole, an arm over each carriageway), see roads/Planting.ts
+  for (const l of planMedianLamps(roads)) {
+    const L = Config.city.planting.medianLamps;
+    for (const dir of [1, -1]) out.push({ x: l.x, y: l.y, z: l.z, ix: l.nx * dir, iz: l.nz * dir, tx: l.tx, ty: l.ty, tz: l.tz, scale: L.scale[l.kind], pool: L.pool[l.kind], roadY: l.roadY });
   }
 
   // junctions: one pole on every corner (between two neighbouring legs), just outside the kerb return, arm over the junction
@@ -317,7 +326,7 @@ export class StreetLights {
       X.set(sx / sl, 0, sz / sl);
       N.crossVectors(T, X);
       Z.copy(T);
-      m.makeBasis(X, N, Z).setPosition(lx, s.y + 0.1, lz);
+      m.makeBasis(X, N, Z).setPosition(lx, (s.roadY ?? s.y) + 0.1, lz);
       m.multiply(sc.makeScale(s.pool * 1.35, 1, s.pool * 2.3));
       this.pools.setMatrixAt(i, m);
     }

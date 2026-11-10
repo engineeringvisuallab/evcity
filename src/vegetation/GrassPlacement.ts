@@ -11,6 +11,8 @@ import { farmCovers } from '../farm/FarmFields';
 import { parkingContains } from '../parking/ParkingSite';
 import { getCityGreen, type CityGreen } from '../city/CityGreen';
 import { MS, medianHalfAt, planMedians } from '../roads/MedianPlan';
+import { sightZoneLen } from '../roads/Planting';
+import { uturnZoneHas } from '../roads/UTurns';
 
 
 const V = Config.vegetation;
@@ -341,6 +343,9 @@ export class GrassPlacer {
       const a = k * MS;
       const b = (k + 1) * MS;
       const mh = Math.min(medianHalfAt(run, k), medianHalfAt(run, k + 1));
+      // ROADS STEP 5 (D7): low grass only inside the sight zone of a U-turn opening
+      const road = this.gen.roads.roads[run.roadId];
+      const sightMul = road && uturnZoneHas(plan.uturns, run.roadId, run.p[a + 7], sightZoneLen(road)) ? Config.city.planting.grassScale : 1;
       const uw = mh - Math.min(run.kerbW, mh * 0.5) - 0.1; // stay on the soil
       if (uw < 0.15) continue;
       const rng = mulberry32(hash2D(this.seed ^ 0x3ed1a, list[n] * 7919 + k, 17));
@@ -353,7 +358,7 @@ export class GrassPlacer {
         const x = run.p[a] + (run.p[b] - run.p[a]) * f + (run.p[a + 3] + (run.p[b + 3] - run.p[a + 3]) * f) * u;
         const z = run.p[a + 2] + (run.p[b + 2] - run.p[a + 2]) * f + (run.p[a + 4] + (run.p[b + 4] - run.p[a + 4]) * f) * u;
         const y = run.p[a + 1] + (run.p[b + 1] - run.p[a + 1]) * f + run.kerbH - drop - 0.02;
-        out.push(x - ox, y, z - oz, 0.7 + 0.8 * rScale ** 1.3, rYaw * Math.PI * 2, 0.85 + rTint * 0.3, 0, 5);
+        out.push(x - ox, y, z - oz, (0.7 + 0.8 * rScale ** 1.3) * sightMul, rYaw * Math.PI * 2, 0.85 + rTint * 0.3, 0, 5);
       }
     }
   }

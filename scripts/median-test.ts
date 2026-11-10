@@ -98,7 +98,7 @@ ok(maxSq * 14 <= 12000, `no mesh square has more than 12000 triangles (max ${max
 // planting stands on the soil
 console.log('\n=== PLANTING ON THE SOIL ===');
 const rp = planRoadside(gen);
-ok(Math.abs(medianSoilTop(divided[0]) - (0.15 - M.soilDrop)) < 1e-9, `soil is ${(0.15 - M.soilDrop).toFixed(2)} m above the road surface (kerb 0.15 - drop ${M.soilDrop})`);
+ok(Math.abs(medianSoilTop(divided[0]) - (M.height - M.soilDrop)) < 1e-9, `soil is ${(M.height - M.soilDrop).toFixed(2)} m above the road surface (kerb ${M.height} - drop ${M.soilDrop})`); // ROADS STEP 5: the test still had the old 0.15 m kerb
 ok(rp.hedges.length > 0, `${rp.hedges.length / 7} median hedge pieces planned`);
 // every median hedge lies inside a median run
 const inRun = (x: number, z: number): boolean => plan.runs.some((u) => {

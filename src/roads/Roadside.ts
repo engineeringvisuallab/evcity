@@ -6,9 +6,10 @@ import type { RoadNetwork } from './RoadNetwork';
 import type { RoadSpec } from './RoadTypes';
 import { medianSoilTop } from './RoadSection';
 import { padIndex } from './PadIndex';
-import { footpathHas } from './FootpathPlan';
+import { footpathHas, footpathNear } from './FootpathPlan';
 import { crossingZoneHas, planMedians } from './MedianPlan';
 import { uturnZoneHas } from './UTurns';
+import { medianLampNearFn, sightZoneLen } from './Planting';
 
 export { padIndex };
 import { EVLAB_LOT, MALL_LOT, SIDE_LOT, lotToWorld, parkingContains, type LotRect } from '../parking/ParkingSite';
@@ -158,6 +159,7 @@ export function planCityTrees(roads: RoadNetwork): { pits: number[]; trees: numb
         if (nearPad(px, pz, 5)) continue; // junction pads have their own corners / lamps
         if (roads.surfaceAt(px, pz) === 1) continue; // another road's asphalt
         if (!footpathHas(roads, r.id, side as 1 | -1, here)) continue; // ROADS STEP 3: pits stand on the raised footpath (full height part)
+        if (!footpathNear(roads, r.id, side as 1 | -1, px, pz, 2)) continue; // ROADS STEP 5: ... and really on the strip (sharp bends)
         const yaw = Math.atan2(w.tx, w.tz);
         pits.push(px, w.y, pz, yaw);
         const letter = theme[n++ % theme.length];
@@ -169,6 +171,9 @@ export function planCityTrees(roads: RoadNetwork): { pits: number[]; trees: numb
     if (r.medianHalf > 0) {
       const mplan = planMedians(roads);
       const uturns = mplan.uturns; // ROADS STEP 4: the gaps of the U-turn openings stay free of trees
+      const sight = sightZoneLen(r); // ROADS STEP 5 (D7): no tree within the sight zone of an opening
+      const lampNear = medianLampNearFn(roads); // ... and none beside a median lamp pole
+      const CM = Config.city.planting.countryMedian;
       const rngM = mulberry32(hash2D(seed ^ 0x3ed1a, r.id, 7));
       let sm = 16 + rngM() * 10;
       w.reset();
@@ -181,9 +186,12 @@ export function planCityTrees(roads: RoadNetwork): { pits: number[]; trees: numb
         const here = sm;
         sm += gap;
         if (!w.at(here)) break;
-        if (!cityPoint(roads, r, w)) continue;
+        const inCity = cityPoint(roads, r, w);
+        // ROADS STEP 5: outside the cities the median gets a small tree at `treeKeep` of the places (the choice is a hash of the place, so the city sequence does not change)
+        if (!inCity && (!CM.enabled || w.onBridge() || hash2D(seed ^ 0x6c3d, r.id, Math.floor(here)) % 1000 >= CM.treeKeep * 1000)) continue;
         if (nearPad(w.x, w.z, 16)) continue; // the median ends at junctions (the shader fades the kerb there too)
-        if (uturnZoneHas(uturns, r.id, here, Config.city.uturn.plantClear) || crossingZoneHas(mplan, r.id, here, 3)) continue; // ROADS STEP 4: no trunk in or beside a U-turn gap / pedestrian crossing
+        if (uturnZoneHas(uturns, r.id, here, sight) || crossingZoneHas(mplan, r.id, here, 3)) continue; // ROADS STEP 4: no trunk in or beside a U-turn gap / pedestrian crossing; STEP 5: the whole sight zone
+        if (lampNear(w.x, w.z, Config.city.planting.medianLamps.treeClear)) continue;
         // SMALL narrow trees only (a small debdaru / date palm)
         const K = pickM < 0.55 ? STREET_KIND.D : STREET_KIND.Pd;
         const sc = MEDIAN_SMALL[0] + (MEDIAN_SMALL[1] - MEDIAN_SMALL[0]) * scale;
@@ -268,12 +276,16 @@ export function planRoadside(gen: TerrainGenerator): RoadsidePlan & { stats: Roa
     const w = new Walker(r);
     const mplan2 = planMedians(roads);
     const uturns = mplan2.uturns;
+    const sight = sightZoneLen(r); // ROADS STEP 5 (D7)
+    const CM = Config.city.planting.countryMedian;
     const rng = mulberry32(hash2D(seed ^ 0x4ed9e, r.id, 3));
     for (let s = 14; s < r.length - 14; s += HD.step) {
       const rr = rng(); const rs = rng();
-      if (!w.at(s) || !cityPoint(roads, r, w)) continue;
+      if (!w.at(s)) continue;
+      // ROADS STEP 5: outside the cities the hedge comes in blocks (hedgeOn m planted, hedgeOff m gap)
+      if (!cityPoint(roads, r, w) && (!CM.enabled || w.onBridge() || s % (CM.hedgeOn + CM.hedgeOff) >= CM.hedgeOn)) continue;
       if (nearPad(w.x, w.z, 9)) continue; // the median ends at junctions (the shader fades the kerb there too)
-      if (uturnZoneHas(uturns, r.id, s, Config.city.uturn.plantClear) || crossingZoneHas(mplan2, r.id, s, 2)) continue; // ROADS STEP 4: no hedge in or beside a U-turn gap / pedestrian crossing
+      if (uturnZoneHas(uturns, r.id, s, sight) || crossingZoneHas(mplan2, r.id, s, 2)) continue; // ROADS STEP 4: no hedge in or beside a U-turn gap / pedestrian crossing; STEP 5: the whole sight zone
       hedges.push(w.x, w.y + medianSoilTop(r) + 0.03, w.z, Math.atan2(w.tx, w.tz), 1 + (rr - 0.5) * 0.1, HD.hMin / 0.75 + (rs * (HD.hMax - HD.hMin)) / 0.75, rr);
     }
   }
