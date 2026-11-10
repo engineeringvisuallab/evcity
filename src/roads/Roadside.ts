@@ -4,6 +4,7 @@ import { worldToChunkCoord, chunkKey } from '../world/WorldGrid';
 import type { TerrainGenerator } from '../terrain/TerrainGenerator';
 import type { RoadNetwork } from './RoadNetwork';
 import type { RoadSpec } from './RoadTypes';
+import { medianSoilTop } from './RoadSection';
 import { EVLAB_LOT, MALL_LOT, SIDE_LOT, lotToWorld, parkingContains, type LotRect } from '../parking/ParkingSite';
 import { TreeKind } from '../vegetation/TreeTypes';
 
@@ -81,7 +82,7 @@ class Walker {
 }
 
 /** Is (x, z) inside a junction pad (+ margin)? Coarse grid, built once per call of a planner. */
-function padIndex(roads: RoadNetwork): (x: number, z: number, margin: number) => boolean {
+export function padIndex(roads: RoadNetwork): (x: number, z: number, margin: number) => boolean {
   const cell = 120;
   const grid = new Map<string, number[]>();
   const key = (cx: number, cz: number): string => cx + ',' + cz;
@@ -200,7 +201,7 @@ export function planCityTrees(roads: RoadNetwork): { pits: number[]; trees: numb
         const K = pickM < 0.55 ? STREET_KIND.D : STREET_KIND.Pd;
         const sc = MEDIAN_SMALL[0] + (MEDIAN_SMALL[1] - MEDIAN_SMALL[0]) * scale;
         // trunk on the centre line, on the finished road surface (the median strip is part of the deck, not natural ground)
-        push([w.x, w.y - Config.vegetation.sink * 0.4, w.z, sc, yawRnd * Math.PI * 2, K.tint[0] + (K.tint[1] - K.tint[0]) * tint, K.kind, 1], w.x, w.z);
+        push([w.x, w.y + medianSoilTop(r) - Config.vegetation.sink * 0.4, w.z, sc, yawRnd * Math.PI * 2, K.tint[0] + (K.tint[1] - K.tint[0]) * tint, K.kind, 1], w.x, w.z);
       }
     }
   }
@@ -283,7 +284,7 @@ export function planRoadside(gen: TerrainGenerator): RoadsidePlan & { stats: Roa
       const rr = rng(); const rs = rng();
       if (!w.at(s) || !cityPoint(roads, r, w)) continue;
       if (nearPad(w.x, w.z, 9)) continue; // the median ends at junctions (the shader fades the kerb there too)
-      hedges.push(w.x, w.y + 0.03, w.z, Math.atan2(w.tx, w.tz), 1 + (rr - 0.5) * 0.1, HD.hMin / 0.75 + (rs * (HD.hMax - HD.hMin)) / 0.75, rr);
+      hedges.push(w.x, w.y + medianSoilTop(r) + 0.03, w.z, Math.atan2(w.tx, w.tz), 1 + (rr - 0.5) * 0.1, HD.hMin / 0.75 + (rs * (HD.hMax - HD.hMin)) / 0.75, rr);
     }
   }
   // ---------- hedges along the open edges of the parking lots ----------

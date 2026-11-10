@@ -99,3 +99,16 @@ export function carriagewayWidth(r: SectionFields): number {
 export function isDual(r: SectionFields & { kind: string }): boolean {
   return isDivided(r) || (r.kind === 'highway' && r.lanes >= 4);
 }
+
+/** The divided section a road was built from (matched by half width), or null when the road has no median. */
+export function dividedSectionOf(r: { halfWidth: number; medianHalf: number }): DividedSection | null {
+  if (r.medianHalf <= 0) return null;
+  for (const d of DIVIDED_SECTIONS) if (Math.abs(d.halfWidth - r.halfWidth) < 0.02) return d;
+  return null;
+}
+
+/** ROADS STEP 2: height (m) of the soil surface of the median above the road surface (kerb height minus soilDrop). Trees and hedges of the median stand on it. */
+export function medianSoilTop(r: { halfWidth: number; medianHalf: number }): number {
+  const d = dividedSectionOf(r);
+  return d ? Config.city.roadSections[d.id].kerbH - Config.city.median.soilDrop : 0;
+}

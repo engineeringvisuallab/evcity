@@ -28,6 +28,7 @@
     "test:farm-crew": "tsx scripts/farm-crew-test.ts",
     "gen:farm": "tsx scripts/gen-farm-fields.ts",
     "test:roads": "tsx scripts/road-test.ts",
+    "test:median": "tsx scripts/median-test.ts",
     "test:mirrors": "tsx scripts/mirror-test.ts",
     "test:carjack": "tsx scripts/carjack-test.ts",
     "test:port": "tsx scripts/port-test.ts",

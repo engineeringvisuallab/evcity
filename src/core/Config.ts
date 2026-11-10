@@ -88,6 +88,25 @@ export const Config = {
       collector: { lanesPerDir: 1, laneW: 3.25, kerbH: 0.15, kerbW: 0.2, verge: 1.5, walk: 2.0, fall: 0.02, designKmh: 50 },
       local: { lanesPerDir: 1, laneW: 3.0, kerbH: 0.15, kerbW: 0.2, verge: 1.2, walk: 2.0, fall: 0.02, designKmh: 30 },
     },
+    /** ROADS STEP 2: the physical median (kerbs + soil strip as a companion mesh, invisible collider so cars cannot cross). Used by roads/MedianPlan.ts, MedianView.ts, MedianPhysics.ts. */
+    median: {
+      /** Sample spacing (m) along the road for the mesh and the collider pieces. */
+      step: 3,
+      /** The soil surface sits this far (m) below the kerb top. */
+      soilDrop: 0.04,
+      /** Height (m) of the invisible collider above the road surface. A 150 mm kerb alone does not stop a car (wheel radius 0.33 m), so the barrier is 0.5 m (decision D4). */
+      colliderH: 0.5,
+      /** The median ends this far (m) beyond the junction pad core (rCore). Hedges stop at 9, trees at 16, so the planting is always inside the median. */
+      padMargin: 8,
+      /** Length (m) of the rounded nose at each end of a median piece. */
+      noseLen: 3,
+      /** Shortest median piece (m); anything shorter is left flat. */
+      minRun: 12,
+      /** The median mesh is drawn within drawRadius x this (m). */
+      drawRange: 0.7,
+      /** Physics cells (m): colliders are made per cell, only near the player. */
+      cell: 125,
+    },
     localRoads: {
       /** City sites that get local streets so far (Stage 10B step 1 = site 0 only; sites 1 and 2 follow). */
       sites: [0] as number[],
