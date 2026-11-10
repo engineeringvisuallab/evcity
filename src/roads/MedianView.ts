@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Config } from '../core/Config';
 import { Q } from '../core/Quality';
 import type { RoadNetwork } from './RoadNetwork';
-import { MS, medianHalfAt, planMedians } from './MedianPlan';
+import { MS, medianHalfAt, planMedians, type Crossing } from './MedianPlan';
 import { frameAt, type UTurnOpening } from './UTurns';
 import { getSurfaceMaterial } from '../buildings/models/BuildingTextures';
 
@@ -21,20 +21,23 @@ const SQUARE = 250;
 const SINK = 0.06;
 const KERB_TOP: [number, number, number] = [0.74, 0.73, 0.70]; // x the concrete photo
 const KERB_FACE: [number, number, number] = [0.62, 0.61, 0.59];
-const SOIL: [number, number, number] = [0.17, 0.085, 0.035]; // brown earth (mati)
+const SOIL: [number, number, number] = [0.24, 0.125, 0.055]; // brown earth (mati) x the earth photo (the photo is ~0.7 as bright)
+const SOIL_TEX_M = 1.5; // the earth photo repeats every 1.5 m
 const TEX_M = 2; // the concrete photo repeats every 2 m on the kerb walls and tops
 
-interface Square { cx: number; cz: number; segs: { run: number; k: number }[]; uts: UTurnOpening[]; mesh: THREE.Mesh | null; patch: THREE.Mesh | null; built: boolean }
+interface Square { cx: number; cz: number; segs: { run: number; k: number }[]; uts: UTurnOpening[]; xs: Crossing[]; mesh: THREE.Mesh | null; patch: THREE.Mesh | null; built: boolean }
 
 /** sRGB paint colour -> the linear colour the road shader ends up with (it does pow(col, 2.2)). */
 const lin = (r: number, g: number, b: number): [number, number, number] => [Math.pow(r, 2.2), Math.pow(g, 2.2), Math.pow(b, 2.2)];
 const PATCH_ASPHALT = lin(0.465, 0.475, 0.485);
 const PATCH_YELLOW = lin(0.88, 0.68, 0.08);
+const PATCH_WHITE = lin(0.93, 0.93, 0.9);
 
 export class MedianView {
   readonly group = new THREE.Group();
   private squares: Square[] = [];
-  private mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+  /** REAL SOIL: the earth photo of the building kit (shared texture) for the median soil strip. */
+  private mat = (() => { const m = (getSurfaceMaterial('earth') as THREE.MeshLambertMaterial).clone(); m.side = THREE.DoubleSide; return m; })();
   /** The real concrete photo of the building kit (shared texture), for the kerb walls and tops; DoubleSide because the strips are one-sided quads. */
   private concrete = (() => { const m = (getSurfaceMaterial('concrete') as THREE.MeshLambertMaterial).clone(); m.side = THREE.DoubleSide; return m; })();
   private patchMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
@@ -55,7 +58,7 @@ export class MedianView {
       const cz = Math.floor((z + HALF) / SQUARE);
       const key = cx + ',' + cz;
       let sq = map.get(key);
-      if (!sq) { sq = { cx: cx * SQUARE - HALF + SQUARE / 2, cz: cz * SQUARE - HALF + SQUARE / 2, segs: [], uts: [], mesh: null, patch: null, built: false }; map.set(key, sq); }
+      if (!sq) { sq = { cx: cx * SQUARE - HALF + SQUARE / 2, cz: cz * SQUARE - HALF + SQUARE / 2, segs: [], uts: [], xs: [], mesh: null, patch: null, built: false }; map.set(key, sq); }
       return sq;
     };
     this.plan.runs.forEach((run, ri) => {
@@ -66,6 +69,7 @@ export class MedianView {
       }
     });
     for (const o of this.plan.uturns.openings) squareOf(o.x, o.z).uts.push(o);
+    for (const c of this.plan.crossings) squareOf(c.x, c.z).xs.push(c);
     this.squares = [...map.values()];
     parent.add(this.group);
   }
@@ -82,7 +86,7 @@ export class MedianView {
     for (const sq of this.squares) {
       const d = Math.hypot(sq.cx - px, sq.cz - pz);
       const on = d < draw + SQUARE * 0.71;
-      if (on && !sq.built && built < 2) { sq.mesh = sq.segs.length > 0 ? this.build(sq) : null; sq.patch = sq.uts.length > 0 ? this.buildPatch(sq) : null; sq.built = true; built++; }
+      if (on && !sq.built && built < 2) { sq.mesh = sq.segs.length > 0 ? this.build(sq) : null; sq.patch = sq.uts.length + sq.xs.length > 0 ? this.buildPatch(sq) : null; sq.built = true; built++; }
       if (sq.built) {
         if (sq.mesh) { sq.mesh.visible = on; if (on) tris += (sq.mesh.geometry.getIndex()?.count ?? 0) / 3; }
         if (sq.patch) { sq.patch.visible = on; if (on) tris += (sq.patch.geometry.getIndex()?.count ?? 0) / 3; }
@@ -138,6 +142,32 @@ export class MedianView {
           frameAt(r, Math.min(s1, sd + U.dash), B);
           quad(A.x + A.nx * u0, A.y + lift * 1.4, A.z + A.nz * u0, A.x + A.nx * u1, A.y + lift * 1.4, A.z + A.nz * u1, B.x + B.nx * u0, B.y + lift * 1.4, B.z + B.nz * u0, B.x + B.nx * u1, B.y + lift * 1.4, B.z + B.nz * u1, PATCH_YELLOW);
         }
+      }
+    }
+    // PEDESTRIAN CROSSINGS: asphalt over the median opening (hides the shader's pale strip + yellow lines there) and the white zebra bars across the whole road
+    const CR = Config.city.median.crossing;
+    for (const c of sq.xs) {
+      const r = this.roads.roads[c.roadId];
+      const A = { x: 0, y: 0, z: 0, nx: 0, nz: 0, tx: 0, tz: 0 };
+      const B = { x: 0, y: 0, z: 0, nx: 0, nz: 0, tx: 0, tz: 0 };
+      const lift = U.lift;
+      const mh = Math.max(r.medianHalf, 0);
+      const pw = mh + U.patchBeyond;
+      const n = Math.max(1, Math.ceil((c.b - c.a) / 2));
+      for (let i = 0; i < n; i++) {
+        frameAt(r, c.a + ((c.b - c.a) * i) / n, A);
+        frameAt(r, c.a + ((c.b - c.a) * (i + 1)) / n, B);
+        quad(A.x + A.nx * pw, A.y + lift, A.z + A.nz * pw, A.x - A.nx * pw, A.y + lift, A.z - A.nz * pw, B.x + B.nx * pw, B.y + lift, B.z + B.nz * pw, B.x - B.nx * pw, B.y + lift, B.z - B.nz * pw, PATCH_ASPHALT);
+      }
+      const s0 = c.s - CR.zebraLen / 2;
+      const s1 = c.s + CR.zebraLen / 2;
+      frameAt(r, s0, A);
+      frameAt(r, s1, B);
+      const reach = r.halfWidth - 0.45; // stop at the kerb
+      for (let u = -reach + CR.barW / 2; u <= reach - CR.barW / 2 + 1e-6; u += CR.barStep) {
+        const u0 = u - CR.barW / 2;
+        const u1 = u + CR.barW / 2;
+        quad(A.x + A.nx * u0, A.y + lift * 1.4, A.z + A.nz * u0, A.x + A.nx * u1, A.y + lift * 1.4, A.z + A.nz * u1, B.x + B.nx * u0, B.y + lift * 1.4, B.z + B.nz * u0, B.x + B.nx * u1, B.y + lift * 1.4, B.z + B.nz * u1, PATCH_WHITE);
       }
     }
     const geo = new THREE.BufferGeometry();
@@ -211,8 +241,9 @@ export class MedianView {
           col[v * 3] = st.c[0] * f; col[v * 3 + 1] = st.c[1] * f; col[v * 3 + 2] = st.c[2] * f;
           // concrete texture coordinates: along the road (metres / TEX_M) and up the wall (vertical faces) or across the top
           const along = (sg.k + (e < 2 ? 0 : 1)) * Config.city.median.step;
-          uv[v * 2] = along / TEX_M;
-          uv[v * 2 + 1] = (st.ny === 0 ? ring2.h[pi] : ring2.u[pi]) / TEX_M;
+          const tm = st.c === SOIL ? SOIL_TEX_M : TEX_M;
+          uv[v * 2] = along / tm;
+          uv[v * 2 + 1] = (st.ny === 0 ? ring2.h[pi] : ring2.u[pi]) / tm;
           v++;
         }
         const ix = st.c === SOIL ? soilIdx : kerbIdx;

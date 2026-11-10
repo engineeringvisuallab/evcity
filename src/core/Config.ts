@@ -104,6 +104,13 @@ export const Config = {
        * the game's wild flowers (buttercup, lavender, poppy, cornflower; no white ones).
        */
       grass: { enabled: true, perSeg: 18, flowerShare: 0.14 },
+      /**
+       * PEDESTRIAN CROSSINGS (zebra) with a gap in the median: one in front of each City Mall door (MALL_DOORS), on the nearest divided road within `maxDist` m
+       * (people come from the parking lots across the road and must reach the mall). `gap` = length (m) of the opening in the median (rounded out to the 3 m sample grid),
+       * `zebraLen` = length of the painted band along the road, `barW` / `barStep` = width and spacing (m) of the white bars across the road.
+       * `extra` = more world points (x, z): a crossing is made at the nearest divided road to each. A crossing never lands in a junction or on a bridge.
+       */
+      crossing: { enabled: true, gap: 7, zebraLen: 3.2, barW: 0.5, barStep: 1.0, maxDist: 70, extra: [] as { x: number; z: number }[] },
       /** The median ends this far (m) beyond the junction pad core (rCore). Hedges stop at 9, trees at 16, so the planting is always inside the median. */
       padMargin: 8,
       /** Length (m) of the rounded nose at each end of a median piece. */

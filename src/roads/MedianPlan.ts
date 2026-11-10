@@ -10,6 +10,7 @@ import type { RoadSpec } from './RoadTypes';
 import { dividedSectionOf } from './RoadSection';
 import { padIndex } from './PadIndex';
 import { padDistance, placeUTurns, type RunRange, type UTurnPlan } from './UTurns';
+import { MALL_DOORS } from '../mall/MallSite';
 
 /** Floats per sample in MedianRun.p: x, y, z (centreline, finished road surface), nx, nz (unit left normal), tx, tz (unit tangent), s (arc length). */
 export const MS = 8;
@@ -24,7 +25,25 @@ export interface MedianRun {
   p: Float64Array;
 }
 
+/** A pedestrian crossing: an opening [a, b] (m along the road, on the sample grid) in the median plus a zebra band centred on s. */
+export interface Crossing {
+  roadId: number;
+  s: number;
+  a: number;
+  b: number;
+  x: number;
+  z: number;
+}
+
+/** Is s (m along road `roadId`) inside a pedestrian crossing's opening, or within `clear` m of it? Trees / hedges stay out of it. */
+export function crossingZoneHas(plan: { crossings: Crossing[] }, roadId: number, s: number, clear: number): boolean {
+  for (const c of plan.crossings) if (c.roadId === roadId && s > c.a - clear && s < c.b + clear) return true;
+  return false;
+}
+
 export interface MedianPlan {
+  /** Pedestrian crossings (median gaps + zebra), see Config.city.median.crossing. */
+  crossings: Crossing[];
   runs: MedianRun[];
   /** ROADS STEP 4: the U-turn openings. The median runs are already cut at them (a gap between two runs, each ending in a nose). */
   uturns: UTurnPlan;
@@ -112,11 +131,56 @@ export function planMedians(roads: RoadNetwork): MedianPlan {
     l.push({ roadId: u.roadId, sa: u.p[7], sb: u.p[(u.n - 1) * MS + 7] });
     ranges.set(u.roadId, l);
   }
+  // PEDESTRIAN CROSSINGS: the nearest divided road to every mall door (and Config extras); the median is cut there and no U-turn opening may sit near it
+  const crossings: Crossing[] = [];
+  const CR = M.crossing;
+  if (CR.enabled) {
+    const spots = [...MALL_DOORS.map((d) => ({ x: d.x, z: d.z })), ...CR.extra];
+    for (const p of spots) {
+      let best: { r: RoadSpec; s: number; d: number; i: number } | null = null;
+      for (const r of roads.roads) {
+        if (!dividedSectionOf(r) || r.earth || r.xs.length < 2) continue;
+        for (let i = 0; i < r.xs.length - 1; i++) {
+          const ex = r.xs[i + 1] - r.xs[i];
+          const ez = r.zs[i + 1] - r.zs[i];
+          const l2 = ex * ex + ez * ez;
+          if (l2 < 1e-9) continue;
+          const t = Math.max(0, Math.min(1, ((p.x - r.xs[i]) * ex + (p.z - r.zs[i]) * ez) / l2));
+          const d = Math.hypot(p.x - (r.xs[i] + ex * t), p.z - (r.zs[i] + ez * t));
+          if (!best || d < best.d) best = { r, s: r.cum[i] + Math.sqrt(l2) * t, d, i };
+        }
+      }
+      if (!best || best.d > CR.maxDist || best.r.bridgeOf[best.i] >= 0) continue;
+      if (crossings.some((c) => c.roadId === best!.r.id && Math.abs(c.s - best!.s) < 30)) continue;
+      const cur2 = { i: 0 };
+      const smp = new Float64Array(MS);
+      sampleRoad(best.r, best.s, cur2, smp, 0);
+      if (nearPad(smp[0], smp[2], M.padMargin + 8)) continue; // never inside a junction
+      const a = Math.floor((best.s - CR.gap / 2) / M.step) * M.step;
+      const b = Math.ceil((best.s + CR.gap / 2) / M.step) * M.step;
+      crossings.push({ roadId: best.r.id, s: best.s, a, b, x: smp[0], z: smp[2] });
+    }
+    // keep the U-turn openings away from the crossings (split the allowed ranges around them)
+    for (const c of crossings) {
+      const l = ranges.get(c.roadId);
+      if (!l) continue;
+      const out: RunRange[] = [];
+      for (const rg of l) {
+        if (c.s < rg.sa || c.s > rg.sb) { out.push(rg); continue; }
+        if (c.a - 25 > rg.sa) out.push({ roadId: rg.roadId, sa: rg.sa, sb: c.a - 25 });
+        if (c.b + 25 < rg.sb) out.push({ roadId: rg.roadId, sa: c.b + 25, sb: rg.sb });
+      }
+      ranges.set(c.roadId, out);
+    }
+  }
   const uturns = placeUTurns(roads.roads, ranges, padDistance(roads.pads, Config.city.uturn.padMax), M.step);
   for (const u of base) {
     const sa = u.p[7];
     const sb = u.p[(u.n - 1) * MS + 7];
-    const cuts = (uturns.byRoad.get(u.roadId) ?? []).filter((o) => o.a >= sa - 1e-6 && o.b <= sb + 1e-6);
+    const cuts = [
+      ...(uturns.byRoad.get(u.roadId) ?? []),
+      ...crossings.filter((c) => c.roadId === u.roadId),
+    ].filter((o) => o.a >= sa - 1e-6 && o.b <= sb + 1e-6).sort((p, q) => p.a - q.a);
     // pieces [lo, hi] in metres along the road
     const pieces: [number, number][] = [];
     let lo = sa;
@@ -134,7 +198,7 @@ export function planMedians(roads: RoadNetwork): MedianPlan {
       metres += len;
     }
   }
-  const out = { runs, uturns, metres, flatMetres: 0 };
+  const out = { runs, uturns, crossings, metres, flatMetres: 0 };
   // flatMetres = divided road length - built median length
   let divided = 0;
   for (const r of roads.roads) if (dividedSectionOf(r) && !r.earth) divided += r.length;
