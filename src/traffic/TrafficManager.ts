@@ -11,11 +11,13 @@ import { getWorldZoneAt } from '../city/WorldZones';
 import type { RoadKind } from '../roads/RoadTypes';
 import { canUTurn } from '../roads/UTurns';
 import { SPECS, canUse, canUseRoad, canUsePlace, groundY, type Vehicle, type VehicleManager, type VehicleSpec } from '../vehicles';
+import { ENERGY } from '../vehicles/Energy';
 import type { BusStops } from './BusStops';
 import { AIDriver, type Obstacle } from './AIDriver';
 import { RoadGraph, type RoadPoint } from './RoadGraph';
 import { RouteBuilder, type RouteRule } from './Route';
 import { planRoute } from './RoutePlanner';
+import { StationStops } from './StationStops';
 import type { RaceCourse } from '../race/RaceCourse';
 import type { TrafficSignals } from './TrafficSignals';
 
@@ -53,8 +55,12 @@ export class TrafficManager {
   private timer = 1;
   private obstacles: Obstacle[] = [];
   private _aiCount = 0;
+  /** AI STEP 2: the fuel stations / charge points AI cars drive into when their tank / battery is low. */
+  private stations: StationStops;
 
-  constructor(private d: TrafficDeps) {}
+  constructor(private d: TrafficDeps) {
+    this.stations = new StationStops(d.graph);
+  }
 
   get aiCount(): number {
     return this._aiCount;
@@ -98,6 +104,7 @@ export class TrafficManager {
   update(dt: number, focus: THREE.Vector3): void {
     const T = Config.traffic;
     const vm = this.d.vehicles;
+    this.stations.update(dt);
     let ai = 0;
     for (let i = vm.vehicles.length - 1; i >= 0; i--) {
       const v = vm.vehicles[i];
@@ -176,7 +183,8 @@ export class TrafficManager {
       const [lo, hi] = spec.pax ?? [0, 0];
       const pax = lo + Math.floor(Math.random() * (hi - lo + 1));
       for (let i = 0; i < pax; i++) if (!car.seatPassenger(this.d.people.createPerson())) break;
-      car.ai = new AIDriver(car, route, this.d.signals);
+      car.ai = new AIDriver(car, route, this.d.signals, this.stations);
+      car.energy = this.spawnEnergy(spec, spot.roadId, spot.s, dir);
       // some drivers (rickshaws) are reckless: they speed, run red lights and brake late, so crashes with cars really happen
       if (spec.reckless && Math.random() < spec.reckless) {
         car.ai.reckless = 0.6 + Math.random() * 0.4;
@@ -190,6 +198,22 @@ export class TrafficManager {
       }
       return;
     }
+  }
+
+  /**
+   * How full the tank / battery of a new AI car is: `startMin`..1, or (chance `lowShare`) nearly empty when a free station of its kind lies ahead on the same road,
+   * so the player sees cars drive into stations (Config.traffic.energy).
+   */
+  private spawnEnergy(spec: VehicleSpec, roadId: number, s: number, dir: 1 | -1): number {
+    const en = ENERGY[spec.id];
+    if (!en) return 1;
+    const E = Config.traffic.energy;
+    let level = E.startMin + Math.random() * (1 - E.startMin);
+    if (spec.id !== 'tanker' && spec.id !== 'tank' && Math.random() < E.lowShare) {
+      const near = this.stations.find(roadId, dir, s, en.kind === 'fuel' ? 'fuel' : 'charge', spec.look.kind === 'bus', 110, E.nearStationM);
+      if (near) level = E.lowStartMin + Math.random() * (E.lowStartMax - E.lowStartMin);
+    }
+    return level;
   }
 
   /** What road kinds / places / U-turns this vehicle's AI route may use (and its freeway speed cap). */
@@ -265,7 +289,7 @@ export class TrafficManager {
     car.seatDriver(driver);
     car.abandonedFor = 0;
     car.coast = false;
-    car.ai = new AIDriver(car, route, this.d.signals);
+    car.ai = new AIDriver(car, route, this.d.signals, this.stations);
     car.setEnabled(true);
     return true;
   }
@@ -304,6 +328,7 @@ export class TrafficManager {
 
   /** Remove a vehicle and (if there is one) its driver and passengers. */
   private remove(v: Vehicle): void {
+    v.ai?.releaseStation(); // a car that was on its way to a station gives it back
     for (const p of v.removePassengers()) this.d.people.dispose(p);
     const who = this.d.vehicles.remove(v);
     if (who && who !== 'player') this.d.people.dispose(who);

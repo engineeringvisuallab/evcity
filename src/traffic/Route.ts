@@ -3,6 +3,7 @@ import type { RoadKind } from '../roads/RoadTypes';
 import type { SectionId } from '../roads/RoadSection';
 import type { UTurnOpening } from '../roads/UTurns';
 import { RoadGraph, type RoadPoint } from './RoadGraph';
+import type { VisitState } from './StationStops';
 
 /** Where a driver may go: the route never uses a road kind / place (city area or world zone) this refuses (see vehicles/VehicleUse). */
 export interface RouteRule {
@@ -31,6 +32,8 @@ export interface RoutePt {
   jn: boolean;
   /** OVERTAKING: how many lanes towards the median a car may move out of its kerb lane here (0 = no overtaking: narrow road, bridge, no median, junction). */
   pl?: number;
+  /** AI STATION VISIT: the point where the car stands to fill up / charge (the driver stops here until `done`, see AIDriver). */
+  pump?: VisitState;
   /** ROADS STEP 4: 1 = the point where a U-turn starts (the driver waits here for a gap in the traffic), 2 = a point of the half circle itself. */
   ut?: 0 | 1 | 2;
   /** U-turn start point only: radius (m) of the half circle, i.e. how far to the right of the lane the car sweeps. */
@@ -66,6 +69,12 @@ export class RouteBuilder {
   lane = 0;
   /** The route is being built on a big highway (the driver then ignores cars in the lane next to him). */
   onBigHw = false;
+  /** AI STATION VISIT: the station the driver has decided to use. When the route reaches its entry the detour (lane -> pump -> lane) is built, see beginVisit. */
+  visit: VisitState | null = null;
+  /** The lane offset of the last normal point (a car moves from one lane to another gradually, never with a jump of metres between two points). */
+  private laneCur: number | null = null;
+  private laneRoad = -1;
+  private laneDirOf: 1 | -1 = 1;
   private skipPad = -1;
   /** ROADS STEP 4: the last U-turn opening the driver has already decided about (never twice). */
   private skipOp = -1;
@@ -89,7 +98,10 @@ export class RouteBuilder {
 
   /** Seed the route with the lane point we start on. */
   start(): void {
-    const p = this.g.at(this.roadId, this.s, this.dir, this.laneOff(this.roadId), this.tmp);
+    this.laneCur = this.laneOff(this.roadId);
+    this.laneRoad = this.roadId;
+    this.laneDirOf = this.dir;
+    const p = this.g.at(this.roadId, this.s, this.dir, this.laneCur, this.tmp);
     this.lastHx = p.hx;
     this.lastHz = p.hz;
     this.push(p.x, p.z, p.y, this.cruise());
@@ -115,6 +127,35 @@ export class RouteBuilder {
       return Math.min(this.rule?.highwayLimit ?? H.limitKmh / 3.6, this.rule?.highwayMax ?? Infinity) * this.temper;
     }
     return Math.min(this.g.limit(this.roadId) * 0.85, 22) * this.temper;
+  }
+
+  /** AI STATION VISIT: go to this station. The car takes the kerb lane (gradually, over ~80 m) and the detour is built when the route gets to its entry. */
+  beginVisit(v: VisitState): void {
+    this.visit = v;
+    this.lane = 0;
+  }
+
+  /** The detour of the visit: the planned path of the station (site frame -> world), ending on the kerb lane again. The route goes on from the exit. */
+  private detour(v: VisitState): void {
+    const e = v.entry;
+    const site = e.site;
+    const rx = Math.sin(site.yaw);
+    const rz = Math.cos(site.yaw);
+    for (const q of e.plan.pts) {
+      // site frame -> world: x = cx + lx * cos(yaw) + lz * sin(yaw), z = cz - lx * sin(yaw) + lz * cos(yaw); the pad follows the road (grade along local x)
+      this.push(site.x + q.x * rz + q.z * rx, site.z - q.x * rx + q.z * rz, site.y + site.slope * q.x, q.v, true, 2);
+      if (q.pump) {
+        const last = this.pts[this.pts.length - 1];
+        last.vmax = 0;
+        last.pump = v;
+      }
+    }
+    this.s = e.sExit;
+    const p = this.g.at(this.roadId, this.s, this.dir, this.laneOff(this.roadId), this.tmp);
+    this.lastHx = p.hx;
+    this.lastHz = p.hz;
+    this.visit = null;
+    this.laneCur = null;
   }
 
   /** Lane centre offset of the road: on a big highway the lane this driver prefers, otherwise the kerb lane. */
@@ -171,6 +212,18 @@ export class RouteBuilder {
         return;
       }
     }
+    // AI station visit: the entry of the detour is here -> build it (leaving the road of the station cancels the visit)
+    if (this.visit) {
+      const v = this.visit;
+      const ahead = (v.entry.sEntry - this.s) * this.dir;
+      if (this.roadId !== v.entry.roadId || this.dir !== v.entry.dir || ahead < -1) {
+        v.cancelled = true;
+        this.visit = null;
+      } else if (ahead <= STEP) {
+        this.detour(v);
+        return;
+      }
+    }
     // a junction ahead within reach?
     for (const st of this.g.stations(this.roadId)) {
       const ahead = (st.s - this.s) * this.dir;
@@ -189,7 +242,13 @@ export class RouteBuilder {
       return;
     }
     this.s = next;
-    const p = this.g.at(this.roadId, this.s, this.dir, this.laneOff(this.roadId), this.tmp);
+    // the lane offset moves towards the wanted lane by at most 0.45 m per point (5 m): a change of lane (towards the kerb lane of a station) is a gentle drift
+    const want = this.laneOff(this.roadId);
+    if (this.laneCur === null || this.laneRoad !== this.roadId || this.laneDirOf !== this.dir) this.laneCur = want;
+    else this.laneCur += Math.max(-0.45, Math.min(0.45, want - this.laneCur));
+    this.laneRoad = this.roadId;
+    this.laneDirOf = this.dir;
+    const p = this.g.at(this.roadId, this.s, this.dir, this.laneCur, this.tmp);
     this.lastHx = p.hx;
     this.lastHz = p.hz;
     if (this.rule && !this.rule.placeOk(p.x, p.z)) {

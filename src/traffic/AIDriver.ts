@@ -4,7 +4,10 @@ import { clamp } from '../utils/math';
 import { RouteBuilder } from './Route';
 import { uturnBlocked } from './UTurnGap';
 import { COOLDOWN, decideExtra, LANE_W, type Other } from './Overtake';
+import { Config } from '../core/Config';
+import { ENERGY } from '../vehicles/Energy';
 import type { BusStop } from './BusStops';
+import type { StationStops, VisitState } from './StationStops';
 import type { TrafficSignals } from './TrafficSignals';
 
 /** Something a driver must not hit (WORLD coordinates, metres, m/s). */
@@ -48,6 +51,9 @@ export class AIDriver {
   private shift = 0;
   private laneCool = 0;
   private readonly others: Other[] = [];
+  /** AI STATION VISIT: the station this driver is going to / is at, and the seconds until he looks for a station again. */
+  visit: VisitState | null = null;
+  private visitCheck = 0;
   /** Buses: the bus stop being approached, the ones already served, and how long the bus has waited there. */
   stop: BusStop | null = null;
   readonly served = new Set<number>();
@@ -64,7 +70,74 @@ export class AIDriver {
     readonly route: RouteBuilder,
     /** Traffic lights: the driver stops at the stop line of a red (or late yellow) light. */
     private signals?: TrafficSignals,
+    /** AI STATION VISIT: the fuel stations / charge points a driver with an empty tank / battery may go to (not given = never). */
+    private stations?: StationStops,
   ) {}
+
+  /** Give back the station this driver reserved (he is removed, or the visit is over). */
+  releaseStation(): void {
+    this.stations?.release(this);
+    this.route.visit = null;
+    if (this.visit && !this.visit.done) this.visit.cancelled = true;
+    this.visit = null;
+  }
+
+  /**
+   * AI STATION VISIT. Low on fuel / charge (and a free station of the right kind on this road a little way ahead, on the side of the kerb lane): reserve it and let the
+   * route build the detour (Route.beginVisit). At the pump he stands still, the tank / battery fills up, then he drives on and gives the station back.
+   */
+  private stationLogic(dt: number, P: THREE.Vector3, speed: number): void {
+    const E = Config.traffic.energy;
+    const v = this.veh;
+    const pts = this.route.pts;
+    const vs = this.visit;
+    if (!vs) {
+      if (!this.stations) return;
+      this.visitCheck -= dt;
+      if (this.visitCheck > 0) return;
+      this.visitCheck = 0.5 + Math.random() * 0.3;
+      const spec = v.spec;
+      const en = ENERGY[spec.id];
+      if (!en || spec.id === 'tanker' || spec.id === 'tank' || v.state === 'wrecked' || v.energy > E.lowAt) return;
+      const r = this.route;
+      if (this.hold || this.speedCap !== undefined || r.fast || r.plan || r.target || r.terminal || this.stop) return;
+      const kind = en.kind === 'fuel' ? 'fuel' : 'charge';
+      // the detour is built from the end of the route (100+ m ahead of the car), and the car needs ~80 m to drift into the kerb lane
+      const e = this.stations.find(r.roadId, r.dir, r.s, kind, spec.look.kind === 'bus', 100, 1500);
+      if (!e) return;
+      this.stations.reserve(e, this);
+      this.visit = this.stations.visit(e, v.energy, kind === 'fuel' ? E.fuelSeconds : E.chargeSeconds);
+      r.beginVisit(this.visit);
+      return;
+    }
+    vs.t += dt;
+    const e = vs.entry;
+    if (vs.cancelled) {
+      this.releaseStation();
+      return;
+    }
+    // nothing worked out (blocked in the lot, never reached the pump ...): let the car go on
+    if (vs.t > 200 && !vs.done) {
+      for (const p of pts) if (p.pump === vs) { p.vmax = 7; p.pump = undefined; }
+      vs.done = true;
+    }
+    const hp = pts[this.head];
+    if (!vs.done && hp.pump === vs) {
+      const d = Math.hypot(hp.x - P.x, hp.z - P.z);
+      if (d < 3.2 && Math.abs(speed) < 0.9) {
+        vs.dwell += dt;
+        v.energy = Math.min(1, v.energy + vs.rate * dt);
+        if (vs.dwell >= vs.need) {
+          v.energy = 1;
+          vs.done = true;
+          hp.vmax = 7;
+          hp.pump = undefined;
+        }
+      }
+    }
+    // filled up and well away from the lot again: the station is free for the next car
+    if (vs.done && Math.hypot(P.x - e.site.x, P.z - e.site.z) > 42) this.releaseStation();
+  }
 
   update(dt: number, obstacles: Obstacle[]): void {
     const v = this.veh;
@@ -87,6 +160,8 @@ export class AIDriver {
       pts.splice(0, this.head - 4);
       this.head = 4;
     }
+
+    this.stationLogic(dt, P, speed);
 
     // ---- steering: pure pursuit on a point `ld` metres ahead ----
     // ROADS STEP 4: on the half circle of a U-turn the look-ahead is short (the radius is only 6.6 .. 10.5 m)
@@ -126,6 +201,9 @@ export class AIDriver {
     for (let j = this.head; j < pts.length && dist < look; j++) {
       if (j > this.head) dist += Math.hypot(pts[j].x - pts[j - 1].x, pts[j].z - pts[j - 1].z);
       vt = Math.min(vt, Math.sqrt(pts[j].vmax * pts[j].vmax + 2 * BRAKE_DECEL * dist));
+      // the pump of a station: halt a little before the point (like a bus at its stop), so a car that is a bit late does not roll past it
+      const pm = pts[j].pump;
+      if (pm && !pm.done) vt = Math.min(vt, Math.sqrt(2 * BRAKE_DECEL * 0.7 * Math.max(0, dist - 0.8)));
     }
     if (!Number.isFinite(vt)) vt = 0;
     if (spec.cruiseMax !== undefined) vt = Math.min(vt, this.reckless > 0 ? (spec.recklessSpeed ?? spec.cruiseMax) : spec.cruiseMax);
@@ -197,7 +275,7 @@ export class AIDriver {
         if (Math.abs(l) > 12) continue;
         list.push({ a, l, v: o.vx * fx + o.vz * fz });
       }
-      let nearJn = this.stop !== null;
+      let nearJn = this.stop !== null || this.visit !== null;
       let dj = Math.hypot(pts[this.head].x - P.x, pts[this.head].z - P.z);
       for (let j = this.head; j < pts.length && dj < 140 && !nearJn; j++) {
         if (j > this.head) dj += Math.hypot(pts[j].x - pts[j - 1].x, pts[j].z - pts[j - 1].z);

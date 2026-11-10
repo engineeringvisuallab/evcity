@@ -4,6 +4,7 @@ import type { OrbitTarget } from '../camera/OrbitCamera';
 import type { Bus } from '../core/EventBus';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import { PhysicsConfig } from '../physics/PhysicsConfig';
+import { Config } from '../core/Config';
 import type { TerrainGenerator } from '../terrain';
 import type { FloatingOrigin } from '../world/FloatingOrigin';
 import { clamp } from '../utils/math';
@@ -655,13 +656,16 @@ export class Vehicle implements OrbitTarget {
     const pt = this.powertrain;
 
     // ---- energy: fuel / battery is used up by the distance the player drives (more at speed, more when damaged) ----
+    // AI STEP 2: AI traffic (not the race cars) uses energy too, but never below Config.traffic.energy.floor (a dry AI car would block the road); it fills up at a station
     const en = ENERGY[s.id];
-    const metered = en !== undefined && this.driver === 'player' && this.state !== 'wrecked';
-    if (metered && this.energy > 0) {
+    const aiMeter = this.ai !== null && !this.persistent;
+    const metered = en !== undefined && (this.driver === 'player' || aiMeter) && this.state !== 'wrecked';
+    const floor = aiMeter ? Config.traffic.energy.floor : 0;
+    if (metered && this.energy > floor) {
       const f = consumptionFactor(Math.abs(v) * 3.6, this.hp / 100, this.throttle);
-      this.energy = Math.max(0, this.energy - ((Math.abs(v) * dt) / (en.baseKm * 1000)) * f);
+      this.energy = Math.max(floor, this.energy - ((Math.abs(v) * dt) / (en.baseKm * 1000)) * f);
     }
-    const outOfEnergy = metered && this.energy <= 0;
+    const outOfEnergy = metered && !aiMeter && this.energy <= 0;
 
     // ---- crash detection: the NET velocity change of a whole impact (~0.1 s), not single-step spikes ----
     this.age += dt;

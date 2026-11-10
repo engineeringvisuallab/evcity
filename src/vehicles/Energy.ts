@@ -6,7 +6,8 @@ import type { VehicleId } from './VehicleSpec';
  *   - speed:   faster than 60 km/h costs much more (air drag), slower is a little cheaper
  *   - damage:  a damaged vehicle (low hp) wastes energy
  *   - coasting (no throttle) costs little
- * AI traffic never uses energy. Refuelling: fuel areas (FuelAreas.ts). Charging: electric vehicles at charge points (see docs/CHARGING_POINTS.md).
+ * AI traffic uses energy too (step 2, Config.traffic.energy): a low AI car drives into a fuel station / charge point along its highway (traffic/StationStops.ts) and fills up.
+ * Refuelling: fuel areas (FuelAreas.ts). Charging: electric vehicles at charge points (see docs/CHARGING_POINTS.md).
  */
 export type EnergyKind = 'fuel' | 'electric';
 

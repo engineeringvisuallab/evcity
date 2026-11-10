@@ -625,6 +625,13 @@ export const Config = {
      * keep to the kerb lane at their own much lower speed, `truckKmh` / `tankerKmh`.
      */
     highway: { minLanes: 6, limitKmh: 130, truckKmh: 75, tankerKmh: 80, sportKmh: 175 },
+    /**
+     * AI ENERGY (step 2): AI cars use fuel / battery like the player's (vehicles/Energy.ts). A car appears with `startMin`..1 of a tank; at `lowAt` it looks for a free fuel
+     * station (fuel cars) or charge point (electric cars: rickshaw, bus, evhypar) on its highway, ahead of it, and stands there until it is full again (`fuelSeconds` /
+     * `chargeSeconds` for an empty -> full refill, at least 3 s). `floor`: an AI car never runs completely dry (it would block the road): it limps on at this level.
+     * A car that appears with a station within `nearStationM` ahead is low on energy (`lowStartMin`..`lowStartMax`) with the chance `lowShare`, so visits happen where the player can see them.
+     */
+    energy: { startMin: 0.35, lowAt: 0.28, floor: 0.06, lowStartMin: 0.12, lowStartMax: 0.26, lowShare: 0.4, nearStationM: 900, fuelSeconds: 9, chargeSeconds: 14 },
   },
 
   lod: {
