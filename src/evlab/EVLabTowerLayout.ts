@@ -13,8 +13,8 @@ export const T = {
   /** Level 1 floor = the podium roof top. */
   y1: 19,
   floorH: 4.2,
-  /** Levels 1..68 are tower floors, level 69 is the open roof garden. */
-  top: 68, roof: 69,
+  /** Levels 1..88 are tower floors, level 89 is the open roof garden (the tower was made bigger: wider plates, 20 more floors). */
+  top: 88, roof: 89,
   slab: 0.4,
   /** Stair stops between the ground (0) and level 1 (the podium is 19 m high): 5 flights pairs of 3.8 m. */
   podiumStops: 5,
@@ -24,6 +24,8 @@ export const T = {
 } as const;
 
 export const SETBACKS = [15, 30, 45] as const;
+/** How much wider the tower plates are than the first version. */
+export const TOWER_WIDEN = 1.6;
 
 /** Floor surface height of a level (0 = ground floor). */
 export function levelY(n: number): number {
@@ -43,7 +45,9 @@ export function ringOf(n: number): Ring {
   const s = Math.min(1, Math.max(0, (levelY(nn) - S_Y0) / (S_Y1 - S_Y0)));
   const sm = Math.pow(s, 1.15);
   const steps = SETBACKS.filter((b) => nn >= b).length;
-  return { hx: 40 - 14 * sm - 2.4 * steps, hz: 13.5 - 2 * sm - 0.5 * steps, c: 6 - 2 * sm };
+  // BIGGER TOWER: the plates are 1.6 x wider than before (the core with the stairs and lifts stays exactly as it was, in the middle);
+  // the depth grows only by 1 m because the south face may not stand outside the podium (z 50).
+  return { hx: (40 - 14 * sm - 2.4 * steps) * TOWER_WIDEN, hz: 14.5 - 2 * sm - 0.5 * steps, c: (6 - 2 * sm) * 1.4 };
 }
 /** The 8 corners of a ring (x, z) going clockwise from the north-west chamfer; `inset` shrinks it. */
 export function ringPoints(r: Ring, inset = 0): Array<[number, number]> {
@@ -101,8 +105,9 @@ export interface FloorInfo { level: number; name: string; kind: FloorKind; y: nu
 const SPECIAL: Record<number, [string, FloorKind]> = {
   1: ['Sky Lobby & Cafe', 'lobby'], 15: ['Sky Garden I', 'garden'], 21: ['Mechanical Floor', 'mech'], 30: ['Sky Garden II', 'garden'],
   31: ['Innovation Studio', 'coming'], 41: ['Mechanical Floor', 'mech'], 45: ['Sky Garden III', 'garden'], 50: ['Engineering Library', 'coming'],
-  55: ['Conference Centre', 'coming'], 60: ['Mechanical Floor', 'mech'], 64: ['Executive Suites', 'coming'], 65: ['Executive Boardroom', 'boardroom'],
-  66: ['Sky Restaurant', 'restaurant'], 67: ['Club Lounge', 'coming'], 68: ['Observation Deck 360', 'deck'], 69: ['Roof Garden', 'roof'],
+  55: ['Conference Centre', 'coming'], 60: ['Mechanical Floor', 'mech'], 65: ['Research Labs', 'coming'], 70: ['Mechanical Floor', 'mech'],
+  75: ['Sky Garden IV', 'garden'], 80: ['Data Centre', 'coming'], 84: ['Executive Suites', 'coming'], 85: ['Executive Boardroom', 'boardroom'],
+  86: ['Sky Restaurant', 'restaurant'], 87: ['Club Lounge', 'coming'], 88: ['Observation Deck 360', 'deck'], 89: ['Roof Garden', 'roof'],
 };
 export const FLOORS: FloorInfo[] = (() => {
   const a: FloorInfo[] = [{ level: 0, name: 'Grand Lobby & Presentation Hall', kind: 'ground', y: 0 }];

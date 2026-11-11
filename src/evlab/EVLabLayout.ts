@@ -11,7 +11,7 @@ export const BLD = { hx: 75, hz: 50, H: 17, roofTop: 19, wall: 0.5 };
 export const PORTAL = { halfW: 9, h: 11 };
 
 /** The tower (levels, core, facade) is in EVLabTowerLayout. Tip of the spire: see EVLabFacade (SPIRE_TOP_Y). */
-export const SPIRE_TOP = 352;
+export const SPIRE_TOP = 442;
 
 /** Presentation Hall (ground floor, north part). */
 export const HALL = {

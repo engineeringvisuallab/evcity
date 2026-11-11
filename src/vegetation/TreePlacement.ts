@@ -8,6 +8,7 @@ import { hash2D, mulberry32 } from '../world/Seed';
 import { placementContains } from '../buildings/Placements';
 import { farmCovers } from '../farm/FarmFields';
 import { streetTreesInChunk } from '../roads/Roadside';
+import { evlabParkTreesInChunk } from '../evlab/EVLabParkTrees';
 import { TREE_KIND_COUNT, TREE_TRUNK, TreeKind, type TreeChunkData } from './TreeTypes';
 import { homesteadFactor } from './Homesteads';
 import { WORLD_REGIONS } from '../city/WorldRegions';
@@ -451,6 +452,8 @@ export class TreePlacer {
       this.gen.sample(x, z, this.sample);
       return this.sample.h;
     })) lists[e.kind].push(...e.v);
+    // EVLab campus: the park trees (palms, avenue trees, lawn trees) around the tower and the lake
+    for (const e of evlabParkTreesInChunk(this.gen.evlab.floorY, ox, oz)) lists[e.kind].push(...e.v);
     return lists.map((l) => new Float32Array(l));
   }
 

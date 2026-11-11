@@ -214,7 +214,7 @@ for (const s of TL.STAIRS) {
 // ---- the glass lift doors: a gap wide enough, on every level; the blockers cover the doorway
 for (const l of TL.LIFTS) {
   ok(2 * l.doorHalf >= 1.4, `${l.name}: doorway wide enough`);
-  for (const n of [0, 1, 2, 30, 68, 69]) {
+  for (const n of [0, 1, 2, 30, TL.T.top, TL.T.roof]) {
     const y = TL.levelY(n);
     ok(walk([[l.cx, 43.2, y], [l.cx, 40.0, y], [l.cx, 38.6, y]], n) === null, `${l.name}: you can walk from the landing into the cabin at level ${n}`);
     ok(walk([[l.cx + (l.id === 0 ? -3.2 : 3.2), 43.2, y], [l.cx + (l.id === 0 ? -3.2 : 3.2), 40.0, y]], n) !== null, `${l.name}: the shaft wall beside the door blocks (level ${n})`);
@@ -234,7 +234,7 @@ ok(tcore.landing.length === 2 * (TL.T.roof + 1), 'a door blocker for every lift 
   };
   const sys = new LiftSystem(host);
   ok(state.get('0:0') === false && state.get('0:5') === true, 'lift 1 starts open at the ground, closed everywhere else');
-  const car = sys.call(68);
+  const car = sys.call(TL.T.top);
   ok(car.id === 0 || car.id === 1, 'a car answers the call');
   let t = 0, vmax = 0, prevY = 0, prevV = 0, amax = 0, closedMoving = true;
   const dt = 1 / 60;
@@ -248,17 +248,17 @@ ok(tcore.landing.length === 2 * (TL.T.roof + 1), 'a door blocker for every lift 
     if (car.state === 'moving' && (car.door > 0 || !cabDoor[car.id])) closedMoving = false;
     if (car.state === 'moving' && [...state.entries()].some(([k, b]) => k.startsWith(`${car.id}:`) && !b)) closedMoving = false;
     prevY = car.y;
-    if (car.level === 68 && car.state === 'open') break;
+    if (car.level === TL.T.top && car.state === 'open') break;
   }
   void prevY;
-  console.log(`lift: ground -> level 68 in ${t.toFixed(1)} s, top speed ${vmax.toFixed(2)} m/s, max acceleration ${amax.toFixed(2)} m/s^2`);
-  ok(car.level === 68 && car.state === 'open', 'the lift reaches level 68 with open doors');
-  ok(Math.abs(car.y - TL.levelY(68)) < 0.001, 'the cabin stops exactly at the floor height');
+  console.log(`lift: ground -> level ${TL.T.top} in ${t.toFixed(1)} s, top speed ${vmax.toFixed(2)} m/s, max acceleration ${amax.toFixed(2)} m/s^2`);
+  ok(car.level === TL.T.top && car.state === 'open', `the lift reaches level ${TL.T.top} with open doors`);
+  ok(Math.abs(car.y - TL.levelY(TL.T.top)) < 0.001, 'the cabin stops exactly at the floor height');
   ok(vmax <= 6.01 && vmax > 5.5, `the cruise speed is about 6 m/s (${vmax.toFixed(2)})`);
   ok(amax < 2.2, `smooth acceleration (${amax.toFixed(2)} m/s^2)`);
-  ok(t > 45 && t < 75, `a sensible trip time (${t.toFixed(1)} s)`);
+  ok(t > 45 && t < 95, `a sensible trip time (${t.toFixed(1)} s)`);
   ok(closedMoving, 'doors and landing blockers are closed while moving');
-  ok(state.get(`${car.id}:68`) === false && state.get(`${car.id}:0`) === true && cabDoor[car.id] === false, 'at the top: only the level-68 doorway is open');
+  ok(state.get(`${car.id}:${TL.T.top}`) === false && state.get(`${car.id}:0`) === true && cabDoor[car.id] === false, 'at the top: only the top-level doorway is open');
   // never closes on somebody standing in the doorway
   const c2 = sys.cars[1 - car.id];
   c2.request(10); 
@@ -315,10 +315,10 @@ ok(tcore.landing.length === 2 * (TL.T.roof + 1), 'a door blocker for every lift 
 }
 
 // ---- walk each sample floor: from the lift lobby to the wings, the core corridor, and nothing leaks through the glass wall
-for (const n of [1, 2, 15, 33, 45, 55, 65, 66, 68, 69]) {
+for (const n of [1, 2, 15, 33, 45, 55, 85, 86, TL.T.top, TL.T.roof]) {
   const y = TL.levelY(n), ring = TL.ringOf(n), c = lv.get(n)!;
   void c;
-  const C2 = 0.5, X0 = -50, X1 = 50, Z0 = 10, Z1 = 62;
+  const C2 = 0.5, X0 = -85, X1 = 85, Z0 = 10, Z1 = 62;
   const Wc = Math.round((X1 - X0) / C2) + 1, Dc = Math.round((Z1 - Z0) / C2) + 1;
   const id = (x: number, z: number): number => Math.round((z - Z0) / C2) * Wc + Math.round((x - X0) / C2);
   const seen2 = new Uint8Array(Wc * Dc);
@@ -342,7 +342,7 @@ for (const n of [1, 2, 15, 33, 45, 55, 65, 66, 68, 69]) {
   ok(leak === 0, `level ${n}: ${leak} reachable cells outside the glass wall`);
   ok(r(0, 43.2) && r(0, 35) && r(0, 30), `level ${n}: the lift lobby and the core corridor are reachable`);
   ok(cells > free * 0.8, `level ${n}: most of the floor is reachable (${cells} of ${free} cells)`);
-  if (n !== 69 && n !== 68) ok(r(-(ring.hx - 6), 35) || r(-(ring.hx - 5), 28) || r(ring.hx - 6, 35) || r(ring.hx - 5, 28), `level ${n}: the wings are reachable`);
+  if (n !== TL.T.roof && n !== TL.T.top) ok(r(-(ring.hx - 6), 35) || r(-(ring.hx - 5), 28) || r(ring.hx - 6, 35) || r(ring.hx - 5, 28), `level ${n}: the wings are reachable`);
 }
 
 shell.setNight(1); shell.update(1); facade.setNight(1); facade.update(1); lobby.update(1); hall.update(0.1, 1); grounds.setNight(1); grounds.update(1);

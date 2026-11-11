@@ -3,7 +3,7 @@ import { Parts } from './EVLabParts';
 import type { TowerTextures } from './EVLabTowerTextures';
 import { CORE, CORE_TOP, ROOF_Y, SETBACKS, T, levelY, ringOf, ringPoints } from './EVLabTowerLayout';
 
-export const SPIRE_TOP_Y = 352;
+export const SPIRE_TOP_Y = 442;
 
 export interface FacadeBuild {
   group: THREE.Group;

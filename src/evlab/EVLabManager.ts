@@ -1,6 +1,6 @@
 // EVLab Tower inside the open world (west of the F4 road, on the big level EVLab plot).
-//  - a 150 x 100 m podium with the Presentation Hall and a grand lobby on the ground floor, and a 350 m glass tower above the lobby with a central core: two stairs, two glass lifts (EVLabFacade / Core / Lifts / Floors)
-//  - plaza, reflecting pool, driveway, flags and trees on the plot (EVLabGrounds)
+//  - a 150 x 100 m podium with the Presentation Hall and a grand lobby on the ground floor, and a 440 m glass tower (89 levels, plates 1.6 x wider) above the lobby with a central core: two stairs, two glass lifts (EVLabFacade / Core / Lifts / Floors)
+//  - the campus on the plot (EVLabGrounds): lake ring with 4 bridges and fountains, island with ring road, plaza, flags; park trees are game trees (EVLabParkTrees)
 //  - Rapier colliders for every wall, column, stage, seat row, ramp, the roof and the tower; the three entrance ramps lead up to the hall
 //  - the hall is only drawn / animated when the player is near; the tower is drawn from far away
 import * as THREE from 'three';
@@ -39,7 +39,7 @@ export interface EVLabDeps {
   lockTarget?: HTMLElement;
 }
 
-const SHOW_DIST = 4200; // the tower is drawn this far (it is 350 m high)
+const SHOW_DIST = 4200; // the tower is drawn this far (it is 440 m high)
 const INTERIOR_DIST = 320; // hall + lobby are drawn / animated this near
 
 /** 0 (day) .. 1 (night), smooth at dusk and dawn. */
@@ -86,7 +86,7 @@ export class EVLabManager {
     this.group.position.set(site.x, site.floorY, BUILDING_Z);
     // colliders first: the lift cars switch their door blockers while they are built
     const tc = coreColliders();
-    const solids: Solid[] = [...this.shell.solids, ...this.lobby.solids, ...this.hall.solids, ...tc.solids];
+    const solids: Solid[] = [...this.shell.solids, ...this.lobby.solids, ...this.hall.solids, ...tc.solids, ...this.grounds.solids]; // + the bridge decks and railings
     const obbs: Obb[] = [];
     const ramps: Ramp[] = [...this.lobby.ramps, ...this.hall.ramps, ...tc.ramps];
     for (let n = 1; n <= T.roof; n++) { const lc = levelSolids(n); solids.push(...lc.solids); obbs.push(...lc.obbs); }

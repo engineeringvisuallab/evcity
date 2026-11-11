@@ -1,5 +1,8 @@
 // Where EVLab stands in the world, the big level plot it needs, and the zone that local streets keep out of.
 // Pure numbers + a few functions (no three.js / DOM), so the terrain generator, the road planner and their workers can use it.
+import { lakeDepth } from './EVLabCampus';
+import { BUILDING_Z } from './EVLabLayout';
+
 const smoothstep = (a: number, b: number, x: number): number => {
   const t = x <= a ? 0 : x >= b ? 1 : (x - a) / (b - a);
   return t * t * (3 - 2 * t);
@@ -137,7 +140,9 @@ export class EVLabSite {
     const d = this.outside(x, z);
     if (d >= BLEND) return h;
     const t = (1 - smoothstep(0, BLEND, d)) * k;
-    return h + (this.floorY - EVLAB_PAD_SINK - h) * t;
+    const flat = h + (this.floorY - EVLAB_PAD_SINK - h) * t;
+    // the lake around the tower: carved into the level pad (building-local coordinates, see EVLabCampus)
+    return t > 0.999 ? flat - lakeDepth(x - this.x, z - BUILDING_Z) : flat;
   }
 }
 
