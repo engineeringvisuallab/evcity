@@ -10,6 +10,9 @@ export interface AudienceBuild {
   /** People sitting in the hall / seats they sit on. */
   peopleCount: number;
   seatCount: number;
+  /** The hall is empty by default: people are shown only while a presentation mission runs. */
+  readonly present: boolean;
+  setPresent(on: boolean): void;
   setMood(m: Mood): void;
   update(dt: number, t: number): void;
 }
@@ -21,6 +24,7 @@ export function buildAudience(P: Parts, seats: readonly Seat[], fill = 0.62): Au
   const { k } = P;
   const g = new THREE.Group();
   g.name = 'EVLabAudience';
+  g.visible = false; // nobody sits in the hall unless a presentation is going on
   const r = mulberry32(777);
   const people = seats.filter(() => r() < fill);
   const n = people.length;
@@ -64,8 +68,15 @@ export function buildAudience(P: Parts, seats: readonly Seat[], fill = 0.62): Au
     group: g,
     peopleCount: n,
     seatCount: seats.length,
+    get present() { return g.visible; },
+    setPresent(on) {
+      if (g.visible === on) return;
+      g.visible = on;
+      if (on) { stand = 0; mood = 'idle'; acc = 1; }
+    },
     setMood(m) { mood = m; acc = 1; },
     update(dt, t) {
+      if (!g.visible) return; // empty hall: no work at all
       const target = mood === 'ovation' ? 1 : 0;
       const moving = Math.abs(stand - target) > 0.001;
       if (moving) stand += Math.sign(target - stand) * Math.min(Math.abs(target - stand), dt * 2.2);

@@ -77,6 +77,7 @@ console.log(`tower height ${box.max.y.toFixed(0)} m, footprint ${(box.max.x - bo
 ok(box.max.y >= 300, 'the tower must be at least 300 m high');
 console.log(`audience: ${hall.audience.peopleCount} people on ${hall.audience.seatCount} seats`);
 ok(hall.audience.peopleCount > 1000, 'a crowded hall');
+ok(!hall.audience.present && !hall.audience.group.visible, 'step 2: the hall is empty by default (nobody sits in the seats)');
 
 const tcore = TL.coreColliders();
 const solids = [...shell.solids, ...lobby.solids, ...wings.solids, ...hall.solids, ...tcore.solids];
@@ -378,8 +379,12 @@ for (const n of [1, 2, 15, 33, 45, 55, 85, 86, TL.T.top, TL.T.roof]) {
 }
 
 shell.setNight(1); shell.update(1); facade.setNight(1); facade.update(1); lobby.update(1); hall.update(0.1, 1); grounds.setNight(1); grounds.update(1);
+hall.audience.setPresent(true);
+ok(hall.audience.present, 'step 2: people can be shown for a mission');
 hall.audience.setMood('ovation');
 for (let i = 0; i < 40; i++) hall.update(0.05, 2 + i * 0.05);
+hall.audience.setPresent(false);
+ok(!hall.audience.group.visible, 'step 2: people are hidden again after the mission');
 hall.showSlide({ icon: 'X', title: 'T', bullets: ['a', 'b'] }, 'Topic');
 hall.showSlide(null, '');
 kit.dispose();

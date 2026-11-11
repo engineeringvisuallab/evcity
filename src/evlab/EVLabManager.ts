@@ -209,6 +209,7 @@ export class EVLabManager {
     this.d.teleport(this.q);
     this.d.faceSouth();
     this.onStage = true;
+    this.hall.audience.setPresent(true);
   }
 
   /** Back to the front of the portal. */
@@ -220,6 +221,7 @@ export class EVLabManager {
     this.onStage = false;
     this.hall.showSlide(null, '');
     this.hall.audience.setMood('idle');
+    this.hall.audience.setPresent(false);
   }
 
   showSlide(slide: ScreenSlide | null, topic: string): void {
