@@ -27,6 +27,8 @@ export const T = {
 export const SETBACKS = [15, 30, 45] as const;
 /** How much wider the tower plates are than the first version. */
 export const TOWER_WIDEN = 1.6;
+/** Step 2.5x: the plate is 2.5 x deeper (north-south) = 2.5 x the floor area. The south face (the front) stays where it was, the plate grows towards the back (north). Height is unchanged. */
+export const TOWER_DEEPEN = 2.5;
 
 /** Floor surface height of a level (0 = ground floor). */
 export function levelY(n: number): number {
@@ -38,7 +40,7 @@ export const CORE_TOP = ROOF_Y + T.coreTopAbove;
 export const ceilY = (n: number): number => (n <= 0 ? 17 : levelY(n) + T.floorH - T.slab);
 
 // ---------------------------------------------------------------- the glass ring (plan of the tower at a level)
-export interface Ring { hx: number; hz: number; c: number }
+export interface Ring { hx: number; hz: number; c: number; /** z of the centre of the plate (the plate grows to the north, the south face stays) */ cz: number }
 const S_Y0 = T.y1, S_Y1 = ROOF_Y;
 /** Half sizes and corner chamfer of the facade at level n (constant over the level: the little steps hide behind the slab ledges). */
 export function ringOf(n: number): Ring {
@@ -48,11 +50,12 @@ export function ringOf(n: number): Ring {
   const steps = SETBACKS.filter((b) => nn >= b).length;
   // BIGGER TOWER: the plates are 1.6 x wider than before (the core with the stairs and lifts stays exactly as it was, in the middle);
   // the depth grows only by 1 m because the south face may not stand outside the podium (z 50).
-  return { hx: (40 - 14 * sm - 2.4 * steps) * TOWER_WIDEN, hz: 14.5 - 2 * sm - 0.5 * steps, c: (6 - 2 * sm) * 1.4 };
+  const hz0 = 14.5 - 2 * sm - 0.5 * steps, south = T.cz + hz0, hz = hz0 * TOWER_DEEPEN;
+  return { hx: (40 - 14 * sm - 2.4 * steps) * TOWER_WIDEN, hz, c: (6 - 2 * sm) * 1.4, cz: south - hz };
 }
 /** The 8 corners of a ring (x, z) going clockwise from the north-west chamfer; `inset` shrinks it. */
 export function ringPoints(r: Ring, inset = 0): Array<[number, number]> {
-  const hx = r.hx - inset, hz = r.hz - inset, c = Math.max(0.5, r.c - inset * 0.4), cx = T.cx, cz = T.cz;
+  const hx = r.hx - inset, hz = r.hz - inset, c = Math.max(0.5, r.c - inset * 0.4), cx = T.cx, cz = r.cz;
   return [
     [cx - hx + c, cz - hz], [cx + hx - c, cz - hz], [cx + hx, cz - hz + c], [cx + hx, cz + hz - c],
     [cx + hx - c, cz + hz], [cx - hx + c, cz + hz], [cx - hx, cz + hz - c], [cx - hx, cz - hz + c],
@@ -61,7 +64,7 @@ export function ringPoints(r: Ring, inset = 0): Array<[number, number]> {
 /** Is (x, z) inside the ring (shrunk by `inset`)? */
 export function inRing(r: Ring, x: number, z: number, inset = 0): boolean {
   const hx = r.hx - inset, hz = r.hz - inset, c = Math.max(0.5, r.c - inset * 0.4);
-  const dx = Math.abs(x - T.cx), dz = Math.abs(z - T.cz);
+  const dx = Math.abs(x - T.cx), dz = Math.abs(z - r.cz);
   return dx <= hx && dz <= hz && dx + dz <= hx + hz - c;
 }
 
@@ -188,7 +191,7 @@ export function levelColliders(n: number): TowerColliders {
   // slab (bounding rectangle of the ring, minus the core shafts); the level-1 floor is the podium roof
   if (n >= 2) {
     const r = ringOf(n);
-    const x0 = T.cx - r.hx, x1 = T.cx + r.hx, z0 = T.cz - r.hz, z1 = T.cz + r.hz;
+    const x0 = T.cx - r.hx, x1 = T.cx + r.hx, z0 = r.cz - r.hz, z1 = r.cz + r.hz;
     for (const b of rectMinus(x0, x1, z0, z1, slabHoles())) solids.push([b[0], b[1], b[2], b[3], y - T.slab, y]);
   }
   // glass wall: 8 segments (4 straight + 4 diagonal)
@@ -219,7 +222,7 @@ export const STRUCT = {
   qu: 13,
   /** Concrete strength (MPa), steel ratio, steel yield (MPa), strength reduction factor of a tied column. */
   fc: 80, rho: 0.04, fy: 420, phi: 0.52,
-  minSide: 0.6, maxSide: 2.2, minBeam: 0.3, maxBeam: 0.9,
+  minSide: 0.6, maxSide: 2.2, minBeam: 0.3, maxBeam: 1.3,
 } as const;
 /** Axial capacity of the column section per m2 of section (kN/m2). */
 export const COL_CAP = STRUCT.phi * (0.85 * STRUCT.fc * (1 - STRUCT.rho) + STRUCT.fy * STRUCT.rho) * 1000;
@@ -233,11 +236,24 @@ const up05 = (v: number): number => Math.ceil(v * 20 - 1e-9) / 20;
 export function colLoad(n: number, kind: ColKind): number {
   let sum = 0;
   for (let m = Math.max(1, n); m <= T.top; m++) {
-    const hz = ringOf(m).hz;
-    sum += STRUCT.qu * STRUCT.bay * (kind === 'interior' ? hz : hz / 2);
+    const t = tribDepth(ringOf(m));
+    sum += STRUCT.qu * STRUCT.bay * (kind === 'interior' ? t : t / 2);
   }
   return sum;
 }
+/** Row lines north of the lift lobby start just behind the lobby wall (z = DIVIDER.z): there the columns stand over the hall / wings and are carried by the podium roof. */
+const NORTH_ROW_Z = 12.5;
+/** North rows (east-west, over the hall): every <= 18 m from NORTH_ROW_Z to the north face; zN = z of the north perimeter line. */
+function northRows(zN: number): number[] {
+  const n = Math.max(0, Math.ceil((NORTH_ROW_Z - zN) / 18 - 1e-9));
+  return Array.from({ length: n }, (_, i) => NORTH_ROW_Z - (i * (NORTH_ROW_Z - zN)) / n);
+}
+/** Interior column rows (they run east-west): the core centre line z = T.cz, plus (on the deeper plate) the north rows. */
+export const rowCount = (r: Ring): number => 1 + northRows(r.cz - r.hz).length;
+/** Tributary depth (m) of one interior row: the plate depth shared by the rows (one row = half of the depth, as before). */
+export const tribDepth = (r: Ring): number => (2 * r.hz) / (rowCount(r) + 1);
+/** z of the interior rows of a plate: j = 0 is the core centre line, then the north rows. `zN` = z of the north perimeter line. */
+export const rowZs = (_r: Ring, zN: number): number[] => [T.cz, ...northRows(zN)];
 const sideCache = new Map<string, number>();
 /** Side (m) of the square column of that kind at level n. */
 export function colSide(n: number, kind: ColKind): number {
@@ -271,9 +287,10 @@ function buildFrame(n: number): Frame {
     const a = pts[i], b = pts[(i + 1) % 8];
     const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
     // the end edges (west / east) always get a column in the middle, the chamfers none
-    const nb = i === 2 || i === 6 ? Math.max(2, 2 * Math.round(len / 18)) : i % 2 === 1 ? 1 : Math.max(1, Math.round(len / STRUCT.bay));
-    for (let j = 0; j < nb; j++) {
-      const f = j / nb;
+    // (step 2.5x: the end edges are long now: a column at the start and one on every interior row line)
+    const rowF = i === 2 || i === 6 ? rowZs(ring, pts[0][1]).map((rz) => (rz - a[1]) / (b[1] - a[1])).filter((f) => f > 0.05 && f < 0.95).sort((p, q) => p - q) : [];
+    const fs: number[] = i === 2 || i === 6 ? [0, ...rowF] : (() => { const nb = i % 2 === 1 ? 1 : Math.max(1, Math.round(len / STRUCT.bay)); return Array.from({ length: nb }, (_, j) => j / nb); })();
+    for (const f of fs) {
       const x = a[0] + (b[0] - a[0]) * f, z = a[1] + (b[1] - a[1]) * f;
       perim.push([x, z]);
       cols.push({ x, z, s: sP, kind: 'perimeter' });
@@ -287,30 +304,40 @@ function buildFrame(n: number): Frame {
     const sec = beamSection(Math.hypot(b[0] - a[0], b[1] - a[1]));
     beams.push({ x0: a[0], z0: a[1], x1: b[0], z1: b[1], ...sec });
   }
-  // interior line along z = cz: the x of the north columns plus the two end columns; nothing inside the core blocks
+  // interior rows (east-west): the core centre line z = T.cz and, on the deeper plate, more rows towards the north (every <= 18 m); nothing inside the core blocks
+  const zN = pts[0][1], zS = pts[4][1];
+  const rows = rowZs(ring, zN);
   const xsAll = [...northXs, pts[2][0], pts[6][0]];
-  const inCore = (x: number): boolean => CORES.some((b) => x > b.x0 - 1.5 - sI / 2 && x < b.x1 + 1.5 + sI / 2);
-  const ix = xsAll.filter((x) => !inCore(x)).sort((p, q) => p - q);
-  const icols: Col[] = ix.map((x) => ({ x, z: T.cz, s: sI, kind: 'interior' as const }));
-  cols.push(...icols);
-  for (let i = 0; i + 1 < icols.length; i++) {
-    const a = icols[i], b = icols[i + 1];
-    const between = CORES.filter((c) => c.x0 > a.x && c.x1 < b.x);
-    if (!between.length) {
-      beams.push({ x0: a.x, z0: a.z, x1: b.x, z1: b.z, ...beamSection(b.x - a.x) });
-    } else {
-      const c0 = between[0], c1 = between[between.length - 1];
-      beams.push({ x0: a.x, z0: a.z, x1: c0.x0, z1: a.z, ...beamSection(c0.x0 - a.x) }, { x0: c1.x1, z0: a.z, x1: b.x, z1: a.z, ...beamSection(b.x - c1.x1) });
+  const inCore = (x: number, z: number): boolean => CORES.some((b) => x > b.x0 - 1.5 - sI / 2 && x < b.x1 + 1.5 + sI / 2 && z > b.z0 - 1.5 - sI / 2 && z < b.z1 + 1.5 + sI / 2);
+  const icols: Col[] = [];
+  for (const rz of rows) {
+    const ix = xsAll.filter((x) => !inCore(x, rz)).sort((p, q) => p - q);
+    const rc: Col[] = ix.map((x) => ({ x, z: rz, s: sI, kind: 'interior' as const }));
+    icols.push(...rc);
+    for (let i = 0; i + 1 < rc.length; i++) {
+      const a = rc[i], b = rc[i + 1];
+      const between = CORES.filter((c) => c.x0 > a.x && c.x1 < b.x && rz > c.z0 && rz < c.z1);
+      if (!between.length) {
+        beams.push({ x0: a.x, z0: a.z, x1: b.x, z1: b.z, ...beamSection(b.x - a.x) });
+      } else {
+        const c0 = between[0], c1 = between[between.length - 1];
+        beams.push({ x0: a.x, z0: a.z, x1: c0.x0, z1: a.z, ...beamSection(c0.x0 - a.x) }, { x0: c1.x1, z0: a.z, x1: b.x, z1: b.z, ...beamSection(b.x - c1.x1) });
+      }
     }
   }
-  // north-south beams on every column line: perimeter column -> interior column, or -> the core face where the line meets a core block
-  const zN = pts[0][1], zS = pts[4][1];
+  cols.push(...icols);
+  // north-south beams on every column line: perimeter column -> interior columns -> perimeter column, or to the core face where the line meets a core block
   for (const x of northXs) {
-    const ic = icols.find((c) => Math.abs(c.x - x) < 0.01);
     const core = CORES.find((c) => x > c.x0 && x < c.x1);
-    const zn = ic ? T.cz : core ? core.z0 : null, zs = ic ? T.cz : core ? core.z1 : null;
-    if (zn !== null) beams.push({ x0: x, z0: zN, x1: x, z1: zn, ...beamSection(Math.abs(zn - zN)) });
-    if (zs !== null) beams.push({ x0: x, z0: zS, x1: x, z1: zs, ...beamSection(Math.abs(zs - zS)) });
+    const nodes: number[] = [zN, ...rows.filter((rz) => icols.some((c) => Math.abs(c.x - x) < 0.01 && Math.abs(c.z - rz) < 0.01)).sort((p, q) => p - q), zS];
+    for (let i = 0; i + 1 < nodes.length; i++) {
+      const a = nodes[i], b = nodes[i + 1];
+      if (core && core.z0 > a && core.z1 < b) {
+        beams.push({ x0: x, z0: a, x1: x, z1: core.z0, ...beamSection(core.z0 - a) }, { x0: x, z0: core.z1, x1: x, z1: b, ...beamSection(b - core.z1) });
+      } else if (!core || core.z1 <= a || core.z0 >= b) {
+        beams.push({ x0: x, z0: a, x1: x, z1: b, ...beamSection(b - a) });
+      }
+    }
   }
   return { cols, beams };
 }
@@ -466,14 +493,14 @@ export function floorPlan(n: number): FloorPlan {
     solids.push([it.x - hx, it.x + hx, it.z - hz, it.z + hz, y, y + h]);
   };
   const wings = (cb: (x: number, z: number) => void, sx: number, sz: number): void => {
-    for (let x = T.cx - ring.hx + 4; x < T.cx + ring.hx - 3; x += sx) for (let z = T.cz - ring.hz + 3.5; z < T.cz + ring.hz - 2; z += sz) cb(x, z);
+    for (let x = T.cx - ring.hx + 4; x < T.cx + ring.hx - 3; x += sx) for (let z = ring.cz - ring.hz + 3.5; z < ring.cz + ring.hz - 2; z += sz) cb(x, z);
   };
   if (kind === 'office') {
     // two glass meeting rooms at the ends (door to the south side), only where the plate is wide enough to clear the core; the rest is open plan
     const rx = Math.max(ring.hx - 9, CORE.x1 + 5.5);
     const roomXs: number[] = rx + 4.5 < ring.hx - T.wallIn ? [-rx, rx] : [];
     for (const sx of roomXs) {
-      const x = T.cx + sx, z = T.cz - ring.hz + 5.5;
+      const x = T.cx + sx, z = ring.cz - ring.hz + 5.5;
       items.push({ t: 'room', x, z, w: 7, d: 5 });
       solids.push([x - 3.5, x + 3.5, z - 2.5, z - 2.35, y, y + 2.8], [x - 3.5, x - 3.35, z - 2.5, z + 2.5, y, y + 2.8], [x + 3.35, x + 3.5, z - 2.5, z + 2.5, y, y + 2.8]);
       solids.push([x - 3.5, x - 1.0, z + 2.35, z + 2.5, y, y + 2.8], [x + 1.0, x + 3.5, z + 2.35, z + 2.5, y, y + 2.8]);
@@ -482,7 +509,7 @@ export function floorPlan(n: number): FloorPlan {
     wings((x, z) => {
       if (!free(x, z, 1.6)) return;
       if (nearLobby(x, z, 1.7, 0.85)) return; // step 1.2b: the lift lobby and the way to the gates stay clear
-      if (roomXs.some((rxx) => Math.abs(x - (T.cx + rxx)) < 6.5 && z < T.cz - ring.hz + 9.5)) return;
+      if (roomXs.some((rxx) => Math.abs(x - (T.cx + rxx)) < 6.5 && z < ring.cz - ring.hz + 9.5)) return;
       add({ t: 'desk', x, z, yaw: 0, w: 3.4, d: 1.7 }, 1.7, 0.85, 1.1);
     }, 6.0, 4.6);
     solids.push(...partitionSolids(n));

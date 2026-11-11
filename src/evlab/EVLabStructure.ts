@@ -5,7 +5,7 @@
 //  3. MECHANICAL FLOORS (21, 41, 60, 70): outrigger trusses from the core blocks to the end columns (z = tower centre line) + a belt truss round the facade.
 // Sizing is a preliminary engineering estimate (see EVLAB_STRUCTURE_ASSESSMENT.md), good enough to draw believable members, not a design.
 import { BLD, DIVIDER, HALL, type Solid } from './EVLabLayout';
-import { COL_CAP, CORES, STRUCT, T, ceilY, colLoad, columnsOf, levelY, ringOf, type Col, type ColKind } from './EVLabTowerLayout';
+import { COL_CAP, CORES, STRUCT, T, ceilY, colLoad, columnsOf, levelY, ringOf, tribDepth, type Col, type ColKind } from './EVLabTowerLayout';
 
 const up05 = (v: number): number => Math.ceil(v * 20 - 1e-9) / 20;
 const same = (a: number, b: number): boolean => Math.abs(a - b) < 0.05;
@@ -25,21 +25,23 @@ const RAMP_Z1 = 27;
 const inRamp = (c: Col): boolean =>
   DIVIDER.openings.some(([a, b]) => c.x + c.s / 2 > a - PODIUM.margin && c.x - c.s / 2 < b + PODIUM.margin) && c.z - c.s / 2 < RAMP_Z1 + PODIUM.margin;
 /** Tower columns of level 1 that cannot go straight to the ground (they would stand in a hall ramp): they are transferred. */
-export const isTransferred = (c: Col): boolean => inRamp(c);
+/** Step 2.5x: the deeper tower plate reaches over the Presentation Hall and the wings (z < the lobby wall). Those columns end on the podium roof (hall roof trusses / wing roof beams), no column goes down through the hall. */
+export const carriedByRoof = (c: Col): boolean => c.z < DIVIDER.z;
+export const isTransferred = (c: Col): boolean => !carriedByRoof(c) && inRamp(c);
 
 export interface Girder { x0: number; x1: number; z: number; load: number; carries: Col; supports: [Col, Col] }
 export interface PodiumCol { x: number; z: number; s: number; kind: ColKind; /** factored axial load at the foot (kN) */ load: number }
 export interface Podium { cols: PodiumCol[]; girders: Girder[] }
 
 /** Load of one more floor (the podium roof slab itself) on a column of that kind. */
-const roofExtra = (kind: ColKind): number => STRUCT.qu * STRUCT.bay * (kind === 'interior' ? ringOf(1).hz : ringOf(1).hz / 2);
+const roofExtra = (kind: ColKind): number => STRUCT.qu * STRUCT.bay * (kind === 'interior' ? tribDepth(ringOf(1)) : tribDepth(ringOf(1)) / 2);
 /** Load that a level-1 column delivers to its foot (its own tributary load of all floors above + the podium roof slab). */
 const ownLoad = (c: Col): number => colLoad(1, c.kind) + roofExtra(c.kind);
 
 let podiumCache: Podium | null = null;
 export function podium(): Podium {
   if (podiumCache) return podiumCache;
-  const all = columnsOf(1);
+  const all = columnsOf(1).filter((c) => !carriedByRoof(c));
   const keep = all.filter((c) => !isTransferred(c));
   const girders: Girder[] = [];
   const extra = new Map<Col, number>();

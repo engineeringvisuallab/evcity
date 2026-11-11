@@ -349,7 +349,7 @@ ok(tcore.landing.length === 2 * (TL.T.roof + 1), 'a door blocker for every lift 
 for (const n of [1, 2, 15, 33, 45, 55, 85, 86, TL.T.top, TL.T.roof]) {
   const y = TL.levelY(n), ring = TL.ringOf(n), c = lv.get(n)!;
   void c;
-  const C2 = 0.5, X0 = -85, X1 = 85, Z0 = 10, Z1 = 62;
+  const C2 = 0.5, X0 = -85, X1 = 85, Z0 = -30, Z1 = 62;
   const Wc = Math.round((X1 - X0) / C2) + 1, Dc = Math.round((Z1 - Z0) / C2) + 1;
   const id = (x: number, z: number): number => Math.round((z - Z0) / C2) * Wc + Math.round((x - X0) / C2);
   const seen2 = new Uint8Array(Wc * Dc);

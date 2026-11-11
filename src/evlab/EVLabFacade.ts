@@ -141,14 +141,14 @@ export function buildFacade(P: Parts, TT: TowerTextures): FacadeBuild {
   const mastY0 = ROOF_Y + 2.8, mastH = 22;
   const mx = r68.hx - 2.5, mz = r68.hz - 2;
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
-    P.cyl(g, 0.25, 0.4, mastH, T.cx + sx * mx, mastY0 + mastH / 2, T.cz + sz * mz, crown, 8);
+    P.cyl(g, 0.25, 0.4, mastH, T.cx + sx * mx, mastY0 + mastH / 2, r68.cz + sz * mz, crown, 8);
     tris += 16;
   }
   const fy = mastY0 + mastH;
-  P.tbox(g, T.cx - mx, T.cx + mx, T.cz - mz - 0.2, T.cz - mz + 0.2, fy - 0.2, fy + 0.2, crown);
-  P.tbox(g, T.cx - mx, T.cx + mx, T.cz + mz - 0.2, T.cz + mz + 0.2, fy - 0.2, fy + 0.2, crown);
-  P.tbox(g, T.cx - mx - 0.2, T.cx - mx + 0.2, T.cz - mz, T.cz + mz, fy - 0.2, fy + 0.2, crown);
-  P.tbox(g, T.cx + mx - 0.2, T.cx + mx + 0.2, T.cz - mz, T.cz + mz, fy - 0.2, fy + 0.2, crown);
+  P.tbox(g, T.cx - mx, T.cx + mx, r68.cz - mz - 0.2, r68.cz - mz + 0.2, fy - 0.2, fy + 0.2, crown);
+  P.tbox(g, T.cx - mx, T.cx + mx, r68.cz + mz - 0.2, r68.cz + mz + 0.2, fy - 0.2, fy + 0.2, crown);
+  P.tbox(g, T.cx - mx - 0.2, T.cx - mx + 0.2, r68.cz - mz, r68.cz + mz, fy - 0.2, fy + 0.2, crown);
+  P.tbox(g, T.cx + mx - 0.2, T.cx + mx + 0.2, r68.cz - mz, r68.cz + mz, fy - 0.2, fy + 0.2, crown);
   const conc = P.lit(TT.concrete, 0xffffff, 0.25);
   for (const b of CORES) P.tbox(g, b.x0, b.x1, b.z0, b.z1, ROOF_Y, CORE_TOP + 0.4, conc, 8, 4);
   const lantern = P.tbox(g, T.cx - 6, T.cx + 6, T.cz - 4, T.cz + 4, CORE_TOP + 0.4, CORE_TOP + 9, crown);
@@ -162,7 +162,7 @@ export function buildFacade(P: Parts, TT: TowerTextures): FacadeBuild {
   // the logo, huge, on the south face (seen from the highway)
   const logo = k.own(new THREE.MeshBasicMaterial({ map: P.t.logo, toneMapped: false }));
   const ly = levelY(34), rz = ringOf(34);
-  P.vplane(g, 'z', T.cz + rz.hz + 0.35, -22, 22, ly, ly + 11, 1, logo, 44, 11);
+  P.vplane(g, 'z', rz.cz + rz.hz + 0.35, -22, 22, ly, ly + 11, 1, logo, 44, 11);
   tris += 2;
 
   return {

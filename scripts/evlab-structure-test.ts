@@ -10,10 +10,11 @@ const same = (a: number, b: number): boolean => Math.abs(a - b) < 0.05;
 // ---------------------------------------------------------------- podium
 const pod = S.podium(), lvl1 = TL.columnsOf(1);
 const transferred = lvl1.filter(S.isTransferred);
+console.log(`tower columns over the hall / wings, carried by the podium roof: ${lvl1.filter(S.carriedByRoof).length}`);
 console.log(`podium: ${pod.cols.length} columns to the ground, ${pod.girders.length} transfer girders (${transferred.length} tower columns transferred)`);
-ok(pod.girders.length === transferred.length && transferred.length > 0, 'every transferred column has its girder');
+ok(pod.girders.length === transferred.length, 'every transferred column has its girder');
 for (const c of lvl1) {
-  if (S.isTransferred(c)) continue;
+  if (S.isTransferred(c) || S.carriedByRoof(c)) continue; // (carried by the roof: the deeper tower plate over the hall / wings)
   const g = pod.cols.find((p) => same(p.x, c.x) && same(p.z, c.z));
   ok(!!g && g.s >= c.s - 1e-9, `tower column (${c.x.toFixed(1)}, ${c.z.toFixed(1)}) continues to the ground and is not thinner`);
 }
@@ -80,5 +81,14 @@ for (const n of S.MECH_LEVELS) {
     ok(blocked((closed.x0 + closed.x1) / 2, 35), `level ${n}: a closed panel blocks the walk`);
   }
 }
+// ---------------------------------------------------------------- step 2.5x: the tower plate is 2.5 x deeper (area 2.5x), grows to the north, height unchanged
+ok(TL.T.top === 88 && TL.T.floorH === 4.2, 'tower height unchanged (88 floors x 4.2 m)');
+for (const n of [1, 20, 45, 70, TL.T.top]) {
+  const r = TL.ringOf(n), hz0 = r.hz / TL.TOWER_DEEPEN;
+  ok(Math.abs(r.cz + r.hz - (TL.T.cz + hz0)) < 1e-9, `level ${n}: the south face stays where it was (z ${(r.cz + r.hz).toFixed(1)})`);
+  ok(r.cz + r.hz <= BLD.hz - 1 && r.cz - r.hz > -BLD.hz + 1, `level ${n}: the plate stays on the podium roof (z ${(r.cz - r.hz).toFixed(1)} .. ${(r.cz + r.hz).toFixed(1)})`);
+  ok(TL.CORES.every((b) => b.z0 > r.cz - r.hz && b.z1 < r.cz + r.hz), `level ${n}: the core blocks are inside the plate`);
+}
+console.log(`tower plate level 1: depth ${(2 * TL.ringOf(1).hz).toFixed(1)} m (was ${(2 * TL.ringOf(1).hz / TL.TOWER_DEEPEN).toFixed(1)} m), z ${(TL.ringOf(1).cz - TL.ringOf(1).hz).toFixed(1)} .. ${(TL.ringOf(1).cz + TL.ringOf(1).hz).toFixed(1)}`);
 console.log(fails ? `${fails} FAILED` : 'evlab structure: all ok');
 process.exit(fails ? 1 : 0);

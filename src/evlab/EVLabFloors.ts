@@ -81,7 +81,7 @@ export function makeLevelBuilder(P: Parts, TT: TowerTextures): (n: number) => Le
     if (!roof) {
       keep(plate(pts, true, false, ceilY(n), ceilMat, 6));
       const lm: THREE.Matrix4[] = [];
-      for (let x = T.cx - ring.hx + 2; x < T.cx + ring.hx - 1; x += 3.6) for (let z = T.cz - ring.hz + 2; z < T.cz + ring.hz - 1; z += 3.6) {
+      for (let x = T.cx - ring.hx + 2; x < T.cx + ring.hx - 1; x += 3.6) for (let z = ring.cz - ring.hz + 2; z < ring.cz + ring.hz - 1; z += 3.6) {
         if (inRing(ring, x, z, 1.2) && !CORES.some((b) => x > b.x0 - 1 && x < b.x1 + 1 && z > b.z0 - 1 && z < b.z1 + 1)) {
           const m = new THREE.Matrix4().compose(new THREE.Vector3(x, ceilY(n) - 0.01, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)), new THREE.Vector3(1, 1, 1));
           lm.push(m);
@@ -244,8 +244,8 @@ export function makeLevelBuilder(P: Parts, TT: TowerTextures): (n: number) => Le
 
     // the big sign on the north wall (facing south), and the roof deck's pergola light
     const sg = SIGN[kind];
-    if (sg) k.sign(g, sg[0], sg[1], T.cx, y + (roof ? 2.0 : 2.8), T.cz - ring.hz + 1.0, 10, 1.6, true);
-    if (kind === 'deck') P.hplane(g, T.cx - ring.hx + 2, T.cx + ring.hx - 2, T.cz - ring.hz + 0.6, T.cz - ring.hz + 1.0, y + 0.01, P.glow(0x3a9be8, 1, 0x3a9be8), 4, 4);
+    if (sg) k.sign(g, sg[0], sg[1], T.cx, y + (roof ? 2.0 : 2.8), ring.cz - ring.hz + 1.0, 10, 1.6, true);
+    if (kind === 'deck') P.hplane(g, T.cx - ring.hx + 2, T.cx + ring.hx - 2, ring.cz - ring.hz + 0.6, ring.cz - ring.hz + 1.0, y + 0.01, P.glow(0x3a9be8, 1, 0x3a9be8), 4, 4);
     void ROOF_Y;
     return {
       group: g,
