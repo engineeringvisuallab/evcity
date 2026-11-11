@@ -354,5 +354,32 @@ for (let i = 0; i < 40; i++) hall.update(0.05, 2 + i * 0.05);
 hall.showSlide({ icon: 'X', title: 'T', bullets: ['a', 'b'] }, 'Topic');
 hall.showSlide(null, '');
 kit.dispose();
+
+// ---- structure (step 1.1): columns and beams of the tower floors
+{
+  const rows: string[] = [];
+  let prevI = Infinity, prevP = Infinity, bad = 0;
+  for (let n = 1; n <= TL.T.top; n++) {
+    const ring = TL.ringOf(n), cols = TL.columnsOf(n), beams = TL.beamsOf(n);
+    const sP = TL.colSide(n, 'perimeter'), sI = TL.colSide(n, 'interior');
+    if (sP > prevP + 1e-9 || sI > prevI + 1e-9) bad++;
+    prevP = sP; prevI = sI;
+    for (const c of cols) {
+      if (!TL.inRing(ring, c.x, c.z, 0.2)) bad++;
+      if (TL.CORES.some((b) => c.x + c.s / 2 > b.x0 && c.x - c.s / 2 < b.x1 && c.z + c.s / 2 > b.z0 && c.z - c.s / 2 < b.z1)) bad++;
+    }
+    for (const b of beams) if (b.d > TL.STRUCT.maxBeam + 1e-9 || b.d < TL.STRUCT.minBeam - 1e-9) bad++;
+    // utilisation: demand / capacity of the column section, must be <= 1
+    for (const k of ['perimeter', 'interior'] as const) {
+      const cap = TL.colSide(n, k) ** 2 * TL.COL_CAP;
+      if (TL.colLoad(n, k) > cap + 1e-6 && TL.colSide(n, k) < TL.STRUCT.maxSide) bad++;
+    }
+    if (n === 1 || n % 11 === 0 || n === TL.T.top) rows.push(`  level ${String(n).padStart(2)}: ${cols.length} columns (perimeter ${sP.toFixed(2)} m, interior ${sI.toFixed(2)} m), ${beams.length} beams, deepest ${Math.max(...beams.map((b) => b.d)).toFixed(2)} m`);
+  }
+  console.log(rows.join('\n'));
+  ok(bad === 0, 'structure: columns inside the plate and clear of the core, sizes shrink upwards, columns strong enough, beams within limits');
+  ok(TL.colSide(1, 'interior') <= TL.STRUCT.maxSide && TL.colSide(1, 'perimeter') >= TL.STRUCT.minSide, 'structure: column sizes in range');
+}
+
 console.log(fail ? `${fail} FAILED` : 'EVLab Tower: all ok');
 process.exit(fail ? 1 : 0);

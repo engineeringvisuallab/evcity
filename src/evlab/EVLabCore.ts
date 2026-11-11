@@ -161,7 +161,7 @@ export function buildCore(P: Parts, TT: TowerTextures): CoreBuild {
     let lastText = '';
     const tex = k.texture(W, H, (c) => { c.fillStyle = '#0b0d12'; c.fillRect(0, 0, W, H); });
     const disp = new THREE.Mesh(k.own(new THREE.PlaneGeometry(1.3, 0.325)), k.own(new THREE.MeshBasicMaterial({ map: tex, toneMapped: false })));
-    disp.position.set(0, 2.55, CAB.z1 - 0.16);
+    disp.position.set(0, 2.7, CAB.z1 - 0.16);
     disp.rotation.y = Math.PI;
     cg.add(disp);
     const draw = (text: string): void => {
@@ -230,7 +230,7 @@ export function buildCore(P: Parts, TT: TowerTextures): CoreBuild {
       P.tbox(lg, l.cx - 0.9, l.cx + 0.9, l.sz1, l.sz1 + 0.14, y + h, y + h + 0.1, gold);
       P.tbox(lg, l.cx - 0.9, l.cx - 0.8, l.sz1, l.sz1 + 0.14, y, y + h, gold);
       P.tbox(lg, l.cx + 0.8, l.cx + 0.9, l.sz1, l.sz1 + 0.14, y, y + h, gold);
-      digit(lg, n, 0.7, 0.8, l.cx, y + h + 0.65, l.sz1 + 0.02, 1);
+      digit(lg, n, 0.7, 0.8, l.cx, y + h + 0.45, l.sz1 + 0.02, 1);
       P.tbox(lg, l.cx + 1.15, l.cx + 1.3, l.sz1, l.sz1 + 0.06, y + 1.0, y + 1.3, btnMat);
     }
     levelGroups.set(n, keys);

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Parts } from './EVLabParts';
 import type { TowerTextures } from './EVLabTowerTextures';
-import { CORES, FLOORS, ROOF_Y, T, ceilY, floorPlan, inRing, levelY, ringOf, ringPoints, type FloorKind } from './EVLabTowerLayout';
+import { CORES, FLOORS, ROOF_Y, T, beamsOf, ceilY, columnsOf, floorPlan, inRing, levelY, ringOf, ringPoints, type FloorKind } from './EVLabTowerLayout';
 
 /** What one level of the tower looks like inside (floor, ceiling lights, glass wall, furniture, signs). Built when the player is near, dropped when far. */
 export interface LevelView {
@@ -115,6 +115,20 @@ export function makeLevelBuilder(P: Parts, TT: TowerTextures): (n: number) => Le
       keep(new THREE.Mesh(geo, glass));
       const im = instanced(gBox, gold, mm);
       if (im) g.add(im);
+    }
+
+    // structure: concrete columns (floor to floor) and the beams under the slab above
+    if (!roof) {
+      const cm: THREE.Matrix4[] = [], bm: THREE.Matrix4[] = [];
+      for (const c of columnsOf(n)) cm.push(mx(c.x, y + T.floorH / 2, c.z, c.s, T.floorH, c.s));
+      const cy = ceilY(n);
+      for (const b of beamsOf(n)) {
+        const dx = b.x1 - b.x0, dz = b.z1 - b.z0, len = Math.hypot(dx, dz);
+        if (len < 0.05) continue;
+        bm.push(mx((b.x0 + b.x1) / 2, cy - b.d / 2 + 0.02, (b.z0 + b.z1) / 2, len, b.d + 0.04, b.w, Math.atan2(-dz, dx)));
+      }
+      const ci = instanced(gBox, mats.concrete, cm); if (ci) g.add(ci);
+      const bi = instanced(gBox, mats.concrete, bm); if (bi) g.add(bi);
     }
 
     // furniture

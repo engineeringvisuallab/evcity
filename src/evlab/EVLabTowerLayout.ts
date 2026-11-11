@@ -80,7 +80,7 @@ export const LIFTS = [
   { id: 0, name: 'Lift 1', sx0: -6.6 - SPLIT, sx1: -2.4 - SPLIT, sz0: 36.8, sz1: 41.2, cx: -4.5 - SPLIT, doorHalf: 0.8 },
   { id: 1, name: 'Lift 2', sx0: 2.4 + SPLIT, sx1: 6.6 + SPLIT, sz0: 36.8, sz1: 41.2, cx: 4.5 + SPLIT, doorHalf: 0.8 },
 ] as const;
-export const CAB = { hx: 1.5, z0: 37.8, z1: 41.0, h: 2.9, floorT: 0.3, doorH: 2.3, speed: 6, accel: 1.6 };
+export const CAB = { hx: 1.5, z0: 37.8, z1: 41.0, h: 3.3, floorT: 0.3, doorH: 2.9, speed: 6, accel: 1.6 };
 export const SHAFT_WALL = 0.2;
 
 /** Two fire stairs. Inner well 5.5 x 11.4 m, switchback flights (2.3 m wide, 4.2 m run), mid landing at the north end, door in the south wall. */
@@ -183,8 +183,135 @@ export function levelColliders(n: number): TowerColliders {
     const mx = (a[0] + b[0]) / 2, mz = (a[1] + b[1]) / 2, len = Math.hypot(b[0] - a[0], b[1] - a[1]);
     obbs.push({ cx: mx, cz: mz, hx: len / 2 + 0.15, hz: 0.15, yaw: Math.atan2(-(b[1] - a[1]), b[0] - a[0]), y0: y - 0.1, y1: top });
   }
+  for (const c of columnsOf(n)) solids.push([c.x - c.s / 2, c.x + c.s / 2, c.z - c.s / 2, c.z + c.s / 2, y, top]);
   return { solids, obbs, ramps, landing: [] };
 }
+
+
+// ---------------------------------------------------------------- structure (v1.5, step 1.1): columns and beams of the tower floors
+/**
+ * Engineering assessment (gravity frame, simple tributary-area method):
+ *  - factored floor load qu = 1.2 D + 1.6 L (D = slab + finishes + facade + services, L = office)
+ *  - every column carries the tributary area of all floors above it, so it is biggest at the bottom and thinner towards the top
+ *  - size from the axial capacity of a tied high-strength column (phi * (0.85 f'c (1 - rho) + fy rho)), rounded up to 50 mm
+ *  - beam depth from the span (span / 18, rounded up to 50 mm), width about 0.55 x depth
+ * The lateral system (core walls, outriggers at the mechanical floors) is the next step.
+ */
+export const STRUCT = {
+  /** Wished column spacing along the facade (m). */
+  bay: 9,
+  /** Factored floor load (kN/m2). */
+  qu: 13,
+  /** Concrete strength (MPa), steel ratio, steel yield (MPa), strength reduction factor of a tied column. */
+  fc: 80, rho: 0.04, fy: 420, phi: 0.52,
+  minSide: 0.6, maxSide: 2.2, minBeam: 0.3, maxBeam: 0.9,
+} as const;
+/** Axial capacity of the column section per m2 of section (kN/m2). */
+export const COL_CAP = STRUCT.phi * (0.85 * STRUCT.fc * (1 - STRUCT.rho) + STRUCT.fy * STRUCT.rho) * 1000;
+
+export type ColKind = 'perimeter' | 'interior';
+export interface Col { x: number; z: number; s: number; kind: ColKind }
+export interface Beam { x0: number; z0: number; x1: number; z1: number; w: number; d: number }
+
+const up05 = (v: number): number => Math.ceil(v * 20 - 1e-9) / 20;
+/** Tributary load (kN) of one column kind on all floors from level n up to the top. */
+export function colLoad(n: number, kind: ColKind): number {
+  let sum = 0;
+  for (let m = Math.max(1, n); m <= T.top; m++) {
+    const hz = ringOf(m).hz;
+    sum += STRUCT.qu * STRUCT.bay * (kind === 'interior' ? hz : hz / 2);
+  }
+  return sum;
+}
+const sideCache = new Map<string, number>();
+/** Side (m) of the square column of that kind at level n. */
+export function colSide(n: number, kind: ColKind): number {
+  const key = `${kind}${n}`;
+  const hit = sideCache.get(key);
+  if (hit !== undefined) return hit;
+  const need = Math.sqrt(colLoad(n, kind) / COL_CAP);
+  const v = Math.min(STRUCT.maxSide, Math.max(STRUCT.minSide, up05(need)));
+  sideCache.set(key, v);
+  return v;
+}
+/** Beam section (width, depth) for a span (m). */
+export function beamSection(span: number): { w: number; d: number } {
+  const d = Math.min(STRUCT.maxBeam, Math.max(STRUCT.minBeam, up05(span / 18)));
+  return { w: Math.max(0.3, up05(d * 0.55)), d };
+}
+
+const colCache = new Map<number, Col[]>();
+const beamCache = new Map<number, Beam[]>();
+interface Frame { cols: Col[]; beams: Beam[] }
+function buildFrame(n: number): Frame {
+  const ring = ringOf(n);
+  const sP = colSide(n, 'perimeter'), sI = colSide(n, 'interior');
+  const ins = 0.2 + sP / 2;
+  const pts = ringPoints(ring, ins);
+  const cols: Col[] = [];
+  const beams: Beam[] = [];
+  const perim: Array<[number, number]> = [];
+  const northXs: number[] = [];
+  for (let i = 0; i < 8; i++) {
+    const a = pts[i], b = pts[(i + 1) % 8];
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    // the end edges (west / east) always get a column in the middle, the chamfers none
+    const nb = i === 2 || i === 6 ? Math.max(2, 2 * Math.round(len / 18)) : i % 2 === 1 ? 1 : Math.max(1, Math.round(len / STRUCT.bay));
+    for (let j = 0; j < nb; j++) {
+      const f = j / nb;
+      const x = a[0] + (b[0] - a[0]) * f, z = a[1] + (b[1] - a[1]) * f;
+      perim.push([x, z]);
+      cols.push({ x, z, s: sP, kind: 'perimeter' });
+      if (i === 0) northXs.push(x);
+    }
+  }
+  northXs.push(pts[1][0]);
+  // perimeter beams: from column to column all around
+  for (let i = 0; i < perim.length; i++) {
+    const a = perim[i], b = perim[(i + 1) % perim.length];
+    const sec = beamSection(Math.hypot(b[0] - a[0], b[1] - a[1]));
+    beams.push({ x0: a[0], z0: a[1], x1: b[0], z1: b[1], ...sec });
+  }
+  // interior line along z = cz: the x of the north columns plus the two end columns; nothing inside the core blocks
+  const xsAll = [...northXs, pts[2][0], pts[6][0]];
+  const inCore = (x: number): boolean => CORES.some((b) => x > b.x0 - 1.5 - sI / 2 && x < b.x1 + 1.5 + sI / 2);
+  const ix = xsAll.filter((x) => !inCore(x)).sort((p, q) => p - q);
+  const icols: Col[] = ix.map((x) => ({ x, z: T.cz, s: sI, kind: 'interior' as const }));
+  cols.push(...icols);
+  for (let i = 0; i + 1 < icols.length; i++) {
+    const a = icols[i], b = icols[i + 1];
+    const between = CORES.filter((c) => c.x0 > a.x && c.x1 < b.x);
+    if (!between.length) {
+      beams.push({ x0: a.x, z0: a.z, x1: b.x, z1: b.z, ...beamSection(b.x - a.x) });
+    } else {
+      const c0 = between[0], c1 = between[between.length - 1];
+      beams.push({ x0: a.x, z0: a.z, x1: c0.x0, z1: a.z, ...beamSection(c0.x0 - a.x) }, { x0: c1.x1, z0: a.z, x1: b.x, z1: a.z, ...beamSection(b.x - c1.x1) });
+    }
+  }
+  // north-south beams on every column line: perimeter column -> interior column, or -> the core face where the line meets a core block
+  const zN = pts[0][1], zS = pts[4][1];
+  for (const x of northXs) {
+    const ic = icols.find((c) => Math.abs(c.x - x) < 0.01);
+    const core = CORES.find((c) => x > c.x0 && x < c.x1);
+    const zn = ic ? T.cz : core ? core.z0 : null, zs = ic ? T.cz : core ? core.z1 : null;
+    if (zn !== null) beams.push({ x0: x, z0: zN, x1: x, z1: zn, ...beamSection(Math.abs(zn - zN)) });
+    if (zs !== null) beams.push({ x0: x, z0: zS, x1: x, z1: zs, ...beamSection(Math.abs(zs - zS)) });
+  }
+  return { cols, beams };
+}
+function frameOf(n: number): Frame {
+  let c = colCache.get(n), b = beamCache.get(n);
+  if (!c || !b) {
+    const f = n < 1 || n > T.top ? { cols: [], beams: [] } : buildFrame(n);
+    c = f.cols; b = f.beams;
+    colCache.set(n, c); beamCache.set(n, b);
+  }
+  return { cols: c, beams: b };
+}
+/** The columns of tower level n (floor n up to floor n + 1). */
+export const columnsOf = (n: number): Col[] => frameOf(n).cols;
+/** The beams under the slab of level n (the ceiling of that level). */
+export const beamsOf = (n: number): Beam[] => frameOf(n).beams;
 
 // ---------------------------------------------------------------- whole-tower collision (core is built once for all levels)
 export function coreColliders(): TowerColliders {
@@ -260,7 +387,10 @@ export function floorPlan(n: number): FloorPlan {
   const y = levelY(n);
   const free = (x: number, z: number, m: number): boolean =>
     inRing(ring, x, z, T.wallIn + m) && !CORES.some((b) => x > b.x0 - CORE_PAD && x < b.x1 + CORE_PAD && z > b.z0 - CORE_PAD && z < b.z1 + 5.5);
+  const cols = columnsOf(n);
   const add = (it: Item, hx: number, hz: number, h = 1.2): void => {
+    // nothing stands where a structural column is (0.5 m margin for the chairs)
+    if (cols.some((c) => Math.abs(it.x - c.x) < c.s / 2 + hx + 0.5 && Math.abs(it.z - c.z) < c.s / 2 + hz + 0.5)) return;
     items.push(it);
     solids.push([it.x - hx, it.x + hx, it.z - hz, it.z + hz, y, y + h]);
   };
