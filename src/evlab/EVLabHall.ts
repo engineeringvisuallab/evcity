@@ -136,18 +136,8 @@ export function buildHall(P: Parts): HallBuild {
     bg.addColorStop(0, '#0b1830'); bg.addColorStop(1, '#17335c');
     sc.fillStyle = bg; sc.fillRect(0, 0, W, Hh);
     sc.strokeStyle = '#d4af37'; sc.lineWidth = 6; sc.strokeRect(8, 8, W - 16, Hh - 16);
-    sc.textAlign = 'left'; sc.textBaseline = 'middle';
-    if (!slide) {
-      sc.fillStyle = '#f3d77a'; sc.font = 'bold 84px serif'; sc.textAlign = 'center';
-      sc.fillText('EVLAB PRESENTATION HALL', W / 2, Hh / 2 - 26);
-      sc.fillStyle = '#9fc6e8'; sc.font = '40px sans-serif'; sc.fillText('Engineering Visual City', W / 2, Hh / 2 + 52);
-    } else {
-      sc.fillStyle = '#d4af37'; sc.font = 'bold 32px sans-serif'; sc.fillText(topic.toUpperCase(), 70, 52);
-      sc.font = '120px sans-serif'; sc.fillText(slide.icon, 70, 170);
-      sc.fillStyle = '#ffffff'; sc.font = 'bold 76px sans-serif'; sc.fillText(slide.title, 240, 150);
-      sc.fillStyle = '#cfe6ff'; sc.font = '46px sans-serif';
-      slide.bullets.slice(0, 5).forEach((b, i) => sc.fillText('•  ' + b, 120, 245 + i * 52));
-    }
+    // step 3: no text on the screen (no title, no slide icon, no bullet points): a plain blank screen. The slide arguments are kept so the callers do not change.
+    void slide; void topic;
     stex.needsUpdate = true;
   };
   draw(null, '');

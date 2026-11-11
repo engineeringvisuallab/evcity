@@ -55,9 +55,6 @@ export class PresentationHall {
   private ui: {
     counter: HTMLElement;
     mic: HTMLElement;
-    slideIcon: HTMLElement;
-    slideTitle: HTMLElement;
-    bullets: HTMLElement;
     caption: HTMLElement;
     banner: HTMLElement;
     start: HTMLElement;
@@ -291,10 +288,7 @@ export class PresentationHall {
       borderRadius: '10px', border: '6px solid #0b0b0f', background: 'linear-gradient(160deg, #0f3b3a, #0b1f3a)', boxShadow: '0 0 40px rgba(120,200,255,0.25)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 18px', textAlign: 'center', overflow: 'hidden',
     });
-    const slideIcon = this.el('div', { fontSize: 'min(8vh, 64px)', lineHeight: '1.1' });
-    const slideTitle = this.el('div', { font: `800 clamp(18px, 3.2vh, 30px)/1.25 ${UI_FONT}`, margin: '2px 0 6px' });
-    const bullets = this.el('div', { font: `500 clamp(13px, 2.2vh, 19px)/1.5 ${UI_FONT}`, opacity: '0.92' });
-    screen.append(slideIcon, slideTitle, bullets);
+    // step 3: the screen shows no text any more (no icon, title or bullet points): it is a plain blank screen
     stage.appendChild(screen);
     const podium = this.el('div', {
       position: 'absolute', left: '50%', bottom: '25%', transform: 'translateX(-50%)', width: '90px', height: '56px', borderRadius: '8px 8px 0 0',
@@ -330,7 +324,7 @@ export class PresentationHall {
     nav.append(prev, this.el('span', { opacity: '0.8' }, '🖱️ Mouse wheel: next lines · Enter: leave'), next);
     bar.append(caption, nav);
     r.appendChild(bar);
-    this.ui = { counter, mic, slideIcon, slideTitle, bullets, caption, banner, start, audience, next };
+    this.ui = { counter, mic, caption, banner, start, audience, next };
     this.renderStart();
   }
 
@@ -446,10 +440,6 @@ export class PresentationHall {
     const u = this.ui;
     if (!u || !this.topic) return;
     const p = this.pages[this.page];
-    const slide = this.topic.slides[p.slide];
-    u.slideIcon.textContent = slide.icon;
-    u.slideTitle.textContent = slide.title;
-    u.bullets.replaceChildren(...slide.bullets.map((b) => this.el('div', {}, `• ${b}`)));
 
     // words of the page, with the heard ones in green (the same matching as the marks)
     const lineTokens = p.lines.map((l) => l.split(/\s+/).map((w) => tokenize(w)));
