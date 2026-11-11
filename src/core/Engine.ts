@@ -88,6 +88,7 @@ import { bindVisibility } from './Lifecycle';
 import { HUD } from '../ui/HUD';
 import { Subtitles } from '../ui/Subtitles';
 import { MissionManager, MissionMarkers } from '../missions';
+import { EVLabManager } from '../evlab';
 import { RaceSystem, type RaceCourse } from '../race';
 import { WorldManager } from '../world/WorldManager';
 import { Config } from './Config';
@@ -167,6 +168,8 @@ export class Engine {
   private missions!: MissionManager;
   /** The green cylinder at every mission place (drawing only). */
   private missionMarkers!: MissionMarkers;
+  /** EVLab Tower: the podium with the Presentation Hall and the lobby, and the 350 m glass tower with stairs and glass lifts (src/evlab). */
+  private evlab!: EVLabManager;
   /** CAR RACE on the outer freeway (north -> west): the course, the circles and the rules (src/race). */
   private race!: RaceSystem;
   /** The Jeep the race is driven in. */
@@ -488,6 +491,21 @@ export class Engine {
       terrain: this.world.terrain,
       playerWorld: (out) => this.player.getWorldPosition(out),
       onFoot: () => this.player.active && !this.player.inVehicle && !this.cameraController.isFreeFly && !this.helis.pilot && !this.boats.skipper,
+    });
+
+    // --- EVLab Tower (always standing there when the game starts) ---
+    this.evlab = new EVLabManager({
+      root: this.world.root,
+      physics,
+      origin: this.world.origin,
+      terrain: this.world.terrain,
+      playerWorld: (out) => this.player.getWorldPosition(out),
+      teleport: (w) => this.player.teleportTo(w),
+      lockTarget: this.renderer.domElement,
+      faceSouth: () => {
+        this.orbit.yaw = Math.PI;
+        this.orbit.elevation = 0.16;
+      },
     });
 
     // --- Prototype building: police station (always standing there when the game starts) ---
@@ -1048,6 +1066,7 @@ export class Engine {
     this.mall.update(dt);
     this.engBoundary.update();
     this.library.update(this.time.elapsed);
+    this.evlab.update(this.time.elapsed, this.environment.hours);
     this.protoBuilding.update();
     this.placedBuildings.update();
     this.fillBuildings.update();
@@ -1656,6 +1675,7 @@ export class Engine {
     this.mall.dispose();
     this.engBoundary.dispose();
     this.library.dispose();
+    this.evlab.dispose();
     this.protoBuilding.dispose();
     this.placedBuildings.dispose();
     this.fillBuildings.dispose();
