@@ -5,6 +5,7 @@ import { BLD, DIVIDER, HALL, LECTERN, REAR_Y, SCREEN, SEAT_BLOCKS, SEAT_W, hallF
 import { buildAudience, type AudienceBuild, type Seat } from './EVLabAudience';
 import type { Parts } from './EVLabParts';
 import { HALL_TRUSS } from './EVLabStructure';
+import { Q } from '../core/Quality';
 
 export type { Mood } from './EVLabAudience';
 
@@ -149,7 +150,7 @@ export function buildHall(P: Parts): HallBuild {
   P.cyl(g, 0.012, 0.012, 0.5, LECTERN.x + 0.2, HALL.stageH + 1.4, LECTERN.z + 0.1, gold, 6);
   solids.push([LECTERN.x - 0.75, LECTERN.x + 0.75, LECTERN.z - 0.45, LECTERN.z + 0.45, HALL.stageH, HALL.stageH + 1.2]);
 
-  // ---- seats (2 instanced meshes), seat-row colliders (people walk in the aisles) and the audience
+  // ---- seats (2 strips per block), seat-row colliders (people walk in the aisles) and the audience
   const seats: Seat[] = [];
   const seatMat = P.lit(null, 0x8a1c2b, 0.2);
   for (let i = 0; i < HALL.rows; i++) {
@@ -162,7 +163,8 @@ export function buildHall(P: Parts): HallBuild {
       P.tbox(g, a, b, z + 0.23, z + 0.33, y + 0.5, y + 1.12, seatMat);
     }
   }
-  const audience = buildAudience(P, seats.map((s) => ({ x: s.x, y: s.y - 0.0, z: s.z - 0.05 })));
+  // step 5: people walk in and sit down on these seats (the hall is empty until a mission runs); how many seats get a person depends on the quality tier
+  const audience = buildAudience(P, seats, Q.hallFill);
   g.add(audience.group);
 
   return {

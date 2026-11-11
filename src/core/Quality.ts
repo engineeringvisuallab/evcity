@@ -78,6 +78,8 @@ export interface QualitySettings {
   signRadiusMul: number;
   /** Road sign boards: at most this many get their text drawn (a canvas texture) in one frame. */
   signPaintPerFrame: number;
+  /** EVLab Presentation Hall: share of the seats that get a person during a presentation (0.62 = about 1800 people; each one is 8 instanced parts). */
+  hallFill: number;
   /** Junction road mirrors: how many nearby mirrors show the real scene at once (0 = only the painted picture). */
   mirrorLive: number;
   /** Junction road mirrors: a mirror shows the real scene only within this distance (m) of the camera. */
@@ -94,6 +96,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
     peopleTarget: 12, trafficTarget: 12, maxBuses: 2, flockCount: 4, landAnimals: 24, predators: 2, dolphins: 3, fishSchools: 4,
     lampStepMul: 1.6, roadsideMul: 0.55, grassWind: 0, lightFxDist: 45, farmMul: 0.65, siteDisposeMul: 2.5, siteMerge: true, siteShadowMinR: 1.2, maxAniso: 2, shadowInterval: 2,
     signRadiusMul: 0.6, signPaintPerFrame: 1,
+    hallFill: 0.22,
     mirrorLive: 0, mirrorLiveDist: 30, mirrorTex: 256, // low: no extra scene render for the road mirrors (the painted picture stays)
   },
   medium: {
@@ -103,6 +106,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
     peopleTarget: 22, trafficTarget: 22, maxBuses: 3, flockCount: 8, landAnimals: 42, predators: 3, dolphins: 5, fishSchools: 7,
     lampStepMul: 1.25, roadsideMul: 0.8, grassWind: 0, lightFxDist: 80, farmMul: 0.85, siteDisposeMul: 0, siteMerge: true, siteShadowMinR: 0.5, maxAniso: 4, shadowInterval: 1,
     signRadiusMul: 0.8, signPaintPerFrame: 2,
+    hallFill: 0.4,
     mirrorLive: 1, mirrorLiveDist: 40, mirrorTex: 384,
   },
   high: {
@@ -112,6 +116,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
     peopleTarget: 34, trafficTarget: 34, maxBuses: 5, flockCount: 12, landAnimals: 64, predators: 4, dolphins: 8, fishSchools: 10,
     lampStepMul: 1, roadsideMul: 1, grassWind: 0, lightFxDist: 130, farmMul: 1, siteDisposeMul: 0, siteMerge: true, siteShadowMinR: 0, maxAniso: 16, shadowInterval: 1,
     signRadiusMul: 1, signPaintPerFrame: 3,
+    hallFill: 0.62,
     mirrorLive: 2, mirrorLiveDist: 50, mirrorTex: 512,
   },
 };
