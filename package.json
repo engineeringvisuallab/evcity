@@ -23,6 +23,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test:missions": "tsx scripts/mission-test.ts",
+    "test:evlab-parking": "tsx scripts/evlab-parking-test.ts",
     "test:evlab-audience": "tsx scripts/evlab-audience-test.ts && tsx scripts/evlab-audience-model-test.ts",
     "test:farm": "tsx scripts/farm-test.ts",
     "test:vehicle-factory": "tsx scripts/vehicle-factory-test.ts",

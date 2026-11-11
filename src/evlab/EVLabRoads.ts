@@ -23,7 +23,8 @@ export function asphaltTexture(k: Kit): THREE.CanvasTexture {
 type Pt = readonly [number, number];
 
 /** A flat ribbon of constant width along a polyline (y = height). Normals point up; both faces are drawn. `tile` = metres per texture repeat along the line. */
-export function roadStrip(g: THREE.Object3D, k: Kit, pts: ReadonlyArray<Pt>, halfW: number, y: number, mat: THREE.Material, tile = 8): THREE.Mesh {
+/** `ys` (optional): a height per point instead of the constant `y` (a ribbon that follows sloping ground). */
+export function roadStrip(g: THREE.Object3D, k: Kit, pts: ReadonlyArray<Pt>, halfW: number, y: number, mat: THREE.Material, tile = 8, ys?: ReadonlyArray<number>): THREE.Mesh {
   const n = pts.length;
   const pos: number[] = [], nor: number[] = [], uv: number[] = [], idx: number[] = [];
   let len = 0;
@@ -34,7 +35,8 @@ export function roadStrip(g: THREE.Object3D, k: Kit, pts: ReadonlyArray<Pt>, hal
     dx /= l; dz /= l;
     const nx = -dz, nz = dx;
     if (i > 0) len += Math.hypot(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]);
-    pos.push(p[0] + nx * halfW, y, p[1] + nz * halfW, p[0] - nx * halfW, y, p[1] - nz * halfW);
+    const py = ys ? ys[i] : y;
+    pos.push(p[0] + nx * halfW, py, p[1] + nz * halfW, p[0] - nx * halfW, py, p[1] - nz * halfW);
     nor.push(0, 1, 0, 0, 1, 0);
     uv.push(0, len / tile, 1, len / tile);
   }

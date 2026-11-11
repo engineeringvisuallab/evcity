@@ -2,6 +2,8 @@
 // Pure numbers + functions (no three.js / DOM), so the terrain generator and the tree placer (both run in workers) can use it.
 // All coordinates are BUILDING-LOCAL metres (x = east, z = south, origin = centre of the tower podium), same frame as EVLabLayout.
 
+import { inParkingZone } from './EVLabParking';
+
 const smoothstep = (a: number, b: number, x: number): number => {
   const t = x <= a ? 0 : x >= b ? 1 : (x - a) / (b - a);
   return t * t * (3 - 2 * t);
@@ -182,8 +184,9 @@ export function parkTrees(halfX = 236, zMin = -205, zMax = 226): ParkTree[] {
       add(jx, jz, kind, big ? 0.7 + r() * 0.5 : 0.85 + r() * 0.4);
     }
   }
-  cache = out;
-  return out;
+  // the car park and its entry road (EVLabParking) stay free of trees. Filtering at the END keeps the random sequence, so every other tree stays exactly where it was.
+  cache = out.filter((t) => !inParkingZone(t.x, t.z, 4));
+  return cache;
 }
 
 const inLakeAny = (x: number, z: number): boolean => inLake(x, z, -1.5);

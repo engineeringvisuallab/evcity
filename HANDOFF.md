@@ -26,6 +26,7 @@ See `CHANGES_MERGE_VEHICLES5_STEP4_MISSIONS11_BN.md`.
 ## Next planned
 - Step 5: move the main fuel station away from the city (pump station in `src/engineering/civil/`, mine bonus and tanker logic are tied to it), then mine fuel processing.
 - New EVLab office building (100/150 m, ground-floor conference room, 3D stage and audience) on the EVLab plot; Presentation Hall logic plugs in there.
+- EVLab campus parking lot (Step 7): east of the lake beside the east promenade, entry road to F6; see `src/evlab/EVLabParking.ts`, `CHANGES_EVLAB_STEP7_BN.md`, `HANDOFF_EVLAB.md`. (The older `EVLAB_LOT` in `ParkingSite.ts` is the start-fleet lot near the mall, a different thing.)
 
 ## Known issues / not verified
 - Nothing from step4 / missions v1.1 was seen in a running game (headless tests only): check look, FPS, station placement on slopes, tanker flow, Hall.

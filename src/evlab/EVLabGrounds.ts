@@ -8,6 +8,7 @@ import { BLD, type Solid } from './EVLabLayout';
 import { FOUNTAINS, ISLAND, LAKE, PLAZA, RING, ROAD_RECTS, WATER_Y, contour } from './EVLabCampus';
 import { buildBridges } from './EVLabBridges';
 import { buildFountains } from './EVLabFountains';
+import { buildParkingLot } from './EVLabParkingLot';
 import { asphaltTexture, roadStrip, runsOf, wallStrip } from './EVLabRoads';
 import type { Parts } from './EVLabParts';
 
@@ -20,7 +21,8 @@ export interface GroundsBuild {
   update(t: number): void;
 }
 
-export function buildGrounds(P: Parts): GroundsBuild {
+/** `ground(x, z)` (optional): height of the real ground above the floor level at a building-local point (only the parking lot's entry road uses it). */
+export function buildGrounds(P: Parts, ground?: (x: number, z: number) => number): GroundsBuild {
   const { k, t } = P;
   const g = new THREE.Group();
   g.name = 'EVLabGrounds';
@@ -76,6 +78,10 @@ export function buildGrounds(P: Parts): GroundsBuild {
   for (const l of bridges.lamps) lampSpots.push(l);
   const fountains = buildFountains(P, FOUNTAINS);
   g.add(fountains.group);
+  // the car park east of the lake (beside the east promenade) and its entry road to the F6 highway
+  const lot = buildParkingLot(P, road, ground);
+  g.add(lot.group);
+  for (const l of lot.lamps) lampSpots.push(l);
 
   // ---------------------------------------------------------------- lamps (one instanced pole + one lamp ball for all of them)
   const poleGeo = k.own(new THREE.CylinderGeometry(0.1, 0.14, 6, 6)), lampGeo = k.own(new THREE.SphereGeometry(0.4, 8, 6));

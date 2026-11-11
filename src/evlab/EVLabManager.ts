@@ -84,7 +84,7 @@ export class EVLabManager {
     this.lobby = buildLobby(parts);
     this.wings = buildWings(parts);
     this.hall = buildHall(parts);
-    this.grounds = buildGrounds(parts);
+    this.grounds = buildGrounds(parts, (lx, lz) => d.terrain.heightAt(site.x + lx, BUILDING_Z + lz) - site.floorY);
     const TT = makeTowerTextures(this.kit);
     this.facade = buildFacade(parts, TT);
     this.group.name = 'EVLabTower';

@@ -2,6 +2,7 @@
 // Pure numbers + a few functions (no three.js / DOM), so the terrain generator, the road planner and their workers can use it.
 import { lakeDepth } from './EVLabCampus';
 import { BUILDING_Z } from './EVLabLayout';
+import { DRIVE } from './EVLabParking';
 
 const smoothstep = (a: number, b: number, x: number): number => {
   const t = x <= a ? 0 : x >= b ? 1 : (x - a) / (b - a);
@@ -87,6 +88,8 @@ const FLAT_MARGIN = 4; // level ground outside the fence
 const BLEND = 48; // soft blend back to natural terrain (the north-west corner climbs into the foothills)
 /** Flat strip under the access road (half width, m). */
 const ROAD_FLAT = 14;
+/** World x of the parking lot's entry road (it leaves the lot south to the F6 highway, see EVLabParking). It gets the same flat strip as the access road. */
+const DRIVE_X = EVLAB_POS.x + DRIVE.x;
 /** The terrain pad is slightly BELOW the floor, so the floor tiles never z-fight with the ground. */
 export const EVLAB_PAD_SINK = 0.03;
 /** Local streets stay this far (m) away from the fence. */
@@ -116,7 +119,9 @@ export class EVLabSite {
     const z0 = this.gateZ - 2;
     const z1 = EVLAB_ROAD.endZ + 2;
     const rz = Math.max(z0 - z, z - z1, 0);
-    return Math.min(sq, Math.hypot(rx, rz));
+    // the parking lot's entry road (same z range: from the south fence to F6)
+    const dxDrive = Math.max(Math.abs(x - DRIVE_X) - ROAD_FLAT, 0);
+    return Math.min(sq, Math.hypot(rx, rz), Math.hypot(dxDrive, rz));
   }
 
   /** True if (x, z) is on the plot (+ margin): no trees, rocks or grass here. */
@@ -153,5 +158,7 @@ export class EVLabSite {
 export function evlabKeepout(x: number, z: number): boolean {
   if (Math.abs(x - EVLAB_POS.x) <= EVLAB_HALF_X + STREET_KEEPOUT && Math.abs(z - EVLAB_POS.z) <= EVLAB_HALF_Z + STREET_KEEPOUT) return true;
   const w = EVLAB_ROAD.halfWidth + 22;
-  return Math.abs(x - EVLAB_POS.x) <= w && z >= EVLAB_POS.z + EVLAB_HALF_Z - 1 && z <= EVLAB_ROAD.endZ + 1;
+  if (z < EVLAB_POS.z + EVLAB_HALF_Z - 1 || z > EVLAB_ROAD.endZ + 1) return false;
+  // the access road strip, and the strip of the parking lot's entry road
+  return Math.abs(x - EVLAB_POS.x) <= w || Math.abs(x - DRIVE_X) <= w;
 }

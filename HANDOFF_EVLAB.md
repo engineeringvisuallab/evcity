@@ -2,7 +2,7 @@
 
 Notun chat-e evcity.zip attach kore age "Part A" paste koro. Tarpor ek chat-e ek step, "Part C" theke.
 
-**Ekhon porjonto: Step 1 ar Step 1.1 done. Porer step: Step 1.2a (tarpor Step 2).** Zip-e step 1-er changed file jodi na thake, step1 folder-er 2 ta file age paste koro.
+**Ekhon porjonto: Step 1, 1.1, 2, 3, 4, 5, 6, 7 done. Porer step: Step 8 (gari ese park kore). Pending: 1.1b, 1.2a/b/c (alada, pore).** Zip-e step 1-er changed file jodi na thake, step1 folder-er 2 ta file age paste koro.
 
 ---
 
@@ -25,7 +25,7 @@ Ager kaj (zip-er bhitore CHANGES_EVLAB_BUILDING_BN.md ar CHANGES_EVLAB_CAMPUS_BN
 - Lake ring, 4 bridge, fountain: EVLabCampus.ts, EVLabBridges.ts, EVLabFountains.ts, EVLabGrounds.ts, EVLabSite.ts.
 - Mission: scripts/mission-test.ts, CHANGES_MISSIONS_v1.1_BN.md.
 - People: CHANGES_PEOPLE_GRASS2_BN.md, scripts/people-test.ts.
-- Parking: CHANGES_PARKING_LAYOUT_BN.md. Bike: scripts/bike-test.ts.
+- Parking: CHANGES_PARKING_LAYOUT_BN.md, CHANGES_EVLAB_STEP7_BN.md (EVLab campus-er notun parking lot). Bike: scripts/bike-test.ts.
 ```
 
 ---
@@ -128,6 +128,10 @@ Step 14: EVLabFountains.ts-er fountain-e realistic physics dao: pani-r fota grav
 - **Step 1 (done):** lift door height 2.3 -> 2.9 m, cabin height 2.9 -> 3.3 m (`CAB` in `src/evlab/EVLabTowerLayout.ts`). Door lintel solid, landing collider ar door leaf auto update hoy (`CAB.doorH` theke). `src/evlab/EVLabCore.ts`: door-er opore floor number-er height `y + h + 0.45` (ceiling 3.8 m-er niche thake), cabin-er bhitorer floor display `y = 2.7`. Test pass: evlab-tower-test, mission-test, tsc. Stair door (`ST.doorH`) ager motoi.
 
 - **Step 1.1 (done):** tower floor (level 1..88) structural frame. `EVLabTowerLayout.ts`: `STRUCT`, `colSide`, `colLoad`, `beamSection`, `columnsOf(n)`, `beamsOf(n)` (load hisab kore column size, span/18 diye beam depth). `levelColliders` e column collider, `floorPlan` e column-er upor furniture bad. `EVLabFloors.ts`: column ar beam draw (instanced, concrete). Test: `evlab-tower-test.ts`-e structure check add. Hisab: `EVLAB_STRUCTURE_ASSESSMENT.md`. Column: level 1-e perimeter 1.25 m / interior 1.75 m, level 88-e 0.60 m.
+- **Step 5 (done):** mission shuru hole hall khali theke manush alada alada somoy-e dhoke (3 door, ramp, aisle, row), seat-e boshe (real manush: matha, torso, haat, pa, 8 instanced mesh). `EVLabAudiencePath.ts` (route/timing, pure), `EVLabAudience.ts`, `Q.hallFill`. Chole jawa Step 6. Test: `npm run test:evlab-audience`.
+- **Step 6 (done):** `HallStage` wiring (PresentationHall -> MissionManager -> Engine -> EVLabManager): overlay khulle manush ase, bondho hole `EVLabManager.endPresentation()` -> `audience.dismiss()`: uthe, ulte route diye door diye chole jay, hide. Mood hook (listen/clap/ovation). Overlay ekhono opaque (3D hall tokhon dekha jay na).
+
+- **Step 7 (done):** EVLab campus-er parking lot. Jaiga: lake-er purbo dike, east bridge/promenade-er shesh (building-local x 205..237.6, z 2..81; world x -75..-42, z -258..-179). 4 row (A,B,C,D) nose-in bay 2.6 x 4.8 m, 96 slot, row A-te promenade walkway-er gap. Entry road (10 m) lot-er dokkhin theke F6 highway porjonto (building-local x 221.3, z 81..253 = world x -58.7, z -7); shesh 15 m highway-er level-e (0.54 m niche) namche, ribbon terrain follow kore. `src/evlab/EVLabParking.ts` (pure: `LOT`, `DRIVE`, `ROWS`, `SLOTS` {id,row,x,z,yaw}, `AISLE_X`, `CROSS_Z`, `ENTRY_ROUTE`, `LAMPS`, `inParkingZone`) = Step 8-er jonno data. `EVLabParkingLot.ts` (mesh: asphalt, 1 merged paint mesh, kerb, entry road, 4 lamp). `EVLabSite.ts`: entry road-er flat strip (`DRIVE_X`) + street keep-out. `EVLabCampus.ts`: park tree lot-er upor theke filter (baki gach same jaiga-e). `EVLabGrounds.ts`: `buildGrounds(P, ground?)`. `EVLabRoads.ts`: `roadStrip(..., ys?)`. Test: `npm run test:evlab-parking` (31 check). Gari ekhono nei (Step 8). Ager "EVLAB_LOT" (ParkingSite.ts) mall-er start fleet lot, eta alada.
 
 ## Notun steps (user chaiechhe: 1.1 ar 1.2)
 
@@ -144,12 +148,12 @@ Step 14: EVLabFountains.ts-er fountain-e realistic physics dao: pani-r fota grav
 - [ ] 1.2a Core rotate to lobby
 - [ ] 1.2b Glass partition lift/lobby
 - [ ] 1.2c Separate office gate
-- [ ] 2 Office/conference khali
-- [ ] 3 Mission text remove
-- [ ] 4 Green marker
-- [ ] 5 Hall-e manush ase, bose
-- [ ] 6 Mission shesh, chole jay
-- [ ] 7 Parking lot
+- [x] 2 Office/conference khali (done, CHANGES_EVLAB_STEP2_BN.md)
+- [x] 3 Mission text remove (done, CHANGES_EVLAB_STEP3_BN.md)
+- [x] 4 Green marker (done, CHANGES_EVLAB_STEP4_BN.md)
+- [x] 5 Hall-e manush ase, bose (done)
+- [x] 6 Mission shesh, chole jay (done)
+- [x] 7 Parking lot (done)
 - [ ] 8 Gari park
 - [ ] 9 Cycle model
 - [ ] 10 Cycle rack + cycle-wala
