@@ -20,10 +20,16 @@ export const ROAD_NUMBER_LIFT_M = 0.1;
 /** A road gets a label while the camera is nearer than this to it (m); it loses it beyond HIDE (a little more: no flicker at the edge). */
 export const SHOW_RADIUS_M = 140;
 export const HIDE_RADIUS_M = 170;
-/** At most this many labels at once (the nearest roads win). */
+/** At most this many labels at once (the nearest roads win) while the camera is near the ground. */
 export const MAX_LABELS = 10;
-/** Roads whose surface is more than this above / below the camera get no label (a road under a bridge, a camera high above on a plane). */
-export const MAX_HEIGHT_GAP_M = 80;
+/** Step 4 (high camera): a road ABOVE the camera by more than this gets no label (nobody sees it). A road far BELOW the camera keeps its label up to MAX_CAM_ABOVE_ROAD_M. */
+export const MAX_ROAD_ABOVE_CAM_M = 80;
+export const MAX_CAM_ABOVE_ROAD_M = 600;
+/** Step 4: the higher the camera is above the road, the further away a road still gets a label: + AIR_RADIUS_PER_M metres of radius per metre of height. */
+export const AIR_RADIUS_PER_M = 1.2;
+/** Step 4: from this height above the nearest road the camera may show up to MAX_LABELS_AIR labels at once (the pool size). */
+export const AIR_LABELS_FROM_M = 25;
+export const MAX_LABELS_AIR = 30;
 
 /** Step 3: how far a plate keeps away from a junction pad (m, beyond the pad outline) and how much of each bridge end stays free (m). */
 export const PAD_MARGIN_M = 1.5;
@@ -38,6 +44,10 @@ export interface PadLike {
   x: number;
   z: number;
   outline: ArrayLike<number>;
+  /** Plane of the pad surface (Step 4): height(x, z) = y + a * (x - this.x) + b * (z - this.z). Optional: without it a plate is never moved onto a pad. */
+  y?: number;
+  a?: number;
+  b?: number;
 }
 export interface BridgeLike {
   roadId: number;
@@ -128,6 +138,27 @@ export interface RoadIndexEntry {
   blocked: Interval[];
   /** false = the whole road is blocked or too short: it never gets a label. */
   labelOk: boolean;
+  /** Step 4: true = the road is a short link that lies inside its junction pads; its plate is allowed on the pad (pad plane = road height). */
+  inPad: boolean;
+  /** Step 4: for an inPad road, the pads it lies in (the plate is set onto their planes). */
+  padList: PadLike[];
+}
+
+/** Radius (m) within which a road gets a label when the camera is `h` m above the road (h <= 0: on the ground). */
+export function showRadius(h: number): number {
+  return SHOW_RADIUS_M + AIR_RADIUS_PER_M * Math.min(MAX_CAM_ABOVE_ROAD_M, Math.max(0, h));
+}
+/** The label is dropped beyond this (a little more than showRadius: no flicker at the edge). */
+export function hideRadius(h: number): number {
+  return showRadius(h) + (HIDE_RADIUS_M - SHOW_RADIUS_M);
+}
+/** How many labels at once, by the camera height above the nearest road. */
+export function labelLimit(h: number): number {
+  return h >= AIR_LABELS_FROM_M ? MAX_LABELS_AIR : MAX_LABELS;
+}
+/** gapY = road height - camera height. true = the road may carry a label. */
+export function heightOk(gapY: number): boolean {
+  return gapY <= MAX_ROAD_ABOVE_CAM_M && gapY >= -MAX_CAM_ABOVE_ROAD_M;
 }
 
 /** One bounding box per road, so a frame only looks at the roads that are near; plus the stretches where no plate may lie. */
@@ -154,8 +185,22 @@ export function buildRoadIndex(roads: readonly NumberRoad[], pads: readonly PadL
       if (z < minZ) minZ = z;
       if (z > maxZ) maxZ = z;
     }
-    const blocked = blockedIntervals(road, minX, maxX, minZ, maxZ, pads, padR, bridgesOf.get(road.id) ?? []);
-    out.push({ road, minX, maxX, minZ, maxZ, blocked, labelOk: hasFreeSpot(road, blocked) });
+    const myBridges = bridgesOf.get(road.id) ?? [];
+    let blocked = blockedIntervals(road, minX, maxX, minZ, maxZ, pads, padR, myBridges);
+    let labelOk = hasFreeSpot(road, blocked);
+    let inPad = false;
+    let padList: PadLike[] = [];
+    if (!labelOk) {
+      // a short link between two junctions: no asphalt is left outside the pads, so the plate may lie on the pad (the pad plane is the road height there)
+      const noPads = blockedIntervals(road, minX, maxX, minZ, maxZ, [], [], myBridges);
+      if (hasFreeSpot(road, noPads)) {
+        blocked = noPads;
+        labelOk = true;
+        inPad = true;
+        padList = pads.filter((pad, k) => pad.y !== undefined && pad.x > minX - padR[k] && pad.x < maxX + padR[k] && pad.z > minZ - padR[k] && pad.z < maxZ + padR[k]);
+      }
+    }
+    out.push({ road, minX, maxX, minZ, maxZ, blocked, labelOk, inPad, padList });
   }
   return out;
 }
@@ -455,6 +500,77 @@ export function placeLabel(r: NumberRoad, st: LabelState, cam: Camera2D, dt: num
     d: near.d,
     gapY: p.y - cam.y,
   };
+}
+
+function inOutline(poly: ArrayLike<number>, x: number, z: number): boolean {
+  let c = false;
+  const n = poly.length / 2;
+  for (let i = 0, j = n - 1; i < n; j = i++) {
+    const xi = poly[i * 2];
+    const zi = poly[i * 2 + 1];
+    const xj = poly[j * 2];
+    const zj = poly[j * 2 + 1];
+    if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) c = !c;
+  }
+  return c;
+}
+
+/**
+ * Step 4: a plate of a short link lies on a junction pad. The pad is one flat plane (tilted a little), but the plate rows are built from the road
+ * centreline height, so a corner beside the centreline could sink into the plane: every corner that lies inside a pad outline is set onto the plane + 100 mm.
+ */
+export function fitToPads(pads: readonly PadLike[], out: Float32Array | number[]): void {
+  if (pads.length === 0) return;
+  for (let v = 0; v * 3 + 2 < out.length; v++) {
+    const x = out[v * 3];
+    const z = out[v * 3 + 2];
+    for (const pad of pads) {
+      if (pad.y === undefined || !inOutline(pad.outline, x, z)) continue;
+      out[v * 3 + 1] = pad.y + (pad.a ?? 0) * (x - pad.x) + (pad.b ?? 0) * (z - pad.z) + ROAD_NUMBER_LIFT_M;
+      break;
+    }
+  }
+}
+
+/** Lowest road point of the whole index (m): the camera height above it tells how wide to search. */
+export function lowestY(index: readonly RoadIndexEntry[]): number {
+  let m = Infinity;
+  for (const e of index) for (let i = 0; i < e.road.ys.length; i++) if (e.road.ys[i] < m) m = e.road.ys[i];
+  return Number.isFinite(m) ? m : 0;
+}
+
+export interface Candidate {
+  e: RoadIndexEntry;
+  /** Horizontal distance camera -> centreline (m). */
+  d: number;
+}
+
+/**
+ * Step 4: which roads want a label now. `isActive(id)` = the road already has one (it is not listed again, but it counts for the height).
+ * Returns the new candidates, nearest first, and the number of labels allowed at once (by the camera height above the nearest road).
+ */
+export function chooseRoads(index: readonly RoadIndexEntry[], cam: Camera2D, isActive: (id: number) => boolean, lowY: number): { cand: Candidate[]; limit: number } {
+  const cand: Candidate[] = [];
+  const Rcap = showRadius(cam.y - lowY);
+  let hNear = Infinity;
+  let dNear = Infinity;
+  for (const e of index) {
+    if (cam.x < e.minX - Rcap || cam.x > e.maxX + Rcap || cam.z < e.minZ - Rcap || cam.z > e.maxZ + Rcap) continue;
+    if (!e.labelOk) continue;
+    const n = nearestOnRoad(e.road, cam.x, cam.z);
+    const gapY = pointAt(e.road, n.s).y - cam.y;
+    if (!heightOk(gapY)) continue;
+    const h = -gapY;
+    if (n.d > showRadius(h)) continue;
+    if (n.d < dNear) {
+      dNear = n.d;
+      hNear = h;
+    }
+    if (isActive(e.road.id)) continue;
+    cand.push({ e, d: n.d });
+  }
+  cand.sort((a, b) => a.d - b.d);
+  return { cand, limit: labelLimit(Number.isFinite(hNear) ? hNear : 0) };
 }
 
 /** Floats in a plate's position buffer: 2 vertices (left, right) per row, STRIP_ROWS + 1 rows, 3 numbers each. */

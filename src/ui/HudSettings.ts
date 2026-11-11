@@ -41,7 +41,7 @@ export const HUD_DEFAULTS: Readonly<HudOptions> = {
   rainLevel: 1,
   rainQuality: 0,
   rainUmbrella: true,
-  roadNumbers: true,
+  roadNumbers: false, // default OFF (the player switches it on in Settings)
 };
 
 const KEY = 'evcity.settings';

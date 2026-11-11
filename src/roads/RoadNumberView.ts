@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { Q } from '../core/Quality';
 import {
-  buildRoadIndex, HIDE_RADIUS_M, MAX_HEIGHT_GAP_M, MAX_LABELS, nearestOnRoad, newLabelState, placeLabel, pointAt, SHOW_RADIUS_M, STRIP_FLOATS, STRIP_ROWS,
+  buildRoadIndex, chooseRoads, fitToPads, heightOk, hideRadius, lowestY, MAX_LABELS_AIR, nearestOnRoad, newLabelState, placeLabel, STRIP_FLOATS, STRIP_ROWS,
   stripVertices, styleOf,
   type BridgeLike, type Camera2D, type LabelState, type NumberRoad, type PadLike, type RoadIndexEntry,
 } from './RoadNumberPlan';
@@ -73,6 +73,7 @@ export class RoadNumberView {
   private active = new Map<number, Slot>();
   private texCache = new Map<string, THREE.CanvasTexture>();
   private timer = 1;
+  private lowY = 0;
   private nightK = 1;
   private on = true;
 
@@ -80,6 +81,7 @@ export class RoadNumberView {
     this.group.name = 'road-numbers';
     root.add(this.group);
     this.index = buildRoadIndex(roads, pads, bridges);
+    this.lowY = lowestY(this.index);
 
     // the same uv and triangles for every plate: row k at v = k / STRIP_ROWS, left corner u = 0, right corner u = 1
     const uv = new Float32Array((STRIP_ROWS + 1) * 4);
@@ -89,7 +91,7 @@ export class RoadNumberView {
       if (k < STRIP_ROWS) idx.push(2 * k, 2 * k + 1, 2 * k + 2, 2 * k + 1, 2 * k + 3, 2 * k + 2);
     }
 
-    for (let i = 0; i < MAX_LABELS; i++) {
+    for (let i = 0; i < MAX_LABELS_AIR; i++) {
       // polygonOffset: the plate never z-fights the road, even from far away
       const mat = new THREE.MeshBasicMaterial({ alphaTest: 0.4, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
       const pos = new Float32Array(STRIP_FLOATS);
@@ -144,33 +146,41 @@ export class RoadNumberView {
     for (const [id, s] of this.active) {
       const e = s.entry;
       const pose = e ? placeLabel(e.road, s.state, cam, dt, e.blocked) : null;
-      if (!e || !pose || pose.d > HIDE_RADIUS_M || Math.abs(pose.gapY) > MAX_HEIGHT_GAP_M) {
+      // Step 4: a high camera keeps the labels of the roads far below it (the radius grows with the height); only a road high ABOVE the camera is dropped
+      if (!e || !pose || pose.d > hideRadius(-pose.gapY) || !heightOk(pose.gapY)) {
         this.release(id);
         continue;
       }
       const st = styleOf(e.road);
       stripVertices(e.road, pose.s, s.state.side, s.state.dir, st.across, st.along, s.pos);
+      if (e.inPad) fitToPads(e.padList, s.pos); // a short link: the plate lies on the junction pad plane
       (s.geo.getAttribute('position') as THREE.BufferAttribute).needsUpdate = true;
     }
   }
 
-  /** Picks the roads that get a plate: the nearest ones within SHOW_RADIUS_M, as many as there are free plates. */
+  /** Picks the roads that get a plate: the nearest ones (the radius and the number of plates grow with the camera height), as many as there are free plates. */
   private choose(cam: Camera2D): void {
-    const cand: { e: RoadIndexEntry; d: number }[] = [];
-    const R = SHOW_RADIUS_M;
-    for (const e of this.index) {
-      if (cam.x < e.minX - R || cam.x > e.maxX + R || cam.z < e.minZ - R || cam.z > e.maxZ + R) continue;
-      if (!e.labelOk || this.active.has(e.road.id)) continue;
-      const n = nearestOnRoad(e.road, cam.x, cam.z);
-      if (n.d > R) continue;
-      if (Math.abs(pointAt(e.road, n.s).y - cam.y) > MAX_HEIGHT_GAP_M) continue;
-      cand.push({ e, d: n.d });
+    const { cand, limit } = chooseRoads(this.index, cam, (id) => this.active.has(id), this.lowY);
+    // the camera came down: give back the farthest plates beyond the limit
+    while (this.active.size > limit) {
+      let far = -1;
+      let fd = -1;
+      for (const [id, s] of this.active) {
+        const d = s.entry ? nearestOnRoad(s.entry.road, cam.x, cam.z, s.state.hint).d : Infinity;
+        if (d > fd) {
+          fd = d;
+          far = id;
+        }
+      }
+      if (far < 0) break;
+      this.release(far);
     }
-    if (cand.length === 0) return;
-    cand.sort((a, b) => a.d - b.d);
+    // a few new plates per call: the canvas of a new code is drawn once, so a rise to a high view does not hitch
+    let made = 0;
     for (const c of cand) {
-      if (this.active.size >= MAX_LABELS) break;
+      if (this.active.size >= limit || made >= 6) break;
       this.acquire(c.e);
+      made++;
     }
   }
 

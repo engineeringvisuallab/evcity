@@ -3,15 +3,16 @@
 //   2. the label stands on the road, in the right lane, 100 mm above the road surface, never on the median
 //   3. it follows a camera that drives along a road (slides, stays one plate per road), turns round only when the camera turns round
 //   4. the nearest-point search with a hint gives the same answer as the full search
-//   5. (Step 2) the on/off setting: default on, saved and loaded, old saves without it stay on, the menu row and the Engine hook exist
-//   6. (Step 3) the plate keeps off junction pads and bridge ends, bends with the road (no folding), lies on the road height, a road with no free spot gets none
+//   5. (Step 2 / 4) the on/off setting: default OFF, saved and loaded, old saves without it stay off, the menu row and the Engine hook exist
+//   6. (Step 3) the plate keeps off junction pads and bridge ends, bends with the road (no folding), lies on the road height
+//   7. (Step 4) every road gets a label (short links inside junction pads too, on the pad plane); a high camera (plane, drone) keeps the labels
 import { readFileSync } from 'node:fs';
 import { Config } from '../src/core/Config';
 import { HUD_DEFAULTS, HudSettings } from '../src/ui/HudSettings';
 import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
 import { laneWidth, lanesPerDir, isDivided } from '../src/roads/RoadSection';
 import {
-  BRIDGE_END_M, buildRoadIndex, constrainS, labelLane, labelOffset, MAX_LABELS, nearestOnRoad, newLabelState, padRadius, placeLabel, pointAt, ROAD_NUMBER_LIFT_M, STRIP_FLOATS,
+  BRIDGE_END_M, buildRoadIndex, chooseRoads, constrainS, fitToPads, heightOk, hideRadius, labelLane, labelLimit, labelOffset, lowestY, MAX_LABELS, MAX_LABELS_AIR, nearestOnRoad, newLabelState, padRadius, placeLabel, pointAt, ROAD_NUMBER_LIFT_M, showRadius, STRIP_FLOATS,
   STRIP_ROWS, stripVertices, styleOf,
   type NumberRoad,
 } from '../src/roads/RoadNumberPlan';
@@ -161,26 +162,26 @@ console.log('\n=== 5. ON / OFF SETTING (Step 2) ===');
     getItem: (k: string) => store.get(k) ?? null,
     setItem: (k: string, v: string) => void store.set(k, v),
   };
-  ok(HUD_DEFAULTS.roadNumbers === true, 'default: road numbers are ON');
+  ok(HUD_DEFAULTS.roadNumbers === false, 'default: road numbers are OFF');
   const a = new HudSettings();
-  ok(a.values.roadNumbers === true, 'a new player starts with road numbers on');
+  ok(a.values.roadNumbers === false, 'a new player starts with road numbers off');
   let heard = 0;
   a.onChange(() => heard++);
-  a.set('roadNumbers', false);
-  ok(a.values.roadNumbers === false && heard === 1, 'switching off changes the value and tells the listeners');
-  a.set('roadNumbers', false);
-  ok(heard === 1, 'setting the same value again tells nobody');
-  ok(JSON.parse(store.get('evcity.settings') ?? '{}').roadNumbers === false, 'the choice is saved in the browser');
-  ok(new HudSettings().values.roadNumbers === false, 'after a reload it is still off');
   a.set('roadNumbers', true);
-  ok(new HudSettings().values.roadNumbers === true, 'switched on again: saved on');
+  ok(a.values.roadNumbers === true && heard === 1, 'switching on changes the value and tells the listeners');
+  a.set('roadNumbers', true);
+  ok(heard === 1, 'setting the same value again tells nobody');
+  ok(JSON.parse(store.get('evcity.settings') ?? '{}').roadNumbers === true, 'the choice is saved in the browser');
+  ok(new HudSettings().values.roadNumbers === true, 'after a reload it is still on');
+  a.set('roadNumbers', false);
+  ok(new HudSettings().values.roadNumbers === false, 'switched off again: saved off');
   store.set('evcity.settings', JSON.stringify({ crosshair: false, muted: true }));
   const old = new HudSettings();
-  ok(old.values.roadNumbers === true && old.values.crosshair === false && old.values.muted === true, 'an old save without the key keeps its other choices and road numbers stay on');
+  ok(old.values.roadNumbers === false && old.values.crosshair === false && old.values.muted === true, 'an old save without the key keeps its other choices and road numbers stay off');
   store.set('evcity.settings', JSON.stringify({ roadNumbers: 'no' }));
-  ok(new HudSettings().values.roadNumbers === true, 'a broken value (not true / false) falls back to on');
+  ok(new HudSettings().values.roadNumbers === false, 'a broken value (not true / false) falls back to off');
   store.set('evcity.settings', '{not json');
-  ok(new HudSettings().values.roadNumbers === true, 'a broken save falls back to on');
+  ok(new HudSettings().values.roadNumbers === false, 'a broken save falls back to off');
 
   const menu = readFileSync('src/ui/SettingsMenu.ts', 'utf8');
   ok(/key: 'roadNumbers', label: '[^']+'/.test(menu) && /'areaAlways' \| 'roadNumbers'/.test(menu), 'the Settings menu has the row (key roadNumbers) in the "screen" list');
@@ -200,6 +201,7 @@ console.log('\n=== 6. KEEP-OUT, BENDING PLATE, HILLS (Step 3) ===');
   ok(pads.length === 0 || blockedRoads > 0, 'junction pads do block stretches of road');
   ok(idx.length - noLabel.length >= idx.length * 0.9, `at least 90 % of the roads can get a label (${idx.length - noLabel.length} of ${idx.length})`);
   ok(noLabel.every((e) => e.road.length < 200 || e.blocked.length > 0), 'a road with no free spot is a short road or one that is blocked (no road is lost for no reason)');
+  ok(noLabel.length === 0, `Step 4: every road gets a label (${noLabel.length} without)`);
 
   // constrainS on small cases
   ok(constrainS(50, 2, 100, []) === 50, 'constrainS: a free spot stays where it is');
@@ -243,7 +245,7 @@ console.log('\n=== 6. KEEP-OUT, BENDING PLATE, HILLS (Step 3) ===');
   };
   for (const e of idx) {
     const r = e.road;
-    if (!e.labelOk) continue;
+    if (!e.labelOk || e.inPad) continue; // the short links inside their pads are checked in section 7
     const st = styleOf(r);
     const half = st.along / 2;
     for (let k = 0; k < 60; k++) {
@@ -372,6 +374,97 @@ console.log('\n=== 6. KEEP-OUT, BENDING PLATE, HILLS (Step 3) ===');
     }
     ok(bad === 0, `driving ${r.name} (${r.length.toFixed(0)} m, ${withBlocks.blocked.length} blocked stretches): the plate never overlaps one (${bad} bad)`);
     ok(farJumps === 0, `the plate jumps only close to a pad / bridge end (${nearJumps} jumps near, ${farJumps} far)`);
+  }
+}
+
+console.log('\n=== 7. SHORT LINKS IN PADS, HIGH CAMERA (Step 4) ===');
+{
+  const pads = gen.roads.pads;
+  const bridges = gen.roads.bridges;
+  const idx = buildRoadIndex(roads, pads, bridges);
+  const links = idx.filter((e) => e.inPad);
+  note(`${links.length} short links lie inside their junction pads: ${links.map((e) => e.road.name).join(' ')}`);
+  ok(idx.every((e) => e.labelOk), 'every road can get a label');
+  ok(links.length > 0 && links.every((e) => e.road.length < 100), 'only short links use the pad (a long road never needs it)');
+
+  // the plate of a link: on the road, 100 mm above the pad plane, whole strip on the road
+  let bad = 0;
+  let worst = 0;
+  let measured = 0;
+  const buf = new Float32Array(STRIP_FLOATS);
+  for (const e of links) {
+    const r = e.road;
+    const st = styleOf(r);
+    const half = st.along / 2;
+    for (let k = 0; k < 20; k++) {
+      const c = pointAt(r, (r.length * (k + 0.5)) / 20);
+      const state = newLabelState();
+      const pose = placeLabel(r, state, { x: c.x + c.nx * 3, y: c.y + 3, z: c.z + c.nz * 3, fx: c.tx, fz: c.tz }, 0.016, e.blocked);
+      if (!pose || pose.s - half < -1e-6 || pose.s + half > r.length + 1e-6) { bad++; continue; }
+      stripVertices(r, pose.s, state.side, state.dir, st.across, st.along, buf);
+      fitToPads(e.padList, buf);
+      for (let row = 0; row <= STRIP_ROWS; row++) {
+        for (const side of [0, 1]) {
+          const x = buf[(row * 2 + side) * 3];
+          const y = buf[(row * 2 + side) * 3 + 1];
+          const z = buf[(row * 2 + side) * 3 + 2];
+          // the game's own road surface under this corner (the pad plane inside a pad, the road ribbon elsewhere)
+          const surf = gen.roads.roadHeightAt(x, z);
+          if (surf === null) continue;
+          worst = Math.max(worst, Math.abs(y - (surf + ROAD_NUMBER_LIFT_M)));
+          measured++;
+        }
+      }
+    }
+  }
+  ok(bad === 0, `a plate of a short link lies fully on its road (${bad} bad)`);
+  ok(measured > 100 && worst < 0.005, `the plate of a short link is 100 mm above the game's road surface (${measured} corners measured; largest difference ${worst.toFixed(3)} m, limit 0.005 m)`);
+
+  // the high camera
+  ok(showRadius(0) === 140 && showRadius(-50) === 140, 'on the ground the radius is still 140 m');
+  ok(showRadius(100) > showRadius(10) && showRadius(1e6) <= 140 + 1.2 * 600, 'the radius grows with the camera height and has a ceiling');
+  ok(hideRadius(80) > showRadius(80), 'the hide radius is a little larger than the show radius (no flicker)');
+  ok(labelLimit(0) === MAX_LABELS && labelLimit(200) === MAX_LABELS_AIR, `near the ground ${MAX_LABELS} labels, high up ${MAX_LABELS_AIR}`);
+  ok(heightOk(-300) && heightOk(0) && heightOk(60) && !heightOk(120) && !heightOk(-700), 'a road far below the camera keeps its label; a road high above the camera does not');
+
+  const low = lowestY(idx);
+  const none = (): boolean => false;
+  // a busy place: the pad with the most arms
+  const busy = pads.slice().sort((p, q) => q.arms.length - p.arms.length)[0];
+  const home = idx.find((e) => e.road.id === busy.arms[0].roadId)!.road;
+  const mid = pointAt(home, nearestOnRoad(home, busy.x, busy.z).s);
+  let prevN = 0;
+  for (const up of [5, 100, 250, 450]) {
+    const cam = { x: mid.x, y: mid.y + up, z: mid.z, fx: 0, fz: 0 };
+    const { cand, limit } = chooseRoads(idx, cam, none, low);
+    ok(!!cand.find((c) => c.e.road.id === home.id), `camera ${up} m above road ${home.name}: it still wants a label (before Step 4 it was dropped above 80 m)`);
+    ok(cand.length >= prevN, `camera ${up} m up: ${cand.length} roads are candidates (never fewer than lower down: ${prevN}), ${limit} labels allowed`);
+    prevN = cand.length;
+    if (up >= 100) ok(limit === MAX_LABELS_AIR, `camera ${up} m up: ${MAX_LABELS_AIR} labels allowed`);
+  }
+  {
+    const { cand } = chooseRoads(idx, { x: mid.x, y: mid.y + 450, z: mid.z, fx: 0, fz: 0 }, none, low);
+    ok(cand.length > MAX_LABELS, `from 450 m up more than ${MAX_LABELS} roads want a label (${cand.length})`);
+  }
+  // the hold: a label that exists keeps existing while the camera climbs straight up
+  {
+    const r = home;
+    const state = newLabelState();
+    let dropped = 0;
+    for (let up = 2; up <= 450; up += 2) {
+      const pose = placeLabel(r, state, { x: mid.x + mid.nx * 4, y: mid.y + up, z: mid.z + mid.nz * 4, fx: 0, fz: 0 }, 0.016, idx.find((e) => e.road === r)!.blocked);
+      if (!pose || pose.d > hideRadius(-pose.gapY) || !heightOk(pose.gapY)) dropped++;
+    }
+    ok(dropped === 0, `climbing straight up to 450 m above ${r.name}: its label is never dropped (${dropped} bad)`);
+  }
+  // cost of choosing from the air: all roads in range, 8 times a second
+  {
+    const cam = { x: mid.x, y: mid.y + 400, z: mid.z, fx: 0, fz: 0 };
+    const t0 = Date.now();
+    for (let i = 0; i < 200; i++) chooseRoads(idx, cam, none, low);
+    const ms = (Date.now() - t0) / 200;
+    note(`choosing the roads from 400 m up: ${ms.toFixed(2)} ms per call (8 calls a second)`);
+    ok(ms < 8, 'choosing from the air is cheap (< 8 ms per call)');
   }
 }
 
