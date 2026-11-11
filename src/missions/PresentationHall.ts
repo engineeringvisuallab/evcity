@@ -5,11 +5,20 @@ import { coverage, isStartPhrase, matchWords, pageMark, stars, tokenize } from '
 import type { HallPage, HallTopic } from './HallTypes';
 import type { MissionVoice } from './MissionVoice';
 
+/** The real 3D hall (EVLab): people come in and sit when a presentation opens, react while it runs, and leave when it closes. Optional: without it only the overlay shows. */
+export type HallMood = 'idle' | 'listen' | 'clap' | 'ovation';
+export interface HallStage {
+  enter(): void;
+  end(): void;
+  mood(m: HallMood): void;
+}
+
 export interface HallDeps {
   parent: HTMLElement;
   /** The game canvas: the mouse is released while the hall is open and taken back when it closes. */
   lockTarget: HTMLElement;
   voice: MissionVoice;
+  stage?: HallStage;
 }
 
 export interface HallCallbacks {
@@ -93,6 +102,7 @@ export class PresentationHall {
     window.addEventListener('keydown', this.onKeyDown, true);
     window.addEventListener('keyup', this.onKeyUp, true);
     this.root.style.display = 'flex';
+    this.d.stage?.enter();
     this.showTopics();
   }
 
@@ -102,6 +112,7 @@ export class PresentationHall {
     this.d.voice.stopLoop();
     window.clearTimeout(this.leaveTimer);
     window.clearTimeout(this.bannerTimer);
+    window.clearTimeout(this.moodTimer);
     window.removeEventListener('keydown', this.onKeyDown, true);
     window.removeEventListener('keyup', this.onKeyUp, true);
     this.root.style.display = 'none';
@@ -117,6 +128,7 @@ export class PresentationHall {
       }
     }
     this.relock = false;
+    this.d.stage?.end();
     this.cb?.onClose();
     this.cb = null;
   }
@@ -210,6 +222,7 @@ export class PresentationHall {
   // ------------------------------------------------------------------ 1. topics
   private showTopics(): void {
     this.mode = 'topics';
+    this.setMood('idle');
     this.d.voice.stopLoop();
     this.ui = null;
     const r = this.root;
@@ -259,6 +272,7 @@ export class PresentationHall {
     this.started = false;
     this.leaveArmed = false;
     this.mode = 'ready';
+    this.setMood('idle');
     this.buildStage();
     this.renderPage();
     this.startMic();
@@ -377,6 +391,7 @@ export class PresentationHall {
     if (this.started) return;
     this.started = true;
     this.mode = 'live';
+    this.setMood('listen');
     this.renderStart();
     this.renderPage();
   }
@@ -471,7 +486,19 @@ export class PresentationHall {
   }
 
   // ------------------------------------------------------------------ audience reactions
+  /** The real hall's people (if wired): a soft clap, or a standing ovation, then back to listening (while reading) / sitting still. */
+  private moodTimer = 0;
+  private setMood(m: HallMood): void {
+    window.clearTimeout(this.moodTimer);
+    this.d.stage?.mood(m);
+  }
+  private reactMood(level: 1 | 2): void {
+    this.setMood(level === 2 ? 'ovation' : 'clap');
+    this.moodTimer = window.setTimeout(() => this.d.stage?.mood(this.mode === 'live' ? 'listen' : 'idle'), level === 2 ? 4200 : 1800);
+  }
+
   private react(level: 1 | 2): void {
+    this.reactMood(level);
     const host = this.ui?.audience;
     if (!host) return;
     const people = Array.from(host.querySelectorAll<HTMLElement>('.hall-p'));

@@ -60,6 +60,18 @@ ok(at(head, 500)[1] > before + 0.3, 'ovation: people stand up');
 A.setMood('clap'); run(1);
 A.setMood('listen'); run(3);
 ok(Math.abs(at(head, 500)[1] - before) < 0.1, 'listening: sitting again');
+// step 6: dismissal: people leave one after the other, then the hall is hidden
+A.dismiss();
+ok(A.leaving && A.present, 'dismiss: people start to leave');
+run(8);
+ok(A.leaving && A.seated < A.peopleCount && A.seated > 0, 'they leave one after the other');
+run(90);
+ok(!A.leaving && !A.present && !A.group.visible && A.seated === 0, 'the last one is out: the hall is empty and hidden');
+A.setPresent(true);
+run(10);
+A.dismiss(); run(2);
+A.setPresent(true); // a new mission while people still leave: fresh arrival
+ok(!A.leaving && A.present && A.arrived === 0, 'a new mission during the leaving starts a fresh arrival');
 A.setPresent(false);
 ok(!A.group.visible && !A.present, 'hidden after the mission');
 A.setPresent(true);

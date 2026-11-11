@@ -225,6 +225,14 @@ export class EVLabManager {
     this.hall.audience.setPresent(false);
   }
 
+  /** Step 6: the presentation mission is over: the audience gets up and leaves through the doors (the player stays where he is). */
+  endPresentation(): void {
+    this.onStage = false;
+    this.hall.showSlide(null, '');
+    this.hall.audience.setMood('idle');
+    this.hall.audience.dismiss();
+  }
+
   showSlide(slide: ScreenSlide | null, topic: string): void {
     this.hall.showSlide(slide, topic);
   }

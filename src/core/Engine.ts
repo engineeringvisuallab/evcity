@@ -770,7 +770,8 @@ export class Engine {
     // --- the always-on site map (top-right) ---
     this.cityPlan = new CityPlan(this.world.terrain.sites);
     this.minimap = new Minimap(container, this.world.seed.value, this.world.terrain.sites, this.cityPlan, this.rail);
-    this.missions = new MissionManager({ parent: container, lockTarget: this.renderer.domElement, chipTop: () => this.minimap.infoBottom, toast: (t, ms) => this.toast.show(t, ms ?? 3400) });
+    this.missions = new MissionManager({ parent: container, lockTarget: this.renderer.domElement, chipTop: () => this.minimap.infoBottom, toast: (t, ms) => this.toast.show(t, ms ?? 3400),
+      stage: { enter: () => this.evlab.enterStage(), end: () => this.evlab.endPresentation(), mood: (m) => this.evlab.setMood(m) } });
     this.missionMarkers = new MissionMarkers(this.world.root, (x, z) => this.world.terrain.heightAt(x, z));
     this.race = new RaceSystem({ parent: container, root: this.world.root, graph, toast: (t, ms) => this.toast.show(t, ms ?? 3400), begin: (c) => this.beginRace(c), go: () => { for (const v of this.raceCars) if (v.ai) v.ai.hold = false; }, clear: () => this.clearRacers() });
     // the parked fleet (see EVLAB_SLOTS): the helicopter stands on its pad in the EVLAB parking lot

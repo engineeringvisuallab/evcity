@@ -27,6 +27,8 @@ export interface Plan {
   /** Walking speed (m/s), seconds until this person starts walking, seconds the sitting-down takes. */
   speed: number; delay: number; sitTime: number;
   seat: Seat;
+  /** Step 6: the way out = the way in backwards; seconds after the dismissal when this person gets up; seconds the standing up takes. */
+  rway: Way[]; rcum: number[]; leaveDelay: number; riseTime: number;
 }
 
 /** Which of the 4 aisles a seat is reached from: the nearest one that touches its seat block. */
@@ -46,6 +48,8 @@ export function doorFor(x: number): number {
 
 /** Timing of the arrival: people come in over this many seconds (the first ones at once), so the hall fills up bit by bit. */
 export const ARRIVE_SPAN = 16;
+/** Step 6: after the mission ends people get up over this many seconds (the first ones at once) and leave through the doors. */
+export const LEAVE_SPAN = 12;
 
 export function planPerson(seat: Seat, r: () => number): Plan {
   const aisle = aisleFor(seat.x) + (r() - 0.5) * 1.6;
@@ -65,11 +69,15 @@ export function planPerson(seat: Seat, r: () => number): Plan {
   ];
   const cum = [0];
   for (let i = 1; i < way.length; i++) cum.push(cum[i - 1] + Math.hypot(way[i].x - way[i - 1].x, way[i].z - way[i - 1].z));
+  const total = cum[cum.length - 1];
   return {
     way, cum, seat,
     speed: 1.6 + r() * 0.6, // a purposeful walk: people are hurrying to their seats
     delay: Math.pow(r(), 0.8) * ARRIVE_SPAN,
     sitTime: 1.1 + r() * 0.7,
+    rway: way.slice().reverse(), rcum: cum.map((c) => total - c).reverse(),
+    leaveDelay: Math.pow(r(), 0.9) * LEAVE_SPAN,
+    riseTime: 0.8 + r() * 0.5,
   };
 }
 
@@ -89,6 +97,29 @@ const NORTH = Math.PI;
 const angDiff = (a: number, b: number): number => { let d = (b - a) % (Math.PI * 2); if (d > Math.PI) d -= Math.PI * 2; if (d < -Math.PI) d += Math.PI * 2; return d; };
 const TURN = 0.45; // seconds to turn to face the stage before sitting down
 
+
+/** Walk along a waypoint list: `s` metres from the start. Heading follows the leg; corners are smoothed over 1.2 m on both sides. */
+function along(way: Way[], cum: number[], s: number, out: Sample): Sample {
+  let i = 1;
+  while (i < cum.length - 1 && cum[i] < s) i++;
+  const a = way[i - 1], b = way[i], len = cum[i] - cum[i - 1];
+  const f = len > 1e-6 ? Math.min(1, Math.max(0, (s - cum[i - 1]) / len)) : 1;
+  out.phase = 'walk';
+  out.x = a.x + (b.x - a.x) * f; out.y = a.y + (b.y - a.y) * f; out.z = a.z + (b.z - a.z) * f;
+  const h0 = Math.atan2(b.x - a.x, b.z - a.z);
+  const toEnd = cum[i] - s, fromStart = s - cum[i - 1];
+  let h = len > 1e-6 ? h0 : NORTH;
+  if (i < way.length - 1 && toEnd < 1.2) {
+    const nx = way[i + 1], hn = Math.atan2(nx.x - b.x, nx.z - b.z);
+    h = h0 + angDiff(h0, hn) * (1 - toEnd / 1.2) * 0.5;
+  } else if (i > 1 && fromStart < 1.2) {
+    const pv = way[i - 2], hp = Math.atan2(a.x - pv.x, a.z - pv.z);
+    h = hp + angDiff(hp, h0) * (0.5 + 0.5 * (fromStart / 1.2));
+  }
+  out.h = h; out.sit = 0; out.stride = s * 3.2;
+  return out;
+}
+
 export function walkTime(p: Plan): number { return p.cum[p.cum.length - 1] / p.speed; }
 /** Time (s after the arrival started) when this person is fully seated. */
 export function seatedAt(p: Plan): number { return p.delay + walkTime(p) + TURN + p.sitTime; }
@@ -97,28 +128,7 @@ export function sample(p: Plan, t: number, out: Sample): Sample {
   const last = p.way[p.way.length - 1];
   const t1 = t - p.delay, tw = walkTime(p);
   if (t1 < 0) { out.phase = 'away'; out.x = p.way[0].x; out.y = 0; out.z = p.way[0].z; out.h = 0; out.sit = 0; out.stride = 0; return out; }
-  if (t1 < tw) {
-    const s = t1 * p.speed;
-    let i = 1;
-    while (i < p.cum.length - 1 && p.cum[i] < s) i++;
-    const a = p.way[i - 1], b = p.way[i], len = p.cum[i] - p.cum[i - 1];
-    const f = len > 1e-6 ? (s - p.cum[i - 1]) / len : 1;
-    out.phase = 'walk';
-    out.x = a.x + (b.x - a.x) * f; out.y = a.y + (b.y - a.y) * f; out.z = a.z + (b.z - a.z) * f;
-    // heading along the leg; the turn at a corner is smoothed over the last / first 1.2 m
-    const h0 = Math.atan2(b.x - a.x, b.z - a.z);
-    const toEnd = p.cum[i] - s, fromStart = s - p.cum[i - 1];
-    let h = len > 1e-6 ? h0 : NORTH;
-    if (i < p.way.length - 1 && toEnd < 1.2) {
-      const nx = p.way[i + 1], hn = Math.atan2(nx.x - b.x, nx.z - b.z);
-      h = h0 + angDiff(h0, hn) * (1 - toEnd / 1.2) * 0.5;
-    } else if (i > 1 && fromStart < 1.2) {
-      const pv = p.way[i - 2], hp = Math.atan2(a.x - pv.x, a.z - pv.z);
-      h = hp + angDiff(hp, h0) * (0.5 + 0.5 * (fromStart / 1.2));
-    }
-    out.h = h; out.sit = 0; out.stride = s * 3.2;
-    return out;
-  }
+  if (t1 < tw) return along(p.way, p.cum, t1 * p.speed, out);
   const hEnd = p.way.length > 1 ? Math.atan2(last.x - p.way[p.way.length - 2].x, last.z - p.way[p.way.length - 2].z) : NORTH;
   const t2 = t1 - tw;
   out.x = last.x; out.stride = 0;
@@ -138,4 +148,29 @@ export function sample(p: Plan, t: number, out: Sample): Sample {
   }
   out.phase = 'seated'; out.sit = 1; out.z = p.seat.z - SEAT_SETBACK; out.y = p.seat.y;
   return out;
+}
+
+/** Time (s after the dismissal) when this person has left the hall (is back in the lobby, out of sight). */
+export function leftAt(p: Plan): number { return p.leaveDelay + p.riseTime + walkTime(p); }
+
+/**
+ * Step 6: the way out. `t` = seconds since the dismissal. Seated until `leaveDelay`, then gets up (turns to the row lane while standing up),
+ * walks the way in backwards, and is 'away' (gone) at the end.
+ */
+export function sampleLeave(p: Plan, t: number, out: Sample): Sample {
+  const first = p.rway[0], nxt = p.rway[1];
+  const t1 = t - p.leaveDelay;
+  out.stride = 0;
+  if (t1 < 0) { out.phase = 'seated'; out.sit = 1; out.x = p.seat.x; out.y = p.seat.y; out.z = p.seat.z - SEAT_SETBACK; out.h = NORTH; return out; }
+  if (t1 < p.riseTime) {
+    const f = t1 / p.riseTime, e = f * f * (3 - 2 * f);
+    const hOut = Math.atan2(nxt.x - first.x, nxt.z - first.z);
+    out.phase = 'sit'; out.sit = 1 - e;
+    out.x = first.x; out.z = p.seat.z - SEAT_SETBACK + (first.z - (p.seat.z - SEAT_SETBACK)) * e; out.y = p.seat.y + (first.y - p.seat.y) * e;
+    out.h = NORTH + angDiff(NORTH, hOut) * e;
+    return out;
+  }
+  const s = (t1 - p.riseTime) * p.speed, total = p.rcum[p.rcum.length - 1];
+  if (s >= total) { out.phase = 'away'; out.x = p.way[0].x; out.y = 0; out.z = p.way[0].z; out.h = 0; out.sit = 0; return out; }
+  return along(p.rway, p.rcum, s, out);
 }

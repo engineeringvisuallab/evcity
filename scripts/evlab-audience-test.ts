@@ -1,6 +1,6 @@
 // EVLab step 5: the arrival routes of the hall audience (pure maths, no three.js).
 import { DIVIDER, HALL, REAR_Y, SEAT_BLOCKS, SEAT_W, hallFloorY } from '../src/evlab/EVLabLayout';
-import { AISLES, ARRIVE_SPAN, ROW_LANE, SEAT_SETBACK, aisleFor, planPerson, sample, seatedAt, walkTime, type Sample, type Seat } from '../src/evlab/EVLabAudiencePath';
+import { AISLES, ARRIVE_SPAN, LEAVE_SPAN, ROW_LANE, SEAT_SETBACK, aisleFor, leftAt, planPerson, sample, sampleLeave, seatedAt, walkTime, type Sample, type Seat } from '../src/evlab/EVLabAudiencePath';
 
 // same generator as src/structures (copied here so the test needs no three.js)
 function mulberry32(seed: number): () => number {
@@ -65,6 +65,30 @@ for (const p of plans) { sample(p, 6, s); if (s.phase === 'seated') seatedEarly+
 ok(seatedEarly < plans.length * 0.2, 'at 6 s most people are still on their way');
 ok(walkingMid > 20, 'at 6 s many people are walking');
 console.log(`at 6 s: ${walkingMid} walking, ${seatedEarly} seated`);
+
+// ---- step 6: the way out
+let leaveBad = 0, leaveY = 0, maxLeft = 0, startsLate = 0;
+for (const p of plans) {
+  maxLeft = Math.max(maxLeft, leftAt(p));
+  sampleLeave(p, 0, s);
+  if (p.leaveDelay > 0.05 && !(s.phase === 'seated' && Math.abs(s.z - (p.seat.z - SEAT_SETBACK)) < 1e-6)) startsLate++;
+  for (let t = p.leaveDelay; t < leftAt(p); t += 0.25) {
+    sampleLeave(p, t, s);
+    if (s.phase === 'walk') {
+      if (s.z < HALL.slopeZ1 + 9 && s.z > HALL.slopeZ0 - 2 && inSeatBox(s.x, s.z)) leaveBad++;
+      if (s.z <= 14.5 && s.z >= HALL.slopeZ0 && Math.abs(s.y - (s.z > HALL.slopeZ1 ? REAR_Y : hallFloorY(s.z))) > 0.2) leaveY++;
+    }
+  }
+  sampleLeave(p, leftAt(p) + 0.5, s);
+  ok(s.phase === 'away', 'gone at the end');
+  sampleLeave(p, p.leaveDelay + p.riseTime + 0.5, s); // just after getting up: in the row lane, standing
+  ok(Math.abs(s.z - (p.seat.z - ROW_LANE)) < 1.5, 'gets up into the row lane');
+}
+console.log(`everybody out after ${maxLeft.toFixed(1)} s (leave span ${LEAVE_SPAN} s)`);
+ok(startsLate === 0, 'people sit until their turn');
+ok(leaveBad === 0, `nobody leaves through a seat block (${leaveBad})`);
+ok(leaveY === 0, `feet follow the floor on the way out (${leaveY})`);
+ok(maxLeft < 90, 'the hall is empty within 90 s');
 
 console.log(fails ? `${fails} FAILED` : 'evlab audience: all ok');
 process.exit(fails ? 1 : 0);

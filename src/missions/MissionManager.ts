@@ -1,7 +1,7 @@
 import { UI_FONT } from '../ui/theme';
 import { MISSIONS, MISSION_BY_ID } from './MissionData';
 import type { Mission, MissionKind, MissionPin, MissionProgress, MissionQuestion } from './MissionTypes';
-import { PresentationHall } from './PresentationHall';
+import { PresentationHall, type HallStage } from './PresentationHall';
 import { MissionVoice, checkNumber, checkText, parseSpokenNumber } from './MissionVoice';
 
 const STORE_KEY = 'evc.missions.v1';
@@ -15,6 +15,8 @@ export interface MissionDeps {
   /** Top (px) where the tracker chip goes: just under the minimap's coordinate chip. */
   chipTop: () => number;
   toast: (text: string, ms?: number) => void;
+  /** The real 3D Presentation Hall (EVLab): audience comes in when a presentation opens and leaves when it closes. */
+  stage?: HallStage;
 }
 
 type Phase = 'ask' | 'feedback' | 'result';
@@ -62,7 +64,7 @@ export class MissionManager {
 
   constructor(private d: MissionDeps) {
     this.load();
-    this.hall = new PresentationHall({ parent: d.parent, lockTarget: d.lockTarget, voice: this.voice });
+    this.hall = new PresentationHall({ parent: d.parent, lockTarget: d.lockTarget, voice: this.voice, stage: d.stage });
     window.addEventListener('keydown', this.onEnterKey);
     this.buildChip();
     this.buildPanel();

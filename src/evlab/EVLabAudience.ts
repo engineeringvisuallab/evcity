@@ -1,11 +1,12 @@
 // EVLab Tower: the audience of the Presentation Hall. Step 5: real people (head, hair, torso, arms with elbows, legs with knees, feet) who walk in
 // through the three doors one after the other, climb down the aisles, sidestep along the row and sit down facing the stage.
+// Step 6: when the mission ends everybody gets up (one after the other), walks the way in backwards through the doors and is gone; a new mission fills the hall again.
 // 8 instanced meshes = 8 draw calls for the whole crowd. The routes and timing are in EVLabAudiencePath (pure maths).
 // Only people on the move, and (while the crowd claps / listens) the seated ones, are re-posed; a hall of people sitting still costs nothing.
 import * as THREE from 'three';
 import { mulberry32 } from '../structures';
 import type { Parts } from './EVLabParts';
-import { planPerson, sample, seatedAt, SEAT_SETBACK, type Plan, type Sample, type Seat } from './EVLabAudiencePath';
+import { leftAt, planPerson, sample, sampleLeave, seatedAt, SEAT_SETBACK, type Plan, type Sample, type Seat } from './EVLabAudiencePath';
 
 export type Mood = 'idle' | 'listen' | 'clap' | 'ovation';
 export type { Seat };
@@ -19,7 +20,11 @@ export interface AudienceBuild {
   readonly seated: number;
   /** The hall is empty by default: people are shown only while a presentation mission runs. */
   readonly present: boolean;
+  /** True while the people are leaving (after dismiss(), until the last one is out of the hall). */
+  readonly leaving: boolean;
   setPresent(on: boolean): void;
+  /** Step 6: the mission is over: people get up and leave through the doors; the crowd hides itself when the last one is out. */
+  dismiss(): void;
   setMood(m: Mood): void;
   update(dt: number, t: number): void;
 }
@@ -183,12 +188,48 @@ export function buildAudience(P: Parts, seats: readonly Seat[], fill = 0.62): Au
   hideAll();
 
   let clock = 0, next = 0, walkAcc = 0, moodAcc = 0, dirty = false, nSeated = 0;
+  let leaving = false, lclock = 0, lnext = 0;
+  const leaveOrder: number[] = [], leaveActive: number[] = [];
   const active: number[] = [];
   const seatedList: number[] = [];
   const smp: Sample = { phase: 'away', x: 0, y: 0, z: 0, h: 0, sit: 0, stride: 0 };
+  const hidePerson = (i: number): void => {
+    for (const m of [torso, head, hair]) m.setMatrixAt(i, hide);
+    for (const m of [thigh, shin, uarm, farm, foot]) { m.setMatrixAt(i * 2, hide); m.setMatrixAt(i * 2 + 1, hide); }
+  };
   const poseSeated = (i: number, t: number): void => {
     const s = plans[i].seat;
     pose(i, s.x, s.y, s.z - SEAT_SETBACK - STAND_FWD * stand, Math.PI, 0, 0, 1, stand, t);
+  };
+
+  /** The leaving phase: the seated people get up one after the other; the ones who stay behind keep sitting. */
+  const updateLeave = (dt: number, t: number): void => {
+    lclock += dt;
+    while (lnext < leaveOrder.length && plans[leaveOrder[lnext]].leaveDelay <= lclock) { leaveActive.push(leaveOrder[lnext++]); nSeated--; } // `seated` counts the ones still sitting
+    // the people still sitting settle after the ovation (stand -> 0); a pose only when something changes
+    const moving = Math.abs(stand) > 0.001;
+    if (moving) stand = Math.max(0, stand - dt * 2.2);
+    walkAcc += dt;
+    if (walkAcc < 1 / 30) return;
+    walkAcc = 0.0001;
+    if (moving || dirty) {
+      dirty = false;
+      for (let q = lnext; q < leaveOrder.length; q++) poseSeated(leaveOrder[q], t);
+    }
+    for (let a = leaveActive.length - 1; a >= 0; a--) {
+      const i = leaveActive[a], pl = plans[i];
+      if (lclock >= leftAt(pl)) {
+        leaveActive[a] = leaveActive[leaveActive.length - 1]; leaveActive.pop();
+        hidePerson(i);
+      } else {
+        sampleLeave(pl, lclock, smp);
+        pose(i, smp.x, smp.y, smp.z, smp.h, smp.stride, smp.phase === 'walk' ? 1 : 0, smp.sit, 0, t);
+      }
+    }
+    flush();
+    if (lnext >= leaveOrder.length && leaveActive.length === 0) { // the last one is out: the hall is empty again
+      leaving = false; g.visible = false; seatedList.length = 0; leaveOrder.length = 0; nSeated = 0;
+    }
   };
 
   return {
@@ -198,18 +239,33 @@ export function buildAudience(P: Parts, seats: readonly Seat[], fill = 0.62): Au
     get arrived() { return next; },
     get seated() { return nSeated; },
     get present() { return g.visible; },
+    get leaving() { return leaving; },
     setPresent(on) {
-      if (g.visible === on) return;
+      if (g.visible === on && !(on && leaving)) return; // a new mission while people are still leaving starts a fresh arrival
       g.visible = on;
+      leaving = false; leaveOrder.length = 0; leaveActive.length = 0; lnext = 0;
       if (on) {
         hideAll();
         clock = 0; next = 0; walkAcc = 1; moodAcc = 0; dirty = false; nSeated = 0; stand = 0; mood = 'idle';
         active.length = 0; seatedList.length = 0;
       }
     },
+    dismiss() {
+      if (!g.visible || leaving) return;
+      // people who are still on their way in take their seat at once; people who have not come in yet never do
+      for (const i of active) { seatedList.push(i); nSeated++; }
+      active.length = 0;
+      next = n;
+      leaving = true; lclock = 0; lnext = 0;
+      leaveOrder.length = 0; leaveActive.length = 0;
+      for (const i of seatedList) leaveOrder.push(i);
+      leaveOrder.sort((a, b) => plans[a].leaveDelay - plans[b].leaveDelay);
+      mood = 'idle'; dirty = true;
+    },
     setMood(m) { mood = m; dirty = true; },
     update(dt, t) {
       if (!g.visible) return; // empty hall: no work at all
+      if (leaving) { updateLeave(dt, t); return; }
       clock += dt;
       while (next < n && plans[order[next]].delay <= clock) active.push(order[next++]);
       // people on the move (30 poses a second)
