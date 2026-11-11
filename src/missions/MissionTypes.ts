@@ -33,6 +33,8 @@ export interface MissionPlace {
   /** The player has "arrived" inside this many metres. */
   radius: number;
   label: string;
+  /** Metres above the ground where the green marker stands (and where the player's feet must be): the stage of the Presentation Hall. Missions without it stand on the ground (any height). */
+  lift?: number;
 }
 
 export interface Mission {

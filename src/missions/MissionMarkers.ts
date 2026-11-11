@@ -37,7 +37,7 @@ export class MissionMarkers {
     for (const m of MISSIONS) {
       const { x, z } = m.place;
       const g = new THREE.Group();
-      g.position.set(x, groundAt(x, z), z);
+      g.position.set(x, groundAt(x, z) + (m.place.lift ?? 0), z); // (the Presentation Hall marker stands on the stage)
 
       // the small marker: 1 m wide, 1.5 m high, standing on the ground at the centre
       const markMat = new THREE.MeshBasicMaterial({ color: GREEN, transparent: true, opacity: 0.9 });

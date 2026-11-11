@@ -2,7 +2,8 @@
 import { MISSIONS } from '../src/missions/MissionData';
 import { checkNumber, checkText, parseSpokenNumber } from '../src/missions/MissionVoice';
 import { ENGINEERING_AREAS } from '../src/city/EngineeringZones';
-import { EVLAB_PLOT } from '../src/evlab/EVLabSite';
+import { EVLAB_PAD_SINK, EVLAB_PLOT, EVLAB_POS } from '../src/evlab/EVLabSite';
+import { BUILDING_Z, HALL, PRESENTER } from '../src/evlab/EVLabLayout';
 import { HALL_SOON, HALL_TOPICS, pagesOf } from '../src/missions/HallTopics';
 import { coverage, isStartPhrase, matchWords, pageMark, tokenize } from '../src/missions/HallScoring';
 
@@ -36,7 +37,12 @@ for (const m of MISSIONS) {
   if (m.kind === 'hall') {
     const inPlot = m.place.x >= EVLAB_PLOT.x0 && m.place.x <= EVLAB_PLOT.x1 && m.place.z >= EVLAB_PLOT.z0 && m.place.z <= EVLAB_PLOT.z1;
     ok(inPlot, `${m.id}: the hall entrance is outside the EVLab plot`);
-    console.log(`${m.id.padEnd(18)} ${m.kind.padEnd(12)} (${m.place.x}, ${m.place.z}) in EVLab plot`);
+    // step 4: the mission place is the green marker on the stage of the real hall, where the presenter stands
+    ok(m.place.x === EVLAB_POS.x + PRESENTER.x && m.place.z === BUILDING_Z + PRESENTER.z, `${m.id}: the marker stands at the presenter place`);
+    ok(m.place.radius <= 2, `${m.id}: the marker is small (radius ${m.place.radius} m), not a big area`);
+    ok(m.place.lift !== undefined && Math.abs(m.place.lift - (HALL.stageH + EVLAB_PAD_SINK)) < 1e-9, `${m.id}: the marker is on the stage (lift ${m.place.lift} m)`);
+    ok(PRESENTER.z > HALL.z0 && PRESENTER.z < HALL.stageZ1 && Math.abs(PRESENTER.x) < HALL.stageX, `${m.id}: the presenter place is on the stage`);
+    console.log(`${m.id.padEnd(18)} ${m.kind.padEnd(12)} (${m.place.x}, ${m.place.z}) marker on the hall stage`);
     continue;
   }
   const a = ENGINEERING_AREAS.find((e) => m.place.x >= e.x0 && m.place.x <= e.x1 && m.place.z >= e.z0 && m.place.z <= e.z1);

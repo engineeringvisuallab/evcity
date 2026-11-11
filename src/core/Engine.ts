@@ -168,6 +168,7 @@ export class Engine {
   private missions!: MissionManager;
   /** The green cylinder at every mission place (drawing only). */
   private missionMarkers!: MissionMarkers;
+  private missionPos = new THREE.Vector3();
   /** EVLab Tower: the podium with the Presentation Hall and the lobby, and the 350 m glass tower with stairs and glass lifts (src/evlab). */
   private evlab!: EVLabManager;
   /** CAR RACE on the outer freeway (north -> west): the course, the circles and the rules (src/race). */
@@ -1103,7 +1104,7 @@ export class Engine {
     if (this.input.wasPressed('Backslash')) this.missions.toggle(); // \ opens the mission list (the Missions button does the same)
     {
       const ms = this.mapState(); // `me` = what you control (on foot, car, helicopter, boat): missions use the same position as the map
-      this.missions.update(dt, ms.me.x, ms.me.z);
+      this.missions.update(dt, ms.me.x, ms.me.z, this.player.getWorldPosition(this.missionPos).y - this.world.terrain.heightAt(ms.me.x, ms.me.z));
       ms.missions = [...this.missions.pins(), ...this.race.pins()];
       this.missionMarkers.update(dt, ms.missions);
       {

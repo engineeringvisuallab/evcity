@@ -1,6 +1,7 @@
 import type { Mission } from './MissionTypes';
 import { ENGINEERING_BY_ID } from '../city/EngineeringZones';
-import { EVLAB_PLOT, EVLAB_POS } from '../evlab/EVLabSite';
+import { EVLAB_PAD_SINK, EVLAB_POS } from '../evlab/EVLabSite';
+import { BUILDING_Z, HALL, PRESENTER } from '../evlab/EVLabLayout';
 
 /**
  * MISSIONS (data only). Add a mission = add one object here; nothing else changes.
@@ -35,13 +36,13 @@ const I_LINE = LINE.P / (Math.sqrt(3) * LINE.V);
 
 export const MISSIONS: readonly Mission[] = [
   {
-    // The Presentation Hall is inside the EVLab office building (built later). Until then the pin is at the south side of the EVLab plot, near its gate.
+    // Step 4: the mission place is the green marker on the stage of the real Presentation Hall, exactly where the presenter stands (behind the lectern).
     id: 'present-evlab',
     kind: 'hall',
     title: 'Presentation at the EVLab Office',
-    place: { x: EVLAB_POS.x, z: EVLAB_PLOT.z1 - 30, radius: 45, label: 'EVLab Office (Presentation Hall)' },
-    brief: 'Go to the EVLab office. Press Enter to go into the Presentation Hall, choose a topic, and present it to the audience by reading each page aloud.',
-    arrival: 'You are at the EVLab office. Press Enter to go into the Presentation Hall.',
+    place: { x: EVLAB_POS.x + PRESENTER.x, z: BUILDING_Z + PRESENTER.z, radius: 1.2, lift: HALL.stageH + EVLAB_PAD_SINK, label: 'EVLab Office (Presentation Hall stage)' },
+    brief: 'Go to the EVLab office, into the Presentation Hall. Walk onto the stage and step on the green marker behind the lectern, choose a topic, and present it by reading each page aloud.',
+    arrival: 'You are on the marker. The presentation starts.',
     questions: [],
     pass: 0.6,
     badge: 'Presenter',

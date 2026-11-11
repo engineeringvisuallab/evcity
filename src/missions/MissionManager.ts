@@ -70,11 +70,14 @@ export class MissionManager {
   }
 
   // ------------------------------------------------------------------ per frame
-  update(_dt: number, px: number, pz: number): void {
+  /** `rel` = height of the player's capsule centre above the ground (only the hall marker on the stage looks at it, so the floors above the hall do not count). */
+  update(_dt: number, px: number, pz: number, rel = Infinity): void {
+    // step 4: the Presentation Hall mission is the green marker on the stage: standing on it (feet at stage height) = "arrived". It starts the mission once per visit; ENTER on the marker opens it again.
+    const here = MISSIONS.find((h) => h.kind === 'hall' && Math.hypot(h.place.x - px, h.place.z - pz) <= h.place.radius && (h.place.lift === undefined || (rel >= h.place.lift - 0.5 && rel <= h.place.lift + 3.5))) ?? null;
     const m = this.activeId ? MISSION_BY_ID.get(this.activeId) : undefined;
     if (m) {
       this.distance = Math.hypot(m.place.x - px, m.place.z - pz);
-      const now = this.distance <= m.place.radius;
+      const now = m.kind === 'hall' ? here?.id === m.id : this.distance <= m.place.radius;
       if (now && !this.arrived) {
         this.arrived = true;
         if (m.kind !== 'hall') {
@@ -86,13 +89,9 @@ export class MissionManager {
       this.distance = Infinity;
       this.arrived = false;
     }
-    // the entrance of a Presentation Hall: ENTER goes in (also when the mission is not tracked)
-    const here = MISSIONS.find((h) => h.kind === 'hall' && Math.hypot(h.place.x - px, h.place.z - pz) <= h.place.radius) ?? null;
-    if (here && !this.hallHere && !this.hall.isOpen) {
-      this.d.toast('🎤 Press ENTER to go into the Presentation Hall', 4200);
-      if (here.id === this.activeId) this.voice.speak(here.arrival ?? 'Press enter to go into the presentation hall.');
-    }
+    const entered = !!here && !this.hallHere;
     this.hallHere = here;
+    if (entered && here && !this.hall.isOpen && !this.panelOpen) this.openHall(here);
     this.refreshChip(false);
   }
 
