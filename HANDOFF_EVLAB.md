@@ -2,7 +2,7 @@
 
 Notun chat-e evcity.zip attach kore age "Part A" paste koro. Tarpor ek chat-e ek step, "Part C" theke.
 
-**Ekhon porjonto: Step 1, 1.1, 2, 3, 4, 5, 6, 7, 8, 9, 10 done. Porer step: Step 11 (bairer bench/branch). Pending: 1.1b, 1.2a/b/c (alada, pore).** Zip-e step 1-er changed file jodi na thake, step1 folder-er 2 ta file age paste koro.
+**Ekhon porjonto: Step 1, 1.1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 done. Porer step: Step 12 (bench-e manush). Pending: 1.1b, 1.2a/b/c (alada, pore).** Zip-e step 1-er changed file jodi na thake, step1 folder-er 2 ta file age paste koro.
 
 ---
 
@@ -135,6 +135,7 @@ Step 14: EVLabFountains.ts-er fountain-e realistic physics dao: pani-r fota grav
 - **Step 8 (done):** Mission-e gari ese park kore. `src/evlab/EVLabArrivalPath.ts` (pure: `planArrivals`, `ARRIVAL_CARS`, route/`sampleRoute`/`roundCorners`, `speedIn/Out`) + `EVLabArrivals.ts` (state machine: wait, driveIn, park, walkIn, inside, walkOut, board, back, turn, driveOut, gone; game-er `VehicleModel`/`PersonModel`, physics nei). `EVLabManager`: `enterStage` -> `arrivals.start()`, `endPresentation`/`leaveStage` -> `arrivals.dismiss()`, update/dispose. Songkha `Q.evlabArrivals` (2/4/5). Test: `npm run test:evlab-arrivals`. Browser-e real model chokh diye dekha baki (node-e VehicleModel chole na).
 - **Step 9 (done):** Cycle model (shudhu model, movement nei). `src/evlab/EVLabCycle.ts`: `CycleKit` (shared geometry + material, onek cycle-e ekta kit), `Cycle`/`buildCycle(kit, color)` (diamond frame, fork, handlebar, saddle, 2 spoked wheel, crank + pedal, chain, rear carrier; ~14 mesh, ~2k triangle), `CYCLE` (wheel, axle, saddle, grip, pedal, head tube-er sonkha: rider ar rack-er jonno), `CYCLE_PAINT` (7 rong). +Z samne, +x bam, y=0 maati, origin duto tyre-er majhkhane maatite. `setSteer(rad)` (head tube-er axis-e ghore), `setPedal(a)` (pedal soman thake), `roll(d)` (chaka + crank ghore), `place(x,y,z,heading)`. Test: `npm run test:evlab-cycle`. Browser-e dekha baki.
 - **Step 10 (done):** Cycle rack + cycle-wala manush. Rack: plaza-r purbo dike (building-local x 24..34, z 63.5..66.5, portal-er purbo-dokkhin), 6 ta steel hoop (1 InstancedMesh) + 12 bay, shob cycle nose uttore (building-er dike). `src/evlab/EVLabCycleRack.ts` (pure: `RACK`, `CYCLE_SLOTS`, `RACK_PAD`, `inRackZone`), `EVLabCycleRackMesh.ts` (hoop + pad), `EVLabGrounds.ts` e `buildCycleRack`. `EVLabCampus.ts`: rack pad-e porha ekta debdaru (x 34, z 64) filter hoy. Cyclist: `EVLabCyclistPath.ts` (pure: route avenue -> south bridge -> plaza -> bay, `planCyclists`, speed), `EVLabCyclistPose.ts` (pure: rider IK, pa pedal-e, haat grip-e), `EVLabCyclists.ts` (state machine: wait, rideIn, park, walkIn, inside, walkOut, mount, back, turn, rideOut, gone), `EVLabCyclistModels.ts` (real `Cycle` + `PersonModel`). `PersonModel.setSeatedLimbs` (notun, CRLF) = cyclist-er pa/haat pose. `EVLabManager`: `enterStage` -> `cyclists.start(Q.evlabCyclists)`, `endPresentation`/`leaveStage` -> `cyclists.dismiss()`. Songkha `Q.evlabCyclists` (2/3/4). Test: `npm run test:evlab-cyclists` (+ `test:evlab-cycle`-e RIDE = CYCLE check). Browser-e real model chokh diye dekha baki.
+- **Step 11 (done):** Bairer bosar bench. 65 ta (plaza 18, island quay 24, lake-er bairer bank 23), 195 ta bosar jaiga. `src/evlab/EVLabBenches.ts` (pure: `BENCH`, `benches()`, `benchSeats()` = Step 12-er jonno {id, bench, x, y, z, yaw}, `benchObbs()`, `inBenchZone()`, `plazaPoles()`), `EVLabBenchMesh.ts` (2 InstancedMesh: wood + steel, castShadow false). `EVLabGrounds.ts`: `buildBenches`, `GroundsBuild.obbs`. `EVLabManager.ts`: bench collider (ghurano box, 65 ta) `obbs` e. Notun tree nei (`parkTrees` ager moto); bench gach, road, bridge, ring road, lake, parking, cycle rack, fountain, lamp ar cyclist/driver route theke dure thake. Test: `npm run test:evlab-benches`. Browser-e real `three` diye chokh-e dekha baki.
 
 ## Notun steps (user chaiechhe: 1.1 ar 1.2)
 
@@ -160,7 +161,7 @@ Step 14: EVLabFountains.ts-er fountain-e realistic physics dao: pani-r fota grav
 - [ ] 8 Gari park
 - [x] 9 Cycle model
 - [x] 10 Cycle rack + cycle-wala (done, CHANGES_EVLAB_STEP10_BN.md)
-- [ ] 11 Bairer bench
+- [x] 11 Bairer bench (done, CHANGES_EVLAB_STEP11_BN.md)
 - [ ] 12 Bench-e manush
 - [ ] 13 Lake water physics
 - [ ] 14 Fountain physics

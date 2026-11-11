@@ -10,6 +10,8 @@ import { buildBridges } from './EVLabBridges';
 import { buildFountains } from './EVLabFountains';
 import { buildParkingLot } from './EVLabParkingLot';
 import { buildCycleRack } from './EVLabCycleRackMesh';
+import { buildBenches } from './EVLabBenchMesh';
+import type { Obb } from './EVLabTowerLayout';
 import { asphaltTexture, roadStrip, runsOf, wallStrip } from './EVLabRoads';
 import type { Parts } from './EVLabParts';
 
@@ -17,6 +19,8 @@ export interface GroundsBuild {
   group: THREE.Group;
   /** Colliders of the bridges (decks and railings), building-local. */
   solids: Solid[];
+  /** Step 11: colliders of the benches (boxes turned about y), building-local. */
+  obbs: Obb[];
   /** 0 (day) .. 1 (night): the lamps glow. */
   setNight(k: number): void;
   update(t: number): void;
@@ -85,6 +89,9 @@ export function buildGrounds(P: Parts, ground?: (x: number, z: number) => number
   for (const l of lot.lamps) lampSpots.push(l);
   // Step 10: the cycle rack on the plaza, east of the portal
   g.add(buildCycleRack(P));
+  // Step 11: benches on the plaza, along the island's quay and on the outer bank of the lake (EVLabBenches has the layout)
+  const benches = buildBenches(P);
+  g.add(benches.group);
 
   // ---------------------------------------------------------------- lamps (one instanced pole + one lamp ball for all of them)
   const poleGeo = k.own(new THREE.CylinderGeometry(0.1, 0.14, 6, 6)), lampGeo = k.own(new THREE.SphereGeometry(0.4, 8, 6));
@@ -115,6 +122,7 @@ export function buildGrounds(P: Parts, ground?: (x: number, z: number) => number
   return {
     group: g,
     solids: bridges.solids,
+    obbs: benches.obbs,
     setNight: (n) => { lampMat.color.copy(dayLamp).lerp(nightLamp, n); water.color.copy(dayWater).lerp(nightWater, n); fountains.setNight(n); },
     update: (tt) => {
       flags.forEach((f, i) => { f.rotation.y = Math.sin(tt * 2.1 + i) * 0.25; f.scale.x = 0.92 + Math.sin(tt * 3.3 + i * 1.7) * 0.06; });

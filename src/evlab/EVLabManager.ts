@@ -100,7 +100,7 @@ export class EVLabManager {
     // colliders first: the lift cars switch their door blockers while they are built
     const tc = coreColliders();
     const solids: Solid[] = [...this.shell.solids, ...this.lobby.solids, ...this.wings.solids, ...this.hall.solids, ...tc.solids, ...this.grounds.solids]; // + the bridge decks and railings
-    const obbs: Obb[] = [];
+    const obbs: Obb[] = [...this.grounds.obbs]; // Step 11: the benches
     const ramps: Ramp[] = [...this.lobby.ramps, ...this.hall.ramps, ...tc.ramps];
     for (let n = 1; n <= T.roof; n++) { const lc = levelSolids(n); solids.push(...lc.solids, ...outriggerSolids(n)); obbs.push(...lc.obbs); }
     this.body = this.createColliders(solids, ramps, obbs);
