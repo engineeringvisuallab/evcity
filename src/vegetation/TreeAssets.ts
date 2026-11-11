@@ -637,7 +637,7 @@ function crown(m: Mesh, r: () => number, c: THREE.Vector3, rx: number, ry: numbe
     if (n.dot(radial) < 0.2) n.addScaledVector(radial, 0.6).normalize();
     const size = lerp(sMin, sMax, r());
     const t = Math.min(1, Math.max(0, (p.y - yMin) / (yMax - yMin)));
-    const bright = lerp(0.72, 1.2, t * t * 0.6 + t * 0.4) + (r() - 0.5) * 0.18;
+    const bright = lerp(0.86, 1.2, t * t * 0.6 + t * 0.4) + (r() - 0.5) * 0.14;
     m.card(p, n, V3(0, 1, 0), size, size * lerp(0.85, 1.1, r()), tile, r() * Math.PI * 2, radial, bright, r() < 0.5, leafTint(r, warmChance));
   }
 }
@@ -1040,6 +1040,7 @@ export class TreeAssets {
       alphaToCoverage: !!atlas,
     });
     const wind = Config.vegetation.windStrength;
+    const floor = Config.vegetation.shadeFloor.map((v) => v.toFixed(3));
     // everything right of the bark tiles is foliage (bark u < (barkTiles - 0.03) / tiles, leaves u >= barkTiles / tiles)
     const leafEdge = ((barkTiles - 0.015) / tiles).toFixed(5);
     m.onBeforeCompile = (shader) => {
@@ -1091,6 +1092,9 @@ export class TreeAssets {
           float spec = pow( clamp( dot( normal, halfDir ), 0.0, 1.0 ), 36.0 );
           float sunSeen = clamp( dot( reflectedLight.directDiffuse, vec3( 0.3333 ) ) * 6.0, 0.0, 1.0 );
           outgoingLight += sunCol * spec * 0.045 * sunSeen * leafMask;
+          // shade floor: leaves turned away from the sun never go black (scaled by the sun, so night stays dark)
+          float dayAmt = clamp( dot( sunCol, vec3( 0.3333 ) ), 0.0, 1.0 );
+          outgoingLight = max( outgoingLight, diffuseColor.rgb * vec3( ${floor[0]}, ${floor[1]}, ${floor[2]} ) * dayAmt );
         }
         #endif
         `;

@@ -23,6 +23,9 @@ See `CHANGES_MERGE_VEHICLES5_STEP4_MISSIONS11_BN.md`.
 - Missions: field / meeting / presentation (`src/missions/`), green markers (`MissionMarkers`), Presentation Hall mission (temporary stage scene, no building yet; Islamic Life topic works, 10 engineering topics "coming soon").
 - EVLab campus REMOVED. Only `src/evlab/EVLabSite.ts` stays (level plot + keep-out) for the new building. EVLab parking lot stays.
 
+## Tree shade (latest)
+Trees looked too black in shade. Fixed in `TreeAssets.ts` (shade floor in leaf shader) + `Config.vegetation.leafDark` / `shadeFloor`. See `CHANGES_TREE_SHADE_BN.md`. Check in a running game and tune `shadeFloor`.
+
 ## Next planned
 - Step 5: move the main fuel station away from the city (pump station in `src/engineering/civil/`, mine bonus and tanker logic are tied to it), then mine fuel processing.
 - New EVLab office building (100/150 m, ground-floor conference room, 3D stage and audience) on the EVLab plot; Presentation Hall logic plugs in there.
