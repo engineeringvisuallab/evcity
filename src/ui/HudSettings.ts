@@ -24,6 +24,8 @@ export interface HudOptions {
   rainQuality: number;
   /** The player holds an umbrella in the rain. */
   rainUmbrella: boolean;
+  /** ROAD NUMBERS: the road code (H1, P3 ...) painted on the road near the camera. */
+  roadNumbers: boolean;
 }
 
 export const HUD_DEFAULTS: Readonly<HudOptions> = {
@@ -39,6 +41,7 @@ export const HUD_DEFAULTS: Readonly<HudOptions> = {
   rainLevel: 1,
   rainQuality: 0,
   rainUmbrella: true,
+  roadNumbers: true,
 };
 
 const KEY = 'evcity.settings';
@@ -52,7 +55,7 @@ export class HudSettings {
       const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(KEY) : null;
       if (raw) {
         const o = JSON.parse(raw) as Partial<Record<keyof HudOptions, unknown>>;
-        for (const k of ['crosshair', 'gold', 'weapon', 'areaAlways', 'muted'] as const) if (typeof o[k] === 'boolean') this.values[k] = o[k] as boolean;
+        for (const k of ['crosshair', 'gold', 'weapon', 'areaAlways', 'muted', 'roadNumbers'] as const) if (typeof o[k] === 'boolean') this.values[k] = o[k] as boolean;
         if (typeof o.infiniteOxygen === 'boolean') this.values.infiniteOxygen = o.infiniteOxygen;
         if (typeof o.waterQuality === 'number' && o.waterQuality >= 0 && o.waterQuality <= 2) this.values.waterQuality = Math.round(o.waterQuality);
         if (typeof o.rainMode === 'number' && o.rainMode >= 0 && o.rainMode <= 2) this.values.rainMode = Math.round(o.rainMode);

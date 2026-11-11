@@ -79,7 +79,7 @@ const MODE_NOTE: Record<TimeMode, string> = {
 const ZOOMS = ['কাছে', 'মাঝারি', 'পুরো ম্যাপ'];
 
 interface Toggle {
-  key: keyof Pick<HudOptions, 'crosshair' | 'gold' | 'weapon' | 'areaAlways'>;
+  key: keyof Pick<HudOptions, 'crosshair' | 'gold' | 'weapon' | 'areaAlways' | 'roadNumbers'>;
   label: string;
   desc: string;
 }
@@ -88,6 +88,7 @@ const TOGGLES: Toggle[] = [
   { key: 'gold', label: 'গোল্ড ব্যালান্স', desc: 'জরিমানা/আয়ের বার্তা এমনিতেই দেখা যাবে' },
   { key: 'weapon', label: 'অস্ত্র, গুলি ও ওয়ান্টেড স্টার', desc: 'বন্ধ থাকলেও স্টার বাড়লে-কমলে কয়েক সেকেন্ড দেখা যায়' },
   { key: 'areaAlways', label: 'এলাকার নাম সবসময় দেখাও', desc: 'বন্ধ থাকলে নতুন এলাকায় ঢুকলে কিছুক্ষণ দেখায়' },
+  { key: 'roadNumbers', label: 'রাস্তার নম্বর দেখাও', desc: 'রাস্তার ওপর রাস্তার কোড (H1, P3 ...) লেখা থাকবে, ক্যামেরার সাথে সরবে' },
 ];
 
 const KEYS: [string, string][] = [

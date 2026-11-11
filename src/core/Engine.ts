@@ -30,6 +30,7 @@ import { MedianView } from '../roads/MedianView';
 import { MedianPhysics } from '../roads/MedianPhysics';
 import { FootpathView } from '../roads/FootpathView';
 import { UTurnSignView } from '../roads/UTurnSigns';
+import { RoadNumberView } from '../roads/RoadNumberView';
 import { FootpathPhysics } from '../roads/FootpathPhysics';
 import { RoadsideView } from '../roads/RoadsideView';
 import { CombatSystem } from '../combat';
@@ -239,6 +240,9 @@ export class Engine {
   private bridgeVisuals: BridgeBuilder;
   private bridgePhysics: BridgePhysics;
   private medianView: MedianView;
+  /** ROAD NUMBERS Step 1: the road code painted on the road (1 plate per road, follows the camera). */
+  private roadNumbers: RoadNumberView;
+  private camDir = new THREE.Vector3();
   private medianPhysics: MedianPhysics;
   private footpathView: FootpathView;
   private uturnSigns: UTurnSignView;
@@ -373,6 +377,7 @@ export class Engine {
     this.world.root.add(this.bridgeVisuals.group);
     this.bridgePhysics = new BridgePhysics(physics, this.world.origin, roads.bridges, roads.roads);
     this.medianView = new MedianView(this.world.root, roads);
+    this.roadNumbers = new RoadNumberView(this.world.root, roads.roads, roads.pads, roads.bridges);
     this.medianPhysics = new MedianPhysics(physics, this.world.origin, roads);
     this.footpathView = new FootpathView(this.world.root, roads);
     this.uturnSigns = new UTurnSignView(this.world.root, roads);
@@ -1140,6 +1145,11 @@ export class Engine {
       this.medianView.update(dt, this.camera.position.x + this.world.origin.origin.x, this.camera.position.z + this.world.origin.origin.z);
       this.footpathView.update(dt, this.camera.position.x + this.world.origin.origin.x, this.camera.position.z + this.world.origin.origin.z);
       this.uturnSigns.update(dt, this.camera.position.x + this.world.origin.origin.x, this.camera.position.z + this.world.origin.origin.z);
+      this.camera.getWorldDirection(this.camDir);
+      const hl = Math.hypot(this.camDir.x, this.camDir.z);
+      if (this.roadNumbers.enabled !== this.hudSettings.values.roadNumbers) this.roadNumbers.setEnabled(this.hudSettings.values.roadNumbers); // Settings > "রাস্তার নম্বর দেখাও"
+      this.roadNumbers.setLamp(lamp);
+      this.roadNumbers.update(dt, { x: this.camera.position.x + this.world.origin.origin.x, y: this.camera.position.y, z: this.camera.position.z + this.world.origin.origin.z, fx: hl > 0.2 ? this.camDir.x / hl : 0, fz: hl > 0.2 ? this.camDir.z / hl : 0 });
       this.lighthouseLight?.update(lamp, this.time.elapsed, fov, px);
     }
 
@@ -1689,6 +1699,7 @@ export class Engine {
     this.bridgePhysics.dispose();
     this.medianPhysics.dispose();
     this.medianView.dispose();
+    this.roadNumbers.dispose();
     this.footpathPhysics.dispose();
     this.footpathView.dispose();
     this.uturnSigns.dispose();
