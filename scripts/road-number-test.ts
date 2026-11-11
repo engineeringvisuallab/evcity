@@ -5,6 +5,7 @@
 //   4. the nearest-point search with a hint gives the same answer as the full search
 //   5. (Step 2 / 4) the on/off setting: default OFF, saved and loaded, old saves without it stay off, the menu row and the Engine hook exist
 //   6. (Step 3) the plate keeps off junction pads and bridge ends, bends with the road (no folding), lies on the road height
+//   8. (Step 5) junction numbers: one plate J<id> in the middle of every junction pad, on the pad plane, readable, not touching the short-link plates
 //   7. (Step 4) every road gets a label (short links inside junction pads too, on the pad plane); a high camera (plane, drone) keeps the labels
 import { readFileSync } from 'node:fs';
 import { Config } from '../src/core/Config';
@@ -12,7 +13,7 @@ import { HUD_DEFAULTS, HudSettings } from '../src/ui/HudSettings';
 import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
 import { laneWidth, lanesPerDir, isDivided } from '../src/roads/RoadSection';
 import {
-  BRIDGE_END_M, buildRoadIndex, chooseRoads, constrainS, fitToPads, heightOk, hideRadius, labelLane, labelLimit, labelOffset, lowestY, MAX_LABELS, MAX_LABELS_AIR, nearestOnRoad, newLabelState, padRadius, placeLabel, pointAt, ROAD_NUMBER_LIFT_M, showRadius, STRIP_FLOATS,
+  BRIDGE_END_M, buildRoadIndex, chooseRoads, chooseJunctions, constrainS, fitToPads, heightOk, hideRadius, JUNCTION_KEEP_M, JUNCTION_PLATE_H, JUNCTION_PLATE_W, junctionCode, junctionCorners, junctionDir, labelLane, labelLimit, labelOffset, lowestY, MAX_LABELS, MAX_LABELS_AIR, nearestOnRoad, newLabelState, padRadius, placeLabel, pointAt, ROAD_NUMBER_LIFT_M, showRadius, STRIP_FLOATS,
   STRIP_ROWS, stripVertices, styleOf,
   type NumberRoad,
 } from '../src/roads/RoadNumberPlan';
@@ -466,6 +467,104 @@ console.log('\n=== 7. SHORT LINKS IN PADS, HIGH CAMERA (Step 4) ===');
     note(`choosing the roads from 400 m up: ${ms.toFixed(2)} ms per call (8 calls a second)`);
     ok(ms < 8, 'choosing from the air is cheap (< 8 ms per call)');
   }
+}
+
+console.log('\n=== 8. JUNCTION NUMBERS (Step 5) ===');
+{
+  const pads = gen.roads.pads;
+  const idx = buildRoadIndex(roads, pads, gen.roads.bridges);
+  const inPoly = (poly: ArrayLike<number>, x: number, z: number): boolean => {
+    let c = false;
+    for (let i = 0, j = poly.length / 2 - 1; i < poly.length / 2; j = i++) {
+      const xi = poly[i * 2], zi = poly[i * 2 + 1], xj = poly[j * 2], zj = poly[j * 2 + 1];
+      if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) c = !c;
+    }
+    return c;
+  };
+  const codes = new Set(pads.map((p) => junctionCode(p)));
+  ok(codes.size === pads.length, `every junction has its own number (${codes.size} codes for ${pads.length} pads, e.g. ${junctionCode(pads[0])}, ${junctionCode(pads[pads.length - 1])})`);
+  ok(/^J\d{1,3}$/.test(junctionCode(pads[5])), 'a junction number looks like J12');
+
+  const q = new Float32Array(12);
+  let outside = 0;
+  let badY = 0;
+  let worstY = 0;
+  let badShape = 0;
+  for (const pad of pads) {
+    for (const dir of [1, -1]) {
+      if (!junctionCorners(pad, dir, q)) badY++;
+      for (let k = 0; k < 4; k++) {
+        const x = q[k * 3], y = q[k * 3 + 1], z = q[k * 3 + 2];
+        if (!inPoly(pad.outline, x, z)) outside++;
+        const surf = gen.roads.roadHeightAt(x, z);
+        if (surf === null) badY++;
+        else worstY = Math.max(worstY, Math.abs(y - (surf + ROAD_NUMBER_LIFT_M)));
+      }
+      // shape: width along the text right, height along the text up; text up = north (-z) for dir 1
+      const w = Math.hypot(q[3] - q[0], q[5] - q[2]);
+      const h = Math.hypot(q[6] - q[0], q[8] - q[2]);
+      const rightX = (q[3] - q[0]) / w;
+      const upZ = (q[8] - q[2]) / h;
+      if (Math.abs(w - JUNCTION_PLATE_W) > 1e-4 || Math.abs(h - JUNCTION_PLATE_H) > 1e-4 || Math.abs(rightX - dir) > 1e-6 || Math.abs(upZ + dir) > 1e-6) badShape++;
+    }
+  }
+  ok(outside === 0, `all 4 corners of every junction plate lie inside the pad outline (${outside} bad)`);
+  ok(badY === 0 && worstY < 0.005, `every corner is exactly 100 mm above the game's road surface (largest difference ${worstY.toFixed(4)} m; ${badY} corners without surface)`);
+  ok(badShape === 0, `the plate is ${JUNCTION_PLATE_W} x ${JUNCTION_PLATE_H} m; text right = east / text up = north (turned round for the other reading direction) (${badShape} bad)`);
+
+  // reading direction
+  ok(junctionDir(1, -1) === 1 && junctionDir(1, 0) === 1 && junctionDir(-1, 1) === -1, 'looking along the text up (north), sideways, or straight down: the text stays');
+  ok(junctionDir(1, 0.2) === 1 && junctionDir(1, 0.34) === 1, 'a small turn does not flip it');
+  ok(junctionDir(1, 0.9) === -1 && junctionDir(-1, -0.9) === 1, 'looking clearly south turns the text round, and back');
+  let flips = 0;
+  let dir = 1;
+  for (let a = 0; a < 3000; a++) {
+    const nd = junctionDir(dir, Math.cos(a * 0.01) * 0.3);
+    if (nd !== dir) flips++;
+    dir = nd;
+  }
+  ok(flips === 0, 'a camera that wobbles around the east-west line never makes the text flicker');
+
+  // choosing
+  const busy = pads.slice().sort((p, q2) => q2.arms.length - p.arms.length)[0];
+  const none = (): boolean => false;
+  const at = (up: number) => ({ x: busy.x, y: busy.y + up, z: busy.z, fx: 0, fz: 0 });
+  const g0 = chooseJunctions(pads, at(3), none);
+  ok(g0.cand[0]?.pad.id === busy.id && g0.limit === MAX_LABELS, `standing on junction J${busy.id}: it is the nearest one (${g0.cand.length} junctions within range, limit ${g0.limit})`);
+  const gHigh = chooseJunctions(pads, at(300), none);
+  ok(gHigh.cand.length > g0.cand.length && gHigh.limit === MAX_LABELS_AIR, `300 m up: more junctions (${gHigh.cand.length} vs ${g0.cand.length}), limit ${gHigh.limit}`);
+  ok(chooseJunctions(pads, at(3), (id) => id === busy.id).cand.every((c) => c.pad.id !== busy.id), 'a junction that already has its plate is not listed again');
+
+  // the plates of the short links do not touch the junction plate
+  let touch = 0;
+  let tested = 0;
+  const buf = new Float32Array(STRIP_FLOATS);
+  const half2 = { x: JUNCTION_PLATE_W / 2, z: JUNCTION_PLATE_H / 2 };
+  for (const e of idx.filter((en) => en.inPad)) {
+    const r = e.road;
+    const st = styleOf(r);
+    for (let k = 0; k < 60; k++) {
+      const c = pointAt(r, (r.length * (k + 0.5)) / 60);
+      const state = newLabelState();
+      const pose = placeLabel(r, state, { x: c.x + c.nx * 3, y: c.y + 3, z: c.z + c.nz * 3, fx: c.tx, fz: c.tz }, 0.016, e.blocked);
+      if (!pose) continue;
+      stripVertices(r, pose.s, state.side, state.dir, st.across, st.along, buf);
+      tested++;
+      // sample points over the strip (rows x 5 across) and test them against the junction plate rectangles of the pads that are near
+      for (const pad of e.padList) {
+        for (let row = 0; row <= STRIP_ROWS; row++) {
+          for (let t = 0; t <= 4; t++) {
+            const x = buf[row * 6] + (buf[row * 6 + 3] - buf[row * 6]) * (t / 4);
+            const z = buf[row * 6 + 2] + (buf[row * 6 + 5] - buf[row * 6 + 2]) * (t / 4);
+            if (Math.abs(x - pad.x) < half2.x && Math.abs(z - pad.z) < half2.z) touch++;
+          }
+        }
+      }
+    }
+  }
+  ok(tested > 0 && touch === 0, `the plates of the short links never lie on a junction plate (${tested} placements, ${touch} points inside)`);
+  ok(JUNCTION_KEEP_M > Math.hypot(JUNCTION_PLATE_W / 2, JUNCTION_PLATE_H / 2), 'the keep-away radius is larger than the plate half diagonal');
+  ok(idx.every((e) => e.labelOk), 'every road still gets a label with the junction keep-out');
 }
 
 console.log(failed ? `\n${failed} FAILED` : '\nALL PASSED');

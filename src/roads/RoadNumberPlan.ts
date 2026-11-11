@@ -37,10 +37,19 @@ export const BRIDGE_END_M = 8;
 /** Rows of the bending plate (the plate is cut in this many strips along the road). */
 export const STRIP_ROWS = 8;
 
+/** Step 5: the junction number plate lies in the middle of the junction pad: 5 m wide (west-east) x 3 m (north-south), purple (no road class has this colour). */
+export const JUNCTION_PLATE_W = 5;
+export const JUNCTION_PLATE_H = 3;
+export const JUNCTION_COLOR = '#7b1d5e';
+/** A short link road keeps its plate this far (m, from the pad centre to the plate edge) away from a junction plate. */
+export const JUNCTION_KEEP_M = 4;
+
 /** A stretch of road, as distances along it (m): [from, to]. */
 export type Interval = [number, number];
 /** What this module needs of a junction pad / a bridge (PadSpec and BridgeSpec have all of it). */
 export interface PadLike {
+  /** Junction pad id (Step 5: the junction number is "J" + id). */
+  id?: number;
   x: number;
   z: number;
   outline: ArrayLike<number>;
@@ -191,13 +200,15 @@ export function buildRoadIndex(roads: readonly NumberRoad[], pads: readonly PadL
     let inPad = false;
     let padList: PadLike[] = [];
     if (!labelOk) {
-      // a short link between two junctions: no asphalt is left outside the pads, so the plate may lie on the pad (the pad plane is the road height there)
-      const noPads = blockedIntervals(road, minX, maxX, minZ, maxZ, [], [], myBridges);
+      // a short link between two junctions: no asphalt is left outside the pads, so the plate may lie on the pad (the pad plane is the road height there),
+      // but it keeps off the junction number plate in the middle of each pad
+      const near = pads.filter((pad, k) => pad.y !== undefined && pad.x > minX - padR[k] && pad.x < maxX + padR[k] && pad.z > minZ - padR[k] && pad.z < maxZ + padR[k]);
+      const noPads = blockedIntervals(road, minX, maxX, minZ, maxZ, near, near.map(() => JUNCTION_KEEP_M), myBridges);
       if (hasFreeSpot(road, noPads)) {
         blocked = noPads;
         labelOk = true;
         inPad = true;
-        padList = pads.filter((pad, k) => pad.y !== undefined && pad.x > minX - padR[k] && pad.x < maxX + padR[k] && pad.z > minZ - padR[k] && pad.z < maxZ + padR[k]);
+        padList = near;
       }
     }
     out.push({ road, minX, maxX, minZ, maxZ, blocked, labelOk, inPad, padList });
@@ -530,6 +541,76 @@ export function fitToPads(pads: readonly PadLike[], out: Float32Array | number[]
       break;
     }
   }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// Step 5: junction numbers (one plate in the middle of every junction pad)
+
+/** The number of a junction: "J" + the pad id (the same id the game uses for the pad). */
+export function junctionCode(pad: PadLike): string {
+  return `J${pad.id ?? 0}`;
+}
+
+/** Height of the pad plane under (x, z) (m); NaN when the pad has no plane. */
+export function padPlaneY(pad: PadLike, x: number, z: number): number {
+  return pad.y === undefined ? NaN : pad.y + (pad.a ?? 0) * (x - pad.x) + (pad.b ?? 0) * (z - pad.z);
+}
+
+/**
+ * The 4 corners of the junction plate (12 floats): bottom-left, bottom-right, top-left, top-right of the text. The text "up" is north (-z) for dir = 1 and
+ * south (+z) for dir = -1, so the text right is (dir, 0). Each corner lies on the pad plane + ROAD_NUMBER_LIFT_M. Returns false when the pad has no plane.
+ */
+export function junctionCorners(pad: PadLike, dir: number, out: Float32Array | number[]): boolean {
+  if (pad.y === undefined) return false;
+  const hw = JUNCTION_PLATE_W / 2;
+  const hh = JUNCTION_PLATE_H / 2;
+  const put = (k: number, sx: number, sy: number): void => {
+    // sx: -1 left / +1 right of the text, sy: -1 bottom / +1 top of the text (in the plate's own axes; the plate is rotated by dir)
+    const x = pad.x + sx * hw * dir;
+    const z = pad.z - sy * hh * dir;
+    out[k * 3] = x;
+    out[k * 3 + 1] = padPlaneY(pad, x, z) + ROAD_NUMBER_LIFT_M;
+    out[k * 3 + 2] = z;
+  };
+  put(0, -1, -1);
+  put(1, 1, -1);
+  put(2, -1, 1);
+  put(3, 1, 1);
+  return true;
+}
+
+/** Reading direction of a junction plate with hysteresis: it turns round only when the camera looks clearly against the text "up" (the same rule as the road plates). */
+export function junctionDir(dir: number, camFz: number): number {
+  // text up = (0, -dir): the camera look direction along it = -dir * camFz
+  return -dir * camFz < -0.35 ? -dir : dir;
+}
+
+export interface JunctionCandidate {
+  pad: PadLike;
+  /** Horizontal distance camera -> pad centre (m). */
+  d: number;
+}
+
+/** Which junction plates want to show now (nearest first) and how many are allowed: the same radius / height rules as the road plates. */
+export function chooseJunctions(pads: readonly PadLike[], cam: Camera2D, isActive: (id: number) => boolean): { cand: JunctionCandidate[]; limit: number } {
+  const cand: JunctionCandidate[] = [];
+  let hNear = Infinity;
+  let dNear = Infinity;
+  for (const pad of pads) {
+    if (pad.y === undefined) continue;
+    const gapY = padPlaneY(pad, pad.x, pad.z) - cam.y;
+    if (!heightOk(gapY)) continue;
+    const d = Math.hypot(pad.x - cam.x, pad.z - cam.z);
+    if (d > showRadius(-gapY)) continue;
+    if (d < dNear) {
+      dNear = d;
+      hNear = -gapY;
+    }
+    if (isActive(pad.id ?? 0)) continue;
+    cand.push({ pad, d });
+  }
+  cand.sort((a, b) => a.d - b.d);
+  return { cand, limit: labelLimit(Number.isFinite(hNear) ? hNear : 0) };
 }
 
 /** Lowest road point of the whole index (m): the camera height above it tells how wide to search. */
