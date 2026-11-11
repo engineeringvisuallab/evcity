@@ -1,6 +1,7 @@
 // EVLab step 9: the cycle model (headless: no DOM needed). npx tsx scripts/evlab-cycle-test.ts
 import * as THREE from 'three';
 import { CYCLE, CYCLE_PAINT, Cycle, CycleKit, buildCycle } from '../src/evlab/EVLabCycle';
+import { RIDE } from '../src/evlab/EVLabCyclistPose';
 
 let fails = 0;
 const ok = (c: boolean, m: string): void => { if (!c) { fails++; console.error('FAIL: ' + m); } };
@@ -125,6 +126,12 @@ ok(dist > 0.45 && dist < 0.7, 'saddle to grip reach is a rider-size distance: ' 
 c.dispose();
 ok(c.root.parent === null, 'dispose detaches');
 kit.dispose();
+
+// Step 10: the rider's pose maths (EVLabCyclistPose, no three.js) keeps its own copy of the saddle / pedal / grip numbers: they must match the model
+ok(near(RIDE.saddle.y, CYCLE.saddle[1], 1e-9) && near(RIDE.saddle.z, CYCLE.saddle[2], 1e-9), 'RIDE.saddle = CYCLE.saddle');
+ok(near(RIDE.bb.y, CYCLE.bb[1], 1e-9) && near(RIDE.bb.z, CYCLE.bb[2], 1e-9) && near(RIDE.crankLen, CYCLE.crankLen, 1e-9), 'RIDE.bb / crank = CYCLE');
+ok(near(RIDE.pedalX, CYCLE.pedal[0][0], 1e-9), 'RIDE.pedalX = CYCLE.pedal');
+ok(near(RIDE.grip.x, CYCLE.grip[0][0], 1e-9) && near(RIDE.grip.y, CYCLE.grip[0][1], 1e-9) && near(RIDE.grip.z, CYCLE.grip[0][2], 1e-9), 'RIDE.grip = CYCLE.grip');
 
 if (fails) { console.error(fails + ' FAIL'); process.exit(1); }
 console.log('evlab cycle: all ok');

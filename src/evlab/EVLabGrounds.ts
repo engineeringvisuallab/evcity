@@ -9,6 +9,7 @@ import { FOUNTAINS, ISLAND, LAKE, PLAZA, RING, ROAD_RECTS, WATER_Y, contour } fr
 import { buildBridges } from './EVLabBridges';
 import { buildFountains } from './EVLabFountains';
 import { buildParkingLot } from './EVLabParkingLot';
+import { buildCycleRack } from './EVLabCycleRackMesh';
 import { asphaltTexture, roadStrip, runsOf, wallStrip } from './EVLabRoads';
 import type { Parts } from './EVLabParts';
 
@@ -82,6 +83,8 @@ export function buildGrounds(P: Parts, ground?: (x: number, z: number) => number
   const lot = buildParkingLot(P, road, ground);
   g.add(lot.group);
   for (const l of lot.lamps) lampSpots.push(l);
+  // Step 10: the cycle rack on the plaza, east of the portal
+  g.add(buildCycleRack(P));
 
   // ---------------------------------------------------------------- lamps (one instanced pole + one lamp ball for all of them)
   const poleGeo = k.own(new THREE.CylinderGeometry(0.1, 0.14, 6, 6)), lampGeo = k.own(new THREE.SphereGeometry(0.4, 8, 6));

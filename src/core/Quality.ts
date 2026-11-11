@@ -80,6 +80,8 @@ export interface QualitySettings {
   signPaintPerFrame: number;
   /** EVLab step 8: how many cars (with their drivers) come to a presentation. */
   evlabArrivals: number;
+  /** EVLab step 10: how many people come to a presentation by cycle (each one is a cycle of ~14 meshes + a rider). */
+  evlabCyclists: number;
   /** EVLab Presentation Hall: share of the seats that get a person during a presentation (0.62 = about 1800 people; each one is 8 instanced parts). */
   hallFill: number;
   /** Junction road mirrors: how many nearby mirrors show the real scene at once (0 = only the painted picture). */
@@ -97,7 +99,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
     treeMul: 0.3, rockMul: 0.3, grassMul: 0.6, grassDense: 2, treeMaxLod: 1, grassRadius: 35, grassBlades: 0.6,
     peopleTarget: 12, trafficTarget: 12, maxBuses: 2, flockCount: 4, landAnimals: 24, predators: 2, dolphins: 3, fishSchools: 4,
     lampStepMul: 1.6, roadsideMul: 0.55, grassWind: 0, lightFxDist: 45, farmMul: 0.65, siteDisposeMul: 2.5, siteMerge: true, siteShadowMinR: 1.2, maxAniso: 2, shadowInterval: 2,
-    signRadiusMul: 0.6, signPaintPerFrame: 1, evlabArrivals: 2,
+    signRadiusMul: 0.6, signPaintPerFrame: 1, evlabArrivals: 2, evlabCyclists: 2,
     hallFill: 0.22,
     mirrorLive: 0, mirrorLiveDist: 30, mirrorTex: 256, // low: no extra scene render for the road mirrors (the painted picture stays)
   },
@@ -107,7 +109,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
     treeMul: 0.5, rockMul: 0.5, grassMul: 0.85, grassDense: 3, treeMaxLod: 1, grassRadius: 35, grassBlades: 0.8,
     peopleTarget: 22, trafficTarget: 22, maxBuses: 3, flockCount: 8, landAnimals: 42, predators: 3, dolphins: 5, fishSchools: 7,
     lampStepMul: 1.25, roadsideMul: 0.8, grassWind: 0, lightFxDist: 80, farmMul: 0.85, siteDisposeMul: 0, siteMerge: true, siteShadowMinR: 0.5, maxAniso: 4, shadowInterval: 1,
-    signRadiusMul: 0.8, signPaintPerFrame: 2, evlabArrivals: 4,
+    signRadiusMul: 0.8, signPaintPerFrame: 2, evlabArrivals: 4, evlabCyclists: 3,
     hallFill: 0.4,
     mirrorLive: 1, mirrorLiveDist: 40, mirrorTex: 384,
   },
@@ -117,7 +119,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
     treeMul: 0.7, rockMul: 0.7, grassMul: 1, grassDense: 4, treeMaxLod: 1, grassRadius: 35, grassBlades: 1,
     peopleTarget: 34, trafficTarget: 34, maxBuses: 5, flockCount: 12, landAnimals: 64, predators: 4, dolphins: 8, fishSchools: 10,
     lampStepMul: 1, roadsideMul: 1, grassWind: 0, lightFxDist: 130, farmMul: 1, siteDisposeMul: 0, siteMerge: true, siteShadowMinR: 0, maxAniso: 16, shadowInterval: 1,
-    signRadiusMul: 1, signPaintPerFrame: 3, evlabArrivals: 5,
+    signRadiusMul: 1, signPaintPerFrame: 3, evlabArrivals: 5, evlabCyclists: 4,
     hallFill: 0.62,
     mirrorLive: 2, mirrorLiveDist: 50, mirrorTex: 512,
   },

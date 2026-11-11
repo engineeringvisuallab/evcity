@@ -3,6 +3,7 @@
 // All coordinates are BUILDING-LOCAL metres (x = east, z = south, origin = centre of the tower podium), same frame as EVLabLayout.
 
 import { inParkingZone } from './EVLabParking';
+import { inRackZone } from './EVLabCycleRack';
 
 const smoothstep = (a: number, b: number, x: number): number => {
   const t = x <= a ? 0 : x >= b ? 1 : (x - a) / (b - a);
@@ -185,7 +186,8 @@ export function parkTrees(halfX = 236, zMin = -205, zMax = 226): ParkTree[] {
     }
   }
   // the car park and its entry road (EVLabParking) stay free of trees. Filtering at the END keeps the random sequence, so every other tree stays exactly where it was.
-  cache = out.filter((t) => !inParkingZone(t.x, t.z, 4));
+  // (the cycle rack on the plaza (EVLabCycleRack) also keeps the one plaza tree that stood on its pad away)
+  cache = out.filter((t) => !inParkingZone(t.x, t.z, 4) && !inRackZone(t.x, t.z, 2.5));
   return cache;
 }
 

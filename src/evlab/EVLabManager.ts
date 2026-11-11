@@ -27,6 +27,9 @@ import { outriggerSolids } from './EVLabStructure';
 import { BLOCK_PIVOT } from './EVLabLayout';
 import type { LiftHost } from './EVLabLifts';
 import { EVLabArrivals } from './EVLabArrivals';
+import { EVLabCyclists } from './EVLabCyclists';
+import { RealCyclistFactory } from './EVLabCyclistModels';
+import { Q } from '../core/Quality';
 
 export interface EVLabDeps {
   root: THREE.Object3D; // world.root: children use ABSOLUTE world coordinates
@@ -73,6 +76,8 @@ export class EVLabManager {
   private grounds: GroundsBuild;
   /** Step 8: the people who come to the presentation by car (cars + drivers, drawn only). */
   private arrivals = new EVLabArrivals();
+  /** Step 10: the people who come by cycle (cycles + riders, drawn only; the cycles share one kit that is built on the first cycle). */
+  private cyclists = new EVLabCyclists(new RealCyclistFactory());
   private interior = new THREE.Group();
   private body: RAPIER.RigidBody;
   private p = new THREE.Vector3();
@@ -103,7 +108,7 @@ export class EVLabManager {
     if (typeof document !== 'undefined' && document.body) this.ui = new LiftUI(d.lockTarget);
     this.tower = new TowerView(parts, TT, this.liftHost(), { teleportLocal: (x, y, z) => this.teleportLocal(x, y, z) }, this.ui);
     this.interior.add(this.lobby.group, this.wings.group, this.hall.group, this.tower.group);
-    this.group.add(this.shell.group, this.facade.group, this.grounds.group, this.interior, this.arrivals.group);
+    this.group.add(this.shell.group, this.facade.group, this.grounds.group, this.interior, this.arrivals.group, this.cyclists.group);
     d.root.add(this.group);
   }
 
@@ -215,6 +220,7 @@ export class EVLabManager {
     this.onStage = true;
     this.hall.audience.setPresent(true);
     this.arrivals.start();
+    this.cyclists.start(Q.evlabCyclists);
   }
 
   /** Back to the front of the portal. */
@@ -228,6 +234,7 @@ export class EVLabManager {
     this.hall.audience.setMood('idle');
     this.hall.audience.setPresent(false);
     this.arrivals.dismiss();
+    this.cyclists.dismiss();
   }
 
   /** Step 6: the presentation mission is over: the audience gets up and leaves through the doors (the player stays where he is). */
@@ -237,6 +244,7 @@ export class EVLabManager {
     this.hall.audience.setMood('idle');
     this.hall.audience.dismiss();
     this.arrivals.dismiss();
+    this.cyclists.dismiss();
   }
 
   showSlide(slide: ScreenSlide | null, topic: string): void {
@@ -266,6 +274,7 @@ export class EVLabManager {
       this.grounds.setNight(nk);
     }
     this.arrivals.update(dt);
+    this.cyclists.update(dt);
     this.shell.update(t);
     this.facade.update(t);
     if (dist < 700) this.grounds.update(t);
@@ -280,6 +289,7 @@ export class EVLabManager {
 
   dispose(): void {
     this.arrivals.dispose();
+    this.cyclists.dispose();
     this.tower.dispose();
     this.ui?.dispose();
     for (const b of this.cabBodies) this.d.physics.world.removeRigidBody(b);

@@ -26,6 +26,7 @@
     "test:evlab-parking": "tsx scripts/evlab-parking-test.ts",
     "test:evlab-arrivals": "tsx scripts/evlab-arrivals-test.ts",
     "test:evlab-cycle": "tsx scripts/evlab-cycle-test.ts",
+    "test:evlab-cyclists": "tsx scripts/evlab-cyclists-test.ts",
     "test:evlab-audience": "tsx scripts/evlab-audience-test.ts && tsx scripts/evlab-audience-model-test.ts",
     "test:farm": "tsx scripts/farm-test.ts",
     "test:vehicle-factory": "tsx scripts/vehicle-factory-test.ts",

@@ -343,6 +343,29 @@ export class PersonModel {
     }
   }
 
+  /**
+   * A seated person whose limbs are posed every frame (a cyclist: the legs follow the pedals, the hands stay on the grips). Call setSeated(true, pose with
+   * lean != 0) first. Angles as in SeatPose (thigh / arm from straight down, negative = forward; knee + = shin back; elbow negative = forearm forward);
+   * index 0 = the side at x < 0, 1 = the side at x > 0. `lean` tips the upper body forward about the hips.
+   */
+  setSeatedLimbs(lean: number, thigh: readonly [number, number], knee: readonly [number, number], arm: readonly [number, number], elbow: readonly [number, number], spread = 0.11): void {
+    if (!this.seated) return;
+    this.splitFeet();
+    this.pivot.rotation.x = lean;
+    const legs = [this.legL, this.legR], shins = [this.shinL, this.shinR], feet = [this.footL, this.footR];
+    const arms = [this.armL, this.armR], fores = [this.foreL, this.foreR];
+    for (let i = 0; i < 2; i++) {
+      legs[i].rotation.x = thigh[i] - lean;
+      shins[i].rotation.x = knee[i];
+      const foot = feet[i];
+      if (foot) foot.rotation.x = -(thigh[i] + knee[i]); // the sole stays flat on the pedal
+      arms[i].rotation.x = arm[i] - lean;
+      fores[i].rotation.x = elbow[i];
+    }
+    this.legL.position.x = -spread;
+    this.legR.position.x = spread;
+  }
+
   /** Smoothly turn to face `heading` (radians about Y, 0 = +Z). */
   setHeading(heading: number, dt: number): void {
     let d = heading - this.root.rotation.y;
