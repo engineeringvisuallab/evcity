@@ -29,13 +29,14 @@ export function buildWings(P: Parts): WingsBuild {
   // ---- instancing helpers (a lot of desks / benches / chairs: a few draw calls)
   const unitBox = k.own(new THREE.BoxGeometry(1, 1, 1));
   const unitCyl = k.own(new THREE.CylinderGeometry(1, 1, 1, 14));
-  const pending = new Map<THREE.Material, { geo: THREE.BufferGeometry; list: THREE.Matrix4[] }>();
+  // one list of matrices per (geometry, material) pair: the same material may be used on boxes and on cylinders
+  const pending = new Map<THREE.BufferGeometry, Map<THREE.Material, THREE.Matrix4[]>>();
   const put = (geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: number, z: number, sx: number, sy: number, sz: number): void => {
-    const key = mat;
-    const e = pending.get(key) ?? { geo, list: [] };
-    if (e.geo !== geo) throw new Error('one geometry per material in put()');
-    e.list.push(new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion(), new THREE.Vector3(sx, sy, sz)));
-    pending.set(key, e);
+    const byMat = pending.get(geo) ?? new Map<THREE.Material, THREE.Matrix4[]>();
+    const list = byMat.get(mat) ?? [];
+    list.push(new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion(), new THREE.Vector3(sx, sy, sz)));
+    byMat.set(mat, list);
+    pending.set(geo, byMat);
   };
   const box = (mat: THREE.Material, x: number, y: number, z: number, w: number, h: number, d: number): void => put(unitBox, mat, x, y, z, w, h, d);
   const cyl = (mat: THREE.Material, x: number, y: number, z: number, r: number, h: number): void => put(unitCyl, mat, x, y, z, r, h, r);
@@ -160,11 +161,13 @@ export function buildWings(P: Parts): WingsBuild {
   }
 
   // ---- flush the instanced pieces: one InstancedMesh per material
-  for (const [mat, e] of pending) {
-    const im = new THREE.InstancedMesh(e.geo, mat, e.list.length);
-    e.list.forEach((m, i) => im.setMatrixAt(i, m));
-    im.frustumCulled = false;
-    g.add(im);
+  for (const [geo, byMat] of pending) {
+    for (const [mat, list] of byMat) {
+      const im = new THREE.InstancedMesh(geo, mat, list.length);
+      list.forEach((m, i) => im.setMatrixAt(i, m));
+      im.frustumCulled = false;
+      g.add(im);
+    }
   }
 
   return { group: g, solids, update: (tt) => anim.forEach((f) => f(tt)) };

@@ -18,6 +18,7 @@ const { makeTextures } = await import('../src/evlab/EVLabTextures');
 const { buildShell } = await import('../src/evlab/EVLabShell');
 const { buildLobby } = await import('../src/evlab/EVLabLobby');
 const { buildHall } = await import('../src/evlab/EVLabHall');
+const { buildWings } = await import('../src/evlab/EVLabWings');
 const { buildGrounds } = await import('../src/evlab/EVLabGrounds');
 const { makeTowerTextures } = await import('../src/evlab/EVLabTowerTextures');
 const { buildFacade } = await import('../src/evlab/EVLabFacade');
@@ -41,11 +42,12 @@ const parts = new Parts(kit, makeTextures(kit));
 const shell = buildShell(parts);
 const lobby = buildLobby(parts);
 const hall = buildHall(parts);
+const wings = buildWings(parts);
 const grounds = buildGrounds(parts);
 const TT = makeTowerTextures(kit);
 const facade = buildFacade(parts, TT);
 const all = new THREE.Group();
-all.add(shell.group, facade.group, lobby.group, hall.group, grounds.group);
+all.add(shell.group, facade.group, lobby.group, wings.group, hall.group, grounds.group);
 
 function stats(g: THREE.Object3D): { meshes: number; instanced: number; tris: number } {
   let meshes = 0, instanced = 0, tris = 0;
@@ -63,7 +65,7 @@ function stats(g: THREE.Object3D): { meshes: number; instanced: number; tris: nu
   });
   return { meshes, instanced, tris: Math.round(tris) };
 }
-for (const [name, g] of [['shell', shell.group], ['lobby', lobby.group], ['hall', hall.group], ['grounds', grounds.group], ['facade', facade.group]] as const) {
+for (const [name, g] of [['shell', shell.group], ['lobby', lobby.group], ['wings', wings.group], ['hall', hall.group], ['grounds', grounds.group], ['facade', facade.group]] as const) {
   const s = stats(g);
   console.log(`${name.padEnd(8)} ${String(s.meshes).padStart(4)} meshes (${s.instanced} instanced)  ${String(s.tris).padStart(8)} triangles`);
 }
@@ -77,7 +79,7 @@ console.log(`audience: ${hall.audience.peopleCount} people on ${hall.audience.se
 ok(hall.audience.peopleCount > 1000, 'a crowded hall');
 
 const tcore = TL.coreColliders();
-const solids = [...shell.solids, ...lobby.solids, ...hall.solids, ...tcore.solids];
+const solids = [...shell.solids, ...lobby.solids, ...wings.solids, ...hall.solids, ...tcore.solids];
 for (const s of solids) ok(s[0] < s[1] && s[2] < s[3] && s[4] < s[5] && s.every(Number.isFinite), `bad solid ${s.join(',')}`);
 console.log(`${solids.length} colliders + ${lobby.ramps.length + hall.ramps.length} ramps`);
 
@@ -126,7 +128,8 @@ ok(reach(0, 10), 'hall: the rear aisle is reachable (entrance ramp)');
 ok(reach(-15, -10) && reach(15, -10), 'hall: the aisles lead down to the front');
 ok(reach(0, -27), 'hall: the front of the hall is reachable');
 ok(reach(0, -34.8), `stage: the spot behind the lectern is reachable (${L.PRESENTER.x}, ${L.PRESENTER.z})`);
-ok(reach(65, -30) && reach(-65, -30), 'galleries: reachable from the lobby');
+ok(reach(71, -30) && reach(-71, -30), 'wings: the Main Office and the Lab are reachable from the lobby');
+ok(reach(-71.25, 10) && reach(71.25, 10) && reach(-71.25, -50) && reach(71.25, -50), 'wings: the aisle from each door to the back wall is open');
 ok(!reach(0, -20), 'seat blocks must block (centre of a row)');
 
 // ---- every ramp collider: the TOP face of the tilted cuboid must pass through both ends of the ramp
