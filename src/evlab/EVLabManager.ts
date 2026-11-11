@@ -26,6 +26,7 @@ import { CAB, LIFTS, T, blockToWorld, coreColliders, levelSolids, type Obb } fro
 import { outriggerSolids } from './EVLabStructure';
 import { BLOCK_PIVOT } from './EVLabLayout';
 import type { LiftHost } from './EVLabLifts';
+import { EVLabArrivals } from './EVLabArrivals';
 
 export interface EVLabDeps {
   root: THREE.Object3D; // world.root: children use ABSOLUTE world coordinates
@@ -70,6 +71,8 @@ export class EVLabManager {
   private wings: WingsBuild;
   private hall: HallBuild;
   private grounds: GroundsBuild;
+  /** Step 8: the people who come to the presentation by car (cars + drivers, drawn only). */
+  private arrivals = new EVLabArrivals();
   private interior = new THREE.Group();
   private body: RAPIER.RigidBody;
   private p = new THREE.Vector3();
@@ -100,7 +103,7 @@ export class EVLabManager {
     if (typeof document !== 'undefined' && document.body) this.ui = new LiftUI(d.lockTarget);
     this.tower = new TowerView(parts, TT, this.liftHost(), { teleportLocal: (x, y, z) => this.teleportLocal(x, y, z) }, this.ui);
     this.interior.add(this.lobby.group, this.wings.group, this.hall.group, this.tower.group);
-    this.group.add(this.shell.group, this.facade.group, this.grounds.group, this.interior);
+    this.group.add(this.shell.group, this.facade.group, this.grounds.group, this.interior, this.arrivals.group);
     d.root.add(this.group);
   }
 
@@ -211,6 +214,7 @@ export class EVLabManager {
     this.d.faceSouth();
     this.onStage = true;
     this.hall.audience.setPresent(true);
+    this.arrivals.start();
   }
 
   /** Back to the front of the portal. */
@@ -223,6 +227,7 @@ export class EVLabManager {
     this.hall.showSlide(null, '');
     this.hall.audience.setMood('idle');
     this.hall.audience.setPresent(false);
+    this.arrivals.dismiss();
   }
 
   /** Step 6: the presentation mission is over: the audience gets up and leaves through the doors (the player stays where he is). */
@@ -231,6 +236,7 @@ export class EVLabManager {
     this.hall.showSlide(null, '');
     this.hall.audience.setMood('idle');
     this.hall.audience.dismiss();
+    this.arrivals.dismiss();
   }
 
   showSlide(slide: ScreenSlide | null, topic: string): void {
@@ -259,6 +265,7 @@ export class EVLabManager {
       this.facade.setNight(nk);
       this.grounds.setNight(nk);
     }
+    this.arrivals.update(dt);
     this.shell.update(t);
     this.facade.update(t);
     if (dist < 700) this.grounds.update(t);
@@ -272,6 +279,7 @@ export class EVLabManager {
   }
 
   dispose(): void {
+    this.arrivals.dispose();
     this.tower.dispose();
     this.ui?.dispose();
     for (const b of this.cabBodies) this.d.physics.world.removeRigidBody(b);

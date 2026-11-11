@@ -2,7 +2,7 @@
 
 Notun chat-e evcity.zip attach kore age "Part A" paste koro. Tarpor ek chat-e ek step, "Part C" theke.
 
-**Ekhon porjonto: Step 1, 1.1, 2, 3, 4, 5, 6, 7 done. Porer step: Step 8 (gari ese park kore). Pending: 1.1b, 1.2a/b/c (alada, pore).** Zip-e step 1-er changed file jodi na thake, step1 folder-er 2 ta file age paste koro.
+**Ekhon porjonto: Step 1, 1.1, 2, 3, 4, 5, 6, 7, 8 done. Porer step: Step 9 (cycle model). Pending: 1.1b, 1.2a/b/c (alada, pore).** Zip-e step 1-er changed file jodi na thake, step1 folder-er 2 ta file age paste koro.
 
 ---
 
@@ -132,6 +132,7 @@ Step 14: EVLabFountains.ts-er fountain-e realistic physics dao: pani-r fota grav
 - **Step 6 (done):** `HallStage` wiring (PresentationHall -> MissionManager -> Engine -> EVLabManager): overlay khulle manush ase, bondho hole `EVLabManager.endPresentation()` -> `audience.dismiss()`: uthe, ulte route diye door diye chole jay, hide. Mood hook (listen/clap/ovation). Overlay ekhono opaque (3D hall tokhon dekha jay na).
 
 - **Step 7 (done):** EVLab campus-er parking lot. Jaiga: lake-er purbo dike, east bridge/promenade-er shesh (building-local x 205..237.6, z 2..81; world x -75..-42, z -258..-179). 4 row (A,B,C,D) nose-in bay 2.6 x 4.8 m, 96 slot, row A-te promenade walkway-er gap. Entry road (10 m) lot-er dokkhin theke F6 highway porjonto (building-local x 221.3, z 81..253 = world x -58.7, z -7); shesh 15 m highway-er level-e (0.54 m niche) namche, ribbon terrain follow kore. `src/evlab/EVLabParking.ts` (pure: `LOT`, `DRIVE`, `ROWS`, `SLOTS` {id,row,x,z,yaw}, `AISLE_X`, `CROSS_Z`, `ENTRY_ROUTE`, `LAMPS`, `inParkingZone`) = Step 8-er jonno data. `EVLabParkingLot.ts` (mesh: asphalt, 1 merged paint mesh, kerb, entry road, 4 lamp). `EVLabSite.ts`: entry road-er flat strip (`DRIVE_X`) + street keep-out. `EVLabCampus.ts`: park tree lot-er upor theke filter (baki gach same jaiga-e). `EVLabGrounds.ts`: `buildGrounds(P, ground?)`. `EVLabRoads.ts`: `roadStrip(..., ys?)`. Test: `npm run test:evlab-parking` (31 check). Gari ekhono nei (Step 8). Ager "EVLAB_LOT" (ParkingSite.ts) mall-er start fleet lot, eta alada.
+- **Step 8 (done):** Mission-e gari ese park kore. `src/evlab/EVLabArrivalPath.ts` (pure: `planArrivals`, `ARRIVAL_CARS`, route/`sampleRoute`/`roundCorners`, `speedIn/Out`) + `EVLabArrivals.ts` (state machine: wait, driveIn, park, walkIn, inside, walkOut, board, back, turn, driveOut, gone; game-er `VehicleModel`/`PersonModel`, physics nei). `EVLabManager`: `enterStage` -> `arrivals.start()`, `endPresentation`/`leaveStage` -> `arrivals.dismiss()`, update/dispose. Songkha `Q.evlabArrivals` (2/4/5). Test: `npm run test:evlab-arrivals`. Browser-e real model chokh diye dekha baki (node-e VehicleModel chole na).
 
 ## Notun steps (user chaiechhe: 1.1 ar 1.2)
 
