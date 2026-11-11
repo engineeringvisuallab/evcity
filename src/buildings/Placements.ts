@@ -32,7 +32,7 @@ export const BUILDING_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'villa', x: 660, z: 700, yaw: 3.1416, W: 24, D: 28, zone: 'se-dense' },
   { id: 'apartment-mid', x: 220, z: 20, yaw: 0, W: 18, D: 13, zone: 'metro-core' },
   { id: 'apartment-high', x: 300, z: 80, yaw: -3.1416, W: 27, D: 20, zone: 'metro-core' },
-  { id: 'tower-residential', x: 20, z: -260, yaw: 1.5708, W: 45, D: 45, zone: 'metro-core' },
+  // 'tower-residential' (28 floors, 45 x 45 m) stood at x 20, z -260, right on top of the Main Station Pump Station (pad centre 36.5, -253.4): removed. The model stays in the registry; add a row here to place it somewhere else.
   { id: 'dormitory', x: -1860, z: -940, yaw: 0, W: 33, D: 33, zone: 'nw-university' },
   { id: 'labor-quarters', x: -980, z: 80, yaw: 0, W: 40, D: 11, zone: 'west-homes' },
   { id: 'village-bazaar', x: 2920, z: -900, yaw: -1.5708, W: 64, D: 48, zone: 'village-east' },

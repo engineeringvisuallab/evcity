@@ -5,9 +5,10 @@
 // Trees are NOT made here any more: the park trees are normal game trees (palms, krishnachura, sal, koroi ...), see EVLabParkTrees.
 import * as THREE from 'three';
 import { BLD, type Solid } from './EVLabLayout';
-import { FOUNTAINS, ISLAND, LAKE, PLAZA, RING, ROAD_RECTS, WATER_Y, contour } from './EVLabCampus';
+import { FOUNTAINS, ISLAND, PLAZA, RING, ROAD_RECTS, contour } from './EVLabCampus';
 import { buildBridges } from './EVLabBridges';
 import { buildFountains } from './EVLabFountains';
+import { buildLakeWater } from './EVLabLakeWater';
 import { buildParkingLot } from './EVLabParkingLot';
 import { buildCycleRack } from './EVLabCycleRackMesh';
 import { buildBenches } from './EVLabBenchMesh';
@@ -24,6 +25,9 @@ export interface GroundsBuild {
   /** 0 (day) .. 1 (night): the lamps glow. */
   setNight(k: number): void;
   update(t: number): void;
+  /** Step 13: clock hour (moves the sun / moon glint on the lake) and water detail 0 / 1 / 2 (Q.evlabWater). */
+  setSun(hours: number): void;
+  setWaterDetail(d: number): void;
 }
 
 /** `ground(x, z)` (optional): height of the real ground above the floor level at a building-local point (only the parking lot's entry road uses it). */
@@ -38,8 +42,9 @@ export function buildGrounds(P: Parts, ground?: (x: number, z: number) => number
   const lampSpots: Array<[number, number]> = [];
 
   // ---------------------------------------------------------------- the lake: one water plane (the terrain hides it everywhere except in the carved bed)
-  const water = k.own(new THREE.MeshPhongMaterial({ color: 0x1f6f8f, specular: 0xcdeeff, shininess: 140, transparent: true, opacity: 0.86 }));
-  P.hplane(g, LAKE.cx - LAKE.hx, LAKE.cx + LAKE.hx, LAKE.cz - LAKE.hz, LAKE.cz + LAKE.hz, WATER_Y, water);
+  // Step 13: waves, fresnel, depth colour and ripples at the quay / bridges in one shader (EVLabLakeWater)
+  const lake = buildLakeWater();
+  g.add(lake.mesh);
 
   // ---------------------------------------------------------------- island edge: quay wall + coping (open at the bridge mouths)
   const edge = contour(ISLAND, 0.25, 2);
@@ -118,14 +123,16 @@ export function buildGrounds(P: Parts, ground?: (x: number, z: number) => number
   });
 
   const dayLamp = new THREE.Color(0x555044), nightLamp = new THREE.Color(0xffe6a8);
-  const dayWater = new THREE.Color(0x1f6f8f), nightWater = new THREE.Color(0x0e3550);
   return {
     group: g,
     solids: bridges.solids,
     obbs: benches.obbs,
-    setNight: (n) => { lampMat.color.copy(dayLamp).lerp(nightLamp, n); water.color.copy(dayWater).lerp(nightWater, n); fountains.setNight(n); },
+    setNight: (n) => { lampMat.color.copy(dayLamp).lerp(nightLamp, n); lake.setNight(n); fountains.setNight(n); },
+    setSun: (h) => lake.setSun(h),
+    setWaterDetail: (d) => lake.setDetail(d),
     update: (tt) => {
       flags.forEach((f, i) => { f.rotation.y = Math.sin(tt * 2.1 + i) * 0.25; f.scale.x = 0.92 + Math.sin(tt * 3.3 + i * 1.7) * 0.06; });
+      lake.update(tt);
       fountains.update(tt);
     },
   };

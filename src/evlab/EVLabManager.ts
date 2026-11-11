@@ -29,6 +29,7 @@ import type { LiftHost } from './EVLabLifts';
 import { EVLabArrivals } from './EVLabArrivals';
 import { EVLabCyclists } from './EVLabCyclists';
 import { RealCyclistFactory } from './EVLabCyclistModels';
+import { EVLabBenchSitters, RealSitterFactory } from './EVLabBenchSitters';
 import { Q } from '../core/Quality';
 
 export interface EVLabDeps {
@@ -48,6 +49,7 @@ export interface EVLabDeps {
 
 const SHOW_DIST = 4200; // the tower is drawn this far (it is 440 m high)
 const INTERIOR_DIST = 320; // hall + lobby are drawn / animated this near
+const SITTERS_DIST = 260; // the people on the benches are built / drawn this near
 
 /** 0 (day) .. 1 (night), smooth at dusk and dawn. */
 function nightOf(h: number): number {
@@ -78,6 +80,8 @@ export class EVLabManager {
   private arrivals = new EVLabArrivals();
   /** Step 10: the people who come by cycle (cycles + riders, drawn only; the cycles share one kit that is built on the first cycle). */
   private cyclists = new EVLabCyclists(new RealCyclistFactory());
+  /** Step 12: the people who sit on the outdoor benches (real PersonModel each, built when the player first comes near, no per-frame cost). */
+  private sitters = new EVLabBenchSitters(new RealSitterFactory());
   private interior = new THREE.Group();
   private body: RAPIER.RigidBody;
   private p = new THREE.Vector3();
@@ -108,7 +112,7 @@ export class EVLabManager {
     if (typeof document !== 'undefined' && document.body) this.ui = new LiftUI(d.lockTarget);
     this.tower = new TowerView(parts, TT, this.liftHost(), { teleportLocal: (x, y, z) => this.teleportLocal(x, y, z) }, this.ui);
     this.interior.add(this.lobby.group, this.wings.group, this.hall.group, this.tower.group);
-    this.group.add(this.shell.group, this.facade.group, this.grounds.group, this.interior, this.arrivals.group, this.cyclists.group);
+    this.group.add(this.shell.group, this.facade.group, this.grounds.group, this.interior, this.arrivals.group, this.cyclists.group, this.sitters.group);
     d.root.add(this.group);
   }
 
@@ -275,6 +279,10 @@ export class EVLabManager {
     }
     this.arrivals.update(dt);
     this.cyclists.update(dt);
+    this.sitters.setCount(Q.evlabBenchSitters);
+    this.grounds.setWaterDetail(Q.evlabWater);
+    this.grounds.setSun(hours);
+    this.sitters.show(dist < SITTERS_DIST);
     this.shell.update(t);
     this.facade.update(t);
     if (dist < 700) this.grounds.update(t);
@@ -290,6 +298,7 @@ export class EVLabManager {
   dispose(): void {
     this.arrivals.dispose();
     this.cyclists.dispose();
+    this.sitters.dispose();
     this.tower.dispose();
     this.ui?.dispose();
     for (const b of this.cabBodies) this.d.physics.world.removeRigidBody(b);

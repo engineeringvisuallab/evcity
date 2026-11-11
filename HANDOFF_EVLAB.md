@@ -2,7 +2,7 @@
 
 Notun chat-e evcity.zip attach kore age "Part A" paste koro. Tarpor ek chat-e ek step, "Part C" theke.
 
-**Ekhon porjonto: Step 1, 1.1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 done. Porer step: Step 12 (bench-e manush). Pending: 1.1b, 1.2a/b/c (alada, pore).** Zip-e step 1-er changed file jodi na thake, step1 folder-er 2 ta file age paste koro.
+**Ekhon porjonto: Step 1, 1.1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 done. Porer step: Step 14 (fountain physics). Pending: 1.1b, 1.2a/b/c (alada, pore).** Zip-e step 1-er changed file jodi na thake, step1 folder-er 2 ta file age paste koro.
 
 ---
 
@@ -137,6 +137,11 @@ Step 14: EVLabFountains.ts-er fountain-e realistic physics dao: pani-r fota grav
 - **Step 10 (done):** Cycle rack + cycle-wala manush. Rack: plaza-r purbo dike (building-local x 24..34, z 63.5..66.5, portal-er purbo-dokkhin), 6 ta steel hoop (1 InstancedMesh) + 12 bay, shob cycle nose uttore (building-er dike). `src/evlab/EVLabCycleRack.ts` (pure: `RACK`, `CYCLE_SLOTS`, `RACK_PAD`, `inRackZone`), `EVLabCycleRackMesh.ts` (hoop + pad), `EVLabGrounds.ts` e `buildCycleRack`. `EVLabCampus.ts`: rack pad-e porha ekta debdaru (x 34, z 64) filter hoy. Cyclist: `EVLabCyclistPath.ts` (pure: route avenue -> south bridge -> plaza -> bay, `planCyclists`, speed), `EVLabCyclistPose.ts` (pure: rider IK, pa pedal-e, haat grip-e), `EVLabCyclists.ts` (state machine: wait, rideIn, park, walkIn, inside, walkOut, mount, back, turn, rideOut, gone), `EVLabCyclistModels.ts` (real `Cycle` + `PersonModel`). `PersonModel.setSeatedLimbs` (notun, CRLF) = cyclist-er pa/haat pose. `EVLabManager`: `enterStage` -> `cyclists.start(Q.evlabCyclists)`, `endPresentation`/`leaveStage` -> `cyclists.dismiss()`. Songkha `Q.evlabCyclists` (2/3/4). Test: `npm run test:evlab-cyclists` (+ `test:evlab-cycle`-e RIDE = CYCLE check). Browser-e real model chokh diye dekha baki.
 - **Step 11 (done):** Bairer bosar bench. 65 ta (plaza 18, island quay 24, lake-er bairer bank 23), 195 ta bosar jaiga. `src/evlab/EVLabBenches.ts` (pure: `BENCH`, `benches()`, `benchSeats()` = Step 12-er jonno {id, bench, x, y, z, yaw}, `benchObbs()`, `inBenchZone()`, `plazaPoles()`), `EVLabBenchMesh.ts` (2 InstancedMesh: wood + steel, castShadow false). `EVLabGrounds.ts`: `buildBenches`, `GroundsBuild.obbs`. `EVLabManager.ts`: bench collider (ghurano box, 65 ta) `obbs` e. Notun tree nei (`parkTrees` ager moto); bench gach, road, bridge, ring road, lake, parking, cycle rack, fountain, lamp ar cyclist/driver route theke dure thake. Test: `npm run test:evlab-benches`. Browser-e real `three` diye chokh-e dekha baki.
 
+- **Step 12 (done):** Bench-e manush. Real `PersonModel` (game-er nijer manush), `Q.evlabBenchSitters` = 6/12/20 jon (65 bench-er moddhe, bakigulo khali). `src/evlab/EVLabSitterPlan.ts` (pure: `planSitters(count)`, `sitPose(scale, hands)` = pa duto maatite thake (two-link), `sitterHip`, `SIT`), `EVLabBenchSitters.ts` (`EVLabBenchSitters`, `RealSitterFactory`: player 260 m-er kache ashle prothom bar build, dure gele hide, ekbar pose dile per-frame kaj nei). `EVLabManager.ts`: `sitters.group` + `setCount`/`show`. Ek bench-e max 2 jon (dui pranter seat), ek jon thakle jekono seat; plaza/island/bank-e bench-er songkhar onupate bhag kora. Physics nei (shudhu dekha jay). Test: `npm run test:evlab-sitters`. Browser-e real model chokh diye dekha baki.
+- **Main Station pump station-er upor-er building (done):** `tower-residential` (28 tola, 45x45 m, x 20 z -260) `Placements.ts` theke remove (model registry-te ache). `placements-test.ts`: UNPLACED list + check 2b (pump pad-er upor kono building nei).
+
+- **Step 13 (done):** Lake water. Ager `MeshPhongMaterial` plane-er jaygay ekta shader plane (4 vertex, vertex-er kaj nei, extra render pass nei). `src/evlab/EVLabLakeWater.ts`: `buildLakeWater()`, `LAKE_WAVES` (5 wave, 14 m theke 0.9 m, deep-water speed), `lakeSlope`, `shoreDist`, `rippleSlope`, `sunFromHours`. Wave normal-e, fresnel (sky + sun/moon glint ar nijer sobuj-nil rong), depth (quay/bank-er kache halka ar swochho, majhkhane gobhir), quay ar bank theke ripple ring, bridge-er pashe ripple (detail 2), quay-te halka foam. `Q.evlabWater` 0/1/2 (low/medium/high = 2/4/5 wave, 1+ ripple+foam, 2 bridge ripple). `EVLabGrounds.ts`: `buildLakeWater`, `setSun(hours)`, `setWaterDetail(d)`; `EVLabManager.ts` prottek frame e duto call kore. Sky reflection ekta gradient (planar reflection na, tai building-er chhaya paniote dekha jabe na). Test: `npm run test:evlab-lake`; GLSL glslang diye validate kora (vertex + fragment). Browser-e chokh diye dekha baki.
+
 ## Notun steps (user chaiechhe: 1.1 ar 1.2)
 
 - **1.1b (pore):** podium-e column (tower-er column ground porjonto transfer, lobby-te), hall roof-e long-span truss, mech floor (21, 41, 60, 70) e outrigger / belt truss.
@@ -162,6 +167,6 @@ Step 14: EVLabFountains.ts-er fountain-e realistic physics dao: pani-r fota grav
 - [x] 9 Cycle model
 - [x] 10 Cycle rack + cycle-wala (done, CHANGES_EVLAB_STEP10_BN.md)
 - [x] 11 Bairer bench (done, CHANGES_EVLAB_STEP11_BN.md)
-- [ ] 12 Bench-e manush
-- [ ] 13 Lake water physics
+- [x] 12 Bench-e manush (done, CHANGES_EVLAB_STEP12_BN.md)
+- [x] 13 Lake water physics
 - [ ] 14 Fountain physics

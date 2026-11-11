@@ -10,7 +10,7 @@ import { libraryKeepout } from '../src/library/LibrarySite';
 import { mallKeepout } from '../src/mall/MallSite';
 import { evlabKeepout } from '../src/evlab/EVLabSite';
 import { protoKeepout } from '../src/buildings/ProtoSite';
-import { infraKeepout } from '../src/engineering/InfraSites';
+import { INFRA_PLACEMENTS, infraKeepout } from '../src/engineering/InfraSites';
 import { airportKeepout } from '../src/airport/AirportSite';
 import { agroKeepout } from '../src/agro/AgroSite';
 import { getWorldZoneAt } from '../src/city/WorldZones';
@@ -18,10 +18,11 @@ import { getWorldZoneAt } from '../src/city/WorldZones';
 let fails = 0;
 const ok = (c: boolean, m: string) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++; };
 
-// 1. every registry model has exactly one placement (police_station = ProtoSite)
+// 1. every registry model has exactly one placement (police_station = ProtoSite, tower-residential = deliberately unplaced)
 const reg = readFileSync('src/buildings/models/registry.ts', 'utf8');
 const ids = [...reg.matchAll(/\{ id: '([^']+)'/g)].map((m) => m[1]);
-const missing = ids.filter((id) => id !== 'police_station' && !BUILDING_PLACEMENTS.some((p) => p.id === id));
+const UNPLACED = ['police_station', 'tower-residential']; // police station = ProtoSite; the residential tower was removed from the Main Station pump station (it stood on its pad)
+const missing = ids.filter((id) => !UNPLACED.includes(id) && !BUILDING_PLACEMENTS.some((p) => p.id === id));
 const extra = BUILDING_PLACEMENTS.filter((p) => !ids.includes(p.id)).map((p) => p.id);
 const dup = BUILDING_PLACEMENTS.filter((p, i) => BUILDING_PLACEMENTS.findIndex((q) => q.id === p.id) !== i).map((p) => p.id);
 ok(missing.length === 0, `every registry model (${ids.length}) is placed (missing: ${missing.join(', ') || 'none'})`);
@@ -71,6 +72,22 @@ for (let i = 0; i < BUILDING_PLACEMENTS.length; i++) for (let j = i + 1; j < BUI
   }
 }
 ok(overlaps === 0, 'no two building footprints overlap');
+
+// 2b. nothing stands on the Main Station pump station (pad 50 x 36 m): no building footprint touches it (2 m margin)
+{
+  const pump = INFRA_PLACEMENTS.find((q) => q.id === 'pump')!;
+  const pc = Math.cos(pump.yaw), ps = Math.sin(pump.yaw);
+  const onPad = (x: number, z: number): boolean => { const dx = x - pump.x, dz = z - pump.z; const lx = dx * pc - dz * ps, lz = dx * ps + dz * pc; return Math.abs(lx) < 25 + 2 && Math.abs(lz) < 18 + 2; };
+  const hit = BUILDING_PLACEMENTS.filter((p) => {
+    const c = Math.cos(p.yaw), sn = Math.sin(p.yaw);
+    for (let i = 0; i <= 10; i++) for (let j = 0; j <= 10; j++) {
+      const lx = -p.W / 2 + (i / 10) * p.W, lz = -p.D / 2 + (j / 10) * p.D;
+      if (onPad(p.x + lx * c + lz * sn, p.z - lx * sn + lz * c)) return true;
+    }
+    return false;
+  });
+  ok(hit.length === 0, `no building stands on the Main Station pump station (${hit.map((h) => h.id).join(', ') || 'none'})`);
+}
 
 // 3. helpers
 const p0 = BUILDING_PLACEMENTS[0];
