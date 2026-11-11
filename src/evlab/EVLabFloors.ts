@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Parts } from './EVLabParts';
 import type { TowerTextures } from './EVLabTowerTextures';
-import { CORE, FLOORS, ROOF_Y, T, ceilY, floorPlan, inRing, levelY, ringOf, ringPoints, type FloorKind } from './EVLabTowerLayout';
+import { CORES, FLOORS, ROOF_Y, T, ceilY, floorPlan, inRing, levelY, ringOf, ringPoints, type FloorKind } from './EVLabTowerLayout';
 
 /** What one level of the tower looks like inside (floor, ceiling lights, glass wall, furniture, signs). Built when the player is near, dropped when far. */
 export interface LevelView {
@@ -39,8 +39,10 @@ export function makeLevelBuilder(P: Parts, TT: TowerTextures): (n: number) => Le
   const plate = (pts: Array<[number, number]>, hole: boolean, up: boolean, y: number, mat: THREE.Material, tile: number): THREE.Mesh => {
     const sh = new THREE.Shape(pts.map(([x, z]) => new THREE.Vector2(x, up ? -z : z)));
     if (hole) {
-      const c = [[CORE.x0, CORE.z0], [CORE.x1, CORE.z0], [CORE.x1, CORE.z1], [CORE.x0, CORE.z1]];
-      sh.holes.push(new THREE.Path(c.map(([x, z]) => new THREE.Vector2(x, up ? -z : z))));
+      for (const b of CORES) {
+        const c = [[b.x0, b.z0], [b.x1, b.z0], [b.x1, b.z1], [b.x0, b.z1]];
+        sh.holes.push(new THREE.Path(c.map(([x, z]) => new THREE.Vector2(x, up ? -z : z))));
+      }
     }
     const geo = new THREE.ShapeGeometry(sh);
     geo.rotateX(up ? -Math.PI / 2 : Math.PI / 2);
@@ -79,7 +81,7 @@ export function makeLevelBuilder(P: Parts, TT: TowerTextures): (n: number) => Le
       keep(plate(pts, true, false, ceilY(n), ceilMat, 6));
       const lm: THREE.Matrix4[] = [];
       for (let x = T.cx - ring.hx + 2; x < T.cx + ring.hx - 1; x += 3.6) for (let z = T.cz - ring.hz + 2; z < T.cz + ring.hz - 1; z += 3.6) {
-        if (inRing(ring, x, z, 1.2) && !(x > CORE.x0 - 1 && x < CORE.x1 + 1 && z > CORE.z0 - 1 && z < CORE.z1 + 1)) {
+        if (inRing(ring, x, z, 1.2) && !CORES.some((b) => x > b.x0 - 1 && x < b.x1 + 1 && z > b.z0 - 1 && z < b.z1 + 1)) {
           const m = new THREE.Matrix4().compose(new THREE.Vector3(x, ceilY(n) - 0.01, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)), new THREE.Vector3(1, 1, 1));
           lm.push(m);
         }

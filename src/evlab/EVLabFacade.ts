@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Parts } from './EVLabParts';
 import type { TowerTextures } from './EVLabTowerTextures';
-import { CORE, CORE_TOP, ROOF_Y, SETBACKS, T, levelY, ringOf, ringPoints } from './EVLabTowerLayout';
+import { CORES, CORE_TOP, ROOF_Y, SETBACKS, T, levelY, ringOf, ringPoints } from './EVLabTowerLayout';
 
 export const SPIRE_TOP_Y = 442;
 
@@ -150,7 +150,7 @@ export function buildFacade(P: Parts, TT: TowerTextures): FacadeBuild {
   P.tbox(g, T.cx - mx - 0.2, T.cx - mx + 0.2, T.cz - mz, T.cz + mz, fy - 0.2, fy + 0.2, crown);
   P.tbox(g, T.cx + mx - 0.2, T.cx + mx + 0.2, T.cz - mz, T.cz + mz, fy - 0.2, fy + 0.2, crown);
   const conc = P.lit(TT.concrete, 0xffffff, 0.25);
-  P.tbox(g, CORE.x0, CORE.x1, CORE.z0, CORE.z1, ROOF_Y, CORE_TOP + 0.4, conc, 8, 4);
+  for (const b of CORES) P.tbox(g, b.x0, b.x1, b.z0, b.z1, ROOF_Y, CORE_TOP + 0.4, conc, 8, 4);
   const lantern = P.tbox(g, T.cx - 6, T.cx + 6, T.cz - 4, T.cz + 4, CORE_TOP + 0.4, CORE_TOP + 9, crown);
   lantern.name = 'lantern';
   P.tbox(g, T.cx - 7, T.cx + 7, T.cz - 5, T.cz + 5, CORE_TOP + 9, CORE_TOP + 10, P.gold());

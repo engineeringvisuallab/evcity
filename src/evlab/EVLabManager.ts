@@ -14,6 +14,7 @@ import { buildGrounds, type GroundsBuild } from './EVLabGrounds';
 import { buildHall, type HallBuild, type ScreenSlide } from './EVLabHall';
 import { BLD, BUILDING_Z, HALL, PRESENTER, rampPose, type Ramp, type Solid } from './EVLabLayout';
 import { buildLobby, type LobbyBuild } from './EVLabLobby';
+import { buildWings, type WingsBuild } from './EVLabWings';
 import { Parts } from './EVLabParts';
 import { buildShell, type ShellBuild } from './EVLabShell';
 import { makeTextures } from './EVLabTextures';
@@ -64,6 +65,7 @@ export class EVLabManager {
   private cabDoors: RAPIER.Collider[] = [];
   private local = new THREE.Vector3();
   private lobby: LobbyBuild;
+  private wings: WingsBuild;
   private hall: HallBuild;
   private grounds: GroundsBuild;
   private interior = new THREE.Group();
@@ -78,6 +80,7 @@ export class EVLabManager {
     const parts = new Parts(this.kit, makeTextures(this.kit));
     this.shell = buildShell(parts);
     this.lobby = buildLobby(parts);
+    this.wings = buildWings(parts);
     this.hall = buildHall(parts);
     this.grounds = buildGrounds(parts);
     const TT = makeTowerTextures(this.kit);
@@ -86,7 +89,7 @@ export class EVLabManager {
     this.group.position.set(site.x, site.floorY, BUILDING_Z);
     // colliders first: the lift cars switch their door blockers while they are built
     const tc = coreColliders();
-    const solids: Solid[] = [...this.shell.solids, ...this.lobby.solids, ...this.hall.solids, ...tc.solids, ...this.grounds.solids]; // + the bridge decks and railings
+    const solids: Solid[] = [...this.shell.solids, ...this.lobby.solids, ...this.wings.solids, ...this.hall.solids, ...tc.solids, ...this.grounds.solids]; // + the bridge decks and railings
     const obbs: Obb[] = [];
     const ramps: Ramp[] = [...this.lobby.ramps, ...this.hall.ramps, ...tc.ramps];
     for (let n = 1; n <= T.roof; n++) { const lc = levelSolids(n); solids.push(...lc.solids); obbs.push(...lc.obbs); }
@@ -94,7 +97,7 @@ export class EVLabManager {
     this.createLiftColliders(tc.landing);
     if (typeof document !== 'undefined' && document.body) this.ui = new LiftUI(d.lockTarget);
     this.tower = new TowerView(parts, TT, this.liftHost(), { teleportLocal: (x, y, z) => this.teleportLocal(x, y, z) }, this.ui);
-    this.interior.add(this.lobby.group, this.hall.group, this.tower.group);
+    this.interior.add(this.lobby.group, this.wings.group, this.hall.group, this.tower.group);
     this.group.add(this.shell.group, this.facade.group, this.grounds.group, this.interior);
     d.root.add(this.group);
   }
@@ -245,6 +248,7 @@ export class EVLabManager {
     if (dist < 700) this.grounds.update(t);
     if (near) {
       this.lobby.update(t);
+      this.wings.update(t);
       this.hall.update(dt, t);
       this.local.set(this.p.x - site.x, this.p.y - site.floorY, this.p.z - BUILDING_Z);
       this.tower.update(dt, this.onStage ? null : this.local);

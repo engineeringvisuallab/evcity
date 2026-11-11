@@ -142,7 +142,7 @@ for (const r of allRamps) {
 
 // ---- hall data
 ok(L.HALL.x1 - L.HALL.x0 >= 100 && L.HALL.z1 - L.HALL.z0 >= 60, 'the hall is big (100 x 60 m or more)');
-ok(L.BLD.hx * 2 === 150 && L.BLD.hz * 2 === 100, 'footprint 150 x 100 m');
+ok(L.BLD.hx * 2 === 176 && L.BLD.hz * 2 === 116, 'footprint 176 x 116 m');
 // ======================================================= v1.3 tower: the core, the stairs, the lifts, the floors
 const PR = 0.4; // player radius with a margin
 type Box = readonly [number, number, number, number, number, number];
@@ -340,7 +340,7 @@ for (const n of [1, 2, 15, 33, 45, 55, 85, 86, TL.T.top, TL.T.roof]) {
   for (let x = X0; x <= X1; x += C2) for (let z = Z0; z <= Z1; z += C2) if (TL.inRing(ring, x, z, 0.8) && !tcore.solids.some((b) => hitBox(b, x, z, y)) && !blockedAt(x, z, y, n)) free++;
   const r = (x: number, z: number): boolean => seen2[id(x, z)] === 1;
   ok(leak === 0, `level ${n}: ${leak} reachable cells outside the glass wall`);
-  ok(r(0, 43.2) && r(0, 35) && r(0, 30), `level ${n}: the lift lobby and the core corridor are reachable`);
+  ok(r(0, 43.2) && TL.LIFTS.every((l) => r(l.cx, 43.2)) && TL.STAIRS.every((s) => r(s.doorX, 43.2)), `level ${n}: the lift lobby and the doors of both stair + lift blocks are reachable`);
   ok(cells > free * 0.8, `level ${n}: most of the floor is reachable (${cells} of ${free} cells)`);
   if (n !== TL.T.roof && n !== TL.T.top) ok(r(-(ring.hx - 6), 35) || r(-(ring.hx - 5), 28) || r(ring.hx - 6, 35) || r(ring.hx - 5, 28), `level ${n}: the wings are reachable`);
 }

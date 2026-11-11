@@ -1,5 +1,5 @@
 // EVLab Tower v1.3: the numbers of the TOWER (pure data, no three.js). Building-local frame as in EVLabLayout (x east, z south, y up, origin = footprint centre at floor level).
-// The tower stands on the south part of the podium roof, right above the lobby (so the Presentation Hall stays column-free). In its middle is the concrete CORE:
+// The tower stands on the south part of the podium roof, right above the lobby (so the Presentation Hall stays column-free). In its middle are two concrete CORE blocks, one on each side of the open lobby (v1.4: west = stair A + lift 1, east = lift 2 + stair B); the old layout was:
 // stair A | lift 1 | open corridor | lift 2 | stair B, from the ground to the roof.
 import { rampPose, type Ramp, type Solid } from './EVLabLayout';
 
@@ -65,20 +65,28 @@ export function inRing(r: Ring, x: number, z: number, inset = 0): boolean {
 }
 
 // ---------------------------------------------------------------- the core
-export const CORE = { x0: -14.5, x1: 14.5, z0: 28.8, z1: 41.2 };
+/** The core is split in two: the WEST block (stair A + lift 1) and the EAST block (lift 2 + stair B) stand SPLIT m further out, so the middle of the lobby is open. */
+export const SPLIT = 11.5;
+/** Bounding box of both blocks (use CORES for the real shapes). */
+export const CORE = { x0: -14.5 - SPLIT, x1: 14.5 + SPLIT, z0: 28.8, z1: 41.2 };
+/** The two blocks (x0, x1, z0, z1): west, east. */
+export const CORES: ReadonlyArray<{ x0: number; x1: number; z0: number; z1: number }> = [
+  { x0: -14.5 - SPLIT, x1: -2.4 - SPLIT, z0: 28.8, z1: 41.2 },
+  { x0: 2.4 + SPLIT, x1: 14.5 + SPLIT, z0: 28.8, z1: 41.2 },
+];
 export const WALL_T = 0.5;
 /** Two glass lift shafts, doors to the south (+z). Cabin: 3.0 x 3.2 m, 2.9 m high. */
 export const LIFTS = [
-  { id: 0, name: 'Lift 1', sx0: -6.6, sx1: -2.4, sz0: 36.8, sz1: 41.2, cx: -4.5, doorHalf: 0.8 },
-  { id: 1, name: 'Lift 2', sx0: 2.4, sx1: 6.6, sz0: 36.8, sz1: 41.2, cx: 4.5, doorHalf: 0.8 },
+  { id: 0, name: 'Lift 1', sx0: -6.6 - SPLIT, sx1: -2.4 - SPLIT, sz0: 36.8, sz1: 41.2, cx: -4.5 - SPLIT, doorHalf: 0.8 },
+  { id: 1, name: 'Lift 2', sx0: 2.4 + SPLIT, sx1: 6.6 + SPLIT, sz0: 36.8, sz1: 41.2, cx: 4.5 + SPLIT, doorHalf: 0.8 },
 ] as const;
 export const CAB = { hx: 1.5, z0: 37.8, z1: 41.0, h: 2.9, floorT: 0.3, doorH: 2.3, speed: 6, accel: 1.6 };
 export const SHAFT_WALL = 0.2;
 
 /** Two fire stairs. Inner well 5.5 x 11.4 m, switchback flights (2.3 m wide, 4.2 m run), mid landing at the north end, door in the south wall. */
 export const STAIRS = [
-  { id: 0, name: 'Stair A', x0: -14.0, x1: -8.5, doorX: -11.25 },
-  { id: 1, name: 'Stair B', x0: 8.5, x1: 14.0, doorX: 11.25 },
+  { id: 0, name: 'Stair A', x0: -14.0 - SPLIT, x1: -8.5 - SPLIT, doorX: -11.25 - SPLIT },
+  { id: 1, name: 'Stair B', x0: 8.5 + SPLIT, x1: 14.0 + SPLIT, doorX: 11.25 + SPLIT },
 ] as const;
 export const ST = { zN: 29.3, zS: 40.7, flightZ0: 33.0, flightZ1: 37.2, flightW: 2.3, doorHalf: 0.8, doorH: 2.4 };
 /** Flight x ranges: the flight that goes up from the south landing is on the outer side (A: west), the one that comes back down to the landing is on the inner side. */
@@ -185,16 +193,12 @@ export function coreColliders(): TowerColliders {
   const top = CORE_TOP;
   const doorLevels: number[] = [];
   for (let n = 0; n <= T.roof; n++) doorLevels.push(n);
-  // ---- north wall of the core (full height), west and east end walls (full height)
-  solids.push([C.x0, C.x1, C.z0, C.z0 + t, 0, top]);
-  solids.push([C.x0, C.x0 + t, C.z0, C.z1, 0, top], [C.x1 - t, C.x1, C.z0, C.z1, 0, top]);
-  // the central corridor runs north-south: open the north wall in x -2.4..2.4 (rebuild north wall in pieces)
-  solids.pop(); solids.pop(); solids.pop();
-  solids.push([C.x0, -2.4, C.z0, C.z0 + t, 0, top], [2.4, C.x1, C.z0, C.z0 + t, 0, top]);
-  solids.push([C.x0, C.x0 + t, C.z0, C.z1, 0, top], [C.x1 - t, C.x1, C.z0, C.z1, 0, top]);
+  // ---- the two blocks: north wall and outer end wall (full height). The inner end is closed by the lift shaft + service block.
+  for (const b of CORES) solids.push([b.x0, b.x1, C.z0, C.z0 + t, 0, top]);
+  solids.push([CORES[0].x0, CORES[0].x0 + t, C.z0, C.z1, 0, top], [CORES[1].x1 - t, CORES[1].x1, C.z0, C.z1, 0, top]);
   // service blocks north of the lifts and between stair and lift (solid concrete)
   for (const l of LIFTS) solids.push([l.sx0, l.sx1, C.z0, l.sz0, 0, top]);
-  solids.push([-8.5, -6.6, C.z0, C.z1, 0, top], [6.6, 8.5, C.z0, C.z1, 0, top]);
+  solids.push([-8.5 - SPLIT, -6.6 - SPLIT, C.z0, C.z1, 0, top], [6.6 + SPLIT, 8.5 + SPLIT, C.z0, C.z1, 0, top]);
   // ---- lift shafts: side walls full height; the south wall in pieces around the door
   for (const l of LIFTS) {
     solids.push([l.sx0, l.sx0 + SHAFT_WALL, l.sz0, l.sz1, 0, top], [l.sx1 - SHAFT_WALL, l.sx1, l.sz0, l.sz1, 0, top], [l.sx0, l.sx1, l.sz0, l.sz0 + SHAFT_WALL, 0, top]);
@@ -235,10 +239,8 @@ export function coreColliders(): TowerColliders {
     solids.push([s.x0, s.x1, ST.flightZ1, ST.zS, STOPS[STOPS.length - 1] - T.slab, STOPS[STOPS.length - 1]]);
     solids.push([s.x0, s.x1, ST.zN, ST.zS, top, top + 0.4]); // roof of the well
   }
-  // central corridor: floor at every level (the lobby floor at the bottom is the ground slab)
-  for (let n = 1; n <= T.roof; n++) solids.push([-2.4, 2.4, C.z0, C.z1, levelY(n) - T.slab, levelY(n)]);
-  // the core's own roof
-  solids.push([C.x0, C.x1, C.z0, C.z1, top, top + 0.4]);
+  // the roof of each block
+  for (const b of CORES) solids.push([b.x0, b.x1, b.z0, b.z1, top, top + 0.4]);
   return { solids, obbs: [], ramps, landing };
 }
 
@@ -257,7 +259,7 @@ export function floorPlan(n: number): FloorPlan {
   const solids: Solid[] = [];
   const y = levelY(n);
   const free = (x: number, z: number, m: number): boolean =>
-    inRing(ring, x, z, T.wallIn + m) && !(x > CORE.x0 - CORE_PAD && x < CORE.x1 + CORE_PAD && z > CORE.z0 - CORE_PAD && z < CORE.z1 + 5.5);
+    inRing(ring, x, z, T.wallIn + m) && !CORES.some((b) => x > b.x0 - CORE_PAD && x < b.x1 + CORE_PAD && z > b.z0 - CORE_PAD && z < b.z1 + 5.5);
   const add = (it: Item, hx: number, hz: number, h = 1.2): void => {
     items.push(it);
     solids.push([it.x - hx, it.x + hx, it.z - hz, it.z + hz, y, y + h]);
@@ -283,26 +285,27 @@ export function floorPlan(n: number): FloorPlan {
     }, 6.0, 4.6);
     for (const [x, z] of [[-16, 30], [16, 30], [-20, 41], [20, 41]] as const) if (free(T.cx + x, z, 1)) add({ t: 'plant', x: T.cx + x, z, r: 0.5 }, 0.5, 0.5, 1.8);
   } else if (kind === 'lobby') {
-    add({ t: 'counter', x: -20, z: 45, w: 8, d: 1.4 }, 4, 0.7, 1.1);
-    for (const x of [-32, -26, 26, 32]) for (const z of [30, 40]) add({ t: 'table', x, z, r: 0.8 }, 0.9, 0.9, 0.8);
+    add({ t: 'counter', x: 0, z: 45, w: 8, d: 1.4 }, 4, 0.7, 1.1);
+    for (const x of [-44, -38, 38, 44]) for (const z of [30, 40]) add({ t: 'table', x, z, r: 0.8 }, 0.9, 0.9, 0.8);
     add({ t: 'sofa', x: 0, z: 23.5, yaw: 0, w: 4, d: 1.2 }, 2, 0.6, 1);
-    for (const [x, z] of [[-34, 24], [34, 24], [-22, 46], [22, 46]] as const) add({ t: 'plant', x, z, r: 0.5 }, 0.5, 0.5, 1.8);
+    for (const [x, z] of [[-34, 24], [34, 24], [-40, 46], [40, 46]] as const) add({ t: 'plant', x, z, r: 0.5 }, 0.5, 0.5, 1.8);
   } else if (kind === 'garden') {
     for (const [x, z] of [[-30, 28], [30, 28], [-30, 42], [30, 42], [-20, 23], [20, 23], [-22, 47], [22, 47]] as const) {
       if (free(T.cx + x, z, 1)) add({ t: 'plant', x: T.cx + x, z, r: 1.2 }, 1.2, 1.2, 3);
     }
-    for (const x of [-26, 26]) add({ t: 'bench', x, z: 35, yaw: Math.PI / 2, w: 2.2, d: 0.6 }, 0.35, 1.1, 0.5);
+    for (const x of [-8, 8]) add({ t: 'bench', x, z: 35, yaw: Math.PI / 2, w: 2.2, d: 0.6 }, 0.35, 1.1, 0.5);
   } else if (kind === 'restaurant') {
     wings((x, z) => { if (free(x, z, 1.5)) add({ t: 'table', x, z, r: 0.75 }, 0.9, 0.9, 0.8); }, 5.5, 4.6);
     add({ t: 'counter', x: 0, z: 46.5, w: 10, d: 1.2 }, 5, 0.6, 1.1);
   } else if (kind === 'boardroom') {
-    add({ t: 'table', x: -24, z: 35, w: 14, d: 3.2 }, 7, 1.6, 0.8);
-    add({ t: 'table', x: 24, z: 35, w: 14, d: 3.2 }, 7, 1.6, 0.8);
+    // the middle between the two core blocks is free (x -13.9 .. 13.9)
+    add({ t: 'table', x: 0, z: 31, w: 14, d: 3.2 }, 7, 1.6, 0.8);
+    add({ t: 'table', x: 0, z: 39, w: 14, d: 3.2 }, 7, 1.6, 0.8);
   } else if (kind === 'deck') {
     for (const [x, z] of [[-26, 24], [-14, 22], [14, 22], [26, 24], [-26, 46], [-14, 48], [14, 48], [26, 46]] as const) if (free(T.cx + x, z, 1)) add({ t: 'telescope', x: T.cx + x, z }, 0.5, 0.5, 1.5);
     for (const x of [-31, 31]) add({ t: 'bench', x: T.cx + x, z: 35, yaw: Math.PI / 2, w: 2.6, d: 0.6 }, 0.35, 1.3, 0.5);
   } else if (kind === 'roof') {
-    for (const [x, z] of [[-18, 24], [18, 24], [-18, 46], [18, 46], [-24, 35], [24, 35]] as const) add({ t: 'plant', x: T.cx + x, z, r: 1.4 }, 1.4, 1.4, 3);
+    for (const [x, z] of [[-18, 24], [18, 24], [-18, 46], [18, 46], [-8, 35], [8, 35]] as const) add({ t: 'plant', x: T.cx + x, z, r: 1.4 }, 1.4, 1.4, 3);
     add({ t: 'bench', x: 0, z: 22.6, yaw: 0, w: 4, d: 0.6 }, 2, 0.3, 0.5);
   } else if (kind === 'coming' || kind === 'mech') {
     for (const [x, z] of [[-18, 24], [18, 24], [-18, 46], [18, 46]] as const) if (free(T.cx + x, z, 1)) add({ t: 'sofa', x: T.cx + x, z, yaw: 0, w: 3.4, d: 1.1 }, 1.7, 0.55, 0.9);

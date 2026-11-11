@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { BLD, PORTAL, type Solid } from './EVLabLayout';
-import { CORE, rectMinus } from './EVLabTowerLayout';
+import { CORES, rectMinus } from './EVLabTowerLayout';
 import { Parts } from './EVLabParts';
 
 export interface ShellBuild {
@@ -12,7 +12,7 @@ export interface ShellBuild {
 }
 
 /**
- * The outside of the EVLab podium: a 150 x 100 m glass-and-stone base with a grand portal and canopy (the tall tower is EVLabFacade). Building-local coordinates (see EVLabLayout).
+ * The outside of the EVLab podium: a 176 x 116 m glass-and-stone base with a grand portal and canopy (the tall tower is EVLabFacade). Building-local coordinates (see EVLabLayout).
  */
 export function buildShell(P: Parts): ShellBuild {
   const { k, t } = P;
@@ -53,10 +53,11 @@ export function buildShell(P: Parts): ShellBuild {
   P.tbox(g, pw, pw + 0.5, hz - 1.2, hz + 0.6, 0, PORTAL.h, gold);
   // stone piers every 15 m on the south and the sides, with gold edges
   const pierGeo = k.own(new THREE.BoxGeometry(1.6, H + 1.2, 1.4));
-  const piers = new THREE.InstancedMesh(pierGeo, marble, 40);
+  const piers = new THREE.InstancedMesh(pierGeo, marble, 80);
   const o = new THREE.Object3D();
   let pi = 0;
-  for (let x = -hx; x <= hx + 0.1; x += 15) {
+  const pierStep = (2 * hx) / Math.round((2 * hx) / 15); // symmetric about the portal
+  for (let x = -hx; x <= hx + 0.1; x += pierStep) {
     if (Math.abs(x) < pw + 1.5) continue;
     for (const z of [hz + 0.5]) { o.position.set(x, (H + 1.2) / 2, z); o.updateMatrix(); piers.setMatrixAt(pi++, o.matrix); }
   }
@@ -67,7 +68,7 @@ export function buildShell(P: Parts): ShellBuild {
   // cornice, roof slab and parapet
   P.tbox(g, -hx - 1, hx + 1, -hz - 1, hz + 1.4, H, H + 0.9, marble, 8, 4);
   P.tbox(g, -hx - 1.2, hx + 1.2, -hz - 1.2, hz + 1.6, H + 0.9, H + 1.15, goldGlow);
-  const coreHole = [[CORE.x0, CORE.x1, CORE.z0, CORE.z1]] as const;
+  const coreHole = CORES.map((b) => [b.x0, b.x1, b.z0, b.z1] as const);
   // the roof slab and its collider have a hole where the tower core (stairs + glass lift shafts) goes through
   for (const b of rectMinus(-hx, hx, -hz, hz, coreHole)) P.tbox(g, b[0], b[1], b[2], b[3], H, top, stone, 8, 4);
   for (const b of rectMinus(-hx - 1, hx + 1, -hz - 1, hz + 1.4, coreHole)) solids.push([b[0], b[1], b[2], b[3], H, top + 0.1]);

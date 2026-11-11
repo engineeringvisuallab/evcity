@@ -22,7 +22,7 @@ export const ISLAND: RRect = { cx: 0, cz: 38.5, hx: 125, hz: 133.5, r: 50 };
 /** Outer edge of the lake (the lake is the band between the island and this line: 50 m wide). */
 export const LAKE: RRect = { cx: 0, cz: 38.5, hx: 175, hz: 183.5, r: 100 };
 /** Centre line of the ring road on the island (road is 14 m wide). */
-export const RING: RRect & { halfW: number } = { cx: 0, cz: 38.5, hx: 100, hz: 108.5, r: 40, halfW: 7 };
+export const RING: RRect & { halfW: number } = { cx: 0, cz: 38.5, hx: 100, hz: 108.5, r: 15, halfW: 7 }; // tight corners (r 15): the bigger 176 x 116 m podium fits inside the ring road
 
 /** Depth of the lake bed below the ground (m), width of the sloping bank (m) and the water level (m below the ground / floor level). */
 export const LAKE_DEPTH = 4.2;
@@ -73,7 +73,8 @@ export const ROAD_RECTS: ReadonlyArray<readonly [number, number, number, number]
 ];
 
 /** Plaza (stone) in front of the tower, and its fountain. */
-export const PLAZA = { x0: -70, x1: 70, z0: 52, z1: 132 };
+/** (z0 = podium south wall z 58 + 2 m: the plaza starts at the canopy line) */
+export const PLAZA = { x0: -70, x1: 70, z0: 60, z1: 132 };
 export const PLAZA_FOUNTAIN = { x: 0, z: 92, r: 14 };
 
 /** Where the fountains stand: x, z (local), the water level they spray from, and a size 1..3. */
@@ -113,7 +114,7 @@ function rng(seed: number): () => number {
 
 /** The tower's own footprint plus the plaza and the road strips (no trees inside). */
 function blocked(x: number, z: number, pad: number): boolean {
-  if (x > -80 - pad && x < 80 + pad && z > -55 - pad && z < 54 + pad) return true; // podium + tower
+  if (x > -92 - pad && x < 92 + pad && z > -62 - pad && z < 58 + pad) return true; // podium + tower
   if (x > PLAZA.x0 - pad && x < PLAZA.x1 + pad && z > PLAZA.z0 - pad && z < PLAZA.z1 + pad) return true; // plaza
   for (const q of ROAD_RECTS) if (x > q[0] - pad && x < q[1] + pad && z > q[2] - pad && z < q[3] + pad) return true;
   // the ring road (14 m) with a 3 m verge

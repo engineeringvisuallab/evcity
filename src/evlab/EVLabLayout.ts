@@ -4,8 +4,8 @@
 /** World z of the building centre: the plot runs z -470 .. -30, so there are ~180 m of plaza in front (south) and ~180 m of gardens behind. */
 export const BUILDING_Z = -260;
 
-/** Footprint 150 m x 100 m. Ground floor clear height H = 17 m, the roof slab sits on top, the tower rises from there. */
-export const BLD = { hx: 75, hz: 50, H: 17, roofTop: 19, wall: 0.5 };
+/** Footprint 176 m x 116 m (was 150 x 100). Ground floor clear height H = 17 m, the roof slab sits on top, the tower rises from there. */
+export const BLD = { hx: 88, hz: 58, H: 17, roofTop: 19, wall: 0.5 };
 
 /** The grand portal in the south wall. */
 export const PORTAL = { halfW: 9, h: 11 };
@@ -15,7 +15,7 @@ export const SPIRE_TOP = 442;
 
 /** Presentation Hall (ground floor, north part). */
 export const HALL = {
-  x0: -54.5, x1: 54.5, z0: -49, z1: 13.5,
+  x0: -54.5, x1: 54.5, z0: -57, z1: 13.5,
   /** Stage platform. */
   stageX: 30, stageZ1: -31, stageH: 1.2,
   /** Seating rows: row i stands at z = rowZ0 + i * rowStep. The floor rises 0.12 m per row towards the back. */
@@ -34,16 +34,28 @@ export const DIVIDER = { z: 14, openings: [[-4, 4], [-34, -28], [28, 34]] as Rea
 /** Where the entrance ramps climb from the lobby floor (z = rampZ1, y 0) to the rear aisle (z = DIVIDER.z + 0.5, y REAR_Y). */
 export const RAMP = { z1: 27 };
 
+/**
+ * The two side wings of the ground floor (west = Main Office, east = Engineering Lab). Each is entered from the lobby through its own door in the
+ * lobby wall (z = DIVIDER.z). x ranges are given for the east wing; the west wing is the mirror image.
+ */
+export const WING = {
+  /** Inner x of the wing (outside of the hall's side wall) and the inner face of the outer wall. */
+  x0: 55.5,
+  x1: BLD.hx - 1,
+  /** The door from the lobby: centre x, half width, height. */
+  door: { c: 71.25, halfW: 3.5, h: 5.6 },
+} as const;
+
 /** The three seat blocks of a row (x ranges); the gaps are the aisles. */
 export const SEAT_BLOCKS: ReadonlyArray<readonly [number, number]> = [[-50, -17], [-13, 13], [17, 50]];
 export const SEAT_W = 0.7;
 
 /** Lectern and where the presenter stands (behind it, facing the audience = south). */
-export const LECTERN = { x: 0, z: -33.2 };
-export const PRESENTER = { x: 0, z: -35.6 };
+export const LECTERN = { x: 0, z: -39 };
+export const PRESENTER = { x: 0, z: -41.4 };
 
 /** The big LED screen on the north wall: centre and size (m). */
-export const SCREEN = { x: 0, y: 9.6, z: -48.6, w: 44, h: 12.4 };
+export const SCREEN = { x: 0, y: 9.6, z: -56.6, w: 44, h: 12.4 };
 
 /** A walk-collision box in building-local metres. */
 export type Solid = readonly [x0: number, x1: number, z0: number, z1: number, y0: number, y1: number];
