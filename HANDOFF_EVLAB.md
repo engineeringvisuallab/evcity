@@ -2,7 +2,7 @@
 
 Notun chat-e evcity.zip attach kore age "Part A" paste koro. Tarpor ek chat-e ek step, "Part C" theke.
 
-**Ekhon porjonto: Step 1, 1.1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 done. Porer step: Step 14 (fountain physics). Pending: 1.1b, 1.2a/b/c (alada, pore).** Zip-e step 1-er changed file jodi na thake, step1 folder-er 2 ta file age paste koro.
+**Ekhon porjonto: Step 1, 1.1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 done. Shob step shesh (Part B-r 1-6). Pending: 1.1b, 1.2a/b/c (alada, pore).** Zip-e step 1-er changed file jodi na thake, step1 folder-er 2 ta file age paste koro.
 
 ---
 
@@ -169,4 +169,6 @@ Step 14: EVLabFountains.ts-er fountain-e realistic physics dao: pani-r fota grav
 - [x] 11 Bairer bench (done, CHANGES_EVLAB_STEP11_BN.md)
 - [x] 12 Bench-e manush (done, CHANGES_EVLAB_STEP12_BN.md)
 - [x] 13 Lake water physics
-- [ ] 14 Fountain physics
+- [x] 14 Fountain physics (done, CHANGES_EVLAB_STEP14_BN.md)
+
+- **Step 14 (done):** Fountain physics. `src/evlab/EVLabFountainPhysics.ts` (pure, three nei: `windAt`, `hash01`, `flightTime`, `drag`, `fitReach`, `buildJets`, `cycleOf`, `phaseOf`, `dropPose`, `ringPose`, `sprayPose`). Pratita fota projectile (gravity), hawa-e bhese jay (0.15..1.65 m/s), pool-er pani-r level-e thik pore, splash puff hoy; lead drop 3 ta chhoto fota ar ripple ring chhare. Prati fota-r height/reach/dik/size alada (hash theke, per-drop random state nei). `fitReach`: porar jaiga shob shomoy plinth-er baire ar basin rim-er bhitore. `EVLabFountains.ts`: basin notun (floor, patla wall, rim, pani BASIN.water-e), pani = 1 InstancedMesh (drop + splash puff + splash fota), ripple ring = ar 1 chhoto InstancedMesh. `FountainSet` API (group, setNight, update) ager moto, EVLabGrounds.ts-e kono change nei. Test: `npm run test:evlab-fountains`. Browser-e chokh diye dekha baki.
