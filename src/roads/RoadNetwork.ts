@@ -1,4 +1,5 @@
 import { Config } from '../core/Config';
+import { ROAD_CORRECTIONS, replaceCorner } from './RoadCorrections';
 import { DISTRICT_LINKS, DISTRICT_LINK_SNAP, ISLAND_PLAN, MAIN_EDGES, MAIN_NODES, PRIMARY, SECONDARY } from './RoadPlan';
 import type { TerrainSample } from '../terrain/Lakes';
 import type { CitySite } from '../terrain/TerrainGenerator';
@@ -264,6 +265,35 @@ export class RoadNetwork {
       const pts = this.smoothRoute(poly, false); // the main highways keep their original shape (the railway and the city plan are fitted to them)
       done.push(...pts);
       out.push({ tier: 1, kind: 'highway', name: e.name, closed: false, pts, endY: [this.nodeY.get(e.from)!, this.nodeY.get(e.to)!] });
+    }
+    this.applyMainCorrections(out);
+  }
+
+  /** Hand corrections of the main roads (RoadCorrections.ts, ROAD_CORRECTION_SYSTEM.md). Applied right after the routing, before profile, pads, median, bridges. */
+  private applyMainCorrections(out: RawRoad[]): void {
+    for (const c of ROAD_CORRECTIONS) {
+      const ra = out.find((r) => r.name === c.roads[0]);
+      const rb = out.find((r) => r.name === c.roads[1]);
+      const old = this.mainNodes.get(c.node);
+      if (!ra || !rb || !old) continue;
+      const res = replaceCorner(ra.pts, rb.pts, old, c.pts, KIND.highway.step, c.lead);
+      const y = this.groundAround(res.node);
+      const touch = (r: RawRoad, pts: number[][]): void => {
+        const atStart = Math.hypot(pts[0][0] - res.node[0], pts[0][1] - res.node[1]) < 1;
+        r.pts = pts;
+        if (r.endY) r.endY = atStart ? [y, r.endY[1]] : [r.endY[0], y];
+      };
+      touch(ra, res.a);
+      touch(rb, res.b);
+      this.mainNodes.set(c.node, res.node);
+      this.nodeY.set(c.node, y);
+      for (const j of this.junctions) {
+        if (Math.hypot(j.x - old[0], j.z - old[1]) < 1) {
+          j.x = res.node[0];
+          j.z = res.node[1];
+          j.y = y;
+        }
+      }
     }
   }
 
