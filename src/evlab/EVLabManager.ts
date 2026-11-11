@@ -22,7 +22,8 @@ import { buildFacade, type FacadeBuild } from './EVLabFacade';
 import { LiftUI } from './EVLabLiftUI';
 import { TowerView } from './EVLabTowerView';
 import { makeTowerTextures } from './EVLabTowerTextures';
-import { CAB, LIFTS, T, coreColliders, levelSolids, type Obb } from './EVLabTowerLayout';
+import { CAB, LIFTS, T, blockToWorld, coreColliders, levelSolids, type Obb } from './EVLabTowerLayout';
+import { BLOCK_PIVOT } from './EVLabLayout';
 import type { LiftHost } from './EVLabLifts';
 
 export interface EVLabDeps {
@@ -139,7 +140,7 @@ export class EVLabManager {
     for (const r of ramps) {
       const p = rampPose(r);
       world.createCollider(
-        R.ColliderDesc.cuboid(p.hx, p.hy, p.hz).setTranslation(p.cx, p.cy, p.cz).setRotation({ x: p.qx, y: 0, z: 0, w: p.qw }).setFriction(1),
+        R.ColliderDesc.cuboid(p.hx, p.hy, p.hz).setTranslation(p.cx, p.cy, p.cz).setRotation({ x: p.qx, y: p.qy, z: p.qz, w: p.qw }).setFriction(1),
         body,
       );
     }
@@ -161,7 +162,10 @@ export class EVLabManager {
     const site = this.d.terrain.evlab;
     const o = this.d.origin.origin;
     for (const l of LIFTS) {
-      const body = world.createRigidBody(R.RigidBodyDesc.kinematicPositionBased().setTranslation(site.x - o.x + l.cx, site.floorY, BUILDING_Z - o.z));
+      // the cabin is described in its block's design frame; the body origin is the design point (cx, 0), the body is turned with the block
+      const [wx, wz] = blockToWorld(l.id, l.cx, 0);
+      const yaw = BLOCK_PIVOT[l.id].yaw;
+      const body = world.createRigidBody(R.RigidBodyDesc.kinematicPositionBased().setTranslation(site.x - o.x + wx, site.floorY, BUILDING_Z - o.z + wz).setRotation({ x: 0, y: Math.sin(yaw / 2), z: 0, w: Math.cos(yaw / 2) }));
       const box = (x0: number, x1: number, z0: number, z1: number, y0: number, y1: number, friction = 0.1): RAPIER.Collider =>
         world.createCollider(R.ColliderDesc.cuboid((x1 - x0) / 2, (y1 - y0) / 2, (z1 - z0) / 2).setTranslation((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2).setFriction(friction), body);
       const hx = CAB.hx;
@@ -183,7 +187,8 @@ export class EVLabManager {
       landingBlock: (lift, level, blocked) => this.landing.get(`${lift}:${level}`)?.setEnabled(blocked),
       cabinPose: (lift, y) => {
         const o = this.d.origin.origin;
-        this.cabBodies[lift]?.setNextKinematicTranslation({ x: site.x - o.x + LIFTS[lift].cx, y: site.floorY + y, z: BUILDING_Z - o.z });
+        const [wx, wz] = blockToWorld(lift, LIFTS[lift].cx, 0);
+        this.cabBodies[lift]?.setNextKinematicTranslation({ x: site.x - o.x + wx, y: site.floorY + y, z: BUILDING_Z - o.z + wz });
       },
       cabinDoorBlock: (lift, blocked) => this.cabDoors[lift]?.setEnabled(blocked),
     };

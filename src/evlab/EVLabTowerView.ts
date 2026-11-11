@@ -5,7 +5,7 @@ import { LiftSystem, type LiftCar, type LiftHost } from './EVLabLifts';
 import type { LiftUI } from './EVLabLiftUI';
 import { Parts } from './EVLabParts';
 import type { TowerTextures } from './EVLabTowerTextures';
-import { CAB, FLOORS, LIFTS, T, levelAtY, levelY } from './EVLabTowerLayout';
+import { CAB, FLOORS, LIFTS, T, blockToDesign, blockToWorld, levelAtY, levelY } from './EVLabTowerLayout';
 
 const BELOW = 2, ABOVE = 3;
 const EYE = 0.9; // capsule centre above the feet
@@ -46,13 +46,16 @@ export class TowerView {
 
   private pl: THREE.Vector3 | null = null;
 
+  /** The player's position in the design frame of core block `id` (the blocks are turned, see BLOCK_PIVOT). */
+  private loc(id: number, p: THREE.Vector3): [number, number] { return blockToDesign(id, p.x, p.z); }
+
   private inCabin(car: LiftCar, p: THREE.Vector3): boolean {
-    const l = LIFTS[car.id];
-    return Math.abs(p.x - l.cx) < CAB.hx + 0.1 && p.z > CAB.z0 && p.z < CAB.z1 + 0.3 && Math.abs(p.y - EYE - car.y) < 1.5;
+    const l = LIFTS[car.id], [x, z] = this.loc(car.id, p);
+    return Math.abs(x - l.cx) < CAB.hx + 0.1 && z > CAB.z0 && z < CAB.z1 + 0.3 && Math.abs(p.y - EYE - car.y) < 1.5;
   }
   private inDoorway(car: LiftCar, p: THREE.Vector3): boolean {
-    const l = LIFTS[car.id];
-    return car.state !== 'moving' && Math.abs(p.x - l.cx) < 1.3 && p.z > CAB.z1 - 0.35 && p.z < CAB.z1 + 2.2 && Math.abs(p.y - EYE - levelY(car.level)) < 1.5;
+    const l = LIFTS[car.id], [x, z] = this.loc(car.id, p);
+    return car.state !== 'moving' && Math.abs(x - l.cx) < 1.3 && z > CAB.z1 - 0.35 && z < CAB.z1 + 2.2 && Math.abs(p.y - EYE - levelY(car.level)) < 1.5;
   }
 
   private onKey = (e: KeyboardEvent): void => {
@@ -80,7 +83,9 @@ export class TowerView {
 
   /** Level of the lift landing the player stands at (-1 = not at a landing). */
   landingLevel(p: THREE.Vector3): number {
-    if (p.z < CAB.z1 + 0.2 || p.z > CAB.z1 + 6.5 || Math.abs(p.x) > 9) return -1;
+    // in front of a lift door: up to 6.5 m into the lobby and 5 m to each side of the door
+    const near = LIFTS.some((l) => { const [x, z] = this.loc(l.id, p); return z >= CAB.z1 + 0.2 && z <= CAB.z1 + 6.5 && Math.abs(x - l.cx) <= 5; });
+    if (!near) return -1;
     const feet = p.y - EYE;
     const lv = levelNear(feet);
     return Math.abs(feet - levelY(lv)) < 1.2 ? lv : -1;
@@ -109,15 +114,15 @@ export class TowerView {
     if (ride >= 0) {
       const c = this.lifts.cars[ride], l = LIFTS[ride];
       if (!c.walkable) {
-        const x = Math.max(l.cx - CAB.hx + 0.4, Math.min(l.cx + CAB.hx - 0.4, p.x));
-        const z = Math.max(CAB.z0 + 0.4, Math.min(CAB.z1 - 0.4, p.z));
-        this.io.teleportLocal(x, c.y + EYE + 0.03, z);
+        const [px, pz] = this.loc(ride, p);
+        const [wx, wz] = blockToWorld(ride, Math.max(l.cx - CAB.hx + 0.4, Math.min(l.cx + CAB.hx - 0.4, px)), Math.max(CAB.z0 + 0.4, Math.min(CAB.z1 - 0.4, pz)));
+        this.io.teleportLocal(wx, c.y + EYE + 0.03, wz);
       }
     } else if (this.ui?.open) this.ui.close();
 
     // trapped in a shaft outside a cabin? bring the player back to the lobby
     let inShaft = false;
-    for (const l of LIFTS) if (p.x > l.sx0 + 0.3 && p.x < l.sx1 - 0.3 && p.z > l.sz0 + 0.3 && p.z < l.sz1 - 0.3 && ride < 0) inShaft = true;
+    for (const l of LIFTS) { const [x, z] = this.loc(l.id, p); if (x > l.sx0 + 0.3 && x < l.sx1 - 0.3 && z > l.sz0 + 0.3 && z < l.sz1 - 0.3 && ride < 0) inShaft = true; }
     this.stuck = inShaft ? this.stuck + dt : 0;
     if (this.stuck > 1.2) { this.stuck = 0; this.io.teleportLocal(0, EYE + 0.1, 45); }
 

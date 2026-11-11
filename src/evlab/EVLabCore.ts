@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { Parts } from './EVLabParts';
 import { DIGIT_COLS, DIGIT_ROWS, type TowerTextures } from './EVLabTowerTextures';
 import type { LiftCar } from './EVLabLifts';
-import { CAB, CORE, CORE_TOP, FLOORS, LIFTS, ST, STAIRS, STOPS, T, coreColliders, flightX, levelAtY, levelLabel, levelY, type Solid } from './EVLabTowerLayout';
+import { BLOCK_PIVOT } from './EVLabLayout';
+import { CAB, CORE_D, CORE_TOP, FLOORS, LIFTS, ST, STAIRS, STOPS, T, blockOfBox, coreDesign, flightX, levelAtY, levelLabel, levelY, type Solid } from './EVLabTowerLayout';
 
 /** Index of the "A" / "B" plates in the digits atlas. */
 const DIG_A = 70, DIG_B = 71;
@@ -33,6 +34,19 @@ export function buildCore(P: Parts, TT: TowerTextures): CoreBuild {
   const { k, t } = P;
   const g = new THREE.Group();
   g.name = 'EVLabCore';
+  /** The two core blocks are turned a quarter turn (doors to the lobby): everything of a block is built in its design frame inside one of these groups. */
+  const turned = (parent: THREE.Object3D): THREE.Group[] => [0, 1].map((i) => {
+    const pv = BLOCK_PIVOT[i];
+    const w = new THREE.Group();
+    w.position.set(pv.x, 0, pv.z);
+    w.rotation.y = pv.yaw;
+    const inner = new THREE.Group();
+    inner.position.set(-pv.x, 0, -pv.z);
+    w.add(inner);
+    parent.add(w);
+    return inner;
+  });
+  const blockIn = turned(g);
   const conc = P.lit(TT.concrete, 0xffffff, 0.34);
   const slab = P.lit(t.marbleCream, 0xffffff, 0.34);
   const gold = P.gold();
@@ -42,7 +56,7 @@ export function buildCore(P: Parts, TT: TowerTextures): CoreBuild {
   const btnMat = P.glow(0xffd27a, 1.4, 0xd4af37);
 
   // ---------------------------------------------------------------- classify the collision boxes of the core into drawing groups
-  const cc = coreColliders();
+  const cc = coreDesign();
   const full: Solid[] = [];
   const byLevel = new Map<number, Solid[]>();
   for (const s of cc.solids) {
@@ -58,9 +72,9 @@ export function buildCore(P: Parts, TT: TowerTextures): CoreBuild {
     if (isGlass(s)) P.tbox(p, s[0], s[1], s[2], s[3], s[4], s[5], glass, 4, 4);
     else P.tbox(p, s[0], s[1], s[2], s[3], s[4], s[5], s[5] - s[4] <= 0.45 ? slab : conc, 4, 4);
   };
-  for (const s of full) drawSolid(g, s);
+  for (const s of full) drawSolid(blockIn[blockOfBox(s)], s);
   // gold posts at the corners of the glass shafts
-  for (const l of LIFTS) for (const x of [l.sx0 + 0.1, l.sx1 - 0.1]) for (const z of [l.sz0 + 0.1, l.sz1 - 0.1]) P.tbox(g, x - 0.08, x + 0.08, z - 0.08, z + 0.08, 0, CORE_TOP, gold);
+  for (const l of LIFTS) for (const x of [l.sx0 + 0.1, l.sx1 - 0.1]) for (const z of [l.sz0 + 0.1, l.sz1 - 0.1]) P.tbox(blockIn[l.id], x - 0.08, x + 0.08, z - 0.08, z + 0.08, 0, CORE_TOP, gold);
 
   // ---------------------------------------------------------------- shared pieces
   const numGeo = new Map<string, THREE.BufferGeometry>();
@@ -127,7 +141,7 @@ export function buildCore(P: Parts, TT: TowerTextures): CoreBuild {
   };
 
   // podium stairs (ground .. level 1): permanent
-  for (const s of STAIRS) for (let i = 0; i < T.podiumStops; i++) storey(g, s, i);
+  for (const s of STAIRS) for (let i = 0; i < T.podiumStops; i++) storey(blockIn[s.id], s, i);
 
   // ---------------------------------------------------------------- the lift cabins (glass, gold, a floor display)
   const cabins: CabinView[] = LIFTS.map((l) => {
@@ -182,7 +196,7 @@ export function buildCore(P: Parts, TT: TowerTextures): CoreBuild {
       tex.needsUpdate = true;
     };
     draw('G');
-    g.add(cg);
+    blockIn[l.id].add(cg);
     return {
       group: cg,
       update: (car) => {
@@ -205,22 +219,25 @@ export function buildCore(P: Parts, TT: TowerTextures): CoreBuild {
     lg.name = `core-L${n}`;
     const y = levelY(n);
     const keys: string[] = [];
-    for (const s of byLevel.get(n) ?? []) drawSolid(lg, s);
+    const lgb = turned(lg);
+    for (const s of byLevel.get(n) ?? []) drawSolid(lgb[blockOfBox(s)], s);
     // stair doors: gold frame, the level number and the stair letter above
     for (const s of STAIRS) {
-      const x0 = s.doorX - ST.doorHalf, x1 = s.doorX + ST.doorHalf, z = CORE.z1 + 0.02;
-      P.tbox(lg, x0 - 0.1, x0, CORE.z1 - 0.1, z + 0.08, y, y + ST.doorH, gold);
-      P.tbox(lg, x1, x1 + 0.1, CORE.z1 - 0.1, z + 0.08, y, y + ST.doorH, gold);
-      P.tbox(lg, x0 - 0.1, x1 + 0.1, CORE.z1 - 0.1, z + 0.08, y + ST.doorH, y + ST.doorH + 0.1, gold);
+      const lg = lgb[s.id];
+      const x0 = s.doorX - ST.doorHalf, x1 = s.doorX + ST.doorHalf, z = CORE_D.z1 + 0.02;
+      P.tbox(lg, x0 - 0.1, x0, CORE_D.z1 - 0.1, z + 0.08, y, y + ST.doorH, gold);
+      P.tbox(lg, x1, x1 + 0.1, CORE_D.z1 - 0.1, z + 0.08, y, y + ST.doorH, gold);
+      P.tbox(lg, x0 - 0.1, x1 + 0.1, CORE_D.z1 - 0.1, z + 0.08, y + ST.doorH, y + ST.doorH + 0.1, gold);
       digit(lg, n, 0.8, 0.9, s.doorX + 0.45, y + ST.doorH + 0.75, z + 0.01, 1);
       digit(lg, s.id === 0 ? DIG_A : DIG_B, 0.8, 0.9, s.doorX - 0.45, y + ST.doorH + 0.75, z + 0.01, 1);
       // the green EXIT light over the door
-      P.tbox(lg, s.doorX - 0.3, s.doorX + 0.3, CORE.z1, z + 0.05, y + ST.doorH - 0.25, y + ST.doorH - 0.1, P.glow(0x40ff80, 1.4, 0x208040));
+      P.tbox(lg, s.doorX - 0.3, s.doorX + 0.3, CORE_D.z1, z + 0.05, y + ST.doorH - 0.25, y + ST.doorH - 0.1, P.glow(0x40ff80, 1.4, 0x208040));
       // the floor number painted on the north wall of the well
       if (n >= 1) digit(lg, n, 1.2, 1.35, (s.x0 + s.x1) / 2, y + 1.7, ST.zN + 0.02, 1);
     }
     // lift landing doors (two leaves per lift), the call button and the level number
     for (const l of LIFTS) {
+      const lg = lgb[l.id];
       const zz = l.sz1 + 0.03, h = CAB.doorH;
       const a = P.tbox(lg, l.cx - 0.8, l.cx, zz, zz + 0.05, y, y + h, leafMat, 3, 3);
       const b = P.tbox(lg, l.cx, l.cx + 0.8, zz, zz + 0.05, y, y + h, leafMat, 3, 3);
@@ -234,7 +251,7 @@ export function buildCore(P: Parts, TT: TowerTextures): CoreBuild {
       P.tbox(lg, l.cx + 1.15, l.cx + 1.3, l.sz1, l.sz1 + 0.06, y + 1.0, y + 1.3, btnMat);
     }
     levelGroups.set(n, keys);
-    if (n >= 1 && n <= T.top) for (const s of STAIRS) storey(lg, s, T.podiumStops + n - 1);
+    if (n >= 1 && n <= T.top) for (const s of STAIRS) storey(lgb[s.id], s, T.podiumStops + n - 1);
     return lg;
   };
   // ground floor pieces are part of the permanent group

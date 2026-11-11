@@ -104,9 +104,15 @@ export function buildLobby(P: Parts): LobbyBuild {
   // ---------------------------------------------------------------- signs on the two blocks: stair + lift on each side
   for (const [i, b] of CORES.entries()) {
     const label = i === 0 ? 'STAIR A  \u00b7  LIFT 1' : 'LIFT 2  \u00b7  STAIR B';
-    k.sign(g, label, 0xd4af37, (b.x0 + b.x1) / 2, 5.3, b.z1 + 0.2, 11, 1.3, true);
+    // the doors face the lobby between the blocks: the sign hangs on that face (west block: +x, east block: -x)
+    const west = i === 0;
+    const sg = new THREE.Group();
+    sg.position.set((west ? b.x1 : b.x0) + (west ? 0.2 : -0.2), 0, (b.z0 + b.z1) / 2);
+    sg.rotation.y = west ? Math.PI / 2 : -Math.PI / 2;
+    g.add(sg);
+    k.sign(sg, label, 0xd4af37, 0, 5.3, 0, 11, 1.3, true);
     // a gold plinth strip along the foot of the block
-    P.tbox(g, b.x0, b.x1, b.z1, b.z1 + 0.15, 0, 0.35, gold);
+    P.tbox(g, west ? b.x1 : b.x0 - 0.15, west ? b.x1 + 0.15 : b.x0, b.z0, b.z1, 0, 0.35, gold);
   }
   void LIFTS; void STAIRS;
 

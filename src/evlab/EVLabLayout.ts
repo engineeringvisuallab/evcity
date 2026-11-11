@@ -59,21 +59,53 @@ export const SCREEN = { x: 0, y: 9.6, z: -56.6, w: 44, h: 12.4 };
 
 /** A walk-collision box in building-local metres. */
 export type Solid = readonly [x0: number, x1: number, z0: number, z1: number, y0: number, y1: number];
-/** A sloped walking surface: top height yA at zA and yB at zB (thickness 0.6 below). */
-export interface Ramp {
-  x0: number; x1: number; zA: number; yA: number; zB: number; yB: number;
+/**
+ * v1.6: the two core blocks (stair + lift) are turned a quarter turn about their own centre so that their doors face the lobby between them.
+ * The blocks are still described in their old "design frame" (door side = +z, west block x -26 .. -13.9, z 28.8 .. 41.2); these helpers turn
+ * design coordinates into building coordinates. West block (0): design +z -> world +x. East block (1): design +z -> world -x.
+ */
+export const BLOCK_PIVOT: ReadonlyArray<{ x: number; z: number; yaw: number }> = [
+  { x: -19.95, z: 35, yaw: Math.PI / 2 },
+  { x: 19.95, z: 35, yaw: -Math.PI / 2 },
+];
+export function blockToWorld(i: number, x: number, z: number): [number, number] {
+  const p = BLOCK_PIVOT[i], dx = x - p.x, dz = z - p.z;
+  return i === 0 ? [p.x + dz, p.z - dx] : [p.x - dz, p.z + dx];
+}
+export function blockToDesign(i: number, wx: number, wz: number): [number, number] {
+  const p = BLOCK_PIVOT[i];
+  return i === 0 ? [p.x + (p.z - wz), p.z + (wx - p.x)] : [p.x + (wz - p.z), p.z + (p.x - wx)];
+}
+/** A box (x0, x1, z0, z1) of block i turned into building coordinates. */
+export function blockRect(i: number, x0: number, x1: number, z0: number, z1: number): [number, number, number, number] {
+  const a = blockToWorld(i, x0, z0), b = blockToWorld(i, x1, z1);
+  return [Math.min(a[0], b[0]), Math.max(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[1], b[1])];
 }
 
-/** Pose of the thin cuboid (0.3 m half thickness) that makes a Ramp walkable: centre, half sizes and the rotation about x (quaternion x / w). */
-export function rampPose(r: Ramp): { cx: number; cy: number; cz: number; hx: number; hy: number; hz: number; qx: number; qw: number } {
+/** A sloped walking surface: top height yA at zA and yB at zB (thickness 0.6 below). `blk`: the ramp is given in the design frame of that core block. */
+export interface Ramp {
+  x0: number; x1: number; zA: number; yA: number; zB: number; yB: number;
+  blk?: 0 | 1;
+}
+
+/** Pose of the thin cuboid (0.3 m half thickness) that makes a Ramp walkable: centre, half sizes and the rotation (quaternion). */
+export function rampPose(r: Ramp): { cx: number; cy: number; cz: number; hx: number; hy: number; hz: number; qx: number; qy: number; qz: number; qw: number } {
   // the angle is measured towards +z, so the lower-z end comes first
   const [zA, yA, zB, yB] = r.zA <= r.zB ? [r.zA, r.yA, r.zB, r.yB] : [r.zB, r.yB, r.zA, r.yA];
   const dz = zB - zA, dy = yB - yA;
   const a = Math.atan2(dy, dz);
   const th = 0.3;
+  const sx = Math.sin(-a / 2), cxq = Math.cos(-a / 2);
+  let cx = (r.x0 + r.x1) / 2, cz = (zA + zB) / 2 + th * Math.sin(a);
+  let qx = sx, qy = 0, qz = 0, qw = cxq;
+  if (r.blk !== undefined) {
+    const yaw = BLOCK_PIVOT[r.blk].yaw, sy = Math.sin(yaw / 2), cy = Math.cos(yaw / 2);
+    [cx, cz] = blockToWorld(r.blk, cx, cz);
+    qx = cy * sx; qy = sy * cxq; qz = -sy * sx; qw = cy * cxq;
+  }
   return {
-    cx: (r.x0 + r.x1) / 2, cy: (yA + yB) / 2 - th * Math.cos(a), cz: (zA + zB) / 2 + th * Math.sin(a),
+    cx, cy: (yA + yB) / 2 - th * Math.cos(a), cz,
     hx: (r.x1 - r.x0) / 2, hy: th, hz: Math.hypot(dz, dy) / 2,
-    qx: Math.sin(-a / 2), qw: Math.cos(-a / 2),
+    qx, qy, qz, qw,
   };
 }

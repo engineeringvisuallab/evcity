@@ -135,12 +135,16 @@ ok(!reach(0, -20), 'seat blocks must block (centre of a row)');
 // ---- every ramp collider: the TOP face of the tilted cuboid must pass through both ends of the ramp
 for (const r of allRamps) {
   const p = L.rampPose(r);
-  const q = new THREE.Quaternion(p.qx, 0, 0, p.qw);
+  const q = new THREE.Quaternion(p.qx, p.qy, p.qz, p.qw);
   const end = (sign: number): THREE.Vector3 => new THREE.Vector3(0, p.hy, sign * p.hz).applyQuaternion(q).add(new THREE.Vector3(p.cx, p.cy, p.cz));
   const e1 = end(-1), e2 = end(1);
+  // ramps of a core block are given in the block's design frame: turn the ends back before comparing
+  const zOf = (e: THREE.Vector3): number => (r.blk === undefined ? e.z : L.blockToDesign(r.blk, e.x, e.z)[1]);
+  const xOf = (e: THREE.Vector3): number => (r.blk === undefined ? e.x : L.blockToDesign(r.blk, e.x, e.z)[0]);
   const lo = r.zA <= r.zB ? [r.zA, r.yA, r.zB, r.yB] : [r.zB, r.yB, r.zA, r.yA];
-  ok(Math.abs(e1.z - lo[0]) < 0.35 && Math.abs(e1.y - lo[1]) < 0.05, `ramp (z ${r.zA} -> ${r.zB}): low end is at (${e1.z.toFixed(2)}, ${e1.y.toFixed(2)})`);
-  ok(Math.abs(e2.z - lo[2]) < 0.35 && Math.abs(e2.y - lo[3]) < 0.05, `ramp (z ${r.zA} -> ${r.zB}): high end is at (${e2.z.toFixed(2)}, ${e2.y.toFixed(2)})`);
+  ok(Math.abs(zOf(e1) - lo[0]) < 0.35 && Math.abs(e1.y - lo[1]) < 0.05, `ramp (z ${r.zA} -> ${r.zB}): low end is at (${zOf(e1).toFixed(2)}, ${e1.y.toFixed(2)})`);
+  ok(Math.abs(zOf(e2) - lo[2]) < 0.35 && Math.abs(e2.y - lo[3]) < 0.05, `ramp (z ${r.zA} -> ${r.zB}): high end is at (${zOf(e2).toFixed(2)}, ${e2.y.toFixed(2)})`);
+  ok(Math.abs(xOf(e1) - (r.x0 + r.x1) / 2) < 0.05 && Math.abs(xOf(e2) - (r.x0 + r.x1) / 2) < 0.05, `ramp (z ${r.zA} -> ${r.zB}): stays in its flight lane`);
 }
 
 // ---- hall data
@@ -187,6 +191,27 @@ function walk(path: Array<[number, number, number]>, n: number, step = 0.2): str
   return null;
 }
 
+/** A path given in the design frame of core block `blk` (door side = +z), turned into building coordinates. */
+const wp = (blk: number, pts: Array<[number, number, number]>): Array<[number, number, number]> => pts.map(([x, z, y]) => { const [wx, wz] = TL.blockToWorld(blk, x, z); return [wx, wz, y] as [number, number, number]; });
+// ---- v1.6: the blocks are turned so the doors face the lobby between them
+{
+  for (const i of [0, 1] as const) {
+    const [px, pz] = TL.blockToWorld(i, 3.3, 37.1), [bx, bz] = TL.blockToDesign(i, px, pz);
+    ok(Math.abs(bx - 3.3) < 1e-9 && Math.abs(bz - 37.1) < 1e-9, `block ${i}: design <-> building transform round trip`);
+    const c = TL.CORES_D[i];
+    ok(Math.abs((c.x0 + c.x1) / 2 - L.BLOCK_PIVOT[i].x) < 1e-9 && Math.abs((c.z0 + c.z1) / 2 - L.BLOCK_PIVOT[i].z) < 1e-9, `block ${i}: the pivot is the block centre`);
+  }
+  for (const l of TL.LIFTS) {
+    const door = Math.abs(TL.blockToWorld(l.id, l.cx, l.sz1)[0]), back = Math.abs(TL.blockToWorld(l.id, l.cx, l.sz0)[0]);
+    ok(door < back, `${l.name}: the door faces the lobby between the blocks (door |x| ${door.toFixed(1)} < back |x| ${back.toFixed(1)})`);
+  }
+  for (const s of TL.STAIRS) {
+    const door = Math.abs(TL.blockToWorld(s.id, s.doorX, TL.ST.zS)[0]), back = Math.abs(TL.blockToWorld(s.id, s.doorX, TL.ST.zN)[0]);
+    ok(door < back, `${s.name}: the door faces the lobby between the blocks`);
+  }
+  ok(TL.CORES[0].x1 < TL.CORES[1].x0 && TL.CORES[1].x0 - TL.CORES[0].x1 > 20, 'a wide open lobby between the two blocks');
+}
+
 // ---- stairs: every storey of both stairs, door to landing, flights, mid landing
 let stairFails = 0;
 for (const s of TL.STAIRS) {
@@ -196,13 +221,13 @@ for (const s of TL.STAIRS) {
     const y0 = TL.STOPS[i], y1 = TL.STOPS[i + 1], hm = (y0 + y1) / 2;
     const lvl = Math.max(0, TL.levelAtY(y0 + 0.3));
     const nLevel = y0 < TL.T.y1 - 0.5 ? 0 : lvl;
-    const r = walk([[ax, 39, y0], [ax, zS, y0], [ax, zM, hm], [ax, zN, hm], [bx, zN, hm], [bx, zM, hm], [bx, zS, y1], [bx, 39, y1]], nLevel);
+    const r = walk(wp(s.id, [[ax, 39, y0], [ax, zS, y0], [ax, zM, hm], [ax, zN, hm], [bx, zN, hm], [bx, zM, hm], [bx, zS, y1], [bx, 39, y1]]), nLevel);
     if (r) { stairFails++; if (stairFails < 6) console.error(`FAIL ${s.name} storey ${i} (y ${y0.toFixed(1)} -> ${y1.toFixed(1)}): ${r}`); }
   }
   // the doors at every level
   for (let n = 0; n <= TL.T.roof; n++) {
     const y = TL.levelY(n);
-    const r = walk([[s.doorX, 43.2, y], [s.doorX, 39.5, y], [ax, 39.5, y]], n);
+    const r = walk(wp(s.id, [[s.doorX, 43.2, y], [s.doorX, 39.5, y], [ax, 39.5, y]]), n);
     if (r) { stairFails++; if (stairFails < 6) console.error(`FAIL ${s.name} door at level ${n}: ${r}`); }
   }
 }
@@ -219,8 +244,8 @@ for (const l of TL.LIFTS) {
   ok(2 * l.doorHalf >= 1.4, `${l.name}: doorway wide enough`);
   for (const n of [0, 1, 2, 30, TL.T.top, TL.T.roof]) {
     const y = TL.levelY(n);
-    ok(walk([[l.cx, 43.2, y], [l.cx, 40.0, y], [l.cx, 38.6, y]], n) === null, `${l.name}: you can walk from the landing into the cabin at level ${n}`);
-    ok(walk([[l.cx + (l.id === 0 ? -3.2 : 3.2), 43.2, y], [l.cx + (l.id === 0 ? -3.2 : 3.2), 40.0, y]], n) !== null, `${l.name}: the shaft wall beside the door blocks (level ${n})`);
+    ok(walk(wp(l.id, [[l.cx, 43.2, y], [l.cx, 40.0, y], [l.cx, 38.6, y]]), n) === null, `${l.name}: you can walk from the landing into the cabin at level ${n}`);
+    ok(walk(wp(l.id, [[l.cx + (l.id === 0 ? -3.2 : 3.2), 43.2, y], [l.cx + (l.id === 0 ? -3.2 : 3.2), 40.0, y]]), n) !== null, `${l.name}: the shaft wall beside the door blocks (level ${n})`);
   }
 }
 ok(tcore.landing.length === 2 * (TL.T.roof + 1), 'a door blocker for every lift on every level');
@@ -275,7 +300,8 @@ ok(tcore.landing.length === 2 * (TL.T.roof + 1), 'a door blocker for every lift 
 {
   const state = new Map<string, boolean>();
   const host = { landingBlock: (l: number, n: number, b: boolean) => { state.set(`${l}:${n}`, b); }, cabinPose: () => undefined, cabinDoorBlock: () => undefined };
-  const pl = new THREE.Vector3(TL.LIFTS[0].cx, 0.9 + 0.03, 39);
+  const [cabX, cabZ] = TL.blockToWorld(0, TL.LIFTS[0].cx, 39);
+  const pl = new THREE.Vector3(cabX, 0.9 + 0.03, cabZ);
   const io = { teleportLocal: (x: number, y: number, z: number) => pl.set(x, y, z) };
   const view = new TowerView(parts, TT, host, io, null);
   view.lifts.cars[0].request(40);
@@ -293,7 +319,8 @@ ok(tcore.landing.length === 2 * (TL.T.roof + 1), 'a door blocker for every lift 
   ok(Math.abs(pl.y - 0.9 - TL.levelY(40)) < 0.2, `the rider ends at the level-40 floor (y ${pl.y.toFixed(2)})`);
   ok(view.level === 40 || view.level === 39 || view.level === 41, 'the view follows the rider\'s level');
   // landing call at a level
-  pl.set(0, TL.levelY(12) + 0.93, 44);
+  const [landX, landZ] = TL.blockToWorld(0, TL.LIFTS[0].cx, 44);
+  pl.set(landX, TL.levelY(12) + 0.93, landZ);
   view.update(1 / 60, pl);
   ok(view.landingLevel(pl) === 12, 'at a landing the call button works');
   view.dispose();
@@ -325,8 +352,9 @@ for (const n of [1, 2, 15, 33, 45, 55, 85, 86, TL.T.top, TL.T.roof]) {
   const Wc = Math.round((X1 - X0) / C2) + 1, Dc = Math.round((Z1 - Z0) / C2) + 1;
   const id = (x: number, z: number): number => Math.round((z - Z0) / C2) * Wc + Math.round((x - X0) / C2);
   const seen2 = new Uint8Array(Wc * Dc);
-  const st: Array<[number, number]> = [[0, 43.2]];
-  seen2[id(0, 43.2)] = 1;
+  const [sx0, sz0] = TL.blockToWorld(0, TL.LIFTS[0].cx, 43.2);
+  const st: Array<[number, number]> = [[sx0, sz0]];
+  seen2[id(sx0, sz0)] = 1;
   let leak = 0, cells = 0, free = 0;
   while (st.length) {
     const [x, z] = st.pop()!;
@@ -343,7 +371,8 @@ for (const n of [1, 2, 15, 33, 45, 55, 85, 86, TL.T.top, TL.T.roof]) {
   for (let x = X0; x <= X1; x += C2) for (let z = Z0; z <= Z1; z += C2) if (TL.inRing(ring, x, z, 0.8) && !tcore.solids.some((b) => hitBox(b, x, z, y)) && !blockedAt(x, z, y, n)) free++;
   const r = (x: number, z: number): boolean => seen2[id(x, z)] === 1;
   ok(leak === 0, `level ${n}: ${leak} reachable cells outside the glass wall`);
-  ok(r(0, 43.2) && TL.LIFTS.every((l) => r(l.cx, 43.2)) && TL.STAIRS.every((s) => r(s.doorX, 43.2)), `level ${n}: the lift lobby and the doors of both stair + lift blocks are reachable`);
+  const front = (blk: number, x: number): boolean => { const [wx, wz] = TL.blockToWorld(blk, x, 43.2); return r(wx, wz); };
+  ok(TL.LIFTS.every((l) => front(l.id, l.cx)) && TL.STAIRS.every((st2) => front(st2.id, st2.doorX)), `level ${n}: the lobby in front of the doors of both stair + lift blocks is reachable`);
   ok(cells > free * 0.8, `level ${n}: most of the floor is reachable (${cells} of ${free} cells)`);
   if (n !== TL.T.roof && n !== TL.T.top) ok(r(-(ring.hx - 6), 35) || r(-(ring.hx - 5), 28) || r(ring.hx - 6, 35) || r(ring.hx - 5, 28), `level ${n}: the wings are reachable`);
 }

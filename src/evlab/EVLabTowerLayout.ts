@@ -1,9 +1,10 @@
 // EVLab Tower v1.3: the numbers of the TOWER (pure data, no three.js). Building-local frame as in EVLabLayout (x east, z south, y up, origin = footprint centre at floor level).
 // The tower stands on the south part of the podium roof, right above the lobby (so the Presentation Hall stays column-free). In its middle are two concrete CORE blocks, one on each side of the open lobby (v1.4: west = stair A + lift 1, east = lift 2 + stair B); the old layout was:
 // stair A | lift 1 | open corridor | lift 2 | stair B, from the ground to the roof.
-import { rampPose, type Ramp, type Solid } from './EVLabLayout';
+import { blockRect, blockToDesign, blockToWorld, rampPose, type Ramp, type Solid } from './EVLabLayout';
 
 export type { Ramp, Solid };
+export { blockToDesign, blockToWorld };
 
 /** A box turned about y (the chamfered corners of the glass wall). */
 export interface Obb { cx: number; cz: number; hx: number; hz: number; yaw: number; y0: number; y1: number }
@@ -67,13 +68,23 @@ export function inRing(r: Ring, x: number, z: number, inset = 0): boolean {
 // ---------------------------------------------------------------- the core
 /** The core is split in two: the WEST block (stair A + lift 1) and the EAST block (lift 2 + stair B) stand SPLIT m further out, so the middle of the lobby is open. */
 export const SPLIT = 11.5;
-/** Bounding box of both blocks (use CORES for the real shapes). */
-export const CORE = { x0: -14.5 - SPLIT, x1: 14.5 + SPLIT, z0: 28.8, z1: 41.2 };
-/** The two blocks (x0, x1, z0, z1): west, east. */
-export const CORES: ReadonlyArray<{ x0: number; x1: number; z0: number; z1: number }> = [
+/**
+ * v1.6: the blocks are TURNED a quarter turn about their centre so the doors face the lobby between them (see BLOCK_PIVOT in EVLabLayout).
+ * Everything inside a block (shafts, stairs, doors, cabins) is still described in its old DESIGN frame (door side = +z): CORE_D / CORES_D / LIFTS / STAIRS / ST / CAB.
+ * CORES and CORE are the real footprints in building coordinates (west block: door side +x, east block: door side -x).
+ */
+export const CORE_D = { x0: -14.5 - SPLIT, x1: 14.5 + SPLIT, z0: 28.8, z1: 41.2 };
+export const CORES_D: ReadonlyArray<{ x0: number; x1: number; z0: number; z1: number }> = [
   { x0: -14.5 - SPLIT, x1: -2.4 - SPLIT, z0: 28.8, z1: 41.2 },
   { x0: 2.4 + SPLIT, x1: 14.5 + SPLIT, z0: 28.8, z1: 41.2 },
 ];
+/** The two blocks in building coordinates (x0, x1, z0, z1): west, east. */
+export const CORES: ReadonlyArray<{ x0: number; x1: number; z0: number; z1: number }> = CORES_D.map((b, i) => {
+  const r = blockRect(i, b.x0, b.x1, b.z0, b.z1);
+  return { x0: r[0], x1: r[1], z0: r[2], z1: r[3] };
+});
+/** Bounding box of both blocks in building coordinates. */
+export const CORE = { x0: CORES[0].x0, x1: CORES[1].x1, z0: Math.min(CORES[0].z0, CORES[1].z0), z1: Math.max(CORES[0].z1, CORES[1].z1) };
 export const WALL_T = 0.5;
 /** Two glass lift shafts, doors to the south (+z). Cabin: 3.0 x 3.2 m, 2.9 m high. */
 export const LIFTS = [
@@ -158,11 +169,15 @@ export function rectMinus(x0: number, x1: number, z0: number, z1: number, holes:
   return out;
 }
 
-/** The slab holes of the core at any level: the two lift shafts. (Stair wells have their own floor pieces.) */
-export function slabHoles(): Array<[number, number, number, number]> {
-  const h: Array<[number, number, number, number]> = LIFTS.map((l) => [l.sx0, l.sx1, l.sz0, l.sz1]);
-  for (const s of STAIRS) h.push([s.x0, s.x1, ST.zN, ST.zS - 3.5 + 0]);
+/** The slab holes of the core at any level, in the DESIGN frame: the two lift shafts. (Stair wells have their own floor pieces.) */
+export function slabHolesD(): Array<[number, number, number, number, number]> {
+  const h: Array<[number, number, number, number, number]> = LIFTS.map((l) => [l.sx0, l.sx1, l.sz0, l.sz1, l.id]);
+  for (const s of STAIRS) h.push([s.x0, s.x1, ST.zN, ST.zS - 3.5 + 0, s.id]);
   return h;
+}
+/** The same holes in building coordinates. */
+export function slabHoles(): Array<[number, number, number, number]> {
+  return slabHolesD().map((h) => blockRect(h[4], h[0], h[1], h[2], h[3]));
 }
 
 /** Per-level solids of the tower floor n (1..69): slab, glass wall, core walls with doors, stair pieces, furniture. */
@@ -314,15 +329,15 @@ export const columnsOf = (n: number): Col[] => frameOf(n).cols;
 export const beamsOf = (n: number): Beam[] => frameOf(n).beams;
 
 // ---------------------------------------------------------------- whole-tower collision (core is built once for all levels)
-export function coreColliders(): TowerColliders {
+export function coreDesign(): TowerColliders {
   const solids: Solid[] = [], ramps: Ramp[] = [], landing: TowerColliders['landing'] = [];
-  const C = CORE, t = WALL_T;
+  const C = CORE_D, t = WALL_T;
   const top = CORE_TOP;
   const doorLevels: number[] = [];
   for (let n = 0; n <= T.roof; n++) doorLevels.push(n);
   // ---- the two blocks: north wall and outer end wall (full height). The inner end is closed by the lift shaft + service block.
-  for (const b of CORES) solids.push([b.x0, b.x1, C.z0, C.z0 + t, 0, top]);
-  solids.push([CORES[0].x0, CORES[0].x0 + t, C.z0, C.z1, 0, top], [CORES[1].x1 - t, CORES[1].x1, C.z0, C.z1, 0, top]);
+  for (const b of CORES_D) solids.push([b.x0, b.x1, C.z0, C.z0 + t, 0, top]);
+  solids.push([CORES_D[0].x0, CORES_D[0].x0 + t, C.z0, C.z1, 0, top], [CORES_D[1].x1 - t, CORES_D[1].x1, C.z0, C.z1, 0, top]);
   // service blocks north of the lifts and between stair and lift (solid concrete)
   for (const l of LIFTS) solids.push([l.sx0, l.sx1, C.z0, l.sz0, 0, top]);
   solids.push([-8.5 - SPLIT, -6.6 - SPLIT, C.z0, C.z1, 0, top], [6.6 + SPLIT, 8.5 + SPLIT, C.z0, C.z1, 0, top]);
@@ -360,15 +375,33 @@ export function coreColliders(): TowerColliders {
       const y0 = STOPS[i], y1 = STOPS[i + 1], hm = (y0 + y1) / 2;
       solids.push([s.x0, s.x1, ST.flightZ1, ST.zS, y0 - T.slab, y0]);
       solids.push([s.x0, s.x1, ST.zN, ST.flightZ0, hm - T.slab, hm]);
-      ramps.push({ x0: a0, x1: a1, zA: ST.flightZ1, yA: y0, zB: ST.flightZ0, yB: hm });
-      ramps.push({ x0: b0, x1: b1, zA: ST.flightZ0, yA: hm, zB: ST.flightZ1, yB: y1 });
+      ramps.push({ x0: a0, x1: a1, zA: ST.flightZ1, yA: y0, zB: ST.flightZ0, yB: hm, blk: s.id });
+      ramps.push({ x0: b0, x1: b1, zA: ST.flightZ0, yA: hm, zB: ST.flightZ1, yB: y1, blk: s.id });
     }
     solids.push([s.x0, s.x1, ST.flightZ1, ST.zS, STOPS[STOPS.length - 1] - T.slab, STOPS[STOPS.length - 1]]);
     solids.push([s.x0, s.x1, ST.zN, ST.zS, top, top + 0.4]); // roof of the well
   }
   // the roof of each block
-  for (const b of CORES) solids.push([b.x0, b.x1, b.z0, b.z1, top, top + 0.4]);
+  for (const b of CORES_D) solids.push([b.x0, b.x1, b.z0, b.z1, top, top + 0.4]);
   return { solids, obbs: [], ramps, landing };
+}
+
+
+/** Which block a box of the design frame belongs to (the west block lies at x < 0). */
+export const blockOfBox = (b: Solid): 0 | 1 => ((b[0] + b[1]) / 2 < 0 ? 0 : 1);
+
+/** The core colliders in building coordinates: every box of the design frame turned with its block (ramps keep their design numbers + `blk`). */
+export function coreColliders(): TowerColliders {
+  const d = coreDesign();
+  const solids = d.solids.map((b): Solid => {
+    const r = blockRect(blockOfBox(b), b[0], b[1], b[2], b[3]);
+    return [r[0], r[1], r[2], r[3], b[4], b[5]];
+  });
+  const landing = d.landing.map((l) => {
+    const r = blockRect(l.lift, l.box[0], l.box[1], l.box[2], l.box[3]);
+    return { lift: l.lift, level: l.level, box: [r[0], r[1], r[2], r[3], l.box[4], l.box[5]] as Solid };
+  });
+  return { solids, obbs: [], ramps: d.ramps, landing };
 }
 
 // ---------------------------------------------------------------- furniture of the floors
@@ -386,7 +419,8 @@ export function floorPlan(n: number): FloorPlan {
   const solids: Solid[] = [];
   const y = levelY(n);
   const free = (x: number, z: number, m: number): boolean =>
-    inRing(ring, x, z, T.wallIn + m) && !CORES.some((b) => x > b.x0 - CORE_PAD && x < b.x1 + CORE_PAD && z > b.z0 - CORE_PAD && z < b.z1 + 5.5);
+    // the doors face the lobby between the blocks, so the free strip lies on that side of each block (west block: +x, east block: -x)
+    inRing(ring, x, z, T.wallIn + m) && !CORES.some((b, i) => x > b.x0 - (i === 1 ? 5.5 : CORE_PAD) && x < b.x1 + (i === 0 ? 5.5 : CORE_PAD) && z > b.z0 - CORE_PAD && z < b.z1 + CORE_PAD);
   const cols = columnsOf(n);
   const add = (it: Item, hx: number, hz: number, h = 1.2): void => {
     // nothing stands where a structural column is (0.5 m margin for the chairs)
