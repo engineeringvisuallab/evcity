@@ -23,6 +23,7 @@ import { LiftUI } from './EVLabLiftUI';
 import { TowerView } from './EVLabTowerView';
 import { makeTowerTextures } from './EVLabTowerTextures';
 import { CAB, LIFTS, T, blockToWorld, coreColliders, levelSolids, type Obb } from './EVLabTowerLayout';
+import { outriggerSolids } from './EVLabStructure';
 import { BLOCK_PIVOT } from './EVLabLayout';
 import type { LiftHost } from './EVLabLifts';
 
@@ -93,7 +94,7 @@ export class EVLabManager {
     const solids: Solid[] = [...this.shell.solids, ...this.lobby.solids, ...this.wings.solids, ...this.hall.solids, ...tc.solids, ...this.grounds.solids]; // + the bridge decks and railings
     const obbs: Obb[] = [];
     const ramps: Ramp[] = [...this.lobby.ramps, ...this.hall.ramps, ...tc.ramps];
-    for (let n = 1; n <= T.roof; n++) { const lc = levelSolids(n); solids.push(...lc.solids); obbs.push(...lc.obbs); }
+    for (let n = 1; n <= T.roof; n++) { const lc = levelSolids(n); solids.push(...lc.solids, ...outriggerSolids(n)); obbs.push(...lc.obbs); }
     this.body = this.createColliders(solids, ramps, obbs);
     this.createLiftColliders(tc.landing);
     if (typeof document !== 'undefined' && document.body) this.ui = new LiftUI(d.lockTarget);

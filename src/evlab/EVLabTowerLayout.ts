@@ -404,6 +404,43 @@ export function coreColliders(): TowerColliders {
   return { solids, obbs: [], ramps: d.ramps, landing };
 }
 
+// ---------------------------------------------------------------- lift / stair lobby: glass partition (step 1.2b) and the gates to the office (step 1.2c)
+/**
+ * The lobby in front of the lift + stair doors is the strip between the two core blocks. On the OFFICE floors it is closed off from the open-plan
+ * office by a floor-to-ceiling glass partition at its north and south end (the core blocks themselves are the east and west sides).
+ * Each partition has ONE glass gate (a double sliding door, always passable) in the middle: that is the way into the office.
+ */
+export const LOBBY = {
+  x0: CORES[0].x1, x1: CORES[1].x0,
+  z0: Math.max(CORES[0].z0, CORES[1].z0), z1: Math.min(CORES[0].z1, CORES[1].z1),
+};
+/** t: glass thickness, gateHalf: half width of the gate opening, gateH: height of the door leaves (glass above is fixed), approach: free space kept on the office side of a gate. */
+export const PART = { t: 0.12, gateHalf: 1.5, gateH: 2.6, approach: 2.2, margin: 0.6 };
+export interface PartWall {
+  /** 'north' = the glass at z = LOBBY.z0 (the office is north of it), 'south' = the glass at z = LOBBY.z1. */
+  side: 'north' | 'south';
+  z: number;
+  /** The wall runs from x0 to x1; the gate opening is g0 .. g1. */
+  x0: number; x1: number; g0: number; g1: number;
+}
+/** The glass partitions of level n (only office floors have them). */
+export function partitionOf(n: number): PartWall[] {
+  if (n < 1 || n > T.top || FLOORS[n].kind !== 'office') return [];
+  const c = (LOBBY.x0 + LOBBY.x1) / 2;
+  const mk = (side: 'north' | 'south', z: number): PartWall => ({ side, z, x0: LOBBY.x0 - 0.02, x1: LOBBY.x1 + 0.02, g0: c - PART.gateHalf, g1: c + PART.gateHalf });
+  return [mk('north', LOBBY.z0), mk('south', LOBBY.z1)];
+}
+/** The walk-collision boxes of the partitions of level n: the glass on both sides of every gate (the gate itself stays open). */
+export function partitionSolids(n: number): Solid[] {
+  const y = levelY(n), top = y + T.floorH - T.slab, h = PART.t / 2, out: Solid[] = [];
+  for (const w of partitionOf(n)) out.push([w.x0, w.g0, w.z - h, w.z + h, y, top], [w.g1, w.x1, w.z - h, w.z + h, y, top]);
+  return out;
+}
+/** Does a box centred (x, z) with half sizes (hx, hz) touch the lobby or the space in front of its gates? (Desks and the like keep out of it.) */
+export function nearLobby(x: number, z: number, hx: number, hz: number): boolean {
+  return x + hx > LOBBY.x0 - PART.margin && x - hx < LOBBY.x1 + PART.margin && z + hz > LOBBY.z0 - PART.approach && z - hz < LOBBY.z1 + PART.approach;
+}
+
 // ---------------------------------------------------------------- furniture of the floors
 export interface Item { t: 'desk' | 'table' | 'plant' | 'sofa' | 'chair' | 'bench' | 'counter' | 'telescope' | 'room'; x: number; z: number; yaw?: number; w?: number; d?: number; r?: number }
 export interface FloorPlan { items: Item[]; solids: Solid[]; kind: FloorKind }
@@ -444,9 +481,11 @@ export function floorPlan(n: number): FloorPlan {
     }
     wings((x, z) => {
       if (!free(x, z, 1.6)) return;
+      if (nearLobby(x, z, 1.7, 0.85)) return; // step 1.2b: the lift lobby and the way to the gates stay clear
       if (roomXs.some((rxx) => Math.abs(x - (T.cx + rxx)) < 6.5 && z < T.cz - ring.hz + 9.5)) return;
       add({ t: 'desk', x, z, yaw: 0, w: 3.4, d: 1.7 }, 1.7, 0.85, 1.1);
     }, 6.0, 4.6);
+    solids.push(...partitionSolids(n));
     for (const [x, z] of [[-16, 30], [16, 30], [-20, 41], [20, 41]] as const) if (free(T.cx + x, z, 1)) add({ t: 'plant', x: T.cx + x, z, r: 0.5 }, 0.5, 0.5, 1.8);
   } else if (kind === 'lobby') {
     add({ t: 'counter', x: 0, z: 45, w: 8, d: 1.4 }, 4, 0.7, 1.1);

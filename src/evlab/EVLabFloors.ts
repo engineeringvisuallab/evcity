@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { Parts } from './EVLabParts';
+import { beltOf, beltSection, isMech, outriggersOf } from './EVLabStructure';
 import type { TowerTextures } from './EVLabTowerTextures';
-import { CORES, FLOORS, ROOF_Y, T, beamsOf, ceilY, columnsOf, floorPlan, inRing, levelY, ringOf, ringPoints, type FloorKind } from './EVLabTowerLayout';
+import { CORES, FLOORS, LOBBY, PART, ROOF_Y, T, beamsOf, ceilY, columnsOf, floorPlan, inRing, levelY, partitionOf, ringOf, ringPoints, type FloorKind } from './EVLabTowerLayout';
 
 /** What one level of the tower looks like inside (floor, ceiling lights, glass wall, furniture, signs). Built when the player is near, dropped when far. */
 export interface LevelView {
@@ -182,6 +183,64 @@ export function makeLevelBuilder(P: Parts, TT: TowerTextures): (n: number) => Le
     add(gBox, topM, desks); add(gBox, white, panels); add(gBox, black, screens); add(gBox, chairM, chairs);
     add(gCyl, topM, rTables); add(gCyl, black, rLegs); add(gBox, topM, bTables);
     add(gCyl, pot, pots); add(gSph, leaf, leaves); add(gBox, leather, sofaB); add(gBox, leather, sofaK); add(gBox, counterM, counters); add(gCyl, gold, scopes);
+
+    // step 1.2b + 1.2c: glass partition around the lift / stair lobby of an office floor, with one glass gate (double sliding door) in each partition
+    const parts = partitionOf(n);
+    if (parts.length) {
+      const hgt = T.floorH - T.slab, mull: THREE.Matrix4[] = [];
+      P.hplane(g, LOBBY.x0, LOBBY.x1, LOBBY.z0, LOBBY.z1, y + 0.012, mats.marble, 6, 6); // marble lobby floor between the core blocks
+      for (const w of parts) {
+        const office = w.side === 'north' ? -1 : 1; // which side of the glass the office is on
+        const panel = (a: number, b: number): void => {
+          P.tbox(g, a, b, w.z - 0.03, w.z + 0.03, y + 0.1, y + hgt, roomGlass);
+          P.tbox(g, a, b, w.z - 0.07, w.z + 0.07, y, y + 0.1, gold); // base rail
+          P.tbox(g, a, b, w.z - 0.07, w.z + 0.07, y + hgt - 0.08, y + hgt, gold); // top rail
+          const cnt = Math.max(1, Math.round((b - a) / 3.4));
+          for (let i = 0; i <= cnt; i++) mull.push(mx(a + ((b - a) * i) / cnt, y + hgt / 2, w.z, 0.08, hgt, 0.15));
+        };
+        panel(w.x0, w.g0); panel(w.g1, w.x1);
+        // the gate: gold posts and header, fixed glass above, and the two door leaves slid open into the wall
+        mull.push(mx(w.g0, y + hgt / 2, w.z, 0.16, hgt, 0.2), mx(w.g1, y + hgt / 2, w.z, 0.16, hgt, 0.2));
+        P.tbox(g, w.g0, w.g1, w.z - 0.07, w.z + 0.07, y + PART.gateH, y + PART.gateH + 0.1, gold);
+        P.tbox(g, w.g0, w.g1, w.z - 0.03, w.z + 0.03, y + PART.gateH + 0.1, y + hgt, roomGlass);
+        const oz = office * 0.12;
+        P.tbox(g, w.g0 - 1.35, w.g0 + 0.05, w.z + oz - 0.025, w.z + oz + 0.025, y + 0.05, y + PART.gateH, roomGlass);
+        P.tbox(g, w.g1 - 0.05, w.g1 + 1.35, w.z + oz - 0.025, w.z + oz + 0.025, y + 0.05, y + PART.gateH, roomGlass);
+        for (const x of [w.g0 + 0.05, w.g1 - 0.05]) P.tbox(g, x - 0.03, x + 0.03, w.z + oz - 0.04, w.z + oz + 0.04, y + 0.05, y + PART.gateH, gold); // the leading edges
+        k.sign(g, 'OFFICE  \u2194  LIFTS & STAIRS', 0xd4af37, (w.g0 + w.g1) / 2, y + 3.3, w.z, 4.2, 0.5, true);
+      }
+      const mi = instanced(gBox, gold, mull); if (mi) g.add(mi);
+    }
+
+    // step 1.1b: mechanical floors: outrigger trusses (core block -> end column, one open panel as a doorway) and a belt truss round the facade
+    if (isMech(n)) {
+      const bars: THREE.Matrix4[] = [], ex = new THREE.Vector3(1, 0, 0), dir = new THREE.Vector3(), mid = new THREE.Vector3(), one = new THREE.Vector3();
+      const bar = (ax: number, ay: number, az: number, bx: number, by: number, bz: number, w: number): void => {
+        dir.set(bx - ax, by - ay, bz - az);
+        const len = dir.length();
+        if (len < 0.05) return;
+        dir.normalize();
+        mid.set((ax + bx) / 2, (ay + by) / 2, (az + bz) / 2);
+        bars.push(new THREE.Matrix4().compose(mid, new THREE.Quaternion().setFromUnitVectors(ex, dir), one.set(len, w, w)));
+      };
+      const yc = ceilY(n);
+      for (const o of outriggersOf(n)) {
+        const yb = o.y0 + o.chord / 2, yt = yc - o.chord / 2;
+        bar(Math.min(...o.panels.map((p) => p.x0)), yt, o.z, Math.max(...o.panels.map((p) => p.x1)), yt, o.z, o.chord); // top chord: the whole length (a deep beam over the doorway)
+        for (const p of o.panels) {
+          if (p.open) continue;
+          bar(p.x0, yb, o.z, p.x1, yb, o.z, o.chord); // bottom chord only where the panel is closed
+          bar(p.x0, yb, o.z, p.x1, yt, o.z, o.diag); bar(p.x1, yb, o.z, p.x0, yt, o.z, o.diag); // X bracing
+        }
+      }
+      const bs = beltSection(n);
+      beltOf(n).forEach(({ a, b }, i) => {
+        const yb = y + 0.3, yt = yc - 0.3;
+        bar(a.x, yb, a.z, b.x, yb, b.z, bs.chord); bar(a.x, yt, a.z, b.x, yt, b.z, bs.chord);
+        if (i % 2) bar(a.x, yb, a.z, b.x, yt, b.z, bs.diag); else bar(a.x, yt, a.z, b.x, yb, b.z, bs.diag);
+      });
+      const bm = instanced(gBox, P.lit(null, 0x4a5058, 0.3), bars); if (bm) g.add(bm);
+    }
 
     // the big sign on the north wall (facing south), and the roof deck's pergola light
     const sg = SIGN[kind];

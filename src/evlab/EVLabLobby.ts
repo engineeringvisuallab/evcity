@@ -3,6 +3,7 @@ import { addChandeliers } from './EVLabHall';
 import { BLD, DIVIDER, PORTAL, RAMP, REAR_Y, WING, type Ramp, type Solid } from './EVLabLayout';
 import { Parts } from './EVLabParts';
 import { CORES, LIFTS, STAIRS, rectMinus } from './EVLabTowerLayout';
+import { PODIUM, podium, podiumSolids } from './EVLabStructure';
 
 export interface LobbyBuild {
   group: THREE.Group;
@@ -155,6 +156,23 @@ export function buildLobby(P: Parts): LobbyBuild {
       l.scale.set(0.9 - i * 0.08, 0.7, 0.9 - i * 0.08);
     }
     solids.push([x - 0.8, x + 0.8, z - 0.8, z + 0.8, 0, 2.5]);
+  }
+
+  // ---------------------------------------------------------------- step 1.1b: the tower columns continue to the ground through the lobby
+  // (square marble-clad columns with gold bands; the ones that would stand in a hall ramp are carried by a steel transfer girder under the ceiling)
+  const steel = P.lit(null, 0x2f353d, 0.28);
+  for (const c of podium().cols) {
+    P.tbox(g, c.x - c.s / 2, c.x + c.s / 2, c.z - c.s / 2, c.z + c.s / 2, 0, PODIUM.ceil, marble, 4, 4);
+    for (const [y0, y1] of [[0, 0.35], [PODIUM.ceil - 0.5, PODIUM.ceil]] as const) P.tbox(g, c.x - c.s / 2 - 0.06, c.x + c.s / 2 + 0.06, c.z - c.s / 2 - 0.06, c.z + c.s / 2 + 0.06, y0, y1, gold);
+  }
+  solids.push(...podiumSolids());
+  for (const gi of podium().girders) {
+    // the girder is as deep as the roof zone (the slab is part of it): only the lower part shows below the ceiling, with gold edge strips
+    P.tbox(g, gi.x0, gi.x1, gi.z - 0.7, gi.z + 0.7, PODIUM.girderBottom, PODIUM.ceil + 0.05, steel);
+    P.tbox(g, gi.x0, gi.x1, gi.z - 0.72, gi.z - 0.66, PODIUM.girderBottom, PODIUM.girderBottom + 0.1, gold);
+    P.tbox(g, gi.x0, gi.x1, gi.z + 0.66, gi.z + 0.72, PODIUM.girderBottom, PODIUM.girderBottom + 0.1, gold);
+    // bearing plates where the girder sits on its two columns
+    for (const x of [gi.x0, gi.x1]) P.tbox(g, x - 0.9, x + 0.9, gi.z - 0.9, gi.z + 0.9, PODIUM.girderBottom - 0.15, PODIUM.girderBottom, gold);
   }
 
   return { group: g, solids, ramps, update: (tt) => anim.forEach((f) => f(tt)) };

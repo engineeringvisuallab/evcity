@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { BLD, DIVIDER, HALL, LECTERN, REAR_Y, SCREEN, SEAT_BLOCKS, SEAT_W, hallFloorY, type Ramp, type Solid } from './EVLabLayout';
 import { buildAudience, type AudienceBuild, type Seat } from './EVLabAudience';
 import type { Parts } from './EVLabParts';
+import { HALL_TRUSS } from './EVLabStructure';
 
 export type { Mood } from './EVLabAudience';
 
@@ -62,6 +63,34 @@ export function buildHall(P: Parts): HallBuild {
   P.hplane(g, x0, x1, z0, zd1, H, P.lit(t.ceiling, 0xffffff, 0.2), 6, 6, false);
   for (let z = z0 + 6; z < zd0; z += 9) P.tbox(g, x0 + 2, x1 - 2, z, z + 0.5, H - 0.2, H - 0.1, cove);
   addChandeliers(P, g, [[-36, -5], [36, -5], [-36, 8], [36, 8]], 14.2, 1.0);
+  // ---- step 1.1b: the column-free roof (70.5 m span) is carried by steel Warren trusses every 9 m; the bottom chord hangs just below the ceiling,
+  // the rest of each truss lies in the 2 m roof zone above it (hidden by the ceiling). One instanced mesh for all members.
+  {
+    const tr = HALL_TRUSS, steel = P.lit(null, 0x3a4048, 0.3), bg = k.own(new THREE.BoxGeometry(1, 1, 1));
+    const ms: THREE.Matrix4[] = [], ex = new THREE.Vector3(1, 0, 0), dir = new THREE.Vector3(), mid = new THREE.Vector3(), one = new THREE.Vector3();
+    const bar = (ax: number, ay: number, az: number, bx: number, by: number, bz: number, w: number): void => {
+      dir.set(bx - ax, by - ay, bz - az);
+      const len = dir.length();
+      dir.normalize();
+      mid.set((ax + bx) / 2, (ay + by) / 2, (az + bz) / 2);
+      ms.push(new THREE.Matrix4().compose(mid, new THREE.Quaternion().setFromUnitVectors(ex, dir), one.set(len, w, w)));
+    };
+    const pl = tr.span / tr.panels;
+    for (const x of tr.xs) {
+      bar(x, tr.yBot, tr.zA, x, tr.yBot, tr.zB, tr.chord);
+      bar(x, tr.yTop, tr.zA, x, tr.yTop, tr.zB, tr.chord);
+      for (let i = 0; i <= tr.panels; i++) { const z = tr.zA + i * pl; bar(x, tr.yBot, z, x, tr.yTop, z, tr.diag * 0.8); }
+      for (let i = 0; i < tr.panels; i++) {
+        const za = tr.zA + i * pl, zb = za + pl;
+        if (i % 2) bar(x, tr.yBot, za, x, tr.yTop, zb, tr.diag); else bar(x, tr.yTop, za, x, tr.yBot, zb, tr.diag);
+      }
+    }
+    const im = new THREE.InstancedMesh(bg, steel, ms.length);
+    ms.forEach((m, i) => im.setMatrixAt(i, m));
+    im.frustumCulled = false;
+    g.add(im);
+  }
+
 
   // ---- the wall to the lobby: stone, three openings (6.5 m high above the ramp tops), a gold lintel, wood lining on the hall side
   const cuts = DIVIDER.openings.slice().sort((p, q) => p[0] - q[0]);
