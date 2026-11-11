@@ -16,6 +16,8 @@ export interface RoadCorrection {
   pts: [number, number][];
   /** Metres of the old roads before the first / after the last drawn point that are re-drawn too, so the curve can join the road with the same heading (default 50). */
   lead?: number;
+  /** Smallest turning radius (m) the new curve may have (default 120). If the drawn line is tighter, the lead grows (up to 260 m) until the curve is wide enough. */
+  minR?: number;
   note: string;
 }
 
@@ -28,6 +30,17 @@ export const ROAD_CORRECTIONS: readonly RoadCorrection[] = [
     // green line of the screenshot (camera X -2799 Y 260 Z -499, 2.6 px/m), traced from the F3 side to the F6 side
     pts: [[-2767, -345], [-2759, -374], [-2749, -403], [-2738, -432], [-2722, -457], [-2702, -481], [-2678, -502], [-2652, -518], [-2624, -533]],
     note: '2026-11-11: the sharp ~90 degree corner of F3/F6 at the W node is cut off by a smooth curve; the old corner stub is removed.',
+  },
+  {
+    id: 'RC02',
+    mode: 'replace-corner',
+    roads: ['F4', 'F1'],
+    node: 'N',
+    // the drawn line is a 105 deg turn in ~160 m (R about 60 m, too tight for a highway): widened to R >= 100. minR: 60 would give it almost as drawn.
+    minR: 100,
+    // green line of the screenshot (camera X 390 Y 186 Z -3663, camera turned -50 deg, 3.8 px/m), traced from the F4 side to the F1 side
+    pts: [[408, -3533], [412, -3548], [414, -3563], [418, -3578], [423, -3592], [432, -3605], [443, -3616], [454, -3627], [466, -3637], [478, -3647], [491, -3655], [500, -3665]],
+    note: '2026-11-11: F4 and F1 met at the N node in a hairpin V with a dead-end grey stub; the stub is removed and F4 now bends smoothly into F1.',
   },
 ];
 
@@ -119,7 +132,7 @@ function resample(poly: number[][], step: number): number[][] {
  * draw[0], b at its vertex nearest to draw[last]; both old end pieces (the corner stub) are dropped and a smooth curve (same heading as the
  * roads at both ends) takes their place. The node moves to the middle of the curve; `a` ends there, `b` starts there.
  */
-export function replaceCorner(a0: number[][], b0: number[][], node: number[], draw: [number, number][], step: number, lead = 50): CornerResult {
+function replaceCornerOnce(a0: number[][], b0: number[][], node: number[], draw: [number, number][], step: number, lead: number): CornerResult {
   const aRev = d2(a0[0], node) < d2(a0[a0.length - 1], node);
   const bRev = d2(b0[b0.length - 1], node) < d2(b0[0], node);
   const a = aRev ? [...a0].reverse() : a0;
@@ -158,6 +171,24 @@ export function replaceCorner(a0: number[][], b0: number[][], node: number[], dr
   const outA = [...a.slice(0, iA), ...curve.slice(0, mid + 1)];
   const outB = [...curve.slice(mid), ...b.slice(iB + 1)];
   return { a: aRev ? outA.reverse() : outA, b: bRev ? outB.reverse() : outB, node: node1, curve };
+}
+
+/** replace-corner with a radius guard: starts with `lead` and widens the curve (lead + 10 m each time, max 260 m) until its tightest turn is >= minR. */
+export function replaceCorner(a0: number[][], b0: number[][], node: number[], draw: [number, number][], step: number, lead = 50, minR = 120): CornerResult & { lead: number; radius: number } {
+  let best: (CornerResult & { lead: number; radius: number }) | null = null;
+  for (let L = lead; L <= 260; L += 10) {
+    let r: CornerResult;
+    try {
+      r = replaceCornerOnce(a0, b0, node, draw, step, L);
+    } catch {
+      break;
+    }
+    const radius = minRadius(r.curve, 2);
+    best = { ...r, lead: L, radius };
+    if (radius >= minR) break;
+  }
+  if (!best) throw new Error('replace-corner failed');
+  return best;
 }
 
 /** Smallest turning radius (m) along a polyline, from three points `span` vertices apart. */

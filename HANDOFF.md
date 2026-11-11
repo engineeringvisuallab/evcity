@@ -36,7 +36,7 @@ See `CHANGES_MERGE_VEHICLES5_STEP4_MISSIONS11_BN.md`.
 - Mine gate -> pad path has no road and is steep (~24 deg).
 
 ## Road corrections (hand-drawn screenshots)
-Read `ROAD_CORRECTION_SYSTEM.md` first. All corrections are data in `src/roads/RoadCorrections.ts` (RC01 = F3/F6 corner at node W, done), applied by `RoadNetwork.applyMainCorrections`; test `scripts/road-correction-test.ts`.
+Read `ROAD_CORRECTION_SYSTEM.md` first. All corrections are data in `src/roads/RoadCorrections.ts` (RC01 = F3/F6 corner at node W, RC02 = F4/F1 hairpin at node N, both done), applied by `RoadNetwork.applyMainCorrections`; test `scripts/road-correction-test.ts`.
 
 ## Other docs
 `VEHICLE_ENERGY_HANDOFF_BN.md` (energy/station steps), `docs/CHARGING_POINTS.md`, `docs/ROAD_SIGNS_HANDOFF_BN.md`, `CHANGES_*.md`.

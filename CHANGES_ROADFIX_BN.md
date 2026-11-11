@@ -15,3 +15,11 @@
 ## Jante rakho
 - Hat-e-aka line-er shesh/shuru road-er heading-er sathe mile na, tai 50 m `lead` diye road-er heading-e mishano hoyeche ar hat-er kapa smooth kora hoyeche. Final curve green line theke ~9 m vitor-er dike.
 - Notun correction: `ROAD_CORRECTION_SYSTEM.md` section 5.
+
+## RC02 - F4/F1 hairpin (node N)
+- F4 ar F1 N node-e ekta teekhno V (hairpin) banachchilo, pad "bend sharper than 50 deg" bole skip hoyechhilo (tai grey dead-end blob). Blob ar stub bad.
+- Notun curve F4 theke F1-e ghure mishlo. Node N (340,-3670) theke (479,-3577) e shorlo. Highway aro ~233 m choto.
+- Tomar aka line 105 digree ghurche ~160 m-e (radius ~60 m, highway-er jonno onek tight). Tai `minR: 100` diye wide kora (radius 126 m), curve aka line theke ~50 m bhitor-e. As drawn chaile `minR: 60` dao (src/roads/RoadCorrections.ts, RC02).
+- Rail: 7 issue ager moto-i, rail-over-road crossing (417,-3482) -> (435,-3470). north-hub station nirapod.
+- road-fit highway: worst sink/float kome (0.211/0.205 -> 0.124/0.151) kintu out-of-tolerance 38 -> 44 (sample 3334 -> 3300): game-e dekho.
+- Screenshot-er camera 50 digree ghorano chhilo (north-up na): ROAD_CORRECTION_SYSTEM.md section 2 te likha.

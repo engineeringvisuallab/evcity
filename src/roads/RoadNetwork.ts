@@ -276,7 +276,7 @@ export class RoadNetwork {
       const rb = out.find((r) => r.name === c.roads[1]);
       const old = this.mainNodes.get(c.node);
       if (!ra || !rb || !old) continue;
-      const res = replaceCorner(ra.pts, rb.pts, old, c.pts, KIND.highway.step, c.lead);
+      const res = replaceCorner(ra.pts, rb.pts, old, c.pts, KIND.highway.step, c.lead, c.minR);
       const y = this.groundAround(res.node);
       const touch = (r: RawRoad, pts: number[][]): void => {
         const atStart = Math.hypot(pts[0][0] - res.node[0], pts[0][1] - res.node[1]) < 1;

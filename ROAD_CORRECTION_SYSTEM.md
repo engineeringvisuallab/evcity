@@ -12,11 +12,11 @@ The screenshot is a game view (usually top-down, camera high above the road) wit
 If something is not readable (digit, which road, replace or add?) ask ONE short question; otherwise just do it.
 
 ## 2. Pixel -> world metres (do this for every screenshot)
-Camera looking straight down, vertical FOV 70 (`Config.camera.fov`), image centre pixel = camera (X, Z), north up.
+Camera looking straight down, vertical FOV 70 (`Config.camera.fov`), image centre pixel = camera (X, Z). **The camera may be TURNED (yaw), north is not always up** (RC01 was north-up, RC02 was turned -50 deg). Find the yaw first: take a road you can see, dump its real centreline (build the network headless, see section 5), overlay it on the screenshot for a few yaw values until it sits on the road. Mapping used: `image = R(yaw) * world * s` (image y down), so `world = cam + R(-yaw) * (pixel - centre) / s`.
 - ground height under camera h = Y - terrain height (about Y - 25 .. 40 on the plain; check with the terrain function if exact)
 - visible height = 2 * h * tan(35 deg) = 1.4 * h metres, so `pxPerM = imageHeight / (1.4 * h)`
 - **Better: calibrate with the road itself.** Highway full width = 25.4 m (3 lanes x 3.5 m x 2 + median + shy), arterial = 17.8 m, see `src/roads/RoadSection.ts` / `Config.city.roadSections`. Measure the road in pixels, divide. (Example screenshot 1895x861, Y 260: highway about 65 px wide = about 2.6 px/m.)
-- `worldX = camX + (px - imgW/2) / pxPerM`,  `worldZ = camZ + (py - imgH/2) / pxPerM`
+- north-up case: `worldX = camX + (px - imgW/2) / pxPerM`,  `worldZ = camZ + (py - imgH/2) / pxPerM`. Calibrated so far: RC01 s=2.6 px/m at Y 260 (yaw 0); RC02 s=3.8 px/m at Y 186 (yaw -50). Always overlay the real F-roads on the screenshot and check before tracing.
 - Check: a known junction/road end in the picture must land within about 10 m of its real coordinate (RoadNetwork junction list, RoadPlan MAIN_NODES). If not, fix the scale first. If the camera is tilted (not top-down) say so and ask for a top-down screenshot.
 - Precision: expect +-10 m from a hand drawing. That is fine: the router/smoother cleans the line.
 
@@ -33,10 +33,12 @@ All hand corrections live in ONE file: `src/roads/RoadCorrections.ts` (data `ROA
 { id: 'RC01', mode: 'replace-corner', roads: ['F3','F6'] /* [runs INTO node, runs OUT of node] */, node: 'W',
   pts: [[x,z], ...],  /* traced green line, from the roads[0] side to the roads[1] side */
   lead?: 50,          /* m of old road re-drawn before/after the drawn line so the curve joins with the road heading */
+  minR?: 120,         /* smallest turning radius allowed; a tighter drawing is widened (lead grows in 10 m steps up to 260 m) */
   note: '...' }
 ```
 What `replace-corner` does: cuts F3 at the vertex nearest to the first drawn point (minus `lead`), F6 at the vertex nearest to the last drawn point (plus `lead`), drops the old corner stub, builds ONE cubic-Hermite curve (road heading at both ends, drawn line smoothed + thinned because hand wobble gives R < 80 m), resamples every 8 m. The node (here `W`) moves to the middle of the curve; F3 ends there, F6 starts there; junction record + node height follow. The drawn line is followed within about 10 m (the smoothing pulls it slightly to the inside of the bend).
 Only mode so far: `replace-corner` for two MAIN roads (F1-F7) meeting at a MAIN_NODES node. Other cases (reshape a middle stretch, add a road, remove a road, primary/secondary/district links S*, IR*) = add a new mode in the same file + one hook in `RoadNetwork` (generic, no road-specific `if`), then document it here.
+Radius guard (RC02): the green line of RC02 was a 105 deg turn in ~160 m (R about 60 m, a hairpin for a 3-lane highway). `replaceCorner` widens it until R >= minR (RC02: minR 100 -> R 126, curve ~50 m further from the drawn line; `minR: 60` gives it almost as drawn). Always TELL the user when a drawing was widened and how to get it as drawn.
 Limits seen in RC01: highway min radius guard = 120 m in the test (ideal for 100 km/h is 250 m: a drawn corner that tight gets a warning in the answer, not a silent change). After the correction no junction pad is needed at the node (two roads run on, 2.8 deg biggest vertex turn).
 
 ## 5. Steps for the AI for each screenshot
@@ -52,6 +54,7 @@ Limits seen in RC01: highway min radius guard = 120 m in the test (ideal for 100
 ## 6. Correction log (newest first)
 | id | date | roads / junctions | what | status |
 |----|------|-------------------|------|--------|
+| RC02 | 2026-11-11 | F4, F1, node N (was (340,-3670): hairpin V, pad skipped 'bend sharper than 50 deg' = grey dead-end blob) | Green line (camera X 390 Y 186 Z -3663, yaw -50, 3.8 px/m) from F4 about (408,-3533) round to F1 about (500,-3665); circled stub on the left = remove. Done as replace-corner, minR 100 (drawn R~60 widened to 126). Node N moved to (479,-3577), stub and pad blob gone, highway 233 m shorter. Rail crossing moved to (435,-3470). | DONE, needs a look in the running game |
 | RC01 | 2026-11-11 | F3, F6, node W (real position -2830,-520, was a sharp ~90 deg corner) | User drew a smooth green curve from F3 about (-2767,-345) to F6 about (-2624,-533) (camera X -2799 Y 260 Z -499, 2.6 px/m, checked: real F3/F6 centrelines overlay the screenshot within 3 m). Old corner stub removed, node W moved to (-2714,-453), min radius 180 m, highway 168 m shorter. Rail crossing near F6 moved to (-2535,-549). | DONE, needs a look in the running game |
 
 ## 7. Rules the user already gave
