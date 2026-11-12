@@ -1,5 +1,5 @@
 import { Config } from '../core/Config';
-import { ROAD_CORRECTIONS, replaceCorner } from './RoadCorrections';
+import { ROAD_CORRECTIONS, ROAD_FIXES, replaceCorner, straightenThrough, type RoadFix } from './RoadCorrections';
 import { DISTRICT_LINKS, DISTRICT_LINK_SNAP, ISLAND_PLAN, MAIN_EDGES, MAIN_NODES, PRIMARY, SECONDARY } from './RoadPlan';
 import type { TerrainSample } from '../terrain/Lakes';
 import type { CitySite } from '../terrain/TerrainGenerator';
@@ -169,6 +169,7 @@ export class RoadNetwork {
       }
     }
     this.applyScenarios(); // after all tiers, BEFORE the pads: pads, median, bridges, traffic graph then see the edited network
+    this.applyRoadFixes(); // RC03 (RoadCorrections.ts ROAD_FIXES): after the scenarios, before the pads and the railway
     const pr = buildJunctionPads(this.roads, this.natural);
     this.pads = pr.pads;
     this.padSkipped = pr.skipped;
@@ -1542,6 +1543,88 @@ export class RoadNetwork {
         console.warn(`[scenario ${id}] skipped: ${rep.issues[rep.issues.length - 1]}`);
       }
     }
+  }
+
+  /**
+   * FIXES ON FINISHED ROADS (RoadCorrections.ts ROAD_FIXES: RC03 straighten-through). Runs after the scenarios and BEFORE the junction pads,
+   * median, bridges, traffic graph and the railway, so all of them see the corrected road. A fix that does not fit (road not found, bridge in the redrawn part) is skipped with a warning.
+   */
+  readonly roadFixReport: { id: string; applied: boolean; info: string }[] = [];
+
+  private applyRoadFixes(): void {
+    for (const f of ROAD_FIXES) {
+      try {
+        const info = this.fixStraighten(f);
+        this.roadFixReport.push({ id: f.id, applied: true, info });
+      } catch (err) {
+        const info = err instanceof Error ? err.message : String(err);
+        this.roadFixReport.push({ id: f.id, applied: false, info });
+        console.warn(`[road fix ${f.id}] skipped: ${info}`);
+      }
+    }
+  }
+
+  private fixStraighten(f: RoadFix): string {
+    const ra = this.roadByName(f.roads![0]);
+    const rb = this.roadByName(f.roads![1]);
+    if (!ra || !rb) throw new Error('road not found');
+    // before the pads exist the end of the first road lies a few metres from the start of the second (the pad joins them later): the node is the START of the second road,
+    // and the first road is drawn on to it (J6-west also ends there, so all three meet in one point)
+    const pa: number[][] = Array.from(ra.xs, (x, i) => [x, ra.zs[i]]);
+    const pb: number[][] = Array.from(rb.xs, (x, i) => [x, rb.zs[i]]);
+    const dEnd = Math.hypot(pa[pa.length - 1][0] - pb[0][0], pa[pa.length - 1][1] - pb[0][1]);
+    if (dEnd > 40) throw new Error(`${ra.name} ends ${dEnd.toFixed(0)} m from the start of ${rb.name}`);
+    if (dEnd > 0.5) pa.push([pb[0][0], pb[0][1]]);
+    const res = straightenThrough(pa, pb, f.lenA ?? 240, f.lenB ?? 250, KIND.collector.step);
+    for (const b of this.bridges) {
+      if (b.roadId === ra.id && b.i1 >= res.iA) throw new Error(`bridge ${b.id} lies in the redrawn part of ${ra.name}`);
+      if (b.roadId === rb.id && b.i0 <= res.iB) throw new Error(`bridge ${b.id} lies in the redrawn part of ${rb.name}`);
+    }
+    // heights: straight (arc length) profile between the old end heights of the redrawn part, so the grade stays what it was
+    const profile = (curve: number[][], yFrom: number, yTo: number): number[] => {
+      const cum = [0];
+      for (let i = 1; i < curve.length; i++) cum.push(cum[i - 1] + Math.hypot(curve[i][0] - curve[i - 1][0], curve[i][1] - curve[i - 1][1]));
+      return cum.map((c) => yFrom + ((yTo - yFrom) * c) / (cum[cum.length - 1] || 1));
+    };
+    const rebuild = (r: RoadSpec, pts: number[][], keep: { from: number; to: number }, curveLen: number, curveFirst: boolean, yy: number[]): void => {
+      // keep = range of old vertices that stay; the new curve goes before (curveFirst) or after them
+      const nKeep = keep.to - keep.from;
+      const m = nKeep + curveLen;
+      const xs = new Float64Array(m);
+      const zs = new Float64Array(m);
+      const ys = new Float64Array(m);
+      const hn = new Float32Array(m);
+      const bo = new Int16Array(m).fill(-1);
+      const off = curveFirst ? curveLen : 0;
+      for (let k = 0; k < nKeep; k++) {
+        xs[off + k] = r.xs[keep.from + k];
+        zs[off + k] = r.zs[keep.from + k];
+        ys[off + k] = r.ys[keep.from + k];
+        hn[off + k] = r.hNat[keep.from + k];
+        bo[off + k] = r.bridgeOf[keep.from + k];
+      }
+      const co = curveFirst ? 0 : nKeep;
+      for (let k = 0; k < curveLen; k++) {
+        const p = pts[k];
+        xs[co + k] = p[0];
+        zs[co + k] = p[1];
+        ys[co + k] = yy[k];
+        this.natural(p[0], p[1], this.scratch);
+        hn[co + k] = this.scratch.h;
+      }
+      this.setRoadPoints(r, xs, zs, ys, hn, bo);
+    };
+    const yNode = rb.ys[0];
+    // road a: old vertices 0..iA-1 stay, the curve (pA ... node) follows; its first point is the old vertex iA (same height)
+    rebuild(ra, res.curveA, { from: 0, to: res.iA }, res.curveA.length, false, profile(res.curveA, ra.ys[res.iA], yNode));
+    // road b: the curve (node ... pB) comes first, the old vertices iB+1.. follow
+    const shift = res.curveB.length - (res.iB + 1);
+    rebuild(rb, res.curveB, { from: res.iB + 1, to: rb.xs.length }, res.curveB.length, true, profile(res.curveB, rb.ys[0], rb.ys[res.iB]));
+    for (const b of this.bridges) if (b.roadId === rb.id) {
+      b.i0 += shift;
+      b.i1 += shift;
+    }
+    return `${ra.name}/${rb.name}: through heading ${res.headingDeg.toFixed(0)} deg, ${res.curveA.length + res.curveB.length - 1} vertices redrawn`;
   }
 
   private roadByName(name: string): RoadSpec | undefined {

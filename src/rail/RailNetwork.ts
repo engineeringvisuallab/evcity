@@ -1,4 +1,5 @@
 import { Config } from '../core/Config';
+import { RAIL_BOX_COVER } from '../roads/RoadCorrections';
 import type { RoadSpec } from '../roads/RoadTypes';
 import { RailContext, type RailTerrain } from './RailContext';
 import { bandOk, movingAverage, solveProfile } from './RailProfile';
@@ -157,6 +158,8 @@ interface Zone {
   /** Road surface height at the crossing (m); the deck top for a road on a bridge. */
   y: number;
   bridge: boolean;
+  /** Extra earth cover (m) over a cut & cover box for this road (RoadCorrections.RAIL_BOX_COVER, RC04). */
+  extra: number;
 }
 
 interface Window {
@@ -990,7 +993,7 @@ export class RailNetwork {
           const rz = c.road.zs[c.i + 1] - c.road.zs[c.i];
           const sin = Math.abs(p.dx * rz - p.dz * rx) / (Math.hypot(rx, rz) || 1);
           const half = Math.min(70, (c.road.planHalfWidth + c.road.shoulder + 5) / Math.max(0.3, sin) + 6);
-          return { a: c.s - half, b: c.s + half, y: c.y, bridge: c.onBridge };
+          return { a: c.s - half, b: c.s + half, y: c.y, bridge: c.onBridge, extra: RAIL_BOX_COVER[c.road.name] ?? 0 };
         });
       let kind: Window['kind'] = 'free';
       if (zones.length) {
@@ -1021,7 +1024,7 @@ export class RailNetwork {
         const i1 = Math.min(n - 1, Math.ceil(z.b / step));
         for (let i = i0; i <= i1; i++) {
           if (kind === 'over') l[i] = Math.max(l[i], z.y + OVER_RISE);
-          else if (kind === 'under') u[i] = Math.min(u[i], z.y - D.underRoadDrop - 0.06);
+          else if (kind === 'under') u[i] = Math.min(u[i], z.y - D.underRoadDrop - 0.06 - z.extra);
           else if (kind === 'under-bridge') u[i] = Math.min(u[i], z.y - D.underRoadDrop - (z.bridge ? 0.4 : 0));
         }
       }

@@ -40,7 +40,7 @@ Trees looked too black in shade. Fixed in `TreeAssets.ts` (shade floor in leaf s
 - Mine gate -> pad path has no road and is steep (~24 deg).
 
 ## Road corrections (hand-drawn screenshots)
-Read `ROAD_CORRECTION_SYSTEM.md` first. All corrections are data in `src/roads/RoadCorrections.ts` (RC01 = F3/F6 corner at node W, RC02 = F4/F1 hairpin at node N, both done), applied by `RoadNetwork.applyMainCorrections`; test `scripts/road-correction-test.ts`.
+Read `ROAD_CORRECTION_SYSTEM.md` first. All corrections are data in `src/roads/RoadCorrections.ts` (RC01 = F3/F6 corner at node W, RC02 = F4/F1 hairpin at node N, both done; RC03 = S12/S5 straight through J57 and RC04 = S12 over the railway box, via ROAD_FIXES / RAIL_BOX_COVER, done 2026-11-12, see ROAD_CORRECTION_SYSTEM.md section 4b), applied by `RoadNetwork.applyMainCorrections`; test `scripts/road-correction-test.ts`.
 
 ## Other docs
 `VEHICLE_ENERGY_HANDOFF_BN.md` (energy/station steps), `docs/CHARGING_POINTS.md`, `docs/ROAD_SIGNS_HANDOFF_BN.md`, `CHANGES_*.md`.
