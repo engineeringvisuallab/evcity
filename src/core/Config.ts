@@ -67,6 +67,16 @@ export const Config = {
     activeTier: 4 as 1 | 2 | 3 | 4,
     /** The long bridge to the island and the island's road network (RoadPlan.ISLAND_PLAN). */
     island: true,
+    /**
+     * INTERCHANGES (src/interchange, docs/INTERCHANGE_SYSTEM_BN.md). OFF by default: with enabled = false (or an empty list) the road network is exactly as before.
+     * Every entry: where (x, z in world metres, yaw = world heading of the main road at the centre, atan2(dz, dx)), the pattern ('diamond' | 'cloverleaf' | 'parclo'), the section of the
+     * two roads ('highway' | 'arterial' | 'avenue', = roads/RoadSection.ts), optionally which road is the bridge and the ground height `y` (default: the road surface under the centre).
+     * STEP 2b: only the RAMP ROADS are added (ribbon + terrain cut). Bridge deck / junction pads / AI / look come in the next steps.
+     */
+    interchange: {
+      enabled: false as boolean,
+      list: [] as { id: string; pattern: string; x: number; z: number; yaw: number; main: 'highway' | 'arterial' | 'avenue'; cross: 'highway' | 'arterial' | 'avenue'; upper?: 'main' | 'cross'; y?: number }[],
+    },
   },
 
   /** STAGE 10: the city (local streets, then buildings). */

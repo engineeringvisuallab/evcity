@@ -12,3 +12,4 @@
 - Terrain cut 20 m+ west hill: retaining wall / slope kit (T06).
 - Timelapse performance: instancing + lazy build (T17).
 - Analysis constants (HCM, unit cost) assumption — user-er project standard-e replace korte pare.
+- `interchange-network-test` 1 check FAIL on the current repo network (see 05_RULES_AND_TESTS_BN.md "Known failing check"). Verify on the real build (three installed): interchange files (InterchangeView.ts, viewer.ts, Parts.ts...) were compiled only in a sandbox without `three` types.

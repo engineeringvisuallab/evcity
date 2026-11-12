@@ -31,9 +31,9 @@ const wrap = (a: number): number => {
 };
 
 /** Length (m) of the straight, flat "stub" of each leg (minimum; corners may need more). */
-const STUB: Record<RoadKind, number> = { highway: 34, arterial: 30, collector: 26, local: 22, roundabout: 22 };
+const STUB: Record<RoadKind, number> = { highway: 34, arterial: 30, collector: 26, local: 22, roundabout: 22, ramp: 26 };
 /** Kerb-return radius (m) per road class. */
-const KERB: Record<RoadKind, number> = { highway: 22, arterial: 16, collector: 12, local: 9, roundabout: 9 };
+const KERB: Record<RoadKind, number> = { highway: 22, arterial: 16, collector: 12, local: 9, roundabout: 9, ramp: 12 };
 const CLUSTER_R = 30;
 const THROUGH_R = 22;
 /** Beyond this distance (m) from the junction the original road line is untouched. */

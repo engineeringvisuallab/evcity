@@ -8,7 +8,8 @@ import type { BridgeSpec, CulvertSpec, JunctionSpec, PadSpec, RoadInfo, RoadKind
 import { buildJunctionPads } from './Junctions';
 import { planLocalStreets } from './LocalRoads';
 import { CityPlan } from '../city/CityPlan';
-import { sectionFor } from './RoadSection';
+import { DIVIDED_SECTIONS, sectionFor } from './RoadSection';
+import { buildInterchange, type InterchangeModel, type RoadSection as IcSection } from '../interchange';
 import type { LocalAreaStat } from './LocalRoads';
 
 /** Natural terrain WITHOUT roads (hills, rivers, lakes, sea). Roads are planned on top of this. */
@@ -26,6 +27,8 @@ const KIND = {
   arterial: { halfWidth: 5.5, shoulder: 1.6, lanes: 2, speedKmh: 70, maxGrade: 0.09, step: 8 },
   collector: { halfWidth: 4.8, shoulder: 1.4, lanes: 2, speedKmh: 50, maxGrade: 0.1, step: 8 },
   roundabout: { halfWidth: 4.5, shoulder: 1.3, lanes: 1, speedKmh: 30, maxGrade: 0.1, step: 3 },
+  // INTERCHANGE ramp (src/interchange): one-way, one lane. No road of this kind exists until the interchange wiring (Step 2b) adds them; the numbers are the defaults of RoadAdapter.
+  ramp: { halfWidth: 4.2, shoulder: 1.2, lanes: 1, speedKmh: 50, maxGrade: 0.05, step: 8 },
 } as const;
 /** Radius (m) around the city centre inside which roads are not re-shaped (see nearCity). */
 const NEAR_CITY = 0;
@@ -66,6 +69,8 @@ interface RawRoad {
   cross?: number[][];
   /** Earthen track (see KIND_EARTH). */
   earth?: boolean;
+  /** Interchange ramp: the finished surface height of every point (used as it is: no smoothing, no grade repair; see buildFixedProfile). */
+  fixedY?: number[];
 }
 
 /**
@@ -84,6 +89,8 @@ export class RoadNetwork {
   readonly bridges: BridgeSpec[] = [];
   readonly culverts: CulvertSpec[] = [];
   readonly junctions: JunctionSpec[] = [];
+  /** Interchanges that were built (Config.roads.interchange): the models of src/interchange. Empty while the flag is off. */
+  readonly interchanges: InterchangeModel[] = [];
   /** Engineered intersections (flat pads with kerb returns), see Junctions.ts. */
   pads: PadSpec[] = [];
   /** Why a junction cluster did not get a pad (debug / tests). */
@@ -172,6 +179,7 @@ export class RoadNetwork {
       }
     }
     this.layoutEarthen();
+    this.layoutInterchanges();
     this.buildSegments();
   }
 
@@ -1493,11 +1501,108 @@ export class RoadNetwork {
       this.buildEarthProfile(road, raw.endY?.[0]);
       return;
     }
+    if (raw.fixedY) {
+      this.buildFixedProfile(road, raw.fixedY);
+      return;
+    }
     if (raw.tier === 4 && raw.endY) {
       this.buildLocalProfile(road, raw.endY, raw.knots);
       return;
     }
     this.buildProfile(road, raw);
+  }
+
+  /** Interchange ramps: the surface heights come from the interchange level plan and are used exactly as given. */
+  private buildFixedProfile(r: RoadSpec, ys: number[]): void {
+    for (let i = 0; i < r.xs.length; i++) {
+      this.natural(r.xs[i], r.zs[i], this.scratch);
+      r.hNat[i] = this.scratch.h;
+      r.ys[i] = ys[i];
+    }
+  }
+
+  /**
+   * INTERCHANGES (Config.roads.interchange, src/interchange). Runs after the junction pads and the earthen tracks, so none of that logic sees the ramps.
+   * A model with a validation ERROR is skipped (a warning in the console); the others add one RoadSpec per ramp. Nothing happens while the flag is off.
+   */
+  private layoutInterchanges(): void {
+    const C = Config.roads.interchange;
+    if (!C.enabled) return;
+    const section = (k: 'highway' | 'arterial' | 'avenue'): IcSection => {
+      const s = DIVIDED_SECTIONS.find((d) => d.id === k) ?? DIVIDED_SECTIONS[0];
+      return { roadId: -1, halfWidth: s.halfWidth, kerbLane: s.halfWidth - s.shyOuter - s.laneW / 2, laneW: s.laneW, lanesPerDir: s.lanesPerDir, designKmh: s.designKmh };
+    };
+    for (const e of C.list) {
+      this.natural(e.x, e.z, this.scratch);
+      const y = e.y ?? this.nearestRoadHeight(e.x, e.z, -1) ?? this.scratch.h;
+      let model: InterchangeModel;
+      try {
+        model = buildInterchange({ id: e.id, pattern: e.pattern, x: e.x, z: e.z, y, yaw: e.yaw, main: section(e.main), cross: section(e.cross), upper: e.upper }, (x, z) => {
+          this.natural(x, z, this.scratch);
+          return this.scratch.h;
+        });
+      } catch (err) {
+        console.warn(`[interchange ${e.id}] skipped: ${err instanceof Error ? err.message : String(err)}`); // a wrong entry must never break the world build
+        continue;
+      }
+      const errors = model.issues.filter((i) => i.level === 'error');
+      if (errors.length > 0) {
+        console.warn(`[interchange ${e.id}] skipped: ${errors.map((i) => i.message).join('; ')}`);
+        continue;
+      }
+      for (const ramp of model.ramps) {
+        this.addRoad({ tier: 3, kind: 'ramp', name: `${e.id}:${ramp.id}`, closed: false, pts: ramp.xs.map((x, i) => [x, ramp.zs[i]]), halfWidth: ramp.halfWidth, lanes: 1, speedKmh: ramp.designKmh, fixedY: ramp.ys });
+        this.bridgeRamp(this.roads[this.roads.length - 1], ramp.elevated);
+      }
+      this.interchanges.push(model);
+    }
+  }
+
+  /**
+   * INTERCHANGE STEP 3D-A: the stretches of a ramp that stand higher than pierFromH over the ground become BRIDGES (a dry viaduct), so the existing pipeline does everything:
+   * the ground under the deck is left alone (no earth dam), BridgeBuilder draws the slab, parapets and piers, BridgePhysics adds the colliders, StreetLights stand on the deck edge.
+   * `ranges` are point index ranges of the ramp (= of the road, same points). Short stretches stay an embankment.
+   */
+  private bridgeRamp(r: RoadSpec, ranges: readonly { i0: number; i1: number }[]): void {
+    const n = r.xs.length;
+    const zones: { a: number; b: number }[] = [];
+    for (const g of ranges) {
+      const a = Math.max(0, g.i0 - 2); // a short approach slab before / after the stretch that is really high
+      const b = Math.min(n - 1, g.i1 + 2);
+      const last = zones[zones.length - 1];
+      if (last && a - last.b <= 3) last.b = Math.max(last.b, b);
+      else zones.push({ a, b });
+    }
+    for (const z of zones) {
+      if (z.b - z.a < 4) continue;
+      let peak = -Infinity;
+      let clear = Infinity;
+      for (let k = z.a; k <= z.b; k++) {
+        peak = Math.max(peak, r.hNat[k]);
+        clear = Math.min(clear, r.ys[k] - r.hNat[k]);
+      }
+      const lengthM = (z.b - z.a) * r.step;
+      const approach = Math.min(12, lengthM * 0.25);
+      const id = this.bridges.length;
+      for (let k = z.a; k <= z.b; k++) r.bridgeOf[k] = id;
+      this.bridges.push({
+        id,
+        roadId: r.id,
+        i0: z.a,
+        i1: z.b,
+        type: 'beam',
+        spanM: Math.max(8, lengthM - 2 * approach), // piers (every <= 25 m) only between the two approach slabs, like a dry viaduct
+        lengthM,
+        deckHalfWidth: r.halfWidth + r.shoulder + 0.3,
+        waterY: peak,
+        clearanceM: Math.max(0, clear),
+        material: 'prestressed-concrete',
+        maxLoadT: 40,
+        maxSpanM: 25,
+        centerX: r.xs[(z.a + z.b) >> 1],
+        centerZ: r.zs[(z.a + z.b) >> 1],
+      });
+    }
   }
 
   /**

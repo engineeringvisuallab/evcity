@@ -50,6 +50,7 @@ const CLASS: Record<RoadKind, Class> = {
   collector: { step: 40, scale: 1.0, pool: 9.5 },
   roundabout: { step: 24, scale: 1.0, pool: 9 },
   local: { step: 32, scale: 0.85, pool: 8 },
+  ramp: { step: 36, scale: 1.1, pool: 10 },
 };
 /** The arm of a pole (scale 1) reaches this far over the road; the lamp hangs at its end. */
 const ARM = 2.4;

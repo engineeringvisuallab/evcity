@@ -50,8 +50,8 @@ export function canUse(u: VehicleUse, road: RoadKind, zone: WorldZoneKind, area:
   return u.weight > 0 && canUseRoad(u, road) && canUsePlace(u, zone, area);
 }
 
-const ALL_ROADS: readonly RoadKind[] = ['highway', 'arterial', 'collector', 'local', 'roundabout'];
-const MAIN_ROADS: readonly RoadKind[] = ['highway', 'arterial', 'collector', 'roundabout'];
+const ALL_ROADS: readonly RoadKind[] = ['highway', 'arterial', 'collector', 'local', 'roundabout', 'ramp'];
+const MAIN_ROADS: readonly RoadKind[] = ['highway', 'arterial', 'collector', 'roundabout', 'ramp'];
 const CITY_ROADS: readonly RoadKind[] = ['arterial', 'collector', 'local', 'roundabout']; // everything except the freeway
 const STREETS: readonly RoadKind[] = ['collector', 'local', 'roundabout']; // neighbourhood roads
 const HOME_ZONES: readonly WorldZoneKind[] = ['residential', 'village', 'education', 'commercial'];

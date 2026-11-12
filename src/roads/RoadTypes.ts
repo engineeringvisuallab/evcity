@@ -2,7 +2,7 @@
 
 /** Road hierarchy, built one tier per stage: 1 main (freeway), 2 primary (arterial), 3 secondary (collector), 4 tertiary (local). */
 export type RoadTier = 1 | 2 | 3 | 4;
-export type RoadKind = 'highway' | 'arterial' | 'collector' | 'local' | 'roundabout';
+export type RoadKind = 'highway' | 'arterial' | 'collector' | 'local' | 'roundabout' | 'ramp';
 export type BridgeType = 'beam' | 'arch';
 /** What a wheel / foot touches: 0 = natural ground (grass, dirt), 1 = asphalt, 2 = gravel shoulder. */
 export type SurfaceKind = 0 | 1 | 2;
