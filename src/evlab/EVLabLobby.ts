@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { addChandeliers } from './EVLabHall';
 import { BLD, DIVIDER, PORTAL, RAMP, REAR_Y, WING, type Ramp, type Solid } from './EVLabLayout';
 import { Parts } from './EVLabParts';
+import { Furnish } from './EVLabFurniture';
+import { defineFurniture } from './EVLabFurnModels';
 import { CORES, LIFTS, STAIRS, rectMinus } from './EVLabTowerLayout';
 import { PODIUM, podium, podiumSolids } from './EVLabStructure';
 
@@ -37,6 +39,8 @@ export function buildLobby(P: Parts): LobbyBuild {
   const cove = P.glow(0xffe2a8, 1.1);
   const zl0 = DIVIDER.z + 0.5; // lobby starts at the divider wall
   const pw = PORTAL.halfW;
+  const F = new Furnish(P, g);
+  defineFurniture(F, ['reception', 'sofaLeather', 'sofaVelvet', 'armLeather', 'armVelvet', 'coffeeTable', 'sideTable', 'floorLamp', 'rugRed', 'rugBlue', 'palm1', 'palm2', 'ficus1', 'ficus2', 'ficus3', 'roundTable', 'parkBench', 'clock', 'extinguisher', 'firstAid', 'bin']);
 
   // ---------------------------------------------------------------- floor, with a dark marble border and a carpet from the portal to the hall
   P.hplane(g, -XI, XI, zl0, ZS, 0.004, marble, 6, 6);
@@ -119,9 +123,7 @@ export function buildLobby(P: Parts): LobbyBuild {
 
   // ---------------------------------------------------------------- reception desks, lounges, plants
   const desk = (x: number, z: number): void => {
-    P.tbox(g, x - 6, x + 6, z - 1.3, z + 1.3, 0, 1.15, dark, 4, 4);
-    P.tbox(g, x - 6.2, x + 6.2, z - 1.5, z + 1.5, 1.15, 1.28, gold);
-    P.tbox(g, x - 5.9, x + 5.9, z - 1.3, z - 1.15, 0.6, 0.62, P.glow(0xffd27a, 1.3, 0xd4af37));
+    F.place('reception', x, 0, z, 0, 1);
     solids.push([x - 6.2, x + 6.2, z - 1.5, z + 1.5, 0, 1.3]);
   };
   desk(-30, 52);
@@ -129,13 +131,7 @@ export function buildLobby(P: Parts): LobbyBuild {
   const leather = P.lit(null, 0x5e3320, 0.18);
   const velv = P.lit(null, 0x1f3a5c, 0.2);
   const sofa = (x: number, z: number, yaw: number, mat: THREE.Material): void => {
-    const s = k.node(g, x, 0, z);
-    s.rotation.y = yaw;
-    k.box(s, 3.4, 0.5, 1.2, 0, 0.45, 0, mat);
-    k.box(s, 3.4, 0.7, 0.3, 0, 0.9, 0.5, mat);
-    k.box(s, 0.35, 0.65, 1.2, -1.6, 0.75, 0, mat);
-    k.box(s, 0.35, 0.65, 1.2, 1.6, 0.75, 0, mat);
-    k.box(s, 3.2, 0.2, 1.0, 0, 0.1, 0, gold);
+    F.place(mat === leather ? 'sofaLeather' : 'sofaVelvet', x, 0, z, yaw + Math.PI, 1.3);
     const c = Math.cos(yaw), si = Math.sin(yaw);
     const hx = Math.abs(1.8 * c) + Math.abs(0.7 * si), hz = Math.abs(1.8 * si) + Math.abs(0.7 * c);
     solids.push([x - hx, x + hx, z - hz, z + hz, 0, 1.2]);
@@ -146,17 +142,24 @@ export function buildLobby(P: Parts): LobbyBuild {
     k.cyl(g, 1.05, 1.05, 0.05, x, 0.47, z, gold, 24);
     solids.push([x - 1.1, x + 1.1, z - 1.1, z + 1.1, 0, 0.6]);
   }
-  const leafMat = P.lit(null, 0x2f8a46, 0.3);
-  const potMat = P.lit(null, 0x1a1a1f, 0.1);
-  for (const [x, z] of [[-84, 53], [84, 53], [-12, 53], [12, 53], [-84, 18], [84, 18], [-30, 18], [30, 18]]) {
-    k.cyl(g, 0.7, 0.55, 1.1, x, 0.55, z, potMat, 14);
-    k.cyl(g, 0.72, 0.72, 0.1, x, 1.12, z, gold, 14);
-    for (let i = 0; i < 5; i++) {
-      const l = k.sphere(g, 1, x + Math.sin(i * 1.7) * 0.4, 2.0 + i * 0.35, z + Math.cos(i * 1.7) * 0.4, leafMat);
-      l.scale.set(0.9 - i * 0.08, 0.7, 0.9 - i * 0.08);
-    }
+  [[-84, 53], [84, 53], [-12, 53], [12, 53], [-84, 18], [84, 18], [-30, 18], [30, 18]].forEach(([x, z], i) => {
+    F.place(i % 2 ? 'palm2' : 'palm1', x, 0, z, i * 1.3, 1.25);
     solids.push([x - 0.8, x + 0.8, z - 0.8, z + 0.8, 0, 2.5]);
-  }
+  });
+  // lounge groups (rug, two sofas over a coffee table, armchairs, side tables with lamps) and a small cafe of round tables
+  const lounge = (cx: number, cz: number, lea: boolean): void => {
+    F.place(lea ? 'rugRed' : 'rugBlue', cx, 0, cz, 0);
+    F.place(lea ? 'sofaLeather' : 'sofaVelvet', cx, 0, cz - 1.45, 0); F.place(lea ? 'sofaLeather' : 'sofaVelvet', cx, 0, cz + 1.45, Math.PI);
+    F.place('coffeeTable', cx, 0, cz, 0);
+    F.place(lea ? 'armVelvet' : 'armLeather', cx - 2.45, 0, cz, Math.PI / 2); F.place(lea ? 'armVelvet' : 'armLeather', cx + 2.45, 0, cz, -Math.PI / 2);
+    for (const sg of [-1, 1]) { F.place('sideTable', cx + sg * 2.45, 0, cz - 1.0); F.place('floorLamp', cx + sg * 2.45, 0, cz - 1.65); }
+    solids.push([cx - 3.0, cx + 3.0, cz - 2.0, cz + 2.0, 0, 0.95]);
+  };
+  lounge(-66, 47, true); lounge(66, 47, false);
+  for (const [x, z] of [[-53, 46], [-46, 46], [46, 46], [53, 46]] as const) { F.place('roundTable', x, 0, z, 0, 1); solids.push([x - 1.0, x + 1.0, z - 1.0, z + 1.0, 0, 0.9]); }
+  // benches at the portal, fire safety and a clock on the south wall
+  for (const x of [-14, 14]) { F.place('parkBench', x, 0, ZS - 0.7, Math.PI, 1.2); solids.push([x - 1.5, x + 1.5, ZS - 1.1, ZS - 0.3, 0, 0.6]); }
+  for (const x of [-50, 50]) { F.place('extinguisher', x, 0, ZS - 0.12, Math.PI, 1.4); F.place('firstAid', x + 0.8, 1.5, ZS - 0.1, Math.PI, 1.3); F.place('clock', x - 2, 4.2, ZS - 0.1, Math.PI, 2.5); }
 
   // ---------------------------------------------------------------- step 1.1b: the tower columns continue to the ground through the lobby
   // (square marble-clad columns with gold bands; the ones that would stand in a hall ramp are carried by a steel transfer girder under the ceiling)
@@ -175,5 +178,6 @@ export function buildLobby(P: Parts): LobbyBuild {
     for (const x of [gi.x0, gi.x1]) P.tbox(g, x - 0.9, x + 0.9, gi.z - 0.9, gi.z + 0.9, PODIUM.girderBottom - 0.15, PODIUM.girderBottom, gold);
   }
 
+  F.flush();
   return { group: g, solids, ramps, update: (tt) => anim.forEach((f) => f(tt)) };
 }

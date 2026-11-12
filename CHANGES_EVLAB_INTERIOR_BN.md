@@ -17,6 +17,13 @@ Unzip over the project root (same paths as in the project).
 evlab-tower, evlab-structure, evlab-partition and the other EVLab tests pass (worst level 36.5k triangles).
 evlab-fountains, evlab-parking and evlab-site fail on the ORIGINAL code too (not caused by this step).
 
+## Step 2 (done): ground floor
+- EVLabLobby.ts: reception desks, sofas and plants are now kit models (reception, sofaLeather / sofaVelvet scaled, palm1 / palm2); added two lounge groups
+  (x +-66, z 47), four round dining tables, benches at the portal, fire extinguishers, first aid boxes and clocks on the south wall.
+- EVLabWings.ts: Main Office = deskPod workstations, real reception counter + waiting sofa, meeting tables with chairs, filing cabinets, plants.
+  Engineering Lab = labBench with stools, light racks on the north wall (the motor test rigs with the spinning rotor are unchanged).
+- The column at x = 0, z = 35 (between the core blocks) stays: carrying it on a girder fails the engineering checks (column would need 2.4 m, flange plate 541 mm).
+
 ## Next steps (in order)
-- Step 2: the podium lobby (ground floor), Presentation Hall wings and the lift lobby interior with the same kit; check the other column at x = 0, z = 35 (between the cores).
-- Step 3: polish: lighting on each floor kind, signs, materials, performance check in the browser.
+- Look at it in the browser and send screenshots / notes of anything that floats, overlaps or looks wrong (model sizes, wall items, colours).
+- Polish round: lighting per floor kind, wall art / whiteboards in meeting rooms, hall wing details, performance check.

@@ -4,6 +4,8 @@
 import * as THREE from 'three';
 import { BLD, DIVIDER, WING, type Solid } from './EVLabLayout';
 import type { Parts } from './EVLabParts';
+import { Furnish } from './EVLabFurniture';
+import { defineFurniture } from './EVLabFurnModels';
 
 export interface WingsBuild {
   group: THREE.Group;
@@ -25,10 +27,11 @@ export function buildWings(P: Parts): WingsBuild {
   const gold = P.gold();
   const cove = P.glow(0xffe2a8, 1.1);
   const ceilMat = P.lit(t.ceiling, 0xffffff, 0.45);
+  const F = new Furnish(P, g);
+  defineFurniture(F, ['deskPod', 'reception8', 'meetSet44', 'cabinet', 'palm1', 'palm2', 'ficus1', 'ficus2', 'labBench', 'stool', 'rackL0', 'rackL1', 'rackL2', 'rackL3', 'bin', 'cooler', 'copier', 'extinguisher', 'firstAid', 'clock', 'sofaLeather', 'coffeeTable', 'floorLamp', 'bookshelf', 'whiteboard']);
 
   // ---- instancing helpers (a lot of desks / benches / chairs: a few draw calls)
   const unitBox = k.own(new THREE.BoxGeometry(1, 1, 1));
-  const unitCyl = k.own(new THREE.CylinderGeometry(1, 1, 1, 14));
   // one list of matrices per (geometry, material) pair: the same material may be used on boxes and on cylinders
   const pending = new Map<THREE.BufferGeometry, Map<THREE.Material, THREE.Matrix4[]>>();
   const put = (geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: number, z: number, sx: number, sy: number, sz: number): void => {
@@ -39,24 +42,16 @@ export function buildWings(P: Parts): WingsBuild {
     pending.set(geo, byMat);
   };
   const box = (mat: THREE.Material, x: number, y: number, z: number, w: number, h: number, d: number): void => put(unitBox, mat, x, y, z, w, h, d);
-  const cyl = (mat: THREE.Material, x: number, y: number, z: number, r: number, h: number): void => put(unitCyl, mat, x, y, z, r, h, r);
 
   // ---- shared materials
-  const deskWood = P.lit(t.wood, 0xffffff, 0.3);
   const darkM = P.lit(null, 0x2a2f3a, 0.2);
-  const chairM = P.lit(null, 0x23364f, 0.3);
   const whiteM = P.lit(null, 0xe8eaee, 0.4);
   const blackM = P.lit(null, 0x14161b, 0.3);
-  const screenM = P.glow(0x7fb7ff, 0.9, 0x3a6fb0);
-  const greenM = P.glow(0x58f0a0, 1.0, 0x20a060);
-  const amberM = P.glow(0xffc04a, 1.0, 0xd48a20);
   const yellowM = P.glow(0xffd23a, 1.0, 0xd4a017);
   const glassM = k.own(new THREE.MeshLambertMaterial({ color: 0xcfeaf6, transparent: true, opacity: 0.28, emissive: 0x6fb8e0, emissiveIntensity: 0.35, depthWrite: false }));
-  const leafMat = P.lit(null, 0x2f8a46, 0.3);
-  const potMat = P.lit(null, 0x1a1a1f, 0.1);
+  let pn = 0;
   const plant = (x: number, z: number): void => {
-    k.cyl(g, 0.6, 0.5, 0.9, x, 0.45, z, potMat, 12);
-    for (let i = 0; i < 4; i++) { const l = k.sphere(g, 0.85, x + Math.sin(i * 1.9) * 0.3, 1.6 + i * 0.3, z + Math.cos(i * 1.9) * 0.3, leafMat); l.scale.set(0.9 - i * 0.1, 0.7, 0.9 - i * 0.1); }
+    F.place(['palm1', 'palm2', 'ficus1', 'ficus2'][pn++ & 3], x, 0, z, pn * 1.7, 1);
     solids.push([x - 0.7, x + 0.7, z - 0.7, z + 0.7, 0, 2.2]);
   };
 
@@ -88,19 +83,13 @@ export function buildWings(P: Parts): WingsBuild {
       // ---- open-plan office: 4 columns x 6 rows of desks, a clear aisle from the door to the back
       for (const x of [-83, -78, -65, -60]) {
         for (const z of [-42, -35.5, -29, -22.5, -16, -9.5]) {
-          box(deskWood, x, 0.75, z, 3.4, 0.07, 1.7);
-          box(darkM, x, 0.37, z - 0.78, 3.2, 0.72, 0.08);
-          box(darkM, x, 1.1, z - 0.4, 0.15, 0.3, 0.12); // monitor stand
-          box(screenM, x, 1.38, z - 0.45, 0.95, 0.5, 0.05);
-          box(chairM, x, 0.48, z + 1.25, 0.55, 0.08, 0.55);
-          box(chairM, x, 0.82, z + 1.55, 0.55, 0.6, 0.08);
-          cyl(darkM, x, 0.22, z + 1.25, 0.06, 0.44);
-          solids.push([x - 1.7, x + 1.7, z - 0.85, z + 0.85, 0, 1.1]);
+          F.place('deskPod', x, 0, z, 0);
+          solids.push([x - 1.7, x + 1.7, z - 1.15, z + 1.15, 0, 1.1]);
         }
       }
       // reception counter next to the door
-      P.tbox(g, -64, -55.8, 8.3, 9.7, 0, 1.1, P.lit(t.marbleDark, 0xffffff, 0.3), 4, 4);
-      P.tbox(g, -64.2, -55.6, 8.1, 9.9, 1.1, 1.2, gold);
+      F.place('reception8', -59.9, 0, 8.7, 0);
+      F.place('sofaLeather', -75, 0, 11.4, Math.PI, 1); F.place('coffeeTable', -72, 0, 10.2, 0); F.place('floorLamp', -77.2, 0, 11.4, 0);
       solids.push([-64.2, -55.6, 8.1, 9.9, 0, 1.2]);
       k.sign(g, 'RECEPTION', 0xd4af37, -59.9, 2.4, 9.95, 5, 0.9, false);
       // two glass meeting rooms along the north wall (door gap in the south wall)
@@ -110,39 +99,29 @@ export function buildWings(P: Parts): WingsBuild {
         wall(x0, cx - 1.2, z1 - 0.1, z1); wall(cx + 1.2, x1, z1 - 0.1, z1);
         wall(x0, x0 + 0.1, z0, z1); wall(x1 - 0.1, x1, z0, z1);
         P.tbox(g, x0, x1, z1 - 0.12, z1 + 0.02, 2.8, 2.9, gold);
-        box(deskWood, cx, 0.75, z0 + 3.2, 4.4, 0.08, 1.6);
-        box(darkM, cx, 0.37, z0 + 3.2, 0.5, 0.7, 0.5);
+        F.place('meetSet44', cx, 0, z0 + 3.2, 0);
         solids.push([cx - 2.2, cx + 2.2, z0 + 2.4, z0 + 4.0, 0, 0.85]);
-        for (const dx of [-1.6, -0.5, 0.6, 1.7]) for (const dz of [-1.0, 1.0]) box(chairM, cx + dx, 0.48, z0 + 3.2 + dz, 0.5, 0.08, 0.5);
         box(whiteM, cx, 2.0, z0 + 0.1, 3.6, 1.2, 0.05); // whiteboard
       }
       // filing cabinets along the outer wall
       for (let i = 0; i < 8; i++) {
         const z = -44 + i * 4.4;
-        box(darkM, -86.1, 0.95, z, 1.2, 1.9, 2.4);
-        box(amberM, -85.48, 1.2, z, 0.03, 0.12, 1.8);
-        solids.push([-86.8, -85.5, z - 1.2, z + 1.2, 0, 1.9]);
+        for (let j = -2; j <= 1; j++) F.place('cabinet', -86.3, 0, z + j * 0.55 + 0.27, Math.PI / 2);
+        solids.push([-86.8, -85.6, z - 1.2, z + 1.2, 0, 1.4]);
       }
       for (const [x, z] of [[-85, 11], [-57, -46], [-85, -46], [-57, 11]]) plant(x, z);
     } else {
       // ---- engineering lab: six rows of two long benches with instruments and stools
       for (const x of [62.5, 80]) {
         for (const z of [-44, -36, -28, -20, -12, -4]) {
-          box(darkM, x, 0.45, z, 10, 0.9, 1.8);
-          box(whiteM, x, 0.94, z, 10.2, 0.08, 2.0);
-          for (const dx of [-3.3, 0, 3.3]) {
-            box(blackM, x + dx, 1.2, z - 0.35, 1.1, 0.45, 0.7);
-            box(dx === 0 ? greenM : screenM, x + dx, 1.25, z - 0.0, 0.8, 0.28, 0.03);
-          }
-          for (const dx of [-3, 0, 3]) cyl(chairM, x + dx, 0.32, z + 1.7, 0.26, 0.64);
+          for (const dx of [-3.3, 0, 3.3]) { F.place('labBench', x + dx, 0, z, 0); F.place('stool', x + dx, 0, z + 1.1, 0); }
           solids.push([x - 5.1, x + 5.1, z - 1.0, z + 1.0, 0, 1.2]);
         }
       }
       // equipment racks along the north wall, with status lights
       for (let i = 0; i < 10; i++) {
         const x = 58 + i * 2.9;
-        box(darkM, x, 1.3, zN + 0.7, 2.4, 2.6, 1.2);
-        for (let j = 0; j < 4; j++) box(j % 2 ? greenM : amberM, x, 0.6 + j * 0.55, zN + 1.32, 1.9, 0.08, 0.03);
+        for (let j = -1; j <= 1; j++) F.place('rackL' + ((i + j + 1) & 3), x + j * 0.92, 0, zN + 0.55, 0);
         solids.push([x - 1.2, x + 1.2, zN, zN + 1.3, 0, 2.6]);
       }
       // two motor test rigs near the door (the rotor spins)
@@ -160,6 +139,7 @@ export function buildWings(P: Parts): WingsBuild {
     }
   }
 
+  F.flush();
   // ---- flush the instanced pieces: one InstancedMesh per material
   for (const [geo, byMat] of pending) {
     for (const [mat, list] of byMat) {
