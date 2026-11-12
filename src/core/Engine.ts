@@ -78,6 +78,7 @@ import { JunctionMirrors } from '../roads/JunctionMirrors';
 import { Toast } from '../ui/Toast';
 import { SuprimHUD } from '../ui/SuprimHUD';
 import { SettingsMenu } from '../ui/SettingsMenu';
+import { ExportPanel } from '../export/ExportPanel';
 import { HudSettings } from '../ui/HudSettings';
 import type { TimeMode } from '../environment/DayNight';
 import { PhysicsWorld } from '../physics/PhysicsWorld';
@@ -180,6 +181,7 @@ export class Engine {
   /** Settings menu (gear button / Tab): day-night mode, what the screen shows, sound, minimap zoom, key help. */
   private hudSettings = new HudSettings();
   private settingsMenu!: SettingsMenu;
+  private exportPanel!: ExportPanel;
   /** Waves' effects: under-water look, sea floor plants, fish / jellyfish / turtles, light beams, bubbles, splashes. */
   private waterFx!: WaterFX;
   /** Rain, clouds, wet ground, sea storm, umbrellas (src/weather). */
@@ -887,6 +889,13 @@ export class Engine {
       this.hudSettings,
       this.renderer.domElement,
     );
+    // EXPORT: GIS layers (shapefile / GeoJSON) and a 3D file (glb / obj) of the area around the camera; button next to the settings gear (src/export)
+    this.exportPanel = new ExportPanel(container, {
+      terrain: this.world.terrain,
+      scene: this.scene,
+      cameraPos: () => this.camera.position,
+      lockTarget: this.renderer.domElement,
+    });
     this.hudSettings.onChange(() => this.applyHudOptions());
     this.applyHudOptions();
     this.minimap.setZoom(this.hudSettings.values.mapZoom);
@@ -1669,6 +1678,7 @@ export class Engine {
     this.unbindVisibility();
     this.ctxGuard.dispose();
     this.settingsMenu.dispose();
+    this.exportPanel.dispose();
     this.waterFx.dispose();
     this.oxygenHud.dispose();
     this.vehicleMenu.dispose();
