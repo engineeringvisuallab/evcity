@@ -59,7 +59,7 @@ export const J6_SCENARIO: ScenarioSpec = {
   clearPads: [{ at: { u: 68, v: 0 }, radius: 60, why: 'old at-grade pad J6 (S4 / S5 / F6 meet there)' }],
   cuts: [
     { roadId: 24, name: 'S4', keep: 'head', at: { u: -3, v: -45 }, why: 'S4 tail: the bend north to the old pad is removed; S4 ends on its last straight point and J6-S4-ext continues it to the centre' },
-    { roadId: 25, name: 'S5', keep: 'tail', at: { u: -198, v: 89 }, why: 'S5 head: the part that runs parallel to F6 from the old pad to the branch join is removed; S5 starts at the join' },
+    { roadId: 25, name: 'S5', keep: 'tail', at: { u: -20, v: 455 }, maxSnap: 45, why: 'S5 head: the whole winding part from the old pad (parallel to F6, then the hill loops) up to J57 is removed (user 2026-11-12: red-marked roads not needed); S5 starts at J57' },
   ],
   addRoads: [
     // east leg of the cross road: S4 itself continues from its new end straight to the centre (the end ON F6 gets a pad until T08 builds the interchange)
