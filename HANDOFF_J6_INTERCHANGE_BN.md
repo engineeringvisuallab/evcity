@@ -13,7 +13,7 @@ EVCity = engineering-analysis + shikkhonio game. Junction-e kon solution possibl
 | T01 | Scenario edit layer + J6 edits | DONE (flag `Config.roads.scenario.enabled`, OFF = ager moto). West leg / south branch alignment = PLACEHOLDER (provisional grade 18 %), T04 replace korbe. Centre-e pad nei (S4 bridge 109 m door, rule 115 m): T08 diamond bosabe |
 | T02 | Scenario tests | PARTIAL: `scripts/j6-scenario-test.ts` (OFF == original digest, ON connectivity / pads / bridges / untouched roads) ALL OK. Baaki: radius >= 73 m, grade <= limit (T04-er por) |
 | T03 | Demand model | DONE (`demand/Demand.ts`, `scripts/demand-test.ts` ALL OK): override > AI count provider > road-class default. AI traffic count provider ekhono wire kora nei (T10 / T09-e) |
-| T04 | West-leg alignment by Analysis | TODO |
+| T04 | West-leg alignment by Analysis | IN PROGRESS: `scripts/j6-alignment.ts` (lattice least-cost route, grade + R>=73 aware) works. FINDING: centre->J57 cannot be done in ~465 m: J57 is 67 m higher than the underpass start (24.6 m). Class grade 10 % needs >= 675 m, 8 % >= 844 m; the lattice route is ~1.5 km (T at ~890 m, not 250 m). USER DECISION needed (see below). J6Scenario.ts NOT changed yet |
 | T05 | Level plan: grade-following + 'under' | TODO |
 | T06 | Underpass structures (F6 deck, walls, drainage) | TODO |
 | T07 | Ramp gore/merge taper | TODO |
@@ -34,3 +34,8 @@ EVCity = engineering-analysis + shikkhonio game. Junction-e kon solution possibl
 ## Files
 Done: `src/interchange/Analysis.ts`, `index.ts`, `scripts/analysis-test.ts j6-analysis.ts j6-survey.ts j6-dump.ts j6-design.ts j6-plot.py j6-scenario-data.ts`, `docs/INTERCHANGE_J6_DESIGN_BN.md JUNCTION_ANALYSIS_BN.md j6/*`.
 Stubs: `src/interchange/{scenario,demand,ui,construction}/*`, `scripts/j6-scenario-test.ts`.
+
+## T04 finding + options (2026-11-12) — user decision needed
+Run: `npx tsx scripts/j6-alignment.ts` (env `J6_GRADE`, `J6_LF`, `J6_T`). Result (grade 10 %, R >= 73 m): west leg to J57 = 1507 m, cut ~85k m3, T only at ~890 m, branch 635 m. At 8 %: cut ~290k m3.
+Options: (A) accept the long ~1.5 km hill route to J57 (sketch topology kept, T far from the centre); (B) west leg joins S5 near the old branch join (~450 m, low ground), J57 stays reachable via S5, no hill climb (script alt C: needs end-heading fix, R was 12 m at the snap); (C) steeper grade than the 10 % collector class (not recommended).
+Default if no answer: (B) refine + implement, keep the T on the leg >= 250 m.
