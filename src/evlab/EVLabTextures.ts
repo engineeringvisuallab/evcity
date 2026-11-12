@@ -43,10 +43,8 @@ export function makeTextures(k: Kit): EVLabTextures {
     for (let y = 0; y < h; y += 32) { const L = 92 + r() * 22; c.fillStyle = `rgb(${L + 40},${L},${L - 40})`; c.fillRect(0, y, w, 32); c.fillStyle = 'rgba(40,20,5,0.35)'; c.fillRect(0, y, w, 2); }
     noise(c, w, h, 32, 900, 0.18, false);
   }));
-  const carpet = repeat(k.texture(128, 128, (c, w, h) => {
-    c.fillStyle = '#7a1f2b'; c.fillRect(0, 0, w, h); noise(c, w, h, 41, 1500, 0.2, true); noise(c, w, h, 42, 900, 0.25, false);
-    c.fillStyle = 'rgba(212,175,55,0.16)'; c.fillRect(w / 2 - 2, 0, 4, h); c.fillRect(0, h / 2 - 2, w, 4); // faint gold weave
-  }));
+  // (was a red carpet: now a polished light-grey marble with soft grey veins, so the offices, wings, ramps and hall floors are stone)
+  const carpet = marble('#dcdde0', 'rgba(105,112,126,0.38)', 23);
   const ceiling = repeat(k.texture(128, 128, (c, w, h) => {
     c.fillStyle = '#e9e6df'; c.fillRect(0, 0, w, h); c.strokeStyle = 'rgba(0,0,0,0.12)'; c.lineWidth = 2; c.strokeRect(0, 0, w, h); noise(c, w, h, 51, 300, 0.08, false);
   }));

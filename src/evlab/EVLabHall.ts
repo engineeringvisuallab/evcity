@@ -152,7 +152,7 @@ export function buildHall(P: Parts): HallBuild {
 
   // ---- seats (2 strips per block), seat-row colliders (people walk in the aisles) and the audience
   const seats: Seat[] = [];
-  const seatMat = P.lit(null, 0x8a1c2b, 0.2);
+  const seatMat = P.lit(null, 0x1f3a5c, 0.2);
   for (let i = 0; i < HALL.rows; i++) {
     const z = HALL.rowZ0 + i * HALL.rowStep, y = hallFloorY(z);
     for (const [a, b] of SEAT_BLOCKS) {

@@ -24,6 +24,13 @@ evlab-fountains, evlab-parking and evlab-site fail on the ORIGINAL code too (not
   Engineering Lab = labBench with stools, light racks on the north wall (the motor test rigs with the spinning rotor are unchanged).
 - The column at x = 0, z = 35 (between the core blocks) stays: carrying it on a girder fails the engineering checks (column would need 2.4 m, flange plate 541 mm).
 
+## Step 3 (done): marble floors, no red, better chairs
+- EVLabTextures.ts: the red carpet texture is now a polished light-grey marble (`carpet` keeps its name, so every floor that used it - tower offices, boardroom,
+  wings, lobby strip, hall, ramps - is marble stone now).
+- Red removed: rugRed is sand-coloured, chairRed is charcoal, hall seats (EVLabHall.ts) and chairRow are navy, library book colours changed.
+- Chairs redesigned in EVLabFurnModels.ts: officeChair, meetingChair, execChair (contoured seats, curved backs, headrest, T-arms, castors / chrome base, quilted leather), and the chairs in deskPod.
+- Worst level 37.2k triangles (limit 40k). Tests as before (fountains / parking / site fail on the original code too).
+
 ## Next steps (in order)
-- Look at it in the browser and send screenshots / notes of anything that floats, overlaps or looks wrong (model sizes, wall items, colours).
+- Look at it in the browser and send screenshots / notes of anything that floats, overlaps or looks wrong.
 - Polish round: lighting per floor kind, wall art / whiteboards in meeting rooms, hall wing details, performance check.

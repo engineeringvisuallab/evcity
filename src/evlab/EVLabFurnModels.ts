@@ -14,25 +14,35 @@ function rng(seed: number): () => number {
 }
 
 // ------------------------------------------------------------------ chairs
-/** Office chair: 5-star base on castors, gas lift, padded seat, mesh-style back with a lumbar post, two arm rests. 1.0 m high. */
+/** Office chair: 5-star base on castors, gas lift with cover, contoured seat, curved mesh back with headrest and lumbar support, T-shaped arm rests. 1.1 m high. */
 export function officeChair(fabric: number): Composite {
-  const c = new Composite();
-  c.cyl(0, 0.26, 0, 0.025, 0.025, 0.34, STEEL, 8);
-  c.cyl(0, 0.43, 0, 0.065, 0.045, 0.07, DARK, 10);
+  const c = new Composite(), MESH = 0x2b3038;
   for (let i = 0; i < 5; i++) {
-    const a = (i / 5) * Math.PI * 2;
-    c.box(Math.sin(a) * 0.16, 0.085, Math.cos(a) * 0.16, 0.05, 0.035, 0.33, DARK, { yaw: a });
-    c.cyl(Math.sin(a) * 0.3, 0.04, Math.cos(a) * 0.3, 0.032, 0.032, 0.055, BLACK, 8);
+    const a = (i / 5) * Math.PI * 2, sx = Math.sin(a), cz = Math.cos(a);
+    c.box(sx * 0.15, 0.1, cz * 0.15, 0.055, 0.03, 0.32, DARK, { yaw: a, tilt: 0.06 });
+    c.cyl(sx * 0.29, 0.07, cz * 0.29, 0.012, 0.012, 0.05, STEEL, 6);
+    c.sphere(sx * 0.29, 0.035, cz * 0.29, 0.03, 0.03, 0.03, BLACK, 6);
   }
-  c.box(0, 0.46, 0, 0.44, 0.03, 0.42, DARK); // seat pan
-  c.box(0, 0.5, 0.01, 0.5, 0.07, 0.47, fabric); // cushion
-  c.box(0, 0.54, 0.22, 0.46, 0.03, 0.04, fabric); // waterfall front edge
-  c.box(0, 0.6, -0.2, 0.05, 0.22, 0.04, DARK, { tilt: -0.1 }); // lumbar post
-  c.box(0, 0.83, -0.25, 0.47, 0.5, 0.05, DARK, { tilt: -0.12 }); // back frame
-  c.box(0, 0.83, -0.225, 0.43, 0.46, 0.035, fabric, { tilt: -0.12 }); // back pad
+  c.cyl(0, 0.12, 0, 0.05, 0.065, 0.06, DARK, 10);
+  c.cyl(0, 0.3, 0, 0.032, 0.032, 0.34, STEEL, 8);
+  c.cyl(0, 0.35, 0, 0.05, 0.04, 0.2, BLACK, 10);
+  c.box(0, 0.45, 0, 0.3, 0.035, 0.24, DARK);
+  c.box(0, 0.5, 0.01, 0.46, 0.06, 0.44, fabric);
+  c.sphere(0, 0.505, 0.0, 0.245, 0.045, 0.235, fabric, 10);
+  c.box(0, 0.52, 0.225, 0.44, 0.045, 0.06, fabric, { tilt: 0.35 });
+  c.box(-0.2, 0.53, -0.02, 0.07, 0.045, 0.38, fabric); c.box(0.2, 0.53, -0.02, 0.07, 0.045, 0.38, fabric);
+  c.box(0, 0.58, -0.2, 0.05, 0.18, 0.04, DARK, { tilt: -0.1 });
+  c.box(0, 0.68, -0.235, 0.34, 0.12, 0.06, fabric, { tilt: -0.1 });
+  for (const sx of [-1, 1]) {
+    c.box(sx * 0.17, 0.87, -0.26, 0.17, 0.52, 0.03, MESH, { tilt: -0.14, yaw: sx * -0.25 });
+    c.box(sx * 0.24, 0.87, -0.255, 0.025, 0.54, 0.05, DARK, { tilt: -0.14, yaw: sx * -0.25 });
+  }
+  c.box(0, 1.14, -0.3, 0.3, 0.12, 0.07, fabric, { tilt: -0.16 });
+  c.box(0, 1.0, -0.3, 0.03, 0.2, 0.03, DARK, { tilt: -0.14 });
   for (const s of [-1, 1]) {
-    c.box(s * 0.26, 0.6, -0.04, 0.03, 0.2, 0.03, DARK);
-    c.box(s * 0.26, 0.71, 0.0, 0.06, 0.03, 0.26, BLACK);
+    c.box(s * 0.26, 0.6, -0.04, 0.035, 0.22, 0.035, DARK);
+    c.box(s * 0.26, 0.715, 0.0, 0.07, 0.035, 0.27, BLACK);
+    c.box(s * 0.255, 0.54, -0.04, 0.05, 0.03, 0.05, DARK);
   }
   return c;
 }
@@ -55,13 +65,19 @@ export function labStool(): Composite {
   return c;
 }
 
-/** Meeting-room chair (fixed legs, upholstered seat and back, 4 steel legs). */
+/** Meeting-room chair: splayed steel legs with a cross rail, contoured upholstered seat, curved upholstered back. */
 export function meetingChair(fabric: number): Composite {
   const c = new Composite();
-  for (const sx of [-1, 1]) for (const sz of [-1, 1]) c.cyl(sx * 0.2, 0.22, sz * 0.19, 0.016, 0.014, 0.44, STEEL, 8);
-  c.box(0, 0.45, 0, 0.46, 0.05, 0.44, fabric);
-  c.box(0, 0.7, -0.21, 0.44, 0.38, 0.05, fabric, { tilt: -0.08 });
-  c.box(0, 0.5, 0.0, 0.42, 0.03, 0.4, DARK);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) c.cyl(sx * 0.215, 0.22, sz * 0.2, 0.015, 0.012, 0.45, STEEL, 8, 'y', { tilt: sz * -0.05, roll: sx * 0.05 });
+  for (const sx of [-1, 1]) c.box(sx * 0.215, 0.3, 0, 0.02, 0.02, 0.4, STEEL);
+  c.box(0, 0.425, 0, 0.42, 0.03, 0.4, DARK);
+  c.box(0, 0.455, 0.01, 0.44, 0.045, 0.42, fabric);
+  c.sphere(0, 0.46, 0.01, 0.235, 0.035, 0.225, fabric, 8);
+  for (const sx of [-1, 1]) {
+    c.box(sx * 0.14, 0.72, -0.215, 0.17, 0.4, 0.045, fabric, { tilt: -0.1, yaw: sx * -0.22 });
+    c.box(sx * 0.205, 0.55, -0.205, 0.025, 0.28, 0.03, STEEL, { tilt: -0.08 });
+  }
+  c.box(0, 0.93, -0.235, 0.34, 0.03, 0.04, STEEL, { tilt: -0.1 });
   return c;
 }
 
@@ -309,7 +325,7 @@ export function receptionDesk(w = 12): { body: Composite; glow: Composite } {
   c.cyl(1.4, 1.11, 0.62, 0.05, 0.06, 0.04, GOLD, 12);
   c.sphere(1.4, 1.14, 0.62, 0.035, 0.02, 0.035, GOLD, 8);
   c.box(-1.8, 1.2, 0.7, 0.26, 0.28, 0.06, 0xf2f2f2, { tilt: -0.15 });
-  for (let i = 0; i < 3; i++) c.box(-1.8, 1.18 + i * 0.07, 0.72, 0.2, 0.05, 0.015, [0xc23b3b, 0x2f6bb0, 0x3b9a4f][i]);
+  for (let i = 0; i < 3; i++) c.box(-1.8, 1.18 + i * 0.07, 0.72, 0.2, 0.05, 0.015, [0xd9a441, 0x2f6bb0, 0x3b9a4f][i]);
   return { body: c, glow: g };
 }
 
@@ -515,7 +531,7 @@ export function motorRotor(): Composite {
 
 // ------------------------------------------------------------------ hall
 /** Hall seat (0.7 m pitch): padded cushion with a rounded front, curved padded back, wooden back trim, armrest on the +x side, steel standard with a foot plate. Faces +z. */
-export function hallSeat(fabric = 0x8a1c2b): Composite {
+export function hallSeat(fabric = 0x1f3a5c): Composite {
   const c = new Composite();
   c.box(0, 0.42, 0.02, 0.56, 0.1, 0.5, fabric);
   c.box(0, 0.4, 0.27, 0.56, 0.07, 0.06, fabric);
@@ -579,16 +595,20 @@ export function spotLight(): { body: Composite; glow: Composite } {
 }
 
 // ------------------------------------------------------------------ step 2: models for the lobby bars, boardroom, executive suites, library, conference centre
-/** High-back executive chair in leather (0.66 m wide, 1.2 m high). Faces +z. */
+/** High-back executive chair in leather: channel-quilted back, wide cushion, walnut-capped arms, chrome star base (0.7 m wide, 1.25 m high). Faces +z. */
 export function execChair(): Composite {
-  const c = new Composite(), L = 0x2a1a14;
-  c.cyl(0, 0.05, 0, 0.3, 0.3, 0.04, STEEL, 5);
-  for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2; c.box(Math.sin(a) * 0.16, 0.04, Math.cos(a) * 0.16, 0.05, 0.03, 0.32, DARK, { yaw: a }); c.sphere(Math.sin(a) * 0.31, 0.03, Math.cos(a) * 0.31, 0.03, 0.03, 0.03, BLACK, 6); }
-  c.cyl(0, 0.27, 0, 0.04, 0.04, 0.4, STEEL, 8);
-  c.box(0, 0.5, 0, 0.56, 0.12, 0.54, L);
-  c.box(0, 0.88, -0.26, 0.54, 0.74, 0.1, L, { tilt: -0.08 });
-  c.box(0, 1.2, -0.28, 0.4, 0.14, 0.1, L, { tilt: -0.1 });
-  for (const sg of [-1, 1]) { c.box(sg * 0.31, 0.72, 0, 0.05, 0.05, 0.4, WALNUT); c.box(sg * 0.31, 0.62, -0.05, 0.04, 0.2, 0.04, STEEL); }
+  const c = new Composite(), L = 0x2a1a14, L2 = 0x35231a;
+  c.cyl(0, 0.07, 0, 0.09, 0.07, 0.05, STEEL, 10);
+  for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2; c.box(Math.sin(a) * 0.17, 0.07, Math.cos(a) * 0.17, 0.055, 0.03, 0.34, STEEL, { yaw: a, tilt: 0.05 }); c.sphere(Math.sin(a) * 0.32, 0.035, Math.cos(a) * 0.32, 0.03, 0.03, 0.03, BLACK, 6); }
+  c.cyl(0, 0.27, 0, 0.04, 0.04, 0.38, STEEL, 8);
+  c.box(0, 0.47, 0, 0.3, 0.03, 0.3, DARK);
+  c.box(0, 0.52, 0.01, 0.58, 0.1, 0.56, L);
+  c.sphere(0, 0.57, 0.0, 0.3, 0.05, 0.29, L2, 10);
+  c.box(0, 0.54, 0.29, 0.56, 0.07, 0.06, L, { tilt: 0.3 });
+  for (let i = 0; i < 4; i++) c.box(0, 0.7 + i * 0.17, -0.27 - i * 0.012, 0.52, 0.15, 0.1, i % 2 ? L : L2, { tilt: -0.1 });
+  for (const sx of [-1, 1]) c.box(sx * 0.29, 0.92, -0.22, 0.07, 0.7, 0.14, L, { tilt: -0.1, roll: sx * 0.08 });
+  c.box(0, 1.28, -0.34, 0.5, 0.14, 0.12, L2, { tilt: -0.14 });
+  for (const sx of [-1, 1]) { c.box(sx * 0.34, 0.68, 0.0, 0.07, 0.04, 0.4, WALNUT); c.box(sx * 0.33, 0.6, -0.05, 0.04, 0.2, 0.05, STEEL); c.box(sx * 0.31, 0.545, -0.05, 0.05, 0.05, 0.1, STEEL); c.box(sx * 0.345, 0.7, 0.0, 0.085, 0.025, 0.36, L2); }
   return c;
 }
 
@@ -650,7 +670,7 @@ export function libStack(): Composite {
   c.box(0, 1.0, 0, 1.2, 2.0, 0.04, OAK);
   for (const sx of [-1, 1]) c.box(sx * 0.6, 1.0, 0, 0.04, 2.0, 0.7, OAK);
   c.box(0, 2.0, 0, 1.24, 0.04, 0.74, OAK);
-  const cols = [0x7a1f2b, 0x23364f, 0x2f5a3a, 0x8a6a2a, 0x4a3a5a, 0xcfc6b0];
+  const cols = [0x6a4a2a, 0x23364f, 0x2f5a3a, 0x8a6a2a, 0x4a3a5a, 0xcfc6b0];
   for (const sz of [-1, 1]) {
     for (let k = 0; k < 4; k++) {
       const y = 0.1 + k * 0.5;
@@ -674,7 +694,7 @@ export function readTableSet(): { body: Composite; glow: Composite } {
 /** Theatre row: eight padded seats on one frame, 4.3 m long, 0.9 m high. Faces +z. */
 export function chairRowModel(): Composite {
   const c = new Composite();
-  for (let i = 0; i < 8; i++) { const x = -1.88 + i * 0.54; c.box(x, 0.45, 0, 0.5, 0.1, 0.46, 0x8a1c2b); c.box(x, 0.7, -0.2, 0.5, 0.5, 0.08, 0x8a1c2b, { tilt: -0.08 }); }
+  for (let i = 0; i < 8; i++) { const x = -1.88 + i * 0.54; c.box(x, 0.45, 0, 0.5, 0.1, 0.46, 0x1f3a5c); c.box(x, 0.7, -0.2, 0.5, 0.5, 0.08, 0x1f3a5c, { tilt: -0.08 }); }
   for (let i = 0; i <= 8; i++) c.box(-2.15 + 0.08 + i * 0.54, 0.25, 0, 0.04, 0.5, 0.4, STEEL);
   c.box(0, 0.43, 0.02, 4.3, 0.03, 0.04, GOLD);
   return c;
@@ -730,10 +750,14 @@ export function deskPod(): { body: Composite; glow: Composite } {
     c.box(x + sx * 0.4, 0.3, z, 0.4, 0.6, 0.6, 0xdfe2e6);
     const mz = z - sz * 0.3; c.box(x, 1.05, mz, 0.6, 0.34, 0.03, BLACK); c.box(x, 0.9, mz, 0.05, 0.3, 0.05, DARK);
     g.box(x, 1.05, mz + sz * 0.02, 0.56, 0.3, 0.004, SCREEN);
-    const cz = z + sz * 0.78;
-    c.box(x, 0.46, cz, 0.5, 0.08, 0.5, fab[(sx + 1) >> 1]);
-    c.box(x, 0.86, cz + sz * 0.22, 0.48, 0.5, 0.07, fab[(sx + 1) >> 1]);
-    c.cyl(x, 0.24, cz, 0.04, 0.04, 0.4, STEEL, 6); c.box(x, 0.04, cz, 0.56, 0.04, 0.56, DARK);
+    const cz = z + sz * 0.78, fb = fab[(sx + 1) >> 1], bk = -sz; // bk: the back of the chair is on the side away from the desk
+    c.box(x, 0.46, cz, 0.48, 0.07, 0.48, fb); c.sphere(x, 0.48, cz, 0.26, 0.05, 0.25, fb, 8);
+    for (const q of [-1, 1]) c.box(x + q * 0.13, 0.85, cz + sz * 0.23, 0.2, 0.5, 0.05, 0x2b3038, { tilt: sz * 0.12, yaw: q * 0.22 });
+    c.box(x, 1.12, cz + sz * 0.27, 0.28, 0.1, 0.06, fb, { tilt: sz * 0.14 });
+    for (const q of [-1, 1]) { c.box(x + q * 0.26, 0.62, cz, 0.03, 0.2, 0.03, DARK); c.box(x + q * 0.26, 0.72, cz, 0.06, 0.03, 0.22, BLACK); }
+    void bk;
+    c.cyl(x, 0.24, cz, 0.035, 0.035, 0.4, STEEL, 6);
+    for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2; c.box(x + Math.sin(a) * 0.14, 0.06, cz + Math.cos(a) * 0.14, 0.045, 0.03, 0.3, DARK, { yaw: a }); }
   }
   c.box(0, 1.05, 0, 3.3, 0.7, 0.05, 0x4a6a8a);
   return { body: c, glow: g };
@@ -741,7 +765,7 @@ export function deskPod(): { body: Composite; glow: Composite } {
 
 type Made = Composite | { body: Composite; glow: Composite };
 const MODELS: Record<string, () => Made> = {
-  chairBlue: () => officeChair(0x23364f), chairGrey: () => officeChair(0x4a5058), chairRed: () => officeChair(0x7a1f2b),
+  chairBlue: () => officeChair(0x23364f), chairGrey: () => officeChair(0x4a5058), chairRed: () => officeChair(0x3a4048),
   stool: labStool, meetChair: () => meetingChair(0x2a3a5a),
   desk: workDesk, partition: () => partition(0x4a6a8a), partition2: () => partition(0x8a6a4a),
   meetTable: () => meetingTable(), whiteboard: () => whiteboard(),
@@ -749,7 +773,7 @@ const MODELS: Record<string, () => Made> = {
   sofaLeather: () => sofa(0x5e3320, 0xd4af37, 2.6), sofaVelvet: () => sofa(0x1f3a5c, 0xd4af37, 2.6),
   armLeather: () => sofa(0x5e3320, 0xd4af37, 0.95), armVelvet: () => sofa(0x1f3a5c, 0xd4af37, 0.95),
   coffeeTable: () => coffeeTable(), sideTable, floorLamp,
-  rugBlue: () => rug(6.2, 4.4, 0x2c4670, 0xd4af37), rugRed: () => rug(6.2, 4.4, 0x7a2430, 0xd4af37),
+  rugBlue: () => rug(6.2, 4.4, 0x2c4670, 0xd4af37), rugRed: () => rug(6.2, 4.4, 0xb9aa8c, 0xd4af37),
   ficus1: () => ficus(1), ficus2: () => ficus(2), ficus3: () => ficus(3, 0xd8d2c4),
   palm1: () => palmPlant(4), palm2: () => palmPlant(9, 0xd8d2c4), snake1: () => snakePlant(6), snake2: () => snakePlant(8),
   reception: () => receptionDesk(12), reception8: () => receptionDesk(8),
