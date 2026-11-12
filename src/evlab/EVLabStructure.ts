@@ -4,7 +4,7 @@
 //  2. HALL ROOF: column-free 70.5 m span (z) -> steel Warren trusses every 9 m (box chords), bottom chord just below the hall ceiling.
 //  3. MECHANICAL FLOORS (21, 41, 60, 70): outrigger trusses from the core blocks to the end columns (z = tower centre line) + a belt truss round the facade.
 // Sizing is a preliminary engineering estimate (see EVLAB_STRUCTURE_ASSESSMENT.md), good enough to draw believable members, not a design.
-import { BLD, DIVIDER, HALL, PORTAL, type Solid } from './EVLabLayout';
+import { BLD, DIVIDER, HALL, type Solid } from './EVLabLayout';
 import { COL_CAP, CORES, STRUCT, T, ceilY, colLoad, columnsOf, levelY, ringOf, tribDepth, type Col, type ColKind } from './EVLabTowerLayout';
 
 const up05 = (v: number): number => Math.ceil(v * 20 - 1e-9) / 20;
@@ -16,6 +16,8 @@ export const PODIUM = {
   ceil: BLD.H, top: levelY(1),
   /** Transfer girders: bottom face, width. They are as deep as the podium roof zone allows (the slab is part of the girder). */
   girderBottom: 16.3, girderW: 1.4,
+  /** Biggest ground column (m): mega-columns of a 440 m tower; the girder of the lobby centre line (164 MN) is built as TWIN girders (one per 120 MN). */
+  maxSide: 2.5, twinLoad: 120000,
   /** Clear margin kept round the hall ramps. */
   margin: 0.8,
 } as const;
@@ -28,7 +30,7 @@ const inRamp = (c: Col): boolean =>
 /** Step 2.5x: the deeper tower plate reaches over the Presentation Hall and the wings (z < the lobby wall). Those columns end on the podium roof (hall roof trusses / wing roof beams), no column goes down through the hall. */
 export const carriedByRoof = (c: Col): boolean => c.z < DIVIDER.z;
 /** The entry: no column may stand in the way in the middle of the portal, the one there is carried by a transfer girder over the entrance. */
-const inEntry = (c: Col): boolean => Math.abs(c.x) < PORTAL.halfW - 1 && c.z > 45;
+const inEntry = (c: Col): boolean => Math.abs(c.x) < 1 && c.z > 30; // the two columns on the centre line of the lobby (z 48.6 at the portal, z 35 between the core blocks)
 export const isTransferred = (c: Col): boolean => !carriedByRoof(c) && (inRamp(c) || inEntry(c));
 
 export interface Girder { x0: number; x1: number; z: number; load: number; carries: Col; supports: [Col, Col] }
@@ -52,14 +54,15 @@ export function podium(): Podium {
     const l = line.filter((k) => k.x < c.x).sort((a, b) => b.x - a.x)[0], r = line.filter((k) => k.x > c.x).sort((a, b) => a.x - b.x)[0];
     if (!l || !r) continue; // never happens with this plan (the test checks it)
     const P = ownLoad(c), t = (r.x - c.x) / (r.x - l.x); // the girder is loaded by the column at c: the reactions follow the lever rule
-    girders.push({ x0: l.x, x1: r.x, z: c.z, load: P, carries: c, supports: [l, r] });
+    const nG = P > PODIUM.twinLoad ? 2 : 1;
+    for (let q = 0; q < nG; q++) girders.push({ x0: l.x, x1: r.x, z: c.z + (nG === 2 ? (q ? 0.75 : -0.75) : 0), load: P / nG, carries: c, supports: [l, r] });
     extra.set(l, (extra.get(l) ?? 0) + P * t);
     extra.set(r, (extra.get(r) ?? 0) + P * (1 - t));
   }
   const cols = keep.map((c): PodiumCol => {
     const load = ownLoad(c) + (extra.get(c) ?? 0);
     const need = Math.sqrt(load / COL_CAP);
-    return { x: c.x, z: c.z, s: Math.max(c.s, Math.min(STRUCT.maxSide, up05(need))), kind: c.kind, load };
+    return { x: c.x, z: c.z, s: Math.max(c.s, Math.min(PODIUM.maxSide, up05(need))), kind: c.kind, load };
   });
   // the end columns of the centre line exist twice in the frame (perimeter + interior at the same spot): one column, the bigger section
   const merged: PodiumCol[] = [];

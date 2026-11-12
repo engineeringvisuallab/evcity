@@ -12,7 +12,7 @@ const pod = S.podium(), lvl1 = TL.columnsOf(1);
 const transferred = lvl1.filter(S.isTransferred);
 console.log(`tower columns over the hall / wings, carried by the podium roof: ${lvl1.filter(S.carriedByRoof).length}`);
 console.log(`podium: ${pod.cols.length} columns to the ground, ${pod.girders.length} transfer girders (${transferred.length} tower columns transferred)`);
-ok(pod.girders.length === transferred.length, 'every transferred column has its girder');
+ok(new Set(pod.girders.map((g) => g.carries)).size === transferred.length, 'every transferred column has its girder');
 for (const c of lvl1) {
   if (S.isTransferred(c) || S.carriedByRoof(c)) continue; // (carried by the roof: the deeper tower plate over the hall / wings)
   const g = pod.cols.find((p) => same(p.x, c.x) && same(p.z, c.z));
@@ -20,7 +20,7 @@ for (const c of lvl1) {
 }
 for (const p of pod.cols) {
   ok(p.s * p.s * TL.COL_CAP >= p.load * 0.999, `ground column (${p.x.toFixed(1)}, ${p.z.toFixed(1)}) ${p.s} m carries ${(p.load / 1000).toFixed(0)} MN`);
-  ok(S.podiumNeed(p.load) <= TL.STRUCT.maxSide + 1e-9, `ground column (${p.x.toFixed(1)}, ${p.z.toFixed(1)}) section need ${S.podiumNeed(p.load).toFixed(2)} m is within the maximum`);
+  ok(S.podiumNeed(p.load) <= S.PODIUM.maxSide + 1e-9, `ground column (${p.x.toFixed(1)}, ${p.z.toFixed(1)}) section need ${S.podiumNeed(p.load).toFixed(2)} m is within the maximum`);
   ok(p.z - p.s / 2 > DIVIDER.z + 0.5 && p.z + p.s / 2 < BLD.hz - 1 && Math.abs(p.x) + p.s / 2 < BLD.hx - 1, `ground column (${p.x.toFixed(1)}, ${p.z.toFixed(1)}) stands in the lobby, not in the hall or the walls`);
   // not in a ramp (3 openings, z DIVIDER.z .. 27) and not in a core block
   ok(!DIVIDER.openings.some(([a, b]) => p.x + p.s / 2 > a && p.x - p.s / 2 < b && p.z - p.s / 2 < 27), `ground column (${p.x.toFixed(1)}, ${p.z.toFixed(1)}) is not in a ramp`);
@@ -36,7 +36,7 @@ for (const [x, z] of [[-75, 34], [75, 34]]) decor.push([x - 1.1, x + 1.1, z - 1.
 for (const p of pod.cols) ok(!decor.some((d) => p.x + p.s / 2 > d[0] - 0.3 && p.x - p.s / 2 < d[1] + 0.3 && p.z + p.s / 2 > d[2] - 0.3 && p.z - p.s / 2 < d[3] + 0.3), `ground column (${p.x.toFixed(1)}, ${p.z.toFixed(1)}) does not touch lobby furniture`);
 for (const g of pod.girders) {
   const [l, r] = g.supports;
-  ok(l.x < g.carries.x && r.x > g.carries.x && same(l.z, g.z) && same(r.z, g.z), `girder at z ${g.z.toFixed(1)}: the carried column lies between its supports`);
+  ok(l.x < g.carries.x && r.x > g.carries.x && same(l.z, g.carries.z) && same(r.z, g.carries.z), `girder at z ${g.z.toFixed(1)}: the carried column lies between its supports`);
   const t = S.girderFlange(g) / S.PODIUM.girderW;
   console.log(`girder x ${g.x0.toFixed(1)} .. ${g.x1.toFixed(1)}, z ${g.z.toFixed(1)}: carries ${(g.load / 1000).toFixed(0)} MN, flange area ${S.girderFlange(g).toFixed(3)} m2 = ${(t * 1000).toFixed(0)} mm plate over ${S.PODIUM.girderW} m`);
   ok(t < 0.35, `girder flange plate ${(t * 1000).toFixed(0)} mm thick is buildable`);

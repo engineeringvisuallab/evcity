@@ -22,7 +22,6 @@ evlab-fountains, evlab-parking and evlab-site fail on the ORIGINAL code too (not
   (x +-66, z 47), four round dining tables, benches at the portal, fire extinguishers, first aid boxes and clocks on the south wall.
 - EVLabWings.ts: Main Office = deskPod workstations, real reception counter + waiting sofa, meeting tables with chairs, filing cabinets, plants.
   Engineering Lab = labBench with stools, light racks on the north wall (the motor test rigs with the spinning rotor are unchanged).
-- The column at x = 0, z = 35 (between the core blocks) stays: carrying it on a girder fails the engineering checks (column would need 2.4 m, flange plate 541 mm).
 
 ## Step 3 (done): marble floors, no red, better chairs
 - EVLabTextures.ts: the red carpet texture is now a polished light-grey marble (`carpet` keeps its name, so every floor that used it - tower offices, boardroom,
@@ -30,6 +29,12 @@ evlab-fountains, evlab-parking and evlab-site fail on the ORIGINAL code too (not
 - Red removed: rugRed is sand-coloured, chairRed is charcoal, hall seats (EVLabHall.ts) and chairRow are navy, library book colours changed.
 - Chairs redesigned in EVLabFurnModels.ts: officeChair, meetingChair, execChair (contoured seats, curved backs, headrest, T-arms, castors / chrome base, quilted leather), and the chairs in deskPod.
 - Worst level 37.2k triangles (limit 40k). Tests as before (fountains / parking / site fail on the original code too).
+
+## Step 3b (done): the middle column of the lobby is gone
+- The podium column at x = 0, z = 35 (straight ahead when you walk in, before the hall ramp) is removed too. The tower column above it is carried by TWIN transfer
+  girders (x -9.2 .. 9.2, z 34.25 and 35.75, 82 MN each); the two columns beside it grow to 2.5 m (podium maxSide 2.5, was 2.2 for the whole tower).
+  Files: EVLabStructure.ts (`inEntry`, PODIUM.maxSide / twinLoad), scripts/evlab-structure-test.ts (test adapted to twin girders).
+- Now no column stands on the centre line of the lobby (x = 0) from the portal to the hall.
 
 ## Next steps (in order)
 - Look at it in the browser and send screenshots / notes of anything that floats, overlaps or looks wrong.
