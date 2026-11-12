@@ -49,6 +49,7 @@ Promise.all([prepared, splash.introDone])
     engine.start();
     await engine.firstChunksReady(); // the terrain around the player is in before the splash fades (max 12 s)
     new Watermark();
+    try { sessionStorage.removeItem('evcity-stale-reload'); } catch { /* ignore */ }
     void splash.finish();
     return engine;
   })
@@ -57,6 +58,16 @@ Promise.all([prepared, splash.introDone])
     if (import.meta.env.DEV) (window as unknown as { __engine: Engine }).__engine = engine;
   })
   .catch((err) => {
+    // Stale cache after a new deploy: old index points to an Engine-<hash>.js that no longer exists on the server. Reload once to pick up the fresh index.
+    if (/dynamically imported module|Importing a module script failed|error loading dynamically/i.test(String(err))) {
+      try {
+        if (sessionStorage.getItem('evcity-stale-reload') !== '1') {
+          sessionStorage.setItem('evcity-stale-reload', '1');
+          location.reload();
+          return;
+        }
+      } catch { /* storage blocked: show the error below */ }
+    }
     splash.dispose();
     console.error(err);
     container.innerHTML = `<pre style="color:#f88;padding:16px">${bn.errors.engineFailed}:\n${String(err)}</pre>`;
