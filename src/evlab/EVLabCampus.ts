@@ -158,8 +158,8 @@ export function parkTrees(halfX = 236, zMin = -205, zMax = 226): ParkTree[] {
   rowAlong(ISLAND, -4.5, 11, [K.coconut, K.coconut, K.datePalm, K.palmyra], [0.9, 1.2]);
   rowAlong(LAKE, 6, 12, [K.coconut, K.palmyra, K.datePalm, K.coconut], [0.95, 1.25]); // the outer bank of the lake
 
-  // 2. avenue trees (south of the bridge to the highway): krishnachura and debdaru, both sides
-  for (let z = 234; z < 270; z += 12) for (const sx of [-1, 1]) add(sx * 16, z, (Math.round(z / 12) % 2) ? K.krishnachura : K.debdaru, 0.95 + r() * 0.15);
+  // 2. avenue trees (south of the bridge; they stop before the highway: z 246 / 258 stood on its footpath and lanes): krishnachura and debdaru, both sides
+  for (let z = 234; z < 240; z += 12) for (const sx of [-1, 1]) add(sx * 16, z, (Math.round(z / 12) % 2) ? K.krishnachura : K.debdaru, 0.95 + r() * 0.15);
   // plaza: debdaru around the fountain plaza
   for (let x = -62; x <= 62; x += 16) { add(x, PLAZA.z0 + 4, K.debdaru, 0.9); add(x, PLAZA.z1 - 4, K.debdaru, 0.9); }
 

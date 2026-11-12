@@ -83,7 +83,7 @@ export function planFootpaths(roads: RoadNetwork): FootpathPlan {
   const runs: FootRun[] = [];
   const gullies: number[] = [];
   let metres = 0;
-  const crossingsOf = new Map<number, { s: number }[]>();
+  const crossingsOf = new Map<number, { s: number; a: number; b: number; mouth?: number }[]>();
   for (const c of planMedians(roads).crossings) { const l = crossingsOf.get(c.roadId) ?? []; l.push(c); crossingsOf.set(c.roadId, l); }
   for (const r of roads.roads) {
     if (r.earth || r.closed || r.xs.length < 2 || r.length < F.minRun) continue;
@@ -100,7 +100,7 @@ export function planFootpaths(roads: RoadNetwork): FootpathPlan {
       const x = pts[m * FS]; const z = pts[m * FS + 2];
       // ROADS STEP 6b: a crossing (mall or street) breaks the footpath: level with the road within breakHalf m of its centre; the run ends on both sides are the dropped kerbs
       const sHere = pts[m * FS + 7];
-      const atCrossing = crossings.some((c) => Math.abs(c.s - sHere) < Config.city.streetCrossing.breakHalf);
+      const atCrossing = crossings.some((c) => (c.mouth ? sHere > c.a - 1 && sHere < c.b + 1 : Math.abs(c.s - sHere) < Config.city.streetCrossing.breakHalf)); // an EVLab road mouth breaks the footpath over its whole width
       city.push(cityAt(roads, r, cur.i, x, z) && !nearPad(x, z, F.padMargin) && !atCrossing);
       m++;
     }

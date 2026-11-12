@@ -52,6 +52,28 @@ export function roadStrip(g: THREE.Object3D, k: Kit, pts: ReadonlyArray<Pt>, hal
   return m;
 }
 
+/**
+ * The rounded corner where a side road meets a main road: a flat asphalt fan between the side road's edge (x = xEdge), the main road's edge (z = zEnd) and a quarter circle of radius R.
+ * `side` = +1 for the east corner, -1 for the west one. `yAt(x, z)` = height of the surface there (it follows the ground, like the road strips).
+ */
+export function cornerFlare(g: THREE.Object3D, k: Kit, side: 1 | -1, xEdge: number, zEnd: number, R: number, yAt: (x: number, z: number) => number): THREE.Mesh {
+  const cx = xEdge + side * R, cz = zEnd - R;
+  const pts: Array<[number, number]> = [[xEdge, zEnd]];
+  for (let j = 0; j <= 8; j++) { const th = Math.PI - (j / 8) * (Math.PI / 2); pts.push([cx + side * R * Math.cos(th) * 1, cz + R * Math.sin(th)]); }
+  const pos: number[] = [], nor: number[] = [], idx: number[] = [];
+  for (const [x, z] of pts) { pos.push(x, yAt(x, z), z); nor.push(0, 1, 0); }
+  for (let j = 1; j < pts.length - 1; j++) idx.push(0, j, j + 1);
+  const geo = k.own(new THREE.BufferGeometry());
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  geo.setIndex(idx);
+  const mat = k.own(new THREE.MeshPhongMaterial({ color: 0x6f7274, specular: 0x222222, shininess: 14, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+  const m = new THREE.Mesh(geo, mat);
+  m.frustumCulled = false;
+  g.add(m);
+  return m;
+}
+
 /** A vertical wall along a polyline from y0 up to y1 (both faces drawn). `tile` = metres per texture repeat. */
 export function wallStrip(g: THREE.Object3D, k: Kit, pts: ReadonlyArray<Pt>, y0: number, y1: number, mat: THREE.Material, tile = 6): THREE.Mesh {
   const pos: number[] = [], uv: number[] = [], idx: number[] = [];

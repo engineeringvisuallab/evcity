@@ -3,7 +3,9 @@
 // No colliders (like the other parking lots: the ground is the ground; the kerb is only 14 cm high).
 import * as THREE from 'three';
 import { DRIVE, LAMPS, LOT, kerbRects, paintRects } from './EVLabParking';
-import { roadStrip } from './EVLabRoads';
+import { cornerFlare, roadStrip } from './EVLabRoads';
+import { EVLAB_ROAD } from './EVLabSite';
+import { BUILDING_Z } from './EVLabLayout';
 import type { Parts } from './EVLabParts';
 
 export interface ParkingLotBuild {
@@ -54,10 +56,14 @@ export function buildParkingLot(P: Parts, road: THREE.Material, ground?: (x: num
 
   // the entry road: from the middle of the cross aisle south to the highway (asphalt ribbon with edge lines and a dashed centre line)
   const pts: Array<[number, number]> = [], ys: number[] = [];
-  for (let z = DRIVE.z0; z < DRIVE.z1 - 1e-6; z += 4) { pts.push([DRIVE.x, z]); ys.push(ground ? ground(DRIVE.x, z) + 0.08 : y); }
-  pts.push([DRIVE.x, DRIVE.z1]); ys.push(ground ? ground(DRIVE.x, DRIVE.z1) + 0.08 : y);
+  const zEnd = Math.min(DRIVE.z1, EVLAB_ROAD.edgeZ - BUILDING_Z + 0.3); // stops at the highway's north asphalt edge, it does not run onto the lanes
+  for (let z = DRIVE.z0; z < zEnd - 1e-6; z += 4) { pts.push([DRIVE.x, z]); ys.push(ground ? ground(DRIVE.x, z) + 0.08 : y); }
+  pts.push([DRIVE.x, zEnd]); ys.push(ground ? ground(DRIVE.x, zEnd) + 0.08 : y);
   // (flat ground is 0.03 m below the floor: + 0.08 = the same 0.05 as the lot)
   roadStrip(g, k, pts, DRIVE.halfW, y, road, 8, ys);
+  const yAtDrive = (x: number, z: number): number => (ground ? ground(x, z) + 0.08 : y);
+  cornerFlare(g, k, 1, DRIVE.x + DRIVE.halfW, zEnd, 4, yAtDrive);
+  cornerFlare(g, k, -1, DRIVE.x - DRIVE.halfW, zEnd, 4, yAtDrive);
 
   return { group: g, lamps: LAMPS.map(([x, z]) => [x, z] as [number, number]) };
 }

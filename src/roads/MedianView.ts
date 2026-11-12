@@ -159,6 +159,7 @@ export class MedianView {
         frameAt(r, c.a + ((c.b - c.a) * (i + 1)) / n, B);
         quad(A.x + A.nx * pw, A.y + lift, A.z + A.nz * pw, A.x - A.nx * pw, A.y + lift, A.z - A.nz * pw, B.x + B.nx * pw, B.y + lift, B.z + B.nz * pw, B.x - B.nx * pw, B.y + lift, B.z - B.nz * pw, PATCH_ASPHALT);
       }
+      if (c.mouth) continue; // a road mouth: asphalt over the median opening only, no zebra
       const s0 = c.s - CR.zebraLen / 2;
       const s1 = c.s + CR.zebraLen / 2;
       frameAt(r, s0, A);

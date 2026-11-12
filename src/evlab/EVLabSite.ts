@@ -82,7 +82,7 @@ export const EVLAB_LOCAL_HALF_X = EVLAB_HALF_X / EVLAB_SCALE;
 export const EVLAB_LOCAL_HALF_Z = EVLAB_HALF_Z / EVLAB_SCALE;
 
 /** Access road from the gate to the F6 highway: half width (m) and the z where it meets F6's edge. */
-export const EVLAB_ROAD = { halfWidth: 8, endZ: -7 };
+export const EVLAB_ROAD = { halfWidth: 8, endZ: -7, /** World z of F6's NORTH asphalt edge here (F6 runs along z = 0, half width 12.7 m). The avenue and the entry road stop here, they do not run onto F6. */ edgeZ: -12.7 };
 
 const FLAT_MARGIN = 4; // level ground outside the fence
 const BLEND = 48; // soft blend back to natural terrain (the north-west corner climbs into the foothills)
@@ -90,6 +90,11 @@ const BLEND = 48; // soft blend back to natural terrain (the north-west corner c
 const ROAD_FLAT = 14;
 /** World x of the parking lot's entry road (it leaves the lot south to the F6 highway, see EVLabParking). It gets the same flat strip as the access road. */
 const DRIVE_X = EVLAB_POS.x + DRIVE.x;
+/** Where the avenue (half width 12) and the car park entry road (half width DRIVE.halfW) meet F6: the road system cuts the median, the footpath and the roadside planting there (MedianPlan). */
+export const EVLAB_MOUTHS: ReadonlyArray<{ x: number; z: number; halfW: number }> = [
+  { x: EVLAB_POS.x, z: EVLAB_ROAD.endZ, halfW: 12 },
+  { x: DRIVE_X, z: EVLAB_ROAD.endZ, halfW: DRIVE.halfW },
+];
 /** The terrain pad is slightly BELOW the floor, so the floor tiles never z-fight with the ground. */
 export const EVLAB_PAD_SINK = 0.03;
 /** Local streets stay this far (m) away from the fence. */

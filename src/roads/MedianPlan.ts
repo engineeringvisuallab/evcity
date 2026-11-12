@@ -12,6 +12,7 @@ import { medianPadIndex } from './PadIndex';
 import { padDistance, placeUTurns, type RunRange, type UTurnPlan } from './UTurns';
 import { MALL_DOORS } from '../mall/MallSite';
 import { planStreetCrossings } from './CrossingPlan';
+import { EVLAB_MOUTHS } from '../evlab/EVLabSite';
 
 /** Floats per sample in MedianRun.p: x, y, z (centreline, finished road surface), nx, nz (unit left normal), tx, tz (unit tangent), s (arc length). */
 export const MS = 8;
@@ -34,6 +35,8 @@ export interface Crossing {
   b: number;
   x: number;
   z: number;
+  /** EVLab road mouth: half width (m) of the side road that joins here. The median is cut over the whole mouth, the footpath is level, nothing is planted; no zebra. */
+  mouth?: number;
   /** ROADS STEP 6b: a mid-block crossing of an undivided city road (no median opening, see CrossingPlan.ts). */
   street?: boolean;
 }
@@ -162,6 +165,29 @@ export function planMedians(roads: RoadNetwork): MedianPlan {
       const a = Math.floor((best.s - CR.gap / 2) / M.step) * M.step;
       const b = Math.ceil((best.s + CR.gap / 2) / M.step) * M.step;
       crossings.push({ roadId: best.r.id, s: best.s, a, b, x: smp[0], z: smp[2] });
+    }
+    // EVLAB MOUTHS: the avenue and the car park entry road join the divided road beside them; the median is cut over the full width of the side road + the corner flare
+    for (const m of EVLAB_MOUTHS) {
+      let best: { r: RoadSpec; s: number; d: number; i: number } | null = null;
+      for (const r of roads.roads) {
+        if (!dividedSectionOf(r) || r.earth || r.xs.length < 2) continue;
+        for (let i = 0; i < r.xs.length - 1; i++) {
+          const ex = r.xs[i + 1] - r.xs[i];
+          const ez = r.zs[i + 1] - r.zs[i];
+          const l2 = ex * ex + ez * ez;
+          if (l2 < 1e-9) continue;
+          const t = Math.max(0, Math.min(1, ((m.x - r.xs[i]) * ex + (m.z - r.zs[i]) * ez) / l2));
+          const d = Math.hypot(m.x - (r.xs[i] + ex * t), m.z - (r.zs[i] + ez * t));
+          if (!best || d < best.d) best = { r, s: r.cum[i] + Math.sqrt(l2) * t, d, i };
+        }
+      }
+      if (!best || best.d > 30 || best.r.bridgeOf[best.i] >= 0) continue;
+      const cur3 = { i: 0 };
+      const smp3 = new Float64Array(MS);
+      sampleRoad(best.r, best.s, cur3, smp3, 0);
+      if (nearPad(smp3[0], smp3[2], M.padMargin + 8)) continue;
+      const half = m.halfW + 7;
+      crossings.push({ roadId: best.r.id, s: best.s, a: Math.floor((best.s - half) / M.step) * M.step, b: Math.ceil((best.s + half) / M.step) * M.step, x: smp3[0], z: smp3[2], mouth: m.halfW });
     }
     // keep the U-turn openings away from the crossings (split the allowed ranges around them)
     for (const c of crossings) {

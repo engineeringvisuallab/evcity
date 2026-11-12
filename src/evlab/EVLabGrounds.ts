@@ -4,7 +4,8 @@
 //  - four bridges (EVLabBridges), the entrance avenue to the F6 highway, and the lake fountains (EVLabFountains)
 // Trees are NOT made here any more: the park trees are normal game trees (palms, krishnachura, sal, koroi ...), see EVLabParkTrees.
 import * as THREE from 'three';
-import { BLD, type Solid } from './EVLabLayout';
+import { BLD, BUILDING_Z, type Solid } from './EVLabLayout';
+import { EVLAB_ROAD } from './EVLabSite';
 import { FOUNTAINS, ISLAND, PLAZA, RING, ROAD_RECTS, contour } from './EVLabCampus';
 import { buildBridges } from './EVLabBridges';
 import { buildFountains } from './EVLabFountains';
@@ -13,7 +14,7 @@ import { buildParkingLot } from './EVLabParkingLot';
 import { buildCycleRack } from './EVLabCycleRackMesh';
 import { buildBenches } from './EVLabBenchMesh';
 import type { Obb } from './EVLabTowerLayout';
-import { asphaltTexture, roadStrip, runsOf, wallStrip } from './EVLabRoads';
+import { asphaltTexture, cornerFlare, roadStrip, runsOf, wallStrip } from './EVLabRoads';
 import type { Parts } from './EVLabParts';
 
 export interface GroundsBuild {
@@ -63,7 +64,18 @@ export function buildGrounds(P: Parts, ground?: (x: number, z: number) => number
   for (let i = 0; i < ringLamps.length; i += 12) if (!atMouth(ringLamps[i][0], ringLamps[i][1])) lampSpots.push(ringLamps[i]);
   const cz = ISLAND.cz;
   roadStrip(g, k, [[0, PLAZA.z1], [0, 166]], 12, y, road); // plaza -> ring -> south bridge
-  roadStrip(g, k, [[0, 228], [0, 272]], 12, y, road); // avenue from the bridge to the F6 highway
+  // avenue from the bridge to the F6 highway: it STOPS at the highway's north asphalt edge (it used to run on over both carriageways), follows the ground down to the
+  // highway's level and opens into rounded corners. The road system cuts the median / footpath / planting there (MedianPlan, EVLAB_MOUTHS).
+  {
+    const zEnd = EVLAB_ROAD.edgeZ - BUILDING_Z + 0.3;
+    const yAt = (x: number, z: number): number => (ground ? ground(x, z) + 0.08 : y);
+    const pts: Array<[number, number]> = [], ys: number[] = [];
+    for (let z = 228; z < zEnd - 1e-6; z += 4) { pts.push([0, z]); ys.push(yAt(0, z)); }
+    pts.push([0, zEnd]); ys.push(yAt(0, zEnd));
+    roadStrip(g, k, pts, 12, y, road, 8, ys);
+    cornerFlare(g, k, 1, 12, zEnd, 5, yAt);
+    cornerFlare(g, k, -1, -12, zEnd, 5, yAt);
+  }
   roadStrip(g, k, [[0, -89], [0, -70]], 8, y, road); // north
   roadStrip(g, k, [[-119, cz], [-100, cz]], 8, y, road); // west
   roadStrip(g, k, [[100, cz], [119, cz]], 8, y, road); // east
@@ -71,7 +83,7 @@ export function buildGrounds(P: Parts, ground?: (x: number, z: number) => number
   roadStrip(g, k, [[0, -181], [0, -151]], 8, y, road);
   roadStrip(g, k, [[-205, cz], [-181, cz]], 8, y, road);
   roadStrip(g, k, [[181, cz], [205, cz]], 8, y, road);
-  for (let z = 236; z < 270; z += 17) for (const x of [-14, 14]) lampSpots.push([x, z]);
+  for (const x of [-14, 14]) lampSpots.push([x, 236]); // (the lamps that stood at z 253 were on the highway's lanes)
   for (let z = 150; z < 166; z += 15) for (const x of [-14, 14]) lampSpots.push([x, z]);
 
   // ---------------------------------------------------------------- plaza in front of the portal
