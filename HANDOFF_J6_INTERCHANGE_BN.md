@@ -1,55 +1,36 @@
-# HANDOFF — J6 interchange + construction timelapse (evcity)
+# HANDOFF — J6 interchange + analysis + timelapse (evcity)
 
-Base: `evcity.zip` (main) + `evcity_interchange_MERGED.zip` overlay (src/interchange, flag off). Banglish; technical word English.
-Rule: prottek part-er shesh-e `tsc` (notun error 0) + `interchange-test` + `road-test` (79/2 same). Flag off thakle game ager moto. Prottek step-e **changed file dite hobe** (zip, `evcity/` path soho).
+**Onno AI/developer: age `docs/j6/00_START_HERE_BN.md` poro.** Eta short status; details `docs/j6/`-e.
+Rule: Banglish kotha, English code. Prottek step-e changed+notun file zip (`evcity/` path soho). Flag OFF = game ager moto. Notun tsc error 0, notun test FAIL 0 (baseline: tsc ~109 noise, road-test 2 FAIL, original main-eo).
 
-## NOTUN DIRECTION (user): EVCity = engineering analysis + shikkhonio game
-Interchange shudhu "bananor" jinis noy: **je kono junction-e kon solution possible, kano (rule, capacity, safety, cost, terrain), shikkhar jonno dekhano**, tarpor chosen solution build. `src/interchange/Analysis.ts` ei engine (docs/JUNCTION_ANALYSIS_BN.md).
+## Direction
+EVCity = engineering-analysis + shikkhonio game. Junction-e kon solution possible/kano (analysis) -> chosen solution build -> construction timelapse video.
 
-## Analysis parts (A) — age eigulo, tarpor build parts
-| # | Part | Status |
+## Status
+| ID | Task | Status |
 |---|---|---|
-| A1 | Analysis engine (rule, capacity, safety, cost, score, lesson en/bn) + test + J6 run | DONE |
-| A2 | Demand: game-er AI traffic count / road class theke peak-hour volume (ekhon input) | next |
-| A3 | Analysis panel UI: junction click -> table, ranking, bn lesson, weight / assumption slider, what-if (volume, speed) | |
-| A4 | Candidate preview 3D (standalone viewer-e solution bachai) | |
-| A5 | "Apply solution": chosen candidate game-e build (niche Part 5-9) | |
-| A6 | Student mode: quiz / challenge ("ei junction-e kon solution?") | |
+| done | Survey, design decision (diamond, F6 on grade, cross road underpass), Analysis engine + tests + J6 run | DONE |
+| T01 | Scenario edit layer + J6 edits (remove pad 6 / S4 tail / S5 head; add S4 ext, west leg to J57, T + south branch) | TODO (stub `scenario/J6Scenario.ts`) |
+| T02 | Scenario tests | TODO (`scripts/j6-scenario-test.ts` stub) |
+| T03 | Demand model | TODO (`demand/Demand.ts`) |
+| T04 | West-leg alignment by Analysis | TODO |
+| T05 | Level plan: grade-following + 'under' | TODO |
+| T06 | Underpass structures (F6 deck, walls, drainage) | TODO |
+| T07 | Ramp gore/merge taper | TODO |
+| T08 | Apply interchange in network (+ median/sign/tree/light) | TODO |
+| T09 | AI traffic on ramps (high risk) | TODO |
+| T10 | Analysis panel UI (bn) | TODO (`ui/AnalysisPanel.ts`) |
+| T11 | Pattern coverage (parclo), 3-leg | TODO |
+| T12 | Candidate preview + student mode | TODO |
+| T13-T16 | Timelapse: schedule, view, machines, camera/overlay/recorder | TODO (`construction/*`) |
+| T17 | Traffic diversion, perf, final | TODO |
 
-## Build / timelapse parts (age-er plan)
-| # | Part | Status |
-|---|---|---|
-| 1 | Survey J6 | DONE (`scripts/j6-survey.ts`, `j6-dump.ts`) |
-| 2 | Pattern + design parameter | DONE — `docs/INTERCHANGE_J6_DESIGN_BN.md`; Analysis diamond-under (north leg west-e bend) ke confirm korlo |
-| 3 | Top + profile SVG, validator | next |
-| 4 | Standalone 3D viewer artifact | |
-| 5 | Step 2c: ramp gore/merge taper (no z-fight) | |
-| **5a** | **Grade-following level plan** (`Levels.ts`: cross road underpass, F6 profile obikrito) | notun, Part 2-te ber holo |
-| 6 | J6 config entry; old pad + stub soraano; S4/S5 realign (N leg), drainage, retaining wall | |
-| 7 | F6-r upor bridge deck (F6 on grade, bridge over cross road) | F6 profile bodlay na — risk komlo |
-| 8 | Interchange-aware median/UTurn/sign/gach/light | |
-| 9 | AI ramp-e (RoadGraph one-way link) | high risk |
-| 10-14 | Construction schedule, renderer, machinery, camera/overlay, video | timelapse |
-| 15 | Traffic diversion during construction | |
-| 16 | Perf + final test + handoff | |
+## Key facts (details: docs/j6/02, 03)
+- J6 = pad id 6 (x -1731.8, z -137.0). **Interchange centre x -1774.0, z -190.3, yaw 0.9018** (68 m SW of the pad, where S4 (east, river bridge) meets F6). Nearest junction J57 at 463 m.
+- User sketch: remove pad J6 + stubs + S5 parallel part; cross road east-west: S4 east, new road west to J57 with a T and a south branch to S5.
+- Analysis (assumed demand): only **diamond, cross road under** is possible, IF the west leg bends down-slope (straight = 45 m cut). Signal/roundabout fail (100 km/h highway), diamond-over fails (grade 8.6 %), parclo/cloverleaf fail (cut 37-38 m, weaving, missing turns).
+- Roads are PROCEDURAL (RoadNetwork.ts) -> T01 is the highest-risk step.
 
-## J6 facts (Part 1+2)
-- J6 = pad id 6, x=-1731.8, z=-137.0, y=33.73, rCore 43.9. F6 (road 5, 6 lane, 100 km/h, grade 4-5 %), S4 (road 24, collector, bridge id 21 river, span 32 m), S5 (road 25, collector). Duto collector F6 duibar paar hoy (u=-68 ar pad); real cross road = S4 (south) + S5 (north).
-- Interchange centre: **u=-68** (x=-1773.9, z=-190.4, y_F6=31.5), yaw 0.9018 rad (51.7 deg). Terrain: uttore pahar, dokkhine nodi.
-- **Decision (user approval chai):** diamond, F6 on grade unchanged, cross road underpass (clearance 5.5 + deck 1.4 = 6.9 m), ramp 50 km/h, terminal V ~62 m, nose 200-240 m.
-- Level plan flat-ground assumption F6 theke 10.3 m dure — Part 5a.
-
-## Jana shimana
-- Game chalano jay ni; proman = headless `TerrainGenerator` + `buildInterchange` + SVG/PNG. `three`/`vite` nai.
-- Left-hand traffic: slip = left turn, loop = right turn. Cross road main-er 90 deg dhora hoy.
-- `tsc` ~109 noise error ar `road-test` 2 FAIL — original main-eo ache.
-
-## Files (Part 1-2)
-`scripts/j6-survey.ts`, `scripts/j6-dump.ts`, `scripts/j6-design.ts`, `scripts/j6-plot.py`, `docs/INTERCHANGE_J6_DESIGN_BN.md`, `docs/interchange-preview/j6-existing-plan.png`, ei handoff.
-Chalate: `npx tsx scripts/j6-design.ts` (~1 min), `npx tsx scripts/j6-dump.ts` then `python3 scripts/j6-plot.py`.
-
-## Analysis-theke paoa dorkari finding (J6)
-- North leg shoja uttore gele cut 45 m (pahar) -> **north leg west-e bend korte hobe** (S5 diagonal-er low ground); tahole diamond-under possible, cut ~57k m3.
-- Parclo model-e cross->main turn-er ramp nei (4 ta ramp, 8 turn-er 4 ta) — Part 7-e fix.
-- Next junction 465 m, guide 1000 m — warning.
-- Files (A1): `src/interchange/Analysis.ts`, `src/interchange/index.ts` (1 line export), `scripts/analysis-test.ts`, `scripts/j6-analysis.ts`, `docs/JUNCTION_ANALYSIS_BN.md`.
+## Files
+Done: `src/interchange/Analysis.ts`, `index.ts`, `scripts/analysis-test.ts j6-analysis.ts j6-survey.ts j6-dump.ts j6-design.ts j6-plot.py j6-scenario-data.ts`, `docs/INTERCHANGE_J6_DESIGN_BN.md JUNCTION_ANALYSIS_BN.md j6/*`.
+Stubs: `src/interchange/{scenario,demand,ui,construction}/*`, `scripts/j6-scenario-test.ts`.
