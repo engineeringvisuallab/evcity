@@ -11,6 +11,7 @@ import { CityPlan } from '../city/CityPlan';
 import { DIVIDED_SECTIONS, sectionFor } from './RoadSection';
 import { buildInterchange, type InterchangeModel, type RoadSection as IcSection } from '../interchange';
 import type { LocalAreaStat } from './LocalRoads';
+import { SCENARIOS, cutRange, nearestPoint, uvToWorld, type ScenarioSpec } from '../interchange/scenario/J6Scenario';
 
 /** Natural terrain WITHOUT roads (hills, rivers, lakes, sea). Roads are planned on top of this. */
 export type NaturalSampler = (x: number, z: number, out: TerrainSample) => void;
@@ -71,6 +72,8 @@ interface RawRoad {
   earth?: boolean;
   /** Interchange ramp: the finished surface height of every point (used as it is: no smoothing, no grade repair; see buildFixedProfile). */
   fixedY?: number[];
+  /** PROVISIONAL grade limit of a scenario road (default: the class limit, KIND). */
+  maxGrade?: number;
 }
 
 /**
@@ -91,6 +94,8 @@ export class RoadNetwork {
   readonly junctions: JunctionSpec[] = [];
   /** Interchanges that were built (Config.roads.interchange): the models of src/interchange. Empty while the flag is off. */
   readonly interchanges: InterchangeModel[] = [];
+  /** SCENARIOS (Config.roads.scenario): what each scenario did to the generated roads, and anything that did not fit. Empty while the flag is off. */
+  readonly scenarios: { id: string; applied: boolean; issues: string[]; cut: { roadId: number; name: string; keep: string; removed: number }[]; addedRoadIds: number[] }[] = [];
   /** Engineered intersections (flat pads with kerb returns), see Junctions.ts. */
   pads: PadSpec[] = [];
   /** Why a junction cluster did not get a pad (debug / tests). */
@@ -163,6 +168,7 @@ export class RoadNetwork {
         if (Config.roads.island) this.layoutIsland();
       }
     }
+    this.applyScenarios(); // after all tiers, BEFORE the pads: pads, median, bridges, traffic graph then see the edited network
     const pr = buildJunctionPads(this.roads, this.natural);
     this.pads = pr.pads;
     this.padSkipped = pr.skipped;
@@ -178,6 +184,7 @@ export class RoadNetwork {
         }
       }
     }
+    this.checkScenarioPads();
     this.layoutEarthen();
     this.layoutInterchanges();
     this.buildSegments();
@@ -1484,7 +1491,7 @@ export class RoadNetwork {
       shoulder: raw.shoulder ?? K.shoulder,
       lanes: sec ? sec.lanesPerDir * 2 : oldLanes,
       speedKmh: raw.speedKmh ?? K.speedKmh,
-      maxGrade: raw.tier === 4 ? Config.city.localRoads.rampGrade : K.maxGrade,
+      maxGrade: raw.maxGrade ?? (raw.tier === 4 ? Config.city.localRoads.rampGrade : K.maxGrade),
       xs,
       zs,
       ys: new Float64Array(n),
@@ -1510,6 +1517,217 @@ export class RoadNetwork {
       return;
     }
     this.buildProfile(road, raw);
+  }
+
+  // =====================================================================================
+  // SCENARIOS (T01): deterministic edits of the generated network (src/interchange/scenario/J6Scenario.ts)
+  // =====================================================================================
+  private applyScenarios(): void {
+    const C = Config.roads.scenario;
+    if (!C.enabled) return;
+    for (const id of C.list) {
+      const spec = SCENARIOS[id];
+      const rep = { id, applied: false, issues: [] as string[], cut: [] as { roadId: number; name: string; keep: string; removed: number }[], addedRoadIds: [] as number[] };
+      this.scenarios.push(rep);
+      if (!spec) {
+        rep.issues.push('unknown scenario id');
+        console.warn(`[scenario ${id}] unknown id`);
+        continue;
+      }
+      try {
+        this.applyScenario(spec, rep);
+        rep.applied = true;
+      } catch (err) {
+        rep.issues.push(`skipped: ${err instanceof Error ? err.message : String(err)}`); // a wrong scenario must never break the world build
+        console.warn(`[scenario ${id}] skipped: ${rep.issues[rep.issues.length - 1]}`);
+      }
+    }
+  }
+
+  private roadByName(name: string): RoadSpec | undefined {
+    for (let i = this.roads.length - 1; i >= 0; i--) if (this.roads[i].name === name) return this.roads[i];
+    return undefined;
+  }
+
+  private applyScenario(spec: ScenarioSpec, rep: { issues: string[]; cut: { roadId: number; name: string; keep: string; removed: number }[]; addedRoadIds: number[] }): void {
+    // 1. validate EVERYTHING before the first change (all or nothing)
+    const plan: { r: RoadSpec; keep: 'head' | 'tail'; idx: number; why: string }[] = [];
+    for (const c of spec.cuts) {
+      const r = this.roads[c.roadId];
+      if (!r || r.name !== c.name) throw new Error(`cut: road ${c.roadId} is not ${c.name} (the road plan changed)`);
+      const [x, z] = uvToWorld(spec.centre, c.at);
+      const np = nearestPoint(r.xs, r.zs, x, z);
+      if (np.d > (c.maxSnap ?? 25)) throw new Error(`cut ${c.name}: nearest point is ${np.d.toFixed(0)} m from the spec point`);
+      const { lo, hi } = cutRange(r.xs.length, c.keep, np.i);
+      if (hi - lo < 4) throw new Error(`cut ${c.name}: nothing would be left`);
+      for (const b of this.bridges) {
+        if (b.roadId !== r.id) continue;
+        const removedStart = c.keep === 'head' ? hi + 1 : 0;
+        const removedEnd = c.keep === 'head' ? r.xs.length - 1 : lo - 1;
+        if (b.i1 >= removedStart && b.i0 <= removedEnd) throw new Error(`cut ${c.name}: bridge ${b.id} lies in the removed part`);
+      }
+      plan.push({ r, keep: c.keep, idx: np.i, why: c.why });
+    }
+    const known = new Set(this.roads.map((r) => r.name));
+    for (const a of spec.addRoads) {
+      for (const sn of [a.startSnap, a.endSnap]) if (sn && !known.has(sn.roadName)) throw new Error(`road ${a.name}: snap target ${sn.roadName} does not exist`);
+      known.add(a.name);
+    }
+    // 2. cut the road ends
+    for (const p of plan) {
+      const removed = this.cutRoadEnd(p.r, p.keep, p.idx);
+      rep.cut.push({ roadId: p.r.id, name: p.r.name, keep: p.keep, removed });
+    }
+    // 3. add the new roads (in order: a later road may snap to / join an earlier one)
+    for (const a of spec.addRoads) {
+      const wp = a.waypoints.map((w) => uvToWorld(spec.centre, w));
+      const last = wp.length - 1;
+      const target = a.join ? this.roadByName(a.join.roadName)! : null;
+      let yA: number | null = null; // surface height at the first point
+      let yB: number | null = null; // ... at the last point
+      const snapEnd = (idx: number, roadName: string): number => {
+        const t = this.roadByName(roadName)!;
+        const np = nearestPoint(t.xs, t.zs, wp[idx][0], wp[idx][1]);
+        wp[idx] = [t.xs[np.i], t.zs[np.i]];
+        return t.ys[np.i];
+      };
+      if (a.startSnap) yA = snapEnd(0, a.startSnap.roadName);
+      if (a.endSnap) yB = snapEnd(last, a.endSnap.roadName);
+      if (target && a.join!.at === 'end') {
+        const k = target.xs.length - 1;
+        wp[0] = [target.xs[k], target.zs[k]];
+        yA = target.ys[k];
+      } else if (target) {
+        wp[last] = [target.xs[0], target.zs[0]];
+        yB = target.ys[0];
+      }
+      // an end that is not snapped lies on a road that is already built (the main road at the centre): take its height
+      if (yA === null) yA = this.nearestRoadHeight(wp[0][0], wp[0][1], target ? target.id : -1);
+      if (yB === null) yB = this.nearestRoadHeight(wp[last][0], wp[last][1], target ? target.id : -1);
+      const pts = this.smoothRoute(wp, false);
+      pts[0] = wp[0];
+      pts[pts.length - 1] = wp[last];
+      const cum: number[] = [0];
+      for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+      const len = cum[cum.length - 1];
+      const limit = a.maxGrade ?? (target ? target.maxGrade : KIND[a.kind].maxGrade);
+      if (yA !== null && yB !== null) {
+        const need = Math.abs(yB - yA) / len;
+        if (need > limit * 0.97) rep.issues.push(`${a.name}: needs grade ${(need * 100).toFixed(1)} % over ${len.toFixed(0)} m (limit ${(limit * 100).toFixed(0)} %): a longer / other alignment is needed (T04)`);
+        else if (a.maxGrade !== undefined && need > KIND[a.kind].maxGrade) rep.issues.push(`${a.name}: provisional grade ${(need * 100).toFixed(1)} % (class limit ${(KIND[a.kind].maxGrade * 100).toFixed(0)} %): T04 must replace the alignment`);
+      } else {
+        rep.issues.push(`${a.name}: no road height found at one end, the profile follows the terrain`);
+      }
+      if (target) {
+        // FUSE: straight surface profile between the two end heights (a short link), then the road keeps one id
+        const ys = pts.map((_, i) => (yA ?? 0) + ((yB ?? yA ?? 0) - (yA ?? 0)) * (cum[i] / (len || 1)));
+        this.extendRoad(target, pts, ys, a.join!.at);
+        rep.addedRoadIds.push(target.id);
+      } else {
+        const raw: RawRoad = { tier: 3, kind: a.kind, name: a.name, closed: false, pts, maxGrade: a.maxGrade };
+        if (yA !== null && yB !== null) {
+          // both ends cannot always be met within the limit: the START (the road already built) wins, the far end stops where the limit allows
+          const gmax = limit * 0.97 * len;
+          raw.endY = [yA, Math.abs(yB - yA) > gmax ? yA + Math.sign(yB - yA) * gmax : yB];
+          if (raw.endY[1] !== yB) rep.issues.push(`${a.name}: far end stays ${Math.abs(yB - raw.endY[1]).toFixed(1)} m ${yB > raw.endY[1] ? 'below' : 'above'} the road it joins`);
+        }
+        this.addRoad(raw);
+        rep.addedRoadIds.push(this.roads.length - 1);
+      }
+    }
+  }
+
+  /** Replace the point arrays of road `r` (keeps its id): distances, length and the left normals are recomputed. */
+  private setRoadPoints(r: RoadSpec, xs: Float64Array, zs: Float64Array, ys: Float64Array, hNat: Float32Array, bridgeOf: Int16Array): void {
+    const m = xs.length;
+    r.xs = xs;
+    r.zs = zs;
+    r.ys = ys;
+    r.hNat = hNat;
+    r.bridgeOf = bridgeOf;
+    const cum = new Float64Array(m);
+    for (let i = 1; i < m; i++) cum[i] = cum[i - 1] + Math.hypot(xs[i] - xs[i - 1], zs[i] - zs[i - 1]);
+    r.cum = cum;
+    r.length = cum[m - 1];
+    const nx = new Float32Array(m);
+    const nz = new Float32Array(m);
+    for (let i = 0; i < m; i++) {
+      const ip = Math.max(0, i - 1);
+      const inx = Math.min(m - 1, i + 1);
+      let tx = xs[inx] - xs[ip];
+      let tz = zs[inx] - zs[ip];
+      const l = Math.hypot(tx, tz) || 1;
+      tx /= l;
+      tz /= l;
+      nx[i] = tz; // left normal, same convention as addRoad
+      nz[i] = -tx;
+    }
+    r.nx = nx;
+    r.nz = nz;
+  }
+
+  /** Remove the points before / after point `idx` of road `r` in place (the road keeps its id; bridge indices are fixed up). Returns the number of removed points. */
+  private cutRoadEnd(r: RoadSpec, keep: 'head' | 'tail', idx: number): number {
+    const n = r.xs.length;
+    const { lo, hi } = cutRange(n, keep, idx);
+    this.setRoadPoints(r, r.xs.slice(lo, hi + 1), r.zs.slice(lo, hi + 1), r.ys.slice(lo, hi + 1), r.hNat.slice(lo, hi + 1), r.bridgeOf.slice(lo, hi + 1));
+    if (lo > 0) {
+      for (const b of this.bridges) {
+        if (b.roadId !== r.id) continue;
+        b.i0 -= lo;
+        b.i1 -= lo;
+      }
+    }
+    return n - (hi - lo + 1);
+  }
+
+  /** Fuse a polyline into road `r`: `at: 'end'` = pts[0] is the last point of r (appended after it), `at: 'start'` = the last of pts is the first point of r (prepended before it). ys are the surface heights of pts. */
+  private extendRoad(r: RoadSpec, pts: number[][], ys: number[], at: 'start' | 'end'): void {
+    const n = r.xs.length;
+    const add = pts.length - 1;
+    const m = n + add;
+    const xs = new Float64Array(m);
+    const zs = new Float64Array(m);
+    const yy = new Float64Array(m);
+    const hn = new Float32Array(m);
+    const bo = new Int16Array(m).fill(-1);
+    const off = at === 'end' ? 0 : add; // where the old points start in the new arrays
+    for (let i = 0; i < n; i++) {
+      xs[off + i] = r.xs[i];
+      zs[off + i] = r.zs[i];
+      yy[off + i] = r.ys[i];
+      hn[off + i] = r.hNat[i];
+      bo[off + i] = r.bridgeOf[i];
+    }
+    for (let k = 0; k < add; k++) {
+      const src = at === 'end' ? k + 1 : k; // pts index of the new point
+      const dst = at === 'end' ? n + k : k;
+      xs[dst] = pts[src][0];
+      zs[dst] = pts[src][1];
+      yy[dst] = ys[src];
+      this.natural(pts[src][0], pts[src][1], this.scratch);
+      hn[dst] = this.scratch.h;
+    }
+    this.setRoadPoints(r, xs, zs, yy, hn, bo);
+    if (at === 'start') {
+      for (const b of this.bridges) {
+        if (b.roadId !== r.id) continue;
+        b.i0 += add;
+        b.i1 += add;
+      }
+    }
+  }
+
+  /** After the pads exist: no pad may remain where the scenario removed a junction (reported, not repaired). */
+  private checkScenarioPads(): void {
+    for (const rep of this.scenarios) {
+      const spec = SCENARIOS[rep.id];
+      if (!spec || !rep.applied) continue;
+      for (const c of spec.clearPads) {
+        const [x, z] = uvToWorld(spec.centre, c.at);
+        for (const p of this.pads) if (Math.hypot(p.x - x, p.z - z) < c.radius) rep.issues.push(`pad ${p.id} still stands ${Math.hypot(p.x - x, p.z - z).toFixed(0)} m from the removed junction (${c.why})`);
+      }
+    }
   }
 
   /** Interchange ramps: the surface heights come from the interchange level plan and are used exactly as given. */

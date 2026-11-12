@@ -20,3 +20,13 @@ Origin = interchange centre C = (x -1774.0, z -190.3). Data: `data/j6-scenario-d
 
 ## Why not just edit by hand
 Roads are **procedural** (src/roads/RoadNetwork.ts: collectors `S${n}` built ~line 398 and ~532, plan in RoadPlan.ts, pads in Junctions.ts). T01 must add a deterministic **scenario/edits layer** (`src/interchange/scenario/J6Scenario.ts`) applied after generation and BEFORE pads, so everything downstream (pads, bridges, traffic graph, minimap) sees the edited network. Seed must not change anything else (diff of all other roads = 0).
+
+
+## T01 implemented (2026-11-12)
+- Hook: `RoadNetwork.applyScenarios()` after all tiers, BEFORE `buildJunctionPads`. Flag `Config.roads.scenario.enabled` (OFF default), `list: ['J6']`. Spec + helpers: `src/interchange/scenario/J6Scenario.ts` (pure).
+- Cut: `RoadCut {roadId, name, keep: 'head'|'tail', at}` snaps by DISTANCE, road id + name both checked, a bridge in the removed part = refuse (all-or-nothing).
+- New roads: S4-ext and the south branch are FUSED into S4 (appended) / S5 (prepended) (`join`), so no fake 2-arm pad and no 'leg too short'. Only `J6-west` is a new road (id appended after all tiers).
+- Finding: the straight chord centre -> J57 climbs 14.5 % (J57 y 99 vs centre 31.5, 465 m) and the T -> S5 join drops 16.8 %: collector limit is 10 %. Provisional `maxGrade 0.18` on those two so the pads (J57 4-way, T) still form. T04 must find an alignment >= ~700 m or other end point (question for the user).
+- Centre: pad rule 'bridge within 115 m' rejects the F6 x S4 x west pad (S4 bridge 21 ends 109 m from the centre). Expected: T08 replaces this junction by the diamond.
+- Side effects (generated FROM the edited roads): F6 reshaped only near the removed old pad, S12 near J57, earthen track E34 (branches off S5).
+- Digest of the original network: `docs/j6/data/j6-baseline-off.json` (`scripts/j6-net-digest.ts`).

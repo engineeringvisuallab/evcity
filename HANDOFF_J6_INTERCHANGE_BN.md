@@ -10,9 +10,9 @@ EVCity = engineering-analysis + shikkhonio game. Junction-e kon solution possibl
 | ID | Task | Status |
 |---|---|---|
 | done | Survey, design decision (diamond, F6 on grade, cross road underpass), Analysis engine + tests + J6 run | DONE |
-| T01 | Scenario edit layer + J6 edits (remove pad 6 / S4 tail / S5 head; add S4 ext, west leg to J57, T + south branch) | TODO (stub `scenario/J6Scenario.ts`) |
-| T02 | Scenario tests | TODO (`scripts/j6-scenario-test.ts` stub) |
-| T03 | Demand model | TODO (`demand/Demand.ts`) |
+| T01 | Scenario edit layer + J6 edits | DONE (flag `Config.roads.scenario.enabled`, OFF = ager moto). West leg / south branch alignment = PLACEHOLDER (provisional grade 18 %), T04 replace korbe. Centre-e pad nei (S4 bridge 109 m door, rule 115 m): T08 diamond bosabe |
+| T02 | Scenario tests | PARTIAL: `scripts/j6-scenario-test.ts` (OFF == original digest, ON connectivity / pads / bridges / untouched roads) ALL OK. Baaki: radius >= 73 m, grade <= limit (T04-er por) |
+| T03 | Demand model | DONE (`demand/Demand.ts`, `scripts/demand-test.ts` ALL OK): override > AI count provider > road-class default. AI traffic count provider ekhono wire kora nei (T10 / T09-e) |
 | T04 | West-leg alignment by Analysis | TODO |
 | T05 | Level plan: grade-following + 'under' | TODO |
 | T06 | Underpass structures (F6 deck, walls, drainage) | TODO |
