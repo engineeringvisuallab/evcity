@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { Parts } from './EVLabParts';
+import { Furnish } from './EVLabFurniture';
+import { defineFurniture } from './EVLabFurnModels';
 import { beltOf, beltSection, isMech, outriggersOf } from './EVLabStructure';
 import type { TowerTextures } from './EVLabTowerTextures';
 import { CORES, FLOORS, LOBBY, PART, ROOF_Y, T, beamsOf, ceilY, columnsOf, floorPlan, inRing, levelY, partitionOf, ringOf, ringPoints, type FloorKind } from './EVLabTowerLayout';
@@ -29,13 +31,9 @@ export function makeLevelBuilder(P: Parts, TT: TowerTextures): (n: number) => Le
   const roomGlass = k.own(new THREE.MeshLambertMaterial({ color: 0xcfeaf6, transparent: true, opacity: 0.25, emissive: 0x6fb8e0, emissiveIntensity: 0.35, depthWrite: false }));
   const gold = P.gold();
   const lamp = P.glow(0xfff1cf, 1.3, 0xfff1cf);
-  const topM = P.lit(t.wood, 0xffffff, 0.4), white = P.lit(null, 0xe8e8ea, 0.35), black = P.lit(null, 0x16181d, 0.2), chairM = P.lit(null, 0x23364f, 0.3);
-  const leaf = P.lit(null, 0x2f8a46, 0.32), pot = P.lit(null, 0x1a1a1f, 0.15), leather = P.lit(null, 0x5e3320, 0.25), counterM = P.lit(t.marbleDark, 0xffffff, 0.3);
 
   const gPlane = k.own(new THREE.PlaneGeometry(1.2, 1.2));
   const gBox = k.own(new THREE.BoxGeometry(1, 1, 1));
-  const gCyl = k.own(new THREE.CylinderGeometry(1, 1, 1, 18));
-  const gSph = k.own(new THREE.SphereGeometry(1, 8, 6));
 
   const plate = (pts: Array<[number, number]>, hole: boolean, up: boolean, y: number, mat: THREE.Material, tile: number): THREE.Mesh => {
     const sh = new THREE.Shape(pts.map(([x, z]) => new THREE.Vector2(x, up ? -z : z)));
@@ -132,43 +130,26 @@ export function makeLevelBuilder(P: Parts, TT: TowerTextures): (n: number) => Le
       const bi = instanced(gBox, mats.concrete, bm); if (bi) g.add(bi);
     }
 
-    // furniture
+    // furniture: every piece is a real model of the kit (EVLabFurnModels), placed as an instance
     const plan = floorPlan(n);
-    const desks: THREE.Matrix4[] = [], panels: THREE.Matrix4[] = [], screens: THREE.Matrix4[] = [], chairs: THREE.Matrix4[] = [];
-    const rTables: THREE.Matrix4[] = [], rLegs: THREE.Matrix4[] = [], bTables: THREE.Matrix4[] = [], pots: THREE.Matrix4[] = [], leaves: THREE.Matrix4[] = [];
-    const sofaB: THREE.Matrix4[] = [], sofaK: THREE.Matrix4[] = [], counters: THREE.Matrix4[] = [], scopes: THREE.Matrix4[] = [];
+    const F = new Furnish(P, g);
+    const W: Array<[string, number, number, number, number, number]> = []; // name, x, z, yaw, scale, height above the floor
+    const at = (m: string, x: number, z: number, yaw = 0, sc = 1, dy = 0): void => { W.push([m, x, z, yaw, sc, dy]); };
+    /** Offset (right, forward) in the frame of a piece turned by yaw (forward = the way it faces). */
+    const rel = (it: { x: number; z: number }, yaw: number, rx: number, fz: number): [number, number] => [it.x + rx * Math.cos(yaw) + fz * Math.sin(yaw), it.z - rx * Math.sin(yaw) + fz * Math.cos(yaw)];
     for (const it of plan.items) {
       const w = it.w ?? 1, d = it.d ?? 1, r = it.r ?? 0.5, yaw = it.yaw ?? 0;
-      if (it.t === 'desk') {
-        desks.push(mx(it.x, y + 0.75, it.z, w, 0.06, d, yaw));
-        panels.push(mx(it.x, y + 0.4, it.z, w, 0.7, 0.05, yaw));
-        for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
-          screens.push(mx(it.x + sx * w * 0.25, y + 1.1, it.z + sz * d * 0.32, 0.55, 0.34, 0.04, yaw));
-          chairs.push(mx(it.x + sx * w * 0.25, y + 0.45, it.z + sz * (d * 0.5 + 0.55), 0.5, 0.9, 0.5, yaw));
-        }
+      if (it.t === 'model') at(it.m!, it.x, it.z, yaw, it.s ?? 1, it.d ?? 0);
+      else if (it.t === 'desk') {
+        at('deskPod', it.x, it.z, yaw);
       } else if (it.t === 'table') {
-        if (it.r) {
-          rTables.push(mx(it.x, y + 0.75, it.z, r, 0.06, r));
-          rLegs.push(mx(it.x, y + 0.37, it.z, 0.08, 0.74, 0.08));
-          for (const a of [0, 1.57, 3.14, 4.71]) chairs.push(mx(it.x + Math.cos(a) * (r + 0.4), y + 0.45, it.z + Math.sin(a) * (r + 0.4), 0.45, 0.9, 0.45));
-        } else {
-          bTables.push(mx(it.x, y + 0.75, it.z, w, 0.08, d));
-          for (let c = -Math.floor(w / 1.4) / 2; c <= Math.floor(w / 1.4) / 2; c += 1) for (const sz of [-1, 1]) chairs.push(mx(it.x + c * 1.3, y + 0.45, it.z + sz * (d / 2 + 0.45), 0.5, 0.9, 0.5));
-        }
-      } else if (it.t === 'plant') {
-        pots.push(mx(it.x, y + 0.45, it.z, Math.min(0.7, r * 0.8), 0.9, Math.min(0.7, r * 0.8)));
-        for (let i = 0; i < 3; i++) leaves.push(mx(it.x + Math.sin(i * 2.1) * r * 0.25, y + 1.3 + i * 0.4 * r, it.z + Math.cos(i * 2.1) * r * 0.25, r * (1 - i * 0.12), r * 0.8, r * (1 - i * 0.12)));
-      } else if (it.t === 'sofa') {
-        sofaB.push(mx(it.x, y + 0.3, it.z, w, 0.5, d, yaw));
-        sofaK.push(mx(it.x, y + 0.75, it.z - d * 0.4, w, 0.7, 0.25, yaw));
-      } else if (it.t === 'counter') {
-        counters.push(mx(it.x, y + 0.55, it.z, w, 1.1, d, yaw));
-      } else if (it.t === 'bench') {
-        sofaB.push(mx(it.x, y + 0.25, it.z, yaw ? d : w, 0.5, yaw ? w : d));
-      } else if (it.t === 'telescope') {
-        pots.push(mx(it.x, y + 0.7, it.z, 0.12, 1.4, 0.12));
-        scopes.push(mx(it.x, y + 1.45, it.z, 0.3, 0.3, 0.9));
-      } else if (it.t === 'room') {
+        if (it.r) at('roundTable', it.x, it.z, yaw, r / 0.75);
+        else at('meetSet44', it.x, it.z, yaw, 1);
+      } else if (it.t === 'plant') at('palm1', it.x, it.z, yaw, Math.max(1, r));
+      else if (it.t === 'sofa') { for (const sx of [-1, 1]) at('sofaLeather', ...rel(it, yaw, sx * w * 0.25, 0), yaw, w / 5.2); }
+      else if (it.t === 'bench') at('parkBench', it.x, it.z, yaw, w / 2.4);
+      else if (it.t === 'telescope') at('telescope', it.x, it.z, yaw, 1);
+      else if (it.t === 'room') {
         const x0 = it.x - w / 2, x1 = it.x + w / 2, z0 = it.z - d / 2, z1 = it.z + d / 2;
         P.tbox(g, x0, x1, z0, z0 + 0.05, y, y + 2.8, roomGlass);
         P.tbox(g, x0, x0 + 0.05, z0, z1, y, y + 2.8, roomGlass);
@@ -179,10 +160,9 @@ export function makeLevelBuilder(P: Parts, TT: TowerTextures): (n: number) => Le
         P.tbox(g, x0, x1, z0, z1, y + 2.8, y + 2.86, gold);
       }
     }
-    const add = (geo: THREE.BufferGeometry, mat: THREE.Material, list: THREE.Matrix4[]): void => { const im = instanced(geo, mat, list); if (im) g.add(im); };
-    add(gBox, topM, desks); add(gBox, white, panels); add(gBox, black, screens); add(gBox, chairM, chairs);
-    add(gCyl, topM, rTables); add(gCyl, black, rLegs); add(gBox, topM, bTables);
-    add(gCyl, pot, pots); add(gSph, leaf, leaves); add(gBox, leather, sofaB); add(gBox, leather, sofaK); add(gBox, counterM, counters); add(gCyl, gold, scopes);
+    defineFurniture(F, [...new Set(W.map((q) => q[0]))]);
+    for (const [m, x, z, yaw, sc, dy] of W) F.place(m, x, y + dy, z, yaw, sc);
+    F.flush();
 
     // step 1.2b + 1.2c: glass partition around the lift / stair lobby of an office floor, with one glass gate (double sliding door) in each partition
     const parts = partitionOf(n);

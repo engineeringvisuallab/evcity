@@ -1,6 +1,8 @@
 // EVLab Tower v1.3: the numbers of the TOWER (pure data, no three.js). Building-local frame as in EVLabLayout (x east, z south, y up, origin = footprint centre at floor level).
 // The tower stands on the south part of the podium roof, right above the lobby (so the Presentation Hall stays column-free). In its middle are two concrete CORE blocks, one on each side of the open lobby (v1.4: west = stair A + lift 1, east = lift 2 + stair B); the old layout was:
 // stair A | lift 1 | open corridor | lift 2 | stair B, from the ground to the roof.
+import { defineFurniture } from './EVLabFurnModels';
+import type { Furnish } from './EVLabFurniture';
 import { blockRect, blockToDesign, blockToWorld, rampPose, type Ramp, type Solid } from './EVLabLayout';
 
 export type { Ramp, Solid };
@@ -469,10 +471,34 @@ export function nearLobby(x: number, z: number, hx: number, hz: number): boolean
 }
 
 // ---------------------------------------------------------------- furniture of the floors
-export interface Item { t: 'desk' | 'table' | 'plant' | 'sofa' | 'chair' | 'bench' | 'counter' | 'telescope' | 'room'; x: number; z: number; yaw?: number; w?: number; d?: number; r?: number }
+/**
+ * One thing that stands on a floor. The first kinds are the ones of the first versions (the renderer turns each into a real model of the furniture kit,
+ * see EVLabFloors); 'model' places any model of EVLabFurnModels by name (`m`, scaled by `s`, turned by `yaw`; 0 = faces +z).
+ */
+export interface Item { t: 'desk' | 'table' | 'plant' | 'sofa' | 'chair' | 'bench' | 'counter' | 'telescope' | 'room' | 'model'; x: number; z: number; yaw?: number; w?: number; d?: number; r?: number; m?: string; s?: number }
 export interface FloorPlan { items: Item[]; solids: Solid[]; kind: FloorKind }
 
 const CORE_PAD = 3.0; // free corridor around the core
+/** Triangle budget of the furniture of one level (the test keeps a whole level under 40k triangles): a piece that would go over it is not placed (and gets no collision box). */
+const FURN_BUDGET = 26000;
+const costMemo = new Map<string, number>();
+/** Triangles of one copy of a kit model (built once to count). */
+const costOf = (m: string): number => {
+  let v = costMemo.get(m);
+  if (v === undefined) {
+    v = 0;
+    defineFurniture({ has: () => false, define: (_n: string, b: { triangles: number }, g?: { triangles: number }) => { v = b.triangles + (g ? g.triangles : 0); } } as unknown as Furnish, [m]);
+    costMemo.set(m, v);
+  }
+  return v;
+};
+
+/** Turned footprint: the box (x0, x1, z0, z1) that holds a (hx, hz) rectangle centred (x, z) and turned by yaw. */
+const rotBox = (x: number, z: number, hx: number, hz: number, yaw: number): [number, number, number, number] => {
+  const c = Math.abs(Math.cos(yaw)), sn = Math.abs(Math.sin(yaw)), ex = hx * c + hz * sn, ez = hx * sn + hz * c;
+  return [x - ex, x + ex, z - ez, z + ez];
+};
+const hash01 = (a: number, b: number): number => { const v = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return v - Math.floor(v); };
 
 /** Where things stand on a floor (deterministic per level). */
 export function floorPlan(n: number): FloorPlan {
@@ -482,64 +508,174 @@ export function floorPlan(n: number): FloorPlan {
   const items: Item[] = [];
   const solids: Solid[] = [];
   const y = levelY(n);
-  const free = (x: number, z: number, m: number): boolean =>
-    // the doors face the lobby between the blocks, so the free strip lies on that side of each block (west block: +x, east block: -x)
-    inRing(ring, x, z, T.wallIn + m) && !CORES.some((b, i) => x > b.x0 - (i === 1 ? 5.5 : CORE_PAD) && x < b.x1 + (i === 0 ? 5.5 : CORE_PAD) && z > b.z0 - CORE_PAD && z < b.z1 + CORE_PAD);
   const cols = columnsOf(n);
-  const add = (it: Item, hx: number, hz: number, h = 1.2): void => {
+  const taken: Array<[number, number, number, number]> = [];
+  let spent = 0;
+  const northZ = ring.cz - ring.hz, southZ = ring.cz + ring.hz;
+  // the doors face the lobby between the blocks, so the free strip lies on that side of each block (west block: +x, east block: -x)
+  const fits = (x: number, z: number, hx: number, hz: number, yaw = 0, pad = 0.1, ignoreTaken = false): boolean => {
+    const [a, b, c, d] = rotBox(x, z, hx, hz, yaw);
+    for (const [px, pz] of [[a, c], [a, d], [b, c], [b, d]]) if (!inRing(ring, px, pz, T.wallIn + 0.25)) return false;
+    if (CORES.some((bk, i) => b > bk.x0 - (i === 1 ? 5.5 : CORE_PAD) && a < bk.x1 + (i === 0 ? 5.5 : CORE_PAD) && d > bk.z0 - CORE_PAD && c < bk.z1 + CORE_PAD)) return false;
     // nothing stands where a structural column is (0.5 m margin for the chairs)
-    if (cols.some((c) => Math.abs(it.x - c.x) < c.s / 2 + hx + 0.5 && Math.abs(it.z - c.z) < c.s / 2 + hz + 0.5)) return;
+    if (cols.some((cc) => b > cc.x - cc.s / 2 - 0.5 && a < cc.x + cc.s / 2 + 0.5 && d > cc.z - cc.s / 2 - 0.5 && c < cc.z + cc.s / 2 + 0.5)) return false;
+    return ignoreTaken || !taken.some((t) => b > t[0] - pad && a < t[1] + pad && d > t[2] - pad && c < t[3] + pad);
+  };
+  /** Place an item if it fits: (hx, hz) = half size of what you bump into (the collision box), (cx, cz) = half size of the space it needs round it (default = the same). */
+  const put = (it: Item, hx: number, hz: number, h: number, cx = hx, cz = hz, solid = true): boolean => {
+    const yaw = it.yaw ?? 0;
+    const cost = it.t === 'model' && it.m ? costOf(it.m) : it.t === 'desk' ? costOf('deskPod') : it.t === 'table' ? costOf(it.r ? 'roundTable' : 'meetSet44') : it.t === 'plant' ? costOf('palm1') : it.t === 'sofa' ? 2 * costOf('sofaLeather') : it.t === 'bench' ? costOf('parkBench') : it.t === 'telescope' ? costOf('telescope') : 0;
+    if (spent + cost > FURN_BUDGET) return false;
+    if (!fits(it.x, it.z, Math.max(hx, cx), Math.max(hz, cz), yaw)) return false;
+    spent += cost;
     items.push(it);
-    solids.push([it.x - hx, it.x + hx, it.z - hz, it.z + hz, y, y + h]);
+    if (solid) { const f = rotBox(it.x, it.z, hx, hz, yaw); solids.push([f[0], f[1], f[2], f[3], y, y + h]); }
+    taken.push(rotBox(it.x, it.z, Math.max(hx, cx), Math.max(hz, cz), yaw));
+    return true;
   };
-  const wings = (cb: (x: number, z: number) => void, sx: number, sz: number): void => {
-    for (let x = T.cx - ring.hx + 4; x < T.cx + ring.hx - 3; x += sx) for (let z = ring.cz - ring.hz + 3.5; z < ring.cz + ring.hz - 2; z += sz) cb(x, z);
+  /** A model of the kit: (hx, hz) = half size of its footprint BEFORE scaling and turning. */
+  const mod = (m: string, x: number, z: number, hx: number, hz: number, h: number, yaw = 0, sc = 1, solid = true): boolean => put({ t: 'model', m, x, z, yaw, s: sc }, hx * sc, hz * sc, h * sc, hx * sc, hz * sc, solid);
+  /** Wall / core-face fittings: no collision, no space taken. */
+  const deco = (m: string, x: number, z: number, yaw: number, sc = 1, h = 0): void => { spent += costOf(m); items.push({ t: 'model', m, x, z, yaw, s: sc, d: h }); };
+  const grid = (cb: (x: number, z: number) => void, sx: number, sz: number, x0 = T.cx - ring.hx + 4, x1 = T.cx + ring.hx - 3, z0 = northZ + 3.5, z1 = southZ - 2): void => {
+    for (let x = x0; x < x1; x += sx) for (let z = z0; z < z1; z += sz) cb(x, z);
   };
+  /** A lounge group (rug, two sofas facing each other over a coffee table, an armchair at each end, side tables with lamps): 6.8 x 4.8 m. */
+  const lounge = (cx: number, cz: number, leather: boolean): boolean => {
+    if (!fits(cx, cz, 3.5, 2.6) || spent + 2600 > FURN_BUDGET) return false;
+    spent += 2600;
+    const sofa = leather ? 'sofaLeather' : 'sofaVelvet', arm = leather ? 'armVelvet' : 'armLeather';
+    const raw = (m: string, x: number, z: number, hx: number, hz: number, h: number, yaw = 0): void => {
+      items.push({ t: 'model', m, x, z, yaw, s: 1 });
+      if (h > 0) { const f = rotBox(x, z, hx, hz, yaw); solids.push([f[0], f[1], f[2], f[3], y, y + h]); }
+    };
+    raw(leather ? 'rugRed' : 'rugBlue', cx, cz, 0, 0, 0);
+    raw(sofa, cx, cz - 1.45, 1.31, 0.46, 0.95, 0); raw(sofa, cx, cz + 1.45, 1.31, 0.46, 0.95, Math.PI);
+    raw('coffeeTable', cx, cz, 0.62, 0.37, 0.45);
+    raw(arm, cx - 2.45, cz, 0.48, 0.46, 0.95, Math.PI / 2); raw(arm, cx + 2.45, cz, 0.48, 0.46, 0.95, -Math.PI / 2);
+    for (const sg of [-1, 1]) { raw('sideTable', cx + sg * 2.45, cz - 1.0, 0.26, 0.26, 0.6); raw('floorLamp', cx + sg * 2.45, cz - 1.65, 0.24, 0.24, 1.6); }
+    taken.push(rotBox(cx, cz, 3.5, 2.6, 0));
+    return true;
+  };
+  const plantAt = (x: number, z: number, big: boolean, i: number): boolean =>
+    big ? mod(i % 2 ? 'palm2' : 'palm1', x, z, 0.5, 0.5, 2.2, i * 1.3) : mod(['ficus1', 'ficus2', 'ficus3', 'snake1'][i % 4], x, z, 0.4, 0.4, 2.2, i * 1.7);
+  let seq = 0;
+
+  // the fire extinguisher + first aid box + clock on the lobby faces of the two core blocks (between the lift door and the stair door), every floor that has a roof
+  if (n <= T.top) for (const [i, b] of CORES.entries()) {
+    const west = i === 0, x = west ? b.x1 : b.x0, yaw = west ? Math.PI / 2 : -Math.PI / 2;
+    deco('extinguisher', x + (west ? 0.07 : -0.07), 34.0, yaw, 1.3);
+    deco('firstAid', x + (west ? 0.05 : -0.05), 34.7, yaw, 1.2, 1.5);
+    deco('clock', x + (west ? 0.06 : -0.06), 34.4, yaw, 1.4, 3.3);
+  }
+
   if (kind === 'office') {
     // two glass meeting rooms at the ends (door to the south side), only where the plate is wide enough to clear the core; the rest is open plan
     const rx = Math.max(ring.hx - 9, CORE.x1 + 5.5);
     const roomXs: number[] = rx + 4.5 < ring.hx - T.wallIn ? [-rx, rx] : [];
     for (const sx of roomXs) {
-      const x = T.cx + sx, z = ring.cz - ring.hz + 5.5;
+      const x = T.cx + sx, z = northZ + 5.5;
       items.push({ t: 'room', x, z, w: 7, d: 5 });
       solids.push([x - 3.5, x + 3.5, z - 2.5, z - 2.35, y, y + 2.8], [x - 3.5, x - 3.35, z - 2.5, z + 2.5, y, y + 2.8], [x + 3.35, x + 3.5, z - 2.5, z + 2.5, y, y + 2.8]);
       solids.push([x - 3.5, x - 1.0, z + 2.35, z + 2.5, y, y + 2.8], [x + 1.0, x + 3.5, z + 2.35, z + 2.5, y, y + 2.8]);
-      add({ t: 'table', x, z, w: 3.2, d: 1.4 }, 1.6, 0.7, 0.8);
+      taken.push([x - 3.5, x + 3.5, z - 2.5, z + 4.6]);
+      // (the real meeting table with its chairs; nothing stands where a structural column is)
+      if (!cols.some((c) => Math.abs(x - c.x) < c.s / 2 + 1.7 + 0.5 && Math.abs(z - c.z) < c.s / 2 + 0.7 + 0.5)) { items.push({ t: 'table', x, z, w: 3.2, d: 1.4 }); solids.push([x - 1.6, x + 1.6, z - 0.7, z + 0.7, y, y + 0.8]); }
     }
-    wings((x, z) => {
-      if (!free(x, z, 1.6)) return;
-      if (nearLobby(x, z, 1.7, 0.85)) return; // step 1.2b: the lift lobby and the way to the gates stay clear
-      if (roomXs.some((rxx) => Math.abs(x - (T.cx + rxx)) < 6.5 && z < ring.cz - ring.hz + 9.5)) return;
-      add({ t: 'desk', x, z, yaw: 0, w: 3.4, d: 1.7 }, 1.7, 0.85, 1.1);
+    // service corners on the south wall: copier, pantry counter, water cooler, bin (the fronts face the office)
+    const zs = southZ - T.wallIn - 0.5;
+    for (const sg of [-1, 1]) {
+      const gx = sg * Math.max(ring.hx * 0.6, CORE.x1 + 9);
+      if (!fits(gx, zs - 0.6, 3.6, 1.2)) continue;
+      mod('copier', gx - 2.6, zs - 0.15, 0.45, 0.37, 0.9, Math.PI);
+      mod('pantry', gx, zs - 0.1, 1.12, 0.33, 1.3, Math.PI);
+      mod('cooler', gx + 1.7, zs - 0.1, 0.17, 0.19, 1.45, Math.PI);
+      mod('bin', gx + 2.3, zs - 0.1, 0.17, 0.17, 0.42, Math.PI);
+      mod('extinguisher', gx - 1.6, zs + 0.2, 0.06, 0.06, 0.6, Math.PI, 1.3, false);
+    }
+    grid((x, z) => {
+      if (!fits(x, z, 1.7, 1.6, 0, 0.05)) return;
+      if (nearLobby(x, z, 1.7, 0.85)) return; // the lift lobby and the way to the gates stay clear
+      if (roomXs.some((rxx) => Math.abs(x - (T.cx + rxx)) < 6.5 && z < northZ + 9.5)) return;
+      put({ t: 'desk', x, z, yaw: 0, w: 3.4, d: 1.7 }, 1.7, 0.85, 1.1, 1.7, 1.6);
     }, 6.0, 4.6);
     solids.push(...partitionSolids(n));
-    for (const [x, z] of [[-16, 30], [16, 30], [-20, 41], [20, 41]] as const) if (free(T.cx + x, z, 1)) add({ t: 'plant', x: T.cx + x, z, r: 0.5 }, 0.5, 0.5, 1.8);
+    // plants where the plate is free: along the end walls and near the corners
+    for (const [x, z] of [[-ring.hx + 3.2, ring.cz], [ring.hx - 3.2, ring.cz], [-ring.hx + 3.2, southZ - 4], [ring.hx - 3.2, southZ - 4]] as const) plantAt(T.cx + x, z, true, seq++);
   } else if (kind === 'lobby') {
-    add({ t: 'counter', x: 0, z: 45, w: 8, d: 1.4 }, 4, 0.7, 1.1);
-    for (const x of [-44, -38, 38, 44]) for (const z of [30, 40]) add({ t: 'table', x, z, r: 0.8 }, 0.9, 0.9, 0.8);
-    add({ t: 'sofa', x: 0, z: 23.5, yaw: 0, w: 4, d: 1.2 }, 2, 0.6, 1);
-    for (const [x, z] of [[-34, 24], [34, 24], [-40, 46], [40, 46]] as const) add({ t: 'plant', x, z, r: 0.5 }, 0.5, 0.5, 1.8);
+    mod('bar8', 0, 45, 4.1, 1.0, 2.2, Math.PI);
+    for (const x of [-44, -38, 38, 44]) for (const z of [30, 40]) put({ t: 'table', x, z, r: 0.8 }, 0.9, 0.9, 0.8, 1.1, 1.1);
+    put({ t: 'sofa', x: 0, z: 23.5, yaw: 0, w: 4, d: 1.2 }, 2, 0.6, 1);
+    for (const [x, z] of [[-34, 24], [34, 24], [-40, 46], [40, 46]] as const) plantAt(x, z, true, seq++);
+    lounge(-52, 12, true); lounge(52, 12, false); lounge(-22, 8, false); lounge(22, 8, true); lounge(-52, 46, false); lounge(52, 46, true);
+    grid((x, z) => { if (hash01(x, z) < 0.35) plantAt(x, z, false, seq++); }, 11, 13, -ring.hx + 3, ring.hx - 2, northZ + 2.5, southZ - 2);
   } else if (kind === 'garden') {
-    for (const [x, z] of [[-30, 28], [30, 28], [-30, 42], [30, 42], [-20, 23], [20, 23], [-22, 47], [22, 47]] as const) {
-      if (free(T.cx + x, z, 1)) add({ t: 'plant', x: T.cx + x, z, r: 1.2 }, 1.2, 1.2, 3);
-    }
-    for (const x of [-8, 8]) add({ t: 'bench', x, z: 35, yaw: Math.PI / 2, w: 2.2, d: 0.6 }, 0.35, 1.1, 0.5);
+    for (const [x, z] of [[-30, 28], [30, 28], [-30, 42], [30, 42], [-20, 23], [20, 23], [-22, 47], [22, 47]] as const) plantAt(T.cx + x, z, true, seq++);
+    for (const x of [-8, 8]) put({ t: 'bench', x, z: 35, yaw: x < 0 ? Math.PI / 2 : -Math.PI / 2, w: 2.2, d: 0.6 }, 0.35, 1.1, 0.5, 0.9, 1.4);
+    grid((x, z) => { if (hash01(x * 1.3, z) < 0.5) plantAt(x, z, hash01(z, x) < 0.4, seq++); }, 9, 8, -ring.hx + 3, ring.hx - 2, northZ + 2.5, southZ - 2);
+    grid((x, z) => { if (hash01(x, z * 2.1) < 0.16) put({ t: 'bench', x, z, yaw: Math.PI, w: 2.6, d: 0.6 }, 1.3, 0.3, 0.5, 1.6, 1.0); }, 15, 13, -ring.hx + 6, ring.hx - 6, northZ + 4, southZ - 4);
   } else if (kind === 'restaurant') {
-    wings((x, z) => { if (free(x, z, 1.5)) add({ t: 'table', x, z, r: 0.75 }, 0.9, 0.9, 0.8); }, 5.5, 4.6);
-    add({ t: 'counter', x: 0, z: 46.5, w: 10, d: 1.2 }, 5, 0.6, 1.1);
+    mod('bar10', 0, 46.5, 5.1, 1.0, 2.2, Math.PI);
+    grid((x, z) => { put({ t: 'table', x, z, r: 0.75 }, 0.9, 0.9, 0.8, 1.0, 1.0); }, 6.0, 5.2);
+    for (const [x, z] of [[-ring.hx + 3, northZ + 3], [ring.hx - 3, northZ + 3], [-ring.hx + 3, southZ - 4], [ring.hx - 3, southZ - 4]] as const) plantAt(x, z, true, seq++);
   } else if (kind === 'boardroom') {
     // the middle between the two core blocks is free (x -13.9 .. 13.9)
-    add({ t: 'table', x: 0, z: 31, w: 14, d: 3.2 }, 7, 1.6, 0.8);
-    add({ t: 'table', x: 0, z: 39, w: 14, d: 3.2 }, 7, 1.6, 0.8);
+    mod('boardTable', 0, 31, 7, 3.2, 0.8, 0, 1, true);
+    mod('boardTable', 0, 39, 7, 3.2, 0.8, 0, 1, true);
+    for (const [x, z] of [[-ring.hx + 4, northZ + 4], [ring.hx - 4, northZ + 4], [-ring.hx + 4, southZ - 5], [ring.hx - 4, southZ - 5]] as const) plantAt(x, z, true, seq++);
+    lounge(-30, 10, true); lounge(30, 10, false);
+    for (const sg of [-1, 1]) { mod('execDesk', sg * 20, 20, 1.2, 0.5, 1.3, 0); mod('execChair', sg * 20, 21.0, 0.33, 0.33, 1.2, Math.PI); }
   } else if (kind === 'deck') {
-    for (const [x, z] of [[-26, 24], [-14, 22], [14, 22], [26, 24], [-26, 46], [-14, 48], [14, 48], [26, 46]] as const) if (free(T.cx + x, z, 1)) add({ t: 'telescope', x: T.cx + x, z }, 0.5, 0.5, 1.5);
-    for (const x of [-31, 31]) add({ t: 'bench', x: T.cx + x, z: 35, yaw: Math.PI / 2, w: 2.6, d: 0.6 }, 0.35, 1.3, 0.5);
+    for (const [x, z] of [[-26, 24], [-14, 22], [14, 22], [26, 24], [-26, 46], [-14, 48], [14, 48], [26, 46]] as const) put({ t: 'telescope', x: T.cx + x, z, yaw: Math.PI }, 0.28, 0.4, 1.5);
+    for (const x of [-31, 31]) put({ t: 'bench', x: T.cx + x, z: 35, yaw: x < 0 ? Math.PI / 2 : -Math.PI / 2, w: 2.6, d: 0.6 }, 0.35, 1.3, 0.5, 0.9, 1.6);
+    grid((x, z) => { if (hash01(x, z) < 0.3) plantAt(x, z, false, seq++); }, 13, 11, -ring.hx + 3, ring.hx - 2, northZ + 2.5, southZ - 2);
   } else if (kind === 'roof') {
-    for (const [x, z] of [[-18, 24], [18, 24], [-18, 46], [18, 46], [-8, 35], [8, 35]] as const) add({ t: 'plant', x: T.cx + x, z, r: 1.4 }, 1.4, 1.4, 3);
-    add({ t: 'bench', x: 0, z: 22.6, yaw: 0, w: 4, d: 0.6 }, 2, 0.3, 0.5);
-  } else if (kind === 'coming' || kind === 'mech') {
-    for (const [x, z] of [[-18, 24], [18, 24], [-18, 46], [18, 46]] as const) if (free(T.cx + x, z, 1)) add({ t: 'sofa', x: T.cx + x, z, yaw: 0, w: 3.4, d: 1.1 }, 1.7, 0.55, 0.9);
+    for (const [x, z] of [[-18, 24], [18, 24], [-18, 46], [18, 46], [-8, 35], [8, 35]] as const) put({ t: 'plant', x: T.cx + x, z, r: 1.4 }, 1.4, 1.4, 3);
+    put({ t: 'bench', x: 0, z: 22.6, yaw: 0, w: 4, d: 0.6 }, 2, 0.3, 0.5);
+    grid((x, z) => { if (hash01(x * 0.7, z * 1.1) < 0.3) plantAt(x, z, false, seq++); }, 12, 10, -ring.hx + 3, ring.hx - 2, northZ + 2.5, southZ - 2);
+  } else if (kind === 'mech') {
+    // plant rooms: switchgear / control cabinets in rows on the two quiet sides of the plate (the doorway of the outrigger stays free: z 26 .. 44), two control desks
+    const rowsAt = [northZ + 4, northZ + 7.2, southZ - 4.5];
+    rowsAt.forEach((zr, ri) => grid((x, z) => { if (z === zr) mod(['rackL0', 'rackL1', 'rackL2', 'rackL3'][(Math.round(x) + ri) & 3], x, z, 0.41, 0.46, 2.2, ri === 1 ? Math.PI : 0); }, 0.9, 99999, -ring.hx + 5, ring.hx - 5, zr, zr + 1));
+    for (const sg of [-1, 1]) { mod('desk', sg * 36, northZ + 12, 0.85, 0.4, 1.3, 0); mod('chairGrey', sg * 36, northZ + 13.0, 0.32, 0.32, 1.1, Math.PI); }
+  } else if (kind === 'coming') {
+    const mid = (a: number, b: number): number => a + (b - a) / 2;
+    if (n === 31) { // Innovation Studio
+      for (const [x, z] of [[-40, 12], [40, 12], [-40, 30], [40, 30], [0, 6]] as const) lounge(x, z, ((x + z) & 1) === 0);
+      grid((x, z) => { mod('meetSet44', x, z, 2.2, 1.1, 0.8); }, 14, 9.5, -ring.hx + 7, ring.hx - 6, northZ + 4, southZ - 4);
+      grid((x, z) => { if (hash01(x, z) < 0.45) plantAt(x, z, false, seq++); }, 10, 9, -ring.hx + 3, ring.hx - 2, northZ + 2.5, southZ - 2);
+    } else if (n === 50) { // Engineering Library
+      grid((x, z) => { mod('readTable', x, z, 1.8, 0.97, 0.8, 0); }, 12.8, 6.6, -ring.hx + 9, ring.hx - 9, mid(northZ, southZ) + 2, southZ - 4);
+      grid((x, z) => { mod('libStackL', x, z, 0.6, 0.35, 2.0, 0); }, 1.3, 4.6, -ring.hx + 4, ring.hx - 4, northZ + 3, mid(northZ, southZ) - 4);
+      for (const [x, z] of [[-ring.hx + 4, southZ - 4], [ring.hx - 4, southZ - 4]] as const) { mod('armLeather', x, z, 0.48, 0.46, 0.95, x < 0 ? Math.PI / 2 : -Math.PI / 2); mod('floorLamp', x, z - 1.4, 0.24, 0.24, 1.6); plantAt(x, z - 3, true, seq++); }
+    } else if (n === 55) { // Conference Centre
+      mod('lectern', 0, northZ + 3.2, 0.7, 0.4, 1.2, 0);
+      for (const sg of [-1, 1]) { mod('stageChair', sg * 9, northZ + 3.4, 0.48, 0.46, 0.95, sg * -0.25); mod('sideTable', sg * 12, northZ + 3.4, 0.26, 0.26, 0.6); }
+      for (let r = 0; r < 14; r++) for (const bx of [-30, -15, 0, 15, 30]) mod('chairRow', bx, northZ + 9 + r * 1.1, 2.15, 0.3, 0.9, Math.PI, 1, false);
+      for (const x of [-ring.hx + 3.5, ring.hx - 3.5]) plantAt(x, northZ + 3, true, seq++);
+    } else if (n === 65) { // Research Labs
+      grid((x, z) => { mod('labBench', x, z, 1.65, 0.5, 2.1, 0); }, 3.4, 7.2, -ring.hx + 5, ring.hx - 5, northZ + 12, southZ - 6);
+      grid((x, z) => { mod(['rackL0', 'rackL1', 'rackL2', 'rackL3'][seq++ & 3], x, z, 0.41, 0.46, 2.2, 0); }, 1.0, 99999, -ring.hx + 4, ring.hx - 4, northZ + 1.6, northZ + 2.6);
+    } else if (n === 80) { // Data Centre
+      let cnt = 0;
+      for (let z = northZ + 3; z < southZ - 4 && cnt < 220; z += 7.2) {
+        grid((x, zz) => { if (cnt < 220 && mod(['rackL0', 'rackL1', 'rackL2', 'rackL3'][cnt & 3], x, zz, 0.41, 0.46, 2.2, 0)) cnt++; }, 0.84, 99999, -ring.hx + 4, ring.hx - 4, z, z + 1);
+        grid((x, zz) => { if (cnt < 220 && mod(['rackL3', 'rackL2', 'rackL1', 'rackL0'][cnt & 3], x, zz, 0.41, 0.46, 2.2, Math.PI)) cnt++; }, 0.84, 99999, -ring.hx + 4, ring.hx - 4, z + 2.9, z + 3.9);
+      }
+    } else if (n === 84) { // Executive Suites
+      grid((x, z) => { if (mod('execDesk', x, z, 1.2, 0.5, 1.3, 0)) { mod('execChair', x, z + 1.0, 0.33, 0.33, 1.2, Math.PI); mod('bookshelf', x, z - 1.7, 0.6, 0.17, 2.0, 0); mod('bookshelf2', x + 1.3, z - 1.7, 0.6, 0.17, 2.0, 0); mod('ficus1', x + 2.7, z - 1.2, 0.4, 0.4, 2.2, 0); } }, 14, 9, -ring.hx + 6, ring.hx - 6, northZ + 4, southZ - 4);
+      for (const [x, z] of [[-30, 36], [30, 36]] as const) lounge(x, z, true);
+    } else if (n === 87) { // Club Lounge
+      mod('bar8', 0, 46.5, 4.1, 1.0, 2.2, Math.PI);
+      for (const [x, z] of [[-42, 8], [42, 8], [0, 8], [-42, 28], [42, 28], [-20, 12], [20, 12]] as const) lounge(x, z, ((x + z) & 2) === 0);
+      grid((x, z) => { put({ t: 'table', x, z, r: 0.75 }, 0.9, 0.9, 0.8, 1.0, 1.0); }, 7, 6, -ring.hx + 4, ring.hx - 4, mid(northZ, southZ) + 4, southZ - 4);
+      grid((x, z) => { if (hash01(x, z) < 0.5) plantAt(x, z, true, seq++); }, 12, 10, -ring.hx + 3, ring.hx - 2, northZ + 2.5, southZ - 2);
+    } else { // generic 'coming' floor
+      for (const [x, z] of [[-40, 14], [40, 14], [-40, 42], [40, 42]] as const) lounge(x, z, ((x + z) & 1) === 0);
+      grid((x, z) => { if (hash01(x, z) < 0.4) plantAt(x, z, false, seq++); }, 10, 9, -ring.hx + 3, ring.hx - 2, northZ + 2.5, southZ - 2);
+    }
   }
+  void y;
   return { items, solids, kind };
 }
 

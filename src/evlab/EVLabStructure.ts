@@ -4,7 +4,7 @@
 //  2. HALL ROOF: column-free 70.5 m span (z) -> steel Warren trusses every 9 m (box chords), bottom chord just below the hall ceiling.
 //  3. MECHANICAL FLOORS (21, 41, 60, 70): outrigger trusses from the core blocks to the end columns (z = tower centre line) + a belt truss round the facade.
 // Sizing is a preliminary engineering estimate (see EVLAB_STRUCTURE_ASSESSMENT.md), good enough to draw believable members, not a design.
-import { BLD, DIVIDER, HALL, type Solid } from './EVLabLayout';
+import { BLD, DIVIDER, HALL, PORTAL, type Solid } from './EVLabLayout';
 import { COL_CAP, CORES, STRUCT, T, ceilY, colLoad, columnsOf, levelY, ringOf, tribDepth, type Col, type ColKind } from './EVLabTowerLayout';
 
 const up05 = (v: number): number => Math.ceil(v * 20 - 1e-9) / 20;
@@ -27,7 +27,9 @@ const inRamp = (c: Col): boolean =>
 /** Tower columns of level 1 that cannot go straight to the ground (they would stand in a hall ramp): they are transferred. */
 /** Step 2.5x: the deeper tower plate reaches over the Presentation Hall and the wings (z < the lobby wall). Those columns end on the podium roof (hall roof trusses / wing roof beams), no column goes down through the hall. */
 export const carriedByRoof = (c: Col): boolean => c.z < DIVIDER.z;
-export const isTransferred = (c: Col): boolean => !carriedByRoof(c) && inRamp(c);
+/** The entry: no column may stand in the way in the middle of the portal, the one there is carried by a transfer girder over the entrance. */
+const inEntry = (c: Col): boolean => Math.abs(c.x) < PORTAL.halfW - 1 && c.z > 45;
+export const isTransferred = (c: Col): boolean => !carriedByRoof(c) && (inRamp(c) || inEntry(c));
 
 export interface Girder { x0: number; x1: number; z: number; load: number; carries: Col; supports: [Col, Col] }
 export interface PodiumCol { x: number; z: number; s: number; kind: ColKind; /** factored axial load at the foot (kN) */ load: number }
