@@ -13,7 +13,7 @@ EVCity = engineering-analysis + shikkhonio game. Junction-e kon solution possibl
 | T01 | Scenario edit layer + J6 edits | DONE (flag `Config.roads.scenario.enabled`, OFF = ager moto). West leg / south branch alignment = PLACEHOLDER (provisional grade 18 %), T04 replace korbe. Centre-e pad nei (S4 bridge 109 m door, rule 115 m): T08 diamond bosabe |
 | T02 | Scenario tests | PARTIAL: `scripts/j6-scenario-test.ts` (OFF == original digest, ON connectivity / pads / bridges / untouched roads) ALL OK. Baaki: radius >= 73 m, grade <= limit (T04-er por) |
 | T03 | Demand model | DONE (`demand/Demand.ts`, `scripts/demand-test.ts` ALL OK): override > AI count provider > road-class default. AI traffic count provider ekhono wire kora nei (T10 / T09-e) |
-| T04 | West-leg alignment by Analysis | IN PROGRESS: `scripts/j6-alignment.ts` (lattice least-cost route, grade + R>=73 aware) works. FINDING: centre->J57 cannot be done in ~465 m: J57 is 67 m higher than the underpass start (24.6 m). Class grade 10 % needs >= 675 m, 8 % >= 844 m; the lattice route is ~1.5 km (T at ~890 m, not 250 m). USER DECISION needed (see below). J6Scenario.ts NOT changed yet |
+| T04 | West-leg alignment by Analysis | DONE (option A, user sketch): `J6Scenario.ts` west leg 1.5 km to J57 + south branch from the T (~890 m), grade <= 10 %, provisional maxGrade removed, scenario test ALL OK. Radius >= 73 m check (T02) still TODO (lattice min R ~71 m) |
 | T05 | Level plan: grade-following + 'under' | TODO |
 | T06 | Underpass structures (F6 deck, walls, drainage) | TODO |
 | T07 | Ramp gore/merge taper | TODO |
