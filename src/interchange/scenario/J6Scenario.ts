@@ -64,10 +64,8 @@ export const J6_SCENARIO: ScenarioSpec = {
   addRoads: [
     // east leg of the cross road: S4 itself continues from its new end straight to the centre (the end ON F6 gets a pad until T08 builds the interchange)
     { name: 'J6-S4-ext', kind: 'collector', waypoints: [{ u: -3, v: -45 }, { u: 0, v: -22 }, { u: 0, v: 0 }], join: { roadName: 'S4', at: 'end' }, why: 'S4 straight to the interchange centre (east leg of the cross road)' },
-    // west leg: centre -> J57 (on S5). T04 alignment (scripts/j6-alignment.ts, grade 10 %, R >= ~71 m): 1.5 km contour route up the hill, user option A.
-    { name: 'J6-west', kind: 'collector', waypoints: [{ u: 0, v: 0 }, { u: 0, v: 110 }, { u: -13, v: 144 }, { u: -49, v: 182 }, { u: -94, v: 199 }, { u: -139, v: 200 }, { u: -184, v: 209 }, { u: -229, v: 216 }, { u: -274, v: 229 }, { u: -319, v: 236 }, { u: -364, v: 253 }, { u: -409, v: 282 }, { u: -454, v: 303 }, { u: -499, v: 332 }, { u: -544, v: 362 }, { u: -582, v: 399 }, { u: -599, v: 444 }, { u: -594, v: 489 }, { u: -566, v: 532 }, { u: -521, v: 556 }, { u: -476, v: 569 }, { u: -431, v: 576 }, { u: -386, v: 580 }, { u: -341, v: 580 }, { u: -296, v: 578 }, { u: -251, v: 564 }, { u: -206, v: 558 }, { u: -161, v: 544 }, { u: -118, v: 518 }, { u: -81, v: 488 }, { u: -42, v: 471 }, { u: -35, v: 463 }], endSnap: { roadName: 'S5' }, why: 'West leg to J57 (T04: lattice least-cost route, grade <= 10 %)' },
-    // south branch: S5 itself continues from its new first point (the join) back to the T on the west leg (T04, ~890 m from the centre)
-    { name: 'J6-south-branch', kind: 'collector', waypoints: [{ u: -593, v: 491 }, { u: -549, v: 472 }, { u: -504, v: 442 }, { u: -459, v: 412 }, { u: -414, v: 392 }, { u: -369, v: 390 }, { u: -324, v: 381 }, { u: -279, v: 352 }, { u: -243, v: 314 }, { u: -230, v: 269 }, { u: -221, v: 224 }, { u: -206, v: 179 }, { u: -200, v: 134 }, { u: -200, v: 89 }], join: { roadName: 'S5', at: 'start' }, startSnap: { roadName: 'J6-west' }, why: 'South branch from the T to S5 (T04)' },
+    // west leg: centre -> west -> J57 (on S5). PLACEHOLDER alignment: the straight chord climbs 14.5 % (collector limit 10 %): provisional maxGrade, T04 decides the real alignment.
+    { name: 'J6-west', kind: 'collector', waypoints: [{ u: 0, v: 0 }, { u: 0, v: 100 }, { u: -14, v: 250 }, { u: -35, v: 463 }], endSnap: { roadName: 'S5' }, maxGrade: 0.18, why: 'West leg to J57 (USER SKETCH 2026-11-12: straight to J57, no south branch).' },
   ],
 };
 

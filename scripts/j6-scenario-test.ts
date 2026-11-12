@@ -62,7 +62,7 @@ ok(dist(W, 0, cx, cz) < 3, 'ON: J6-west starts at the centre');
 const pad57 = base && R.pads.find((p: any) => p.arms.some((a: any) => a.roadId === W.id) && p.arms.length >= 4);
 ok(!!pad57, 'ON: J57 has a pad again, with the west leg as an arm (4 arms)');
 const tPad = R.pads.find((p: any) => p !== pad57 && p.arms.some((a: any) => a.roadId === W.id));
-ok(!!tPad, 'ON: the T junction on the west leg has a pad');
+// (no T junction any more: the user sketch of 2026-11-12 has no south branch)
 
 // geometry: no new road along F6 outside the centre (>= 25 m from F6 beyond 60 m from the centre)
 let minF6 = Infinity;
@@ -101,7 +101,7 @@ ok(touch(S4, W) && touch(S4, F6) && touch(W, F6), 'ON: S4 (east) - centre - west
 ok(bfs(S4.id, W.id), 'ON: path S4 -> centre -> J6-west exists');
 ok(touch(W, S5), 'ON: the west leg is connected to S5 (J57 side and the T)');
 const [t0x, t0z] = [S5.xs[0], S5.zs[0]];
-ok(near(W, t0x, t0z) < 3, `ON: S5 now starts on the west leg (T junction, ${near(W, t0x, t0z).toFixed(1)} m)`);
+// (S5 no longer starts on the west leg)
 ok(bfs(F6.id, S5.id), 'ON: path F6 / centre -> T -> S5 (SW) exists');
 
 // everything else is untouched (compared BY NAME with the OFF network: ids of later roads shift by one). A pad reshapes the legs that meet it, so the roads
