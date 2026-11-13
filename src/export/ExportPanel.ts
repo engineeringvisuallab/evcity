@@ -4,15 +4,21 @@ import type * as THREE from 'three';
 import type { TerrainGenerator } from '../terrain/TerrainGenerator';
 import { UI_FONT } from '../ui/theme';
 import { getToolbar } from '../ui/Toolbar';
-import { GIS_LAYERS, type GisFormat } from './GisLayers';
+import { FILL_MODEL_BY_ID } from '../buildings/models/fillRegistry';
+import { planStreetLights } from '../environment/StreetLights';
+import { GIS_LAYERS, type GisContext, type GisFormat } from './GisLayers';
 import { buildGisZip, saveFile } from './GisExport';
 import { exportModel, MAX_RADIUS, type ModelFormat } from './ModelExport';
+import { exportRealModel } from './RealExport';
+import { ALL_REAL_LAYERS, type RealLayers, type RealQuality } from './RealModel';
 
 export interface ExportPanelDeps {
   terrain: TerrainGenerator;
   scene: THREE.Object3D;
-  /** Camera position in render space (the 3D export is centred here). */
+  /** Camera position in render space (the "what is loaded now" 3D export is centred here). */
   cameraPos: () => { x: number; z: number };
+  /** Camera position in WORLD metres (the real 3D export is centred here). */
+  cameraWorld: () => { x: number; z: number };
   /** The element that takes the mouse back (pointer lock) when the panel closes. */
   lockTarget: HTMLElement;
 }
@@ -54,8 +60,22 @@ export class ExportPanel {
   private fmtBtns = new Map<GisFormat, HTMLButtonElement>();
   private modelFormat: ModelFormat = 'glb';
   private modelBtns = new Map<ModelFormat, HTMLButtonElement>();
-  private radius = 300;
+  private mode: 'real' | 'scene' = 'real';
+  private modeBtns = new Map<'real' | 'scene', HTMLButtonElement>();
+  private realLayers: RealLayers = { ...ALL_REAL_LAYERS };
+  private realLayerBtns = new Map<keyof RealLayers, HTMLButtonElement>();
+  private quality: RealQuality = 'medium';
+  private qualityBtns = new Map<RealQuality, HTMLButtonElement>();
+  private realRadius = 600;
+  private sceneRadius = 300;
   private radiusLabel = document.createElement('b');
+  private radiusInput = document.createElement('input');
+  private realBox = document.createElement('div');
+  private sceneNote = document.createElement('div');
+  private gisCtx: GisContext = {
+    buildingFloors: (id) => FILL_MODEL_BY_ID[id]?.floors,
+    planLamps: (roads) => planStreetLights(roads),
+  };
   private gisGo = document.createElement('button');
   private modelGo = document.createElement('button');
   private gisNote = document.createElement('div');
@@ -170,7 +190,7 @@ export class ExportPanel {
     head.append(title, close);
     const sub = document.createElement('div');
     sub.className = 'evx-sub';
-    sub.textContent = 'গেমের রাস্তা, ব্রিজ, বিল্ডিং, নদী, রেললাইন ইত্যাদি GIS ফাইল হিসেবে, আর চারপাশের জিনিস ৩ডি ফাইল হিসেবে নামাও।';
+    sub.textContent = 'গেমের সব জিনিস (রাস্তা, ব্রিজ, বিল্ডিং, নদী, রেল, বন্দর, এলাকা...) GIS ফাইল হিসেবে, আর আসল ৩ডি মডেল হিসেবে নামাও।';
     panel.append(head, sub);
 
     // --- GIS ---
@@ -186,7 +206,20 @@ export class ExportPanel {
       this.layerBtns.set(l.id, b);
       grid.appendChild(b);
     }
-    gis.sec.appendChild(grid);
+    const bulk = document.createElement('div');
+    bulk.className = 'evx-grid';
+    bulk.style.marginBottom = '8px';
+    bulk.append(
+      this.option('✅ সব বাছো', '', () => {
+        GIS_LAYERS.forEach((l) => this.layerOn.add(l.id));
+        this.refresh();
+      }),
+      this.option('⬜ সব বাদ', '', () => {
+        this.layerOn.clear();
+        this.refresh();
+      }),
+    );
+    gis.sec.append(bulk, grid);
     const fmtRow = document.createElement('div');
     fmtRow.className = 'evx-grid3';
     fmtRow.style.marginTop = '10px';
@@ -210,10 +243,57 @@ export class ExportPanel {
     panel.appendChild(gis.sec);
 
     // --- 3D ---
-    const m3 = this.section('🧊 ৩ডি এক্সপোর্ট (তোমার চারপাশ)');
+    const m3 = this.section('🧊 ৩ডি এক্সপোর্ট');
+    const modeRow = document.createElement('div');
+    modeRow.className = 'evx-grid';
+    const modes: ['real' | 'scene', string, string][] = [
+      ['real', 'আসল ৩ডি (গেমের ডেটা থেকে)', 'যেকোনো জায়গা বা পুরো ম্যাপ, লোড না থাকলেও: টেরেন, পানি, রাস্তা, মিডিয়ান, ফুটপাথ, রেল, বন্দর, বিল্ডিং ব্লক'],
+      ['scene', 'এখন যা লোড আছে', 'ক্যামেরার চারপাশে যা দেখা যাচ্ছে (গাছ, ডিটেইল বিল্ডিং, গাড়ি সহ)'],
+    ];
+    for (const [id, label, hint] of modes) {
+      const b = this.option(label, hint, () => {
+        this.mode = id;
+        this.refresh();
+      });
+      this.modeBtns.set(id, b);
+      modeRow.appendChild(b);
+    }
+    m3.sec.appendChild(modeRow);
+
+    // real-3D controls
+    this.realBox.style.marginTop = '10px';
+    const parts: [keyof RealLayers, string][] = [['terrain', 'টেরেন'], ['water', 'পানি'], ['roads', 'রাস্তা'], ['medians', 'মিডিয়ান'], ['footpaths', 'ফুটপাথ'], ['rail', 'রেল'], ['port', 'বন্দর'], ['buildings', 'বিল্ডিং ব্লক']];
+    const pgrid = document.createElement('div');
+    pgrid.className = 'evx-grid';
+    for (const [id, label] of parts) {
+      const b = this.option(label, '', () => {
+        this.realLayers[id] = !this.realLayers[id];
+        this.refresh();
+      });
+      this.realLayerBtns.set(id, b);
+      pgrid.appendChild(b);
+    }
+    const qrow = document.createElement('div');
+    qrow.className = 'evx-grid3';
+    qrow.style.marginTop = '8px';
+    const quals: [RealQuality, string, string][] = [['high', 'বেশি', '৩.৯ মি গ্রিড'], ['medium', 'মাঝারি', '৭.৮ মি গ্রিড'], ['low', 'কম', '১৫.৬ মি গ্রিড (পুরো ম্যাপ)']];
+    for (const [id, label, hint] of quals) {
+      const b = this.option(label, hint, () => {
+        this.quality = id;
+        this.refresh();
+      });
+      this.qualityBtns.set(id, b);
+      qrow.appendChild(b);
+    }
+    this.realBox.append(pgrid, qrow);
+    this.sceneNote.className = 'evx-note';
+    this.sceneNote.textContent = 'কেবল সেই জিনিসই আসবে যা এখন লোড হয়ে দেখা যাচ্ছে। টেরেন/পানির শেডার-ম্যাটেরিয়াল ধূসর সাধারণ ম্যাটেরিয়াল হিসেবে যাবে।';
+    m3.sec.append(this.realBox, this.sceneNote);
+
     const mrow = document.createElement('div');
     mrow.className = 'evx-grid';
-    const mfs: [ModelFormat, string, string][] = [['glb', 'GLB (glTF)', 'Blender, Unity, Unreal, ওয়েব ভিউয়ার'], ['obj', 'OBJ', 'শুধু আকৃতি: AutoCAD, SketchUp ইত্যাদি']];
+    mrow.style.marginTop = '10px';
+    const mfs: [ModelFormat, string, string][] = [['glb', 'GLB (glTF)', 'রংসহ: Blender, Unity, Unreal, ওয়েব ভিউয়ার'], ['obj', 'OBJ', 'AutoCAD, SketchUp, MeshLab (ছোট এলাকার জন্য)']];
     for (const [id, label, hint] of mfs) {
       const b = this.option(label, hint, () => {
         this.modelFormat = id;
@@ -223,29 +303,25 @@ export class ExportPanel {
       mrow.appendChild(b);
     }
     m3.sec.appendChild(mrow);
-    const range = document.createElement('input');
-    range.type = 'range';
-    range.className = 'evx-range';
-    range.min = '50';
-    range.max = String(MAX_RADIUS);
-    range.step = '50';
-    range.value = String(this.radius);
-    range.addEventListener('input', () => {
-      this.radius = Number(range.value);
+    this.radiusInput.type = 'range';
+    this.radiusInput.className = 'evx-range';
+    this.radiusInput.addEventListener('input', () => {
+      if (this.mode === 'real') this.realRadius = Number(this.radiusInput.value);
+      else this.sceneRadius = Number(this.radiusInput.value);
       this.refresh();
     });
     const rrow = document.createElement('div');
     rrow.className = 'evx-row';
     const rl = document.createElement('span');
-    rl.textContent = 'ব্যাসার্ধ (তোমার ক্যামেরা থেকে)';
+    rl.textContent = 'ব্যাসার্ধ (তোমার জায়গা থেকে)';
     rrow.append(rl, this.radiusLabel);
-    m3.sec.append(rrow, range);
+    m3.sec.append(rrow, this.radiusInput);
     this.modelGo.type = 'button';
     this.modelGo.className = 'evx-go';
     this.modelGo.textContent = '⬇️ ৩ডি ফাইল নামাও';
     this.modelGo.addEventListener('click', () => void this.doModel());
     this.modelNote.className = 'evx-note';
-    this.modelNote.textContent = 'ব্যাসার্ধ বড় হলে ফাইল বড় হয় ও সময় লাগে। যে জিনিস এখন দেখা যাচ্ছে (লোড হয়েছে) শুধু সেগুলোই আসবে।';
+    this.modelNote.textContent = 'বড় এলাকা বা "বেশি" মান বাছলে সময় লাগে ও ফাইল বড় হয় (পুরো ম্যাপ ≈ ৫০ MB GLB)। তৈরির সময় গেম কিছুক্ষণ আটকে থাকতে পারে।';
     m3.sec.append(this.modelGo, this.modelNote);
     panel.appendChild(m3.sec);
     return panel;
@@ -255,7 +331,18 @@ export class ExportPanel {
     for (const [id, b] of this.layerBtns) b.classList.toggle('on', this.layerOn.has(id));
     for (const [id, b] of this.fmtBtns) b.classList.toggle('on', id === this.gisFormat);
     for (const [id, b] of this.modelBtns) b.classList.toggle('on', id === this.modelFormat);
-    this.radiusLabel.textContent = `${this.radius} মিটার`;
+    for (const [id, b] of this.modeBtns) b.classList.toggle('on', id === this.mode);
+    for (const [id, b] of this.realLayerBtns) b.classList.toggle('on', this.realLayers[id]);
+    for (const [id, b] of this.qualityBtns) b.classList.toggle('on', id === this.quality);
+    const real = this.mode === 'real';
+    this.realBox.style.display = real ? 'block' : 'none';
+    this.sceneNote.style.display = real ? 'none' : 'block';
+    this.radiusInput.min = real ? '100' : '50';
+    this.radiusInput.max = real ? '5000' : String(MAX_RADIUS);
+    this.radiusInput.step = real ? '100' : '50';
+    const rad = real ? this.realRadius : this.sceneRadius;
+    this.radiusInput.value = String(rad);
+    this.radiusLabel.textContent = real && rad >= 5000 ? 'পুরো ম্যাপ (১০×১০ কিমি)' : `${rad} মিটার`;
   }
 
   private doGis(): void {
@@ -263,7 +350,7 @@ export class ExportPanel {
     this.gisNote.textContent = 'তৈরি হচ্ছে, একটু অপেক্ষা করো…';
     setTimeout(() => {
       try {
-        const r = buildGisZip(this.d.terrain, [...this.layerOn], this.gisFormat);
+        const r = buildGisZip(this.d.terrain, [...this.layerOn], this.gisFormat, this.gisCtx);
         saveFile(r.name, r.bytes as unknown as BlobPart, 'application/zip');
         this.gisNote.textContent = `✅ ${r.name} নামানো হয়েছে।\n${r.lines.join('\n')}`;
       } catch (e) {
@@ -279,8 +366,18 @@ export class ExportPanel {
     this.modelNote.textContent = 'তৈরি হচ্ছে, একটু অপেক্ষা করো…';
     await new Promise((r) => setTimeout(r, 30));
     try {
-      const c = this.d.cameraPos();
-      const r = await exportModel(this.d.scene, { format: this.modelFormat, radius: this.radius, centerX: c.x, centerZ: c.z });
+      let r;
+      if (this.mode === 'real') {
+        const w = this.d.cameraWorld();
+        r = exportRealModel(
+          this.d.terrain,
+          { centerX: w.x, centerZ: w.z, radius: this.realRadius, quality: this.quality, layers: this.realLayers, buildingFloors: this.gisCtx.buildingFloors },
+          this.modelFormat,
+        );
+      } else {
+        const c = this.d.cameraPos();
+        r = await exportModel(this.d.scene, { format: this.modelFormat, radius: this.sceneRadius, centerX: c.x, centerZ: c.z });
+      }
       saveFile(r.name, r.data, r.mime);
       this.modelNote.textContent = `✅ ${r.name} নামানো হয়েছে।\n${r.info.join('\n')}`;
     } catch (e) {

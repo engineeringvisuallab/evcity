@@ -3,14 +3,30 @@
 // Everything here is pure data: no scene, no DOM, so it also runs headless (scripts/export-test.ts).
 import type { TerrainGenerator } from '../terrain/TerrainGenerator';
 import { BUILDING_PLACEMENTS } from '../buildings/Placements';
-import { WORLD_ZONES } from '../city/WorldZones';
+import { FILL_PLACEMENTS } from '../buildings/PlacementsFill';
+import { FACILITIES, WORLD_ZONES, WORLD_ZONE_IDS, rasterizeWorldZones } from '../city/WorldZones';
+import { ENGINEERING_AREAS } from '../city/EngineeringZones';
+import { ROAD_STATION_SITES } from '../parking/RoadStationSites';
+import { PLATFORMS } from '../port/PortPlan';
+import { medianHalfAt, planMedians } from '../roads/MedianPlan';
+import { planFootpaths } from '../roads/FootpathPlan';
 import { toGrid, type GisFeature, type GisField, type GisLayer } from './GisWriter';
+
+/** Things the game has to hand in because they live in files that need three.js (the building model registry, the street-lamp planner). */
+export interface GisContext {
+  /** Number of floors of a building model id. Unknown = 2. */
+  buildingFloors?: (id: string) => number | undefined;
+  /** The street-lamp planner (planStreetLights). Without it the lamp layer is empty. */
+  planLamps?: (roads: TerrainGenerator['roads']) => { x: number; y: number; z: number; scale: number; pool: number }[];
+}
 
 export interface GisLayerDef {
   id: string;
   label: string;
   hint: string;
-  build(t: TerrainGenerator): GisLayer;
+  /** true: the layer may legitimately be empty (e.g. the lamp layer when the game does not hand in the lamp planner). */
+  optional?: boolean;
+  build(t: TerrainGenerator, ctx: GisContext): GisLayer;
 }
 
 const C = (name: string, len: number): GisField => ({ name, type: 'C', len });
@@ -63,8 +79,11 @@ const junctionPads = (t: TerrainGenerator): GisLayer => {
   };
 };
 
+/** Every placed building: the hand-placed ones (villages, landmarks) and the city fill (hundreds of houses, shops, apartment blocks). */
+const ALL_PLACEMENTS = [...BUILDING_PLACEMENTS, ...FILL_PLACEMENTS];
+
 const buildings = (): GisLayer => {
-  const features: GisFeature[] = BUILDING_PLACEMENTS.map((p) => {
+  const features: GisFeature[] = ALL_PLACEMENTS.map((p) => {
     const c = Math.cos(p.yaw);
     const s = Math.sin(p.yaw);
     const ring = ([[-1, -1], [1, -1], [1, 1], [-1, 1]] as const).map(([a, b]) => {
@@ -134,6 +153,233 @@ const railStations = (t: TerrainGenerator): GisLayer => ({
   fields: [C('STATION', 24), C('KIND', 10), N('RADIUS_M', 6), N('ELEVATED', 1)],
 });
 
+// ---------------------------------------------------------------- more layers: every pure-data object of the game ----------------------------------------------------------------
+const rect = (x0: number, z0: number, x1: number, z1: number, y = 0): number[][] => [toGrid(x0, z0, y), toGrid(x1, z0, y), toGrid(x1, z1, y), toGrid(x0, z1, y)];
+
+const roadsArea = (t: TerrainGenerator): GisLayer => {
+  const features: GisFeature[] = [];
+  for (const r of t.roads.roads) {
+    if (r.xs.length < 2) continue;
+    const L: number[][] = [];
+    const R: number[][] = [];
+    for (let i = 0; i < r.xs.length; i++) {
+      L.push(toGrid(r.xs[i] + r.nx[i] * r.halfWidth, r.zs[i] + r.nz[i] * r.halfWidth, r.ys[i]));
+      R.push(toGrid(r.xs[i] - r.nx[i] * r.halfWidth, r.zs[i] - r.nz[i] * r.halfWidth, r.ys[i]));
+    }
+    features.push({ parts: [[...L, ...R.reverse()]], attrs: [r.id, r.name, r.kind, r.lanes, r2(2 * r.halfWidth), r2(r.length)] });
+  }
+  return {
+    id: 'roads_area', label: 'Road surface (width outline)', geom: 'polygon', hasZ: false, features,
+    fields: [N('ROAD_ID', 6), C('NAME', 12), C('KIND', 12), N('LANES', 3), N('WIDTH_M', 8, 2), N('LENGTH_M', 10, 1)],
+  };
+};
+
+const roadMedians = (t: TerrainGenerator): GisLayer => {
+  const features: GisFeature[] = [];
+  for (const run of planMedians(t.roads).runs) {
+    if (run.n < 2) continue;
+    const L: number[][] = [];
+    const R: number[][] = [];
+    for (let k = 0; k < run.n; k++) {
+      const o = k * 8;
+      const hw = medianHalfAt(run, k);
+      L.push(toGrid(run.p[o] + run.p[o + 3] * hw, run.p[o + 2] + run.p[o + 4] * hw));
+      R.push(toGrid(run.p[o] - run.p[o + 3] * hw, run.p[o + 2] - run.p[o + 4] * hw));
+    }
+    features.push({ parts: [[...L, ...R.reverse()]], attrs: [run.roadId, r2(run.medianHalf), r2(run.kerbH), r2(run.p[(run.n - 1) * 8 + 7] - run.p[7])] });
+  }
+  return {
+    id: 'road_medians', label: 'Road medians', geom: 'polygon', hasZ: false, features,
+    fields: [N('ROAD_ID', 6), N('HALF_W_M', 6, 2), N('KERB_H_M', 6, 2), N('LENGTH_M', 8, 1)],
+  };
+};
+
+const footpaths = (t: TerrainGenerator): GisLayer => {
+  const features: GisFeature[] = [];
+  for (const run of planFootpaths(t.roads).runs) {
+    if (run.n < 2) continue;
+    const A: number[][] = [];
+    const B: number[][] = [];
+    for (let k = 0; k < run.n; k++) {
+      const o = k * 8;
+      const nl = Math.hypot(run.p[o + 3], run.p[o + 4]) || 1;
+      const nx = run.p[o + 3] / nl;
+      const nz = run.p[o + 4] / nl;
+      A.push(toGrid(run.p[o] + nx * run.side * run.hw, run.p[o + 2] + nz * run.side * run.hw));
+      B.push(toGrid(run.p[o] + nx * run.side * (run.hw + run.width), run.p[o + 2] + nz * run.side * (run.hw + run.width)));
+    }
+    features.push({ parts: [[...A, ...B.reverse()]], attrs: [run.roadId, run.side === 1 ? 'left' : 'right', r2(run.width), r2(run.p[(run.n - 1) * 8 + 7] - run.p[7])] });
+  }
+  return {
+    id: 'footpaths', label: 'Footpaths', geom: 'polygon', hasZ: false, features,
+    fields: [N('ROAD_ID', 6), C('SIDE', 5), N('WIDTH_M', 6, 2), N('LENGTH_M', 8, 1)],
+  };
+};
+
+const pedCrossings = (t: TerrainGenerator): GisLayer => ({
+  id: 'ped_crossings', label: 'Pedestrian crossings', geom: 'point', hasZ: false,
+  features: planMedians(t.roads).crossings.map((c) => ({ parts: [[toGrid(c.x, c.z)]], attrs: [c.roadId, r2(c.s), c.street ? 1 : 0, r2(c.mouth ?? 0), r2(c.b - c.a)] })),
+  fields: [N('ROAD_ID', 6), N('S_M', 8, 1), N('STREET', 1), N('MOUTH_M', 6, 1), N('GAP_M', 6, 1)],
+});
+
+const streetLights = (t: TerrainGenerator, ctx: GisContext): GisLayer => ({
+  id: 'street_lights', label: 'Street lamps', geom: 'point', hasZ: true,
+  features: (ctx.planLamps?.(t.roads) ?? []).map((l, i) => ({ parts: [[toGrid(l.x, l.z, l.y)]], attrs: [i, r2(8 * l.scale), r2(l.pool)] })),
+  fields: [N('LAMP_ID', 7), N('POLE_H_M', 6, 1), N('POOL_M', 6, 1)],
+});
+
+const railSegments = (t: TerrainGenerator): GisLayer => {
+  const features: GisFeature[] = [];
+  for (const e of t.rail.edges) {
+    const at = (s: number): number[] => {
+      let i = 0;
+      while (i < e.cum.length - 2 && e.cum[i + 1] < s) i++;
+      const seg = e.cum[i + 1] - e.cum[i];
+      const f = seg > 1e-6 ? Math.min(1, Math.max(0, (s - e.cum[i]) / seg)) : 0;
+      return toGrid(e.xs[i] + (e.xs[i + 1] - e.xs[i]) * f, e.zs[i] + (e.zs[i + 1] - e.zs[i]) * f, e.design[i] + (e.design[i + 1] - e.design[i]) * f);
+    };
+    for (const sg of e.segments) {
+      if (sg.s1 - sg.s0 < 0.5) continue;
+      const pts = [at(sg.s0)];
+      for (let i = 0; i < e.cum.length; i++) if (e.cum[i] > sg.s0 && e.cum[i] < sg.s1) pts.push(toGrid(e.xs[i], e.zs[i], e.design[i]));
+      pts.push(at(sg.s1));
+      features.push({ parts: [pts], attrs: [e.id, sg.kind, sg.why, r2(sg.s1 - sg.s0)] });
+    }
+  }
+  return {
+    id: 'rail_segments', label: 'Rail: ground / bridge / tunnel / cut-and-cover', geom: 'polyline', hasZ: true, features,
+    fields: [C('EDGE_ID', 24), C('KIND', 9), C('WHY', 10), N('LENGTH_M', 9, 1)],
+  };
+};
+
+const railPiers = (t: TerrainGenerator): GisLayer => ({
+  id: 'rail_piers', label: 'Rail viaduct piers', geom: 'point', hasZ: true, optional: true,
+  features: t.rail.piers.map((p) => ({ parts: [[toGrid(p.x, p.z, p.baseY)]], attrs: [p.edgeId, r2(p.s), r2(p.baseY), r2(p.deckY)] })),
+  fields: [C('EDGE_ID', 24), N('S_M', 8, 1), N('BASE_Y', 8, 2), N('DECK_Y', 8, 2)],
+});
+
+const railCrossings = (t: TerrainGenerator): GisLayer => ({
+  id: 'rail_crossings', label: 'Road / rail crossings', geom: 'point', hasZ: false, optional: true,
+  features: t.rail.crossings.map((c) => ({ parts: [[toGrid(c.x, c.z)]], attrs: [c.edgeId, r2(c.s), c.roadId, c.roadName, c.roadTier, c.kind] })),
+  fields: [C('EDGE_ID', 24), N('S_M', 8, 1), N('ROAD_ID', 6), C('ROAD_NAME', 12), N('ROAD_TIER', 2), C('KIND', 18)],
+});
+
+const railLinks = (t: TerrainGenerator): GisLayer => ({
+  id: 'rail_links', label: 'Rail station through-links', geom: 'polyline', hasZ: true, optional: true,
+  features: t.rail.links.map((l) => {
+    const pts: number[][] = [];
+    for (let i = 0; i < l.xs.length; i++) pts.push(toGrid(l.xs[i], l.zs[i], l.level));
+    return { parts: [pts], attrs: [l.id, l.station, r2(l.length), r2(l.minRadius), l.elevated ? 1 : 0] };
+  }),
+  fields: [C('LINK_ID', 24), C('STATION', 20), N('LENGTH_M', 8, 1), N('MINRAD_M', 8, 1), N('ELEVATED', 1)],
+});
+
+const engineeringAreas = (): GisLayer => ({
+  id: 'engineering_areas', label: 'Engineering campus areas', geom: 'polygon', hasZ: false,
+  features: ENGINEERING_AREAS.map((a) => ({ parts: [rect(a.x0, a.z0, a.x1, a.z1)], attrs: [a.id, a.group, a.ground, a.branches.join(',')] })),
+  fields: [C('AREA_ID', 24), C('GROUP', 12), C('GROUND', 6), C('BRANCHES', 80)],
+});
+
+const facilityAreas = (): GisLayer => {
+  const features: GisFeature[] = [];
+  for (const f of FACILITIES) {
+    features.push({ parts: [rect(f.x0, f.z0, f.x1, f.z1)], attrs: [f.id, 'boundary', 'boundary'] });
+    for (const a of f.areas) features.push({ parts: [rect(a.x0, a.z0, a.x1, a.z1)], attrs: [f.id, a.id, a.kind] });
+  }
+  return {
+    id: 'facility_areas', label: 'Airport / seaport / army areas', geom: 'polygon', hasZ: false, features,
+    fields: [C('FACILITY', 14), C('AREA_ID', 24), C('KIND', 12)],
+  };
+};
+
+const portPlatforms = (): GisLayer => ({
+  id: 'port_platforms', label: 'Port platforms (quay decks)', geom: 'polygon', hasZ: false,
+  features: PLATFORMS.map((p) => ({ parts: [rect(p.x0, p.z0, p.x1, p.z1, p.h)], attrs: [p.id, r2(p.h)] })),
+  fields: [C('PLATFORM', 12), N('DECK_M', 6, 2)],
+});
+
+const stationSites = (): GisLayer => ({
+  id: 'station_sites', label: 'Fuel stations and charge points', geom: 'polygon', hasZ: false,
+  features: ROAD_STATION_SITES.map((p) => {
+    const c = Math.cos(p.yaw);
+    const sn = Math.sin(p.yaw);
+    const ring = ([[-1, -1], [1, -1], [1, 1], [-1, 1]] as const).map(([a, b]) => {
+      const lx = a * p.hw;
+      const lz = b * p.hd;
+      return toGrid(p.x + lx * c + lz * sn, p.z - lx * sn + lz * c);
+    });
+    return { parts: [ring], attrs: [p.id, p.kind, p.road, r2(p.y)] };
+  }),
+  fields: [C('SITE_ID', 14), C('KIND', 6), C('ROAD', 8), N('FLOOR_M', 7, 2)],
+});
+
+/** District map as polygons: the 100 m zone raster is merged into rectangles (a row-run, grown downwards while the next row has the same run). */
+const worldZones = (): GisLayer => {
+  const { n, cell, ids, kinds } = rasterizeWorldZones(100);
+  const half = (n * cell) / 2;
+  const open = new Map<string, { id: number; i0: number; i1: number; j0: number; j1: number }>();
+  const done: { id: number; i0: number; i1: number; j0: number; j1: number }[] = [];
+  for (let j = 0; j < n; j++) {
+    const seen = new Set<string>();
+    for (let i = 0; i < n; ) {
+      const id = ids[j * n + i];
+      let k = i;
+      while (k + 1 < n && ids[j * n + k + 1] === id) k++;
+      const key = `${id}:${i}:${k}`;
+      seen.add(key);
+      const o = open.get(key);
+      if (o) o.j1 = j;
+      else open.set(key, { id, i0: i, i1: k, j0: j, j1: j });
+      i = k + 1;
+    }
+    for (const [key, r] of open) if (!seen.has(key)) { done.push(r); open.delete(key); }
+  }
+  done.push(...open.values());
+  const byZone = new Map<number, number[][][]>();
+  for (const r of done) {
+    const ring = rect(-half + r.i0 * cell, -half + r.j0 * cell, -half + (r.i1 + 1) * cell, -half + (r.j1 + 1) * cell);
+    (byZone.get(r.id) ?? byZone.set(r.id, []).get(r.id)!).push(ring);
+  }
+  const features: GisFeature[] = [];
+  for (const [id, parts] of byZone) features.push({ parts, attrs: [WORLD_ZONE_IDS[id], kinds[id] ?? '', r2((parts.length ? done.filter((r) => r.id === id).reduce((a, r) => a + (r.i1 - r.i0 + 1) * (r.j1 - r.j0 + 1), 0) : 0) * cell * cell / 1e6)] });
+  return {
+    id: 'world_zones', label: 'Districts (zone map polygons)', geom: 'polygon', hasZ: false, features,
+    fields: [C('ZONE_ID', 24), C('KIND', 16), N('AREA_KM2', 9, 3)],
+  };
+};
+
+const FLOOR_H = 3.0; // m per floor (same as BuildingKit)
+/** Real 3D: every placed building as an extruded block (ESRI MultiPatch: 4 walls + roof + floor, each a closed ring with heights). Footprint = the placement box (it includes the yard). */
+const buildings3d = (t: TerrainGenerator, ctx: GisContext): GisLayer => {
+  const features: GisFeature[] = [];
+  for (const p of ALL_PLACEMENTS) {
+    const c = Math.cos(p.yaw);
+    const sn = Math.sin(p.yaw);
+    const corners = ([[-1, -1], [1, -1], [1, 1], [-1, 1]] as const).map(([a, b]) => {
+      const lx = (a * p.W) / 2;
+      const lz = (b * p.D) / 2;
+      return [p.x + lx * c + lz * sn, p.z - lx * sn + lz * c];
+    });
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (const [cx, cz] of corners) { const h = t.heightAt(cx, cz); minY = Math.min(minY, h); maxY = Math.max(maxY, h); }
+    const floors = Math.max(1, ctx.buildingFloors?.(p.id) ?? 2);
+    const base = minY;
+    const floorY = maxY + 0.02;
+    const top = floorY + floors * FLOOR_H;
+    const lo = corners.map(([cx, cz]) => toGrid(cx, cz, base));
+    const hi = corners.map(([cx, cz]) => toGrid(cx, cz, top));
+    const parts: number[][][] = [];
+    for (let i = 0; i < 4; i++) { const j = (i + 1) % 4; parts.push([lo[i], lo[j], hi[j], hi[i]]); }
+    parts.push(hi, lo);
+    features.push({ parts, partTypes: parts.map(() => 5), attrs: [p.id, p.zone, floors, r2(top - base), r2(base), r2(top)] });
+  }
+  return {
+    id: 'buildings_3d', label: 'Buildings, real 3D blocks (MultiPatch)', geom: 'multipatch', hasZ: true, features,
+    fields: [C('MODEL', 24), C('ZONE', 24), N('FLOORS', 3), N('HEIGHT_M', 7, 2), N('BASE_Z', 8, 2), N('TOP_Z', 8, 2)],
+  };
+};
+
 export const GIS_LAYERS: readonly GisLayerDef[] = [
   { id: 'roads_centerline', label: 'রাস্তার সেন্টারলাইন', hint: 'সব রাস্তা, উচ্চতা (Z) সহ', build: roadsCenterline },
   { id: 'bridges', label: 'ব্রিজ', hint: 'ব্রিজের ডেক, স্প্যান ও লোড', build: bridges },
@@ -145,6 +391,21 @@ export const GIS_LAYERS: readonly GisLayerDef[] = [
   { id: 'rail_lines', label: 'রেললাইন', hint: 'ট্র্যাকের সেন্টারলাইন', build: railLines },
   { id: 'rail_stations', label: 'রেল স্টেশন', hint: 'পয়েন্ট', build: railStations },
   { id: 'zone_centres', label: 'এলাকার কেন্দ্র', hint: 'জোনের কেন্দ্রবিন্দু (পয়েন্ট)', build: () => zoneCentres() },
+  { id: 'roads_area', label: 'রাস্তার চওড়া (সারফেস)', hint: 'প্রতিটি রাস্তার পলিগন আউটলাইন', build: roadsArea },
+  { id: 'road_medians', label: 'রাস্তার মিডিয়ান', hint: 'মাঝের ডিভাইডার (পলিগন)', build: roadMedians },
+  { id: 'footpaths', label: 'ফুটপাথ', hint: 'রাস্তার দুই পাশের ফুটপাথ (পলিগন)', build: footpaths },
+  { id: 'ped_crossings', label: 'জেব্রা ক্রসিং', hint: 'পথচারী পারাপার (পয়েন্ট)', build: pedCrossings },
+  { id: 'street_lights', label: 'রাস্তার বাতি', hint: 'বাতির খুঁটি (পয়েন্ট, Z সহ)', optional: true, build: streetLights },
+  { id: 'rail_segments', label: 'রেল: মাটি/ব্রিজ/টানেল', hint: 'লাইনের কোন অংশ কী ধরনের', build: railSegments },
+  { id: 'rail_piers', label: 'রেল ভায়াডাক্ট পিলার', hint: 'পয়েন্ট', optional: true, build: railPiers },
+  { id: 'rail_crossings', label: 'রাস্তা-রেল ক্রসিং', hint: 'কোথায় কীভাবে পার হয়', optional: true, build: railCrossings },
+  { id: 'rail_links', label: 'স্টেশনের ভেতরের লিংক', hint: 'থ্রু-রানিং ট্র্যাক', optional: true, build: railLinks },
+  { id: 'station_sites', label: 'ফুয়েল/চার্জ স্টেশনের জায়গা', hint: 'পলিগন', build: () => stationSites() },
+  { id: 'port_platforms', label: 'বন্দরের প্ল্যাটফর্ম', hint: 'কোয়ে ডেক (পলিগন)', build: () => portPlatforms() },
+  { id: 'facility_areas', label: 'এয়ারপোর্ট/বন্দর/সেনা এলাকা', hint: 'সীমানা ও উপ-এলাকা (পলিগন)', build: () => facilityAreas() },
+  { id: 'engineering_areas', label: 'ইঞ্জিনিয়ারিং ক্যাম্পাস এলাকা', hint: 'পলিগন', build: () => engineeringAreas() },
+  { id: 'world_zones', label: 'এলাকা/জোন ম্যাপ (পলিগন)', hint: 'পুরো ম্যাপের জোন', build: () => worldZones() },
+  { id: 'buildings_3d', label: 'বিল্ডিং, আসল ৩ডি ব্লক', hint: 'MultiPatch: উচ্চতা সহ (তলা × ৩ মি)', build: buildings3d },
 ];
 
 export type GisFormat = 'shp' | 'geojson' | 'both';

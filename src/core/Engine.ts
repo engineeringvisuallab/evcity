@@ -894,6 +894,7 @@ export class Engine {
       terrain: this.world.terrain,
       scene: this.scene,
       cameraPos: () => this.camera.position,
+      cameraWorld: () => this.world.playerWorld,
       lockTarget: this.renderer.domElement,
     });
     this.hudSettings.onChange(() => this.applyHudOptions());

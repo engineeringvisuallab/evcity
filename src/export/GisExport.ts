@@ -1,6 +1,6 @@
 // Builds ONE .zip with the picked GIS layers (shapefile folder and / or GeoJSON folder + a README). Pure data: no DOM.
 import type { TerrainGenerator } from '../terrain/TerrainGenerator';
-import { GIS_LAYERS, type GisFormat } from './GisLayers';
+import { GIS_LAYERS, type GisContext, type GisFormat } from './GisLayers';
 import { layerToGeoJson, layerToShapefile } from './GisWriter';
 import { makeZip } from './ZipWriter';
 
@@ -20,15 +20,16 @@ Heights (Z) are metres above sea level (the game's y). The .prj file holds a loc
 To place the map on the real Earth, set your own CRS or move / rotate it in your GIS software.
 shapefile/  : <layer>.shp .shx .dbf .prj .cpg   (point / polyline / polygon, Z where the layer has heights)
 geojson/    : <layer>.geojson
+buildings_3d is an ESRI MultiPatch (shapefile type 31): real 3D solids (4 walls + roof + floor per building, height = floors x 3 m); QGIS shows it as a 3D polygon layer, ArcGIS as a 3D multipatch.
 `;
 
-export function buildGisZip(terrain: TerrainGenerator, layerIds: readonly string[], format: GisFormat): GisExportResult {
+export function buildGisZip(terrain: TerrainGenerator, layerIds: readonly string[], format: GisFormat, ctx: GisContext = {}): GisExportResult {
   const files = new Map<string, Uint8Array>();
   const enc = new TextEncoder();
   const lines: string[] = [];
   for (const def of GIS_LAYERS) {
     if (!layerIds.includes(def.id)) continue;
-    const layer = def.build(terrain);
+    const layer = def.build(terrain, ctx);
     if (format === 'shp' || format === 'both') for (const [n, b] of layerToShapefile(layer)) files.set(`shapefile/${n}`, b);
     if (format === 'geojson' || format === 'both') files.set(`geojson/${layer.id}.geojson`, enc.encode(layerToGeoJson(layer)));
     lines.push(`${def.label}: ${layer.features.length}`);

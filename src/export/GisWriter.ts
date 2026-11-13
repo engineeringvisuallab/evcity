@@ -5,7 +5,8 @@
 //   Easting = x + world/2, Northing = world/2 - z   (0 .. 10000 m; north is up, like the minimap; the game's z points south).
 import { Config } from '../core/Config';
 
-export type GisGeom = 'point' | 'polyline' | 'polygon';
+/** multipatch = ESRI MultiPatch (shapefile type 31): real 3D solids made of closed rings with a height on every point (used for extruded buildings). */
+export type GisGeom = 'point' | 'polyline' | 'polygon' | 'multipatch';
 export interface GisField {
   name: string; // <= 10 ASCII chars (dBASE limit)
   type: 'C' | 'N';
@@ -16,6 +17,8 @@ export interface GisField {
 export interface GisFeature {
   parts: number[][][];
   attrs: (string | number)[];
+  /** multipatch only: ESRI part type of each part (default 5 = Ring: a closed planar face). */
+  partTypes?: number[];
 }
 export interface GisLayer {
   id: string; // file name stem, e.g. "roads_centerline"
@@ -51,25 +54,27 @@ function ringArea(ring: number[][]): number {
 function prepareParts(layer: GisLayer): number[][][][] {
   return layer.features.map((f) =>
     f.parts.map((part) => {
-      if (layer.geom !== 'polygon') return part;
+      if (layer.geom !== 'polygon' && layer.geom !== 'multipatch') return part;
       let r = part.slice();
       const a = r[0];
       const b = r[r.length - 1];
-      if (a[0] !== b[0] || a[1] !== b[1]) r.push(a.slice());
-      if (ringArea(r.slice(0, -1)) > 0) r = r.reverse(); // counter-clockwise -> clockwise
+      if (a[0] !== b[0] || a[1] !== b[1] || a[2] !== b[2]) r.push(a.slice());
+      if (layer.geom === 'polygon' && ringArea(r.slice(0, -1)) > 0) r = r.reverse(); // counter-clockwise -> clockwise
       return r;
     }),
   );
 }
 
 function shpType(layer: GisLayer): number {
+  if (layer.geom === 'multipatch') return 31;
   const base = layer.geom === 'point' ? 1 : layer.geom === 'polyline' ? 3 : 5;
   return layer.hasZ ? base + 10 : base;
 }
 
 export function writeShp(layer: GisLayer): { shp: Uint8Array; shx: Uint8Array } {
   const type = shpType(layer);
-  const z = layer.hasZ;
+  const multi = layer.geom === 'multipatch';
+  const z = layer.hasZ || multi;
   const parts = prepareParts(layer);
   const sizes: number[] = [];
   let bodyBytes = 0;
@@ -78,7 +83,9 @@ export function writeShp(layer: GisLayer): { shp: Uint8Array; shx: Uint8Array } 
     const len =
       layer.geom === 'point'
         ? 4 + 16 + (z ? 16 : 0)
-        : 4 + 32 + 8 + 4 * fp.length + 16 * np + (z ? 16 + 8 * np + 16 + 8 * np : 0);
+        : multi
+          ? 4 + 32 + 8 + 8 * fp.length + 16 * np + 16 + 8 * np // parts, part types, points, Z range + Z (no M)
+          : 4 + 32 + 8 + 4 * fp.length + 16 * np + (z ? 16 + 8 * np + 16 + 8 * np : 0);
     sizes.push(len);
     bodyBytes += 8 + len;
   }
@@ -123,12 +130,15 @@ export function writeShp(layer: GisLayer): { shp: Uint8Array; shx: Uint8Array } 
     o += 8;
     let start = 0;
     for (const part of fp) { v.setInt32(o, start, true); start += part.length; o += 4; }
+    if (multi) for (let k = 0; k < fp.length; k++) { v.setInt32(o, layer.features[i].partTypes?.[k] ?? 5, true); o += 4; }
     for (const p of pts) { v.setFloat64(o, p[0], true); v.setFloat64(o + 8, p[1], true); o += 16; }
     if (z) {
       v.setFloat64(o, bz0, true); v.setFloat64(o + 8, bz1, true); o += 16;
       for (const p of pts) { v.setFloat64(o, p[2], true); o += 8; }
-      v.setFloat64(o, 0, true); v.setFloat64(o + 8, 0, true); o += 16; // M range: no measures
-      for (let k = 0; k < pts.length; k++) { v.setFloat64(o, 0, true); o += 8; }
+      if (!multi) {
+        v.setFloat64(o, 0, true); v.setFloat64(o + 8, 0, true); o += 16; // M range: no measures
+        for (let k = 0; k < pts.length; k++) { v.setFloat64(o, 0, true); o += 8; }
+      }
     }
   });
   const header = (dv: DataView, bytes: number): void => {
@@ -201,7 +211,7 @@ export function layerToShapefile(layer: GisLayer): Map<string, Uint8Array> {
 
 export function layerToGeoJson(layer: GisLayer): string {
   const r = (n: number): number => Math.round(n * 1000) / 1000;
-  const pt = (p: number[]): number[] => (layer.hasZ ? [r(p[0]), r(p[1]), r(p[2])] : [r(p[0]), r(p[1])]);
+  const pt = (p: number[]): number[] => (layer.hasZ || layer.geom === 'multipatch' ? [r(p[0]), r(p[1]), r(p[2])] : [r(p[0]), r(p[1])]);
   const features = layer.features.map((f) => {
     const props: Record<string, string | number> = {};
     layer.fields.forEach((fd, i) => (props[fd.name] = f.attrs[i]));
@@ -209,6 +219,9 @@ export function layerToGeoJson(layer: GisLayer): string {
     if (layer.geom === 'point') geometry = { type: 'Point', coordinates: pt(f.parts[0][0]) };
     else if (layer.geom === 'polyline') {
       geometry = f.parts.length === 1 ? { type: 'LineString', coordinates: f.parts[0].map(pt) } : { type: 'MultiLineString', coordinates: f.parts.map((p) => p.map(pt)) };
+    } else if (layer.geom === 'multipatch') {
+      // every closed face of the solid becomes one 3D polygon
+      geometry = { type: 'MultiPolygon', coordinates: prepareParts({ ...layer, features: [f] })[0].map((ring) => [ring.map(pt)]) };
     } else {
       const rings = prepareParts({ ...layer, features: [f] })[0].map((ring) => ring.slice().reverse().map(pt)); // GeoJSON: outer ring counter-clockwise
       geometry = { type: 'Polygon', coordinates: rings };
