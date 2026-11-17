@@ -1,0 +1,40 @@
+STEP 21.6 FIT-1b class 2 (V 40, class minimum R 41 m, lane 3.5 m x 1, RCAP 6000 m, DEV_MAX 15 m, SHIFT_MAX 30 m, SLIDE_MAX 60 m, speeds 40/35/30/25/20 then corner 10 km/h): real straight - spiral - arc - spiral - straight fit of the drawn lines, with the ladder A1 shift / A2 slide / A3 speed / A4 corner
+
+1. PER LINE (stage = last rung used: 0 first fit already fine, 1 shift, 2 slide, 3 speed, 4 corner; before = first fit of FIT-1: max distance / end gap; after = this run)
+   line     len  PIs  stage  before dev/gap   after dev  mean  gap   minR  kink s/e  Vmin  shiftPI  endS endE  hard fails  warn  Ls<Lr
+   R2-8     3919   10     1    112 / 112.9       13.9   4.4  0.0     71  1/0     40      24    12    1         0     0     0  
+   R2-9      200    0     0      0 /   0.0        0.1   0.0  0.0      0  0/0     40       0     0    0         0     0     0  
+   R2-10     339    0     0      0 /   0.0        0.1   0.0  0.0      0  0/0     40       0     0    0         0     0     0  
+   R2-11    1160    4     4     63 /  66.8       17.6   6.3  0.0     53  3/0     30      30     3   18         1     0     0  
+   R2-12     460    2     1     21 /  25.4       15.7   4.3  0.0     78  4/3     40      27     0    1         0     0     0  
+   total  6078 m  45 measured bends -> 16 PIs; bends under the class minimum R (advisory / corner speed) 0; hard 6 V / 2 V fails 1; warnings 0; Ls shorter than runoff 0
+
+2. LADDER DETAIL: what each end is, what moved, PIs dropped (smoothing), advisory speeds, junction corners
+   R2-8: stage 1; start = free: free end (no other road there); end = slide: T on M6-1 (class 6); start moved 11.7 m, end moved 1.2 m; biggest PI shift 24.2 m
+        PI near (-1460, 2696) dropped (drawn wiggle, cost 505 -> 308)
+        PI near (-4421, 2717) dropped (drawn wiggle, cost 308 -> 135)
+        PI near (-1687, 2747) dropped (drawn wiggle, cost 135 -> 77)
+   R2-11: stage 4; start = free: free end (no other road there); end = free: free end (no other road there); start moved 2.6 m, end moved 17.8 m; biggest PI shift 30.0 m
+        PI near (-1384, -1184) dropped (drawn wiggle, cost 179 -> 96)
+        ADVISORY R2-11 bend 2 s~422 R 82 V 30 km/h
+        ADVISORY R2-11 bend 3 s~670 R 53 V 30 km/h
+        ADVISORY R2-11 bend 4 s~964 R 218 V 30 km/h
+   R2-12: stage 1; start = pin: shared end node with R2-13 and R4-10 (not moved here: it needs a joint refit of all lines at the node); end = free: free end (no other road there); start moved 0.0 m, end moved 0.8 m; biggest PI shift 26.9 m
+
+3. WARNINGS (the drawn line has two bends less than 80 m apart: the 6 V / 2 V rule cannot hold on the line the user drew; reason printed, not a FAIL)
+
+4. HARD 6 V / 2 V FAILS (drawn bends 80 m or more apart, rule still broken)
+   R2-11 bends 3-4 (same direction): straight 170 m, rule 180 m; the DRAWN line has these bends 85 m apart FAIL
+
+5. CHECKS (PASS = the rule holds for the WHOLE class; a FAIL is listed above per line, it is a finding, not hidden)
+   PASS  every line has an alignment (5 lines)
+   PASS  every R is at least the minimum of the design speed of its own bend (V 80 where no advisory speed)
+   PASS  every alignment ends on the last point of its line (gap <= 0.5 m)
+   PASS  every alignment stays within 15 m of the drawn line (override by user OK: R6-7 25 m, R6-8 25 m, R6-10 25 m, R4-7 16 m, R4-8 17 m, R4-27 22 m, R4-24 42 m, R4-9 28 m, R4-19 29 m, R2-6 21 m, R2-11 20 m, R2-12 16 m, R2-19 18 m, R2-45 18 m, R2-51 17 m, R2-56 24 m, R2-58 21 m, R2-61 22 m, R2-62 24 m, R2-72 18 m, R2-74 16 m; PI shift )
+   FAIL  every straight between two curves is at least 6 V (same direction) / 2 V (reverse) (WARN pairs of section 3 not counted)
+   PASS  every spiral is at least as long as the superelevation runoff (21.6e-3) and fits its bend (Ls <= R x delta)
+   PASS  heading at the two ends is within 5 deg of the drawn line (no kink at a junction)
+   PASS  literal target R >= 41 m on every bend (a FAIL here = bends that use an advisory speed or a junction corner, listed in section 2)
+   RESULT 7 PASS 1 FAIL
+   NOT RUN: tsc, npm run build, the game, the rail checks. Nothing in src changed. NOT DONE: junction node corners (21.7), R5 tap spacing recheck for a slid node, vertical re-run on the new length (the new line is a bit shorter / longer than the polyline).
+   LIMIT: search = seeded (1+1) evolution strategy, so the result is a feasible design that the checks above confirm, not a proven optimum; the deviation is measured against the 5 m resampled drawn line; R10: the deviation of every line from his line is printed above.

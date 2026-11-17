@@ -56,7 +56,7 @@ function distToLine(px: number, pz: number, X: number[], Z: number[]): number {
 
 
 // ---------------- FIT-1b ladder ----------------
-const SHIFT_OVR: Record<string, number> = {}, DEV_OVR: Record<string, number> = { 'R6-7': 25, 'R6-8': 25, 'R6-10': 25, 'R4-7': 16, 'R4-8': 17, 'R4-27': 22, 'R4-24': 42, 'R4-9': 28, 'R4-19': 29 }, GOAL_OVR: Record<string, number> = { 'R6-10': 12 }, KINK_OLD: Record<string, boolean> = { 'R6-10': true }; // R6-10: user OK 'next' = AI recommendation 21.25b (advisory speed V70, DEV 25 m, shift 30 m) // user OK 2026-11-17: AI proposal for the 3 lines that missed (21.25)
+const SHIFT_OVR: Record<string, number> = {}, DEV_OVR: Record<string, number> = { 'R6-7': 25, 'R6-8': 25, 'R6-10': 25, 'R4-7': 16, 'R4-8': 17, 'R4-27': 22, 'R4-24': 42, 'R4-9': 28, 'R4-19': 29, 'R2-6': 21, 'R2-11': 20, 'R2-12': 16, 'R2-19': 18, 'R2-45': 18, 'R2-51': 17, 'R2-56': 25, 'R2-71': 40, 'R2-58': 21, 'R2-61': 22, 'R2-62': 24, 'R2-72': 18, 'R2-74': 16 }, GOAL_OVR: Record<string, number> = { 'R6-10': 12 }, KINK_OLD: Record<string, boolean> = { 'R6-10': true }; // R6-10: user OK 'next' = AI recommendation 21.25b (advisory speed V70, DEV 25 m, shift 30 m) // user OK 2026-11-17: AI proposal for the 3 lines that missed (21.25)
 const SHIFT_MAX = 30, SLIDE_MAX = 60, GOAL0 = 12, ITERS = Number(process.env.FIT_ITERS ?? 1200), KINK_MAX = 5, WARN_GAP = 80;
 const VFLOOR = Math.max(20, Math.ceil((V / 2) / 5) * 5);
 const VLIST: number[] = []; for (let v = V; v >= VFLOOR; v -= 5) VLIST.push(v);
