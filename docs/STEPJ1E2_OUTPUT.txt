@@ -1,0 +1,35 @@
+PASS J1 terrain exists
+PASS flag off: no arm roads (1 roads), flag on: 5 roads
+PASS J1-N: road exists
+PASS J1-N: starts on the J1 axis at s 270 (offset 0.02 m) at the lane-zone level (diff 0.00 m)
+PASS J1-N: 412 points, length 3283.2 m, max grade between points 4.00 % (limit 4 %, curve overshoot)
+PASS J1-N: ground height vs road level on the centreline outside structures and their 16 m end skirt (the slab carve reaches a few metres past the end, like the ring): max diff 0.00 m (293 points)
+PASS J1-N: 5 structures (6.1d list: 5)
+PASS J1-N: structure lengths 88 / 328 / 96 / 136 / 112 m (6.1d: 87 / 327 / 92 / 137 / 112 m)
+PASS J1-N: ends 0.7 m from the nearest ring point (T)
+PASS J1-E: road exists
+PASS J1-E: starts on the J1 axis at s 270 (offset 0.02 m) at the lane-zone level (diff 0.00 m)
+PASS J1-E: 365 points, length 2911.3 m, max grade between points 3.01 % (limit 4 %, curve overshoot)
+PASS J1-E: ground height vs road level on the centreline outside structures and their 16 m end skirt (the slab carve reaches a few metres past the end, like the ring): max diff 0.00 m (93 points)
+PASS J1-E: 4 structures (6.1d list: 4)
+PASS J1-E: structure lengths 200 / 120 / 544 / 1168 m (6.1d: 197 / 122 / 549 / 1170 m)
+PASS J1-E: ends 3.1 m from the nearest ring point (T)
+PASS J1-S: road exists
+PASS J1-S: starts on the J1 axis at s 270 (offset 0.02 m) at the lane-zone level (diff 0.00 m)
+PASS J1-S: 321 points, length 2556.0 m, max grade between points 3.01 % (limit 4 %, curve overshoot)
+PASS J1-S: ground height vs road level on the centreline outside structures and their 16 m end skirt (the slab carve reaches a few metres past the end, like the ring): max diff 0.00 m (187 points)
+PASS J1-S: 5 structures (6.1d list: 5)
+PASS J1-S: structure lengths 192 / 184 / 152 / 168 / 192 m (6.1d: 192 / 187 / 152 / 172 / 192 m)
+PASS J1-S: ends 1.4 m from the nearest ring point (T)
+PASS J1-W: road exists
+PASS J1-W: starts on the J1 axis at s 270 (offset 0.02 m) at the lane-zone level (diff 0.00 m)
+PASS J1-W: 328 points, length 2611.3 m, max grade between points 4.01 % (limit 4 %, curve overshoot)
+PASS J1-W: ground height vs road level on the centreline outside structures and their 16 m end skirt (the slab carve reaches a few metres past the end, like the ring): max diff 0.00 m (266 points)
+PASS J1-W: 3 structures (6.1d list: 3)
+PASS J1-W: structure lengths 56 / 112 / 208 m (6.1d: 57 / 107 / 207 m)
+PASS J1-W: ends 2.1 m from the nearest ring point (T)
+PASS ringStructures = 23 (ring 6 + arms 17)
+PASS all structure meshes build: 20098 triangles, 0 empty, 17 ms
+PASS railway plan identical with the arms on / off (12 edges)
+
+ALL PASS

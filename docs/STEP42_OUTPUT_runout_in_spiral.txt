@@ -1,0 +1,40 @@
+=== 4.2 RING SUPERELEVATION (V100, f 0.12, normal cross fall 2 %, full tilt 2 %, rule nc018) ===
+  smallest radius that keeps the normal crown: R >= 4374.5 m
+  runoff Lr = w n1 e bw / delta = 3.65 x 4 x 0.02 x 0.625 / 0.0044 = 41.5 m, rounded to 45 m; runout Lt = 45 m; total -2 % to +2 % = 90 m
+  relative gradient 0.41 % vs limit 0.44 %
+  Lr + Lt = 90 m vs spiral Ls 100 m -> whole transition FITS inside the spiral
+  tangent runout placed on the straight: 0 m (runout inside the spiral)
+
+  Curve decisions
+   PI      R   e needed (e+f-f)  e+f      decision
+    0   1396        0.0 %   0.0564   rotate to +2 %
+    1    601        1.1 %   0.1310   rotate to +2 %
+    2    786        0.0 %   0.1002   rotate to +2 %
+    3    591        1.3 %   0.1332   rotate to +2 %
+    4   1272        0.0 %   0.0619   rotate to +2 %
+    5   1008        0.0 %   0.0781   rotate to +2 %
+    6    595        1.2 %   0.1323   rotate to +2 %
+    7   1816        0.0 %   0.0434   rotate to +2 %
+    8    591        1.3 %   0.1332   rotate to +2 %
+    9    714        0.0 %   0.1103   rotate to +2 %
+  rotate 10 of 10
+
+  Straights and tilt zones
+  PI 0 -> PI 1: straight 19293-19548 (255 m), free 19293-19548 (255 m)
+  PI 1 -> PI 2: straight 705-1763 (1058 m), free 705-1763 (1058 m)
+  PI 2 -> PI 3: straight 3031-6014 (2983 m), free 3031-6014 (2983 m)
+  PI 3 -> PI 4: straight 6814-8279 (1465 m), free 6814-8279 (1465 m)
+  PI 4 -> PI 5: straight 8979-9252 (273 m), free 8979-9252 (273 m)
+  PI 5 -> PI 6: straight 11049-12512 (1463 m), free 11049-12512 (1463 m)
+  PI 6 -> PI 7: straight 12881-13877 (995 m), free 12881-13877 (995 m)
+  PI 7 -> PI 8: straight 14809-15949 (1139 m), free 14809-15949 (1139 m)
+  PI 8 -> PI 9: straight 16635-17551 (916 m), free 16635-17551 (916 m)
+  PI 9 -> PI 0: straight 17989-18415 (425 m), free 17989-18415 (425 m)
+
+  Radial meeting points, need >= 500 m free straight on both sides
+  PASS  N station 11549: free 500 before / 963 after
+  PASS  E station 15309: free 500 before / 640 after
+  PASS  S station 1205: free 500 before / 558 after
+  PASS  W station 5104: free 2073 before / 910 after
+
+ALL RADIAL POINTS PASS

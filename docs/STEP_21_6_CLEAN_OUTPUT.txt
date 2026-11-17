@@ -1,0 +1,46 @@
+STEP 21.6a-1  21.3 CLEANUP (headless; rewrites docs/centre_fixed.json only; nothing in src changed)
+class R4 design speed V60, smallest radius 113 m (x 1.1 margin)
+
+1. R4-9 START ON J1-N (it stood on the deck; decision: 55 m along J1-N, road level 44.50 m will be pinned in 21.4c)
+R4-9 start: old end (401, -1326)  ->  new end on J1-N (397.9, -1271.0)  move 55 m (snap distance of the decision point 0.1 m)
+   blend piece joins the old line 180 m from the end, smallest radius there 135 m (class V60 needs 113 m x 1.1 = 125 m), line length 2945 -> 2956 m
+   PASS  R4-9: smallest radius of the new piece 135 m >= 125 m
+   PASS  R4-9 R1: no NEW crossing (crossings of the whole line with other lines 1, before 1: M8; this one is OLD, far from the changed end, not touched here)
+   PASS  R4-9: new end lies on J1-N (0.0 m off)
+   PASS  R4-9: >= 60 m to every other node on J1-N (nearest: J1-N 2263 m, J1-N 800 m, R4-10 1554 m, R4-11 902 m)
+   INFO natural ground on the new piece: 41.5 m at the arm -> 62.9 m at the join, 180 m long, mean grade 11.9 % (R4 limit 6.0 %; the arm has its own pad level, the road level is solved again in 21.4 / 21.4c)
+
+2. R4-13 END ON J1-E (decision: 134 m further out along J1-E)
+R4-13 end: old end (745, 320)  ->  new end on J1-E (860.0, 389.0)  move 134 m (snap distance of the decision point 0.0 m)
+   blend piece joins the old line 280 m from the end, smallest radius there 132 m (class V60 needs 113 m x 1.1 = 125 m), line length 980 -> 985 m
+   PASS  R4-13: smallest radius of the new piece 132 m >= 125 m
+   PASS  R4-13 R1: no NEW crossing (crossings of the whole line with other lines 1, before 1: R2-43; this one is OLD, far from the changed end, not touched here)
+   PASS  R4-13: new end lies on J1-E (0.0 m off)
+   PASS  R4-13: >= 60 m to every other node on J1-E (nearest: J1-E 1825 m, J1-E 843 m, R4-12 659 m, R6-14 640 m)
+   INFO natural ground on the new piece: 28.5 m at the arm -> 22.0 m at the join, 285 m long, mean grade 2.3 % (R4 limit 6.0 %; the arm has its own pad level, the road level is solved again in 21.4 / 21.4c)
+
+3. N004 (R6-12 x R4-9, level gap 42.7 m): NOT CHANGED, the user chooses. R6-12 now 268 m long, ground 29 -> 77 m (18 %), R6 limit 4 % (R11).
+   ground-following route search: 20 m grid, no cut / fill, grade of every step <= limit; start R6-6A (25, -2161) ground 29.2 m
+   grade limit 4.0 %:
+     node on R4-9 s 0 (398, -1271) R4-9 ground 41.5 m: route 1052 m (straight 965 m, ratio 1.1), crossings with other lines: none
+     node on R4-9 s 100 (304, -1304) R4-9 ground 55.3 m: route 1023 m (straight 901 m, ratio 1.1), crossings with other lines: none
+     node on R4-9 s 150 (260, -1327) R4-9 ground 59.7 m: route 1174 m (straight 867 m, ratio 1.4), crossings with other lines: none
+     node on R4-9 s 310 (117, -1391) R4-9 ground 65.7 m: route 1281 m (straight 775 m, ratio 1.7), crossings with other lines: none
+     node on R4-9 s 1209 (-244, -2109) R4-9 ground 74.0 m: route 1055 m (straight 274 m, ratio 3.8), crossings with other lines: none
+     node on R4-9 s 1259 (-236, -2158) R4-9 ground 84.5 m: route 1598 m (straight 261 m, ratio 6.1), crossings with other lines: none
+   grade limit 5.0 %:
+     node on R4-9 s 0 (398, -1271) R4-9 ground 41.5 m: route 997 m (straight 965 m, ratio 1.0), crossings with other lines: none
+     node on R4-9 s 100 (304, -1304) R4-9 ground 55.3 m: route 970 m (straight 901 m, ratio 1.1), crossings with other lines: none
+     node on R4-9 s 150 (260, -1327) R4-9 ground 59.7 m: route 1028 m (straight 867 m, ratio 1.2), crossings with other lines: none
+     node on R4-9 s 310 (117, -1391) R4-9 ground 65.7 m: route 889 m (straight 775 m, ratio 1.1), crossings with other lines: none
+     node on R4-9 s 1209 (-244, -2109) R4-9 ground 74.0 m: route 852 m (straight 274 m, ratio 3.1), crossings with other lines: none
+     node on R4-9 s 1259 (-236, -2158) R4-9 ground 84.5 m: route 1213 m (straight 261 m, ratio 4.6), crossings with other lines: none
+   OPTIONS for N004 (the user decides; my reading):
+   A  MOVE THE NODE along R4-9 to s 100 (304, -1304, R4-9 ground 55.3 m): R6-12 about 1023 m at 4 %, ratio 1.1, no cut / fill, no crossing. R4-9 keeps its line; the old node N004 becomes a plain point of R4-9. The new node is only 100 m from the J1-N join (R4-9 start): node spacing >= 60 m holds, take s >= 150 if you want more room.
+   B  MOVE THE NODE a little along R4-9 to s ~ 1199 (x -244, z -2109, ground 74 m): R6-12 1.06 km but ratio 3.9 (winding, against R3), still 74 m high: not recommended.
+   C  KEEP N004, LONGER ROUTE: needs 1.4 - 1.6 km at 4 % on the hill (ratio 5 - 6): hair-pin shapes, against R3 smoothness: not recommended.
+   D  KEEP N004 and the 268 m line at 18 %: breaks R11 (R6 <= 4 %): not possible; or a 50 m cut: not possible.
+
+
+Because centre_fixed.json changed, centre_profile.json / centre_vprofile.json / centre_sections.json are OLD for R4-9 and R4-13: run centre-profile.ts, centre-vprofile.ts, centre-section.ts again (next step, together with the 21.6 rail / node decisions).
+PASS 8  FAIL 0

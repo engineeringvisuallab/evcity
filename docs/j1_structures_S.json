@@ -1,0 +1,141 @@
+{
+ "SJ": 340,
+ "STRUCT": {
+  "approach": 16,
+  "deckDepth": 1.5,
+  "groundGap": 0.3,
+  "protectReach": 60
+ },
+ "S": {
+  "length": 2825.970770806321,
+  "structures": [
+   {
+    "id": "S1",
+    "arm": "S arm",
+    "kinds": [
+     "river bridge",
+     "viaduct"
+    ],
+    "s0": 1215.1,
+    "s1": 1292,
+    "length": 76.90000000000009,
+    "x0": -687.303,
+    "z0": 766.2470000000001,
+    "x1": -713.6940000000001,
+    "z1": 838.453,
+    "xm": -700.48,
+    "zm": 802.36,
+    "maxHeight": 7.600000000000001,
+    "maxCarve": 0.2900000000000027,
+    "waterLen": 45,
+    "waterLevel": 16.914559728788937,
+    "riverClear": 4.135440271211063,
+    "rail": [],
+    "specialSpans": [
+     75
+    ],
+    "stdSpans": 0,
+    "spanTotal": 75,
+    "piers": 0,
+    "maxPier": 6.100000000000001,
+    "maxCurvatureOn": 0.0000913,
+    "hCurveOnStruct": true,
+    "vCurvesOn": 0,
+    "fromArmEnd": 1533.970770806321,
+    "proposal": "haunched steel box girder, slender V-shaped piers",
+    "why": "river main span about 75 m, deck 8 m above ground"
+   },
+   {
+    "id": "S2",
+    "arm": "S arm",
+    "kinds": [
+     "rail bridge",
+     "viaduct"
+    ],
+    "s0": 1903.9,
+    "s1": 2240.4,
+    "length": 336.5,
+    "x0": -933.94,
+    "z0": 1407.84,
+    "x1": -1053.097,
+    "z1": 1724.035,
+    "xm": -995.4719000000001,
+    "zm": 1565.9735000000003,
+    "maxHeight": 9.620000000000001,
+    "maxCarve": 0,
+    "waterLen": 0,
+    "waterLevel": null,
+    "riverClear": null,
+    "rail": [
+     {
+      "edge": "ring-south",
+      "s": 2064.579254918814,
+      "angle": 65.41577585236458,
+      "gap": 9.571458793774225,
+      "span": 30
+     }
+    ],
+    "specialSpans": [
+     30
+    ],
+    "stdSpans": 7,
+    "spanTotal": 310,
+    "piers": 7,
+    "maxPier": 8.120000000000001,
+    "maxCurvatureOn": 0.0006185,
+    "hCurveOnStruct": true,
+    "vCurvesOn": 1,
+    "fromArmEnd": 585.570770806321,
+    "proposal": "segmental concrete box viaduct, one long span over the rail",
+    "why": "rail span 30 m inside a 337 m viaduct"
+   }
+  ]
+ },
+ "checks": [
+  {
+   "name": "S: every wet point is inside a structure (no dam across water)",
+   "pass": true,
+   "detail": "0 m of wet centreline outside"
+  },
+  {
+   "name": "S: every point with fill > 7 m is inside a viaduct (D4)",
+   "pass": true,
+   "detail": "0 m outside"
+  },
+  {
+   "name": "S: every rail crossing lies in a structure that spans the whole corridor + approach (X5)",
+   "pass": true,
+   "detail": "1 crossings: S2/ring-south s 2065"
+  },
+  {
+   "name": "S: rail over road (no road structure): rail deck underside >= 7.0 m over the road",
+   "pass": true,
+   "detail": "west-nw s 415: 12.92 m, west-sw s 1239: 13.87 m"
+  },
+  {
+   "name": "S: road over rail >= 7.4 m on every rail crossing",
+   "pass": true,
+   "detail": "9.57 m"
+  },
+  {
+   "name": "S: river crossings: road at least 2.5 m above the water",
+   "pass": true,
+   "detail": "S1 4.1 m"
+  },
+  {
+   "name": "S: structures do not overlap and start after the J1 lane zone (s >= 269, J1-b)",
+   "pass": true,
+   "detail": "2 structures, first starts at s 1215"
+  },
+  {
+   "name": "S: no structure on a horizontal curve tighter than 591 m (rule 3.12.8)",
+   "pass": true,
+   "detail": "none"
+  },
+  {
+   "name": "S: no structure inside the last 150 m before the ring T, or it is marked as part of the ring interchange",
+   "pass": true,
+   "detail": "last structure S2 ends 586 m before the ring, fill at the end 0.0 m"
+  }
+ ]
+}

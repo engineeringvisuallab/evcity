@@ -1,0 +1,47 @@
+J1-g3 CHECK: terrain pad + join with the arms, open ground interchange, C10 (-87, -277) yaw 37.5 (2026-11-14)
+
+1. NUMBERS
+  pad plane (Config.roads.junctionJ1): centre 18.214 m, grade 0.35 %, flat square |e|, |n| <= 100 m, skirt 30 m
+  paved star +-91.6 m (slip arcs end at s 91.6); pad plane to SA = 100 m; the arm level is the plane at SA and becomes the approved arm profile at SB = 300 m; lane zone ends at S_END = 315 m (open star zone 312.5 m), half width 27 m
+
+2. PAD   under the paved star (inside the paved outline, 2138 samples every 3 m): max fill 0.48 m, max cut 0.38 m
+
+3. ARM JOIN   finished axis level L(s): plane for s <= 100, then arm profile + d(s) (cubic, same level and grade as the plane at SA, 0 and 0 at SB = 300), exactly the arm profile from SB
+  arm N: level at the centre 18.214 m, at SA 17.898 (plane - profile 0.097 m), at SB 22.520, at s 315 23.036 m; steepest grade 0..340 m 3.59 % (first 100 m 0.32 %); extra grade from the join 0.62 %
+         grade break at SA 0.017 %, at SB 0.002 %, largest other grade step per 1 m 0.034 % (own profile vertices with no curve at s 381, 3553 are left out of this number)
+  arm E: level at the centre 18.214 m, at SA 18.359 (plane - profile -0.134 m), at SB 18.491, at s 315 18.560 m; steepest grade 0..340 m 1.19 % (first 100 m 0.15 %); extra grade from the join 0.15 %
+         grade break at SA 0.003 %, at SB 0.021 %, largest other grade step per 1 m 0.023 % (own profile vertices with no curve at s 130, 439, 706, 821, 3037 are left out of this number)
+  arm S: level at the centre 18.214 m, at SA 18.530 (plane - profile -0.220 m), at SB 18.588, at s 315 18.544 m; steepest grade 0..340 m 0.47 % (first 100 m 0.32 %); extra grade from the join 0.24 %
+         grade break at SA 0.004 %, at SB 0.003 %, largest other grade step per 1 m 0.012 % (own profile vertices with no curve at s 2826 are left out of this number)
+  arm W: level at the centre 18.214 m, at SA 18.069 (plane - profile 0.267 m), at SB 22.521, at s 315 23.037 m; steepest grade 0..340 m 3.45 % (first 100 m 0.15 %); extra grade from the join 0.45 %
+         grade break at SA 0.014 %, at SB 0.000 %, largest other grade step per 1 m 0.028 % (own profile vertices with no curve at s 346, 1783, 2881 are left out of this number)
+
+4. ARM ZONES against the natural ground (axis and both edges of the paved width, s = 0..315 m, every 5 m)
+  arm N: max fill 5.18 m, max cut 0.50 m
+  arm E: max fill 0.22 m, max cut 0.46 m
+  arm S: max fill 0.57 m, max cut 0.13 m
+  arm W: max fill 5.25 m, max cut 0.51 m
+
+5. SKIRT, WATER, RAIL
+  embankment skirt (J1 alone, without the EVLab ground): 6880 points (inside s <= 305), steepest finished slope 22.9 % (1:3 = 33.3 %), wet points under pad + lane zones + skirt 0, under the paved outline 0
+  nearest railway to the paved outline and the arm axes (s 0..315): 102.4 m
+
+6. PASS / FAIL
+  PASS  pad plane grade between 0.3 % and 2 % (junction surface rule of J1-c)                            0.35 %
+  PASS  star: max fill and max cut under the paved star <= 1.5 m                                         fill 0.48 m, cut 0.38 m
+  PASS  arm zones: max fill / cut under every arm zone (s 0..315, axis and edges) <= 7 m (rule D4: fill over 7 m = viaduct) N +5.18/-0.50  E +0.22/-0.46  S +0.57/-0.13  W +5.25/-0.51
+  PASS  skirt slope: the finished surface in the embankment is never steeper than 1:3 (smoothstep skirt 30 m) 22.9 %
+  PASS  no water under the paved outline, the pad, the lane zones or their skirt                         0 wet points
+  PASS  railway at least 50 m from the paved outline and the arm axes (rule of J1-g1)                    102.4 m
+  PASS  every lane centre line of g2 (32) lies on full-weight ground (w = 1) and the game ground equals the finished level (< 3 cm) 0 of 9048 points not full weight, max diff 0.000 m
+  PASS  every corner of the paved outline lies on full-weight ground and the game ground equals the finished level (< 3 cm) 0 of 408 points not full weight, max diff 0.000 m
+  PASS  the paved outline lies inside the flat lane zone (half width 27 m, at least 3 m shoulder)        23.40 m
+  PASS  grade inside the open star (first 100 m of every arm) <= 2 %                                     0.32 %
+  PASS  arm axis grade 0..340 m <= 4 % (arm limit of the J1-c rows)                                      3.59 %
+  PASS  arm axis: the join of plane and profile has no grade break (SA and SB, each <= 0.05 %) and no new grade step per 1 m over 0.1 % breaks 0.021 %, steps 0.034 %
+  PASS  arm join: the extra grade the join adds to the approved profile (s SA..SB) is <= 0.8 %           0.62 %
+  PASS  arm join: from SB the finished level IS the arm profile (difference 0)                           0.0e+0 m
+  PASS  arm join: the generated arm data (J1ArmData, from s 315) starts on the axis at S_END at the finished level and agrees along its first points (16) level 0.000 m, position 0.004 m, max 0.003 m
+  PASS  constants: SA 100 >= arc tangent point 91.6, SB 300 < S_END 315, zone 312.5 <= S_END, S_END <= smallest clear length 330, Config rCore = SA 100 / 300 / 315
+
+ALL PASS

@@ -1,0 +1,29 @@
+E ARM STRUCTURES (s = 0 at the J1 centre, arm from S = 340 to E = 3037), approach slab 16 m each end, deck depth 1.5 m
+  id   kinds                          s0..s1 (m)      length  max height  max carve  wet  river clear  rail (angle, gap, span)  spans (special + std x m)  piers  max pier  from arm end
+  E1   viaduct                          561..688       127        8.3        0.0    0            -  -                                        0 + 3 x 40      2       6.8    2349
+  E2   rail bridge + river bridge + viaduct   746..1158      412       25.4        0.0   75         17.0  east-1 46 deg, gap 9.56, span 35         35+105 + 5 x 50      6      23.9    1879
+  E3   river bridge + viaduct          1260..1422      162        9.3        0.0  125          5.3  -                                        155 + 0 x 40      0       7.8    1615
+  E4   rail bridge + river bridge + viaduct  2344..2646      302       16.3        0.0   20         13.2  east-2 66 deg, gap 9.53, span 30         30+50 + 4 x 50      5      14.8     391
+  E5   viaduct                         2769..2880      112       10.4        0.0    0            -  -                                        0 + 2 x 40      1       8.9     156
+  total structure length 1114 m of 2697 m arm (41.3 %)
+
+PROPOSED DESIGNS (types wait for the user OK, every structure different, none repeats the ring S1-S6):
+  E1  viaduct: precast concrete viaduct, slender twin-blade piers  (127 m long, up to 8.3 m high, standard spans)
+  E2  rail bridge + river bridge + viaduct: haunched steel box girder, slender V-shaped piers  (river main span about 105 m, deck 25 m above ground)
+  E3  river bridge + viaduct: haunched steel box girder, slender V-shaped piers (variant 2: different pier shape and parapet)  (river main span about 155 m, deck 9 m above ground)
+  E4  rail bridge + river bridge + viaduct: haunched steel box girder, slender V-shaped piers (variant 3: different pier shape and parapet)  (river main span about 50 m, deck 16 m above ground)
+  E5  viaduct: precast concrete viaduct, slender twin-blade piers (variant 2: different pier shape and parapet)  (112 m long, up to 10.4 m high, standard spans)
+
+  PASS  E: every wet point is inside a structure (no dam across water)             0 m of wet centreline outside
+  PASS  E: every point with fill > 7 m is inside a viaduct (D4)                    0 m outside
+  PASS  E: every rail crossing lies in a structure that spans the whole corridor + approach (X5) 2 crossings: E2/east-1 s 922, E4/east-2 s 2615
+  PASS  E: rail over road (no road structure): rail deck underside >= 7.0 m over the road north-1 s 424: 10.58 m
+  PASS  E: road over rail >= 7.4 m on every rail crossing                          9.56 m, 9.53 m
+  PASS  E: river crossings: road at least 2.5 m above the water                    E2 17.0 m, E3 5.3 m, E4 13.2 m
+  PASS  E: structures do not overlap and start after the J1 lane zone (s >= 340)   5 structures, first starts at s 561
+  PASS  E: no structure on a horizontal curve tighter than 591 m (rule 3.12.8)     none
+  INFO  E: structures that lie partly on a bend (R >= 591 m, allowed, listed for the mesh): E1 (R 1428), E2 (R 1287), E3 (R 3306), E4 (R 662), E5 (R 662)
+  INFO  E: structures with vertical curves on the deck: E2 (2), E3 (1), E4 (2) (a parabola on a deck is normal, joints are placed by the bridge design)
+  PASS  E: the T is on the ring at ground level (route of 2026-11-14, T moved to ring st 16813): no structure within 150 m of the T, road meets the ring level, fill at the end <= 7 m last structure E5 ends 156 m before the ring, ring level 28.41 m, fill at the end 1.6 m
+  INFO  E approach viaduct: E5 112 m, deck up to 10.4 m above ground, max pier 8.9 m, 1 piers; all viaduct-type structures 1114 m
+SUMMARY: 9 PASS, 0 FAIL

@@ -1,0 +1,11 @@
+R6 STEP G6c: R6-5 = chain L8 + L24 + L44 joined into one road. Numbers + game data, game NOT run.
+  blend 60 m (gaps 63 m, 52 m): 953 m, min radius 204 m, grade 3.0 %, cut 7.7 m, fill 5.9 m, structure 0 m -> profile PASS, radius below 229
+  blend 80 m (gaps 63 m, 52 m): 951 m, min radius 234 m, grade 3.0 %, cut 7.8 m, fill 5.9 m, structure 0 m -> profile PASS, radius PASS
+  blend 100 m (gaps 63 m, 52 m): 950 m, min radius 233 m, grade 3.0 %, cut 7.8 m, fill 5.9 m, structure 0 m -> profile PASS, radius PASS
+  blend 130 m (gaps 63 m, 52 m): 949 m, min radius 244 m, grade 3.0 %, cut 7.6 m, fill 5.9 m, structure 0 m -> profile PASS, radius PASS
+  blend 160 m (gaps 63 m, 52 m): 945 m, min radius 233 m, grade 3.0 %, cut 8.4 m, fill 5.9 m, structure 0 m -> profile PASS, radius PASS
+
+CHOSEN blend 130 m: R6-5, 949 m, grade 3.0 %, cut 7.6 m, fill 5.9 m, min radius 244 m, levels 31.98 -> 31.18 m, closest rail 185 m
+Free ends: west (321, 1190), east (1181, 1030) (72 m from the start of L33, which is not added: it crosses J1-E at JX-2).
+RESULT: PASS (profile + radius). Exported as R6-5.
+LIMITS as before: R2, vertical curves, buildings / city plan along the road, AI traffic NOT checked; game run, in-game drive, npm run build NOT RUN.

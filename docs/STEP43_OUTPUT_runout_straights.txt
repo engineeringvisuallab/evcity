@@ -1,0 +1,50 @@
+=== 4.3 RING RIBBONS (M8, runout straights) ===
+  3859 stations every 4.999 m, 9 ribbons per side, 2 sides = 18 ribbons, 10 edge lines per side
+  triangles: 138924 (2 per quad, 69462 quads, closed loop)
+  ribbons per side: 1 median (half of 6 m) [0.0-3.0]; 2 inner paved shoulder [3.0-4.5]; 3 4 travel lanes x 3.65 m [4.5-19.1]; 4 outer paved shoulder (breakdown) [19.1-22.1]; 5 guardrail / barrier offset [22.1-22.7]; 6 verge + drainage ditch (outer slope) [22.7-23.5]; 7 verge + drainage ditch (inner slope) [23.5-24.2]; 8 clear zone [24.2-32.0]; 9 right-of-way strip [32.0-40.0]
+
+=== Widths and continuity ===
+  PASS  offset of every edge = table value (plan view)             max error 5.74e-13 m over 7718 cross-sections
+  PASS  left and right ribbon meet on the centreline (no gap)      max gap 0.00e+0 m
+  PASS  edge step stays within ds (1 +- d / Rmin)                  worst deviation 6.77 % (allowed 8.8 %)
+  PASS  loop closes on every edge line (last -> first station)     gap 0.00 m = one step
+  PASS  no kink on the ROW edge line (heading step per station)    max 0.485 deg (centreline max 0.485 deg)
+
+=== Self-intersection (plan view) ===
+  PASS  no crossing between 23154 edge segments (6 edge lines, both sides) 0 crossings
+  PASS  offset curve of the inside of the tightest curve stays positive R 591 - 40.0 = 551.0 m
+  PASS  two far-apart parts of the ring never come closer than 2 x ROW (80 m) no two parts more than 1 km apart along the ring come within 400 m of each other
+
+=== Areas (plan view, from the ribbon quads) ===
+  PASS  paved area (median excluded) = 38.2 m x ring length        73.7 ha vs 73.7 ha (4.1: 74 ha)
+  PASS  ROW area = 80 m x ring length                              154.3 ha vs 154.3 ha (4.1: 154 ha)
+
+=== Cross-fall and superelevation (heights relative to the median edge) ===
+  PASS  tilt is continuous (no step between stations)              max step 0.222 % per 5.0 m
+  PASS  tilt between -2 % and +2 %, never above 8 %                from -2.0 % to 2.0 %
+  relative gradient of the outside lane edge against the inner lane edge (14.6 m of lanes): 0.65 % geometric
+  PASS  relative gradient x bw 0.625 <= 0.44 % (limit still to verify) 0.41 % on the AASHTO basis (4 lanes rotated about the median edge)
+  PASS  lane / shoulder algebraic difference <= 8 % (roll-over)    max 2.0 %
+
+  Rotated curves: tilt of the OUTER carriageway at key stations (+ = falls towards the curve centre)
+   PI  outer side   TS station  e at TS   TS+45   TS+90    SC   arc mid   edge drop at normal / full tilt (m)
+    0  +n side        18415    0.0 %    2.0 %    2.0 %    2.0 %    2.0 %    0.472 / -0.292
+    1  -n side          255    0.0 %    2.0 %    2.0 %    2.0 %    2.0 %    0.472 / -0.292
+    2  -n side         1763    0.0 %    2.0 %    2.0 %    2.0 %    2.0 %    0.472 / -0.292
+    3  -n side         6014    0.0 %    2.0 %    2.0 %    2.0 %    2.0 %    0.472 / -0.292
+    4  +n side         8279   -0.0 %    2.0 %    2.0 %    2.0 %    2.0 %    0.472 / -0.292
+    5  -n side         9252    0.0 %    2.0 %    2.0 %    2.0 %    2.0 %    0.472 / -0.292
+    6  -n side        12512   -0.0 %    2.0 %    2.0 %    2.0 %    2.0 %    0.472 / -0.292
+    7  -n side        13877    0.0 %    2.0 %    2.0 %    2.0 %    2.0 %    0.472 / -0.292
+    8  -n side        15949    0.0 %    2.0 %    2.0 %    2.0 %    2.0 %    0.472 / -0.292
+    9  -n side        17551   -0.0 %    2.0 %    2.0 %    2.0 %    2.0 %    0.472 / -0.292
+  PASS  full tilt is reached at or before SC on every curve        10 curves, spiral 100 m, ramps 90 m
+
+=== Section at a rotated curve (PI 3, left and right carriageway), height relative to the median edge, m ===
+  straight     s   5814 e outer  -2.0 %   side +n: 3.0:0.000  4.5:-0.060  19.1:-0.352  22.1:-0.472   side -n: 3.0:0.000  4.5:-0.060  19.1:-0.352  22.1:-0.472
+  TS           s   6014 e outer   0.0 %   side +n: 3.0:0.000  4.5:-0.060  19.1:-0.352  22.1:-0.472   side -n: 3.0:0.000  4.5:-0.030  19.1:-0.028  22.1:-0.088
+  TS+45        s   6059 e outer   2.0 %   side +n: 3.0:0.000  4.5:-0.060  19.1:-0.352  22.1:-0.472   side -n: 3.0:0.000  4.5:0.000  19.1:0.292  22.1:0.292
+  TS+90        s   6104 e outer   2.0 %   side +n: 3.0:0.000  4.5:-0.060  19.1:-0.352  22.1:-0.472   side -n: 3.0:0.000  4.5:0.000  19.1:0.292  22.1:0.292
+  arc mid      s   6414 e outer   2.0 %   side +n: 3.0:0.000  4.5:-0.060  19.1:-0.352  22.1:-0.472   side -n: 3.0:0.000  4.5:0.000  19.1:0.292  22.1:0.292
+
+ALL CHECKS PASS

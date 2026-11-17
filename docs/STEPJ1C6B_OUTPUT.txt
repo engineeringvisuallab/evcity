@@ -1,0 +1,39 @@
+restart 0: cost 3272
+restart 1: cost 3269
+restart 2: cost 3263
+restart 3: cost 3264
+restart 4: cost 3260
+restart 5: cost 3261
+restart 6: cost 3260
+restart 7: cost 3257
+J1-c6b S ARM ALIGNMENT   J1 (-87, -277) yaw 37.5 deg, start S (-294.0, -7.3) heading 127.5 deg (math), 3 PIs, Ls 100 m, V 100
+  end E (-1133.3, 2301.7) on the ring S straight, arrival heading 92.2 deg (ring 182.2 deg), alignment length 2486 m (straight line S-E 2457 m)
+  PI table:  #  x  z  R  Ls  delta(deg)  Ts  arc(m)  straight before / after
+    0  -505.8  268.8  R 962  Ls 100  delta -17.5  Ts 197.8  arc 193  straight 150 / 353
+    1  -732.5  890.2  R 5685  Ls 100  delta 1.2  Ts 110.5  arc 21  straight 353 / 629
+    2  -1117.3  1879.0  R 1617  Ls 100  delta -19.1  Ts 321.9  arc 439  straight 629 / 101
+
+  PASS  PI 1.. every R >= 591 m (1.5 x Rmin V100)                        smallest R 1617 m
+  PASS  PI 0 R >= 591 m                                                  R 962 m, Ls 100 m, turn 17.5 deg
+  PASS  spiral Ls >= minimum (V55 on PI 0, V100 on the rest)             Ls 100 m, needed 60 / 60 / 60 m
+  PASS  straights between curves: reverse >= 2V, same direction >= 6V, none negative 150 / 353(>=200) / 629(>=200) / 101
+  PASS  first tangent is the J1 axis (start heading exact)               start heading 127.50 deg
+  PASS  dead reckoning reaches E (position and heading)                  gap 5.1e-13 m, 1.3e-14 deg
+  PASS  T on the ring: arrival angle 80..100 deg to the ring             90.0 deg
+  PASS  join point on the ring S straight (st 1205..1263 of 705..1763: 500 m of straight on both sides) st 1205, 500 m of straight on the west side and 558 m on the east side (3-leg interchange wants 500 m each side)
+  PASS  smooth: no kink, curvature is continuous (dk/ds <= 1/(R Ls) + small) max heading step 0.30 deg per 5 m, max dk/ds 1.04e-5, tightest R 962 m
+  INFO  zones ignored (ZONES=0, buildings will be re-placed to fit the road); nearest: eng-biomed 475 m, eng-vehicle 641 m, eng-grid 1260 m
+  INFO  wet length (river / lake cells under the centreline) 20 m  (a river crossing becomes a bridge, 6.1e)
+  INFO  rail crossings (road over rail, 6.1d): 3 at s 75, 904, 1727 m from S (s = 0 at the start S, J1 centre is 340 m before it)
+  INFO  station central: nearest edge of its area 120 m from the centreline
+  INFO  station south-interchange: nearest edge of its area 901 m from the centreline
+  INFO  station port: nearest edge of its area 2473 m from the centreline
+  INFO  station east-works: nearest edge of its area 2784 m from the centreline
+  INFO  station north-hub: nearest edge of its area 3019 m from the centreline
+  INFO  station airport: nearest edge of its area 4090 m from the centreline
+  INFO  station nw-town: nearest edge of its area 2941 m from the centreline
+  INFO  station sw-newtown: nearest edge of its area 748 m from the centreline
+  VERTICAL PREVIEW (grade <= 3 % DP profile, the real profile is c4c): max centre cut 2.1 m, cut > 8 m 0 m, cut > 12 m 0 m, max fill 5.5 m, fill > 7 m (viaduct) 0 m, max grade 2.99 %, cut volume about 0.01 million m3 (rough)
+  PASS  no centre cut over 12 m (user: hill cut must go; 12 m = section 3.7 limit 12 m) max cut 2.1 m
+  PASS  grade <= 3 % (<= 3.0 % on the first 0 m from S)                  max 0.00 % on the hill stretch, 2.99 % elsewhere
+SUMMARY: 11 PASS, 0 FAIL

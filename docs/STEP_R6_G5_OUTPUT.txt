@@ -1,0 +1,39 @@
+R6 STEP G5: interchange placeholders, FAIL lines, smoothness. Numbers + files only, NO src/ change, game / tsc / build NOT run.
+Start = G4 line set: 38 lines, 21.2 km.
+
+PART A: FAIL lines of G4 = L27, L59, L62. Methods in order: (1) re-route with a 800 m corridor (ends fixed, G4 method), (2) trim a bad end (up to 40 % of the line), (3) keep and report.
+  L27: old FAIL (wet 20 m (sea / river: bridge needed, not designed); fill > 7 m on 10 m (viaduct needed, not designed)), 743 m
+     ends old (787, -88) -> (213, 368); new (747, -80) -> (213, 368)
+     -> FIXED by trimmed start by 37 m (the line then ends free there): PASS, cut 2.6 m, grade 3.0 %, wet 0 m, length 703 m (was 743 m)
+  L59: old FAIL (wet 60 m (sea / river: bridge needed, not designed); fill > 7 m on 20 m (viaduct needed, not designed)), 1170 m
+     ends old (679, -3171) -> (1136, -2125); new (679, -3171) -> (1078, -2230)
+     -> FIXED by trimmed end by 117 m (the line then ends free there): PASS, cut 8.0 m, grade 3.0 %, wet 60 m, length 1050 m (was 1170 m)
+  L62: old FAIL (fill > 7 m on 79 m (viaduct needed, not designed)), 357 m
+     ends old (-1588, -1991) -> (-1570, -1643); new (-1552, -1889) -> (-1570, -1643)
+     -> FIXED by trimmed start by 107 m (the line then ends free there): PASS, cut 6.2 m, grade 0.0 %, wet 0 m, length 248 m (was 357 m)
+
+PART B: smoothness R3. Radius recomputed on every line (20 m points, 60 m chord), V80 minimum 229 m. Lines under 229 m are smoothed (ends fixed, shift <= 80 m, 150 m for L48, L23) and kept only if the profile result is not worse.
+  L23: radius 219 m; old profile PASS cut 5.7 wet 0; cap 150 m: R 230 m PASS cut 5.7 wet 0; -> SMOOTHED to R 230 m (shift 3 m, cap 150 m)
+  L48: radius 142 m; old profile PASS cut 4.7 wet 20; cap 150 m: R 164 m PASS cut 4.6 wet 30; cap 200 m: R 164 m PASS cut 4.6 wet 30; cap 300 m: R 164 m PASS cut 4.6 wet 30; -> kept as it was (no smoothing keeps the profile as good)
+
+PART C: 8-lane crossings (ring + 4 J1 arms from the game data). User rule 2026-11-15: a 6 / 4-lane road MAY cross the ring through an INTERCHANGE, the ring gets a junction there. So a crossing is NOT cut: it becomes a placeholder JX-n on the 8-lane road, the line goes on.
+8 placeholders (3 crossings, 5 end-touches). s = metres from the J1 centre on an arm (arm starts at 315 m), metres along the ring polyline (length 19293 m, start = first RING_PIS sample) on the ring.
+  JX    road   line   kind        at (x, z)            s road   gap to previous JX on same road   R5 notes
+  JX-1   J1-E   L27  cross      (   447,    132)     673         -   < 900 m from J1 centre (600 m from the plaza edge NOT met)
+  JX-2   J1-E   L33  cross      (  1236,    632)    1607       934   gap < 1600 m (tap spacing NOT met)
+  JX-3   J1-N   L21  end-touch  (   544,  -1776)    1673         -   
+  JX-4   J1-S   L13  cross      ( -1006,   1592)    2100         -   
+  JX-5   ring   L34  end-touch  ( -2387,   1891)    2600         -   
+  JX-6   ring   L28  end-touch  (   224,  -3744)    9817      7216   
+  JX-7   ring   L50  end-touch  (  1639,  -3217)   11447      1631   
+  JX-8   ring   L25  end-touch  (   457,   1889)   18808      7361   
+R5 spacing list (NOT a verdict, the user judges it; the user said interchanges on the ring are wanted): 2 of 8 placeholders break the 600 m / 1600 m numbers of R5. The ring x arm joins (ring ends of the arms) take no road: JX near them is listed above by its s.
+R1 now: a crossing with an 8-lane road is allowed ONLY as a JX interchange (the 3 old crossings L13 x J1-S, L27 x J1-E, L33 x J1-E are JX placeholders now); a crossing with any other road still needs its own junction.
+
+FINAL CHECK of the G5 line set (same solver and rules as G4)
+  lines 38, 21.0 km (G4: 38 lines, 21.2 km); PASS 38 (21.0 km), FAIL 0
+  R11 grade <= 4 %: PASS on 38 / 38, steepest 4.0 %
+  R3 radius >= 229 m (recomputed on all 38 lines): FAIL L48 142 m; smallest 142 m. L48 142 m, L23 233 m.
+  R1 among the R6 lines: PASS (0 crossings)
+  R2 NOT RUN (no AADT). Rail crossings NOT checked. Line ends are free, vertical curves NOT RUN, natural ground only (same limits as G3 / G4).
+  game run, in-game drive, npm run build, tsc: NOT RUN (nothing in src/ changed; this chat has no network).

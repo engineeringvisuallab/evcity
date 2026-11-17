@@ -1,0 +1,153 @@
+STEP MAP2-FIX1: hills. 278 unbuilt lines, 145 have 60 m or more of steep (D / E) ground, 19 MOVED round the hill, 126 kept.
+hill metres (D + E) before: 39087 m, after: 36638 m (all lines)
+very steep (E) metres before: 25008, after: 23190
+R6: 8 with hill, 1 moved
+R4: 41 with hill, 5 moved
+R2: 96 with hill, 13 moved
+
+id | len old | hill old | E old | status | len new | hill new | E new | minR | shift | tunnel?
+R6-12 | 406 | 101 | 0 | MOVED | 399 | 61 | 0 | 1000000000 | 44 | 
+R6-18 | 260 | 90 | 0 | KEEP old (no real gain: hill 90 -> 90 m) | 260 | 90 | 0 | 1000000000 | 24 | 
+R6-20.1 | 275 | 153 | 0 | KEEP old (no real gain: hill 153 -> 153 m) | 275 | 153 | 0 | 1000000000 | 35 | 
+R6-22 | 346 | 82 | 0 | KEEP old (no real gain: hill 82 -> 132 m) | 346 | 132 | 10 | 320 | 56 | 
+R6-29 | 829 | 152 | 0 | KEEP old (new route crosses 3 road(s), R1) | 833 | 110 | 0 | 320 | 41 | 
+R6-30 | 438 | 143 | 31 | KEEP old (new route crosses 1 road(s), R1) | 433 | 121 | 0 | 1000000000 | 44 | 
+R6-31 | 1001 | 160 | 30 | KEEP old (new route crosses 1 road(s), R1) | 1001 | 130 | 10 | 320 | 55 | 
+R6-34 | 1047 | 111 | 0 | KEEP old (new route crosses 1 road(s), R1) | 1045 | 121 | 0 | 320 | 6 | 
+R4-5.2 | 493 | 171 | 10 | KEEP old (no real gain: hill 171 -> 150 m) | 551 | 150 | 0 | 130 | 48 | 
+R4-10.2 | 326 | 81 | 0 | KEEP old (R3 refit failed: dev 92 m, minR 1000000000) |  |  |  |  |  | 
+R4-13 | 647 | 61 | 0 | KEEP old (new route crosses 1 road(s), R1) | 641 | 80 | 0 | 1000000000 | 30 | 
+R4-14.2 | 470 | 133 | 0 | KEEP old (R3 refit failed: dev 96 m, minR 200) |  |  |  |  |  | 
+R4-18.1 | 709 | 91 | 0 | KEEP old (new route crosses 1 road(s), R1) | 709 | 91 | 0 | 1000000000 | 0 | 
+R4-18.2 | 339 | 62 | 0 | MOVED | 348 | 41 | 0 | 144 | 29 | 
+R4-21.1 | 805 | 231 | 0 | MOVED | 786 | 40 | 0 | 200 | 16 | 
+R4-21.2 | 696 | 273 | 61 | KEEP old (new route crosses 1 road(s), R1) | 690 | 325 | 61 | 200 | 56 | 
+R4-22 | 802 | 812 | 812 | KEEP old (R3 refit failed: dev 61 m, minR 144) |  |  |  |  |  | TUNNEL-CANDIDATE
+R4-24 | 349 | 164 | 92 | KEEP old (no real gain: hill 164 -> 164 m) | 349 | 164 | 92 | 1000000000 | 0 | 
+R4-25 | 1021 | 701 | 611 | MOVED | 1169 | 494 | 353 | 130 | 45 | TUNNEL-CANDIDATE
+R4-26 | 1903 | 270 | 130 | KEEP old (new route crosses 3 road(s), R1) | 2236 | 160 | 0 | 170 | 54 | 
+R4-27.2 | 911 | 100 | 0 | KEEP old (R3 refit failed: dev 112 m, minR 200) |  |  |  |  |  | 
+R4-34 | 1170 | 910 | 700 | KEEP old (new route crosses 1 road(s), R1) | 1218 | 846 | 695 | 130 | 38 | TUNNEL-CANDIDATE
+R4-35 | 613 | 573 | 352 | KEEP old (R3 refit failed: dev 346 m, minR 1000000000) |  |  |  |  |  | TUNNEL-CANDIDATE
+R4-37 | 625 | 101 | 0 | KEEP old (R3 refit failed: dev 100 m, minR 170) |  |  |  |  |  | 
+R4-41.1 | 345 | 61 | 0 | KEEP old (R3 refit failed: dev 90 m, minR 1000000000) |  |  |  |  |  | 
+R4-41.2 | 341 | 60 | 0 | MOVED | 363 | 0 | 0 | 200 | 22 | 
+R4-54 | 416 | 365 | 223 | KEEP old (no real gain: hill 365 -> 365 m) | 415 | 365 | 223 | 200 | 4 | TUNNEL-CANDIDATE
+R4-55 | 633 | 372 | 211 | KEEP old (R3 refit failed: dev 61 m, minR 200) |  |  |  |  |  | TUNNEL-CANDIDATE
+R4-57.1 | 503 | 140 | 90 | KEEP old (new route has more fenced / water / fixed-road ground) | 501 | 130 | 80 | 200 | 7 | 
+R4-57.2 | 442 | 80 | 50 | MOVED | 436 | 61 | 10 | 1000000000 | 28 | 
+R4-58 | 445 | 455 | 455 | KEEP old (no real gain: hill 455 -> 455 m) | 445 | 455 | 455 | 218 | 3 | TUNNEL-CANDIDATE
+R4-61.1 | 396 | 406 | 406 | KEEP old (R3 refit failed: dev 212 m, minR 1000000000) |  |  |  |  |  | TUNNEL-CANDIDATE
+R4-61.2 | 334 | 213 | 162 | KEEP old (no real gain: hill 213 -> 213 m) | 334 | 213 | 162 | 1000000000 | 3 | TUNNEL-CANDIDATE
+R4-62 | 785 | 91 | 0 | KEEP old (R3 refit failed: dev 101 m, minR 200) |  |  |  |  |  | 
+R4-63 | 1092 | 681 | 651 | KEEP old (R3 refit failed: dev 93 m, minR 200) |  |  |  |  |  | TUNNEL-CANDIDATE
+R4-66.1 | 1460 | 544 | 393 | KEEP old (new route crosses 2 road(s), R1) | 1414 | 541 | 391 | 200 | 43 | TUNNEL-CANDIDATE
+R4-71.1 | 353 | 313 | 202 | KEEP old (no real gain: hill 313 -> 312 m) | 352 | 312 | 211 | 1000000000 | 7 | TUNNEL-CANDIDATE
+R4-71.2 | 1272 | 1111 | 841 | KEEP old (R3 refit failed: dev 136 m, minR 200) |  |  |  |  |  | TUNNEL-CANDIDATE
+R4-73 | 438 | 347 | 194 | KEEP old (no real gain: hill 347 -> 344 m) | 435 | 344 | 192 | 200 | 8 | TUNNEL-CANDIDATE
+R4-75 | 520 | 71 | 0 | KEEP old (new route crosses 1 road(s), R1) | 520 | 71 | 0 | 248 | 2 | 
+R4-76 | 513 | 161 | 0 | KEEP old (new route crosses 1 road(s), R1) | 508 | 183 | 0 | 1000000000 | 55 | 
+R4-79 | 714 | 433 | 302 | KEEP old (R3 refit failed: dev 160 m, minR 1000000000) |  |  |  |  |  | TUNNEL-CANDIDATE
+R4-81 | 660 | 230 | 160 | KEEP old (no real gain: hill 230 -> 230 m) | 660 | 230 | 160 | 1000000000 | 0 | TUNNEL-CANDIDATE
+R4-82 | 749 | 759 | 668 | KEEP old (no real gain: hill 759 -> 755 m) | 745 | 755 | 654 | 200 | 6 | TUNNEL-CANDIDATE
+R4-83.1 | 527 | 486 | 486 | KEEP old (new route crosses 1 road(s), R1) | 525 | 485 | 485 | 200 | 6 | TUNNEL-CANDIDATE
+R4-83.2 | 426 | 355 | 294 | KEEP old (new route crosses 1 road(s), R1) | 439 | 317 | 194 | 200 | 32 | TUNNEL-CANDIDATE
+R4-84 | 668 | 628 | 567 | KEEP old (R3 refit failed: dev 140 m, minR 1000000000) |  |  |  |  |  | TUNNEL-CANDIDATE
+R4-86 | 131 | 70 | 50 | KEEP old (no real gain: hill 70 -> 70 m) | 131 | 70 | 50 | 1000000000 | 0 | 
+R4-88 | 700 | 120 | 0 | KEEP old (new route crosses 1 road(s), R1) | 700 | 132 | 0 | 321 | 1 | 
+R2-1 | 280 | 280 | 140 | KEEP old (no real gain: hill 280 -> 280 m) | 280 | 280 | 140 | 1000000000 | 0 | TUNNEL-CANDIDATE
+R2-2.1 | 245 | 255 | 255 | KEEP old (no real gain: hill 255 -> 254 m) | 244 | 254 | 254 | 113 | 3 | TUNNEL-CANDIDATE
+R2-2.2 | 170 | 180 | 180 | KEEP old (no real gain: hill 180 -> 180 m) | 170 | 180 | 180 | 1000000000 | 0 | TUNNEL-CANDIDATE
+R2-3 | 166 | 166 | 166 | KEEP old (no real gain: hill 166 -> 166 m) | 166 | 166 | 166 | 1000000000 | 0 | TUNNEL-CANDIDATE
+R2-6.1 | 459 | 184 | 0 | KEEP old (new route crosses 1 road(s), R1) | 492 | 40 | 0 | 110 | 33 | 
+R2-6.2 | 295 | 163 | 51 | KEEP old (new route crosses 1 road(s), R1) | 302 | 101 | 0 | 93 | 7 | 
+R2-6.3 | 526 | 162 | 0 | MOVED | 743 | 70 | 0 | 110 | 36 | 
+R2-7 | 216 | 227 | 206 | KEEP old (no real gain: hill 227 -> 226 m) | 216 | 226 | 205 | 115 | 2 | TUNNEL-CANDIDATE
+R2-8 | 213 | 223 | 193 | KEEP old (no real gain: hill 223 -> 222 m) | 212 | 222 | 192 | 110 | 4 | TUNNEL-CANDIDATE
+R2-9.1 | 277 | 287 | 287 | KEEP old (no real gain: hill 287 -> 287 m) | 277 | 287 | 287 | 1000000000 | 0 | TUNNEL-CANDIDATE
+R2-9.4 | 253 | 264 | 264 | KEEP old (no real gain: hill 264 -> 263 m) | 253 | 263 | 263 | 129 | 2 | TUNNEL-CANDIDATE
+R2-17 | 340 | 62 | 0 | KEEP old (R3 refit failed: dev 61 m, minR 110) |  |  |  |  |  | 
+R2-20 | 202 | 91 | 0 | KEEP old (new route has more fenced / water / fixed-road ground) | 227 | 52 | 0 | 110 | 47 | 
+R2-21.1 | 744 | 593 | 392 | KEEP old (no real gain: hill 593 -> 484 m) | 766 | 484 | 262 | 110 | 42 | TUNNEL-CANDIDATE
+R2-26.2 | 292 | 111 | 10 | KEEP old (no real gain: hill 111 -> 113 m) | 289 | 113 | 10 | 110 | 38 | 
+R2-33.2 | 239 | 62 | 10 | KEEP old (no real gain: hill 62 -> 62 m) | 239 | 62 | 10 | 1000000000 | 0 | 
+R2-33.3 | 304 | 253 | 101 | MOVED | 309 | 155 | 72 | 110 | 12 | 
+R2-33.4 | 157 | 62 | 10 | KEEP old (no real gain: hill 62 -> 62 m) | 157 | 62 | 10 | 1000000000 | 55 | 
+R2-41.1 | 296 | 296 | 296 | KEEP old (no real gain: hill 296 -> 296 m) | 296 | 296 | 296 | 1000000000 | 0 | TUNNEL-CANDIDATE
+R2-41.5 | 179 | 137 | 74 | KEEP old (no real gain: hill 137 -> 114 m) | 216 | 114 | 21 | 93 | 49 | 
+R2-42.2 | 440 | 120 | 0 | KEEP old (new route has more fenced / water / fixed-road ground) | 439 | 123 | 0 | 111 | 5 | 
+R2-43.1 | 377 | 72 | 31 | KEEP old (no real gain: hill 72 -> 71 m) | 375 | 71 | 30 | 110 | 4 | 
+R2-43.2 | 383 | 60 | 0 | KEEP old (no real gain: hill 60 -> 51 m) | 408 | 51 | 0 | 110 | 18 | 
+R2-44.2 | 551 | 110 | 110 | KEEP old (no real gain: hill 110 -> 110 m) | 550 | 110 | 110 | 129 | 1 | TUNNEL-CANDIDATE
+R2-53 | 583 | 241 | 141 | MOVED | 721 | 160 | 50 | 110 | 48 | 
+R2-57.3 | 162 | 162 | 142 | KEEP old (R3 refit failed: dev 103 m, minR 1000000000) |  |  |  |  |  | TUNNEL-CANDIDATE
+R2-61.2 | 350 | 175 | 134 | KEEP old (new route has more fenced / water / fixed-road ground) | 348 | 174 | 133 | 1000000000 | 11 | TUNNEL-CANDIDATE
+R2-61.3 | 444 | 71 | 71 | KEEP old (no real gain: hill 71 -> 71 m) | 444 | 71 | 71 | 1000000000 | 0 | 
+R2-62.1 | 485 | 212 | 81 | KEEP old (no real gain: hill 212 -> 212 m) | 485 | 212 | 81 | 1000000000 | 0 | 
+R2-65.2 | 307 | 82 | 0 | KEEP old (no real gain: hill 82 -> 102 m) | 296 | 102 | 0 | 1000000000 | 54 | 
+R2-69.1 | 404 | 121 | 0 | KEEP old (no real gain: hill 121 -> 112 m) | 409 | 112 | 0 | 110 | 46 | 
+R2-69.2 | 281 | 70 | 0 | MOVED | 317 | 10 | 0 | 110 | 42 | 
+R2-73 | 598 | 91 | 0 | KEEP old (R3 refit failed: dev 74 m, minR 110) |  |  |  |  |  | 
+R2-78.1 | 402 | 70 | 0 | MOVED | 419 | 31 | 0 | 110 | 11 | 
+R2-78.2 | 334 | 142 | 61 | KEEP old (no real gain: hill 142 -> 142 m) | 333 | 142 | 61 | 114 | 3 | 
+R2-79 | 428 | 275 | 51 | KEEP old (new route crosses 1 road(s), R1) | 456 | 172 | 71 | 79 | 33 | 
+R2-80 | 1590 | 1340 | 1040 | KEEP old (new route has more fenced / water / fixed-road ground) | 1517 | 1266 | 1045 | 110 | 49 | TUNNEL-CANDIDATE
+R2-85.2 | 395 | 61 | 0 | KEEP old (no real gain: hill 61 -> 61 m) | 395 | 61 | 0 | 135 | 2 | 
+R2-86.4 | 682 | 70 | 50 | KEEP old (new route has more fenced / water / fixed-road ground) | 681 | 70 | 50 | 111 | 3 | 
+R2-86.5 | 419 | 286 | 92 | KEEP old (new route crosses 1 road(s), R1) | 448 | 82 | 31 | 70 | 18 | 
+R2-87 | 602 | 382 | 251 | KEEP old (new route crosses 1 road(s), R1) | 601 | 390 | 250 | 110 | 3 | TUNNEL-CANDIDATE
+R2-88.1 | 329 | 288 | 288 | KEEP old (no real gain: hill 288 -> 288 m) | 329 | 288 | 288 | 129 | 2 | TUNNEL-CANDIDATE
+R2-88.2 | 410 | 420 | 400 | KEEP old (no real gain: hill 420 -> 419 m) | 409 | 419 | 399 | 111 | 3 | TUNNEL-CANDIDATE
+R2-105.2 | 583 | 422 | 80 | MOVED | 649 | 294 | 41 | 70 | 36 | 
+R2-106.3 | 196 | 62 | 52 | KEEP old (new route crosses 1 road(s), R1) | 198 | 0 | 0 | 110 | 11 | 
+R2-109.1 | 388 | 82 | 0 | KEEP old (no real gain: hill 82 -> 82 m) | 388 | 82 | 0 | 1000000000 | 0 | 
+R2-109.3 | 676 | 71 | 0 | KEEP old (no real gain: hill 71 -> 70 m) | 673 | 70 | 0 | 110 | 10 | 
+R2-111 | 394 | 91 | 0 | MOVED | 504 | 10 | 0 | 110 | 50 | 
+R2-115.2 | 360 | 140 | 0 | KEEP old (new route crosses 1 road(s), R1) | 374 | 51 | 0 | 110 | 8 | 
+R2-125.2 | 279 | 206 | 72 | MOVED | 296 | 164 | 31 | 110 | 19 | 
+R2-129.1 | 396 | 346 | 102 | MOVED | 652 | 50 | 0 | 70 | 23 | 
+R2-132.2 | 2068 | 472 | 341 | KEEP old (no real gain: hill 472 -> 491 m) | 1645 | 491 | 100 | 110 | 44 | 
+R2-134 | 248 | 258 | 258 | KEEP old (no real gain: hill 258 -> 258 m) | 248 | 258 | 258 | 1000000000 | 0 | TUNNEL-CANDIDATE
+R2-138.2 | 1363 | 911 | 711 | MOVED | 1490 | 350 | 0 | 110 | 50 | 
+R2-138.4 | 418 | 235 | 184 | KEEP old (no real gain: hill 235 -> 231 m) | 433 | 231 | 191 | 110 | 39 | TUNNEL-CANDIDATE
+R2-138.5 | 492 | 502 | 452 | KEEP old (no real gain: hill 502 -> 512 m) | 552 | 512 | 281 | 70 | 52 | TUNNEL-CANDIDATE
+R2-138.6 | 617 | 516 | 253 | KEEP old (R3 refit failed: dev 87 m, minR 79) |  |  |  |  |  | TUNNEL-CANDIDATE
+R2-139.1 | 448 | 265 | 153 | KEEP old (R3 refit failed: dev 85 m, minR 1000000000) |  |  |  |  |  | TUNNEL-CANDIDATE
+R2-139.2 | 403 | 343 | 343 | MOVED | 478 | 214 | 153 | 79 | 32 | TUNNEL-CANDIDATE
+R2-142.1 | 335 | 305 | 193 | KEEP old (no real gain: hill 305 -> 250 m) | 501 | 250 | 90 | 70 | 30 | 
+R2-142.2 | 515 | 273 | 192 | KEEP old (new route crosses 1 road(s), R1) | 978 | 302 | 40 | 93 | 37 | 
+R2-144.1 | 732 | 342 | 181 | MOVED | 785 | 222 | 141 | 110 | 45 | TUNNEL-CANDIDATE
+R2-150.1 | 225 | 184 | 133 | KEEP old (no real gain: hill 184 -> 168 m) | 230 | 168 | 84 | 110 | 11 | 
+R2-150.2 | 226 | 236 | 236 | KEEP old (no real gain: hill 236 -> 236 m) | 226 | 236 | 236 | 1000000000 | 5 | TUNNEL-CANDIDATE
+R2-151 | 612 | 541 | 391 | KEEP old (new route crosses 1 road(s), R1) | 658 | 415 | 283 | 110 | 49 | TUNNEL-CANDIDATE
+R2-152 | 511 | 271 | 271 | KEEP old (no real gain: hill 271 -> 271 m) | 633 | 271 | 271 | 70 | 50 | TUNNEL-CANDIDATE
+R2-153.1 | 351 | 321 | 241 | KEEP old (no real gain: hill 321 -> 322 m) | 352 | 322 | 252 | 167 | 29 | TUNNEL-CANDIDATE
+R2-153.2 | 483 | 442 | 231 | KEEP old (no real gain: hill 442 -> 418 m) | 459 | 418 | 296 | 110 | 49 | TUNNEL-CANDIDATE
+R2-154 | 349 | 349 | 298 | MOVED | 359 | 165 | 21 | 110 | 34 | 
+R2-155 | 514 | 423 | 373 | KEEP old (R3 refit failed: dev 229 m, minR 1000000000) |  |  |  |  |  | TUNNEL-CANDIDATE
+R2-158.1 | 290 | 150 | 150 | KEEP old (no real gain: hill 150 -> 150 m) | 290 | 150 | 150 | 1000000000 | 1 | TUNNEL-CANDIDATE
+R2-160 | 263 | 223 | 223 | KEEP old (no real gain: hill 223 -> 222 m) | 263 | 222 | 222 | 148 | 1 | TUNNEL-CANDIDATE
+R2-161 | 448 | 357 | 265 | KEEP old (no real gain: hill 357 -> 335 m) | 478 | 335 | 213 | 110 | 57 | TUNNEL-CANDIDATE
+R2-163.1 | 232 | 242 | 101 | KEEP old (no real gain: hill 242 -> 240 m) | 230 | 240 | 100 | 110 | 4 | 
+R2-163.2 | 189 | 200 | 126 | KEEP old (new route crosses 1 road(s), R1) | 186 | 196 | 124 | 110 | 6 | TUNNEL-CANDIDATE
+R2-165.1 | 789 | 60 | 20 | KEEP old (no real gain: hill 60 -> 81 m) | 779 | 81 | 0 | 110 | 13 | 
+R2-165.2 | 603 | 613 | 593 | KEEP old (no real gain: hill 613 -> 613 m) | 603 | 613 | 593 | 1000000000 | 0 | TUNNEL-CANDIDATE
+R2-167.1 | 293 | 71 | 0 | KEEP old (no real gain: hill 71 -> 80 m) | 321 | 80 | 0 | 79 | 22 | 
+R2-167.2 | 246 | 92 | 0 | KEEP old (new route crosses 1 road(s), R1) | 255 | 133 | 0 | 110 | 37 | 
+R2-168.1 | 451 | 181 | 20 | KEEP old (new route has more fenced / water / fixed-road ground) | 455 | 81 | 0 | 110 | 38 | 
+R2-168.2 | 262 | 60 | 0 | KEEP old (R3 refit failed: dev 64 m, minR 1000000000) |  |  |  |  |  | 
+R2-173.1 | 283 | 293 | 293 | KEEP old (no real gain: hill 293 -> 293 m) | 283 | 293 | 293 | 1000000000 | 0 | TUNNEL-CANDIDATE
+R2-173.2 | 258 | 269 | 269 | KEEP old (new route crosses 1 road(s), R1) | 258 | 269 | 269 | 1000000000 | 1 | TUNNEL-CANDIDATE
+R2-173.3 | 272 | 282 | 282 | KEEP old (no real gain: hill 282 -> 282 m) | 272 | 282 | 282 | 1000000000 | 3 | TUNNEL-CANDIDATE
+R2-173.4 | 178 | 188 | 188 | KEEP old (no real gain: hill 188 -> 188 m) | 178 | 188 | 188 | 1000000000 | 0 | TUNNEL-CANDIDATE
+R2-176 | 441 | 401 | 401 | KEEP old (no real gain: hill 401 -> 400 m) | 440 | 400 | 400 | 110 | 3 | TUNNEL-CANDIDATE
+R2-177 | 366 | 203 | 20 | KEEP old (no real gain: hill 203 -> 163 m) | 376 | 163 | 0 | 110 | 53 | 
+R2-178.1 | 76 | 65 | 11 | KEEP old (no real gain: hill 65 -> 64 m) | 75 | 64 | 21 | 1000000000 | 30 | 
+R2-179 | 365 | 284 | 213 | KEEP old (no real gain: hill 284 -> 283 m) | 364 | 283 | 212 | 113 | 3 | TUNNEL-CANDIDATE
+R2-181 | 383 | 192 | 131 | KEEP old (no real gain: hill 192 -> 163 m) | 426 | 163 | 112 | 110 | 40 | TUNNEL-CANDIDATE
+R2-183.1 | 252 | 262 | 262 | KEEP old (no real gain: hill 262 -> 262 m) | 252 | 262 | 262 | 1000000000 | 8 | TUNNEL-CANDIDATE
+R2-183.2 | 278 | 288 | 288 | KEEP old (no real gain: hill 288 -> 288 m) | 277 | 288 | 288 | 149 | 1 | TUNNEL-CANDIDATE
+R2-184 | 349 | 205 | 123 | KEEP old (no real gain: hill 205 -> 190 m) | 420 | 190 | 100 | 110 | 44 | 
+R2-189 | 442 | 312 | 161 | KEEP old (new route has more fenced / water / fixed-road ground) | 440 | 297 | 174 | 80 | 4 | TUNNEL-CANDIDATE
+R2-190.1 | 258 | 227 | 41 | KEEP old (no real gain: hill 227 -> 227 m) | 258 | 227 | 41 | 1000000000 | 0 | 
+R2-190.2 | 466 | 223 | 0 | KEEP old (new route crosses 1 road(s), R1) | 491 | 80 | 0 | 110 | 18 | 

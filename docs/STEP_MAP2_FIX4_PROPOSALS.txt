@@ -1,0 +1,34 @@
+STEP MAP2-FIX4 PROPOSALS (AI proposal list, NOTHING applied; R10: user decides). Roots = 8-lane + built 6-lane that reach an 8-lane road; spacing 800 m, J1 clear 900 m.
+
+A. ISOLATED BUILT 6-LANE ROADS (not roots, see docs/STEP_MAP2_FIX4_ROOTS.txt)
+  R6-5: PROPOSE end (1181,1030) -> existing R6-8 tap / J1-E at about (1326,670)-(1365,716): new piece about 360-390 m, arrival turn 5 deg, min radius 320 m >= 229 (R3 PASS), uses the EXISTING tap (R6-8-tap, 60 m away, no new tap, R5 ok). Chord crosses sketch lines R6-23.1 and R2-90 -> by R1 they end at R6-5 (junction), 2 R2/R6 line changes: ASK. Ground, rail, water NOT checked (no game / node_modules here).
+  R6-7: already analysed in docs/STEP_R6_7_JOIN_OUTPUT.txt: N end -> existing tap T7299, 757 m, R3 PASS, grade 2.0 %. BLOCKERS: the rail lies between R6-7 and M8 on every way (needs bridge or underpass: USER must allow), and the join crosses R2-165.1 (becomes a junction, R2-165.1 ends at R6-7). Not applied.
+
+B. LINE GROUPS THAT DO NOT TOUCH A PASSING ROAD (24 groups, 110 lines): PROPOSAL = share an EXISTING tap, no new tap, no new spacing change
+group | lines | max class | PROPOSED join (existing tap, distance the line group must be moved / extended) | open reason
+G01 | 28 | R4 | move join to existing tap T-W960 (836 m) | J1 plaza 292 m < 900
+G02 | 22 | R6 | move join to existing tap T-E610 (254 m) | J1 plaza 689 m < 900, tap T-E610 254 m < 800
+G03 | 14 | R4 | move join to existing tap T7299 (782 m) | tap T7299 782 m < 800
+G04 | 7 | R6 | NO tap within 900 m (nearest T-W960 1221 m): USER chooses trunk or new tap | join R4265 381 m (no branch / 800)
+G05 | 5 | R6 | NO tap within 900 m (nearest T13738 1554 m): USER chooses trunk or new tap | join R12094 59 m (no branch / 800)
+G06 | 5 | R2 | move join to existing tap T8919 (900 m) | spacing ok
+G07 | 4 | R2 | move join to existing tap T-W960 (563 m) | tap T-W960 563 m < 800
+G08 | 3 | R2 | move join to existing tap T8919 (699 m) | tap T8919 699 m < 800
+G09 | 1 | R2 | move join to existing tap T13738 (663 m) | tap T13738 663 m < 800
+G10 | 4 | R6 | NO tap within 900 m (nearest R6-8-tap 1146 m): USER chooses trunk or new tap | join R16813 671 m (no branch / 800)
+G11 | 1 | R4 | move join to existing tap T13738 (155 m) | tap T13738 155 m < 800
+G12 | 1 | R4 | NO tap within 900 m (nearest T18838 2285 m): USER chooses trunk or new tap | join R1205 695 m (no branch / 800)
+G13 | 2 | R6 | built 6-lane root R6-8: allow blend / move the line end (turn limit), nearest root R6-8 96 m (line R6-32) | built 6-lane root R6-8 (no spacing rule)
+G14 | 2 | R4 | NO tap within 900 m (nearest R6-8-tap 1548 m): USER chooses trunk or new tap | join R16813 577 m (no branch / 800)
+G15 | 1 | R2 | NO tap within 900 m (nearest T18838 1858 m): USER chooses trunk or new tap | join R1205 256 m (no branch / 800)
+G16 | 1 | R4 | move join to existing tap T13738 (355 m) | tap T13738 355 m < 800
+G17 | 1 | R4 | move join to existing tap T8919 (103 m) | tap T8919 103 m < 800
+G18 | 1 | R4 | move join to existing tap T8919 (543 m) | tap T8919 543 m < 800
+G19 | 2 | R4 | move join to existing tap T-N880 (128 m) | tap T-N880 128 m < 800
+G20 | 1 | R4 | move join to existing tap T18838 (751 m) | tap T18838 751 m < 800
+G21 | 1 | R2 | built 6-lane root R6-6A: allow blend / move the line end (turn limit), nearest root R6-6A 332 m (line R2-189) | built 6-lane root R6-6A (no spacing rule)
+G22 | 1 | R6 | move join to existing tap T-E610 (224 m) | J1 plaza 719 m < 900, tap T-E610 224 m < 800
+G23 | 1 | R2 | move join to existing tap T-W960 (570 m) | J1 plaza 487 m < 900, tap T-W960 570 m < 800
+G24 | 1 | R6 | move join to existing tap T7299 (53 m) | tap T7299 53 m < 800
+
+C. NOT DONE HERE: water re-check on moved lines and FIX 2 (profile, cut <= 12 m, fill <= 7 m, R6 grade <= 4 %, tunnel list) need the game ground (npm ci + tsx + src); this chat has no node_modules and no network for npm.

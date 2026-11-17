@@ -1,0 +1,17 @@
+[road fix RC03] skipped: road not found
+RING STRUCTURES (Step 5.3b)   ring 19293 m, 2412 points, 6 structures
+  no  stations         length  wet span  type  water  clearance(underside over water/ground)
+  S1    776 -   896    120 m     96 m   arch  14.5   2.8 m
+  S2   8135 -  8207     72 m     48 m   beam  43.5   3.6 m
+  S3  12294 - 12358     64 m     40 m   beam  22.2   1.9 m
+  S4  13950 - 14038     88 m     56 m   beam  19.0   17.0 m
+  S5  14230 - 14334    104 m     72 m   beam  26.8   22.3 m
+  S6  15237 - 16037    800 m    768 m   beam  42.4   32.7 m
+  PASS  1. every wet point of the centreline is inside a structure                     bad 0
+  PASS  2. no fill higher than 25 m outside a structure                                worst 0.0 m, bad 0 
+  PASS  3. every structure is long enough for two approach slabs of 16 m               bad 0
+  PASS  4. terrain under the inner part of a structure is never raised (no earth dam)  966 points, worst rise 0.00 m, bad 0 
+  PASS  5. whole deck incl. approach slabs: ground stays 0.3 m below the slab underside 810 points, worst 0.00 m, bad 0 
+  INFO  S1 (station 776-896): underside only 2.8 m over the water (low; the grade line is unchanged, user decision pending)
+  INFO  S3 (station 12294-12358): underside only 1.9 m over the water (low; the grade line is unchanged, user decision pending)
+ALL CHECKS PASS

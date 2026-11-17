@@ -1,0 +1,119 @@
+STEP MAP2-FIX4 APPLY (AI engineering decision): R6-5 / R6-7 pieces, R1 splits, group joins at EXISTING taps (<= 900 m, blend).
+NOT joined now: R6 18, R4 41, R2 44 (before FIX 4: 21 / 49 / 81).
+
+PIECE R6-5X: R6-5 end -> J1-E, 364 m, min R 320 (Rmin 229) R3 PASS, crosses ['R6-23.1', 'R2-90']
+  R1 split / cut R6-23.1 at (1240, 931) -> ['R6-23.1a', 'R6-23.1b'], junction J-152
+  R1 split / cut R2-90 at (1209, 984) -> ['R2-90'], junction J-153
+PIECE R6-7X: R6-7 end -> M8, 663 m, min R 320 (Rmin 229) R3 PASS, crosses []
+TAP-JOIN R2-190.1  start -> T8919     268 m  trim 100 dev 14 minR 110  node J-156
+TAP-JOIN R2-139.1  end   -> T-W960    405 m  trim 200 dev 29 minR 110  node J-157
+FRONTAGE FR-1  class 6: R6-21 start end -> tap T8919, 867 m long, min R 270, 8-lane road M8, node J-159
+FRONTAGE FR-2  class 4: R4-57.1 start end -> tap T-W960, 423 m long, min R 159, 8-lane road J1-W, node J-161
+FRONTAGE FR-3  class 4: R4-63 start end -> tap T7299, 598 m long, min R 174, 8-lane road M8, node J-163
+FRONTAGE FR-4  class 2: R2-1 start end -> tap T-N880, 642 m long, min R 95, 8-lane road J1-N, node J-165
+FRONTAGE FR-5  class 2: R2-80 start end -> tap T13738, 702 m long, min R 105, 8-lane road M8, node J-167
+
+NOT joined (103 lines):
+  R6 R6-10      last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R6 R6-11      last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R6 R6-13      last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R6 R6-16      last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m / no existing tap within 1300 m along the road
+  R6 R6-17      last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R6 R6-18      last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R6 R6-19      last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m / no existing tap within 1300 m along the road
+  R6 R6-20.1    last reason: body too short after trim | frontage: / no 8-lane road within 150 m / R3: offset curve radius 21 < 222
+  R6 R6-20.2    last reason: body too short after trim | frontage: / R3: offset curve radius 38 < 222 / no 8-lane road within 150 m
+  R6 R6-22      last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R6 R6-27      last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R6 R6-29      last reason: moves T-junction J-77 | frontage: / no 8-lane road within 150 m
+  R6 R6-30      last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R6 R6-31      last reason: no existing tap within 900 m of an end | frontage: / no existing tap within 1300 m along the road / no 8-lane road within 150 m
+  R6 R6-32      last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R6 R6-33      last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R6 R6-35      last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R6 R6-36      last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R4 R4-1       last reason: body too short after trim | frontage: / no 8-lane road within 150 m / R3: offset curve radius 41 < 126
+  R4 R4-5.1     last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R4 R4-5.2     last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R4 R4-11      last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R4 R4-14.1    last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R4 R4-14.2    last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R4 R4-19      last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R4 R4-22      last reason: crosses a road (R1) | frontage: / no 8-lane road within 150 m
+  R4 R4-24      last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R4 R4-25      last reason: turn 133 deg > 75 | frontage: / no 8-lane road within 150 m
+  R4 R4-26      last reason: moves T-junction J-53 | frontage: / no 8-lane road within 150 m
+  R4 R4-27.1    last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R4 R4-27.2    last reason: moves T-junction J-59 | frontage: / no 8-lane road within 150 m
+  R4 R4-31      last reason: body too short after trim | frontage: / no existing tap within 1300 m along the road / no 8-lane road within 150 m
+  R4 R4-34      last reason: no existing tap within 900 m of an end | frontage: / no existing tap within 1300 m along the road / no 8-lane road within 150 m
+  R4 R4-37      last reason: body too short after trim | frontage: / no 8-lane road within 150 m / no existing tap within 1300 m along the road
+  R4 R4-45      last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R4 R4-50.1    last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R4 R4-50.2    last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R4 R4-52      last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m / no existing tap within 1300 m along the road
+  R4 R4-55      last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R4 R4-56      last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m / no existing tap within 1300 m along the road
+  R4 R4-58      last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R4 R4-60.2    last reason: body too short after trim | frontage: / no existing tap within 1300 m along the road / no 8-lane road within 150 m
+  R4 R4-60.3    last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R4 R4-61.1    last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R4 R4-61.2    last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m / no existing tap within 1300 m along the road
+  R4 R4-62      last reason: moves T-junction J-106 | frontage: / no existing tap within 1300 m along the road / no 8-lane road within 150 m
+  R4 R4-71.1    last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R4 R4-71.2    last reason: moves T-junction J-122 | frontage: / no 8-lane road within 150 m
+  R4 R4-73      last reason: body too short after trim | frontage: / no 8-lane road within 150 m / no existing tap within 1300 m along the road
+  R4 R4-75      last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R4 R4-76      last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R4 R4-79      last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R4 R4-81      last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R4 R4-82      last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R4 R4-83.1    last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R4 R4-83.2    last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R4 R4-84      last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R4 R4-86      last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R4 R4-88      last reason: body too short after trim | frontage: / no existing tap within 1300 m along the road / no 8-lane road within 150 m
+  R2 R2-7       last reason: no existing tap within 900 m of an end | frontage: / no existing tap within 1300 m along the road / no 8-lane road within 150 m
+  R2 R2-8       last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R2 R2-20      last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m / no existing tap within 1300 m along the road
+  R2 R2-21.1    last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R2 R2-21.2    last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R2 R2-54.1    last reason: no existing tap within 900 m of an end | frontage: / no existing tap within 1300 m along the road / no 8-lane road within 150 m
+  R2 R2-54.2    last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R2 R2-78.1    last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R2 R2-78.2    last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R2 R2-79      last reason: no existing tap within 900 m of an end | frontage: / no existing tap within 1300 m along the road / no 8-lane road within 150 m
+  R2 R2-82      last reason: no existing tap within 900 m of an end | frontage: / no existing tap within 1300 m along the road / no 8-lane road within 150 m
+  R2 R2-86.2    last reason: body too short after trim | frontage: / no existing tap within 1300 m along the road / no 8-lane road within 150 m
+  R2 R2-86.4    last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R2 R2-86.5    last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R2 R2-88.1    last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R2 R2-88.2    last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R2 R2-106.1   last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R2 R2-106.2   last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R2 R2-106.3   last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R2 R2-107.1   last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R2 R2-107.2   last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R2 R2-109.1   last reason: no existing tap within 900 m of an end | frontage: / no existing tap within 1300 m along the road / no 8-lane road within 150 m
+  R2 R2-109.2   last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R2 R2-109.3   last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m / no existing tap within 1300 m along the road
+  R2 R2-110.1   last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R2 R2-110.2   last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R2 R2-110.3   last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R2 R2-111     last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R2 R2-114.1   last reason: no existing tap within 900 m of an end | frontage: / no existing tap within 1300 m along the road / no 8-lane road within 150 m
+  R2 R2-114.2   last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R2 R2-115.1   last reason: body too short after trim | frontage: / no existing tap within 1300 m along the road / no 8-lane road within 150 m
+  R2 R2-115.2   last reason: body too short after trim | frontage: / no 8-lane road within 150 m
+  R2 R2-117     last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m / no existing tap within 1300 m along the road
+  R2 R2-141     last reason: body too short after trim | frontage: / no existing tap within 1300 m along the road / no 8-lane road within 150 m
+  R2 R2-154     last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R2 R2-161     last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R2 R2-163.1   last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R2 R2-163.2   last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R2 R2-176     last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R2 R2-177     last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R2 R2-178.1   last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R2 R2-178.2   last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R2 R2-184     last reason: no existing tap within 900 m of an end | frontage: / no 8-lane road within 150 m
+  R2 R2-189     last reason: body too short after trim | frontage: / no 8-lane road within 150 m

@@ -1,0 +1,12 @@
+J1-a2 YAW SCAN (2026-11-14). Run: J1YAW=<deg> J1X=<x> J1Z=<z> npx tsx scripts/j1-ground-calc.ts <outdir>
+Reason: user wants to rotate J1 clockwise so the N arm skirts the hill (no hill cut). Straight N arm, grade 3 % from pad 18.25 m, real ground:
+ yaw 17.6: max cut 88 m (>12 m: 560 m) | 25: 35 m (440) | 30: 20 m (180) | 35: 9 m (0) | 40: 11 m (0) | 45: 15 m (80) | 55: 13 m (40)
+ W arm (straight) cut > 80 m for every yaw (hill 100-190 m): the W arm needs its own route around the hill (c5), the rotation does not change that.
+Clear lengths at C9 (-117, -277), need N 330 / E 324 / S 330 / W 324 m (W approach is the limit, slope on the west side):
+ yaw 32: N 380 E 370 S 330 W 320 (1 FAIL, W)   yaw 35: N 390 E 370 S 330 W 310 (1 FAIL)   yaw 37.5: N 400 E 380 S 330 W 310 (1 FAIL)
+ yaw 40: N 400 E 390 S 330 W 300 (1 FAIL)       yaw 42: N 410 E 400 S 340 W 300 (1 FAIL)
+Shift scan at yaw 37.5 (dx east, dz south, from C9):
+ (0,0) 11P/1F | (0,30) 1F | (0,60) 1F | (30,0) N 380 E 350 S 350 W 330 = 12 PASS 0 FAIL | (30,30) 1F | (30,60) 1F | (60,0) 1F | (60,30) 1F | (60,60) 2F
+RESULT: J1 = C10 (-87, -277), yaw 37.5 deg east of north. 12 PASS, 0 FAIL (docs/STEPJ1A2_OUTPUT.txt).
+Bearings: N 37.5, E 127.5, S 217.5, W 307.5. Bends to the ring points (approx.): N -5, E -29, S +16, W +30 deg (limit raised 20 -> 35 deg, user OK).
+N arm search (scripts/j1-n-hybrid.ts, env J1X J1Z J1YAW HMIN=-47 HMAX=-37, cut cap 12, 90 m steps, 5 deg turns = R >= 1031 m): 3149 m from s 340, max centre cut 8.9-10 m (cut > 12 m: 0 m, was 36 m / 540 m), fill > 7 m 180 m, 1 rail crossing, arrives at the ring N straight at ~90 deg (about st 12040). Picture docs/j1c4a_yaw375.png. Route is a bit wavy (grid search): c4b smoothing makes it straight-spiral-arc.

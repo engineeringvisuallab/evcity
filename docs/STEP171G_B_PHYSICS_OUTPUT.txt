@@ -1,0 +1,15 @@
+PASS A drive mainland -> island at 22 m/s over 414.55 m: 1131 steps, box bottom over the road surface -0.01 .. 0.11 m (limits -0.15 .. 0.35), lane error max 0.01 m (limit 1.0), highest at design s 878.88
+PASS A drive island -> mainland at 22 m/s over 414.55 m: 1131 steps, box bottom over the road surface -0.01 .. 0.09 m (limits -0.15 .. 0.35), lane error max 0.00 m (limit 1.0), highest at design s 885.33
+PASS B parapet first span middle left : centre never beyond u = 15.21 m (outer face 16.90 m, inner face 16.00 m), lowest box bottom -0.11 m over the road surface
+PASS B parapet first span middle right: centre never beyond u = 15.23 m (outer face 16.90 m, inner face 16.00 m), lowest box bottom -0.10 m over the road surface
+PASS B parapet mid-span          left : centre never beyond u = 15.22 m (outer face 16.90 m, inner face 16.00 m), lowest box bottom 0.00 m over the road surface
+PASS B parapet mid-span          right: centre never beyond u = 15.22 m (outer face 16.90 m, inner face 16.00 m), lowest box bottom 0.00 m over the road surface
+PASS B parapet last span middle  left : centre never beyond u = 15.19 m (outer face 16.90 m, inner face 16.00 m), lowest box bottom 0.02 m over the road surface
+PASS B parapet last span middle  right: centre never beyond u = 15.24 m (outer face 16.90 m, inner face 16.00 m), lowest box bottom 0.03 m over the road surface
+PASS B parapet first 8 m         left : centre never beyond u = 15.21 m (outer face 16.90 m, inner face 16.00 m), lowest box bottom -0.10 m over the road surface
+PASS B parapet first 8 m         right: centre never beyond u = 15.22 m (outer face 16.90 m, inner face 16.00 m), lowest box bottom -0.10 m over the road surface
+PASS C 7 pier lines: a ray 4 m over the sea floor from 8 m outside the outer column hits that column (face about 6.40 m away, tolerance 1.6 m for the taper); misses: 0
+PASS C abutment at design s 487.15: a ray along the road under the girder hits the abutment wall (3.2 m thick, centred on the structure end) at 6.40 m (3.2 m thick wall, face about 6.4 m from the ray start)
+PASS C abutment at design s 869.70: a ray along the road under the girder hits the abutment wall (3.2 m thick, centred on the structure end) at 6.40 m (3.2 m thick wall, face about 6.4 m from the ray start)
+
+ALL PASS

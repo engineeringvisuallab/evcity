@@ -1,0 +1,17 @@
+===== J1-E (undefined, rail undefined) =====
+  rail crossings on this arm (rail design of the game now): north-1 s 424 rail top 33.82; east-1 s 922 rail top 24.78; east-2 s 2615 rail top 29.45
+  best cost 16405.6; PVIs (s, level, curve): 0 (18.19, 0) | 130 (18.58, 0) | 350 (18.43, 133) | 439 (21.02, 0) | 706 (28.88, 0) | 821 (32.27, 0) | 962 (36.41, 270) | 1219 (30.33, 234) | 1611 (41.85, 300) | 2013 (30.04, 195) | 2333 (34.82, 64) | 2560 (41.48, 300) | 2921 (30.87, 60) | 3037 (28.41, 0)
+  OLD  PVIs: 0 (18.19, 0) | 130 (18.58, 0) | 310 (18.47, 70) | 381 (19.55, 62) | 686 (28.52, 0) | 845 (33.18, 61) | 978 (35.51, 198) | 1226 (30.21, 224) | 1618 (41.74, 300) | 2005 (30.36, 178) | 2355 (34.22, 71) | 2607 (41.05, 288) | 2884 (32.90, 0) | 3037 (28.41, 0)
+  PASS  grade within the arm limits (pad stretch 3.0 %, hill 3.0 % to s 340, 3 % beyond) max grade 2.94 % (s 65..3037)
+  PASS  every vertical curve K >= minimum (crest / sag) and length >= 60 m     8 curves
+  PASS  vertical curves do not overlap                                         0 overlaps
+  PASS  first curve starts at s >= 60 (pad plane kept)                         first curve starts at s 284
+  PASS  end level = ring level at the T                                        end 28.41 m
+  PASS  centre cut <= 12 m in the changed part                                 max cut 8.1 m 
+  PASS  river: road >= 2.5 m over the water in the changed part                5.3 m
+  PASS  north-1 at s 424: rail over road, deck underside >= 7 m over the road  road 20.59 m (was 20.81), ground 18.19 m, rail top 33.82 m, gap 10.58 m (was 10.36)
+  PASS  east-1 at s 922: road over rail, road >= 9 m over the rail top         road 34.34 m (was 34.35), rail top 24.78 m, gap 9.56 m (was 9.57)
+  PASS  east-2 at s 2615: road over rail, road >= 9 m over the rail top        road 38.99 m (was 39.00), rail top 29.45 m, gap 9.53 m (was 9.55)
+  INFO  viaduct runs now (fill > 7 m): s 580..670 (max fill 8.3 m); s 765..1139 (max fill 25.4 m); s 1294..1404 (max fill 9.3 m); s 2363..2612 (max fill 16.3 m); s 2787..2862 (max fill 10.4 m)
+SUMMARY: 10 PASS, 0 FAIL (only the checks of this script; the game checks must be run separately)
+written: docs/j1c7c_profile.json (E, new route). Next steps: structures list of E, tools/j1-arm-data.py, game checks, rail.

@@ -1,0 +1,14 @@
+ring_samples_5m.csv: 3859 rows, ds 4.999 m, length 19292.8 m
+
+Radial meeting points on the new ring (nearest point to the end of the reference radial)
+  dir  station   x        z        ring heading  approach   element      straight range (clear before / after)    ref end -> ring
+  N     10194    591.0  -3821.1      358.8 deg    58 deg   arc         in curve (arc)                                 49 m
+       suggested (>= 500 m clear straight each side): station 11549 at x 1711.6, z -3145.4, shift along the ring 1355 m
+  E     14498   3044.5   -616.2       88.6 deg    84 deg   arc         in curve (arc)                                 286 m
+       suggested (>= 500 m clear straight each side): station 15309 at x 2967.4, z 190.5, shift along the ring 811 m
+  S       235   -187.9   2200.1      148.9 deg    56 deg   straight    straight 0-255 (235 / 20)                      178 m
+       suggested (>= 500 m clear straight each side): station 1205 at x -1131.6, z 2301.8, shift along the ring 970 m
+  W      5104  -2595.0   -591.5      267.3 deg    85 deg   straight    straight 3031-6014 (2074 / 910)                173 m
+       suggested (>= 500 m clear straight each side): station 5104 at x -2595.0, z -591.5, shift along the ring 0 m
+
+  spacing between neighbouring junctions (m): 4869, 5089, 4305, 5029   (rule: >= 1600 m urban)

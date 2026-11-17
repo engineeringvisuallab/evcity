@@ -1,0 +1,4 @@
+J1-c4a N ARM ROUTE (plan search)  edge cut limit 3 m, edge fill limit 10 m, grade <= 3 %, popped 116860 states
+start (-10, -610) s = 340 m on yaw 17.6 deg;  target ring N point (1711.5, -3145.5) road level 36.9 m
+search cost 8082 (m equivalent), route from the end of the straight: 6158 m (straight line 3074 m)
+max grade 2.50 %, max edge cut 2.98 m, max edge fill 9.88 m, wet cells 0, engineering-zone cells 0, rail crossings 0 at route m 

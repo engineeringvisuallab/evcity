@@ -1,0 +1,94 @@
+J1-a CALCULATION SHEET   J1 = C9 (-87, -277), yaw 37.5 deg east of north, 8 lane x 8 lane, ground level, signalised "+"  (C8 (0, -250) failed on the east approach, see section 12)
+inputs: lane 3.65 m, M8 pavement edge 22.1 m from the centreline, arm straight 500 m, rail buffer 50 m from the pavement edge, ground limit 3 %
+
+=== (1) CLEAR LENGTH of each approach, along its axis from the J1 centre (ground flat <= 3 %, dry, rail >= 50 m from the pavement, no facility fence)
+  N  bearing 37.5 deg   clear length  380 m   stop: slope 3.0 % (50 m step along the axis)   ground 17.8..18.7 m along the axis
+      axis crosses rail (straight line, warning for 6.1d): north-1@852   city plan under the axis (first 600 m): s0-arm-n 0-240, s0-suburb 250-280, s0-depot 290-290, s0-suburb 300-550, s0-green 560-600
+  E  bearing 127.5 deg   clear length  350 m   stop: rail north-1 67 m from the axis (needs 72)   ground 18.2..18.9 m along the axis
+      axis crosses rail (straight line, warning for 6.1d): north-1@424   city plan under the axis (first 600 m): s0-arm-n 0-230, s0-cbd 240-290, s0-arm-e 300-600
+  S  bearing 217.5 deg   clear length  350 m   stop: rail west-nw 64 m from the axis (needs 72)   ground 17.9..18.6 m along the axis
+      axis crosses rail (straight line, warning for 6.1d): west-nw@415   city plan under the axis (first 600 m): s0-arm-n 0-20, s0-edu 30-220, s0-arm-w 230-470, s0-homes 480-600
+  W  bearing 307.5 deg   clear length  330 m   stop: slope 4.5 % (50 m step along the axis)   ground 17.8..18.5 m along the axis
+      axis crosses rail (straight line, warning for 6.1d): none within 900 m   city plan under the axis (first 600 m): s0-arm-n 0-10, s0-edu 20-20, s0-civic 30-310, s0-suburb 320-500, s0-green 510-600
+
+=== (3) LAYOUT per approach (left-hand traffic)
+  inbound lanes at the stop line: 1 left slip + 4 through + 2 right pockets = 7 lanes = 25.6 m;  outbound: 5 lanes = 18.3 m;  central island 3 m
+  box = width of the crossing road = 2 x 7 x 3.65 + 3 = 54.1 m  (half 27.1 m);  crosswalk 4 m  ->  stop line 31.1 m from the centre
+  the M8 carriageway (4 lanes + shoulders, 19.1 m from median edge to pavement edge) is shifted outward at the approach to make room for the pockets: pockets take 7.3 m of the median (6 m) -> the median is opened (done in J1-b)
+  PASS  left slip corner radius >= Rmin of the slip speed              R 25 m, Rmin(25 km/h) 12.5 m
+
+=== (2) DESIGN-HOUR FLOWS (ASSUMED until step 6.4) and LANES
+  approach   L(slip)   T      R     total   AADT-equivalent (total / (K D) = total / 0.06)   mid-block lanes by lanesFromDemand (c 1800)
+  N           350    1200   300    1850     30833                                         1.03 -> 2
+  E           280    1000   250    1530     25500                                         0.85 -> 1
+  S           320    1100   300    1720     28667                                         0.96 -> 1
+  W           300    1000   250    1550     25833                                         0.86 -> 1
+  NOTE: on the open road 2 lanes would carry this flow; the 4 + 4 of M8 are the user decision. At the signal the through lanes only get a part of the cycle, see (4).
+
+=== (4) SIGNAL: 4 phases (left-hand traffic: left = slip, free flow; right = pockets with their own phase), Webster
+  yellow 3.73 s (1.0 s + v/2a, v 60 km/h, a 3.05); all red 3.61 s = (box 54.1 m + 6 m) / 60 km/h; lost time per phase = 2 + (Y + AR - 2) = 7.34 s; L = 29.4 s
+  saturation flow per green hour: through 1800 pcu/h/lane (ASSUMED, heavy vehicles included), right 1530 (0.85 x)
+  phase  movements                          critical flow ratio y   effective green g (s)
+  P1     N + S through (slip lanes free)       0.17 (N)            24.3
+  P2     N + S right pockets                   0.10 (N)            14.3
+  P3     E + W through (slip lanes free)       0.14 (E)            20.2
+  P4     E + W right pockets                   0.08 (E)            11.9
+  Y = 0.49   C0 = (1.5 L + 5) / (1 - Y) = 95.3 s   ->  cycle C = 100 s (rounded up to 5 s, limits 60-120 s)
+  approach  capacity T   x(T)   capacity R   x(R)   95th queue per lane T (veh / m)   R (veh / m)
+  N           1747      0.69       437       0.69      11.2 /  90                          7.4 /  59
+  E           1456      0.69       364       0.69      10.2 /  81                          6.7 /  54
+  S           1747      0.63       437       0.69      10.3 /  82                          7.4 /  59
+  W           1456      0.69       364       0.69      10.2 /  81                          6.7 /  54
+  queue: Poisson arrivals in the red + Newell overflow x^2 / (2 (1 - x)), 8 m per pcu (APPROXIMATION, a HCM check can replace it in 6.2)
+  PASS  sum of critical flow ratios Y <= 0.85                          Y 0.49
+  PASS  cycle <= 120 s (Webster value before the limit)                C0 95.3 s, C 100 s
+  PASS  every movement degree of saturation x <= 0.9                   max x 0.69
+  PASS  every phase green >= 10 s                                      min 11.9 s
+  PASS  left slip lane flow <= 1 lane capacity 1200 pcu/h (ASSUMED, crosswalk + merge) max 350 pcu/h
+  HEADROOM: all flows x 1.21 still pass (every approach AADT-equivalent up to about 30855 .. 37308); above that the 4 + 4 lanes are too few for one signal
+
+=== (5)(6) POCKETS, QUEUE STORAGE and SPEED STEP-DOWN per approach (distances from the STOP LINE outward; available = clear length - stop line distance)
+  braking distance 60 -> 0 km/h 56 m, pocket taper W V^2 / 155 = 85 m, speed step-down 100 -> 60 km/h = 99 m, queue vehicle 8 m
+  pocket (right) = braking distance + storage(95th) + taper;   through queue tail + step-down 99 m must lie inside the arm straight (500 m) and the clear length
+  N  clear 380 m -> available from the stop line 349 m (arm straight allows 469)   through queue 90 m   pocket wanted 200 m (56 + 59 + 85)   need incl. step-down 299 m   FITS
+  E  clear 350 m -> available from the stop line 319 m (arm straight allows 469)   through queue 81 m   pocket wanted 194 m (56 + 54 + 85)   need incl. step-down 293 m   FITS
+  S  clear 350 m -> available from the stop line 319 m (arm straight allows 469)   through queue 82 m   pocket wanted 200 m (56 + 59 + 85)   need incl. step-down 299 m   FITS
+  W  clear 330 m -> available from the stop line 299 m (arm straight allows 469)   through queue 81 m   pocket wanted 194 m (56 + 54 + 85)   need incl. step-down 293 m   FITS
+  PASS  N: queue + pocket + step-down fit in the clear length          need 299 m, available 349 m
+  PASS  E: queue + pocket + step-down fit in the clear length          need 293 m, available 319 m
+  PASS  S: queue + pocket + step-down fit in the clear length          need 299 m, available 319 m
+  PASS  W: queue + pocket + step-down fit in the clear length          need 293 m, available 299 m
+  PASS  step-down 100 -> 60 km/h done before the queue tail (all approaches) 99 m, starts 293+ m from the stop line
+
+=== (6b) YAW SCAN (information only, the yaw 17.6 deg is a user decision): clear length of each approach and the arm bends to the ring points for other common yaws
+  needed from the J1 centre = stop line + queue / pocket + step-down:  N 330 m, E 324 m, S 330 m, W 324 m  (arm straight 500 m)
+  yaw     clear N   E     S     W      all fit   bends to the ring points N / E / S / W (limit 20 deg; E point may move, 6.1a2)
+   10.0    330   310   380   400    no         22.1 /   -1.3 /   12.1 /   -2.9
+   12.0    330   310   370   390    no         20.1 /   -3.3 /   10.1 /   -4.9
+   14.0    330   310   370   380    no         18.1 /   -5.3 /    8.1 /   -6.9
+   16.0    330   310   360   380    no         16.1 /   -7.3 /    6.1 /   -8.9
+   37.5    380   350   350   330    YES        -5.4 /  -28.8 /  -15.4 /  -30.4   <-- decided yaw
+   20.0    340   310   350   370    no         12.1 /  -11.3 /    2.1 /  -12.9
+   22.0    350   320   350   360    no         10.1 /  -13.3 /    0.1 /  -14.9
+   24.0    350   320   350   360    no          8.1 /  -15.3 /   -1.9 /  -16.9
+   26.0    360   320   350   350    no          6.1 /  -17.3 /   -3.9 /  -18.9
+   28.0    370   330   350   350    YES         4.1 /  -19.3 /   -5.9 /  -20.9
+
+=== (6c) SHIFT SCAN (information only: around the chosen point): J1 moved along its own axes (e = along the E-W road, + = east; n = along the N-S road, + = north), yaw 17.6 deg kept
+  needed from the centre: N 330 m, E 324 m, S 330 m, W 324 m;  3 of 99 tested shifts fit all four approaches (ground, water, rail only: the +-200 m flat box and the city plan are NOT re-checked here)
+  smallest shifts that fit:   e      n    clear N / E / S / W
+                               0      0    380 /  350 /  350 /  330   (shift 0 m)
+                               0    -20    400 /  360 /  330 /  330   (shift 20 m)
+                              20      0    390 /  330 /  340 /  350   (shift 20 m)
+
+=== (7) PEDESTRIANS (paved width of one M8 is 44.2 m, rule 3.14: grade-separated crossing on 4+ lane roads)
+  one leg of the crossing = 46.8 m (7 + 5 lanes + island);  walking 1 m/s + 7 s start-up
+  single stage needs 54 s;   two stages (refuge on the island) need 33 s per stage (26 m and 18 m)   concurrent green: P1 24 s, P3 20 s
+  at grade, single stage: NOT possible (needs 54 s, green 20 s);  two-stage refuge: NOT possible (needs 33 s per stage, green 20 s)
+  PASS  pedestrians need a grade-separated crossing (numbers prove at-grade cannot work) decision: option B or C below, user OK needed
+  option A at grade with two-stage refuge: legal only as a fallback, breaks rule 3.14 (8 + 8 lanes).
+  option B footbridge: rise 5.5 m clearance + 1.0 m deck = 6.5 m -> ramp 1:12 = 78 m each side (or stairs + lift), 4 bridges (one per leg) or one ring bridge.
+  option C underpass: clear height 2.8 m + 0.6 m slab = 3.4 m -> ramp 1:12 = 41 m each side, 4 underpasses; ground is flat (2.7 %), ground-water level NOT known yet: checked in J1-c.
+  PROPOSAL: option C (underpass) if J1-c finds the water table deep enough, otherwise option B; the user decides at this checkpoint.
+
+SUMMARY: 12 PASS, 0 FAIL

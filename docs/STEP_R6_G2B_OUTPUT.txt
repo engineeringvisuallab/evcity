@@ -1,0 +1,86 @@
+R6 G2b: keep / cut / smooth of the traced blue lines (thresholds are my proposal: cut if very steep + sea >= 20 % or steep + very steep + sea >= 50 %; rail and fenced do not cut)
+traced 65 segments 36.4 km | cut for ground 26 (13.4 km) | dropped isolated 2 (0.7 km) | KEPT 37 segments 22.0 km (8-lane roads 31.4 km)
+smoothing: Gaussian, ends fixed, until min radius >= 229 m (V80 minimum, V60 needs about 123 m) or 80 m shift from the sketch
+lines still under 229 m radius: 0; biggest shift from the sketch 69 m
+crossings of kept lines with the fixed 8-lane roads: 11 (need the interchange schedule; ring and arms have only 4 ring taps + 3 arm taps at 1.6 km spacing)
+
+CUT:
+  line 9  243 m  very steep + sea 93 % (>= 20 %)
+  line 11  291 m  very steep + sea 86 % (>= 20 %)
+  line 14  279 m  very steep + sea 45 % (>= 20 %)
+  line 16  192 m  very steep + sea 52 % (>= 20 %)
+  line 17  526 m  very steep + sea 67 % (>= 20 %)
+  line 18  553 m  very steep + sea 63 % (>= 20 %)
+  line 19  235 m  steep + very steep + sea 64 % (>= 50 %)
+  line 21  1025 m  very steep + sea 22 % (>= 20 %)
+  line 30  707 m  very steep + sea 67 % (>= 20 %)
+  line 35  424 m  very steep + sea 29 % (>= 20 %)
+  line 38  228 m  very steep + sea 44 % (>= 20 %)
+  line 40  183 m  very steep + sea 27 % (>= 20 %)
+  line 42  331 m  very steep + sea 60 % (>= 20 %)
+  line 45  1662 m  very steep + sea 30 % (>= 20 %)
+  line 47  605 m  very steep + sea 41 % (>= 20 %)
+  line 49  224 m  very steep + sea 33 % (>= 20 %)
+  line 51  463 m  very steep + sea 70 % (>= 20 %)
+  line 52  513 m  very steep + sea 83 % (>= 20 %)
+  line 54  580 m  very steep + sea 73 % (>= 20 %)
+  line 55  497 m  very steep + sea 80 % (>= 20 %)
+  line 56  221 m  very steep + sea 57 % (>= 20 %)
+  line 58  1853 m  very steep + sea 36 % (>= 20 %)
+  line 60  586 m  very steep + sea 81 % (>= 20 %)
+  line 61  462 m  very steep + sea 65 % (>= 20 %)
+  line 62  349 m  very steep + sea 21 % (>= 20 %)
+  line 63  172 m  very steep + sea 29 % (>= 20 %)
+DROPPED:
+  line 7  237 m  isolated piece, group only 237 m
+  line 57  422 m  isolated piece, group only 422 m
+KEPT (src id, length after smoothing, min radius, max shift from sketch):
+  line 1  299 m  R_min 229  shift 3 m
+  line 2  243 m  R_min None  shift 0 m
+  line 3  1218 m  R_min 230  shift 69 m
+  line 4  256 m  R_min None  shift 0 m
+  line 5  1031 m  R_min 242  shift 13 m
+  line 6  390 m  R_min 235  shift 11 m
+  line 8  394 m  R_min None  shift 0 m
+  line 10  418 m  R_min 232  shift 26 m
+  line 12  462 m  R_min None  shift 0 m
+  line 13  564 m  R_min 231  shift 22 m
+  line 15  361 m  R_min 234  shift 4 m
+  line 20  405 m  R_min None  shift 0 m
+  line 22  251 m  R_min 230  shift 10 m
+  line 23  384 m  R_min 239  shift 2 m
+  line 24  180 m  R_min None  shift 0 m
+  line 25  728 m  R_min 240  shift 12 m
+  line 26  225 m  R_min None  shift 0 m
+  line 27  739 m  R_min 275  shift 2 m
+  line 28  773 m  R_min 229  shift 7 m
+  line 29  344 m  R_min None  shift 0 m
+  line 31  846 m  R_min 231  shift 29 m
+  line 32  1429 m  R_min 243  shift 6 m
+  line 33  655 m  R_min 241  shift 7 m
+  line 34  584 m  R_min 233  shift 10 m
+  line 36  344 m  R_min 239  shift 18 m
+  line 37  920 m  R_min 236  shift 10 m
+  line 39  313 m  R_min None  shift 0 m
+  line 41  209 m  R_min None  shift 0 m
+  line 43  856 m  R_min 234  shift 7 m
+  line 44  247 m  R_min None  shift 0 m
+  line 46  440 m  R_min 250  shift 4 m
+  line 48  462 m  R_min 233  shift 7 m
+  line 50  1128 m  R_min 230  shift 11 m
+  line 53  598 m  R_min 232  shift 12 m
+  line 59  1170 m  R_min 231  shift 29 m
+  line 64  184 m  R_min None  shift 0 m
+  line 65  1966 m  R_min 236  shift 15 m
+CROSSINGS (line, on road, position, nearest ring / arm node and distance):
+  line 27 on J1-E part 1 at [444, 130]  nearest T-E610 250 m
+  line 33 on J1-E part 2 at [1437, 756]  nearest T-E610 924 m
+  line 59 on J1-N part 2 at [1136, -2126]  nearest T-N880 1090 m
+  line 13 on J1-S at [-1006, 1592]  nearest R1205 721 m
+  line 32 on J1-S at [-385, 111]  nearest J1 489 m
+  line 32 on J1-W part 1 at [-686, -223]  nearest T-W960 415 m
+  line 34 on ring R1205-R4265 at [-2387, 1891]  nearest R1205 1321 m
+  line 25 on ring R16813-T18838 at [457, 1890]  nearest T18838 30 m
+  line 5 on ring T7299-T8919 at [-1805, -2343]  nearest T7299 8 m
+  line 28 on ring T8919-R12094 at [224, -3744]  nearest T8919 885 m
+  line 50 on ring T8919-R12094 at [1636, -3220]  nearest R12094 651 m

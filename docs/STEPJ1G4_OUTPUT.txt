@@ -1,0 +1,44 @@
+J1-g4 CHECK: mesh + marking + game layer of the open star, C10 (-87, -277) yaw 37.5 (2026-11-14)
+
+1. NUMBERS
+  surface polygons 5 (g2 outline 408 points + 4 plain M8 pieces to S_END = 315 m), islands 8 (median 4, corner 4), marks 1946 pieces, arrows 56, zebra groups 8
+  mesh 25615 vertices, 35697 triangles: surface 22273, islands 6272, kerb walls 1168, marks 5984
+  build time in node (this machine): plan 8.2 ms, mesh 202.0 ms (grid cell 8 m, mark edge 4 m)
+
+2. SURFACE   plan area 58592.0 m2 (g2 outline 58203.0 m2 + plain M8 pieces), triangulated 58592.0 m2, cut at the grid 58592.0 m2, mesh (world) 58592.0 m2
+  longest surface edge 11.31 m, max vertex height error 0.000 m, max error at 3182 triangle centroids 0.005 m
+
+  PASS  g2 paved outline is a simple polygon (no self-crossing) and its area is the g2 area 5.82 ha              58203.0 m2
+  PASS  ear clipping covers the whole surface (triangles area = polygon area, 0.01 %)                            58591.97 vs 58591.97
+  PASS  mesh surface has no hole and no overlap: world triangle area = plan area (0.1 %)                         58592.0 vs 58592.0 m2
+  PASS  no surface triangle edge longer than the grid diagonal 11.3 m                                            11.31 m
+  PASS  mesh surface lies on the game ground + 2 cm at every vertex (< 6 cm) and at the triangle centres (< 3 cm) 0.000 / 0.005 m
+  PASS  every arm surface ends exactly at S_END = 315 m with the plain M8 width (the arm road starts there)      N s 315.00 half 19.10  E s 315.00 half 19.10  S s 315.00 half 19.10  W s 315.00 half 19.10
+  PASS  every lane centre line of g2 (32 movements) lies on the mesh surface (or on its edge within 1 cm)        9048 of 9048 points
+
+3. ISLANDS (raised, kerb walls)
+  PASS  4 median islands (also the pedestrian refuge) lie on the paved surface                                   2500 of 2500 samples inside the paved outline
+  PASS  4 corner islands lie outside the g2 paved outline (nothing paved is covered, the slip lane stays free)   5716 of 5716 samples outside
+  PASS  corner island kerb arc is the island side of the slip lane (R 68.17 m = lane centre R 70 - half lane)    188 arc points
+  PASS  no lane centre line of g2 (32 movements) enters any island (cars never drive over a kerb)                0 points inside, 9048 points x 8 islands tested
+  PASS  kerb walls: every wall vertex is at the ground or 0.14 m above it, walls exist on all 8 islands          1168 wall triangles, heights ok
+
+4. MARKINGS
+  pieces: lane 1202, edge 200, stop 8, zebra 140, arrow 136, guide 260
+  PASS  every mark piece lies on the paved surface (centre point) and none lies on an island                     1946 pieces, 0 off the surface, 0 on an island
+  PASS  line widths: lane / edge / guide lines 0.10 .. 0.20 m (white, painted line)                              lane 0.15-0.15, edge 0.18-0.18, guide 0.12-0.15 m
+  PASS  stop lines: per arm one for the pockets and one for the 4 through lanes, at s = 23.75 m, 0.45 m wide, no gap across the inbound lanes 8 lines (N 2 E 2 S 2 W 2)
+  PASS  zebra: 2 groups per arm (inbound, outbound) in the crossing space between the star edge and the stop line, gap at the median refuge, 5+ bars each Nin 21 Nout 14 Ein 21 Eout 14 Sin 21 Sout 14 Win 21 Wout 14
+  PASS  arrows: per arm 8 through (T1-T4 x 2), 4 right (R1, R2 x 2), 2 left (slip lane); each lies fully inside its own lane (pockets and exit lane at full width) 56 arrows, all inside their lane
+  PASS  curved guide lines exist for right turn (R 25.3 m between the two concentric arcs), U-turn (R 8.8 m) and the star side of the left slip lane (R 71.7 m) on all 4 arms 260 guide pieces, 1202 lane dashes
+
+5. GAME LAYER AND FILES
+  PASS  GroundJ1Layer builds the open star mesh (buildOpenJ1Mesh) and no longer the old box mesh                 old GroundJ1Mesh.ts removed
+  PASS  Engine creates the layer from the J1 terrain (Config.roads.junctionJ1.enabled) as before                 Engine.ts unchanged
+  PASS  triangle budget < 60000 and one mesh draw call (one material, vertex colours)                            35697 triangles
+  PASS  mesh build time in node < 1500 ms (plan + mesh; the browser may differ)                                  210.3 ms
+  PASS  nothing outside the g3 flat zone: every mesh vertex lies in the pad or an arm lane zone (s <= S_END, o <= 27 m) pad +-100 m / zone 27 m
+
+NOT IN g4 (said plainly): signal heads and signal-phase traffic (AI car) were never built in the game, so none is added; pedestrian crossing of the left slip road is not drawn (g1: decided in a later step); U-turn arrow and through-lane guide lines across the star are not drawn.
+
+ALL PASS

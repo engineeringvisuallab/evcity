@@ -1,0 +1,79 @@
+STEP MAP2-FIX5: trunk connectors (class sequence) to PASSING 6 / 4 / 2-lane roads, 8-lane roads not targeted (R5).
+NOT joined now: R6 18, R4 23, R2 20 (before FIX 5: 18 / 41 / 44).
+Connectors made: 12, total length 3673 m
+
+TRUNK TC-1   class 4: R4-76     end   -> R4-66.1      99 m  min R 200  nodes J-168 J-169
+TRUNK TC-2   class 4: R4-58     end   -> R4-54       101 m  min R 200  nodes J-170 J-171
+TRUNK TC-3   class 4: R4-81     end   -> R4-75       262 m  min R 200  nodes J-172 J-173
+TRUNK TC-4   class 4: R4-82     start -> R4-75       373 m  min R 200  nodes J-174 J-175
+TRUNK TC-5   class 4: R4-5.1    end   -> R6-6A       508 m  min R 201  nodes J-176 J-177
+TRUNK TC-6   class 4: R4-71.1   start -> R4-63       604 m  min R 228  nodes J-178 J-179
+TRUNK TC-7   class 2: R2-117    start -> R2-125.1    150 m  min R 113  nodes J-180 J-181
+TRUNK TC-8   class 2: R2-189    end   -> R2-184      152 m  min R 110  nodes J-182 J-183
+TRUNK TC-9   class 2: R2-21.2   end   -> R2-31.2     307 m  min R 110  nodes J-184 J-185
+TRUNK TC-10  class 2: R2-78.2   end   -> R2-69.1     313 m  min R 110  nodes J-186 J-187
+TRUNK TC-11  class 2: R2-79     end   -> R2-86.4     357 m  min R 141  nodes J-188 J-189
+TRUNK TC-12  class 2: R2-88.1   end   -> R2-87       447 m  min R 110  nodes J-190 J-191
+
+STILL NOT JOINED (61 lines), last reason per line:
+  R6 R6-10      R3 fit failed (dev 145)
+  R6 R6-11      longer than 2500 m
+  R6 R6-13      R3 fit failed (dev 146)
+  R6 R6-16      turn 154 deg > 150
+  R6 R6-17      crosses a road (R1)
+  R6 R6-18      longer than 2500 m
+  R6 R6-19      turn 159 deg > 150
+  R6 R6-20.1    R3 fit failed (dev 150)
+  R6 R6-20.2    R3 fit failed (dev 145)
+  R6 R6-22      R3 fit failed (dev 146)
+  R6 R6-27      turn 173 deg > 150
+  R6 R6-29      turn 151 deg > 150
+  R6 R6-30      R3 fit failed (dev 145)
+  R6 R6-31      R3 fit failed (dev 145)
+  R6 R6-32      R3 fit failed (dev 150)
+  R6 R6-33      R3 fit failed (dev 146)
+  R6 R6-35      R3 fit failed (dev 131)
+  R6 R6-36      turn 170 deg > 150
+  R4 R4-1       R3 fit failed (dev 148)
+  R4 R4-11      R3 fit failed (dev 150)
+  R4 R4-14.1    R3 fit failed (dev 145)
+  R4 R4-14.2    R3 fit failed (dev 149)
+  R4 R4-19      R3 fit failed (dev 33)
+  R4 R4-22      R3 fit failed (dev 35)
+  R4 R4-24      R3 fit failed (dev 45)
+  R4 R4-25      R3 fit failed (dev 143)
+  R4 R4-26      R3 fit failed (dev 24)
+  R4 R4-27.1    crosses a road (R1)
+  R4 R4-27.2    crosses a road (R1)
+  R4 R4-31      R3 fit failed (dev 144)
+  R4 R4-34      crosses a road (R1)
+  R4 R4-37      R3 fit failed (dev 144)
+  R4 R4-45      crosses a road (R1)
+  R4 R4-50.1    R3 fit failed (dev 42)
+  R4 R4-50.2    R3 fit failed (dev 146)
+  R4 R4-52      crosses a road (R1)
+  R4 R4-60.2    R3 fit failed (dev 27)
+  R4 R4-60.3    turn 160 deg > 150
+  R4 R4-62      R3 fit failed (dev 37)
+  R4 R4-84      R3 fit failed (dev 147)
+  R4 R4-86      R3 fit failed (dev 130)
+  R2 R2-54.1    crosses a road (R1)
+  R2 R2-54.2    crosses a road (R1)
+  R2 R2-82      turn 175 deg > 150
+  R2 R2-106.1   R3 fit failed (dev 148)
+  R2 R2-106.2   R3 fit failed (dev 26)
+  R2 R2-106.3   R3 fit failed (dev 69)
+  R2 R2-107.1   crosses a road (R1)
+  R2 R2-107.2   crosses a road (R1)
+  R2 R2-109.1   turn 154 deg > 150
+  R2 R2-109.2   turn 166 deg > 150
+  R2 R2-109.3   crosses a road (R1)
+  R2 R2-110.1   crosses a road (R1)
+  R2 R2-110.2   turn 166 deg > 150
+  R2 R2-110.3   R3 fit failed (dev 23)
+  R2 R2-111     crosses a road (R1)
+  R2 R2-114.1   R3 fit failed (dev 24)
+  R2 R2-114.2   crosses a road (R1)
+  R2 R2-115.1   R3 fit failed (dev 31)
+  R2 R2-115.2   turn 175 deg > 150
+  R2 R2-141     R3 fit failed (dev 63)

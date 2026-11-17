@@ -1,0 +1,21 @@
+R6 STEP G4: RE-ROUTE of FAIL / HEAVY lines on the real game ground. Drop L5, L31, L32, L45 (decision of the AI, user: 'tomar kase valo mone hoy').
+Heavy = cut > 8 m or cut + fill > 100 m3 per m. Corridor 400 m, cell 20 m, ends fixed, smoothing shift <= 80 m, radius aim 229 m. Cost weights are MY numbers.
+
+PER LINE (old = G3 line on the user's sketch, new = G4 path):
+  L2: kept old (new path not better)  | old: PASS cut 4.7 m, cut+fill 102 m3/m, wet 0 m, hi-fill 0 m, grade 3.0 %, len 243 m | new: PASS cut 5.4 m, cut+fill 106 m3/m, wet 0 m, hi-fill 0 m, grade 3.0 %, len 246 m | max shift from sketch 16 m, min radius 231 m
+  L8: RE-ROUTED  | old: PASS cut 8.3 m, cut+fill 134 m3/m, wet 0 m, hi-fill 0 m, grade 3.0 %, len 394 m | new: PASS cut 7.2 m, cut+fill 117 m3/m, wet 0 m, hi-fill 0 m, grade 3.0 %, len 410 m | max shift from sketch 50 m, min radius 230 m
+  L20: kept old (new path not better)  | old: PASS cut 8.5 m, cut+fill 107 m3/m, wet 0 m, hi-fill 0 m, grade 0.0 %, len 405 m | new: PASS cut 9.3 m, cut+fill 48 m3/m, wet 0 m, hi-fill 0 m, grade 1.0 %, len 427 m | max shift from sketch 58 m, min radius 229 m
+  L22: RE-ROUTED  | old: PASS cut 12.0 m, cut+fill 185 m3/m, wet 0 m, hi-fill 0 m, grade 4.0 %, len 251 m | new: PASS cut 12.0 m, cut+fill 185 m3/m, wet 0 m, hi-fill 0 m, grade 4.0 %, len 250 m | max shift from sketch 1 m, min radius 230 m
+  L23: RE-ROUTED  | old: PASS cut 8.7 m, cut+fill 133 m3/m, wet 0 m, hi-fill 0 m, grade 3.0 %, len 384 m | new: PASS cut 5.7 m, cut+fill 74 m3/m, wet 0 m, hi-fill 0 m, grade 0.5 %, len 407 m | max shift from sketch 87 m, min radius 213 m (BELOW 229, NOT smooth enough)
+  L27: RE-ROUTED  | old: FAIL cut 5.0 m, cut+fill 34 m3/m, wet 60 m, hi-fill 10 m, grade 3.0 %, len 739 m | new: FAIL cut 4.6 m, cut+fill 31 m3/m, wet 20 m, hi-fill 10 m, grade 3.0 %, len 743 m | max shift from sketch 22 m, min radius 231 m
+  L29: RE-ROUTED  | old: PASS cut 12.0 m, cut+fill 139 m3/m, wet 0 m, hi-fill 0 m, grade 3.5 %, len 344 m | new: PASS cut 11.2 m, cut+fill 119 m3/m, wet 0 m, hi-fill 0 m, grade 3.0 %, len 364 m | max shift from sketch 51 m, min radius 232 m
+  L33: RE-ROUTED  | old: PASS cut 10.0 m, cut+fill 152 m3/m, wet 0 m, hi-fill 0 m, grade 3.0 %, len 655 m | new: PASS cut 7.4 m, cut+fill 84 m3/m, wet 0 m, hi-fill 0 m, grade 3.0 %, len 753 m | max shift from sketch 236 m, min radius 229 m
+  L43: NO dry path in the 400 m corridor -> line kept as it was (FAIL, cut 7.3 m, cut + fill 51 m3/m, wet 110 m, hi-fill 0 m)
+  L44: RE-ROUTED  | old: PASS cut 8.7 m, cut+fill 78 m3/m, wet 0 m, hi-fill 0 m, grade 2.0 %, len 247 m | new: PASS cut 6.5 m, cut+fill 69 m3/m, wet 0 m, hi-fill 0 m, grade 0.0 %, len 254 m | max shift from sketch 27 m, min radius 229 m
+  L48: RE-ROUTED  | old: FAIL cut 4.9 m, cut+fill 41 m3/m, wet 30 m, hi-fill 0 m, grade 0.5 %, len 462 m | new: FAIL cut 4.7 m, cut+fill 31 m3/m, wet 20 m, hi-fill 0 m, grade 0.5 %, len 772 m | max shift from sketch 242 m, min radius 138 m (BELOW 229, NOT smooth enough)
+  L50: RE-ROUTED  | old: FAIL cut 12.0 m, cut+fill 173 m3/m, wet 0 m, hi-fill 40 m, grade 4.0 %, len 1128 m | new: FAIL cut 4.1 m, cut+fill 40 m3/m, wet 20 m, hi-fill 0 m, grade 3.0 %, len 1123 m | max shift from sketch 225 m, min radius 230 m
+  L53: NO dry path in the 400 m corridor -> line kept as it was (FAIL, cut 12.0 m, cut + fill 148 m3/m, wet 70 m, hi-fill 0 m)
+  L59: NO dry path in the 400 m corridor -> line kept as it was (FAIL, cut 12.0 m, cut + fill 95 m3/m, wet 60 m, hi-fill 20 m)
+  L62: kept old (new path not better)  | old: FAIL cut 11.5 m, cut+fill 83 m3/m, wet 0 m, hi-fill 79 m, grade 3.0 %, len 357 m | new: FAIL cut 12.0 m, cut+fill 141 m3/m, wet 0 m, hi-fill 71 m, grade 3.5 %, len 355 m | max shift from sketch 6 m, min radius 230 m
+
+Lines now 38 (G3 had 42, dropped 4, fill > 7 m = viaduct limit as in G3).

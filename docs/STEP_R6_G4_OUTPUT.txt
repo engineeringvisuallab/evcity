@@ -1,0 +1,90 @@
+R6 STEP G4: REAL GRADE CHECK on the game ground (TerrainGenerator.sampleGround), every ~10 m, centre + both pavement edges (+-16.00 m)
+Rule R11: R6 grade <= 4 % (PASS limit), 3 % is the AIM (shown, not a pass condition). Cut limit 12 m, fill limit 7 m, wet = bridge (3.3 / DESIGN).
+Lines: final set of G4 = 38 lines (G3 had 42; L5, L31, L32, L45 dropped; failing / heavy lines re-routed by scripts/r6-reroute.ts). This script does not move them.
+computed in 1.5 s
+
+LINE TABLE (WATCH lines first: 22, 29, 44, 45, 62). nat = natural ground, steepest 30 m window. des = designed profile. cut / fill = largest depth at the pavement edge / centre.
+line  origin        km     natMaxG natOver | desMaxG >3%(m) chg | maxCut(at m) maxFill  cut m3   fill m3 | wet m  hiFill m | GRADE WORK  RESULT
+*L22  G4 re-routed   0.25    17.5%    210m |   4.0%    240   2 |  12.0( 250)   5.1    38743     7481 |     0       0  | PASS  PASS  PASS
+*L29  G4 re-routed   0.36    18.8%    222m |   3.0%      0   0 |  11.2(  91)   5.2    30056    13370 |     0       0  | PASS  PASS  PASS
+*L44  G4 re-routed   0.25    11.0%    183m |   0.0%      0   0 |   6.5(   0)   4.0     7004    10481 |     0       0  | PASS  PASS  PASS
+*L62  G2c re-routed  0.36    38.8%    248m |   3.0%      0   0 |  11.5( 168)   3.5    28121     1339 |     0      79  | PASS  FAIL  FAIL  <- fill > 7 m on 79 m (viaduct needed, not designed)
+ L1   G2b kept       0.30    14.1%    139m |   2.5%      0   0 |   5.1(   0)   2.3     5272     7928 |     0       0  | PASS  PASS  PASS
+ L2   G2b kept       0.24    15.4%    172m |   3.0%      0   0 |   4.7( 182)   6.5    17350     7398 |     0       0  | PASS  PASS  PASS
+ L3   G2b kept       1.22     5.8%     90m |   2.5%      0   9 |   1.5( 988)   1.3     5682     7789 |     0       0  | PASS  PASS  PASS
+ L4   G2b kept       0.26    11.6%    128m |   0.0%      0   0 |   6.9( 246)   2.6     9996     5990 |     0       0  | PASS  PASS  PASS
+ L6   G2b kept       0.39     7.6%    100m |   1.0%      0   2 |   3.7( 120)   2.7     4973     8045 |     0       0  | PASS  PASS  PASS
+ L7   G2c re-routed  0.24     7.2%     40m |   0.0%      0   0 |   1.7( 228)   1.9     1987     3284 |     0       0  | PASS  PASS  PASS
+ L8   G4 re-routed   0.41    11.7%    310m |   3.0%      0   0 |   7.2( 280)   5.9    25556    22343 |     0       0  | PASS  PASS  PASS
+ L10  G2b kept       0.42     8.1%    189m |   2.0%      0   3 |   1.3( 289)   4.8     3803    13249 |     0       0  | PASS  PASS  PASS
+ L12  G2b kept       0.46     6.9%     80m |   2.0%      0   3 |   1.4( 161)   2.2     3579     6613 |     0       0  | PASS  PASS  PASS
+ L13  G2b kept       0.56     2.5%      0m |   0.0%      0   0 |   0.7(   0)   0.5     2122     2290 |     0       0  | PASS  PASS  PASS
+ L15  G2b kept       0.36    13.8%    210m |   2.0%      0   0 |   7.4( 361)   3.7     8281    12843 |     0       0  | PASS  PASS  PASS
+ L20  G2b kept       0.41    16.1%    237m |   0.0%      0   0 |   8.5(   0)   5.7    15010    28247 |     0       0  | PASS  PASS  PASS
+ L21  G2c re-routed  1.04    16.8%    510m |   2.5%      0   3 |   4.9(  60)   2.7    23359    17334 |     0       0  | PASS  PASS  PASS
+ L23  G4 re-routed   0.41    16.2%    199m |   0.5%      0   1 |   5.7( 258)   7.0    16823    13384 |     0       0  | PASS  PASS  PASS
+ L24  G2b kept       0.18    13.7%    150m |   0.0%      0   0 |   4.3(  80)   4.3     6311     7747 |     0       0  | PASS  PASS  PASS
+ L25  G2b kept       0.73     6.9%     70m |   1.0%      0   3 |   2.4( 229)   1.2     6694     5915 |     0       0  | PASS  PASS  PASS
+ L26  G2b kept       0.22    10.5%    123m |   2.5%      0   0 |   4.3( 225)   2.6     4241     5992 |     0       0  | PASS  PASS  PASS
+ L27  G4 re-routed   0.74    21.0%    191m |   3.0%      0  10 |   4.6( 110)   1.4    19031     3630 |    20      10  | PASS  FAIL  FAIL  <- wet 20 m (sea / river: bridge needed, not designed); fill > 7 m on 10 m (viaduct needed, not designed)
+ L28  G2b kept       0.77    10.0%     40m |   0.0%      0   0 |   4.9(   0)   0.6     5218     2662 |     0       0  | PASS  PASS  PASS
+ L33  G4 re-routed   0.75    21.2%    512m |   3.0%      0   8 |   7.4(   0)   5.2    24402    38802 |     0       0  | PASS  PASS  PASS
+ L34  G2b kept       0.58     7.2%    161m |   3.0%      0   7 |   4.3( 584)   0.9     8057     2893 |     0       0  | PASS  PASS  PASS
+ L36  G2b kept       0.34     9.9%    192m |   3.0%      0   0 |   3.5(  30)   3.0     8202     7925 |     0       0  | PASS  PASS  PASS
+ L37  G2b kept       0.92     5.8%    120m |   2.0%      0   2 |   1.6(   0)   1.4     5331     7162 |     0       0  | PASS  PASS  PASS
+ L39  G2b kept       0.31    14.3%    151m |   0.0%      0   0 |   3.8(  81)   5.4     5292    12355 |     0       0  | PASS  PASS  PASS
+ L41  G2b kept       0.21    12.5%     90m |   3.0%      0   0 |   3.9( 209)   3.3     2473     6481 |     0       0  | PASS  PASS  PASS
+ L43  G2b kept       0.86    29.3%    319m |   3.0%      0   5 |   7.3( 418)   2.1    40792     2631 |   110       0  | PASS  PASS  PASS  <- SHORT BRIDGE 110 m accepted (<= 120 m, no dry path found or better), bridge NOT designed
+ L46  G2b kept       0.44    13.9%    190m |   3.0%      0   1 |   4.5( 300)   2.7     9325     5824 |     0       0  | PASS  PASS  PASS
+ L48  G4 re-routed   0.77    24.7%    200m |   0.5%      0   2 |   4.7( 401)   1.2    16108     7948 |    20       0  | PASS  PASS  PASS  <- SHORT BRIDGE 20 m accepted (<= 120 m, no dry path found or better), bridge NOT designed
+ L50  G4 re-routed   1.12    23.6%    441m |   3.0%      0   8 |   4.1( 511)   5.1    18161    26268 |    20       0  | PASS  PASS  PASS  <- SHORT BRIDGE 20 m accepted (<= 120 m, no dry path found or better), bridge NOT designed
+ L53  G2b kept       0.60    31.6%    398m |   3.5%     20   5 |  12.0( 299)   6.4    79535     8986 |    70       0  | PASS  PASS  PASS  <- SHORT BRIDGE 70 m accepted (<= 120 m, no dry path found or better), bridge NOT designed
+ L57  G2c re-routed  0.42    13.0%     90m |   3.0%      0   3 |   3.7(  50)   2.0     6943     5636 |     0       0  | PASS  PASS  PASS
+ L59  G2b kept       1.17    23.8%    720m |   3.5%    120  13 |  12.0(1020)   3.4    96218    14468 |    60      20  | PASS  FAIL  FAIL  <- wet 60 m (sea / river: bridge needed, not designed); fill > 7 m on 20 m (viaduct needed, not designed)
+ L64  G2b kept       0.18    14.3%     51m |   1.5%      0   0 |   3.6(  10)   2.0     4872     4086 |     0       0  | PASS  PASS  PASS
+ L65  G2b kept       1.97     7.2%    419m |   3.0%      0  16 |   3.5( 399)   4.0    20985    39114 |     0       0  | PASS  PASS  PASS
+
+SUMMARY
+  lines PASS 35 (19.0 km) | FAIL 3 (2.3 km) | total 21.2 km
+  R11 GRADE <= 4 %: PASS on 38 / 38 lines; steepest designed grade 4.0 %; length above the 3 % aim: 0.4 km of 21.2 km
+  natural ground steeper than 4 % (30 m window) along the lines: 7.9 km
+  earthwork (indicative: depth at the centreline x 32.0 m block, NO side slopes, NO topsoil): cut 635908 m3, fill 405927 m3
+  structures needed (not designed): wet 299 m, fill > 7 m 109 m
+  HEAVY EARTHWORK (cut at the 12 m limit, or cut + fill above 100 m3 per m of road): 7 lines. The 4 % grade is met here by BUYING cut, check these with the user ('aktu cut fill' = a little):
+     L2: max cut 4.7 m, cut + fill 102 m3 per m (17350 + 7398 m3 on 243 m)
+     L8: max cut 7.2 m, cut + fill 117 m3 per m (25556 + 22343 m3 on 410 m)
+     L20: max cut 8.5 m, cut + fill 107 m3 per m (15010 + 28247 m3 on 405 m)
+     L22: max cut 12.0 m, cut + fill 185 m3 per m (38743 + 7481 m3 on 250 m)
+     L29: max cut 11.2 m, cut + fill 119 m3 per m (30056 + 13370 m3 on 364 m)
+     L53: max cut 12.0 m, cut + fill 148 m3 per m (79535 + 8986 m3 on 598 m)
+     L59: max cut 12.0 m, cut + fill 95 m3 per m (96218 + 14468 m3 on 1170 m) [also FAIL above]
+  HOLLOW GRADE PASS: 0 lines are more than half structure (wet or fill > 7 m), their grade PASS only says the DP flew over the ground: . Treat their R11 result as NOT MEANINGFUL.
+
+WATCH LINES (G2d: 22, 29, 44, 45, 62)
+  L22 (G4 re-routed, 250 m): natural steepest 17.5 %, designed steepest 4.0 %, max cut 12.0 m at 250 m, max fill 5.1 m, cut 38743 m3, fill 7481 m3, wet 0 m, start level 32.3 m, end level 42.1 m -> PASS
+  L29 (G4 re-routed, 364 m): natural steepest 18.8 %, designed steepest 3.0 %, max cut 11.2 m at 91 m, max fill 5.2 m, cut 30056 m3, fill 13370 m3, wet 0 m, start level 45.2 m, end level 34.3 m -> PASS
+  L44 (G4 re-routed, 254 m): natural steepest 11.0 %, designed steepest 0.0 %, max cut 6.5 m at 0 m, max fill 4.0 m, cut 7004 m3, fill 10481 m3, wet 0 m, start level 32.2 m, end level 32.2 m -> PASS
+  L45: not in the line set (dropped in G4)
+  L62 (G2c re-routed, 357 m): natural steepest 38.8 %, designed steepest 3.0 %, max cut 11.5 m at 168 m, max fill 3.5 m, cut 28121 m3, fill 1339 m3, wet 0 m, start level 105.2 m, end level 115.9 m -> FAIL (fill > 7 m on 79 m (viaduct needed, not designed))
+
+R10 SKETCH CHECK (the lines are not moved here)
+  L62: sketch conflict from station 0 m (-1588, -1991): fill > 7 m on 79 m (viaduct needed, not designed). Smallest changes to choose from (NOT done): (a) accept the deeper cut / the structure there, (b) shift the line sideways inside a corridor (G2c method, new cell path), (c) drop the line. ASK.
+  L27: sketch conflict from station 0 m (787, -88): wet 20 m (sea / river: bridge needed, not designed); fill > 7 m on 10 m (viaduct needed, not designed). Smallest changes to choose from (NOT done): (a) accept the deeper cut / the structure there, (b) shift the line sideways inside a corridor (G2c method, new cell path), (c) drop the line. ASK.
+  L59: sketch conflict from station 360 m (793, -2836): wet 60 m (sea / river: bridge needed, not designed); fill > 7 m on 20 m (viaduct needed, not designed). Smallest changes to choose from (NOT done): (a) accept the deeper cut / the structure there, (b) shift the line sideways inside a corridor (G2c method, new cell path), (c) drop the line. ASK.
+
+R1 (R6 lines among themselves, own segment test, crossing = not within 40 m of a line end): PASS (0 crossings)
+R1 (R6 lines vs the 8-lane roads = ring + 4 J1 arms from the game data, own segment test; a line that meets a road within 40 m of ITS END is a planned junction, not a crossing): FAIL (3 crossings, 6 end-touches = junction places still to be designed)
+    L13 x J1-S at (-1006, 1592)
+    L27 x J1-E at (447, 132)
+    L33 x J1-E at (1236, 632)
+    user answer 2026-11-15: a 6-lane road may NOT cross an 8-lane road on a bridge without a connection, so each listed crossing must become a junction or the line is moved / cut at the 8-lane road. The 8-lane roads other than ring + 4 J1 arms (taps, other arms) are not in this test.
+R2 (every road has a stated need): NOT RUN. The 42 lines are the user's blue sketch (R10, function = hierarchy); no AADT is computed in G3 or G4.
+R3 (smooth): NOT RUN here as a check. Minimum radius read from the G2b / G2c files (not recomputed): smallest value 138 m on 29 lines (V80 minimum 229 m); 9 lines (L2, L4, L12, L20, L24, L26, L39, L41, L64) have NO radius value in the files, NOT checked; the real smoothing check comes with the final alignments.
+
+LIMITS OF THIS CHECK (honest)
+  1. The END LEVELS are free: the junction levels (ring taps, arm taps, other R6 lines) are NOT fixed yet. A real profile may be steeper or deeper where a line must meet a road at a given level. NOT RUN.
+  2. Grades are on a 10 m grid with 0.5 % steps. Vertical curves (K values, sight distance) are NOT RUN. Minimum tangent length NOT RUN.
+  3. Ground = natural terrain only: rail earthworks, other roads and buildings are not in it. Rail crossings (G2a counted many) are NOT checked here.
+  4. Cost weights (cut 1, fill 0.8, grade penalty 6 per % above 3 %, viaduct 100, bridge 40) and the freeboard 1.5 m are MY numbers, not a handoff rule. Volumes are indicative.
+  5. PASS here means: designed grade <= 4 %, cut <= 12 m, no wet / high-fill station. It is NOT a full road design (no cross slope, drainage, superelevation).
+  6. game run, in-game drive: NOT RUN (nothing in src/ changed).

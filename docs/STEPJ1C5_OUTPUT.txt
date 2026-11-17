@@ -1,0 +1,16 @@
+STEP J1-c5 (W arm) search result, 2026-11-14, J1 = C10 (-87,-277) yaw 37.5, W arm axis bearing -52.5 (math heading -142.5), start s 340 = (-357,-484), pad y 18.19
+Scripts: scripts/j1-w-raster.ts (raster 20 m, x -2800..200, z -1600..400), scripts/j1-w-hybrid.ts (env STEP, GMAX, RST0, RST1, J1YAW, HMIN, HMAX)
+Target: ring W straight st 4600..6000, arrival heading 160..200 deg, ring level
+Heading-aware search, grade 3 %, cut cap 12 m (soft), turn step 5 deg:
+ STEP 90 (R 1031): cut 93.6 m | STEP 75 (R 860): 88.5 | STEP 60 (R 688): 89.3 | STEP 45 (R 516): 87.2 | STEP 35 (R 401): 85.2 | STEP 30 (R 344): 94.8 | STEP 24 (R 275): no route
+ GMAX 4 %, STEP 60: cut 86.6 m
+Lowest corridor on the ground (cells <= 33 m, no road rules): 2852 m, lowest saddle 31.9 m. It leaves the arm start at heading about -223 deg (80 deg away from the arm axis -142.5), passes (-730,-10), (-1210,250), (-1690,110), (-2170,-130), (-2410,-370).
+CAUSE: the hill spur (up to 190 m, x -1600..-600, z -1000..-150) lies straight ahead of the W arm. The low land is 440 m to the side, but the arm leaves J1 pointing at the hill and a bend with R >= 400 m cannot turn 80 deg inside that distance.
+RESULT: NO W route with centre cut <= 12 m exists with the arm axis fixed. OPEN QUESTION for the user.
+
+--- OPTIONS CHECKED (same day, user said: engineering choice is mine) ---
+1) J1 yaw scan, W arm only (J1 (-87,-277), STEP 60): yaw 27.5 cut 106 m | 17.5 cut 106 | 7.5 cut 33 | -2.5 cut 6.2 | -12.5 cut 3.8. N arm at the same yaws (STEP 90): yaw 7.5 cut 90 m | -2.5 cut 200 | -12.5 cut 288 (N is fine only at yaw 37.5: cut 8.9). N needs yaw about 37, W needs yaw <= -2.5: they conflict (the arms are 90 deg apart and both face a hill).
+2) J1 move at yaw 37.5: W arm and N arm both work around (113,223) (W cut 3.7 m, N cut 4.6 m, N raster extended to z 700 in a temp copy), BUT the site checks fail there and at every nearby point tried ((213,223), (-87,323), (313,223), (-187,323), (-87,373), (-187,223)): railways north-1, west-sw, west-nw, east-1 are closer than 72 m to the axes (rail cannot change). Only C10 passes. REJECTED.
+3) Tight FIRST BEND after the lane zone (env RT, constant level, then R >= 688 m). CORRECTION: the first runs left the arc out of the cut / fill / length statistics (the arc is not in the search parent chain). With the arc included (scripts/j1-w-hybrid.ts fixed): R 250 cut 54.2 m | R 200 33.5 | R 170 21.4 | R 150 17.0 | R 130 12.4 | R 125 9.9 | R 120 7.8 | R 110 6.1 | R 90 2.6. (the earlier numbers 9.1 / 18.5 / 22.7 / 39.0 for R 150 / 170 / 200 / 250 were wrong.)
+CHOSEN (user delegated the choice 2026-11-14): R 125 m first bend, 80 deg, 175 m of arc at level 25.3 m, then gentle bends (R >= 688 m) to the ring W straight (heading about -162). Route 2552 m from s 340, max centre cut 9.9 m, fill 10.7 m, viaduct 71 m, 1 rail crossing, wet 0, zone 0. Design speed of the bend about 55 km/h (advisory), 340 m after a signalised junction.
+Caution: R 125 m is far below the V100 minimum (394 m). Check in c5b: 44 m pavement on R 125 (inner kerb radius, widening, sight distance, truck swept path), the grade artefact 4.24 % in the printout is the 0.9 m level bin on 15 m steps, c5c fixes it.

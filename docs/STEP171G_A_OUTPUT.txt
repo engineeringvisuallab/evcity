@@ -1,0 +1,23 @@
+PASS flag off: no island link (5 roads), flag on: 6 roads
+PASS road M6-1 exists
+PASS M6 section: 6 lanes, half width 16.00 m (SECTION_M6 16.00), median half 2.00 m, lane 3.50 m
+PASS shader knows the M6 row (half width 16.000) next to the ring row
+PASS starts 25.0 m from the ring centreline (ring pavement edge 22.1 m): no overlap with the ring ribbon
+PASS start level 20.02 m, end level 21.53 m (17.1d option A: 20.02 / 21.53)
+PASS ends 0.00 m from the island centre (-1400, 4050)
+PASS 222 points, length 1761.3 m (design 1761.4 m), max grade between points 3.53 % (design max 3.5 %, limit 4 %)
+PASS 1 structure registered (mainland viaduct + strait bridge + island viaduct as one run)
+PASS structure length 384.0 m (17.1d: 384.2 m = 40 + 299 + 55 plus the rounding of the grid)
+PASS structure from s 487.2 to s 869.7 (17.1d: 489 to 873.2)
+PASS structure ends before the horizontal curve (s 961): last s 869.7
+PASS water level of the strait in the game 0.00 m (sea level 0; the design adds high water +1.0 m on top, 17.1d A2)
+PASS clearance under the deck over the water 8.57 m (17.1d: soffit >= high water 1.0 m + 6 m = 7 m over sea level; STRUCT.deckDepth taken off the deck)
+PASS no structure MESH is built for the strait yet (the bridge is the next step): ringStructures() does not list M6-1
+PASS ground height vs road level on the centreline outside the structure (167 points): max diff 0.00 m
+PASS max cut at the pavement edge outside the structure 6.76 m (limit 12 m; 17.1d design 7.5 m at the daylight edge)
+PASS max fill at the pavement edge outside the structure 6.73 m (limit 7 m, 0.5 m grid margin; 17.1d design 7.0 m)
+PASS ribbon held back on 44 inner deck pieces of 49 structure pieces (the two approach slabs keep their ribbon)
+PASS bridgeDeck = true brings the ribbon back on the whole deck
+PASS railway PLAN (x, z of 12 edges) identical with the island link on / off: max difference 0.0e+0 m
+
+ALL PASS

@@ -1,0 +1,30 @@
+restart 0: cost 17395
+restart 1: cost 17730
+restart 2: cost 7030
+restart 3: cost 19034
+restart 4: cost 7169
+restart 5: cost 15085
+restart 6: cost 18658
+restart 7: cost 17972
+J1-c4b N ARM ALIGNMENT   J1 (-87, -277) yaw 37.5 deg, start S (120.0, -546.7) heading -52.5 deg (math), 3 PIs, Ls 100 m, V 100
+  end E (2100.2, -2762.5) on the ring N straight, arrival heading -45.4 deg (ring 44.6 deg), alignment length 3213 m (straight line S-E 2972 m)
+  PI table:  #  x  z  R  Ls  delta(deg)  Ts  arc(m)  straight before / after
+    0  371.7  -874.7  R 606  Ls 100  delta -33.7  Ts 233.9  arc 257  straight 180 / 228
+    1  440.5  -1916.2  R 768  Ls 100  delta 69.4  Ts 582.0  arc 830  straight 228 / 204
+    2  1616.1  -2271.3  R 1538  Ls 100  delta -28.6  Ts 442.3  arc 668  straight 204 / 247
+
+  PASS  every R >= 591 m (1.5 x Rmin V100)                               smallest R 606 m
+  PASS  spiral Ls >= minimum for V100 on every curve                     Ls 100 m, needed 60 / 60 / 60 m
+  PASS  straights between curves: reverse >= 2V, same direction >= 6V, none negative 180 / 228(>=200) / 204(>=200) / 247
+  PASS  first tangent is the J1 axis (start heading exact)               start heading -52.50 deg
+  PASS  dead reckoning reaches E (position and heading)                  gap 6.4e-13 m, 0.0e+0 deg
+  PASS  T on the ring: arrival angle 80..100 deg to the ring             90.0 deg
+  PASS  join point on the ring N straight (st 11049..12512)              st 12094, 1045 m from the west end and 418 m from the east end of the straight (3-leg interchange wants about 1000 m each side: INFO)
+  PASS  smooth: no kink, curvature is continuous (dk/ds <= 1/(R Ls) + small) max heading step 0.47 deg per 5 m, max dk/ds 1.65e-5, tightest R 606 m
+  PASS  centreline at least 45 m from every engineering zone / airport fence nearest: eng-tech-park 47 m, eng-aerospace 98 m, eng-textile 158 m
+  INFO  wet length (river / lake cells under the centreline) 45 m  (a river crossing becomes a bridge, 6.1e)
+  INFO  rail crossings (road over rail, 6.5 m clearance, 6.1d): 1 at s 1234 m from S
+  VERTICAL PREVIEW (grade <= 3 % DP profile, the real profile is c4c): max centre cut 8.8 m, cut > 8 m 40 m, cut > 12 m 0 m, max fill 15.9 m, fill > 7 m (viaduct) 382 m, max grade 3.98 %, cut volume about 0.17 million m3 (rough)
+  PASS  no centre cut over 12 m (user: hill cut must go; 12 m = section 3.7 limit 12 m) max cut 8.8 m
+  PASS  grade <= 3 % (<= 4.0 % on the first 1000 m from S)               max 3.98 % on the hill stretch, 2.99 % elsewhere
+SUMMARY: 11 PASS, 0 FAIL

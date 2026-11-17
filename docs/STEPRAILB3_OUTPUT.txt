@@ -1,0 +1,50 @@
+===== J1-E (E1, rail north-1) =====
+  rail crossings on this arm (rail design of the game now): north-1 s 423 rail top 33.82; east-1 s 1346 rail top 27.04; east-2 s 2648 rail top 26.23
+  best cost 429285.2; PVIs (s, level, curve): 0 (18.19, 0) | 200 (18.79, 60) | 329 (18.40, 60) | 746 (22.75, 61) | 849 (22.60, 136)
+  OLD  PVIs: 0 (18.19, 0) | 124 (18.56, 116) | 251 (22.29, 0) | 407 (26.88, 212) | 746 (22.75, 60) | 849 (22.60, 136)
+  PASS  tail of the arm (s > end of the changed part + 40 m) is the same as before max difference 0.00 m
+  PASS  grade within the arm limits (pad stretch 3.0 %, hill 3.0 % to s 340, 3 % beyond) max grade 2.94 % (s 65..1006)
+  PASS  every vertical curve K >= minimum (crest / sag) and length >= 60 m     6 curves
+  PASS  vertical curves do not overlap                                         0 overlaps
+  PASS  first curve starts at s >= 60 (pad plane kept)                         first curve starts at s 170
+  PASS  centre cut <= 12 m in the changed part                                 max cut 2.7 m (old arm 2.3 m)
+  PASS  no fill > 7 m (no viaduct) before the first kept PVI of the old table  max fill in the changed part 3.4 m
+  PASS  river: road >= 2.5 m over the water in the changed part                7.8 m
+  PASS  north-1 at s 423: rail over road, deck underside >= 7 m over the road  road 19.39 m (was 25.90), ground 18.16 m, rail top 33.82 m, gap 11.78 m (was 5.27)
+  INFO  other crossing east-1 at s 1346: road 34.86 m (was 34.86)
+  INFO  other crossing east-2 at s 2648: road 63.22 m (was 63.22)
+  INFO  viaduct runs now (fill > 7 m): s 799..884 (max fill 15.4 m); s 1354..1743 (max fill 11.2 m); s 1773..1823 (max fill 8.8 m); s 2033..3181 (max fill 53.1 m)
+  INFO  viaduct runs before:   s 395..555 (max fill 8.0 m); s 799..884 (max fill 15.4 m); s 1354..1743 (max fill 11.2 m); s 1773..1823 (max fill 8.8 m); s 2033..3181 (max fill 53.1 m)
+===== J1-S (S1, rail west-nw) =====
+  rail crossings on this arm (rail design of the game now): west-nw s 415 rail top 33.82; west-sw s 1239 rail top 37.50; ring-south s 2065 rail top 14.17
+  best cost 4369.4; PVIs (s, level, curve): 0 (18.19, 0) | 151 (19.03, 60) | 653 (17.53, 143) | 767 (20.88, 0) | 1159 (32.40, 299)
+  OLD  PVIs: 0 (18.19, 0) | 114 (18.83, 104) | 388 (26.82, 228) | 767 (20.88, 198) | 1159 (32.40, 299)
+  PASS  tail of the arm (s > end of the changed part + 40 m) is the same as before max difference 0.00 m
+  PASS  grade within the arm limits (pad stretch 3.0 %, hill 3.0 % to s 340, 3 % beyond) max grade 2.94 % (s 65..1027)
+  PASS  every vertical curve K >= minimum (crest / sag) and length >= 60 m     6 curves
+  PASS  vertical curves do not overlap                                         0 overlaps
+  PASS  first curve starts at s >= 60 (pad plane kept)                         first curve starts at s 121
+  PASS  centre cut <= 12 m in the changed part                                 max cut 0.7 m (old arm 0.7 m)
+  PASS  no fill > 7 m (no viaduct) before the first kept PVI of the old table  max fill in the changed part 2.7 m
+  PASS  west-nw at s 415: rail over road, deck underside >= 7 m over the road  road 18.25 m (was 25.65), ground 17.74 m, rail top 33.82 m, gap 12.92 m (was 5.52)
+  INFO  other crossing west-sw at s 1239: road 29.59 m (was 29.59)
+  INFO  other crossing ring-south at s 2065: road 21.98 m (was 21.98)
+  INFO  viaduct runs now (fill > 7 m): s 989..1139 (max fill 9.7 m); s 1199..1313 (max fill 16.1 m); s 1388..1523 (max fill 9.1 m); s 1957..2112 (max fill 7.9 m)
+  INFO  viaduct runs before:   s 345..500 (max fill 7.9 m); s 989..1139 (max fill 9.7 m); s 1199..1313 (max fill 16.1 m); s 1388..1523 (max fill 9.1 m); s 1957..2112 (max fill 7.9 m)
+===== J1-W (W1, rail west-nw) =====
+  rail crossings on this arm (rail design of the game now): west-nw s 912 rail top 40.60; ring-west s 2783 rail top 17.61
+  best cost 3628.7; PVIs (s, level, curve): 0 (18.19, 0) | 150 (17.36, 176) | 346 (24.09, 0) | 666 (36.73, 340) | 972 (28.36, 233) | 1197 (34.13, 122) | 1415 (34.50, 85) | 1534 (32.71, 120)
+  OLD  PVIs: 0 (18.19, 0) | 150 (17.36, 176) | 376 (25.11, 60) | 679 (37.06, 295) | 1001 (31.07, 150) | 1197 (34.13, 71) | 1415 (34.50, 85) | 1534 (32.71, 120)
+  PASS  tail of the arm (s > end of the changed part + 40 m) is the same as before max difference 0.00 m
+  PASS  grade within the arm limits (pad stretch 3.5 %, hill 4.0 % to s 1340, 3 % beyond) max grade 3.94 % (s 65..1457)
+  PASS  every vertical curve K >= minimum (crest / sag) and length >= 60 m     12 curves
+  PASS  vertical curves do not overlap                                         0 overlaps
+  PASS  first curve starts at s >= 60 (pad plane kept)                         first curve starts at s 62
+  PASS  centre cut <= 12 m in the changed part                                 max cut 11.5 m (old arm 11.7 m)
+  PASS  no fill > 7 m (no viaduct) before the first kept PVI of the old table  max fill in the changed part 6.3 m
+  PASS  west-nw at s 912: rail over road, deck underside >= 7 m over the road  road 30.37 m (was 32.73), ground 28.23 m, rail top 40.60 m, gap 7.58 m (was 5.22)
+  INFO  other crossing ring-west at s 2783: road 25.74 m (was 25.74)
+  INFO  viaduct runs now (fill > 7 m): s 1848..1918 (max fill 13.5 m); s 2677..2847 (max fill 8.9 m)
+  INFO  viaduct runs before:   s 1848..1918 (max fill 13.5 m); s 2677..2847 (max fill 8.9 m)
+SUMMARY: 25 PASS, 0 FAIL (only the checks of this script; the game checks must be run separately)
+written: profile json (E, S, W), structures json, J1ArmProfiles.ts. Next: python3 tools/j1-arm-data.py

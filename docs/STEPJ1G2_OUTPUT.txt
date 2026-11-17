@@ -1,0 +1,77 @@
+J1-g2 GEOMETRY CHECK: open ground interchange, C10 (-87, -277) yaw 37.5 (2026-11-14)
+
+1. NUMBERS
+  box half 19.75 m, stop line 23.75 m, slip lane centre 21.57 m from the axis, arc R 70 m (centre 91.58, 91.58), arc tangent point s 91.58 m
+  exit: full width from s 221.2 (deceleration 129.6 m), taper to s 312.5 (91.3 m).  merge: full width to s 197.7 (acceleration 106.1 m), taper to s 282.4 (84.8 m)
+  arm N: pockets R1 116 m / R2 86 m (end s 224.5 / 194.5), median shift s 225..265.3, lane zone ends at s 312.5 m (clear 380 m)
+  arm E: pockets R1 110 m / R2 80 m (end s 218.5 / 188.5), median shift s 219..259.3, lane zone ends at s 312.5 m (clear 350 m)
+  arm S: pockets R1 116 m / R2 86 m (end s 224.5 / 194.5), median shift s 225..265.3, lane zone ends at s 312.5 m (clear 350 m)
+  arm W: pockets R1 110 m / R2 80 m (end s 218.5 / 188.5), median shift s 219..259.3, lane zone ends at s 312.5 m (clear 330 m)
+
+2. MOVEMENTS (centre lines in the local frame; speed = highest speed whose minimum radius is <= the radius)
+  id              from  to  lanes  radius   speed  phase  pcu/h  length   target lane
+  N-left          N     E   1      70.0 m   40     free   350    552      E-out-O4
+  N-through-T1    N     S   1      -        60     P1     300    531      S-out-O1
+  N-through-T2    N     S   1      -        60     P1     300    531      S-out-O2
+  N-through-T3    N     S   1      -        60     P1     300    531      S-out-O3
+  N-through-T4    N     S   1      -        60     P1     300    531      S-out-O4
+  N-right-R2      N     W   1      23.4 m   30     P2     150    366      W-out-O1
+  N-right-R1      N     W   1      27.1 m   30     P2     150    401      W-out-O2
+  N-uturn         N     N   1      8.8 m    15     P2     30     363      N-out-O4
+  E-left          E     S   1      70.0 m   40     free   280    552      S-out-O4
+  E-through-T1    E     W   1      -        60     P3     250    519      W-out-O1
+  E-through-T2    E     W   1      -        60     P3     250    519      W-out-O2
+  E-through-T3    E     W   1      -        60     P3     250    519      W-out-O3
+  E-through-T4    E     W   1      -        60     P3     250    519      W-out-O4
+  E-right-R2      E     N   1      23.4 m   30     P4     125    366      N-out-O1
+  E-right-R1      E     N   1      27.1 m   30     P4     125    401      N-out-O2
+  E-uturn         E     E   1      8.8 m    15     P4     30     351      E-out-O4
+  S-left          S     W   1      70.0 m   40     free   320    552      W-out-O4
+  S-through-T1    S     N   1      -        60     P1     275    531      N-out-O1
+  S-through-T2    S     N   1      -        60     P1     275    531      N-out-O2
+  S-through-T3    S     N   1      -        60     P1     275    531      N-out-O3
+  S-through-T4    S     N   1      -        60     P1     275    531      N-out-O4
+  S-right-R2      S     E   1      23.4 m   30     P2     150    366      E-out-O1
+  S-right-R1      S     E   1      27.1 m   30     P2     150    401      E-out-O2
+  S-uturn         S     S   1      8.8 m    15     P2     30     363      S-out-O4
+  W-left          W     N   1      70.0 m   40     free   300    552      N-out-O4
+  W-through-T1    W     E   1      -        60     P3     250    519      E-out-O1
+  W-through-T2    W     E   1      -        60     P3     250    519      E-out-O2
+  W-through-T3    W     E   1      -        60     P3     250    519      E-out-O3
+  W-through-T4    W     E   1      -        60     P3     250    519      E-out-O4
+  W-right-R2      W     S   1      23.4 m   30     P4     125    366      S-out-O1
+  W-right-R1      W     S   1      27.1 m   30     P4     125    401      S-out-O2
+  W-uturn         W     W   1      8.8 m    15     P4     30     351      W-out-O4
+  32 centre lines: 4 left, 16 through lanes (4 per arm), 8 right (2 per arm), 4 U-turn
+
+3. PASS / FAIL
+  PASS  every centre line is continuous (no gap longer than 2.1 m between samples)           largest step 2.00 m
+  PASS  direction change at every joint (line / arc / taper) is small (<= 3 deg: 25:1 taper = 2.3 deg) worst 0.50 deg (S-left)
+  PASS  slip arc radius >= minimum radius at the slip design speed (40 km/h)                 R 70 m, min 40.6 m
+  PASS  slip arc radius inside the 60-80 m the user asked for                                70 m
+  PASS  slip arc longer than the stopping sight distance                                     110 m vs 46.0 m
+  INFO  sight over the corner island: nothing higher than about 0.6 m within 3.74 m of the lane centre on the island side (g3 / g4: kerb + grass only, no trees, no signs there)
+  PASS  slip arc meets the receiving lane of the next arm on its lane centre (lateral error) 0.00 m
+  PASS  exit starts 250-320 m before the J1 centre (user: about 250-300 m)                   exit taper starts at s 312.5 m
+  PASS  exit taper + merge taper of every arm end inside its clear length                    N 312.5/380  E 312.5/350  S 312.5/350  W 312.5/330
+  PASS  deceleration length 100 -> 40 km/h fits between taper end and arc start              129.6 m >= 129.6 m
+  PASS  acceleration length 40 -> 70 km/h fits before the merge taper                        106.1 m >= 106.1 m
+  PASS  lane edges never cross inside any arm (receiving, outbound, median, R2, R1, inbound, slip) 1252 stations x 4 arms, 0 overlaps
+  PASS  at the zone end the arm is the plain M8 again (no slip, receiving lane or pocket left, median shift done) ws, wr, w1, w2 = 0, t = 4.5 m
+  PASS  through lanes: 16 straight lines, each lane enters and leaves on the same line (4 lanes x 4 arms), no lateral shift while |s| <= 218 m max sideways deviation 0.00 m
+  PASS  right-turn guide lines: radius >= minimum radius at 30 km/h                          N-right-R2 23.4 m, N-right-R1 27.1 m, min 19.7 m
+  PASS  right-turn guide lines: R1 and R2 are concentric (lane spacing 3.65 m all along the arc) R1 - R2 = 3.65 m
+  PASS  U-turn: radius >= 7 m for cars and < 12.5 m (trucks do not turn here)                R 8.8 m (inner pocket centre to O4 centre)
+  PASS  U-turn ends on the outer outbound lane O4 of the same arm                            target lane O4
+  PASS  movements of the same phase (and the free left turns) never come closer than 3.0 m (diverge / merge zones excluded) 204 pairs, smallest distance 3.00 m
+  INFO  crossings between DIFFERENT phases (closer than 3 m): P1/P3 64, P1/P4 24, P1/P2 22, P2/P4 24, P2/P3 24, P3/P4 22 -> separated by the signal (P1 N+S through, P2 N+S right + U, P3 E+W through, P4 E+W right + U)
+  INFO  free (signal-less) conflicts that remain: 4 exits (diverge from T4) + 4 merges (slip into O4, yield) = 8 points; no crossing in the star
+
+4. FOOTPRINT
+  paved outline (star + the four lane zones to their ends): 58203 m2 = 5.82 ha
+  open star (inside |x|, |y| <= 91.6 m): 18975 m2 = 1.90 ha (g1 estimate with the lane centre arc: 18150 m2; the island side of the lane is 1.825 m closer to the corner, so the paved star is a little bigger)
+  PASS  paved outline is a closed polygon of the four arms (area > open star) and every movement lies inside it (except the island-side lane edge) 408 corners
+  PASS  every centre line lies inside the paved outline (the tips of the exit / merge tapers touch its edge) 0 points outside 
+  PASS  lane counts: left 1 lane, through 4, right 2 pockets, U-turn from the inner pocket; slip flow <= 1500 pcu/h per lane max left 350 pcu/h
+
+ALL PASS

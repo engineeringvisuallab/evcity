@@ -1,0 +1,47 @@
+tolerance 1.2 restart 0: 15 PVIs, cost 4776
+tolerance 1.2 restart 1: 15 PVIs, cost 4695
+tolerance 1.2 restart 2: 15 PVIs, cost 4770
+tolerance 1.8 restart 0: 13 PVIs, cost 4801
+tolerance 1.8 restart 1: 13 PVIs, cost 4873
+tolerance 1.8 restart 2: 13 PVIs, cost 4753
+tolerance 2.5 restart 0: 11 PVIs, cost 4994
+tolerance 2.5 restart 1: 11 PVIs, cost 4883
+tolerance 2.5 restart 2: 11 PVIs, cost 5074
+tolerance 3.5 restart 0: 9 PVIs, cost 5014
+tolerance 3.5 restart 1: 9 PVIs, cost 5141
+tolerance 3.5 restart 2: 9 PVIs, cost 4981
+
+J1-c5c W ARM VERTICAL PROFILE   V 100, K crest 50.9 sag 44.1 (SSD 183 m), optimised PVIs, s = 0 at the J1 centre, S = 340, E = 2881
+  PVI table:  #  s(m)  level(m)  grade in -> out (%)  curve  length(m)  K
+     0      0   18.19    0.00 ->  -0.56  end       0  -
+     1    150   17.36   -0.56 ->   3.44  sag     176  44
+     2    376   25.11    3.44 ->   3.94  sag      60  120
+     3    679   37.06    3.94 ->  -1.86  crest   295  51
+     4   1001   31.07   -1.86 ->   1.56  sag     150  44
+     5   1197   34.13    1.56 ->   0.17  crest    71  51
+     6   1415   34.50    0.17 ->  -1.49  crest    85  51
+     7   1534   32.71   -1.49 ->   1.23  sag     120  44
+     8   1688   34.61    1.23 ->  -2.27  crest   179  51
+     9   1783   32.46   -2.27 ->  -2.77  none      0  -
+    10   1911   28.91   -2.77 ->   1.74  sag     199  44
+    11   2136   32.82    1.74 ->  -2.94  crest   238  51
+    12   2437   23.97   -2.94 ->   1.89  sag     213  44
+    13   2603   27.11    1.89 ->   0.21  crest    86  51
+    14   2730   27.38    0.21 ->  -2.94  crest   160  51
+    15   2881   22.92   -2.94 ->   0.00  end       0  -
+
+  PASS  grade <= 4 % on the first 1000 m from S, <= 3 % beyond (motorway max 4 %, desirable 3 %), pad stretch see next check max 3.94 % on the hill stretch, 2.94 % elsewhere
+  PASS  grade on the pad -> S stretch (s 60..340) <= 3.5 %                 max 3.44 %
+  PASS  grade after the pad curve at least 0.3 % (drainage)                3.44 % (pad level 18.19 -> 17.86)
+  PASS  every vertical curve K >= SSD minimum (crest / sag) and length >= 0.6 V = 60 m 13 curves, shortest 60 m, longest 295 m
+  PASS  vertical curves do not overlap each other (tangent length between curves >= 0) 0 overlaps, smallest straight between curves 4 m
+  PASS  first tangent is the pad plane (to s 60), first curve starts at s >= 60 first curve starts at s 62, pad grade -0.56 %
+  PASS  centre cut <= 12 m (3.7)                                           max cut 11.7 m
+  INFO  edges (+-25 m): max cut 19.7 m, max fill 14.1 m; centre fill > 7 m (viaduct) total 250 m
+  INFO  viaduct runs (fill > 7 m): s 1848..1918 (max fill 13.5 m); s 2677..2847 (max fill 8.9 m)
+  PASS  end level = ring level at the T                                    end 22.92 m, ring 22.92 m (ring st 4265)
+  INFO  last grade into the ring -2.94 %
+  PASS  river / lake crossing: road level at least 2.5 m above the water (bridge, 6.1e) 30 m wet, lowest clearance 10.5 m, deck depth not included
+  PASS  rail crossing west-nw at s 912: |road - rail| >= 7.4 m (road OVER rail) road 32.73 m, rail top 24.76 m, gap 7.97 m
+  PASS  rail crossing ring-west at s 2783: |road - rail| >= 7.4 m (road OVER rail) road 25.74 m, rail top 18.10 m, gap 7.64 m
+SUMMARY: 11 PASS, 0 FAIL

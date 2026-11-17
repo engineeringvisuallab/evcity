@@ -1,0 +1,16 @@
+STEP G7b (option B = trumpet tap NE of JX-3 + R6-6B re-routed as a stem on the SE side of J1-N; numbers only, no src/ change)
+Search: arm station 1850..2300 (between N3 end s 1619 and N4 start s 2355), stem start 130 m from the arm axis (perpendicular, SE side), stem ends on R6-6B at its point k (the first k points of R6-6B are replaced), cubic Hermite, then checks: radius >= 229 m (V80), grade <= 3.5000000000000004 %, cut <= 12 m, fill <= 7 m, rail >= 60 m from the stem and >= 150 m from the tap on the arm, >= 60 m from the other R6 roads, stem level at the start <= arm level - 7.8 m (pass under the arm).
+feasible candidates: 31
+  tap s 2069 (arm 39.0 m, ground 39.0) -> R6-6B point 86 (688 m in): stem 624 m, min radius 265 m, grade 0.5 %, levels 31.2 -> 28.2, cut 10.7 m, fill 0.5 m, rail 400 m (tap 341 m), other R6 465 m, score 921
+  tap s 1989 (arm 40.1 m, ground 40.1) -> R6-6B point 80 (640 m in): stem 583 m, min radius 241 m, grade 0.7 %, levels 32.3 -> 28.4, cut 10.1 m, fill 3.3 m, rail 342 m (tap 272 m), other R6 405 m, score 982
+  tap s 1969 (arm 40.4 m, ground 40.4) -> R6-6B point 80 (640 m in): stem 582 m, min radius 256 m, grade 0.7 %, levels 32.6 -> 28.4, cut 9.6 m, fill 3.9 m, rail 328 m (tap 255 m), other R6 391 m, score 991
+PASS  a legal tap + stem pair exists
+PASS  no arm structure in the trumpet zone (330 m toward J1, 250 m toward the ring): [[366.5,453.4],[1166,1492.9],[1526.6,1618.6],[2355.4,2492.3],[3000,3112]]
+PASS  arm is on the ground at the tap (road 39.0 m, ground 39.0 m)
+PASS  lane zones fit between N3 (ends 1619) and N4 (starts 2355) with 20 m margin: zone 1739 .. 2319
+PASS  R1: the stem crosses no road (0 crossings; it joins R6-6B only at its end)
+PASS  the loop side (NW of the arm) is 341 m from the railway (>= 150 m)
+PASS  R5: tap at arm s 2069 = 2069 m from the J1 centre (plaza radius 300 m), 1 ring join not nearby; the other taps of the A3 list were NOT re-checked
+Level plan (to be fixed in the ramp step): arm road 38.98 m on the ground; the stem is 31.18 m at its start, R6 passes UNDER the arm (deck + 5.5 m clearance + margin = 7.8 m), the stem has to reach about 31.2 m or lower at the structure.
+
+RESULT: ALL PASS

@@ -1,0 +1,25 @@
+STEP 5.3a - STRUCTURE TABLE of the ring (M8). Reads docs/ring_ground_check.txt (water) and docs/ring_profile.csv (grade line). Nothing in src/ changed.
+deck = road surface height of the grade line at the nearest 10 m profile point; slab underside is 0.8-1.5 m lower (deck depth). gap = deck - water level.
+
+A. RIVER CROSSINGS ON THE CENTRELINE
+  no  station  wet len  channel  crossing  water   ground  deck    gap to water  ground below deck
+  B1     837     90 m   85.0 m   60 deg   14.5    6.73   18.85    4.35 m       12.12 m
+  B2    8172     45 m   45.1 m   67 deg   43.5   39.15   49.36    5.86 m       10.21 m
+  B3   12327     40 m   39.2 m   68 deg   22.2   18.39   25.75    3.55 m        7.36 m
+  B4   14009     15 m   20.5 m   78 deg   19.0   16.75   37.68   18.68 m       20.93 m
+  B5   15416     20 m   21.1 m   81 deg   42.1   40.06   76.67   34.57 m       36.61 m
+
+B. TALL FILL RANGES (fill > 7 m, from ring_profile_report.txt) that are near the crossings or the viaduct rule D4 (fill > 7 m beside a river valley = viaduct)
+  station    800 -    880     80 m  max 12.2 m high at 820
+  station   8160 -   8200     40 m  max 10.6 m high at 8180
+  station  12320 -  12350     30 m  max  7.4 m high at 12330
+  station  13960 -  14490    530 m  max 25.8 m high at 14290
+  station  15200 -  16200   1000 m  max 41.5 m high at 15540
+
+C. WHAT THIS MEANS (for the user's OK)
+  - B1 (st 837): 90 m wet, deck only 4.35 m above water: low, long river bridge. Fits a cable-stayed / extradosed landmark.
+  - B2 (st 8172): 45 m wet, deck 5.86 m above water, ground 10 m below deck (fill 10.6 m).
+  - B3 (st 12327): 40 m wet, deck 3.55 m above water: LOW. Slab underside would be only about 2.1-2.8 m above water. Needs OK: raise the grade line locally, or accept it (flood level unknown).
+  - B4 (st 14009): 15 m wet but deck 18.7 m above water and inside the 530 m tall fill 13960-14490 (25.8 m): this is a valley, so it becomes a long viaduct, not a small bridge.
+  - B5 (st 15416): 20 m wet but deck 34.6 m above water, inside the 1000 m tall fill 15200-16200 (41.5 m): the biggest structure; the old '41 m fill near 15540' viaduct is the SAME valley, so B5 and that viaduct are one long structure.
+  - HANDOFF said '58 m fill near station 15080': the profile file shows st 15080 is a CUT (8.6 m deep). Not confirmed by the data; to re-check in the game terrain (5.3b) before building.

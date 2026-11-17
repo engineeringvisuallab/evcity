@@ -1,0 +1,47 @@
+STEP 21.6e-3 RUNOFF / RUNOUT vs SPIRAL + ROTATION AXIS (ring method, relative gradient 0.44 %, Lr and Lt rounded up to 5 m, Ls_new = max(Ls, Lr up to 10 m))
+
+1. SECTION DATA USED (w lane width, n lanes per direction, bw, rotation axis) and the lengths at e = 2 % and e = 8 %
+   cls  n    w    bw   axis          Lt    Lr(2%)  Lr(8%)
+   8    4  3.65  0.625  median edge    45      45     170
+   6    3  3.50  0.667  median edge    35      35     130
+   4    2  3.50  0.750  median edge    25      25     100
+   2    1  3.50  1.000  centreline     20      20      65
+   C    1  3.30  1.000  centreline     15      15      60
+   L    1  2.75  1.000  centreline     15      15      50
+
+2. SUMMARY PER CLASS (bends with e > 0: Ls kept = Ls already long enough; raised = Ls_new above Ls; in spiral = Lr + Lt fits inside Ls_new)
+   cls  bends  Ls kept  raised  max raise  in spiral  max Lr  max Lt  max Ls_new
+   8        8        8       0          0          1     170      45         300
+   6       37       21      16         40          1     130      35         190
+   4       97       85      12         30         51     100      25         360
+   2       18       18       0          0         13      65      20         130
+   C        0
+   L        0
+
+3. THE 15 BIGGEST SPIRAL INCREASES (line, bend no., e, Ls -> Ls_new, Lr, Lt)
+   R6-7    #1  s    45  R  213  e  8.0 %  Ls  90 -> 130  Lr 130  Lt  35  median edge
+   R6-8    #1  s    40  R  217  e  8.0 %  Ls  90 -> 130  Lr 130  Lt  35  median edge
+   R6-15   #7  s   950  R  251  e  6.5 %  Ls  80 -> 110  Lr 105  Lt  35  median edge
+   R4-19   #9  s  2881  R  112  e  8.0 %  Ls  70 -> 100  Lr 100  Lt  25  median edge
+   R6-6B   #3  s   750  R  258  e  6.0 %  Ls  80 -> 100  Lr 100  Lt  35  median edge
+   R6-10   #4  s   726  R  177  e  8.0 %  Ls 110 -> 130  Lr 130  Lt  35  median edge
+   R6-11   #4  s   764  R  262  e  5.5 %  Ls  70 ->  90  Lr  90  Lt  35  median edge
+   R6-15   #10 s  1275  R  256  e  6.0 %  Ls  80 -> 100  Lr 100  Lt  35  median edge
+   R4-7    #7  s   511  R   98  e  8.0 %  Ls  80 -> 100  Lr 100  Lt  25  median edge
+   R4-7    #11 s  1166  R   99  e  8.0 %  Ls  80 -> 100  Lr 100  Lt  25  median edge
+   R4-9    #8  s  1195  R  100  e  8.0 %  Ls  80 -> 100  Lr 100  Lt  25  median edge
+   R4-9    #10 s  1500  R   99  e  8.0 %  Ls  80 -> 100  Lr 100  Lt  25  median edge
+   R4-9    #13 s  2035  R  104  e  8.0 %  Ls  80 -> 100  Lr 100  Lt  25  median edge
+   R4-20   #2  s   335  R   98  e  8.0 %  Ls  80 -> 100  Lr 100  Lt  25  median edge
+   R4-21   #1  s    30  R  109  e  8.0 %  Ls  80 -> 100  Lr 100  Lt  25  median edge
+
+4. CHECKS (these test the table and the method, not the design)
+   PASS  ring worked value reproduced: M8 e 2 %: Lr 45 m, Lt 45 m (docs/ring-superelevation_nc018_output.txt)
+   PASS  every bend with e > 0 has a row (160)
+   PASS  relative gradient of every bend is at most 0.44 %
+   PASS  Ls_new is never shorter than Ls or Lr and is a multiple of 10 m
+   PASS  divided classes (8, 6, 4) rotate about the median edge, the others about the centreline
+   PASS  every runoff and runout length is positive
+   RESULT 6 PASS 0 FAIL
+   NOT RUN: tsc, npm run build, the game. Nothing in src changed. NOT DONE: free straight between two bends (6 V / 2 V rule, tangent runout inside it), bend length vs 2 Ls_new, junction nodes (21.7).
+   LIMIT: R, Ls and bend positions are the measured ones of 21.6e-1, not the real fit; the 0.44 % gradient is the ring assumption used for every class (to confirm).

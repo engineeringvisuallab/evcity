@@ -1,0 +1,146 @@
+[road fix RC03] skipped: road not found
+J1 SITE CHECK (Step 6.1a)   footprint +-300 m, arm straight 500 m, rail buffer 50 m, ground = natural terrain, rail = the real generated plan
+FOOTPRINT SHEET (proposal): half size = box 50 m + stop distance from 60 km/h 56 m + queue storage 100 m (assumed) + pocket taper (W V^2 / 155) 85 m = 290 m  -> FOOT = 300 m; speed step-down 100 -> 60 km/h needs 99 m more (inside the arm straight of 500 m)
+ring meeting points: N (1712, -3145), E (2967, 191), S (-1132, 2302), W (-2595, -592)
+
+=== C0  (0, 0)  city centre   ground 17.0..18.9 m, mean slope 0.5 %
+  PASS  ground flat enough (steepest 50 m step in the footprint)       2.1 % (limit 3 %), height range 1.9 m
+  PASS  no water in the footprint                                      0 wet grid points
+  FAIL  rail at least 50 m from the footprint box                      0 m (north-1), centre to nearest track 205 m (north-1)
+  PASS  no facility fence inside the footprint                         2722 m
+  PASS  every arm bends at most 20 deg (common yaw)                    max 14.2 deg, yaw 17.8 deg east of north
+  PASS  every arm at least 1500 m long                                 shortest 2565 m
+  info  Central Station edge 0 m away, nearest river bank 592 m, world zones in the footprint: metro-core (urban-core)
+  info  city plan under the footprint: s0-edu 11 %, s0-arm-w 11 %, s0-homes 11 %, s0-arm-n 11 %, s0-hub 11 %, s0-arm-s 11 %, s0-cbd 11 %, s0-arm-e 11 %, s0-flats 11 %   (dense areas, density 4-5: 56 %)
+  arm N  straight-line length  3581 m  bearing   -61 deg  bend   10.7 deg  rail crossings of the straight line: north-1@828
+  arm E  straight-line length  2974 m  bearing     4 deg  bend  -14.2 deg  rail crossings of the straight line: north-1@239 east-1@1296 east-2@2435   <-- too near J1 (< 800 m): warning
+  arm S  straight-line length  2565 m  bearing   116 deg  bend    8.4 deg  rail crossings of the straight line: west-nw@242 west-sw@495 ring-south@1734   <-- too near J1 (< 800 m): warning
+  arm W  straight-line length  2662 m  bearing  -167 deg  bend   -5.0 deg  rail crossings of the straight line: west-nw@726 ring-west@2568   <-- too near J1 (< 800 m): warning
+
+=== C1  (650, -500)  proposal of 15.3   ground 14.7..57.8 m, mean slope 6.3 %
+  FAIL  ground flat enough (steepest 50 m step in the footprint)       26.9 % (limit 3 %), height range 43.1 m
+  FAIL  no water in the footprint                                      1 wet grid points
+  FAIL  rail at least 50 m from the footprint box                      0 m (north-1), centre to nearest track 293 m (north-1)
+  PASS  no facility fence inside the footprint                         3058 m
+  PASS  every arm bends at most 20 deg (common yaw)                    max 16.5 deg, yaw 18.2 deg east of north
+  PASS  every arm at least 1500 m long                                 shortest 2418 m
+  info  Central Station edge 731 m away, nearest river bank 401 m, world zones in the footprint: metro-core (urban-core), ne-business (commercial), east-homes (residential)
+  info  city plan under the footprint: s0-green 39 %, none 28 %, s0-suburb 23 %, s0-cbd 10 %   (dense areas, density 4-5: 10 %)
+  arm N  straight-line length  2850 m  bearing   -68 deg  bend    3.7 deg  rail crossings of the straight line: none
+  arm E  straight-line length  2418 m  bearing    17 deg  bend   -1.6 deg  rail crossings of the straight line: east-1@1248 east-2@1893
+  arm S  straight-line length  3320 m  bearing   122 deg  bend   14.3 deg  rail crossings of the straight line: east-1@976 south-1@1158 ring-south@2445
+  arm W  straight-line length  3246 m  bearing  -178 deg  bend  -16.5 deg  rail crossings of the straight line: north-1@298 west-nw@1989 ring-west@3155   <-- too near J1 (< 800 m): warning
+
+=== C2  (450, -350)  NE, nearer the centre   ground 8.0..57.8 m, mean slope 4.2 %
+  FAIL  ground flat enough (steepest 50 m step in the footprint)       26.9 % (limit 3 %), height range 49.8 m
+  FAIL  no water in the footprint                                      1 wet grid points
+  FAIL  rail at least 50 m from the footprint box                      0 m (north-1), centre to nearest track 132 m (north-1)
+  PASS  no facility fence inside the footprint                         2938 m
+  PASS  every arm bends at most 20 deg (common yaw)                    max 13.4 deg, yaw 17.9 deg east of north
+  PASS  every arm at least 1500 m long                                 shortest 2575 m
+  info  Central Station edge 491 m away, nearest river bank 406 m, world zones in the footprint: metro-core (urban-core), ne-business (commercial)
+  info  city plan under the footprint: s0-suburb 44 %, s0-cbd 34 %, s0-green 17 %, s0-arm-e 5 %   (dense areas, density 4-5: 34 %)
+  arm N  straight-line length  3067 m  bearing   -66 deg  bend    6.3 deg  rail crossings of the straight line: none
+  arm E  straight-line length  2575 m  bearing    12 deg  bend   -5.8 deg  rail crossings of the straight line: east-1@1286 east-2@2048
+  arm S  straight-line length  3088 m  bearing   121 deg  bend   12.9 deg  rail crossings of the straight line: north-1@397 north-1@545 south-1@853 ring-south@2225   <-- too near J1 (< 800 m): warning
+  arm W  straight-line length  3055 m  bearing  -175 deg  bend  -13.4 deg  rail crossings of the straight line: north-1@134 west-nw@1684 ring-west@2963   <-- too near J1 (< 800 m): warning
+
+=== C3  (800, -700)  NE, further out   ground 20.9..57.8 m, mean slope 6.5 %
+  FAIL  ground flat enough (steepest 50 m step in the footprint)       26.9 % (limit 3 %), height range 36.9 m
+  PASS  no water in the footprint                                      0 wet grid points
+  PASS  rail at least 50 m from the footprint box                      62 m (north-1), centre to nearest track 403 m (north-1)
+  PASS  no facility fence inside the footprint                         2941 m
+  FAIL  every arm bends at most 20 deg (common yaw)                    max 20.3 deg, yaw 18.5 deg east of north
+  PASS  every arm at least 1500 m long                                 shortest 2343 m
+  info  Central Station edge 981 m away, nearest river bank 517 m, world zones in the footprint: eng-tech-park (engineering), ne-business (commercial), metro-core (urban-core), east-homes (residential)
+  info  city plan under the footprint: none 76 %, s0-green 21 %, s0-suburb 4 %   (dense areas, density 4-5: 0 %)
+  arm N  straight-line length  2610 m  bearing   -70 deg  bend    1.9 deg  rail crossings of the straight line: none
+  arm E  straight-line length  2343 m  bearing    22 deg  bend    3.8 deg  rail crossings of the straight line: east-1@1282 east-2@1816
+  arm S  straight-line length  3570 m  bearing   123 deg  bend   14.3 deg  rail crossings of the straight line: east-1@1220 south-1@1420 ring-south@2692
+  arm W  straight-line length  3397 m  bearing   178 deg  bend  -20.3 deg  rail crossings of the straight line: north-1@412 west-nw@2243 ring-west@3305   <-- too near J1 (< 800 m): warning
+
+=== C4  (900, -250)  east side   ground 7.9..46.5 m, mean slope 7.2 %
+  FAIL  ground flat enough (steepest 50 m step in the footprint)       28.0 % (limit 3 %), height range 38.6 m
+  FAIL  no water in the footprint                                      18 wet grid points
+  PASS  rail at least 50 m from the footprint box                      61 m (east-1), centre to nearest track 437 m (east-1)
+  PASS  no facility fence inside the footprint                         2791 m
+  FAIL  every arm bends at most 20 deg (common yaw)                    max 20.7 deg, yaw 17.9 deg east of north
+  PASS  every arm at least 1500 m long                                 shortest 2114 m
+  info  Central Station edge 755 m away, nearest river bank 61 m, world zones in the footprint: metro-core (urban-core), ne-business (commercial), east-homes (residential)
+  info  city plan under the footprint: none 50 %, s0-green 34 %, s0-suburb 16 %   (dense areas, density 4-5: 0 %)
+  arm N  straight-line length  3007 m  bearing   -74 deg  bend   -2.2 deg  rail crossings of the straight line: none
+  arm E  straight-line length  2114 m  bearing    12 deg  bend   -5.8 deg  rail crossings of the straight line: east-1@822 east-2@1587
+  arm S  straight-line length  3262 m  bearing   129 deg  bend   20.7 deg  rail crossings of the straight line: east-1@748 south-1@1323 ring-south@2333   <-- too near J1 (< 800 m): warning
+  arm W  straight-line length  3512 m  bearing  -174 deg  bend  -12.3 deg  rail crossings of the straight line: north-1@599 west-nw@2093 ring-west@3420   <-- too near J1 (< 800 m): warning
+
+=== C5  (300, -600)  north side   ground 17.6..88.2 m, mean slope 6.7 %
+  FAIL  ground flat enough (steepest 50 m step in the footprint)       43.0 % (limit 3 %), height range 70.6 m
+  PASS  no water in the footprint                                      0 wet grid points
+  FAIL  rail at least 50 m from the footprint box                      0 m (north-1), centre to nearest track 70 m (north-1)
+  PASS  no facility fence inside the footprint                         2811 m
+  PASS  every arm bends at most 20 deg (common yaw)                    max 18.1 deg, yaw 18.0 deg east of north
+  PASS  every arm at least 1500 m long                                 shortest 2782 m
+  info  Central Station edge 649 m away, nearest river bank 693 m, world zones in the footprint: metro-core (urban-core), ne-business (commercial)
+  info  city plan under the footprint: s0-suburb 34 %, s0-green 33 %, s0-cbd 18 %, none 6 %, s0-arm-n 5 %, s0-depot 4 %   (dense areas, density 4-5: 23 %)
+  arm N  straight-line length  2911 m  bearing   -61 deg  bend   11.1 deg  rail crossings of the straight line: north-1@221   <-- too near J1 (< 800 m): warning
+  arm E  straight-line length  2782 m  bearing    17 deg  bend   -1.4 deg  rail crossings of the straight line: north-1@70 east-1@1610 east-2@2257   <-- too near J1 (< 800 m): warning
+  arm S  straight-line length  3236 m  bearing   116 deg  bend    8.3 deg  rail crossings of the straight line: west-nw@914 west-sw@1161 ring-south@2405
+  arm W  straight-line length  2895 m  bearing   180 deg  bend  -18.1 deg  rail crossings of the straight line: west-nw@1695 ring-west@2803
+
+=== C6  (-500, -650)  NW (rejected in 15.3)   ground 17.0..155.7 m, mean slope 16.7 %
+  FAIL  ground flat enough (steepest 50 m step in the footprint)       67.7 % (limit 3 %), height range 138.7 m
+  PASS  no water in the footprint                                      0 wet grid points
+  PASS  rail at least 50 m from the footprint box                      114 m (west-nw), centre to nearest track 526 m (west-nw)
+  PASS  no facility fence inside the footprint                         2354 m
+  FAIL  every arm bends at most 20 deg (common yaw)                    max 25.3 deg, yaw 16.3 deg east of north
+  PASS  every arm at least 1500 m long                                 shortest 2096 m
+  info  Central Station edge 774 m away, nearest river bank 1163 m, world zones in the footprint: nw-university (education), metro-core (urban-core), north-admin (civic)
+  info  city plan under the footprint: s0-green 39 %, none 28 %, s0-suburb 23 %, s0-civic 10 %   (dense areas, density 4-5: 0 %)
+  arm N  straight-line length  3334 m  bearing   -48 deg  bend   25.3 deg  rail crossings of the straight line: north-1@1499
+  arm E  straight-line length  3568 m  bearing    14 deg  bend   -2.7 deg  rail crossings of the straight line: north-1@862 east-1@2323 east-2@3042
+  arm S  straight-line length  3019 m  bearing   102 deg  bend   -4.2 deg  rail crossings of the straight line: west-nw@556 west-sw@1569 ring-south@2258   <-- too near J1 (< 800 m): warning
+  arm W  straight-line length  2096 m  bearing   178 deg  bend  -17.9 deg  rail crossings of the straight line: west-nw@936 ring-west@2004
+
+=== C7  (-50, -300)  flat pocket north of the centre (from the scan)   ground 17.6..28.2 m, mean slope 0.7 %
+  FAIL  ground flat enough (steepest 50 m step in the footprint)       13.3 % (limit 3 %), height range 10.6 m
+  PASS  no water in the footprint                                      0 wet grid points
+  FAIL  rail at least 50 m from the footprint box                      0 m (north-1), centre to nearest track 344 m (north-1)
+  PASS  no facility fence inside the footprint                         2867 m
+  PASS  every arm bends at most 20 deg (common yaw)                    max 14.3 deg, yaw 17.5 deg east of north
+  PASS  every arm at least 1500 m long                                 shortest 2562 m
+  info  Central Station edge 302 m away, nearest river bank 768 m, world zones in the footprint: metro-core (urban-core)
+  info  city plan under the footprint: s0-arm-n 21 %, s0-cbd 16 %, s0-suburb 15 %, s0-edu 14 %, s0-civic 12 %, s0-arm-w 7 %, s0-depot 6 %, s0-hub 6 %, s0-arm-e 4 %   (dense areas, density 4-5: 42 %)
+  arm N  straight-line length  3347 m  bearing   -58 deg  bend   14.3 deg  rail crossings of the straight line: north-1@951
+  arm E  straight-line length  3057 m  bearing     9 deg  bend   -8.3 deg  rail crossings of the straight line: north-1@344 east-1@1668 east-2@2528   <-- too near J1 (< 800 m): warning
+  arm S  straight-line length  2818 m  bearing   113 deg  bend    5.1 deg  rail crossings of the straight line: west-nw@461 west-sw@960 ring-south@2009   <-- too near J1 (< 800 m): warning
+  arm W  straight-line length  2562 m  bearing  -173 deg  bend  -11.0 deg  rail crossings of the straight line: west-nw@1095 ring-west@2469
+
+=== C8  (0, -250)  flat pocket north of the centre, nearer the hub   ground 17.2..19.5 m, mean slope 0.5 %
+  PASS  ground flat enough (steepest 50 m step in the footprint)       2.7 % (limit 3 %), height range 2.3 m
+  PASS  no water in the footprint                                      0 wet grid points
+  FAIL  rail at least 50 m from the footprint box                      0 m (north-1), centre to nearest track 285 m (north-1)
+  PASS  no facility fence inside the footprint                         2935 m
+  PASS  every arm bends at most 20 deg (common yaw)                    max 13.0 deg, yaw 17.6 deg east of north
+  PASS  every arm at least 1500 m long                                 shortest 2617 m
+  info  Central Station edge 250 m away, nearest river bank 700 m, world zones in the footprint: metro-core (urban-core)
+  info  city plan under the footprint: s0-arm-n 21 %, s0-cbd 21 %, s0-edu 11 %, s0-suburb 10 %, s0-civic 10 %, s0-arm-w 8 %, s0-hub 8 %, s0-arm-e 8 %, s0-depot 3 %   (dense areas, density 4-5: 50 %)
+  arm N  straight-line length  3363 m  bearing   -59 deg  bend   13.0 deg  rail crossings of the straight line: north-1@857
+  arm E  straight-line length  3000 m  bearing     8 deg  bend   -9.2 deg  rail crossings of the straight line: north-1@285 east-1@1579 east-2@2470   <-- too near J1 (< 800 m): warning
+  arm S  straight-line length  2791 m  bearing   114 deg  bend    6.3 deg  rail crossings of the straight line: west-nw@448 west-sw@858 ring-south@1975   <-- too near J1 (< 800 m): warning
+  arm W  straight-line length  2617 m  bearing  -173 deg  bend  -10.1 deg  rail crossings of the straight line: west-nw@1097 ring-west@2525
+
+SUMMARY
+  point                 fails  warns  max slope  rail to box  max flat box  max bend  shortest arm  dense plan %  rail X of 4 straight arms
+  C0  (0, 0)                1      2       2.1 %         0 m      +-100 m     14.2 deg       2565 m          56 %              9
+  C1  (650, -500)           3      1      26.9 %         0 m        +-0 m     16.5 deg       2418 m          10 %              8
+  C2  (450, -350)           3      2      26.9 %         0 m        +-0 m     13.4 deg       2575 m          34 %              9
+  C3  (800, -700)           2      1      26.9 %        62 m        +-0 m     20.3 deg       2343 m           0 %              8
+  C4  (900, -250)           3      1      28.0 %        61 m        +-0 m     20.7 deg       2114 m           0 %              8
+  C5  (300, -600)           2      1      43.0 %         0 m        +-0 m     18.1 deg       2782 m          23 %              9
+  C6  (-500, -650)          2      1      67.7 %       114 m        +-0 m     25.3 deg       2096 m           0 %              9
+  C7  (-50, -300)           2      2      13.3 %         0 m      +-250 m     14.3 deg       2562 m          42 %              9
+  C8  (0, -250)             1      2       2.7 %         0 m      +-200 m     13.0 deg       2617 m          50 %              9
+
+  lowest fails, then warnings, then dense city plan under the footprint: C8  (0, -250)   (the user picks the point)
+
+0 of 9 candidate points pass all pass/fail checks

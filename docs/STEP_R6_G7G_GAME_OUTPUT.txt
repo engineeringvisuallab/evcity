@@ -1,0 +1,46 @@
+R6 STEP G7g (game data): R6-8 (north stem) + two slip ramps added to the game. Headless runs only; npm run build / vite / game NOT run.
+
+== 1. scripts/r6-g7g-water.ts (water, reads the JSON only; first run was BEFORE any src change) ==
+PASS  WATER stem R6-8: 495 samples (centre and +-35 m, step 5 m), wet 0
+PASS  WATER exit slip m1: 572 samples (centre and +-35 m, step 5 m), wet 0
+PASS  WATER entry slip m2: 649 samples (centre and +-35 m, step 5 m), wet 0
+RESULT: PASS (water: stem and both slips dry, 35 m beside)
+
+== 2. scripts/r6-game-check.ts (R6 ON) ==
+R6 ON: rail 12 edges, 31.83 km, 16 road crossings, 308 piers, 7 steel spans, geometry hash 344034351
+R6-2: 247 points, 1966 m (data 1966 m), 6 lanes, max grade 3.0 %, ground - design at the centreline max 0.00 m, at +-18 m max 2.12 m
+R6-3: 146 points, 1159 m (data 1159 m), 6 lanes, max grade 2.5 %, ground - design at the centreline max 0.01 m, at +-18 m max 2.47 m
+R6-4: 77 points, 607 m (data 607 m), 6 lanes, max grade 1.0 %, ground - design at the centreline max 0.02 m, at +-18 m max 8.20 m
+R6-5: 120 points, 948 m (data 949 m), 6 lanes, max grade 3.0 %, ground - design at the centreline max 0.00 m, at +-18 m max 2.66 m
+R6-6A: 64 points, 501 m (data 501 m), 6 lanes, max grade 3.1 %, ground - design at the centreline max 0.00 m, at +-18 m max 1.53 m
+R6-6B: 118 points, 930 m (data 930 m), 6 lanes, max grade 2.1 %, ground - design at the centreline max 0.00 m, at +-18 m max 1.64 m
+   bridges on R6-7: [{"type":"beam","i0":41,"i1":46,"spanM":24}]
+R6-7: 98 points, 772 m (data 772 m), 6 lanes, max grade 2.2 %, ground - design at the centreline max 0.00 m, at +-18 m max 6.00 m
+R6-8: 29 points, 218 m (data 219 m), 6 lanes, max grade 1.0 %, ground - design at the centreline max 0.04 m, at +-18 m max 8.92 m
+R6-8:m1: 34 points, 165 m, kind ramp tier 3, 1 lane, halfWidth 4.2, 50 km/h, max grade 1.8 %, ground - design at the centreline max 0.00 m, start 18.6 m from the J1-E axis, end 10.3 m from the R6-8 axis
+R6-8:m2: 38 points, 185 m, kind ramp tier 3, 1 lane, halfWidth 4.2, 50 km/h, max grade 1.8 %, ground - design at the centreline max 0.00 m, start 11.8 m from the R6-8 axis, end 17.4 m from the J1-E axis
+RESULT: PASS (8 R6 roads, 2 slip ramps)
+
+== 3. scripts/r6-game-check.ts off (rail only) ==
+R6 OFF: rail 12 edges, 31.83 km, 16 road crossings, 308 piers, 7 steel spans, geometry hash 344034351
+
+== 4. scripts/r6-g7g-compare.ts, OLD src (before G7g) ==
+roads (without R6-8 / slips): 13, hash 670243232
+J1-E arm: 1 road, hash 174920476
+other tier-1 roads (ring, M8, R6, island link): hash 451586530
+junction pads: 0, hash 0
+bridges (all roads, count only): 22
+rail: 12 edges, 308 piers, 7 steel spans, 16 road crossings, hash 893651067
+has R6-8: false, slips: 0
+
+== 5. scripts/r6-g7g-compare.ts, NEW src ==
+roads (without R6-8 / slips): 13, hash 670243232
+J1-E arm: 1 road, hash 174920476
+other tier-1 roads (ring, M8, R6, island link): hash 451586530
+junction pads: 0, hash 0
+bridges (all roads, count only): 22
+rail: 12 edges, 308 piers, 7 steel spans, 16 road crossings, hash 893651067
+has R6-8: true, slips: 2
+
+== 6. tsc (partial: node_modules empty here, so three / rapier modules are missing) ==
+tsc --noEmit -p (types [] , include src): OLD 529 lines, NEW 529 lines, diff EMPTY, no line in src/roads/r6/ or RoadNetwork.ts. The real npx tsc --noEmit was NOT RUN.

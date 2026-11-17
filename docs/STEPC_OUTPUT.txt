@@ -1,0 +1,107 @@
+STEP C (housing street centrelines, plan view only, all 9 housings). Sketch lines R6 / R4 / R2, 8-lane, rail, buildings are NOT changed; villages wait (19.5-1).
+Parameters (mine, NOT from the web, verify): grade A 6 % / C 8 % / L 10 %, Rmin A 120 / C 60 / L 30 m, min piece = node gap 60 m, building margin 3 m, clear of R6 / 8-lane 25 m, local clear of R4 20 m, cul-de-sac <= 200 m, wet = water + 0.4 m > ground (stricter than sc.water > sc.h).
+WATER CHECK (first) H-C1: 0 of 1793 raster points wet (0.0 %)
+WATER CHECK (first) H-C2W: 90 of 1927 raster points wet (4.7 %)
+WATER CHECK (first) H-C2S: 35 of 1793 raster points wet (2.0 %)
+WATER CHECK (first) H-C3: 165 of 1793 raster points wet (9.2 %)
+WATER CHECK (first) H-S1: 0 of 1517 raster points wet (0.0 %)
+WATER CHECK (first) H-S2: 2 of 1257 raster points wet (0.2 %)
+WATER CHECK (first) H-S3: 0 of 2121 raster points wet (0.0 %)
+WATER CHECK (first) H-S4: 6 of 1257 raster points wet (0.5 %)
+WATER CHECK (first) H-S5: 0 of 1009 raster points wet (0.0 %)
+WATER CHECK (first) V1: 0 of 441 raster points wet (0.0 %)
+WATER CHECK (first) V3: 0 of 441 raster points wet (0.0 %)
+
+H-C1 GRADE of the circle (10 m cells, steeper of the two slopes): <= 4 % 11 %, <= 6 % 23 %, <= 8 % 36 %, <= 10 % 48 % of the area
+H-C1 ARTERIAL SEARCH (grade <= 5.8 % per 20 m, turn <= 15 deg per 60 m, clear of buildings / water / fenced / R6, joins R2 / R4 lines, R3 fillets): no path: from the sketch R2 / R4 lines no path of >= 280 m with every 20 m <= 5.8 % reaches another sketch line (farthest reach 318 m, 13890 states)
+
+H-C1  se-dense, city 20 floors: grid 110 m, arterial 440 m, collector 220 m
+  direction -46 deg (from the sketch lines), shift 0 m, 12 streets (A 0, C 2, L 10), length A 0 m, C 188 m, L 1123 m = 1.2 km per km2 of the circle
+  junction placeholders 9; access points on the sketch R2 / R4 lines (A / C ends, >= 150 m apart) 2
+  dropped (no connection to the sketch network, R2): 15 pieces 105 m L, 85 m L, 90 m L, 95 m L, 110 m L, 105 m L
+  samples dropped (5 m): water 0, ground class (water / rail / fenced / very steep / M8 ROW) 196, grade 2696, building 0, near R6 / 8-lane / R4(local) 65, along a sketch line 34; kept on a steep D cell (grade passes) 65
+  buildings that a candidate street had to go round: 0
+  buildings inside the circle with no street within 80 m (street does not go to them): 0
+
+H-C2W  west-homes, city 10 floors: grid 100 m + one diagonal collector
+  direction 13 deg (from the sketch lines), shift 67 m, 16 streets (A 0, C 4, L 12), length A 0 m, C 401 m, L 1091 m = 1.2 km per km2 of the circle
+  junction placeholders 12; access points on the sketch R2 / R4 lines (A / C ends, >= 150 m apart) 2
+  dropped (no connection to the sketch network, R2): 18 pieces 160 m C, 235 m L, 162 m L, 162 m L, 77 m L, 93 m L
+  samples dropped (5 m): water 7, ground class (water / rail / fenced / very steep / M8 ROW) 755, grade 4085, building 5, near R6 / 8-lane / R4(local) 39, along a sketch line 11; kept on a steep D cell (grade passes) 241
+  buildings that a candidate street had to go round: 1 (eidgahx5)
+  buildings inside the circle with no street within 80 m (street does not go to them): 2 (labor-quarters, eidgah)
+
+H-C2S  sw-homes, city 10 floors: grid 100 m + one diagonal collector
+  direction 1 deg (from the sketch lines), shift 33 m, 32 streets (A 0, C 10, L 22), length A 0 m, C 1035 m, L 2341 m = 3.0 km per km2 of the circle
+  junction placeholders 23; access points on the sketch R2 / R4 lines (A / C ends, >= 150 m apart) 4
+  dropped (no connection to the sketch network, R2): 19 pieces 100 m C, 83 m L, 100 m L, 83 m L, 100 m L, 62 m L
+  samples dropped (5 m): water 37, ground class (water / rail / fenced / very steep / M8 ROW) 1144, grade 2240, building 0, near R6 / 8-lane / R4(local) 65, along a sketch line 81; kept on a steep D cell (grade passes) 148
+  buildings that a candidate street had to go round: 0
+  buildings inside the circle with no street within 80 m (street does not go to them): 0
+
+H-C3  east-homes, city 5-10 floors: perimeter blocks 150 x 120 m along collectors
+  direction 48 deg (from the sketch lines), shift 50 m, 5 streets (A 0, C 2, L 3), length A 0 m, C 183 m, L 340 m = 0.5 km per km2 of the circle
+  junction placeholders 4; access points on the sketch R2 / R4 lines (A / C ends, >= 150 m apart) 2
+  dropped (no connection to the sketch network, R2): 18 pieces 220 m L, 120 m L, 125 m L, 160 m L, 165 m L, 125 m L
+  samples dropped (5 m): water 121, ground class (water / rail / fenced / very steep / M8 ROW) 652, grade 2355, building 3, near R6 / 8-lane / R4(local) 30, along a sketch line 10; kept on a steep D cell (grade passes) 27
+  buildings that a candidate street had to go round: 1 (primary-schoolx3)
+  buildings inside the circle with no street within 80 m (street does not go to them): 1 (house-brick-3)
+
+H-S1  south-suburb: suburb grid, blocks 180 x 200 m
+  direction 2 deg (from the sketch lines), shift 120 m, 3 streets (A 0, C 1, L 2), length A 0 m, C 107 m, L 150 m = 0.3 km per km2 of the circle
+  junction placeholders 3; access points on the sketch R2 / R4 lines (A / C ends, >= 150 m apart) 1  <-- LESS THAN 2 (fire access needs two): the sketch lines decide, ASK
+  dropped (no connection to the sketch network, R2): 19 pieces 200 m C, 180 m C, 180 m C, 130 m L, 200 m L, 200 m L
+  samples dropped (5 m): water 0, ground class (water / rail / fenced / very steep / M8 ROW) 1285, grade 679, building 0, near R6 / 8-lane / R4(local) 86, along a sketch line 157; kept on a steep D cell (grade passes) 4
+  buildings that a candidate street had to go round: 0
+  PROBE 2nd access: no R2 / R4 line can be reached within 450 m over free ground (water / fenced / steep / building / R6 clearance)
+  buildings inside the circle with no street within 80 m (street does not go to them): 0
+
+H-S2  east-suburb: collector spine, loop streets and cul-de-sacs
+  direction 65 deg (from the sketch lines), shift 0 m, 4 streets (A 0, C 2, L 2), length A 0 m, C 150 m, L 161 m = 0.4 km per km2 of the circle
+  junction placeholders 4; access points on the sketch R2 / R4 lines (A / C ends, >= 150 m apart) 2
+  dropped (no connection to the sketch network, R2): 0 pieces 
+  samples dropped (5 m): water 0, ground class (water / rail / fenced / very steep / M8 ROW) 476, grade 268, building 0, near R6 / 8-lane / R4(local) 10, along a sketch line 0; kept on a steep D cell (grade passes) 6
+  buildings that a candidate street had to go round: 0
+  buildings inside the circle with no street within 80 m (street does not go to them): 0
+
+H-S3  sw-newtown: curvilinear collectors, locals at ~75 deg
+  direction -81 deg (from the sketch lines), shift 0 m, 14 streets (A 0, C 8, L 6), length A 0 m, C 822 m, L 1271 m = 1.6 km per km2 of the circle
+  junction placeholders 12; access points on the sketch R2 / R4 lines (A / C ends, >= 150 m apart) 2
+  dropped (no connection to the sketch network, R2): 9 pieces 254 m L, 231 m L, 140 m L, 140 m L, 110 m L, 97 m L
+  samples dropped (5 m): water 0, ground class (water / rail / fenced / very steep / M8 ROW) 428, grade 486, building 0, near R6 / 8-lane / R4(local) 95, along a sketch line 111; kept on a steep D cell (grade passes) 54
+  buildings that a candidate street had to go round: 0
+  buildings inside the circle with no street within 80 m (street does not go to them): 0
+
+H-S4  west-suburb: cluster / court lanes on collectors
+  direction -62 deg (from the sketch lines), shift -60 m, 8 streets (A 0, C 4, L 4), length A 0 m, C 612 m, L 365 m = 1.2 km per km2 of the circle
+  junction placeholders 7; access points on the sketch R2 / R4 lines (A / C ends, >= 150 m apart) 2
+  dropped (no connection to the sketch network, R2): 0 pieces 
+  samples dropped (5 m): water 0, ground class (water / rail / fenced / very steep / M8 ROW) 830, grade 701, building 0, near R6 / 8-lane / R4(local) 1, along a sketch line 0; kept on a steep D cell (grade passes) 9
+  buildings that a candidate street had to go round: 0
+  buildings inside the circle with no street within 80 m (street does not go to them): 0
+
+H-S5  north-homes: linear fishbone along one collector, rear lanes
+  direction -96 deg (from the sketch lines), shift 0 m, 18 streets (A 0, C 4, L 14), length A 0 m, C 331 m, L 1784 m = 3.3 km per km2 of the circle
+  junction placeholders 13; access points on the sketch R2 / R4 lines (A / C ends, >= 150 m apart) 2
+  dropped (no connection to the sketch network, R2): 0 pieces 
+  samples dropped (5 m): water 0, ground class (water / rail / fenced / very steep / M8 ROW) 311, grade 46, building 0, near R6 / 8-lane / R4(local) 18, along a sketch line 0; kept on a steep D cell (grade passes) 0
+  buildings that a candidate street had to go round: 0
+  buildings inside the circle with no street within 80 m (street does not go to them): 0
+
+V1  village-west (moved 570 m to the flat patch at R2-138.1): organic lanes, one curved collector spine, cul-de-sac lanes
+  direction 86 deg (from the sketch lines), shift -60 m, 7 streets (A 0, C 4, L 3), length A 0 m, C 439 m, L 363 m = 2.8 km per km2 of the circle
+  junction placeholders 7; access points on the sketch R2 / R4 lines (A / C ends, >= 150 m apart) 2
+  dropped (no connection to the sketch network, R2): 0 pieces 
+  samples dropped (5 m): water 0, ground class (water / rail / fenced / very steep / M8 ROW) 249, grade 41, building 0, near R6 / 8-lane / R4(local) 0, along a sketch line 0; kept on a steep D cell (grade passes) 0
+  buildings that a candidate street had to go round: 0
+  buildings inside the circle with no street within 80 m (street does not go to them): 0
+
+V3  village-sw (moved 532 m to the flat patch near R2-138.3): organic lanes, one curved collector spine, cul-de-sac lanes
+  direction 131 deg (from the sketch lines), shift -120 m, 9 streets (A 0, C 5, L 4), length A 0 m, C 501 m, L 476 m = 3.5 km per km2 of the circle
+  junction placeholders 7; access points on the sketch R2 / R4 lines (A / C ends, >= 150 m apart) 2
+  dropped (no connection to the sketch network, R2): 0 pieces 
+  samples dropped (5 m): water 0, ground class (water / rail / fenced / very steep / M8 ROW) 0, grade 28, building 0, near R6 / 8-lane / R4(local) 0, along a sketch line 7; kept on a steep D cell (grade passes) 0
+  buildings that a candidate street had to go round: 0
+  buildings inside the circle with no street within 80 m (street does not go to them): 0
+
+search time 153 s. Checks (R1, R3, water, grades, clearances) are in scripts/housing-check.ts (independent loops).

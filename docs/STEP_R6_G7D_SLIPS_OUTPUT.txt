@@ -1,0 +1,25 @@
+STEP G7d part 2 (JX-3 option A half interchange: the two SE slip ramps at the G7d tap; numbers + picture only, NO src/ change; build / game NOT run)
+Inputs: tap s 2019.1 (G7b), stem starts 130 m from the arm axis, free arm length s 1639 .. 2335 = 696 m (N3 ends 1619, N4 river bridge starts 2355, 20 m margin), arm speed 100, exit taper 91.3 m (1:25), entry taper 182.5 m (1:50, 17.1b), ramp centre at the nose 22 m from the arm axis, slips end on the stem lane lines p 10 (out) and -11.75 (in).
+
+A. BUDGET. Extent of the lane zones measured from the stem foot (p = 0) along the arm. NE = toward the ring, SW = toward J1.
+   m1 exit slip: nose at p = P_OUT + Ts, then taper + decel zone further NE.   m2 entry slip: merge at p = P_IN - Ts, then accel + taper further SW.
+   V   R    Ls   Ts   fits stem(Ts<=108)   entry taper   NE ext   SW ext   slips only: need / slack   full trumpet (lower bound): need / slack
+   50   75   35    93   yes                 182.5        310      439        749 /   -53                 860 /  -164
+
+B. TAP WINDOW for the SE slips (V50, entry taper 1:50): the tap must lie in [LO + SW ext, HI - NE ext].
+   window s 2018 .. 2025 (width 7 m); G7b feasible taps: 2069, 1989, 1969
+
+C. TAP s 2019  (arm level 39.70 m, stem level 32.46 m)
+   m1 exit slip V50 R 75 m Ls 35 m: Ts 93.1 m, ramp 168 m, nose at arm s 2122 (level 38.21), grade 3.4 %, cut 1.8 m, fill 1.4 m, min radius 75 m, rail 346 m
+   m2 entry slip V50: ramp 188 m, merge at arm s 1914 (level 41.22), grade 4.7 %, cut 3.1 m, fill 2.1 m, rail 203 m
+   lane zones on the arm: s 1580 .. 2329 (allowed 1639 .. 2335); exit nose to entry merge distance 208 m
+PASS  slips fit between the arm and the stem start (Ts 93 m <= 108 m)
+PASS  alignment closes on the stem line (gap 0.00 / 0.00 m)
+PASS  ramp grades <= 5 % (3.4 / 4.7 %)
+PASS  ramp cut <= 12 m and fill <= 7 m
+PASS  ramps >= 60 m from the railway (203 m)
+PASS  NE end of the lane zones 2329 <= 2335
+PASS  entry-zone taper end on the N3 deck: 39 m (N3 deck 1526..1619 needs an extra lane taper there; <= 60 m)
+PASS  exit nose to entry merge >= 150 m (weaveMin; no weave here, exit comes first)
+
+RESULT: ALL PASS

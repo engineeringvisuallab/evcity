@@ -1,0 +1,283 @@
+diff --git a/HANDOFF_ROAD_DESIGN.md b/HANDOFF_ROAD_DESIGN.md
+index 65af7e4..62178fe 100644
+--- a/HANDOFF_ROAD_DESIGN.md
++++ b/HANDOFF_ROAD_DESIGN.md
+@@ -569,7 +569,7 @@ Road signs, traffic lights logic changes, new vehicle types, weather effects on
+ | 2.5 | Ground check | done for version 3 | OK 2026-11-13 | scripts/ring-ground-check.ts, docs/ring_ground_check.txt (new). Version 3: 5 river crossings on the centreline (st 837 delta river 85 m wide, 8172, 12327, 14009, 15416; wet length 210 m, v2 220 m), STEEP ground 340 m (1.8 %, v2 345 m), hilly 18.9 % (v2 18.6 %: +46 m), same 265 m of lake edge inside the ROW (st 4185-4444, was also in v2), airport fence 235 m away, no fenced area crossed, 7 rail crossings (st 6830, 7047, 8794, 11270, 12550, 17294, 18860: all must be flyovers, X5). The pictures docs/ring_ground_check.png, ring_v2_map.png, ring_alignment.png, ring_marks.png, ring_shape_check.png and ring_overlay.html still show version 2 (not redrawn) |
+ | 3.1-3.5 | Ring profile | done for version 3 | OK 2026-11-13 | User decision: if a hill must be cut, cut it. tools/ring-profile.py + scripts/ring-profile-export.ts; docs/ring_profile.png/.csv/ring_profile_report.txt. Grade line every 60 m, max grade 4 %, K 75, closed. Cut 1:2 (first 8 m) then 8 m tiers 1:1.5 + 2 m bench, fill 1:3, formation half width 24.2 m. TOTAL cut 7.85 million m3, fill 8.22 million m3 (v2: 7.91 / 7.97; v1: 27.8 / 19.1). Deep cuts: st 6310-6700 (55 m), 8280-8860 (53 m), 14570-15070 (47 m), 2900-3220 (31 m). Tall fills over 7 m at 17 places (v2: 16), worst st 15200-16200 (41.5 m) and 13960-14490 (26 m), and 6800-8060 now one stretch with max 20.7 m: viaduct or accept embankment. 5 bridges. Open: accept the 4 deep cuts and tall fills; fill is +0.25 million m3 against v2 |
+ | 4.1-4.5 | Ring cross-section | 4.1 done, waiting OK (4.2-4.5 not started) | | 4.1: scripts/ring-section-table.ts (prints the offset table and 9 checks, all PASS), docs/STEP41_OUTPUT.txt, docs/ring_section_m8.png. Offsets from the centreline, one side (mirrored on the other side): median 0-3.0, inner shoulder 3.0-4.5, 4 lanes 4.5-19.1 (3.65 m each), outer shoulder 19.1-22.1, barrier 22.1-22.7, verge + ditch 22.7-24.2 (1.5 wide, 0.5 deep), clear zone 24.2-32.0, ROW strip 32.0-40.0. One direction 19.1 m, pavement edge to pavement edge 44.2 m (median included), paved width 38.2 m, formation 48.4 m, ROW 80.0 m. Ring (19.293 km): ROW 154 ha, paved 74 ha. Cross falls: lanes 2 %, shoulders 4 % (fall of 0.472 m from the median edge to the pavement edge). Same numbers as SECTION_M8 (src/roads/standards/SectionTable.ts), nothing in the code changed |
+-| 5.1-5.5 | Ring in game | not started | | |
++| 5.1-5.5 | Ring in game | 5.1 done, 5.2a done (terrain cut), waiting OK (5.2b mesh/markings, 5.3-5.5 not started) | | 5.1: the ring is ONE closed tier-1 highway road `M8` in RoadNetwork (`layoutRing()`, Config.roads.ring.enabled, works with activeTier 0). roads/ring/RingRoad.ts (alignment sampled every ~8 m + SECTION_M8 fields), RingProfile.ts + RingProfileData.ts (grade line from docs/ring_profile.csv, regenerate with tools/ring-profile-to-ts.py), RawRoad.section override (the Config highway section would otherwise replace the M8 section). Heights are used exactly (fixedY). Checks: scripts/ring-profile-check.ts, ring-road-check.ts, ring-facade-check.ts, all PASS, output docs/STEP51_OUTPUT.txt. Max grade 4.009 % between neighbouring points (4 % limit, curve overshoot 0.009 %). 5.2a (terrain cut): RoadSpec.daylight; RoadNetwork.apply() cuts / fills the ground beside the ring along DAYLIGHT slopes: flat platform (halfWidth + shoulder = 22.7 m), then fill 1:3, cut 1:2, and where the hill is steeper than 1:2 a ROCK CUT up to 4:1 (76 deg) (user decision: if a hill must be cut, cut it). Face length is found from the real ground (daylightReach, up to 200 m each side), so no wall is left. About 16 % of the ring (stations 2800-3230, 6290-6720, 8250-8880, 14560-15150, 17400-17470, 17980-18490 and short ones) needs a cut steeper than 1:2. scripts/ring-cut-check.ts (every point, 2412) ALL PASS. NOT yet: ring shader section (the road shader finds the M8 median / lane lines by halfWidth, 22.1 is not in its table, 5.2b), bridges / viaducts / culverts (5.3: the 58 m fill near station 15080 and the 41 m fill near 15540 must become viaducts), pads, physics check (5.4), build time of the faces (5.5) |
+ | 6.1 | Four radials | not started | | |
+ | 6.2 | City centre node | not started | | |
+ | 6.3 | Outward M8 / M6 roads | not started | | |
+diff --git a/src/core/Config.ts b/src/core/Config.ts
+index 686635d..3f7f9e3 100644
+--- a/src/core/Config.ts
++++ b/src/core/Config.ts
+@@ -65,6 +65,8 @@ export const Config = {
+      * Stage 6A = 1, 6B = 2, 6C = 3.
+      */
+     activeTier: 0 as 0 | 1 | 2 | 3 | 4, // 0 = NO roads at all (roads removed; set 1-4 again when the new road design is ready)
++    /** ROADS STEP 5.1: the new 8-lane ring road (M8, roads/ring/RingRoad.ts). Works with activeTier 0. `step` = distance between centreline points (m). enabled = false: no ring. */
++    ring: { enabled: true as boolean, step: 8 },
+     /** The long bridge to the island and the island's road network (RoadPlan.ISLAND_PLAN). */
+     island: false,
+     /**
+diff --git a/src/roads/RoadNetwork.ts b/src/roads/RoadNetwork.ts
+index fc9fbef..0dc22d1 100644
+--- a/src/roads/RoadNetwork.ts
++++ b/src/roads/RoadNetwork.ts
+@@ -11,6 +11,7 @@ import { CityPlan } from '../city/CityPlan';
+ import { DIVIDED_SECTIONS, sectionFor } from './RoadSection';
+ import { buildInterchange, type InterchangeModel, type RoadSection as IcSection } from '../interchange';
+ import type { LocalAreaStat } from './LocalRoads';
++import { planRing } from './ring/RingRoad';
+ import { SCENARIOS, cutRange, nearestPoint, uvToWorld, type ScenarioSpec } from '../interchange/scenario/J6Scenario';
+ 
+ /** Natural terrain WITHOUT roads (hills, rivers, lakes, sea). Roads are planned on top of this. */
+@@ -41,6 +42,12 @@ const KIND_EARTH = { halfWidth: 2.2, shoulder: 0.9, lanes: 1, speedKmh: 25, maxG
+ /** Site layout (all inside the flat 600 m core of a city site). */
+ const CELL = 64;
+ const MAX_EMB = 40;
++/** STEP 5.2 daylight roads (the ring): side slopes as height per metre of run, cut 1:2 and fill 1:3 (Step 3 design rules), and the longest cut / fill face (m) that is built. */
++const DAY_CUT = 1 / 2;
++const DAY_FILL = 1 / 3;
++const DAY_MAX = 200;
++/** Where the hill is steeper than the 1:2 cut slope, the cut face gets steeper (a rock cut) up to this rise per metre of run (4 = 76 degrees); steeper hills stay a wall (needs a tunnel / retaining wall). User decision: if a hill must be cut, cut it. */
++const DAY_CUT_MAX = 4;
+ const BRIDGE_MIN_WET = 1; // wet width (m) from which a bridge is built. Every river crossing is a bridge: an embankment would dam the river
+ /** Fill higher than this (m) beside a river valley is replaced by a viaduct (a long bridge) instead of a huge earth dam. */
+ const VIADUCT_FILL = 7.5;
+@@ -74,6 +81,10 @@ interface RawRoad {
+   fixedY?: number[];
+   /** PROVISIONAL grade limit of a scenario road (default: the class limit, KIND). */
+   maxGrade?: number;
++  /** STEP 5.2 (the ring): terrain beside the road follows straight daylight slopes (RoadSpec.daylight). */
++  daylight?: boolean;
++  /** STEP 5.1 (the ring): own cross-section that replaces the Config section of the road kind (metres from the centreline, see roads/ring/RingRoad.ts). */
++  section?: { halfWidth: number; medianHalf: number; laneW: number; shyOuter: number; lanesPerDir: number };
+ }
+ 
+ /**
+@@ -137,6 +148,11 @@ export class RoadNetwork {
+   private score = new Float32Array(0);
+   private sbridge = new Uint8Array(0);
+   private searth = new Uint8Array(0);
++  /** 1 = the terrain beside this segment follows daylight slopes (ring, STEP 5.2). */
++  private sday = new Uint8Array(0);
++  /** Cut slope (rise per metre of run) of the daylight face at the two ends of the segment. */
++  private sca = new Float32Array(0);
++  private scb = new Float32Array(0);
+   /** 1 = the segment lies inside a planned city area (sidewalk, kerb, tree pits, hedges: Config.city.roadside), 0 = open country. */
+   private scity = new Uint8Array(0);
+   private cityPlan: CityPlan | null = null;
+@@ -168,6 +184,7 @@ export class RoadNetwork {
+         if (Config.roads.island) this.layoutIsland();
+       }
+     }
++    this.layoutRing(); // ROADS STEP 5.1: the 8-lane ring (Config.roads.ring), before the scenarios and the pads
+     this.applyScenarios(); // after all tiers, BEFORE the pads: pads, median, bridges, traffic graph then see the edited network
+     this.applyRoadFixes(); // RC03 (RoadCorrections.ts ROAD_FIXES): after the scenarios, before the pads and the railway
+     const pr = buildJunctionPads(this.roads, this.natural);
+@@ -191,6 +208,32 @@ export class RoadNetwork {
+     this.buildSegments();
+   }
+ 
++  /**
++   * ROADS STEP 5.1: the 8-lane RING ROAD (M8) as one closed highway road. Alignment (Step 2), height (Step 3) and cross-section (Step 4.1) come from
++   * roads/ring/RingRoad.ts; the surface heights are used exactly as designed (fixedY, like the interchange ramps). Nothing happens while Config.roads.ring.enabled is false.
++   * Bridges / viaducts / culverts of the ring are Step 5.3, the mesh and terrain cut Step 5.2 (until then the old road ribbon draws it).
++   */
++  private layoutRing(): void {
++    const C = Config.roads.ring;
++    if (!C.enabled) return;
++    const plan = planRing(C.step);
++    this.addRoad({
++      tier: 1,
++      kind: 'highway',
++      name: 'M8',
++      closed: true,
++      pts: plan.pts,
++      fixedY: plan.ys,
++      halfWidth: plan.section.halfWidth,
++      shoulder: plan.section.shoulder,
++      lanes: plan.section.lanesPerDir * 2,
++      speedKmh: plan.designKmh,
++      maxGrade: 0.04,
++      section: plan.section,
++      daylight: true,
++    });
++  }
++
+   get segmentCount(): number {
+     return this.segRoad.length;
+   }
+@@ -1475,7 +1518,7 @@ export class RoadNetwork {
+     }
+     // ROADS STEP 1: the cross-section (median, lane width, half width) comes from Config.city.roadSections through roads/RoadSection.ts.
+     const oldLanes = raw.lanes ?? K.lanes;
+-    const sec = sectionFor(raw.kind, raw.tier, oldLanes, raw.earth);
++    const sec = raw.section ?? sectionFor(raw.kind, raw.tier, oldLanes, raw.earth);
+     const road: RoadSpec = {
+       id,
+       tier: raw.tier,
+@@ -1503,6 +1546,7 @@ export class RoadNetwork {
+       length,
+       bridgeOf: new Int16Array(n).fill(-1),
+       areaId: raw.areaId,
++      daylight: raw.daylight,
+     };
+     this.roads.push(road);
+     if (raw.earth) {
+@@ -2248,6 +2292,54 @@ export class RoadNetwork {
+   // =====================================================================================
+   // Spatial index
+   // =====================================================================================
++  /**
++   * STEP 5.2: how far (m) beyond the flat platform the cut / fill face of a daylight road reaches at every point: the last distance on either side where the natural
++   * ground still lies outside the daylight envelope (fill 1:3 below, cut 1:2 above), plus a margin, so the face always ends on natural ground (no wall).
++   * Wet ground is ignored (every wet crossing is a bridge). The values are smoothed with the neighbouring points, the nearest segment decides at a sample.
++   */
++  private daylightReach(r: RoadSpec): { reach: Float32Array; cut: Float32Array } {
++    const n = r.xs.length;
++    const core = r.halfWidth + r.shoulder;
++    const raw = new Float32Array(n);
++    const rawCut = new Float32Array(n);
++    const hs: number[] = [];
++    for (let i = 0; i < n; i++) {
++      // ground heights on both sides every 4 m of run (wet ground skipped)
++      hs.length = 0;
++      let need = 0;
++      for (const sd of [-1, 1]) {
++        for (let run = 4; run <= DAY_MAX; run += 4) {
++          this.natural(r.xs[i] + r.nx[i] * (core + run) * sd, r.zs[i] + r.nz[i] * (core + run) * sd, this.scratch);
++          if (!Number.isNaN(this.scratch.water) && this.scratch.h < this.scratch.water + 0.3) continue;
++          hs.push(run, this.scratch.h);
++          need = Math.max(need, (this.scratch.h - r.ys[i]) / run);
++        }
++      }
++      // cut slope: the standard 1:2, steeper (a rock cut) only as far as the hill needs it, never beyond DAY_CUT_MAX
++      const cut = Math.min(DAY_CUT_MAX, Math.max(DAY_CUT, need + 0.02));
++      let last = 0;
++      for (let k = 0; k < hs.length; k += 2) {
++        const run = hs[k], h = hs[k + 1];
++        if (h < r.ys[i] - run * DAY_FILL - 0.05 || h > r.ys[i] + run * cut + 0.05) last = Math.max(last, run);
++      }
++      raw[i] = Math.min(DAY_MAX, Math.max(12, last + 12));
++      rawCut[i] = cut;
++    }
++    const reach = new Float32Array(n);
++    const cutOut = new Float32Array(n);
++    for (let i = 0; i < n; i++) {
++      let m = 0, c = 0;
++      for (let k = -4; k <= 4; k++) {
++        const q = r.closed ? (i + k + n) % n : Math.min(n - 1, Math.max(0, i + k));
++        m = Math.max(m, raw[q]);
++        c = Math.max(c, rawCut[q]);
++      }
++      reach[i] = m;
++      cutOut[i] = c;
++    }
++    return { reach, cut: cutOut };
++  }
++
+   private buildSegments(): void {
+     let total = 0;
+     for (const r of this.roads) total += r.closed ? r.xs.length : r.xs.length - 1;
+@@ -2265,6 +2357,9 @@ export class RoadNetwork {
+     this.score = new Float32Array(total);
+     this.sbridge = new Uint8Array(total);
+     this.searth = new Uint8Array(total);
++    this.sday = new Uint8Array(total);
++    this.sca = new Float32Array(total);
++    this.scb = new Float32Array(total);
+     this.scity = new Uint8Array(total);
+     const cityPlan = (this.cityPlan = new CityPlan(this.sites));
+     const walk = Config.city.roadside.sidewalk;
+@@ -2272,7 +2367,16 @@ export class RoadNetwork {
+     const temp = new Map<number, number[]>();
+     const S = Config.world.chunkSize;
+     let s = 0;
+-    const emb = (r: RoadSpec, i: number) => (r.bridgeOf[i] >= 0 ? 6 : Math.min(MAX_EMB, Math.max(6, Math.abs(r.ys[i] - r.hNat[i]) * 2.4 + 5)));
++    const dayReach = new Map<number, { reach: Float32Array; cut: Float32Array }>();
++    const day = (r: RoadSpec) => {
++      let a = dayReach.get(r.id);
++      if (!a) dayReach.set(r.id, (a = this.daylightReach(r)));
++      return a;
++    };
++    const emb = (r: RoadSpec, i: number) => {
++      if (r.daylight && r.bridgeOf[i] < 0) return day(r).reach[i];
++      return r.bridgeOf[i] >= 0 ? 6 : Math.min(MAX_EMB, Math.max(6, Math.abs(r.ys[i] - r.hNat[i]) * 2.4 + 5));
++    };
+     for (const r of this.roads) {
+       const m = r.closed ? r.xs.length : r.xs.length - 1;
+       for (let i = 0; i < m; i++, s++) {
+@@ -2296,6 +2400,11 @@ export class RoadNetwork {
+         this.scity[s] = city ? 1 : 0;
+         this.score[s] = r.halfWidth + (city ? Math.max(r.shoulder, walk) : r.shoulder);
+         this.searth[s] = r.earth ? 1 : 0;
++        this.sday[s] = r.daylight && r.bridgeOf[i] < 0 && r.bridgeOf[j] < 0 ? 1 : 0;
++        if (this.sday[s]) {
++          this.sca[s] = day(r).cut[i];
++          this.scb[s] = day(r).cut[j];
++        }
+         this.sbridge[s] = r.bridgeOf[i] >= 0 && r.bridgeOf[i] === r.bridgeOf[j] ? 1 : 0;
+ 
+         const reach = this.score[s] + Math.max(this.sea[s], this.seb[s]) + 2;
+@@ -2371,6 +2480,11 @@ export class RoadNetwork {
+     let bd = Infinity;
+     let carve = Infinity;
+     let carveW = 0;
++    // DAYLIGHT (ring, STEP 5.2): nearest daylight segment decides; its road surface height and where its flat platform ends
++    let dd = Infinity;
++    let dby = 0;
++    let dcore = 0;
++    let dcut = DAY_CUT;
+     // JUNCTION PLATEAU: inside a pad the terrain IS the pad plane (wins over every road strip); outside it blends back like an embankment
+     const pl = this.padCells.get((Math.floor(x / CELL) + 512) * 1024 + (Math.floor(z / CELL) + 512));
+     if (pl) {
+@@ -2410,6 +2524,15 @@ export class RoadNetwork {
+       }
+       const e = this.sea[s] + (this.seb[s] - this.sea[s]) * t;
+       if (d >= core + e) continue;
++      if (this.sday[s]) {
++        if (d < dd) {
++          dd = d;
++          dby = this.say[s] + (this.sby[s] - this.say[s]) * t;
++          dcore = core;
++          dcut = this.sca[s] + (this.scb[s] - this.sca[s]) * t;
++        }
++        continue;
++      }
+       const w = 1 - smoothstep(core, core + e, d);
+       // strongest pull wins; inside the road surface (w = 1 for several segments) the nearest segment decides
+       if (w > bw + 1e-6 || (w > bw - 1e-6 && d < bd)) {
+@@ -2418,6 +2541,14 @@ export class RoadNetwork {
+         by = this.say[s] + (this.sby[s] - this.say[s]) * t;
+       }
+     }
++    if (dd < Infinity) {
++      // flat platform up to `core`, then ground lower than the fill slope is raised to it and ground higher than the cut slope is cut down to it
++      const run = dd > dcore ? dd - dcore : 0;
++      const lo = dby - run * DAY_FILL;
++      const hi = dby + run * dcut;
++      if (out.h < lo) out.h = lo;
++      else if (out.h > hi) out.h = hi;
++    }
+     if (bw > 0) out.h += (by - out.h) * bw;
+     // where a normal (on-ground) road also claims the cell, that road wins: the abutment must meet the road surface exactly
+     carveW *= 1 - bw;
+diff --git a/src/roads/RoadTypes.ts b/src/roads/RoadTypes.ts
+index 4aa48e6..2278eb4 100644
+--- a/src/roads/RoadTypes.ts
++++ b/src/roads/RoadTypes.ts
+@@ -50,6 +50,8 @@ export interface RoadSpec {
+   bridgeOf: Int16Array;
+   /** Tier 4 only: id of the CityPlan area this street belongs to (connectors: the area of their first node). */
+   areaId?: string;
++  /** STEP 5.2 (the ring): the terrain beside the road is cut / filled along straight DAYLIGHT slopes (cut 1:2, fill 1:3, see RoadNetwork.apply) instead of the old smooth embankment blend. */
++  daylight?: boolean;
+ }
+ 
+ export interface BridgeSpec {

@@ -1,0 +1,24 @@
+S ARM STRUCTURES (s = 0 at the J1 centre, arm from S = 340 to the ring T = 2826), approach slab 16 m each end, deck depth 1.5 m
+  id   kinds                          s0..s1 (m)      length  max height  max carve  wet  river clear  rail (angle, gap, span)  spans (special + std x m)  piers  max pier  from arm end
+  S1   river bridge + viaduct          1215..1292       77        7.6        0.3   45          4.1  -                                        75 + 0 x 40      0       6.1    1534
+  S2   rail bridge + viaduct           1904..2240      337        9.6        0.0    0            -  ring-south 65 deg, gap 9.57, span 30     30 + 7 x 40      7       8.1     586
+  total structure length 413 m of 2486 m arm (16.6 %)
+
+PROPOSED DESIGNS (types wait for the user OK, every structure different, none repeats the ring S1-S6):
+  S1  river bridge + viaduct: haunched steel box girder, slender V-shaped piers  (river main span about 75 m, deck 8 m above ground)
+  S2  rail bridge + viaduct: segmental concrete box viaduct, one long span over the rail  (rail span 30 m inside a 337 m viaduct)
+
+  PASS  S: every wet point is inside a structure (no dam across water)             0 m of wet centreline outside
+  PASS  S: every point with fill > 7 m is inside a viaduct (D4)                    0 m outside
+  PASS  S: every rail crossing lies in a structure that spans the whole corridor + approach (X5) 1 crossings: S2/ring-south s 2065
+  PASS  S: rail over road (no road structure): rail deck underside >= 7.0 m over the road west-nw s 415: 12.92 m, west-sw s 1239: 13.87 m
+  PASS  S: road over rail >= 7.4 m on every rail crossing                          9.57 m
+  PASS  S: river crossings: road at least 2.5 m above the water                    S1 4.1 m
+  PASS  S: structures do not overlap and start after the J1 lane zone (s >= 269, J1-b) 2 structures, first starts at s 1215
+  PASS  S: no structure on a horizontal curve tighter than 591 m (rule 3.12.8)     none
+  INFO  S: structures that lie partly on a bend (R >= 591 m, allowed, listed for the mesh): S1 (R 10953), S2 (R 1617)
+  INFO  S: structures with vertical curves on the deck: S2 (1) (a parabola on a deck is normal, joints are placed by the bridge design)
+  PASS  S: no structure inside the last 150 m before the ring T, or it is marked as part of the ring interchange last structure S2 ends 586 m before the ring, fill at the end 0.0 m
+  INFO  S viaduct-type structures 413 m in total; free embankment between the last structure and the ring: 586 m
+  INFO  gap between S1 and S2: 612 m of embankment
+SUMMARY: 9 PASS, 0 FAIL

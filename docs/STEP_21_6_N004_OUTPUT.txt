@@ -1,0 +1,35 @@
+STEP 21.6a-3  N004 OPTION A: R6-12 end node moved along R4-9, R6-12 re-aligned (headless; nothing in src changed)
+R6 V80, smallest radius 229 m (x 1.15 = 263 m), road grade limit 4 % (R11), cut / fill limit 12 m (engineer's choice)
+
+CANDIDATES (71 fitted alignments; best per node station: search limit, PI tolerance, PIs, length, smallest radius, 100 m ground grade, cut / fill of a 4 % road, arrival angle, verdict)
+   s 160 (251, -1330)  lim 6 %  tol 40  2 PI  len   861 m  R 9999 m  grade 12.2 %  cut 11.8 fill 11.8 m  angle 53  x angle
+   s 180 (232, -1337)  lim 6 %  tol 40  3 PI  len   853 m  R  900 m  grade 12.2 %  cut 12.2 fill 12.2 m  angle 68  x cut/fill
+   s 200 (212, -1342)  lim 6 %  tol 40  3 PI  len   849 m  R  550 m  grade 12.2 %  cut 12.5 fill 12.5 m  angle 87  x cut/fill
+   s 220 (193, -1346)  lim 6 %  tol 90  3 PI  len   847 m  R  894 m  grade 18.4 %  cut 16.2 fill 16.2 m  angle 45  x cut/fill,angle
+   s 240 (174, -1351)  lim 6 %  tol 40  3 PI  len   844 m  R  352 m  grade 12.2 %  cut 11.8 fill 11.8 m  angle 86  OK
+   s 260 (156, -1360)  lim 6 %  tol 60  2 PI  len   812 m  R 9999 m  grade 20.7 %  cut 17.6 fill 17.6 m  angle 51  x cut/fill,angle
+   s 280 (139, -1371)  lim 6 %  tol 60  2 PI  len   799 m  R 9999 m  grade 22.2 %  cut 20.1 fill 20.1 m  angle 45  x cut/fill,angle
+   s 300 (124, -1383)  lim 6 %  tol 60  2 PI  len   784 m  R 9999 m  grade 26.0 %  cut 23.6 fill 23.6 m  angle 39  x cut/fill,angle
+   s 320 (111, -1398)  lim 5 %  tol 90  3 PI  len   793 m  R  317 m  grade 26.1 %  cut 24.7 fill 24.7 m  angle 22  x cut/fill,angle
+   s 340 (100, -1415)  lim 5 %  tol 90  3 PI  len   774 m  R  321 m  grade 27.5 %  cut 25.7 fill 25.7 m  angle 15  x cut/fill,angle
+   s 360 (91, -1433)  lim 5 %  tol 90  3 PI  len   755 m  R  324 m  grade 28.0 %  cut 26.4 fill 26.4 m  angle 13  x cut/fill,angle
+   s 380 (82, -1451)  lim 5 %  tol 90  3 PI  len   736 m  R  327 m  grade 25.5 %  cut 23.9 fill 23.9 m  angle 17  x cut/fill,angle
+   s 400 (71, -1467)  lim 5 %  tol 90  3 PI  len   718 m  R  333 m  grade 19.4 %  cut 17.3 fill 17.3 m  angle 25  x cut/fill,angle
+   s 420 (57, -1482)  lim 5 %  tol 90  3 PI  len   701 m  R  340 m  grade 14.4 %  cut 14.8 fill 14.8 m  angle 30  x cut/fill,angle
+   s 440 (44, -1497)  lim 5 %  tol 90  2 PI  len   664 m  R 9999 m  grade 18.0 %  cut 17.6 fill 17.6 m  angle 42  x cut/fill,angle
+   s 460 (30, -1511)  lim 5 %  tol 90  2 PI  len   650 m  R 9999 m  grade 16.3 %  cut 18.9 fill 18.9 m  angle 46  x cut/fill,angle
+   s 480 (15, -1525)  lim 5 %  tol 90  2 PI  len   636 m  R 9999 m  grade 12.0 %  cut 18.9 fill 18.9 m  angle 52  x cut/fill,angle
+   s 500 (-1, -1536)  lim 5 %  tol 90  2 PI  len   626 m  R 9999 m  grade 12.7 %  cut 19.1 fill 19.1 m  angle 60  x cut/fill
+
+CHOSEN: node on R4-9 at s 240 (173.7, -1351.1), R4-9 ground 63.2 m, 3 PIs, tolerance 40 m. R6-12: 267 m -> 844 m (start 25, -2161 = R6-6A / R6-13, unchanged).
+   PASS  radius 352 m >= 256 m (R6 V80 minimum 229 m)
+   PASS  a 4 % road (R11) between the end ground levels needs cut max 11.8 m, fill max 11.8 m (<= 12 m); natural ground grade over 100 m max 12.2 % (INFO, steep hill: the cut / fill is the real measure)
+   PASS  R1: R6-12 crosses no other line (none)
+   PASS  R1: R6-12 only touches R4-9 at its end node (crossings with R4-9: 0)
+   PASS  arrival angle on R4-9 86 deg >= 60
+   PASS  node 238 m from the J1-N tap (>= 150), 1129 m from the nearest other node on R4-9 (>= 60)
+   PASS  R6-12 end lies on R4-9
+   INFO old node N004 (-237, -2195) becomes a plain point of R4-9; R4-9 and R6-12 levels are solved again in 21.4 / 21.4c; R6-12 old length 267 m with 18 % natural grade
+
+Because centre_fixed.json changed, centre_profile.json / centre_vprofile.json / centre_sections.json are OLD for R6-12 (R6 is all OPEN, centre_use.json stays valid): re-run order next step.
+PASS 7  FAIL 0

@@ -1,0 +1,17 @@
+===== J1-S (-, rail west-sw) =====
+  rail crossings on this arm (rail design of the game now): west-nw s 415 rail top 33.82; west-sw s 1239 rail top 37.50; ring-south s 2065 rail top 14.17
+  best cost 891.1; PVIs (s, level, curve): 0 (18.19, 0) | 151 (19.03, 60) | 653 (17.53, 143) | 767 (20.88, 77) | 846 (22.00, 72) | 1158 (22.02, 65) | 1371 (19.29, 84) | 1602 (12.52, 259) | 2059 (25.95, 300) | 2440 (14.74, 170) | 2598 (16.18, 60) | 2826 (19.68, 0)
+  OLD  PVIs: 0 (18.19, 0) | 151 (19.03, 60) | 653 (17.53, 143) | 767 (20.88, 0) | 1159 (32.40, 299) | 1317 (27.78, 0) | 1531 (21.50, 0) | 1734 (15.55, 258) | 2031 (24.27, 298) | 2398 (13.56, 186) | 2598 (16.18, 0) | 2826 (19.68, 0)
+  PASS  tail of the arm (s > end of the changed part + 40 m) is the same as before max difference 0.00 m
+  PASS  grade within the arm limits (pad stretch 3.0 %, hill 3.0 % to s 340, 3 % beyond) max grade 2.94 % (s 65..2858)
+  PASS  every vertical curve K >= minimum (crest / sag) and length >= 60 m     10 curves
+  PASS  vertical curves do not overlap                                         0 overlaps
+  PASS  centre cut <= 12 m in the changed part                                 max cut 2.6 m (old arm 0.7 m)
+  PASS  river: road >= 2.5 m over the water in the changed part                4.2 m
+  INFO  other crossing west-nw at s 415: road 18.25 m (was 18.25)
+  PASS  west-sw at s 1239: rail over road, deck underside >= 7 m over the road road 20.98 m (was 29.59), ground 14.72 m, rail top 37.50 m, gap 13.87 m (was 5.26)
+  PASS  ring-south at s 2065: road over rail, road >= 9 m over the rail top    road 23.74 m (was 21.98), rail top 14.17 m, gap 9.57 m (was 7.81)
+  INFO  viaduct runs now (fill > 7 m): s 1244..1269 (max fill 7.6 m); s 1922..2222 (max fill 9.6 m)
+  INFO  viaduct runs before:   s 989..1139 (max fill 9.7 m); s 1199..1313 (max fill 16.1 m); s 1388..1523 (max fill 9.1 m); s 1957..2112 (max fill 7.9 m)
+SUMMARY: 8 PASS, 0 FAIL (only the checks of this script; the game checks must be run separately)
+written: profile json (S), J1ArmProfiles.ts. Next: python3 tools/j1-arm-data.py ; npx tsx scripts/j1-structures-s.ts docs

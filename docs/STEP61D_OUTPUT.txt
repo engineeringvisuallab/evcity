@@ -1,0 +1,47 @@
+N ARM STRUCTURES (s = 0 at the J1 centre, arm from S = 340 to E = 3553), approach slab 16 m each end, deck depth 1.5 m
+  id   kinds                          s0..s1 (m)      length  max height  max carve  wet  river clear  rail (angle, gap, span)  spans (special + std x m)  piers  max pier  from arm end
+  N1   viaduct                          367..453        87        7.6        0.0    0            -  -                                        0 + 2 x 40      1       6.1    3100
+  N2   viaduct                         1166..1493      327       15.8        0.0    0            -  -                                        0 + 6 x 50      5      14.3    2060
+  N3   rail bridge                     1527..1619       92        1.6        6.7    0            -  north-1 25 deg, gap 7.69, span 60        60 + 0 x 40      0       0.1    1935
+  N4   river bridge + viaduct          2355..2492      137       17.6        0.0   55         12.3  -                                        85 + 1 x 50      1      16.1    1061
+  N5   viaduct                         3000..3112      112       11.1        0.0    0            -  -                                        0 + 2 x 40      1       9.6     441
+  total structure length 755 m of 3213 m arm (23.5 %)
+
+W ARM STRUCTURES (s = 0 at the J1 centre, arm from S = 340 to E = 2881), approach slab 16 m each end, deck depth 1.5 m
+  id   kinds                          s0..s1 (m)      length  max height  max carve  wet  river clear  rail (angle, gap, span)  spans (special + std x m)  piers  max pier  from arm end
+  W1   rail bridge                      884..941        57        4.5        0.0    0            -  west-nw 89 deg, gap 7.97, span 25        25 + 0 x 40      0       3.0    1941
+  W2   river bridge + viaduct          1829..1936      107       13.5        0.0   35         10.5  -                                        65 + 1 x 40      1      12.0     945
+  W3   rail bridge + viaduct           2658..2865      207        8.9        0.0    0            -  ring-west 86 deg, gap 7.64, span 25      25 + 4 x 40      4       7.4      16
+  total structure length 371 m of 2541 m arm (14.6 %)
+
+PROPOSED DESIGNS (types wait for the user OK, every structure different, none repeats the ring S1-S6):
+  N1  viaduct: precast concrete viaduct, slender twin-blade piers  (87 m long, up to 7.6 m high, standard spans)
+  N2  viaduct: precast concrete viaduct, slender twin-blade piers (variant 2: different pier shape and parapet)  (327 m long, up to 15.8 m high, standard spans)
+  N3  rail bridge: single-span skewed steel box girder, integral abutments  (rail corridor span 60 m, short bridge)
+  N4  river bridge + viaduct: haunched steel box girder, slender V-shaped piers  (river main span about 85 m, deck 18 m above ground)
+  N5  viaduct: precast concrete viaduct, slender twin-blade piers (variant 3: different pier shape and parapet)  (112 m long, up to 11.1 m high, standard spans)
+  W1  rail bridge: single-span skewed steel box girder, integral abutments (variant 2: different pier shape and parapet)  (rail corridor span 25 m, short bridge)
+  W2  river bridge + viaduct: haunched steel box girder, slender V-shaped piers (variant 2: different pier shape and parapet)  (river main span about 65 m, deck 13 m above ground)
+  W3  rail bridge + viaduct: segmental concrete box viaduct, one long span over the rail  (rail span 25 m inside a 207 m viaduct)
+
+  PASS  N: every wet point is inside a structure (no dam across water)             0 m of wet centreline outside
+  PASS  N: every point with fill > 7 m is inside a viaduct (D4)                    0 m outside
+  PASS  N: every rail crossing lies in a structure that spans the whole corridor + approach (X5) 1 crossings: N3/north-1 s 1573
+  PASS  N: road over rail >= 7.4 m on every rail crossing                          7.69 m
+  PASS  N: river crossings: road at least 2.5 m above the water                    N4 12.3 m
+  PASS  N: structures do not overlap and start after the J1 lane zone (s >= 340)   5 structures, first starts at s 367
+  PASS  W: every wet point is inside a structure (no dam across water)             0 m of wet centreline outside
+  PASS  W: every point with fill > 7 m is inside a viaduct (D4)                    0 m outside
+  PASS  W: every rail crossing lies in a structure that spans the whole corridor + approach (X5) 2 crossings: W1/west-nw s 912, W3/ring-west s 2783
+  PASS  W: road over rail >= 7.4 m on every rail crossing                          7.97 m, 7.64 m
+  PASS  W: river crossings: road at least 2.5 m above the water                    W2 10.5 m
+  PASS  W: structures do not overlap and start after the J1 lane zone (s >= 340)   3 structures, first starts at s 884
+  PASS  N: no structure on a horizontal curve tighter than 591 m (rule 3.12.8)     none
+  INFO  N: structures that lie partly on a bend (R >= 591 m, allowed, listed for the mesh): N2 (R 768), N3 (R 768), N4 (R 3016), N5 (R 1538)
+  INFO  N: structures with vertical curves on the deck: N2 (3), N3 (1), N4 (1), N5 (1) (a parabola on a deck is normal, joints are placed by the bridge design)
+  PASS  W: no structure on a horizontal curve tighter than 591 m (rule 3.12.8)     none
+  INFO  W: structures that lie partly on a bend (R >= 591 m, allowed, listed for the mesh): W1 (R 700)
+  INFO  W: structures with vertical curves on the deck: W1 (1), W2 (1), W3 (1) (a parabola on a deck is normal, joints are placed by the bridge design)
+  PASS  N: no structure within 150 m of the T on the ring                          last structure N5 ends 441 m before the ring
+  PASS  W: W3 is inside the ring interchange: a ramp over the rail (>= 7.4 m) can come down to the ring level at <= 5 % rail top 18.14 m, ring 22.92 m, drop 2.71 m needs 54 m, available 64 m (rail axis 98 m before the ring - corridor half 12 - ring edge 22.1)
+SUMMARY: 16 PASS, 0 FAIL

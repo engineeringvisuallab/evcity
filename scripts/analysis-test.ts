@@ -1,0 +1,32 @@
+// Formula + rule checks for src/interchange/Analysis.ts. Run: npx tsx scripts/analysis-test.ts
+import { roundaboutEntryCap, roundaboutDelay, signalAnalysis, circulatingFlow, losSignal, CONFLICTS, analyzeJunction, ASSUMPTIONS } from '../src/interchange/Analysis';
+let fails = 0;
+const ok = (c: boolean, m: string): void => { if (!c) { fails++; console.log('FAIL', m); } else console.log('ok  ', m); };
+ok(Math.abs(roundaboutEntryCap(0, 1) - 1380) < 1e-9, 'single-lane entry capacity at vc=0 is 1380');
+ok(roundaboutEntryCap(1000, 1) < roundaboutEntryCap(500, 1), 'capacity falls with circulating flow');
+ok(roundaboutEntryCap(0, 2) > 2 * 1380 * 0.99, 'two-lane entry about 2840');
+ok(roundaboutDelay(100, 1380) > 3600 / 1380 && roundaboutDelay(100, 1380) < 10, 'roundabout delay at low v/c is a few seconds');
+const sg = signalAnalysis([{ flowPerLane: 400, lanes: 2, vol: 800 }, { flowPerLane: 300, lanes: 1, vol: 300 }]);
+ok(Math.abs(sg.C - Math.max(40, (1.5 * 8 + 5) / (1 - 700 / 1900))) < 1e-6, 'Webster cycle (1.5L+5)/(1-Y)');
+ok(sg.delay > 0 && sg.delay < 40 && sg.los !== 'F', `moderate signal is not F (d=${sg.delay.toFixed(1)}, ${sg.los})`);
+ok(signalAnalysis([{ flowPerLane: 1200, lanes: 1, vol: 1200 }, { flowPerLane: 1200, lanes: 1, vol: 1200 }]).X > 1, 'Y>1 is oversaturated');
+ok(losSignal(10) === 'A' && losSignal(56) === 'E' && losSignal(81) === 'F', 'LOS thresholds');
+const m = { thru: 100, left: 10, right: 5 };
+ok(circulatingFlow({ approaches: [m, m, m, m] }, 0) === 100 + 5 + 5, 'circulating flow = thru+right of previous + right of the one before');
+const fl = CONFLICTS.fourLeg; ok(fl.crossing + fl.merge + fl.diverge === 32, '4-leg conventional = 32 conflict points');
+ok(4 * (CONFLICTS.roundaboutPerLeg.merge + CONFLICTS.roundaboutPerLeg.diverge) === 8, '4-leg roundabout = 8');
+// rules on a flat site
+const sec = (kmh: number, lanes: number, hw: number) => ({ roadId: 0, halfWidth: hw, kerbLane: hw - 1.75, laneW: 3.5, lanesPerDir: lanes, designKmh: kmh } as any);
+const dem = { approaches: [{ thru: 1500, left: 100, right: 80 }, { thru: 250, left: 80, right: 60 }, { thru: 1500, left: 100, right: 80 }, { thru: 250, left: 80, right: 60 }] };
+const a = analyzeJunction({ id: 't', main: sec(100, 3, 12.7), cross: sec(50, 1, 4.8), mainShoulder: 1.5, crossShoulder: 1, mainMaxGrade: 0.08, demand: dem, site: { x: 0, z: 0, y: 30, yaw: 0.9 } });
+const by = (id: string) => a.evaluations.find((e) => e.id === id)!;
+ok(!by('signal').feasible && by('signal').notes.some((n) => n.code === 'access'), 'signal on a 100 km/h highway is not allowed');
+ok(!by('roundabout').feasible, 'roundabout on a 100 km/h 3-lane road is not allowed');
+ok(by('diamond-under').feasible, 'diamond-under feasible on flat ground');
+ok(by('parclo').unserved.list.length > 0, 'modelled parclo leaves the cross-road turns without ramps');
+ok(by('cloverleaf').unserved.list.length === 0, 'cloverleaf serves all 8 turns');
+ok(by('cloverleaf').safety.crossing === 0 && by('diamond-under').safety.crossing > 0, 'cloverleaf has no crossing conflicts, diamond terminals do');
+ok(by('diamond-under').safety.total < 32, 'diamond has fewer conflict points than a conventional 4-leg');
+ok(a.ranking[0] !== undefined && a.evaluations.slice(0, a.ranking.length).every((e) => e.feasible), 'ranking lists feasible solutions first');
+ok(ASSUMPTIONS.satFlow === 1900, 'assumptions exported');
+console.log(fails ? `${fails} FAILED` : 'all passed'); process.exit(fails ? 1 : 0);

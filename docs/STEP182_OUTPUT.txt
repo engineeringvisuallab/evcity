@@ -1,0 +1,179 @@
+ISLAND STRAIT BRIDGE IB, concept A (self-anchored suspension, leaning twin-sail pylon pair, continuous box girder, cables anchored in the deck)
+STEP 18.2: DESIGN BASIS + LOADS (calculation sheet). Everything below is a number from code; "ASSUMED" marks data the game does not have.
+Overrides used: none
+
+0. ASSUMPTIONS (the user can change any of them: --set ID=value, then rerun)
+   ID         value   unit      meaning  [source / status]
+   VB3S         77.5  m/s       design wind speed, 3-s gust at 10 m, taken as valid over the water (NO extra terrain factor is added on top)  [BNBC 2020 Table 6.2.8 value for BAGERHAT (neighbour district; Khulna itself was not visible in the search snippet). It is a code design value, 1.25 x the Sidr gust: conservative. CONFIRM or lower it (--set VB3S=62).]
+   GUST2MEAN   1.434  -         3-s gust / 10-min mean ratio (Durst: gust/hourly 1.52, 10-min/hourly 1.06)  [engineering assumption (Durst curve, open terrain)]
+   LIFE          120  yr        design working life (also the wind return period used)  [HANDOFF 18.3 point 1]
+   Z0          0.003  m         roughness length, sea / strait (EN 1991-1-4 terrain category 0)  [EN 1991-1-4 Table 4.1]
+   RHOAIR       1.25  kg/m3     air density  [EN 1991-1-4 recommended]
+   TMAX           42  C         max shade air temperature, 50-yr  [ASSUMED for Khulna (no BMD record looked up in this session)]
+   TMIN            6  C         min shade air temperature, 50-yr  [ASSUMED for Khulna (no BMD record looked up in this session)]
+   T0             28  C         bridge temperature when the structure is restrained (erection)  [ASSUMED (EN 1991-1-5 leaves it to the national annex)]
+   ZONEZ        0.12  g         seismic zone coefficient = PGA of the 475-yr event (zone 1)  [BNBC 2020 Table 6.2.15 value for BAGERHAT (0.12); reading Z as the 475-yr PGA is an ASSUMPTION. CONFIRM.]
+   GAMI          1.3  -         importance factor (class III bridge, long-life landmark crossing)  [EN 1998-2 recommended value for greater than average importance]
+   SOILS        1.35  -         EN 1998-1 Type 1 spectrum, ground type D (soft delta soil): S  [EN 1998-1 Table 3.2 (TB 0.20, TC 0.80, TD 2.0); the soil is ASSUMED, no data in the game]
+   XI              2  %         viscous damping of the suspension system (steel, cables)  [ASSUMED (5 % is the code reference value; cable bridges use 2-3 %)]
+   SURGE           1  m         storm surge above the high water level in the design extreme water level  [ASSUMED; BMD list shows 1 m (1971 Khulna town) to several m on the open coast. Sensitivity 0-4 m is printed.]
+   FETCH        8000  m         effective wave fetch at the strait  [ASSUMED (strait between the mainland and the island, open to the sea in the south). Sensitivity 2-30 km is printed.]
+   UC            1.5  m/s       design tidal / river current at the piers  [ASSUMED (delta channel), no data in the game]
+   HWL             1  m         design high water level over sea level 0  [handoff 17.1d A2 (game rule: soffit >= HWL + 6 m)]
+   AIRGAP          1  m         minimum air gap soffit to wave crest (extreme water level)  [ASSUMED design practice, NOT a game rule]
+   AADT        80000  veh/day   traffic, both directions  [class 80 000 AADT of 17.1b (real AADT comes from 17.4a)]
+   HEAVY         0.1  -         share of heavy vehicles (> 3.5 t)  [ASSUMED (port / industry link)]
+   SLOW          0.8  -         share of the heavy vehicles of one direction that use the slow lane  [ASSUMED]
+   GSTEEL          5  kN/m2     PRELIMINARY steel of the deck (box girders, orthotropic plate, cross girders, cable anchorage zones)  [ASSUMED about 510 kg/m2; replaced by the sized section in 18.3]
+   TSUR         0.08  m         surfacing thickness  [ASSUMED (EN 1991-1-1 asphalt 23 kN/m3)]
+   GBAR            4  kN/m      edge barrier + kerb, per side (H2 class, steel / composite, not the heavy concrete placeholder)  [ASSUMED]
+   GMED            8  kN/m      median barrier (double sided)  [ASSUMED]
+   GSERV           3  kN/m      lighting, ducts, drainage pipes, SHM cables  [ASSUMED]
+   DGIRD           3  m         girder depth used for the wind area (the game soffit limit: deeper needs a higher road = user decision)  [HANDOFF 18.1]
+   HPAR          1.1  m         parapet / barrier height above the deck  [game parapet 1.1 m (RingBridgeGeometry IB)]
+   SETT           20  mm        differential support settlement (characteristic)  [ASSUMED, no soil data]
+
+1. GAME NUMBERS THE DESIGN MUST MATCH (read from the project, not typed)
+   road M6-1, section pavement edge 16.00 m, median 4.0 m, lanes 3 + 3; deck between parapet faces 32.0 m, over the parapets 33.8 m (parapet base 0.9 m from IB, typed: RingBridgeGeometry.ts)
+   structure range design s 489.0 - 873.2 = 384.2 m in the data (the game structure is 382.5 m on its 8 m grid, abutments at both ends)
+   road level over the whole structure 8.51 - 11.16 m (the ends sit on the embankment), over the water 10.15 - 11.16 m (option A); sea floor on the centreline: deepest -7.35 m, wet part s 523.9 - 818.3 = 294.4 m (5 m samples)
+   user rule: soffit >= HWL 1 m + 6 m = 7.00 m over sea level; girder deeper than 3 m needs a higher road (USER decision, not changed here)
+  PASS  structure range of the data is the 384 m of 17.1g-a (within the 8 m grid of the 382.5 m game structure)   384.2 m vs 382.5 m
+  PASS  deck between parapets is 32.0 m, over them 33.8 m (handoff 18.1)   32.00 / 33.80
+  PASS  deepest sea floor on the line is about -7.4 m (handoff 18.1, tolerance 0.3 m)   -7.35 m (the 5 m samples may miss the very lowest point)
+
+2. DESIGN BASIS (decisions; no calculation)
+   2.1 Codes (main set Eurocode, as in HANDOFF 18.3 point 1):
+       EN 1990 + A1 (Annex A2 bridges)  basis of design, combinations         EN 1991-1-1 / -1-4 / -1-5 / -1-6 / -1-7 / -2   actions (self weight, wind, thermal, execution, accidental, traffic)
+       EN 1992-2 concrete bridges   EN 1993-2 steel bridges   EN 1993-1-11 cables and hangers   EN 1993-1-9 fatigue   EN 1994-2 composite
+       EN 1997-1 geotechnical       EN 1998-1 + EN 1998-2 seismic              AASHTO LRFD HL-93: live load CHECK only (section 3.3)
+       Wave loads: NO Eurocode part exists. Morison equation with linear (Airy) waves, Wheeler stretching; fetch-limited wave growth after Young and Verhagen (1996) as given in the US Coastal Engineering Manual; scour after HEC-18 (CSU) and Sumer and Fredsoe. Local codes: BNBC 2020 gives wind and seismic zone data only (it is a BUILDING code), Bangladesh has no national bridge code (AASHTO or Eurocode are used, ICCESD 2026 paper).
+   2.2 Design working life 120 years (marine, important crossing). Consequence class CC3 / reliability class RC3: beta 5.2 for a 1-year reference period, 4.3 for 50 years (EN 1990 Table B2). Execution class EXC4 (EN 1090-2) for the steel box girder, pylons and cable anchorages.
+   2.3 Exposure: concrete (piers, caps, abutments) XS3 in the tidal / splash zone, XS1 above it; steel corrosivity category C5-M (ISO 12944); cable system: galvanised wire + wrapping + dehumidification (18.5).
+   2.4 Limit states and combination formulas (EN 1990, Eq. 6.10 form, Annex A2 factors):
+       ULS STR / GEO : sum(gG,j Gk,j) + gP P + gQ,1 Qk,1 + sum(gQ,i psi0,i Qk,i)       gG sup 1.35 / inf 1.00, gQ traffic 1.35, wind and temperature 1.50
+       SLS character.: sum(Gk,j) + P + Qk,1 + sum(psi0,i Qk,i)      frequent: ... psi1,1 Qk,1 + sum(psi2,i Qk,i)      quasi-permanent: sum(psi2,i Qk,i)
+       Accidental    : sum(Gk,j) + P + Ad + psi1,1 Qk,1 + sum(psi2,i Qk,i)         Seismic: sum(Gk,j) + P + AEd + sum(psi2,i Qk,i)
+       Fatigue       : EN 1991-2 FLM3 (single vehicle 480 kN, 4 axles x 120 kN) with Nobs of the slow lanes (section 3.3), damage equivalent factors EN 1993-2
+       psi factors (EN 1990 Table A2.1, typed from the standard, NOT re-read in this session):  traffic gr1a TS 0.75 / 0.75 / 0, UDL 0.40 / 0.40 / 0;  wind Fwk 0.6 / 0.2 / 0;  thermal Tk 0.6 / 0.6 / 0.5  (psi0 / psi1 / psi2).  Thermal: uniform and gradient together with omegaN 0.35 and omegaM 0.75 (EN 1991-1-5 6.1.5, seen in a retrieved source).
+       Cable system (self-anchored): the permanent cable force is a PERMANENT action on the girder (axial compression in the deck, EN 1990 treats prestress-like cable forces as P with the factors gP chosen in 18.3 after form finding); second order effects of the pylons and the girder are checked in 18.3 / 18.4, not here.
+   2.5 Items that need a USER decision or data and are NOT decided here: ship passage (D17-5: 6 m clearance, small boats; vessel collision is therefore NOT computed), pedestrian / cycle path (assumed NONE, only a maintenance walkway), soil data (assumed, 18.4), local wind / wave / current records.
+
+3. LOADS
+
+3.1 PERMANENT LOADS PER METRE OF DECK (PRELIMINARY: the real steel weight comes from the sized section in 18.3)
+   steel deck structure   5.0 kN/m2 x 33.8 m                  = 169.0 kN/m
+   surfacing   23 kN/m3 x 0.08 m x 28.0 m (both carriageways incl. shoulders) = 51.5 kN/m
+   barriers    2 x 4 + median 8                          = 16.0 kN/m
+   services                                            = 3.0 kN/m
+   TOTAL g_k = 239.5 kN/m  (7.09 kN/m2 over 33.8 m); over the 384.2 m structure = 92.0 MN. Main cables, hangers and pylons are NOT in this number (18.3).
+
+3.2 TRAFFIC LM1 (EN 1991-2) per carriageway, each carriageway treated alone (separated by the median barrier, EN 1991-2 4.2.3(1)a)
+   carriageway width w = 14.0 m (inner shoulder + 3 lanes + outer shoulder) -> n_l = Int(w / 3) = 4 notional lanes of 3.0 m, remaining area 2.0 m
+   lane 1: TS 300 kN (2 axles of 150), UDL 9 kN/m2 x 3.0 m = 27.0 kN/m
+   lane 2: TS 200 kN (2 axles of 100), UDL 2.5 kN/m2 x 3.0 m = 7.5 kN/m
+   lane 3: TS 100 kN (2 axles of 50), UDL 2.5 kN/m2 x 3.0 m = 7.5 kN/m
+   lane 4: no TS, UDL 2.5 kN/m2 x 3.0 m = 7.5 kN/m
+   remaining area: UDL 2.5 kN/m2 x 2.0 m = 5.0 kN/m          alpha factors = 1.0 (ASSUMED; the national annex of Bangladesh does not exist)
+   per carriageway: UDL 54.5 kN/m, tandem systems 600 kN;  BOTH carriageways loaded with lane 1 on each (conservative for one deck): UDL 109.0 kN/m = 3.22 kN/m2 over the deck
+   braking Qlk = 0.6 aQ1 (2 Q1k) + 0.10 aq1 q1k w1 L = 360 + 1037 = 1397 kN, limited to 180 aQ1 .. 900 kN -> 900 kN (per carriageway, at deck level, over the loaded length 384 m)
+   centrifugal Qtk = 0 : the structure lies on the first straight, the horizontal curve (R 1000 m, 17.1c) starts at s 960.8, 87.6 m after the island end of the structure
+
+3.3 LIVE LOAD CHECK WITH AASHTO HL-93 and FATIGUE TRAFFIC
+   HL-93: design lanes of 3.6 m per carriageway Int(14.0 / 3.6) = 3, 6 lanes loaded, multiple presence factor 0.65 (>= 4 lanes), lane load 9.34 kN/m per lane (0.64 kip/ft)
+   HL-93 uniform part = 6 x 9.34 x 0.65 = 36.4 kN/m vs EN LM1 109.0 kN/m  ->  LM1 UDL is 2.99 x the HL-93 lane load;  truck 325 kN (35+145+145) with dynamic allowance 33 % = 432 kN vs LM1 TS 600 kN per carriageway: the concentrated loads are compared again with the sized girder in 18.3. The ratio is inflated by the conservative rule above (lane 1 loaded on BOTH carriageways, shoulders counted as traffic area)
+   fatigue: heavy vehicles per slow lane and year Nobs = AADT 80000 x 0.1 heavy x 0.5 direction x 0.8 slow lane x 365 = 1168000  ->  between category 2 (0.5e6) and category 1 (2.0e6) of EN 1991-2 Table 4.5; design with category 1, Nobs 2.0e6 per slow lane and year (the next table value above the own number, and the island link is a port / industry access: conservative); cycles in 120 years about 240 million heavy vehicles per slow lane (FLM3 / FLM4)
+
+3.4 WIND (EN 1991-1-4 procedure for pressures and coefficients; the site speed is ASSUMED from BNBC)
+   design gust: BNBC 77.5 m/s (3-s gust, 10 m) / 1.434 = 54.0 m/s as 10-min mean at 10 m. The BNBC value is used AS the value over the water: no terrain-category factor (cat II -> sea would add 1.26 x) is stacked on it, because the code value is already a conservative design number.
+   return period 120 yr: cprob = ((1 - K ln(-ln(1-p))) / (1 - K ln(-ln 0.98)))^n, K 0.2, n 0.5, p = 1/120 -> 1.048;  v_b(120) = 56.7 m/s = 204 km/h (10-min mean), as 3-s gust 81.2 m/s = 292 km/h
+   cross check with history: Cyclone Sidr (2007) coastal gust 223 km/h = 61.9 m/s (source: icddr,b cyclone list); the design gust is 1.31 x that. If the user prefers a record-based speed, rerun with --set VB3S=<value>.
+   profile over the strait / sea, z0 0.003 m: vm(z) = v_b ln(z / z0) / ln(10 / z0);  Iv(z) = 1 / ln(z / z0);  qp(z) = (1 + 7 Iv) 0.5 rho vm^2, rho 1.25
+   height z over water (m)   vm (m/s)    Iv      qp (kN/m2)   gust vp = sqrt(2 qp / rho) (m/s)
+         10                 56.7    0.123       3.74        77.3
+         15                 59.5    0.117       4.03        80.3
+         20                 61.5    0.114       4.24        82.4
+         30                 64.3    0.109       4.55        85.3
+         40                 66.3    0.105       4.78        87.4
+         60                 69.2    0.101       5.10        90.4
+         80                 71.2    0.098       5.34        92.5
+        100                 72.7    0.096       5.53        94.1
+   deck at z = 11.2 m: qp = 3.82 kN/m2.  Transverse force per metre F = qp cf d_tot, cf,x 1.3 (EN 1991-1-4 Fig. 8.3 plateau for b/d_tot >= 4, here b/d = 8.2; WIND TUNNEL needed for the final deck, 18.3)
+     without traffic: d_tot = girder 3 + parapet 1.1 = 4.1 m -> Fw,x = 20.3 kN/m (over 384 m = 7.8 MN)
+     with traffic   : d_tot = girder 3 + 2.0 m vehicles = 5.0 m -> Fw,x = 24.8 kN/m  (EN 1990: this case is combined with traffic, wind psi0 0.6 limits apply in 18.3)
+     vertical (up or down): Fw,z = qp cf,z b = 3.82 x 0.9 x 33.8 = 116.1 kN/m (cf,z +-0.9, EN 1991-1-4 8.3.3 recommended, without wind tunnel);  longitudinal 25 % of transverse (plate girder) = 5.1 kN/m
+   AEROELASTIC TARGETS for 18.3 (frequencies and mode shapes are not known yet, so NO flutter result is given here): required critical flutter speed >= 1.2 x design wind at deck level = 1.2 x 57.4 = 68.9 m/s (10-min mean basis); if the user wants the stricter gust basis: 1.2 x 78.1 = 93.8 m/s. Vortex shedding: vcrit = d f / St (EN 1991-1-4 E.1.3.1), with d 3 m and St about 0.11 (provisional); e.g. f 0.4 Hz gives 10.9 m/s, checked against the first vertical and torsional frequency in 18.3.
+  PASS  cprob(p = 0.02) = 1.000 (the 50-yr reference of EN 1991-1-4 Eq. 4.2 is reproduced)   1.000000
+  PASS  qp(z) rises with height   3.74 -> 5.53 kN/m2
+
+3.5 THERMAL (EN 1991-1-5; steel box deck = Type 1, a composite or concrete deck would change the numbers)
+   shade air Tmax 42, Tmin 6 C (ASSUMED);  Type 1 steel box: Te,max = Tmax + 16 = 58 C, Te,min = Tmin - 3 = 3 C (Fig. 6.1 as I know it, not re-read; a retrieved worked example with T0 10 C and Te -21 / +50 C gives dTN con 31 and dTN exp 40 K by the same rule)
+   T0 = 28 C:  dTN,exp = 30 K,  dTN,con = 25 K,  total range 55 K
+   vertical difference, linear approach, 50 mm surfacing (retrieved: EN 1991-1-5 Table 6.1): dTM,heat = 18 K, dTM,cool = 13 K; surfacing 80 mm needs ksur from Table 6.2 (value not retrieved: 18 / 13 K used, to be corrected in 18.3).
+   combined: 1.0 dTM + 0.35 dTN  or  0.75 dTM + 1.0 dTN (omegaN 0.35, omegaM 0.75).
+   cable vs girder: main cable and hangers can differ from the girder by up to 10 K (ASSUMED, sun on the cable, shade on the box), checked in the form finding of 18.3.
+   free movement of the steel girder, alpha 12 1e-6/K, L = 384.2 m (this is the movement the bearings and joints must take, 18.4):
+     fixed at one abutment, free at the other end movement: expansion 138 mm, contraction 115 mm, total range 254 mm
+     fixed at the middle, both ends move      end movement: expansion 69 mm, contraction 58 mm, total range 127 mm
+
+3.6 SEISMIC (EN 1998-1 horizontal elastic spectrum, Type 1; the zone value is ASSUMED from BNBC, the soil is ASSUMED)
+   a_gR = Z g = 1.18 m/s2 (0.12 g, 475 yr);  a_g = gamma_I a_gR = 1.3 x 1.18 = 1.53 m/s2 (0.156 g);  ground D: S 1.35, TB 0.2, TC 0.8, TD 2 s;  damping 2 % -> eta = sqrt(10 / (5 + xi)) = 1.195
+   T (s)     Se(T) 5 % damping (g)    Se(T) with the damping above (g)    spectral displacement SDe = Se (T / 2pi)^2 (m)
+    0.0        0.211                    0.211                         0.000
+    0.2        0.527                    0.629                         0.006
+    0.8        0.527                    0.629                         0.100
+    1.0        0.421                    0.503                         0.125
+    2.0        0.211                    0.252                         0.250
+    3.0        0.094                    0.112                         0.250
+    4.0        0.053                    0.063                         0.250
+    5.0        0.034                    0.040                         0.250
+    6.0        0.023                    0.028                         0.250
+   vertical (Type 1): avg = 0.90 ag = 1.38 m/s2, TB 0.05, TC 0.15, TD 1.0 s (EN 1998-1 Table 3.4); at the pylon legs and the cable anchorages in 18.3.
+   NOT decided here: the response reduction / ductility (q) of pylon legs and piers, liquefaction of the delta sand (needs soil data), the seismic isolation / damper concept at the abutments (18.4). A self-anchored span has a long first period (several seconds): the displacement column is the one that matters for joints and stoppers.
+  PASS  Se(T) is continuous at TB, TC and TD (EN 1998-1 3.2.2.2 Eq. 3.2-3.5)   jumps < 1e-6 m/s2
+  PASS  Se(0) = ag S (rigid structure follows the ground)   0.211 g
+
+3.7 SETTLEMENT: differential support settlement 20 mm (characteristic, ASSUMED: the game has no soil model), applied to one support at a time in the global analysis (18.3), factor gamma_Gset by the national annex rule in 18.4.
+
+3.8 WAVE, CURRENT AND SCOUR ON THE PIERS (Morison, linear waves; the fetch, the current and the surge are ASSUMED)
+  PASS  Young-Verhagen in the deep, fully developed limit gives Pierson-Moskowitz Hs = 0.0246 U^2 (2 %)   Hs 22.11 m vs 22.14 m
+  PASS  ... and fp U / g = 0.133 (3 %)   nu 0.133
+  PASS  dispersion relation (omega^2 = g k tanh kd) solved to 1e-9   k 0.095 1/m, L 66.2 m (T 8 s, d 8.4 m)
+   design water level DEWL = HWL 1 + surge 1 = +2.00 m; water depth at the deepest sea floor (-7.35 m) d = 9.35 m; wind for waves = v_b(120) 56.7 m/s (10-min mean, over water, no duration limit)
+   fetch-limited wind sea (Young and Verhagen 1996, CEM II-2): fetch 8000 m -> Hs = 2.34 m, Tp = 6.0 s, wave length 48 m; Hmax in 3 h = Hs sqrt(ln N / 2) with N = 3 h / Tz (Tz = Tp / 1.2), limited by breaking 0.78 d = 7.29 m -> Hmax = 4.58 m; crest above still water about 0.65 Hmax = 2.98 m (2nd order Stokes estimate, ASSUMED)
+   sensitivity of the wave to the fetch (surge as assumed):
+     fetch   2000 m:  Hs 1.26 m  Tp 4.3 s  Hmax 2.52 m  (breaking limit 7.29 m)
+     fetch   5000 m:  Hs 1.92 m  Tp 5.4 s  Hmax 3.78 m  (breaking limit 7.29 m)
+     fetch   8000 m:  Hs 2.34 m  Tp 6.0 s  Hmax 4.58 m  (breaking limit 7.29 m)
+     fetch  15000 m:  Hs 2.95 m  Tp 6.8 s  Hmax 5.74 m  (breaking limit 7.29 m)
+     fetch  30000 m:  Hs 3.58 m  Tp 7.4 s  Hmax 6.91 m  (breaking limit 7.29 m)
+   AIR GAP (information, NOT a game rule): lowest allowed soffit 7.00 m (HWL + 6 m, user rule; the plain girder has 7.07 m).  Required: soffit >= DEWL + crest + air gap 1 m
+     surge (m)   DEWL (m)   Hmax (m)   crest top (m over sea level 0)   air gap at the 7.00 m soffit (m)   result
+       0.0        1.00      4.52          3.94                         3.06              OK
+       1.0        2.00      4.58          4.98                         2.02              OK
+       2.0        3.00      4.63          6.01                         0.99              LESS THAN 1 m
+       3.0        4.00      4.67          7.04                        -0.04              LESS THAN 1 m
+       4.0        5.00      4.71          8.06                        -1.06              LESS THAN 1 m
+  PASS  air gap at the assumed surge 1 m is at least 1 m (assumptions as listed in section 0)   2.02 m
+  PASS  Morison inertia integral over the depth equals the closed form rho Cm (pi D^2 / 4) (g H / 2) tanh(kd)   numeric 1030.91 N vs closed 1030.91 N
+   Morison force on one vertical circular column over the full water depth, worst phase of the wave, current added to the wave velocity (rough: CD 1.05, CM 1.2; smooth: CD 0.65, CM 1.6; the larger is printed; marine growth is NOT added to D):
+   D (m)    wave + current force (kN)   moment about the sea floor (kN m)   current only (kN)
+    1.5            122                         785                         17
+    2.5            226                        1430                         28
+    4.0            467                        2689                         46
+   local scour at a circular pier, equilibrium: HEC-18 (CSU) ys / y1 = 2.0 K1 K2 K3 K4 (a / y1)^0.65 Fr^0.43 with K1 1.0 (round), K2 1.0 (aligned), K3 1.1 (small dunes, ASSUMED), K4 1.0; Sumer and Fredsoe live-bed current: S = 1.3 D. y1 = 9.35 m, V = 1.5 m/s, Fr = 0.157
+   D (m)    HEC-18 ys (m)   1.3 D (m)   design scour depth (larger) (m)   sea floor under the pier after scour (m)
+    1.5         2.82          1.95              2.82                            -10.17
+    2.5         3.93          3.25              3.93                            -11.28
+    4.0         5.34          5.20              5.34                            -12.69
+   Scour protection (rock armour, mattress) and the pile length below the scoured bed are sized in 18.4; vessel collision: NOT computed (no ship data, D17-5).
+
+3.9 EXECUTION AND ACCIDENTAL LOADS (listed, sized in the steps named)
+   construction loads EN 1991-1-6 (18.6), cable erection of a self-anchored span needs a temporary girder support (falsework in 0-7.4 m of water or a stiffened lifting scheme, 18.6), vehicle impact on the parapets (class H2 or H3, 18.5), fire of a vehicle near a hanger (18.5), loss of one hanger or cable (EN 1993-1-11 Annex A, 18.3).
+
+4. WHAT THIS STEP FIXES FOR 18.3 (numbers in docs/island_bridge_basis.json)
+   deck 32.0 / 33.8 m, permanent g_k 239.5 kN/m (PRELIMINARY), LM1 UDL 109.0 kN/m + TS 600 kN per carriageway, braking 900 kN, wind v_b(120) 56.7 m/s, qp(deck) 3.82 kN/m2, Fw,x 20.3 / 24.8 kN/m, thermal Te 3 .. 58 C, a_g 0.156 g, Hmax 4.58 m.
+   OPEN, needs the user: (1) wind speed, seismic zone, temperatures, tide / surge, current and fetch are ASSUMED (section 0); (2) ship passage, a path for pedestrians / cycles; (3) the air gap table 3.8 shows the 6 m clearance rule has little margin once a surge above the high water level is allowed.
+
+   12 PASS, 0 FAIL  (these are consistency checks of the numbers and formulas, NOT a safety check of the bridge: the structure is not sized yet).
+   NOT RUN in this session: tsc --noEmit and vite build (npm install failed: no network in this container, node_modules missing), the game, any look at the bridge. src/ is unchanged by this step.

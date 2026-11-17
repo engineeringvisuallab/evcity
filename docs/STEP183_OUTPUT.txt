@@ -1,0 +1,158 @@
+ISLAND STRAIT BRIDGE IB, concept A (self-anchored suspension, leaning pylons, continuous steel box girder)
+STEP 18.3: DECK + MAIN SYSTEM SIZING (calculation sheet). Hand formulas + a 1-D finite-difference deflection-theory model. PASS / FAIL = checks of this sizing, a PRELIMINARY design, not a safety certificate.
+Overrides used: none
+
+0. ASSUMPTIONS AND DESIGN CHOICES (change one: --set ID=value, then rerun)
+   ID      value   unit   meaning  [source / status]
+   SAGR       0.125  -      main cable sag / main span (f/L)  [DESIGN CHOICE (self-anchored bridges use 1/6 .. 1/9); sensitivity table printed]
+   HMIN         2.5  m      shortest hanger (cable above deck at midspan)  [DESIGN CHOICE]
+   LEAN           5  deg    pylon leg lean from the vertical, in the cable plane, toward the main span  [DESIGN CHOICE (leg axis = line of the cable resultant, so the leg has no dead-load bending)]
+   PHI          0.7  -      share of the side-span girder weight that is hung from the side cable  [DESIGN CHOICE]
+   BC            35  m      distance between the two cable planes (the pylon legs stand outside the parapets)  [DESIGN CHOICE (deck over parapets 33.8 m)]
+   SH            12  m      target hanger spacing  [DESIGN CHOICE]
+   FY           355  MPa    structural steel yield (girder, pylon), S355, t <= 40 mm  [EN 10025 / EN 1993-1-1 Table 3.1 (typed, not re-read)]
+   GM0            1  -      partial factor steel cross section resistance  [EN 1993-2 recommended (typed, not re-read)]
+   GM1          1.1  -      partial factor steel member stability  [EN 1993-2 recommended (typed, not re-read)]
+   FUKW        1770  MPa    tensile strength of galvanised parallel-wire cable wire  [typical PWS product value (ASSUMED)]
+   FUKH        1570  MPa    tensile strength of hanger rope wire  [typical locked-coil / strand rope value (ASSUMED)]
+   KE           0.9  -      loss factor ke of the end terminations: Fuk = ke x Fmin (0.9 swaged, 1.0 metal / resin socket)  [READ in a retrieved ETA (DIBt ETA-15/0917, UKTA-0836-25): ke 1.0 socket, 0.9 swaged; 0.9 used (conservative)]
+   GR             1  -      gamma_R of the cable system: FRd = Fuk / (1.5 gamma_R)  [READ in the same ETAs (FRd = Fuk/(1.5 gamma_R), gamma_R 1.0 minimum); there is NO Bangladesh national annex]
+   SLSC        0.45  -      serviceability limit of the cable force / Fuk  [typed from memory of EN 1993-1-11 (NOT re-read): 0.45 is the cautious value]
+   DSC          150  MPa    fatigue detail category of the hanger system at 2e6 cycles (delta sigma_c)  [ASSUMED (typical for strand / rope hangers with sockets; the real value comes from the supplier test)]
+   GMF         1.35  -      fatigue partial factor gamma_Mf  [EN 1993-1-9 value for damage tolerant, high consequence (typed, not re-read)]
+   LAMF         1.5  -      damage equivalent factor x impact factor for the hanger fatigue (lambda x phi)  [ASSUMED (no hanger influence line here; a detailed FLM3 run is needed)]
+   SHARE       0.85  -      share of an FLM3 vehicle that one cable plane receives (outer lane)  [lever rule: lane 13 m from the axis, planes at 17.5 m]
+   KIN          1.4  -      effective length factor of a pylon leg in the cable plane (cable gives partial restraint at the top)  [ASSUMED]
+   KTR            2  -      effective length factor of a pylon leg across the bridge (free cantilever, no cross beam)  [ASSUMED: single leg per plane, no portal]
+   LEGB           3  m      pylon leg section depth in the cable plane (outer)  [DESIGN CHOICE]
+   LEGT         2.2  m      pylon leg section width across the bridge (outer)  [DESIGN CHOICE]
+   BASE           5  m      level of the top of the pylon pier (over sea level): design extreme water 2.0 + wave crest 3.0 (18.2)  [from 18.2 sheet (DEWL + crest = 4.98 m)]
+   XI             2  %      damping ratio  [same as 18.2]
+   ST          0.11  -      Strouhal number of the box girder  [EN 1991-1-4 E.1.3.2 value for rectangular sections, provisional]
+   TSIN         0.6  -      influence of one hanger for a TS (share of 600 kN that reaches one hanger)  [ASSUMED (hanger spacing 12 m, tandem 1.2 m)]
+   PNLR        0.85  -      reduction of the girder stress limit for global buckling of the orthotropic compression panels (NOT calculated here)  [ASSUMED placeholder, replaced by an EN 1993-1-5 stiffened panel check in the detail design]
+   DEFM         0.8  -      the live-load deflection must be <= DEFM x L/400 (margin for the simplified 1-D model: side spans, pylon flexibility and the hinged-end assumption are not modelled)  [DESIGN CHOICE]
+   DSOFT       0.07  m      margin of the plain 3.0 m girder to the soffit limit 7.00 m  [HANDOFF 18.1 (7.07 m)]
+
+1. GEOMETRY (from the game data, nothing typed)
+   structure 384.2 m (18.2): main span 202.5 m, two side spans 90.85 m; pylons at road s 579.9 and 782.4; deck level there 10.83 / 10.61 m; sea floor there -4.45 / -2.33 m
+   pylon pier top 5.0 m (above design extreme water + crest, 18.2); pier height in water about 9.4 m
+  PASS  pylons stand in the wet part of the strait (sea floor below 0 at both)   -4.45 / -2.33 m
+
+2. SOLVER SELF-TESTS (the FD model must reproduce closed forms before it is used)
+  PASS  simply supported beam, UDL: midspan deflection = 5 q L^4 / (384 EI)   218.951 vs 218.947 m
+  PASS  simply supported beam: first frequency = pi/(2 L^2) sqrt(EI/m)   0.038 vs 0.038 Hz
+  PASS  tensioned beam (tension 5000 kN, small EI): deflection a little below the string value q L^2 / (8 H)   9.852 m
+
+3. GIRDER: SELECTION OF DEPTH D AND FLANGE SCALE (soffit rule: a girder deeper than 3.0 m needs a higher road = USER decision)
+   D(m) scale | steel kN/m | EI plane GNm2 | f_v1 Hz | f_T Hz | live defl mm (L/400 = 506, accepted <= 405) | sigma/limit | tau/tauR | road raise m
+    3.0   1.0  |    193     |    455.1      |  0.54   |  1.52  |      457 BAD                |  0.40      |  0.21    | 0.00
+    3.0   1.5  |    271     |    665.2      |  0.53   |  1.58  |      364 ok                 |  0.31      |  0.21    | 0.00
+    3.0   2.0  |    348     |    870.8      |  0.53   |  1.60  |      303 ok                 |  0.26      |  0.21    | 0.00
+    3.0   3.0  |    502     |   1268.1      |  0.52   |  1.57  |      228 ok                 |  0.21      |  0.22    | 0.00
+    3.5   1.0  |    202     |    629.7      |  0.55   |  1.74  |      421 BAD                |  0.38      |  0.16    | 0.43
+    3.5   1.5  |    280     |    918.0      |  0.55   |  1.82  |      334 ok                 |  0.30      |  0.17    | 0.43
+    3.5   2.0  |    357     |   1200.8      |  0.55   |  1.84  |      278 ok                 |  0.26      |  0.17    | 0.43
+    3.5   3.0  |    511     |   1750.4      |  0.54   |  1.82  |      208 ok                 |  0.21      |  0.17    | 0.43
+    4.0   1.0  |    212     |    836.7      |  0.57   |  1.95  |      387 ok                 |  0.38      |  0.13    | 0.93
+    4.0   1.5  |    289     |   1215.5      |  0.57   |  2.05  |      305 ok                 |  0.31      |  0.14    | 0.93
+    4.0   2.0  |    367     |   1588.0      |  0.57   |  2.08  |      253 ok                 |  0.26      |  0.14    | 0.93
+    4.0   3.0  |    521     |   2314.4      |  0.57   |  2.05  |      189 ok                 |  0.21      |  0.14    | 0.93
+    4.5   1.0  |    223     |   1078.3      |  0.58   |  2.16  |      354 ok                 |  0.38      |  0.11    | 1.43
+    4.5   1.5  |    300     |   1559.8      |  0.59   |  2.27  |      278 ok                 |  0.31      |  0.11    | 1.43
+    4.5   2.0  |    377     |   2034.3      |  0.59   |  2.31  |      230 ok                 |  0.26      |  0.11    | 1.43
+    4.5   3.0  |    532     |   2962.3      |  0.59   |  2.28  |      171 ok                 |  0.21      |  0.12    | 1.43
+    5.0   1.0  |    234     |   1356.9      |  0.60   |  2.35  |      322 ok                 |  0.37      |  0.09    | 1.93
+    5.0   1.5  |    311     |   1953.6      |  0.61   |  2.48  |      253 ok                 |  0.30      |  0.09    | 1.93
+    5.0   2.0  |    389     |   2542.3      |  0.61   |  2.53  |      208 ok                 |  0.26      |  0.10    | 1.93
+    5.0   3.0  |    543     |   3696.3      |  0.61   |  2.51  |      155 ok                 |  0.21      |  0.10    | 1.93
+    6.0   1.0  |    259     |   2035.9      |  0.63   |  2.71  |      266 ok                 |  0.36      |  0.06    | 2.93
+    6.0   1.5  |    337     |   2900.0      |  0.65   |  2.89  |      208 ok                 |  0.30      |  0.07    | 2.93
+    6.0   2.0  |    414     |   3754.3      |  0.66   |  2.95  |      171 ok                 |  0.26      |  0.07    | 2.93
+    6.0   3.0  |    568     |   5434.3      |  0.67   |  2.94  |      126 ok                 |  0.21      |  0.07    | 2.93
+   Lightest design that passes (deflection with the DEFM margin, stress, shear) WITHOUT moving the road (D <= 3.07 m): D 3.0 m, flange scale 1.5, steel 271 kN/m  <- CHOSEN (the user rule of 18.1: soffit 7.00 m)
+   Lightest overall: D 4.0 m, flange scale 1.0, steel 212 kN/m, needs the road 0.93 m higher (saves 58 kN/m = 2290 t of girder steel). Raising the road is a USER decision (grade / profile change); NOT done.
+   At the 3.0 m limit (no road change) the best case is flange scale 3.0: live deflection 228 mm vs 506 mm allowed (PASSES with the margin 0.80).
+  PASS  a girder of the 3.0 m soffit limit passes the live-load deflection with the model margin (otherwise the road must go up or the system must change)   228 mm vs 506 mm
+  PASS  at least one (D, flange) candidate passes deflection, stress and shear   D 3.0 m
+  PASS  the chosen girder keeps the 7.00 m soffit without moving the road   D 3.0 m -> road raise 0.00 m (USER decision)
+
+4. CHOSEN DESIGN: D 3.0 m, flange scale 1.5
+4.1 Girder section (steel box, 4 webs at +-5 and +-13 m, top 33.8 m orthotropic plate, bottom 26 m)
+   top plate + ribs smeared 48.000 mm, bottom plate + stiffeners 48.000 mm, 4 webs 21.0 mm x 2.95 m
+   A = 3.118 m2, I = 6.34 m4 (effective with shear lag beta 0.934: A 2.928, I 5.93), Iz = 249 m4, J = 19.86 m4
+   steel per m: plates 252.1 (A x 78.5 x 1.03) + diaphragms 14.5 + outriggers / anchorage 4.0 = 270.6 kN/m (8.01 kN/m2; 18.2 assumed 5.0 -> NEW g_k below)
+   dead load of the deck g_k = 341.1 kN/m (18.2 preliminary 239.5)
+4.2 Cable system, ONE plane (two planes, 35.0 m apart); formulas: H = q L^2 / (8 f), V = q L / 2
+   sag f = 25.3 m (f/L = 1/8.0), saddle 27.8 m over the deck; q_main = g_k/2 + cable 7.7 + hangers 2.0 = 180.3 kN/m
+   H_m = 180.3 x 202.5^2 / (8 x 25.3) = 36501 kN;  V_m = 18251 kN;  side cable q_s = 129.1 kN/m (0.70 of the girder hung)
+   saddle balance with lean 5.0 deg: H_m - H_s = V tan(lean): H_s = 33494 kN, V = 34368 kN, thrust into each leg base 3007 kN
+   cable ULS force at the saddle (UPPER BOUND, cable alone takes all live load: factor 1 + 0.30): T = 89332 kN;  F_Rd/A = ke fuk /(1.5 gR) = 1062 MPa
+   metal area per cable 923.1 cm2 (equal to a 388 mm cable, fill 0.78); cable weight 7.7 kN/m per plane; SLS force 66172 kN = 0.45 of Fuk (limit 0.45)
+  PASS  cable metal area passes ULS: T_Ed <= ke fuk A /(1.5 gamma_R) (it is sized to this, iterated with its own weight)   89332 kN
+  PASS  cable passes the SLS limit F_ser <= 0.45 Fuk   0.45 (ULS sizing governs if < limit)
+  PASS  parabola equilibrium: H_m 8 f / L^2 = q_m   180.252 vs 180.252 kN/m
+  PASS  saddle equilibrium: H_m - H_s = V tan(lean)   3006.8 vs 3006.8 kN
+4.3 Side span, anchorage and bearings (per plane)
+   side cable pulls the anchorage up with U = H_s z / L_s - q_s L_s / 2 = 4390 kN; end bearing reaction from the girder 2324 kN -> dead load R0 = -2066 kN (UPLIFT)
+   live uplift upper bound (traffic on the main span only, cable alone) dU = 3100 kN; end ballast needed so that R0 + ballast - 1.35 dU >= 0: 6251 kN per plane = 1042 m3 of concrete (24 kN/m3) for the four end zones
+  PASS  with the end ballast the end bearings stay in compression for dead + main-span traffic (gamma_G,inf 1.0, traffic 1.35)   0 kN per plane
+4.4 Hangers (per plane): 17 hangers at 11.91 m in the main span, 8 at 11.36 m in each side span
+   dead 2056 kN + LM1 1009 kN (UDL 54.5 x 11.91 + 0.60 x TS 600) -> ULS 1.35 sum = 4138 kN
+   area: ULS 43.9 cm2, SLS 48.2 cm2, loss of a hanger 61.2 cm2, fatigue-governed total -> adopted 61.2 cm2 = rope about 100 mm
+   fatigue: FLM3 vehicle 480 kN x share 0.85 x influence 0.6, x lambda phi 1.50 -> delta sigma = 60.0 MPa (limit 111.1 MPa = 150 / 1.35), at the adopted area 60.0 MPa
+  PASS  hanger fatigue: delta sigma_E <= delta sigma_C / gamma_Mf   60.0 <= 111.1 MPa
+  PASS  no hanger goes slack under the design wind uplift (gamma_G 1.0, wind 1.5)   minimum 1019 kN per hanger
+   loss of one hanger (accidental): neighbours take 1.5 x their load x 1.5 dynamic = 5761 kN vs rope resistance 5761 kN
+  PASS  loss of one hanger: neighbours stay below the rope resistance (accidental case)   5761 <= 5761 kN
+4.5 Deflection theory (section 3 equation), one plane: EI_plane = 665.2 GNm2
+   net geometric tension H - N = 3007 kN (cable tension 36501 minus the girder compression 33494: in a self-anchored bridge the girder compression almost cancels the cable stabilising effect, only the lean is left)
+   cable + girder axial flexibility kappa = 42.153 MN/m (Le 436 m, girder 384 m)
+   LM1 characteristic (UDL 54.5 kN/m per plane + TS 600 kN, both carriageways, 18.2 rule), worst pattern by influence lines: down 364 mm, up -0 mm; limit L/400 = 506 mm
+  PASS  live-load deflection L/400 (chosen design)   364 mm vs 506 mm
+   girder ULS (per whole section, both planes, + local dead moment between hangers 4034 kNm): M+ 58399 kNm, M- -190415 kNm, V 6733 kN, N 117778 kN (upper bound 1.30 x 1.35 H_s x 2)
+   stress: N/A_eff 40.2 MPa + M/W -> 94.1 MPa vs limit 301.8 MPa (fy 355 / gM0 x panel factor 0.85); shear tau 27.2 MPa vs 128.9 MPa (web slenderness 1.28, chi_w 0.69); lateral wind bending sigma_z 8.6 MPa
+  PASS  girder stress (axial + bending) within the limit   94.1 <= 301.8 MPa
+  PASS  girder web shear within the buckling-reduced resistance   27.2 <= 128.9 MPa
+4.6 Pylon legs (4 legs, one per plane and pylon; hollow steel box, S355)
+   outer 3.0 m (in the cable plane) x 2.2 m, wall 50 mm, leg length 33.8 m (vertical rise 33.6 m from the pier top, lean 5.0 deg), weight 1352 kN each
+   N_Ed (traffic leading) 62481 kN, N_Ed (wind leading) 54032 kN; N_cr in plane 632125 kN (K 1.4), across 192554 kN (K 2.0); chi 0.70, N_Rd 85400 kN; wind on the leg 27.3 kN/m -> M_base 23193 kNm
+   utilisation (N / chi N_Rd + 2nd-order M / M_Rd): 0.90 (traffic) / 0.89 (wind)
+  PASS  pylon leg buckling + wind bending (utilisation <= 1)   0.90 with wall 50 mm
+  PASS  pylon leg far from elastic buckling: N_Ed < 0.5 N_cr both directions   0.32 of N_cr
+4.7 Frequencies, flutter, vortex shedding (screening; wind tunnel needed for the final deck)
+   first vertical modes: symmetric 0.534 Hz, antisymmetric 0.924 Hz; first torsional 1.584 Hz (K_theta = G J k^2 + 2 (H-N)(bc/2)^2 k^2); mass 36.7 t/m, radius of gyration 10.32 m
+   Selberg screening (conservative variant, b = B/2 = 16.9 m; the exact constant of the formula was not confirmed in the retrieved sources): U_cr = 0.44 b w_T sqrt( (r/b) (1 - (f_h/f_T)^2) m / (pi rho b^2) ) = 311.6 m/s
+   required: 1.2 x design wind at the deck = 68.9 m/s (10-min mean basis; gust basis 93.8 m/s)
+   NOTE: this is NOT a proof. Selberg is a flat-plate-based estimate that is not reliable for a bluff, 33.8 m wide box with parapets (the literature found it can disagree with wind tunnel results); the sheet only says that the frequencies (f_T / f_v1 = 2.97) are well separated. The wind tunnel decides.
+  PASS  flutter speed (Selberg screening, NOT a proof) >= 1.2 x design wind (mean basis)   311.6 vs 68.9 m/s
+   vortex shedding: v_crit = d f_h / St = 3.00 x 0.534 / 0.11 = 14.6 m/s (a low wind speed: lock-in WILL occur sometimes); Scruton number Sc = 2 delta m / (rho d^2) = 821 (large: the mass damps it); amplitude NOT computed here (wind tunnel)
+  PASS  vortex shedding speed is well below the design wind (lock-in possible, amplitude must be proven in the tunnel): information   v_crit 14.6 m/s, Sc 821
+
+5. SENSITIVITY (chosen girder, one parameter changed at a time; shows what the design depends on)
+   lean (deg) | H_m MN | H_m-H_s MN | live defl mm | f_v1 Hz | f_T Hz | leg base thrust MN per leg
+        0.0   |   36.5 |     0.00   |      362     |  0.54   |  1.58  | 0.00
+        5.0   |   36.5 |     3.01   |      364     |  0.53   |  1.58  | 3.01
+       10.0   |   36.5 |     5.90   |      366     |  0.53   |  1.59  | 5.90
+       15.0   |   36.5 |     8.73   |      368     |  0.53   |  1.59  | 8.73
+   f/L   | f m  | H_m MN | cable cm2 | saddle height m | live defl mm | f_v1 Hz
+   1/6    | 33.8 |   27.2 |      795  |     36.3        |      272     |  0.62
+   1/7    | 28.9 |   31.8 |      857  |     31.4        |      318     |  0.57
+   1/8    | 25.3 |   36.5 |      923  |     27.8        |      364     |  0.53
+   1/9    | 22.5 |   41.2 |      992  |     25.0        |      408     |  0.50
+   1/10   | 20.3 |   45.9 |     1064  |     22.8        |      450     |  0.48
+
+6. QUANTITIES (economy check only)
+   girder steel 10599 t (816 kg/m2), cables 628 t, hangers 42 t (13 m mean length), pylon legs 551 t, end ballast concrete 1042 m3
+   whole bridge steel 11778 t = 907 kg/m2 of deck
+
+7. WHAT THIS SHEET DOES NOT DO (open points, to be closed before 18.4 numbers are frozen)
+   - full 3-D / non-linear FE of cable + girder + pylon (this sheet is a 1-D linear deflection theory of the main span, girder hinged at the pylons; side spans and the pylon flexibility enter only as assumptions)
+   - unbalanced saddle force under one-sided traffic and the resulting pylon bending in the cable plane (estimated nowhere here; needs the FE)
+   - EN 1993-1-5 stiffened-panel check of the orthotropic top plate and the bottom plate (replaced by the placeholder factor PNLR), fatigue of deck details (EN 1993-1-9 category tables), cross-girder / diaphragm design, anchorage zone design
+   - seismic analysis of the system (the response spectrum of 18.2 is not applied to the sized structure), wave / current on the pylon piers (18.4)
+   - wind tunnel test: flutter, vortex shedding, buffeting, cable / hanger galloping and rain-wind vibration
+   - construction stages (18.6), thermal effects in the system, creep / shrinkage (steel: none), temperature difference cable - girder
+   - EN 1993-1-11 SLS value 0.45 Fuk, EN 1993-1-5 shear lag and web buckling formulas, partial factors: typed from memory, not re-read in this session (marked in the table of section 0)
+
+  22 PASS, 0 FAIL

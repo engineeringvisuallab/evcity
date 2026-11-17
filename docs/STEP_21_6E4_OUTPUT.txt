@@ -1,0 +1,49 @@
+STEP 21.6e-4 FREE STRAIGHT + TANGENT RUNOUT + BEND LENGTH (measured bends of 21.6e-1; FAIL = the real fit must change that part of the line, not a road fault)
+
+1. PAIRS OF NEIGHBOURING BENDS ON THE SAME LINE (rule 6 V same direction / 2 V reverse; "rotated" = at least one of the two has e > 0)
+   cls    V  pairs  same  reverse  under rule  rotated pairs  rotated under rule  runout no fit
+   8    100     25    18        7          13              9                   0              0
+   6     80     36    12       24          33             33                  31             17
+   4     60    192    88      104         177            132                 124             47
+   2     40    451   136      315         424             31                  30              8
+   C     40      4     0        4           3              0                   0              0
+   L     30     12     4        8           9              0                   0              0
+
+2. BENDS WITH e > 0: LENGTH vs 2 Ls_new (a real bend is spiral + arc + spiral)
+   cls  bends with e > 0  length >= 2 Ls_new  too short
+   8                  8                   7          1
+   6                 37                  12         25
+   4                 97                  19         78
+   2                 18                   0         18
+
+3. THE 20 ROTATED PAIRS THAT MISS THE 6 V / 2 V RULE BY MOST (line, bends, direction, straight / need, V)
+   R6-15   #13 -> #14 same    straight   20 m  need 480 m  short  460 m  V80
+   R6-15   #8  -> #9  same    straight   30 m  need 480 m  short  450 m  V80
+   R6-10   #4  -> #5  same    straight   60 m  need 480 m  short  420 m  V80
+   R6-10   #1  -> #2  same    straight   60 m  need 480 m  short  420 m  V80
+   R6-11   #1  -> #2  same    straight   70 m  need 480 m  short  410 m  V80
+   R6-9    #1  -> #2  same    straight   90 m  need 480 m  short  390 m  V80
+   R6-10   #5  -> #6  same    straight   95 m  need 480 m  short  385 m  V80
+   R6-11   #4  -> #5  same    straight  105 m  need 480 m  short  375 m  V80
+   R4-7    #10 -> #11 same    straight   10 m  need 360 m  short  350 m  V60
+   R4-6    #6  -> #7  same    straight   15 m  need 360 m  short  345 m  V60
+   R4-9    #8  -> #9  same    straight   15 m  need 360 m  short  345 m  V60
+   R4-20   #6  -> #7  same    straight   15 m  need 360 m  short  345 m  V60
+   R4-7    #9  -> #10 same    straight   15 m  need 360 m  short  345 m  V60
+   R4-2    #3  -> #4  same    straight   15 m  need 360 m  short  345 m  V60
+   R4-29   #7  -> #8  same    straight   15 m  need 360 m  short  345 m  V60
+   R4-9    #15 -> #16 same    straight   20 m  need 360 m  short  340 m  V60
+   R4-19   #9  -> #10 same    straight   20 m  need 360 m  short  340 m  V60
+   R4-12   #5  -> #6  same    straight   20 m  need 360 m  short  340 m  V60
+   R4-1    #16 -> #17 same    straight   20 m  need 360 m  short  340 m  V60
+   R4-24   #3  -> #4  same    straight   20 m  need 360 m  short  340 m  V60
+
+4. CHECKS (these test the table, not the design)
+   PASS  bends on a line do not overlap (every straight >= 0)
+   PASS  needed straight is 6 V (same direction) or 2 V (reverse)
+   PASS  every bend with e > 0 is in the runoff table (160)
+   PASS  one pair per neighbouring bends (720)
+   PASS  runout test is consistent with the straight and the two Lt values
+   RESULT 5 PASS 0 FAIL
+   FINDING: 185 of 205 rotated pairs and 122 of 160 rotated bends do not meet the rules on the MEASURED line; the real fit (21.6 build) must straighten / merge / enlarge them.
+   NOT RUN: tsc, npm run build, the game. Nothing in src changed by this script.

@@ -1,0 +1,120 @@
+[road fix RC03] skipped: road not found
+  R6-10     cls 6 R              NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":7,"open":205408})
+  R6-18     cls 6 HILL           NOT FIXED: frac 1 still HILL
+  R6-20.1   cls 6 BLD            NOT FIXED: frac 1 still R+BLD
+  R6-20.2   cls 6 BLD            NOT FIXED: frac 1 still R+BLD
+  R6-29     cls 6 BLD            NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":361,"open":71846})
+  R6-31     cls 6 R              NOT FIXED: no profile-feasible path in +-900 m ({"nodes":98,"nearest":853,"open":0})
+  R6-32     cls 6 R              NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":45,"open":360850})
+  R4-5.2    cls 4 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":2,"open":243375})
+  R4-21.2   cls 4 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":214,"open":174161})
+  R4-22     cls 4 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":214,"open":174161})
+  R4-24     cls 4 RAILNEAR       NOT FIXED: frac 1 still RAILNEAR
+  R4-25     cls 4 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":213,"nearest":820,"open":0})
+  R4-26     cls 4 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":327,"nearest":1657,"open":0})
+  R4-34     cls 4 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":29,"nearest":1046,"open":0})
+  R4-35     cls 4 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":1,"open":301138})
+  R4-38     cls 4 R              FIXED 454 -> 462 m (frac 1, relax 0)
+  R4-45     cls 4 R              FIXED 203 -> 1114 m (frac 1, relax 4)
+  R4-48     cls 4 R              FIXED 724 -> 733 m (frac 1, relax 0)
+  R4-52     cls 4 R              NOT FIXED: no profile-feasible path in +-900 m ({"nodes":699591,"nearest":450,"open":0})
+  R4-54     cls 4 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":10804,"nearest":31,"open":0})
+  R4-55     cls 4 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":20,"open":140084})
+  R4-56     cls 4 HILL           NOT FIXED: frac 1 still HILL
+  R4-57.2   cls 4 HILL           NOT FIXED: frac 1 still HILL+R
+  R4-58     cls 4 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":2195,"nearest":147,"open":0})
+  R4-60.1   cls 4 BLD            NOT FIXED: frac 1 still R+BLD
+  R4-60.2   cls 4 BLD            NOT FIXED: frac 1 still BLD
+  R4-60.3   cls 4 BLD            NOT FIXED: frac 1 still BLD
+  R4-61.1   cls 4 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":16,"open":245041})
+  R4-61.2   cls 4 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":46,"nearest":206,"open":0})
+  R4-62     cls 4 RAILNEAR       NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":278,"open":168357})
+  R4-63     cls 4 HILL+RAILNEAR  NOT FIXED: no profile-feasible path in +-900 m ({"nodes":96,"nearest":857,"open":0})
+  R4-66.1   cls 4 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":106,"nearest":1041,"open":0})
+  R4-71.1   cls 4 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":10,"open":108869})
+  R4-71.2   cls 4 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":81182,"nearest":673,"open":0})
+  R4-73     cls 4 HILL+BLD       NOT FIXED: no profile-feasible path in +-900 m ({"nodes":80,"nearest":278,"open":0})
+  R4-79     cls 4 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":1,"open":134167})
+  R4-81     cls 4 HILL           FIXED 660 -> 673 m (frac 1, relax 0)
+  R4-82     cls 4 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":11,"nearest":644,"open":0})
+  R4-83.1   cls 4 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":22,"nearest":433,"open":0})
+  R4-83.2   cls 4 HILL           NOT FIXED: frac 1 still HILL+R
+  R4-84     cls 4 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":115,"nearest":530,"open":0})
+  R2-1      cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":7,"open":117914})
+  R2-2.1    cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":745,"nearest":7,"open":0})
+  R2-2.2    cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":0,"open":92713})
+  R2-3      cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":261,"nearest":29,"open":0})
+  R2-6.4    cls 2 RAILNEAR       NOT FIXED: frac 1 still R+RAILNEAR
+  R2-7      cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":4,"open":118681})
+  R2-8      cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":7976,"nearest":6,"open":0})
+  R2-9.1    cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":214,"nearest":81,"open":0})
+  R2-9.2    cls 2 RAILNEAR       NOT FIXED: frac 1 still RAILNEAR
+  R2-9.4    cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":1,"open":172780})
+  R2-12.2   cls 2 RAILNEAR       NOT FIXED: frac 1 still RAILNEAR
+  R2-21.1   cls 2 HILL           FIXED 744 -> 776 m (frac 1, relax 0)
+  R2-26.1   cls 2 BLD            NOT FIXED: frac 1 still BLD
+  R2-26.2   cls 2 RAILNEAR       NOT FIXED: frac 1 still R+RAILNEAR
+  R2-30.1   cls 2 RAILNEAR       NOT FIXED: frac 1 still R+RAILNEAR
+  R2-31.2   cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":0,"open":306821})
+  R2-33.5   cls 2 BLD            NOT FIXED: frac 1 still BLD
+  R2-41.1   cls 2 HILL           NOT FIXED: frac 1 still HILL
+  R2-41.2   cls 2 RAILNEAR       NOT FIXED: frac 1 still R+RAILNEAR
+  R2-49.1   cls 2 BLD            NOT FIXED: frac 1 still BLD
+  R2-49.2   cls 2 BLD            NOT FIXED: frac 1 still BLD
+  R2-57.1   cls 2 BLD            NOT FIXED: frac 1 still BLD
+  R2-57.2   cls 2 BLD            NOT FIXED: frac 1 still BLD
+  R2-57.3   cls 2 RAILNEAR       NOT FIXED: frac 1 still RAILNEAR
+  R2-65.1   cls 2 R              FIXED 436 -> 464 m (frac 1, relax 0)
+  R2-67.1   cls 2 BLD            NOT FIXED: frac 1 still R+BLD
+  R2-67.2   cls 2 BLD            NOT FIXED: frac 1 still BLD
+  R2-80     cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":294,"open":329564})
+  R2-85.2   cls 2 BLD            NOT FIXED: frac 1 still BLD
+  R2-87     cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":128,"open":412731})
+  R2-88.1   cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":23,"nearest":238,"open":0})
+  R2-88.2   cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":27,"nearest":298,"open":0})
+  R2-89.2   cls 2 BLD            NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":322,"open":227247})
+  R2-105.1  cls 2 RAILNEAR       NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1382,"nearest":646,"open":0})
+  R2-105.2  cls 2 HILL           FIXED 583 -> 837 m (frac 1, relax 0)
+  R2-106.1  cls 2 BLD            NOT FIXED: frac 1 still R+BLD
+  R2-106.2  cls 2 BLD            NOT FIXED: frac 1 still R+BLD
+  R2-110.1  cls 2 BLD            NOT FIXED: frac 1 still BLD
+  R2-115.2  cls 2 BLD            NOT FIXED: frac 1 still BLD
+  R2-125.2  cls 2 HILL+RAILNEAR  NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":1,"open":174316})
+  R2-129.1  cls 2 RAILNEAR       NOT FIXED: frac 1 still R+RAILNEAR
+  R2-132.2  cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":332,"open":542283})
+  R2-134    cls 2 HILL           NOT FIXED: frac 1 still HILL
+  R2-138.1  cls 2 HILL           NOT FIXED: frac 1 still HILL+R
+  R2-138.2  cls 2 HILL           FIXED 1363 -> 1427 m (frac 1, relax 0)
+  R2-138.4  cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":60,"open":404934})
+  R2-138.5  cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":0,"open":31071})
+  R2-138.6  cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":1,"open":174897})
+  R2-139.1  cls 2 HILL           NOT FIXED: frac 1 still HILL+R
+  R2-139.2  cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":167,"open":32674})
+  R2-141    cls 2 BLD            NOT FIXED: frac 1 still BLD
+  R2-142.1  cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":1,"open":253475})
+  R2-142.2  cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":1,"open":180498})
+  R2-144.1  cls 2 HILL           NOT FIXED: frac 1 still HILL+R
+  R2-150.1  cls 2 HILL           NOT FIXED: frac 1 still HILL+R
+  R2-150.2  cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":22,"nearest":136,"open":0})
+  R2-151    cls 2 HILL+RAILNEAR  NOT FIXED: no profile-feasible path in +-900 m ({"nodes":12,"nearest":503,"open":0})
+  R2-152    cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":886,"nearest":367,"open":0})
+  R2-153.1  cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":111,"nearest":220,"open":0})
+  R2-153.2  cls 2 HILL           NOT FIXED: frac 1 still HILL+R
+  R2-154    cls 2 HILL           NOT FIXED: frac 1 still HILL+R
+  R2-155    cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":50,"open":100876})
+  R2-158.1  cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":56,"nearest":180,"open":0})
+  R2-161    cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":1,"open":136796})
+  R2-165.2  cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":392,"open":141267})
+  R2-173.1  cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":30,"nearest":193,"open":0})
+  R2-173.2  cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":30,"nearest":193,"open":0})
+  R2-173.3  cls 2 HILL           NOT FIXED: frac 1 still HILL
+  R2-173.4  cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":1,"open":255513})
+  R2-176    cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":33,"nearest":345,"open":0})
+  R2-181    cls 2 HILL+BLD       NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":1,"open":317598})
+  R2-183.1  cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":1,"open":317598})
+  R2-183.2  cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":22,"nearest":187,"open":0})
+  R2-189    cls 2 HILL           NOT FIXED: no profile-feasible path in +-900 m ({"nodes":1200000,"nearest":1,"open":271035})
+RESULT: 115 with a problem, FIXED 8, NOT FIXED 107
+  R6: 7 with a problem, fixed 0
+  R4: 34 with a problem, fixed 4
+  R2: 74 with a problem, fixed 4

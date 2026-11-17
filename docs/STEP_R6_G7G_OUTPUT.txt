@@ -1,0 +1,27 @@
+R6 STEP G7g: J1-E, JX-1 / JX-2 options (R5 numbers) + JX-2 half interchange. Numbers + game data. npm run build / game run NOT run.
+J1-E: arm length 3037 m (s from the J1 centre, J1 plaza edge at 300 m), structures [[561.2,688.1],[746,1157.5],[1260.4,1422.2],[2344,2645.6],[2768.5,2880.4]]. R5: tap >= 600 m from the plaza edge (s >= 900), >= 1600 m from the next tap and from the ring join (s <= 1437).
+Lane-zone budget of ONE half interchange (G7c numbers, V50 slips R 75 Ls 35 Ts 93, exit zone 207, entry zone 334): 310 m toward the ring + 439 m toward J1 = 749 m of arm WITHOUT a structure and without water. A FULL interchange needs at least 860 m + the loop (G7c lower bound).
+
+A. TAP WINDOWS on J1-E (zone = s - SW .. s + NE, margin 20 m to a structure, no water within 35 m of the arm in the zone):
+   taps with NO structure and NO water in the zone: s 1860 .. 2095
+
+B. OPTIONS for JX-1 (L27 crosses at s 673) and JX-2 (L33 crosses at s 1607): R5 numbers and zone check
+   O1 KEEP both (JX-1 + JX-2 as in G5)
+      tap s 673: 373 m from the plaza edge (need 600) NOT met; 2364 m to the ring join (need 1600) ok; zone s 234 .. 983 has 430 m on / near a structure, water YES
+      tap s 1607: 1307 m from the plaza edge (need 600) ok; 1430 m to the ring join (need 1600) NOT met; zone s 1168 .. 1917 has 95 m on / near a structure, water YES
+      tap to tap 934 m (need 1600) NOT met
+      two taps 934 m apart, both zones run over viaducts (J1 arm structure data would have to change): FAIL
+   O2 MERGE JX-1 + JX-2 into one interchange with a collector road
+      tap s 1607: 1307 m from the plaza edge (need 600) ok; 1430 m to the ring join (need 1600) NOT met; zone s 1168 .. 1917 has 95 m on / near a structure, water YES
+      a collector joins L27 to the same tap: it is a 4-leg interchange (full, needs >= 860 m + loop of ground arm, the ground is only s 1422 .. 2344 = 922 m minus margins and the tap at 1607 has the E3 viaduct in its zone) and the collector duplicates the loop that L46 / L15 / L41 / L6 / L4 / L39 / L53 already make on the north side (R2): FAIL
+   O3 MOVE: ONE half interchange on the open ground, L33 south part (R6-5 chain) joins it, L27 ends 90 m before the arm (no crossing)
+      tap s 1900: 1600 m from the plaza edge (need 600) ok; 1137 m to the ring join (need 1600) NOT met; zone s 1461 .. 2210 has 0 m on / near a structure, water no
+      see C: tap chosen from the windows of A, R5 numbers still NOT met on the ring side (nothing on J1-E can meet them: 900 .. 1437 is viaduct and water)
+   O4 ONE tap exactly at JX-2 (s 1607) = L33 crossing as in G5, L27 dropped
+      tap s 1607: 1307 m from the plaza edge (need 600) ok; 1430 m to the ring join (need 1600) NOT met; zone s 1168 .. 1917 has 95 m on / near a structure, water YES
+      zone runs 162 m over the E3 viaduct (J1 arm structure change not allowed): FAIL
+
+C. STEM from a join point on R6-5 (the east end is (1181.0, 1029.5), heading north; a join up to 600 m earlier is tried, the part after the join is REPLACED by the stem) to the stem start S0 (130 m from the arm axis), every tap of the windows (step 5 m)
+   closest miss (stem profile): {"v":11.848962653364538,"s":2047.9,"j":64,"cut":6.562779462736856,"fill":5.286183190627682,"struct":39.998688542251934,"len":749.9972406501678,"at":[609.980000269342,379.9875411513934],"wetLen":0,"high":39.998688542251934,"y0":38.84921804331772,"y1":30.999475416900776}
+   joins x taps tried 1968; rejected: {"ground at the stem start > 6 m below the arm (fill)":1517,"stem radius < 229 after smoothing":437,"stem cut > 12 / fill > 7 / structure":14}; feasible 0
+RESULT: no tap with a clean stem + slips. NOT exported.

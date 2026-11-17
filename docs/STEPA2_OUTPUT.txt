@@ -1,0 +1,98 @@
+ZONE WEIGHTS (Step A2)   ALL numbers are PROPOSALS (table PAR in scripts/zone-weights.ts), the user OKs them; developable land = A1 classes A, B, C
+trips: 3.2 person trips / resident / day (home-based productions), 2.4 / job + 1.2 / resident (local services) / day (attractions); trucks from industrial / logistics jobs and the fixed facility numbers
+
+zone                      kind         role          dev ha   floors   persons   per ha     jobs   prod/day  attr/day  trucks/day
+metro-core                urban-core                    138     12.0    39,600      288   39,600   126,720   142,560          0
+se-dense                  residential  H-C1 city         74     13.0    24,024      327      882    76,877    30,946          0
+south-bazaar              commercial                     67      6.0     6,866      103   10,814    21,970    34,191          0
+ne-business               commercial                     55      6.0     5,657      103    8,910    18,103    28,173          0
+sw-homes                  residential  H-C2 city         47     10.5    13,649      290      564    43,676    17,732          0
+west-homes                residential  H-C2 city         46     10.5    13,431      290      555    42,979    17,449          0
+east-homes                residential  H-C3 city         52      7.0    10,116      194      627    32,370    13,644          0
+sw-newtown                residential  H-S3 suburb       73      3.5     7,691      105      879    24,612    11,339          0
+nw-town                   residential                    50      3.0     4,691       94      597    15,010     7,062          0
+west-bazaar               commercial                     16      6.0     1,646      103    2,592     5,266     8,196          0
+south-suburb              residential  H-S1 suburb       41      3.0     3,668       90      489    11,736     5,575          0
+north-homes               residential  H-S5 suburb       32      3.0     2,858       90      381     9,144     4,343          0
+east-suburb               residential  H-S2 suburb       29      3.0     2,610       90      348     8,352     3,967          0
+airport                   airport                       101        -         0        -    2,525         0     6,060      1,500
+east-mall                 commercial                      8      6.0       849      103    1,337     2,715     4,226          0
+west-suburb               residential  H-S4 suburb       23      2.5     1,744       75      279     5,580     2,762          0
+seaport                   seaport                        49        -         0        -    1,950         0     4,680      3,000
+east-works                industrial                     69        -         0        -    1,870         0     4,487        280
+port-industry             industrial                     69        -         0        -    1,870         0     4,487        280
+north-heavy               industrial                     51        -         0        -    1,363         0     3,272        205
+north-admin               civic                          18      4.0       165        9    1,008       527     2,617          0
+north-labour              residential                    11      3.0     1,014       94      129     3,243     1,526          0
+nw-university             education                      13      4.0       475       37      624     1,521     2,068          0
+nw-campus                 education                       8      4.0       274       37      360       878     1,193          0
+eng-geotech               engineering                    30        -         0        -      600         0     1,440         72
+eng-mining                engineering                    30        -         0        -      600         0     1,440         72
+eng-nuclear               engineering                    30        -         0        -      600         0     1,440         72
+eng-dam                   engineering                    28        -         0        -      550         0     1,320         66
+eng-mech-works            engineering                    27        -         0        -      540         0     1,296         65
+eng-transport             engineering                    27        -         0        -      540         0     1,296         65
+eng-tech-park             engineering                    25        -         0        -      500         0     1,200         60
+eng-chemical              engineering                    24        -         0        -      480         0     1,152         58
+east-logistics            logistics                      33        -         0        -      450         0     1,081        135
+eng-gasfield              engineering                    23        -         0        -      450         0     1,080         54
+eng-vehicle               engineering                    21        -         0        -      420         0     1,008         50
+eng-campus                engineering                    20        -         0        -      405         0       972         49
+eng-structures            engineering                    20        -         0        -      400         0       960         48
+eng-automation            engineering                    20        -         0        -      395         0       948         47
+eng-steel                 engineering                    20        -         0        -      390         0       936         47
+eng-renewable             engineering                    18        -         0        -      350         0       840         42
+eng-textile               engineering                    16        -         0        -      315         0       756         38
+eng-grid                  engineering                    16        -         0        -      315         0       756         38
+north-logistics           logistics                      21        -         0        -      285         0       685         86
+eng-fire-safety           engineering                    14        -         0        -      280         0       672         34
+eng-biomed                engineering                    14        -         0        -      275         0       660         33
+eng-thermal-power         engineering                    13        -         0        -      265         0       636         32
+eng-shipyard              engineering                    13        -         0        -      260         0       624         31
+sw-medical                civic                           4      4.0        34        9      210       110       545          0
+eng-waste                 engineering                    12        -         0        -      240         0       576         29
+eng-aerospace             engineering                    11        -         0        -      225         0       540         27
+background (outside every farmland                      576      1.0       184        0        0       589       221          0
+village-east              village                         8      1.3       164       22       12       524       225          0
+eng-rural                 engineering                     8        -         0        -      150         0       360         18
+island-beach              coast                          92      1.5        63        1       73       201       252          0
+east-beach                coast                          72      1.5        49        1       57       157       196          0
+sw-beach                  coast                          63      1.5        43        1       50       138       172          0
+south-utility             utility                        25        -         0        -       80         0       192         12
+village-west              village                         3      1.3        55       22        4       175        75          0
+village-sw                village                         2      1.3        38       22        3       122        52          0
+village-ne                village                         2      1.3        33       22        2       105        45          0
+army                      army                            7        -         0        -       34         0        81        100
+south-beach               coast                          19      1.5        13        1       15        41        51          0
+east-farms                farmland                       67      1.0        22        0        0        69        26          0
+north-farms               farmland                       46      1.0        15        0        0        47        18          0
+nw-solar                  utility                         4        -         0        -       12         0        29          2
+west-farms                farmland                       32      1.0        10        0        0        32        12          0
+sw-farms                  farmland                       30      1.0        10        0        0        30        11          0
+ne-farms                  farmland                       22      1.0         7        0        0        22         8          0
+sea-south                 sea                            20      1.0         6        0        0        21         8          0
+nw-farms                  farmland                        8      1.0         2        0        0         8         3          0
+north-power               utility                         0        -         0        -        1         0         2          0
+
+TOTAL persons 141,772, jobs 91,385 (jobs / persons 0.64), productions 453,672, attractions 389,452 (ratio 1.16), trucks / day 6,745
+
+HOUSING (19.1): persons and net persons per developable ha
+  se-dense       H-C1 city    floors 13.0  dev 74 ha  persons  24,024  327 per ha
+  west-homes     H-C2 city    floors 10.5  dev 46 ha  persons  13,431  290 per ha
+  sw-homes       H-C2 city    floors 10.5  dev 47 ha  persons  13,649  290 per ha
+  east-homes     H-C3 city    floors 7.0  dev 52 ha  persons  10,116  194 per ha
+  south-suburb   H-S1 suburb  floors 3.0  dev 41 ha  persons   3,668  90 per ha
+  east-suburb    H-S2 suburb  floors 3.0  dev 29 ha  persons   2,610  90 per ha
+  sw-newtown     H-S3 suburb  floors 3.5  dev 73 ha  persons   7,691  105 per ha
+  west-suburb    H-S4 suburb  floors 2.5  dev 23 ha  persons   1,744  75 per ha
+  north-homes    H-S5 suburb  floors 3.0  dev 32 ha  persons   2,858  90 per ha
+
+CHECKS (plausibility of the proposal, numbers only)
+PASS  jobs / persons 0.64 inside 0.35-0.80 (a working city: about 1 job per 2 people)
+PASS  productions / attractions 1.16 inside 0.6-1.6 (A3 balances the rest by scaling)
+PASS  every city housing has >= 150 persons per developable ha (dense)
+PASS  every suburb housing has 40-110 persons per developable ha (1-5 floors)
+PASS  densest suburb < thinnest city housing (gradual change 3.14)
+PASS  villages <= 40 persons per developable ha (green, low)
+
+6 PASS, 0 FAIL (numbers only; no src/ file changed; game NOT run)

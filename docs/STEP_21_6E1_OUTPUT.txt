@@ -1,0 +1,53 @@
+STEP 21.6e-1 CURVE TABLE (measured bends of docs/centre_fixed.json; NOT the real spiral fit, NO superelevation rule yet)
+method: resample 5 m, curvature over +-20 m, bend = |k| >= 1/1500 (R <= 1500 m) for 20 m or more and 3 deg or more; R = 1 / (75th percentile of |k| in the bend); Ls = max(0.0214 V^3/(R C), V/1.8) rounded up to 10 m, C 0.6
+
+1. SUMMARY PER CLASS (V = design speed; "R<Rmin" = under the class minimum radius at e max 8 %; "SHORT" = delta smaller than Ls/R)
+   cls    V  lines  bends  R<Rmin  SHORT  minR(m)  median R  Rmin class
+   8    100      5     30       1      1      123      1007  394
+   6     80     16     50       5     18       99       314  229
+   4     60     29    216      17    132       22       172  113
+   2     40     77    499       4    235       18        82  41
+   C     40     13      6       0      4       95       198  41
+   L     30     31     18       0      3       38        76  20
+   total bends 819 on 171 lines
+
+2. BENDS UNDER THE CLASS MINIMUM RADIUS OR WITH e > 8 % (line, no., s0-s1, dir, delta, R, Ls, e by formula = info only). SHORT bends are only counted in table 1: SHORT = a small bend (a wiggle of the drawn line) where the real fit must take a bigger R; it is not a fault of the road
+   J1-W    #1  s    25-295   R d  100.2 deg  R   123 (tightest 116)  Ls 300  e 52.2 %   R<Rmin 394; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+   R6-3    #5  s  1089-1134  L d   33.8 deg  R    99 (tightest 69)  Ls 190  e 36.9 %   R<Rmin 229; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+   R6-7    #1  s    45-736   R d  156.7 deg  R   213 (tightest 128)  Ls  90  e 9.6 %   R<Rmin 229; e>8%
+   R6-8    #1  s    40-194   R d   48.4 deg  R   217 (tightest 60)  Ls  90  e 9.3 %   R<Rmin 229; e>8%
+   R6-10   #1  s    40-295   R d   68.6 deg  R   159 (tightest 116)  Ls 120  e 17.7 %   R<Rmin 229; e>8%
+   R6-10   #4  s   726-1121  L d  104.2 deg  R   177 (tightest 108)  Ls 110  e 14.5 %   R<Rmin 229; e>8%
+   R4-6    #6  s  1284-1329  L d   26.6 deg  R    74 (tightest 58)  Ls 110  e 21.2 %   R<Rmin 113; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+   R4-7    #7  s   511-726   R d   99.8 deg  R    98 (tightest 62)  Ls  80  e 12.0 %   R<Rmin 113; e>8%
+   R4-7    #11 s  1166-1206  L d   15.8 deg  R    99 (tightest 93)  Ls  80  e 11.6 %   R<Rmin 113; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+   R4-9    #6  s   855-905   L d   20.2 deg  R    94 (tightest 75)  Ls  90  e 13.1 %   R<Rmin 113; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+   R4-9    #8  s  1195-1325  R d   56.1 deg  R   100 (tightest 38)  Ls  80  e 11.4 %   R<Rmin 113; e>8%
+   R4-9    #10 s  1500-1550  R d   20.2 deg  R    99 (tightest 81)  Ls  80  e 11.5 %   R<Rmin 113; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+   R4-9    #13 s  2035-2080  R d   18.4 deg  R   104 (tightest 89)  Ls  80  e 10.2 %   R<Rmin 113; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+   R4-9    #15 s  2526-2566  L d   85.3 deg  R    23 (tightest 20)  Ls 350  e 108.9 %   R<Rmin 113; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+   R4-10   #3  s   491-531   R d   41.4 deg  R    48 (tightest 40)  Ls 160  e 41.5 %   R<Rmin 113; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+   R4-12   #5  s  1001-1041  R d   50.5 deg  R    40 (tightest 33)  Ls 200  e 53.4 %   R<Rmin 113; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+   R4-19   #6  s  2161-2201  L d   19.6 deg  R    95 (tightest 84)  Ls  90  e 12.9 %   R<Rmin 113; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+   R4-19   #9  s  2881-2921  L d   16.9 deg  R   112 (tightest 96)  Ls  70  e 8.2 %   R<Rmin 113; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+   R4-20   #2  s   335-375   L d   19.6 deg  R    98 (tightest 78)  Ls  80  e 12.0 %   R<Rmin 113; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+   R4-20   #6  s  1006-1046  R d   38.5 deg  R    51 (tightest 35)  Ls 150  e 38.1 %   R<Rmin 113; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+   R4-21   #1  s    30-105   L d   34.4 deg  R   109 (tightest 101)  Ls  80  e 9.1 %   R<Rmin 113; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+   R4-21   #5  s   485-525   L d   21.7 deg  R   101 (tightest 91)  Ls  80  e 11.0 %   R<Rmin 113; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+   R4-27   #2  s   235-275   L d   91.4 deg  R    22 (tightest 19)  Ls 360  e 114.3 %   R<Rmin 113; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+   R2-13   #2  s   250-295   R d   64.4 deg  R    32 (tightest 26)  Ls  80  e 16.5 %   R<Rmin 41; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+   R2-17   #11 s   794-869   R d   73.3 deg  R    35 (tightest 26)  Ls  70  e 13.2 %   R<Rmin 41; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+   R2-51   #9  s   854-904   L d  101.8 deg  R    20 (tightest 18)  Ls 120  e 41.2 %   R<Rmin 41; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+   R2-52   #8  s   631-676   R d  115.0 deg  R    18 (tightest 16)  Ls 130  e 48.1 %   R<Rmin 41; SHORT: delta < Ls/R (no room for an arc, spirals only); e>8%
+
+3. BENDS WITH e > 0 BY THE FORMULA e = V^2/(127 R) - f (info; the crown rule is chosen in 21.6e-2): 160 of 819
+   by class: 8 8, 6 37, 4 97, 2 18, C 0, L 0
+
+4. CHECKS (these test the table, not the design)
+   PASS  every line with a known class is in the table (171 lines)
+   PASS  bends in order, no overlap, inside the line length
+   PASS  every bend has R > 0, Ls >= 10 m, delta >= 3 deg
+   PASS  spiral formula gives the worked values V80 R229 = 80 m, V60 R113 = 70 m, V30 R20 = 50 m (same as Checks.spiralLength)
+   RESULT 4 PASS 0 FAIL
+   NOT RUN: tsc, npm run build, the game. Nothing in src changed.
+   LIMITS: R is measured on 5 m resampled points with +-20 m window, so a bend under about R 40 m is blurred and a bend over about R 1000 m is noisy; the final R / Ls come from the real fit (21.6 build).

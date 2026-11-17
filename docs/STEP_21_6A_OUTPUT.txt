@@ -1,0 +1,199 @@
+STEP 21.6a  OPEN / ZONE PER STRETCH (headless; nothing in src or the game changed; docs/centre_use.json is the table the next steps read)
+rule: R6 = OPEN everywhere; R4 / R2 = ZONE inside a built-up zone (getWorldZoneAt, BUILT_UP_KINDS), OPEN outside; C / L = ZONE everywhere. Stations every 10 m, vote +-5 stations, shortest stretch 100 m
+
+1. SUMMARY PER CLASS
+   class 6    7 lines   7.7 km   OPEN   7.7 km   ZONE   0.0 km   OPEN<->ZONE changes 0   (centreline inside a built-up zone: 4.6 km)
+   class 4   29 lines  35.0 km   OPEN  24.1 km   ZONE  10.9 km   OPEN<->ZONE changes 8   (centreline inside a built-up zone: 11.1 km)
+   class 2   74 lines  61.2 km   OPEN  31.6 km   ZONE  29.6 km   OPEN<->ZONE changes 14   (centreline inside a built-up zone: 30.0 km)
+   class C   13 lines   3.8 km   OPEN   0.0 km   ZONE   3.8 km   OPEN<->ZONE changes 0   (centreline inside a built-up zone: 2.1 km)
+   class L   31 lines   6.0 km   OPEN   0.0 km   ZONE   6.0 km   OPEN<->ZONE changes 0   (centreline inside a built-up zone: 2.1 km)
+
+2. R4 / R2 LINES WITH A ZONE STRETCH  (section, from s to s, length, zone ids with metres)
+   R4-21   3052 m  R4-OPEN 0-2547  |  R4-ZONE 2547-3052
+          ZONE 2547-3052 (505 m) in seaport 470 m, port-industry 35 m
+   R4-20   1931 m  R4-ZONE 0-1931
+          ZONE 0-1931 (1931 m) in south-bazaar 1341 m, metro-core 585 m, south-suburb 5 m
+   R4-6    1793 m  R4-ZONE 0-746  |  R4-OPEN 746-1793
+          ZONE 0-746 (746 m) in west-suburb 506 m, village-sw 240 m
+   R4-12   1786 m  R4-ZONE 0-1786
+          ZONE 0-1786 (1786 m) in ne-business 1023 m, metro-core 763 m
+   R4-23   1289 m  R4-ZONE 0-95  |  R4-OPEN 95-1034  |  R4-ZONE 1034-1289
+          ZONE 0-95 (95 m) in airport 95 m
+          ZONE 1034-1289 (255 m) in north-heavy 255 m
+   R4-8    1160 m  R4-ZONE 0-355  |  R4-OPEN 355-1160
+          ZONE 0-355 (355 m) in sw-newtown 355 m
+   R4-13    985 m  R4-ZONE 0-841  |  R4-OPEN 841-985
+          ZONE 0-841 (841 m) in metro-core 338 m, south-bazaar 274 m, se-dense 229 m
+   R4-14    759 m  R4-ZONE 0-759
+          ZONE 0-759 (759 m) in south-bazaar 654 m, south-suburb 105 m
+   R4-27    626 m  R4-ZONE 0-626
+          ZONE 0-626 (626 m) in north-logistics 452 m, north-heavy 109 m, north-power 65 m
+   R4-28    349 m  R4-ZONE 0-349
+          ZONE 0-349 (349 m) in north-heavy 349 m
+   R4-4     253 m  R4-ZONE 0-253
+          ZONE 0-253 (253 m) in nw-town 253 m
+   R2-62   4130 m  R2-ZONE 0-1695  |  R2-OPEN 1695-4130
+          ZONE 0-1695 (1695 m) in north-heavy 1695 m
+   R2-8    3919 m  R2-OPEN 0-3114  |  R2-ZONE 3114-3704  |  R2-OPEN 3704-3919
+          ZONE 3114-3704 (590 m) in sw-newtown 590 m
+   R2-19   2761 m  R2-ZONE 0-2476  |  R2-OPEN 2476-2761
+          ZONE 0-2476 (2476 m) in east-works 1150 m, east-homes 920 m, metro-core 405 m
+   R2-74   2463 m  R2-OPEN 0-145  |  R2-ZONE 145-2168  |  R2-OPEN 2168-2463
+          ZONE 145-2168 (2023 m) in north-heavy 761 m, north-labour 741 m, north-logistics 330 m, eng-textile 180 m, north-farms 10 m
+   R2-58   1725 m  R2-ZONE 0-446  |  R2-OPEN 446-1725
+          ZONE 0-446 (446 m) in village-east 446 m
+   R2-6    1635 m  R2-ZONE 0-264  |  R2-OPEN 264-1122  |  R2-ZONE 1122-1635
+          ZONE 0-264 (264 m) in nw-town 264 m
+          ZONE 1122-1635 (513 m) in nw-solar 444 m, nw-town 70 m
+   R2-33   1437 m  R2-ZONE 0-1437
+          ZONE 0-1437 (1437 m) in south-utility 654 m, sw-homes 454 m, south-bazaar 329 m
+   R2-61   1310 m  R2-ZONE 0-1310
+          ZONE 0-1310 (1310 m) in nw-university 1095 m, metro-core 215 m
+   R2-72   1288 m  R2-ZONE 0-1288
+          ZONE 0-1288 (1288 m) in north-heavy 1288 m
+   R2-55   1282 m  R2-ZONE 0-235  |  R2-OPEN 235-1282
+          ZONE 0-235 (235 m) in east-logistics 155 m, safari-park 50 m, east-suburb 30 m
+   R2-17   1199 m  R2-ZONE 0-1199
+          ZONE 0-1199 (1199 m) in east-works 605 m, ne-business 425 m, east-homes 170 m
+   R2-28   1182 m  R2-ZONE 0-1182
+          ZONE 0-1182 (1182 m) in metro-core 1182 m
+   R2-11   1160 m  R2-ZONE 0-1160
+          ZONE 0-1160 (1160 m) in nw-university 1160 m
+   R2-71    963 m  R2-ZONE 0-963
+          ZONE 0-963 (963 m) in north-heavy 963 m
+   R2-64    948 m  R2-OPEN 0-743  |  R2-ZONE 743-948
+          ZONE 743-948 (205 m) in ne-business 204 m
+   R2-44    867 m  R2-ZONE 0-867
+          ZONE 0-867 (867 m) in se-dense 732 m, port-industry 134 m
+   R2-45    845 m  R2-ZONE 0-845
+          ZONE 0-845 (845 m) in se-dense 407 m, east-mall 367 m, east-suburb 70 m
+   R2-70    824 m  R2-OPEN 0-347  |  R2-ZONE 347-824
+          ZONE 347-824 (477 m) in ne-business 477 m
+   R2-43    760 m  R2-ZONE 0-760
+          ZONE 0-760 (760 m) in se-dense 715 m, metro-core 45 m
+   R2-34    752 m  R2-ZONE 0-752
+          ZONE 0-752 (752 m) in sw-newtown 752 m
+   R2-39    621 m  R2-ZONE 0-621
+          ZONE 0-621 (621 m) in sw-newtown 621 m
+   R2-14    596 m  R2-OPEN 0-422  |  R2-ZONE 422-596
+          ZONE 422-596 (174 m) in north-heavy 174 m
+   R2-32    524 m  R2-ZONE 0-524
+          ZONE 0-524 (524 m) in sw-homes 338 m, south-bazaar 187 m
+   R2-42    522 m  R2-ZONE 0-522
+          ZONE 0-522 (522 m) in south-utility 522 m
+   R2-35    519 m  R2-ZONE 0-519
+          ZONE 0-519 (519 m) in sw-newtown 519 m
+   R2-36    518 m  R2-ZONE 0-518
+          ZONE 0-518 (518 m) in sw-newtown 518 m
+   R2-46    466 m  R2-ZONE 0-466
+          ZONE 0-466 (466 m) in se-dense 362 m, east-mall 104 m
+   R2-37    457 m  R2-ZONE 0-457
+          ZONE 0-457 (457 m) in sw-newtown 457 m
+   R2-77    451 m  R2-ZONE 0-451
+          ZONE 0-451 (451 m) in metro-core 295 m, west-homes 155 m
+   R2-29    430 m  R2-ZONE 0-430
+          ZONE 0-430 (430 m) in metro-core 235 m, south-bazaar 195 m
+   R2-49    306 m  R2-ZONE 0-306
+          ZONE 0-306 (306 m) in port-industry 306 m
+   R2-40    289 m  R2-ZONE 0-289
+          ZONE 0-289 (289 m) in south-utility 254 m, sw-homes 35 m
+   R2-41    286 m  R2-ZONE 0-286
+          ZONE 0-286 (286 m) in sw-homes 212 m, south-utility 74 m
+   R2-50    260 m  R2-ZONE 0-260
+          ZONE 0-260 (260 m) in port-industry 260 m
+   R2-30    258 m  R2-ZONE 0-258
+          ZONE 0-258 (258 m) in metro-core 144 m, sw-homes 114 m
+   R2-48    240 m  R2-ZONE 0-240
+          ZONE 0-240 (240 m) in port-industry 240 m
+   R2-20    223 m  R2-ZONE 0-223
+          ZONE 0-223 (223 m) in east-works 223 m
+   R2-18    217 m  R2-ZONE 0-217
+          ZONE 0-217 (217 m) in metro-core 217 m
+   R2-38    216 m  R2-ZONE 0-216
+          ZONE 0-216 (216 m) in sw-newtown 216 m
+   R2-9     200 m  R2-ZONE 0-200
+          ZONE 0-200 (200 m) in nw-solar 200 m
+   R2-60    190 m  R2-ZONE 0-190
+          ZONE 0-190 (190 m) in nw-university 165 m, center-hills 25 m
+   R2-31     79 m  R2-ZONE 0-79
+          ZONE 0-79 (79 m) in sw-homes 79 m
+   R4-9    2956 m  R4-ZONE 0-1233  |  R4-OPEN 1233-2681  |  R4-ZONE 2681-2956
+          ZONE 0-1233 (1233 m) in north-admin 1233 m
+          ZONE 2681-2956 (275 m) in nw-campus 170 m, nw-town 105 m
+   R4-29    917 m  R4-ZONE 0-917
+          ZONE 0-917 (917 m) in west-homes 782 m, west-suburb 105 m, west-bazaar 30 m
+   R2-75    768 m  R2-ZONE 0-633  |  R2-OPEN 633-768
+          ZONE 0-633 (633 m) in west-bazaar 519 m, west-homes 115 m
+   R2-76    843 m  R2-ZONE 0-843
+          ZONE 0-843 (843 m) in west-homes 843 m
+
+3. R6 LINES (all OPEN by the rule): metres of the centreline that lie inside a built-up zone  (INFO, the user judges)
+   R6-15   2011 m  built-up  1640 m (residential 1165, commercial 470)
+   R6-10   1837 m  built-up   170 m (residential 165)
+   R6-11   1444 m  built-up   380 m (commercial 376)
+   R6-9     734 m  built-up   740 m (residential 673, army 60)
+   R6-13    447 m  built-up   460 m (residential 447)
+   R6-14    366 m  built-up   380 m (residential 366)
+   R6-12    844 m  built-up   850 m (residential 45, civic 427, engineering 372)
+
+4. C / L LINES (all ZONE by the rule): metres of the centreline in open country  (INFO: a kerbed street outside a built-up zone, the user judges)
+   C-2      494 m  open country   494 m
+   C-3      376 m  open country   376 m
+   C-1      326 m  open country   326 m
+   C-4      290 m  open country   290 m
+   C-12     239 m  open country   219 m
+   L-5      538 m  open country   538 m
+   L-4      457 m  open country   457 m
+   L-6      341 m  open country   341 m
+   L-3      270 m  open country   270 m
+   L-2      266 m  open country   266 m
+   L-1      191 m  open country   191 m
+   L-7      172 m  open country   172 m
+   L-15     168 m  open country   168 m
+   L-14     155 m  open country   155 m
+   L-18     150 m  open country   110 m
+   L-8      150 m  open country   150 m
+   L-12     149 m  open country   149 m
+   L-9      139 m  open country   139 m
+   L-11     131 m  open country   131 m
+   L-13     131 m  open country   131 m
+   L-16     129 m  open country   129 m
+   L-22     120 m  open country   120 m
+   L-10     133 m  open country   133 m
+
+5. OPEN <-> ZONE CHANGES on R4 / R2 (a taper / transition is needed there: 21.7 or 21.9, listed so that nothing is forgotten)
+   R4-21  s  2547 (2498, 2747)  -> ZONE
+   R4-6   s   746 (-3239, 1116)  -> OPEN
+   R4-23  s    95 (2608, -3502)  -> OPEN
+   R4-23  s  1034 (1686, -3440)  -> ZONE
+   R4-8   s   355 (-2262, 2441)  -> OPEN
+   R4-13  s   841 (758, 483)  -> OPEN
+   R2-62  s  1695 (1944, -4547)  -> OPEN
+   R2-8   s  3114 (-1935, 2775)  -> ZONE
+   R2-8   s  3704 (-1357, 2675)  -> OPEN
+   R2-19  s  2476 (2486, -1292)  -> OPEN
+   R2-74  s   145 (-395, -2451)  -> ZONE
+   R2-74  s  2168 (1005, -2460)  -> OPEN
+   R2-58  s   446 (3507, -833)  -> OPEN
+   R2-6   s   264 (-2493, -3164)  -> OPEN
+   R2-6   s  1122 (-2738, -2480)  -> ZONE
+   R2-55  s   235 (3044, 988)  -> OPEN
+   R2-64  s   743 (1652, -1494)  -> ZONE
+   R2-70  s   347 (1503, -1704)  -> ZONE
+   R2-14  s   422 (979, -2703)  -> ZONE
+   R4-9   s  1233 (-238, -2138)  -> OPEN
+   R4-9   s  2681 (-1450, -2211)  -> ZONE
+   R2-75  s   633 (-2346, -843)  -> OPEN
+
+6. CHECKS
+   PASS  all 154 profiled lines have a use table (154)
+   PASS  every table covers the whole line from s 0 to the end without a gap
+   PASS  every stretch names a section that exists in ClassSections.ts
+   PASS  R6: all OPEN
+   PASS  C / L: all ZONE
+   PASS  no R4 / R2 stretch shorter than 100 m between two others (0)
+   PASS  every R4 / R2 ZONE stretch lies at least partly in a built-up zone
+   PASS  every OPEN stretch has length
+
+NEXT (21.6 b..f, one per chat): (b) section mesh from ClassSections.ts per stretch; (c) earthwork with the OPEN / ZONE formation width; (d) drain; (e) superelevation; (f) rail entries. centre-section.ts still uses ONE section per class (SECTION_FOR_VOLUME): it reads centre_use.json from (c).
+PASS 8  FAIL 0

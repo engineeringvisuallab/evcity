@@ -1,0 +1,41 @@
+[road fix RC03] skipped: road not found
+ISLAND LINK GROUND CHECK (Step 17.1a)   M6 ROW +-36.4 m, samples every 10 m, ground = natural terrain (no roads, no rail earthworks)
+start = S node (end of J1-S arm) (-1133.3, 2301.8); arm arrival heading 92.2 deg (atan2 dz,dx); island centre (-1400, 4050) radius 830
+
+1. CANDIDATES (straight lines from the S node to the island centre shifted by DX along x)
+   DX     length   bend from arm   wet on centreline (runs)         deepest   wet anywhere in ROW   island start   island max   steepest cross slope (>25 %)   rail min
+   -400    1871 m     18.7 deg    310 m (1 run: 630-930)                                  6.8 m      340 m                950 m      19.5 m     17 % (0 m)         723 m (ring-south)
+   -200    1809 m     12.8 deg    330 m (1 run: 580-900)                                  8.2 m      360 m                920 m      32.1 m     22 % (0 m)         723 m (ring-south)
+      0    1768 m      6.5 deg    300 m (1 run: 550-840)                                  8.1 m      340 m                860 m      28.6 m     24 % (0 m)         723 m (ring-south)
+    200    1750 m      0.0 deg    300 m (1 run: 530-820)                                  7.3 m      320 m                870 m      27.3 m     16 % (0 m)         723 m (ring-south)
+    400    1753 m     -6.5 deg    290 m (1 run: 520-800)                                  6.5 m      330 m                910 m      17.9 m     68 % (10 m)         723 m (ring-south)
+
+2. WORLD ZONES UNDER THE CENTRELINE, DX = 0
+   s     0 -   290   south-utility (utility)
+   s   300 -   660   river-delta (wetland)
+   s   670 -   900   sea-south (sea)
+   s   910 -  1120   island-beach (coast)
+   s  1130 -  1760   island-hills (park)
+   Facility / engineering land touching the ROW edge, per candidate:
+   DX  -400: none
+   DX  -200: none
+   DX     0: none
+   DX   200: none
+   DX   400: none
+   Shore on the S coast line: coastZ(x -1133) = 2940 m, S node z 2302 m
+
+3. RECOMMENDED CANDIDATE (ends at the island centre, bend <= 20 deg, no cross slope > 25 %): DX 0, length 1768 m, bend 6.5 deg, wet 300 m, deepest 8.1 m, island ground max 28.6 m, steepest cross slope 24 %
+
+4. CHECKS (data only; these say the corridor is usable, not that a road is designed)
+  PASS  start is the end of the J1-S arm, on the ring S join   distance to RING_RADIAL_JOINS S 1.8 m
+  PASS  the strait is ONE crossing (one wet run) on the recommended line   1 run(s)
+  PASS  deepest water on the recommended line <= 15 m (normal bridge, no deep-water foundations)   8.1 m
+  PASS  bend from the arm <= 20 deg (rule used for the J1 arms)   6.5 deg
+  PASS  no rail within ROW + 50 m of the recommended line   closest rail point 723 m (ring-south)
+  PASS  no airport / seaport / army / engineering land at the ROW edge of the recommended line   none
+  PASS  no steep ground (cross slope > 25 %) inside the ROW of the recommended line   steepest 24 %, steep length 0 m
+  PASS  island ground on the recommended centreline <= 40 m (cut <= 12 m is then possible with a ridge of 28 m)   28.6 m
+
+  8 PASS, 0 FAIL
+
+wrote docs/island_link_ground.json

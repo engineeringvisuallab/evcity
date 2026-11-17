@@ -1,0 +1,39 @@
+=== 4.5 RING MARKINGS DATA (M8, 4 lanes per direction, runout inspiral) ===
+  PROPOSAL values (the handoff has none): line width 0.15 m, dash 3 m + gap 9 m, white lane / outer edge lines, yellow edge line next to the median
+
+  id            kind                    side  colour  style   centre offset  width  paint from-to
+  A-edge-median edge-line-median-side   +n    yellow  solid       4.425 m   0.15  4.350-4.500
+  A-lane-1      lane-line               +n    white   dashed      8.150 m   0.15  8.075-8.225
+  A-lane-2      lane-line               +n    white   dashed     11.800 m   0.15  11.725-11.875
+  A-lane-3      lane-line               +n    white   dashed     15.450 m   0.15  15.375-15.525
+  A-edge-outer  edge-line-outer         +n    white   solid      19.175 m   0.15  19.100-19.250
+  B-edge-median edge-line-median-side   -n    yellow  solid       4.425 m   0.15  4.350-4.500
+  B-lane-1      lane-line               -n    white   dashed      8.150 m   0.15  8.075-8.225
+  B-lane-2      lane-line               -n    white   dashed     11.800 m   0.15  11.725-11.875
+  B-lane-3      lane-line               -n    white   dashed     15.450 m   0.15  15.375-15.525
+  B-edge-outer  edge-line-outer         -n    white   solid      19.175 m   0.15  19.100-19.250
+
+=== Checks ===
+  PASS  lines per carriageway: 2 edge lines + 3 lane lines (4 lanes)   5 per side, 10 in all
+  PASS  lane lines split the 14.6 m into 4 lanes of exactly 3.65 m     3.65 + 3.65 + 3.65 + 3.65 m
+  PASS  no line crosses a ribbon boundary (slope break)                10 lines checked
+  PASS  edge lines lie in the paved shoulders                          median-side 4.425 m in 3.0-4.5, outer 19.175 m in 19.1-22.1
+  PASS  edge line touches the lane edge (no gap, no paint on the lane) lane edges 4.5 and 19.1 m
+
+  Dashed lines on the closed ring: every line has its own length (ring length -+ 2 pi x offset), so the pitch is stretched to close the pattern
+  line          length m   dashes   pitch m   dash m   stretch
+  A-lane-1       19241.6     1603    12.003    3.001 +0.03 %
+  A-lane-2       19218.7     1602    11.997    2.999 -0.03 %
+  A-lane-3       19195.7     1600    11.997    2.999 -0.02 %
+  B-lane-1       19344.0     1612    12.000    3.000 +0.00 %
+  B-lane-2       19366.9     1614    11.999    3.000 -0.01 %
+  B-lane-3       19389.9     1616    11.999    3.000 -0.01 %
+  PASS  dash pitch stays within 2 % of 12 m on every lane line         worst 0.03 %
+
+  Gore marking placeholders at the four radial meeting points (windows need constant cross fall: no tilt change inside)
+  PASS  N station 11549: +-424 m (exit 207, entry 424) on a constant normal crown yes
+  PASS  E station 15309: +-424 m (exit 207, entry 424) on a constant normal crown yes
+  PASS  S station 1205: +-424 m (exit 207, entry 424) on a constant normal crown yes
+  PASS  W station 5104: +-424 m (exit 207, entry 424) on a constant normal crown yes
+
+ALL CHECKS PASS

@@ -1,0 +1,13 @@
+PASS J1 terrain exists in the road network (Config.roads.junctionJ1.enabled)
+PASS centre ground 18.19 m = pad plane 18.19 m (natural 18.22)
+PASS ground = finished level under pad + lane zones: max diff 0.000 m at , mean 0.0000 m (6097 points)
+  arm N: lane zone s 60..270: max fill 3.6 m, max cut 0.6 m; level at s 270 = 21.49 m, natural on axis 17.86 m
+  arm E: lane zone s 60..270: max fill 4.3 m, max cut 0.2 m; level at s 270 = 22.85 m, natural on axis 18.64 m
+  arm S: lane zone s 60..270: max fill 0.4 m, max cut 0.7 m; level at s 270 = 17.90 m, natural on axis 18.58 m
+  arm W: lane zone s 60..270: max fill 3.4 m, max cut 0.7 m; level at s 270 = 21.47 m, natural on axis 18.06 m
+  footprint samples 2589: wet 0, inside the EVLab plot 1532 (59 %)
+PASS no water inside the J1 footprint
+  mesh: 12762 vertices, 7774 triangles (islands 2044, marks 2604)
+PASS triangle count is sane
+PASS faces have area
+ALL PASS

@@ -1,0 +1,139 @@
+[road fix RC03] skipped: road not found
+housing streets 128, sites 11
+PASS R1 street x street crossings without a node: 0 
+PASS R1 street through an R2 / R4 sketch line without ending there: 0
+PASS R1 street touches an R6 / 8-lane line: 0 
+
+H-C1 se-dense, city 20 floors: grid 110 m, arterial 440 m, collector 220 m
+PASS H-C1 junction nodes >= 60 m apart (also from the sketch J-xx): min 75 m, 9 placeholders
+PASS H-C1 R2 every street has a stated need and >= 60 m (12 streets)
+PASS H-C1 water check (sc.water > sc.h) on 266 points: 0 wet
+PASS H-C1 ground class (no water / rail / fenced / M8 ROW / very steep): 0 points outside A-D
+PASS H-C1 all streets inside the housing circle: 0 points outside
+PASS H-C1 no street through a building (carriageway + footpath): 0 points
+PASS H-C1 steepest 20 m grade A 0.0 % / C 5.0 % / L 9.9 % (limits 6 / 8 / 10 %) 
+PASS H-C1 R3 smoothness: smallest radius 475 m, curvature jumps 0 
+INFO H-C1 separate access points (A / C ends on the sketch R2 / R4 lines, >= 150 m apart): 2
+INFO H-C1 streets 12, length 1311 m, A 0 / C 2 / L 10
+
+H-C2W west-homes, city 10 floors: grid 100 m + one diagonal collector
+PASS H-C2W junction nodes >= 60 m apart (also from the sketch J-xx): min 77 m, 12 placeholders
+PASS H-C2W R2 every street has a stated need and >= 60 m (16 streets)
+PASS H-C2W water check (sc.water > sc.h) on 307 points: 0 wet
+PASS H-C2W ground class (no water / rail / fenced / M8 ROW / very steep): 0 points outside A-D
+PASS H-C2W all streets inside the housing circle: 0 points outside
+PASS H-C2W no street through a building (carriageway + footpath): 0 points
+PASS H-C2W steepest 20 m grade A 0.0 % / C 7.3 % / L 8.5 % (limits 6 / 8 / 10 %) 
+PASS H-C2W R3 smoothness: smallest radius 837 m, curvature jumps 0 
+INFO H-C2W separate access points (A / C ends on the sketch R2 / R4 lines, >= 150 m apart): 2
+INFO H-C2W streets 16, length 1492 m, A 0 / C 4 / L 12
+
+H-C2S sw-homes, city 10 floors: grid 100 m + one diagonal collector
+PASS H-C2S junction nodes >= 60 m apart (also from the sketch J-xx): min 62 m, 23 placeholders
+PASS H-C2S R2 every street has a stated need and >= 60 m (32 streets)
+PASS H-C2S water check (sc.water > sc.h) on 699 points: 0 wet
+PASS H-C2S ground class (no water / rail / fenced / M8 ROW / very steep): 0 points outside A-D
+PASS H-C2S all streets inside the housing circle: 0 points outside
+PASS H-C2S no street through a building (carriageway + footpath): 0 points
+PASS H-C2S steepest 20 m grade A 0.0 % / C 7.3 % / L 9.5 % (limits 6 / 8 / 10 %) 
+PASS H-C2S R3 smoothness: smallest radius 1000 m, curvature jumps 0 
+INFO H-C2S separate access points (A / C ends on the sketch R2 / R4 lines, >= 150 m apart): 4
+INFO H-C2S streets 32, length 3376 m, A 0 / C 10 / L 22
+
+H-C3 east-homes, city 5-10 floors: perimeter blocks 150 x 120 m along collectors
+PASS H-C3 junction nodes >= 60 m apart (also from the sketch J-xx): min 68 m, 4 placeholders
+PASS H-C3 R2 every street has a stated need and >= 60 m (5 streets)
+PASS H-C3 water check (sc.water > sc.h) on 106 points: 0 wet
+PASS H-C3 ground class (no water / rail / fenced / M8 ROW / very steep): 0 points outside A-D
+PASS H-C3 all streets inside the housing circle: 0 points outside
+PASS H-C3 no street through a building (carriageway + footpath): 0 points
+PASS H-C3 steepest 20 m grade A 0.0 % / C 7.3 % / L 8.4 % (limits 6 / 8 / 10 %) 
+PASS H-C3 R3 smoothness: smallest radius 709 m, curvature jumps 0 
+INFO H-C3 separate access points (A / C ends on the sketch R2 / R4 lines, >= 150 m apart): 2
+INFO H-C3 streets 5, length 523 m, A 0 / C 2 / L 3
+
+H-S1 south-suburb: suburb grid, blocks 180 x 200 m
+PASS H-S1 junction nodes >= 60 m apart (also from the sketch J-xx): min 70 m, 3 placeholders
+PASS H-S1 R2 every street has a stated need and >= 60 m (3 streets)
+PASS H-S1 water check (sc.water > sc.h) on 52 points: 0 wet
+PASS H-S1 ground class (no water / rail / fenced / M8 ROW / very steep): 0 points outside A-D
+PASS H-S1 all streets inside the housing circle: 0 points outside
+PASS H-S1 no street through a building (carriageway + footpath): 0 points
+PASS H-S1 steepest 20 m grade A 0.0 % / C 7.7 % / L 9.6 % (limits 6 / 8 / 10 %) 
+PASS H-S1 R3 smoothness: smallest radius 1005 m, curvature jumps 0 
+INFO H-S1 separate access points (A / C ends on the sketch R2 / R4 lines, >= 150 m apart): 1  <-- less than 2 (fire access): ASK
+INFO H-S1 streets 3, length 257 m, A 0 / C 1 / L 2
+
+H-S2 east-suburb: collector spine, loop streets and cul-de-sacs
+PASS H-S2 junction nodes >= 60 m apart (also from the sketch J-xx): min 68 m, 4 placeholders
+PASS H-S2 R2 every street has a stated need and >= 60 m (4 streets)
+PASS H-S2 water check (sc.water > sc.h) on 64 points: 0 wet
+PASS H-S2 ground class (no water / rail / fenced / M8 ROW / very steep): 0 points outside A-D
+PASS H-S2 all streets inside the housing circle: 0 points outside
+PASS H-S2 no street through a building (carriageway + footpath): 0 points
+PASS H-S2 steepest 20 m grade A 0.0 % / C 7.8 % / L 9.0 % (limits 6 / 8 / 10 %) 
+PASS H-S2 R3 smoothness: smallest radius 43 m, curvature jumps 0 
+INFO H-S2 separate access points (A / C ends on the sketch R2 / R4 lines, >= 150 m apart): 2
+INFO H-S2 streets 4, length 310 m, A 0 / C 2 / L 2
+
+H-S3 sw-newtown: curvilinear collectors, locals at ~75 deg
+PASS H-S3 junction nodes >= 60 m apart (also from the sketch J-xx): min 60 m, 12 placeholders
+PASS H-S3 R2 every street has a stated need and >= 60 m (14 streets)
+PASS H-S3 water check (sc.water > sc.h) on 424 points: 0 wet
+PASS H-S3 ground class (no water / rail / fenced / M8 ROW / very steep): 0 points outside A-D
+PASS H-S3 all streets inside the housing circle: 0 points outside
+PASS H-S3 no street through a building (carriageway + footpath): 0 points
+PASS H-S3 steepest 20 m grade A 0.0 % / C 6.9 % / L 5.1 % (limits 6 / 8 / 10 %) 
+PASS H-S3 R3 smoothness: smallest radius 122 m, curvature jumps 0 
+INFO H-S3 separate access points (A / C ends on the sketch R2 / R4 lines, >= 150 m apart): 2
+INFO H-S3 streets 14, length 2093 m, A 0 / C 8 / L 6
+
+H-S4 west-suburb: cluster / court lanes on collectors
+PASS H-S4 junction nodes >= 60 m apart (also from the sketch J-xx): min 64 m, 7 placeholders
+PASS H-S4 R2 every street has a stated need and >= 60 m (8 streets)
+PASS H-S4 water check (sc.water > sc.h) on 201 points: 0 wet
+PASS H-S4 ground class (no water / rail / fenced / M8 ROW / very steep): 0 points outside A-D
+PASS H-S4 all streets inside the housing circle: 0 points outside
+PASS H-S4 no street through a building (carriageway + footpath): 0 points
+PASS H-S4 steepest 20 m grade A 0.0 % / C 7.9 % / L 4.7 % (limits 6 / 8 / 10 %) 
+PASS H-S4 R3 smoothness: smallest radius 741 m, curvature jumps 0 
+INFO H-S4 separate access points (A / C ends on the sketch R2 / R4 lines, >= 150 m apart): 2
+INFO H-S4 streets 8, length 977 m, A 0 / C 4 / L 4
+
+H-S5 north-homes: linear fishbone along one collector, rear lanes
+PASS H-S5 junction nodes >= 60 m apart (also from the sketch J-xx): min 63 m, 13 placeholders
+PASS H-S5 R2 every street has a stated need and >= 60 m (18 streets)
+PASS H-S5 water check (sc.water > sc.h) on 434 points: 0 wet
+PASS H-S5 ground class (no water / rail / fenced / M8 ROW / very steep): 0 points outside A-D
+PASS H-S5 all streets inside the housing circle: 0 points outside
+PASS H-S5 no street through a building (carriageway + footpath): 0 points
+PASS H-S5 steepest 20 m grade A 0.0 % / C 5.1 % / L 6.8 % (limits 6 / 8 / 10 %) 
+PASS H-S5 R3 smoothness: smallest radius 58 m, curvature jumps 0 
+INFO H-S5 separate access points (A / C ends on the sketch R2 / R4 lines, >= 150 m apart): 2
+INFO H-S5 streets 18, length 2115 m, A 0 / C 4 / L 14
+
+V1 village-west (moved 570 m to the flat patch at R2-138.1): organic lanes, one curved collector spine, cul-de-sac lanes
+PASS V1 junction nodes >= 60 m apart (also from the sketch J-xx): min 62 m, 7 placeholders
+PASS V1 R2 every street has a stated need and >= 60 m (7 streets)
+PASS V1 water check (sc.water > sc.h) on 164 points: 0 wet
+PASS V1 ground class (no water / rail / fenced / M8 ROW / very steep): 0 points outside A-D
+PASS V1 all streets inside the housing circle: 0 points outside
+PASS V1 no street through a building (carriageway + footpath): 0 points
+PASS V1 steepest 20 m grade A 0.0 % / C 7.4 % / L 8.0 % (limits 6 / 8 / 10 %) 
+PASS V1 R3 smoothness: smallest radius 167 m, curvature jumps 0 
+INFO V1 separate access points (A / C ends on the sketch R2 / R4 lines, >= 150 m apart): 2
+INFO V1 streets 7, length 802 m, A 0 / C 4 / L 3
+
+V3 village-sw (moved 532 m to the flat patch near R2-138.3): organic lanes, one curved collector spine, cul-de-sac lanes
+PASS V3 junction nodes >= 60 m apart (also from the sketch J-xx): min 61 m, 7 placeholders
+PASS V3 R2 every street has a stated need and >= 60 m (9 streets)
+PASS V3 water check (sc.water > sc.h) on 201 points: 0 wet
+PASS V3 ground class (no water / rail / fenced / M8 ROW / very steep): 0 points outside A-D
+PASS V3 all streets inside the housing circle: 0 points outside
+PASS V3 no street through a building (carriageway + footpath): 0 points
+PASS V3 steepest 20 m grade A 0.0 % / C 4.7 % / L 7.6 % (limits 6 / 8 / 10 %) 
+PASS V3 R3 smoothness: smallest radius 157 m, curvature jumps 0 
+INFO V3 separate access points (A / C ends on the sketch R2 / R4 lines, >= 150 m apart): 2
+INFO V3 streets 9, length 977 m, A 0 / C 5 / L 4
+
+ALL PASS: 91 PASS, 0 FAIL (headless; the game was NOT run)

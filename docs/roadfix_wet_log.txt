@@ -1,0 +1,53 @@
+  R6-29     cls 6 LONG BRIDGE kept 120 m  (no path in +-900 m)
+  R6-31     cls 6 BRIDGE 20 m
+  R6-32     cls 6 LONG BRIDGE kept 70 m  (no path in +-900 m)
+  R6-34     cls 6 LONG BRIDGE kept 80 m  (no path in +-900 m)
+  R4-6      cls 4 BRIDGE 60 m
+  R4-14.2   cls 4 BRIDGE 30 m
+  R4-18.1   cls 4 BRIDGE 30 m
+  R4-21.2   cls 4 BRIDGE 40+50 m
+  R4-24     cls 4 LONG BRIDGE kept 150 m  (no path in +-900 m)
+  R4-25     cls 4 BRIDGE 20 m
+  R4-26     cls 4 BRIDGE (line has tunnel/viaduct, not moved) 60+110+20 m
+  R4-27.2   cls 4 BRIDGE 10 m
+  R4-37     cls 4 LONG BRIDGE kept 70 m  (no path in +-900 m)
+  R4-48     cls 4 LONG BRIDGE kept 80 m  (no path in +-900 m)
+  R4-57.1   cls 4 BRIDGE 20 m
+  R4-61.2   cls 4 BRIDGE 20 m
+  R4-62     cls 4 BRIDGE 30 m
+  R4-66.2   cls 4 BRIDGE 40 m
+  R4-76     cls 4 BRIDGE 30 m
+  R4-81     cls 4 BRIDGE 40 m
+  R4-88     cls 4 BRIDGE 40 m
+  R2-6.3    cls 2 LONG BRIDGE kept 110 m  (still 80 m of water)
+  R2-17     cls 2 BRIDGE 60 m
+  R2-42.2   cls 2 BRIDGE 50 m
+  R2-43.1   cls 2 LONG BRIDGE kept 150 m  (no path in +-900 m)
+  R2-43.2   cls 2 LONG BRIDGE kept 100 m  (still 100 m of water)
+  R2-44.2   cls 2 BRIDGE 50 m
+  R2-53     cls 2 BRIDGE 40 m
+  R2-54.1   cls 2 BRIDGE 30 m
+  R2-61.2   cls 2 LONG BRIDGE kept 180 m  (radius)
+  R2-61.3   cls 2 BRIDGE 20 m
+  R2-62.1   cls 2 LONG BRIDGE kept 70 m  (radius)
+  R2-62.2   cls 2 BRIDGE 10 m
+  R2-67.3   cls 2 BRIDGE 40 m
+  R2-73     cls 2 LONG BRIDGE kept 90+90 m  (no path in +-900 m)
+  R2-78.2   cls 2 LONG BRIDGE kept 90 m  (no path in +-900 m)
+  R2-79     cls 2 BRIDGE 20 m
+  R2-80     cls 2 BRIDGE (line has tunnel/viaduct, not moved) 130 m
+  R2-85.2   cls 2 LONG BRIDGE kept 90 m  (radius)
+  R2-86.4   cls 2 BRIDGE 30 m
+  R2-89.2   cls 2 LONG BRIDGE kept 70 m  (no path in +-900 m)
+  R2-105.1  cls 2 LONG BRIDGE kept 240 m  (no path in +-900 m)
+  R2-107.2  cls 2 LONG BRIDGE kept 80 m  (still 80 m of water)
+  R2-109.1  cls 2 LONG BRIDGE kept 110 m  (no path in +-900 m)
+  R2-109.3  cls 2 BRIDGE 50 m
+  R2-110.1  cls 2 BRIDGE 20 m
+  R2-111    cls 2 LONG BRIDGE kept 70 m  (no path in +-900 m)
+  R2-114.2  cls 2 LONG BRIDGE kept 70 m  (still 70 m of water)
+  R2-144.1  cls 2 BRIDGE 20 m
+  R2-165.1  cls 2 BRIDGE 40 m
+  R2-167.1  cls 2 BRIDGE 20 m
+  R2-190.1  cls 2 BRIDGE 40 m
+WET RESULT {"bridge":32,"moved":0,"long":20}

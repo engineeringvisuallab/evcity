@@ -1,0 +1,50 @@
+ISLAND LINK M6-1  CALCULATION SHEET (Step 17.1b)   lane width 3.65 m, drive side LEFT (Bangladesh), all numbers from the project standards
+
+1. CROSS-SECTION M6 (3 + 3 lanes), distances from the centreline, ONE side, compared with M8
+   element                                   M6 from..to (m)     M8 from..to (m)
+   median (half of 6 m)                       0.00 ..   3.00        0.00 ..   3.00
+   inner paved shoulder                       3.00 ..   4.50        3.00 ..   4.50
+   3 travel lanes x 3.65 m                    4.50 ..  15.45        4.50 ..  19.10
+   outer paved shoulder (breakdown)          15.45 ..  18.45       19.10 ..  22.10
+   guardrail / barrier offset                18.45 ..  19.05       22.10 ..  22.70
+   verge + drainage ditch                    19.05 ..  20.55       22.70 ..  24.20
+   clear zone                                20.55 ..  28.35       24.20 ..  32.00
+   right-of-way strip                        28.35 ..  36.35       32.00 ..  40.00
+   pavement edge M6 18.45 m (M8 22.10 m), ROW half M6 36.35 m (M8 40.00 m), whole ROW 72.7 m
+   paved width between the outer shoulder edges 36.90 m (incl. median 6 m); bridge deck between parapet faces 36.90 m, with the two barriers 38.10 m (cable zone, pylon and median structure NOT included: 18.2)
+   cross fall: crown 2 % each carriageway, shoulder 4 %
+
+2. DESIGN SPEED PER STRETCH (PROPOSAL, confirm) and what it gives
+   stretch                                                                V     Rmin   1.5 x Rmin   SSD     K crest   max grade
+   land, ring node to the shore (s 0 - about 550)                         100     394 m      591 m   183 m    50.9   4 % (3 % desirable)
+   strait bridge and approaches (s about 550 - 850, final length in 17.1e)  80     229 m      344 m   128 m    25.0   4 % (3 % desirable)
+   island part up to the island centre node (s about 850 - 1768)           80     229 m      344 m   128 m    25.0   4 % (3 % desirable)
+   speed step 100 -> 80 at the shore: decel length 56 m (a = 2.5 m/s2), done on the straight before the bridge, not on the bridge
+   NOTE (user 2026-11-14): the bridge is to be a little HIGHER than a normal low bridge. How high is decided in 17.1d (grade <= 4 % and the length of the approach viaducts depend on it).
+
+3. LANE LADDER 8 -> 6 AT THE RING S NODE (4-leg interchange, D17-1). Per direction: arm / ring = 4 lanes, island link = 3 lanes
+   southbound (arm -> island): N_before = N_continue + N_exit - 1 = 3 + 2 - 1 = 4  (arm has 4): the dropped lane IS the exit lane, no taper, no merge
+   northbound (island -> arm): N_after  = N_coming  + N_entry - 1 = 3 + 2 - 1 = 4  (arm has 4): the gained lane is the entry lane (lane gain after the merge)
+   exit zone on the arm, V100 -> ramp 60: taper 1:25 = 91.3 m + deceleration 98.8 m = 190 m before the gore nose (ramp speed 60 is a PROPOSAL, 9.2 / 17.4c fixes it)
+   entry zone, ramp 60 -> 0.85 x 100: acceleration 116.5 m + taper 1:50 = 182.5 m = 299 m
+   fallback if there is no exit at all (only if flows fall): taper L = 0.62 W V = 226 m, designed x 1.5 = 339 m, on a straight, never on a bridge
+   weave / spacing to the next ramp: 150 m minimum, 300 m desirable (the island link needs a FIRST STRAIGHT of at least 300 m after the node: requirement for 17.1c)
+
+4. DEMAND CHECK (3.13): lanes per direction = AADT x K x D / capacity, K 0.1, D 0.6, capacity 1800 pcu/h/lane
+   3 lanes per direction carry AADT from about 60000 to 90000; the handoff class 'branch to an important area' 80 000 AADT gives 2.67 -> 3 lanes. The real AADT of the link comes from the demand step 17.4a (island zone weights are not defined yet).
+
+5. ROOM ON THE J1-S ARM BEFORE THE RING NODE (arm centreline from J1ArmData, T at s 2826)
+   straight (R > 20 000 m) at the end: 60 m; straight or gentle arc with R >= 1000 m at the end: 2057 m (the arm has R about 1370 - 1980 m on s 2100-2700)
+  PASS  exit zone (taper + deceleration) fits on the stretch before the node with R >= 1000 m (MY threshold, not a handoff rule; the handoff only forbids a curve inside the gore)   2057 m available, 190 m needed
+  PASS  lane balance southbound 4 = 3 + 2 - 1   4 = 4
+  PASS  lane balance northbound 4 = 3 + 2 - 1   4 = 4
+  PASS  M6 is M8 minus exactly one lane on each side (pavement edge difference = lane width)   22.10 - 18.45 = 3.65 m
+  PASS  lane ladder step is one (8 -> 6)   8 -> 6 lanes
+  PASS  ROW half = sum of the elements   36.35 m
+  PASS  demand class 80 000 AADT needs 3 lanes per direction   2.67 -> 3
+  PASS  crest K of V100 equals the K used for the J1 arm profiles (50.9), so the island link uses the same standard   K 50.9, SSD 183 m
+
+  8 PASS, 0 FAIL
+  OPEN (not a check): the strict straight before the node is only 60 m, shorter than the exit zone 190 m; the exit lane would run on the gentle R >= 1370 m arc and the gore nose on the last straight. Alignment rule 8 (no curve inside an interchange gore) forbids a curve INSIDE the gore only. Decide in 9.2 / 17.4c, or ask for a straighter last 400 m of the J1-S arm (a change of the finished arm, only with the user's OK).
+
+wrote docs/island_link_section.json

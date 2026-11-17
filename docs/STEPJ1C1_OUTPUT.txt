@@ -1,0 +1,10 @@
+J1-c1 PAD FIT   J1 = (-87, -277), yaw 37.5 deg, disc R 60 m, 441 samples every 5 m
+natural ground in the disc: 17.72 .. 18.57 m  (range 0.85 m)
+free fit: grade 0.63 %   used grade 0.63 %  (limit 3.0 %, min drainage 0.3 %)
+pad centre height y = 18.19 m   world plane: a = -0.00102  b = 0.00623
+residual: RMS 0.09 m, max fill 0.21 m, max cut 0.31 m
+earthwork in the disc: fill 374 m3, cut 374 m3 (balance -0)
+embankment blend emb = 20 m (slope 1:3)
+  PASS  plane grade <= 3 % and >= 0.3 %          0.63 %
+  PASS  max cut or fill <= 3 m                   0.31 m
+  PASS  cut / fill balance within 25 %           -0 m3

@@ -1,0 +1,127 @@
+ISLAND LINK M6-1 VERTICAL PROFILE (Step 17.1d)   centreline of 17.1c (length 1786 m), start = level and grade of the J1-S arm end, ground = natural ground + island (no roads)
+   START: level 19.68 m (= S node, arm end), grade +1.54 % (arm) -> profile starts with +1.50 % (0.5 % grid, difference 0.04 %, below the 0.5 % curve-skip limit: no kink)
+   WATER: sea level 0 m, wet on the centreline s 529-818 (299 m as in 17.1c); horizontal curve (V80, R 1000 m) starts s 961; island centre ground 21.59 m at s 1786
+   ASSUMPTIONS (change them in the script and rerun): A1 start level and grade = arm end (the 4-leg interchange of 17.4c may change the first 100-200 m); A2 design high water 1.0 m above sea level 0 (no tide / wave data in the game, 18.2 fixes it); A3 structure depth soffit -> road 3.0 m (depends on the concept of 18.1); A4 clearance = soffit above design high water over the whole wet crossing (channel width not decided); A5 ground = natural ground (the finished road is cut / filled into it); A6 ship traffic: the user has NOT said ships pass, the options only show what each height costs
+   RULES: grade <= 4 % (3 % desirable), cut <= 12 m, fill <= 7 m else viaduct (17.2 rule 5, measured at the pavement edge +-18.45 m), drainage (grade >= 0.5 % on tangents on a structure, K <= 167 on curves there), parabolic vertical curves with K from SSD (V100 crest 50.9 / sag 44.1, V80 crest 25.0 / sag 28.9), L >= 60 m, 100 -> 80 step 56 m before the first structure, no overlap of curves, structure inside s 0-961 (17.1c requirement: no horizontal curve on a bridge or its approach)
+   METHOD: dynamic programming, 10 m stations, level step 0.05 m, grade step 0.5 %, minimum tangent 12-28 segments of 10 m (raised until no curves overlap); cost = approach viaduct length first, then cut / fill, then grade size and grade changes; the PVI table is then rebuilt with parabolic curves and EVERY check below is run on the FINAL profile every 5 m.
+
+1. RESULT PER OPTION   (D = design high water 1.0 + clearance + structure depth 3.0 = road level on the strait)
+   option                                        clear  D (m)  max grade  mainland viaduct  strait bridge  island viaduct  structure total  structure from-to (s)  ends before curve (961)?   max cut / fill*
+   reference (low bridge, wave freeboard only)   1.5    5.5    4.00 %     20 m              299 m          0 m             319 m            509 - 818              yes                        7.4 / 6.9 m    
+   option A: 6 m clearance (small boats)         6.0    10.0   3.50 %     40 m              299 m          55 m            394 m            489 - 873              yes                        7.5 / 7.0 m    
+   option B: 10 m clearance (small ships)        10.0   14.0   4.00 %     70 m              299 m          160 m           529 m            459 - 978              NO, +17 m into the curve   8.1 / 6.9 m    
+   option C: 15 m clearance (coasters / barges)  15.0   19.0   4.00 %     100 m             299 m          289 m           689 m            429 - 1108             NO, +147 m into the curve  7.8 / 7.0 m    
+   * max cut at the pavement edge / max fill at the pavement edge outside the structure (limit 12 / 7 m). The mainland viaduct is from its first pier to the shore, the island viaduct from the shore to its last pier.
+   Length with grade above 3 % (desirable limit): R 244 m, A 55 m, B 150 m, C 210 m.
+
+2. PVI TABLES (s from the S node, y = level at the PVI, g in %, Lc = vertical curve length, K = Lc / A; same format as J1ArmProfiles.ts, ready for 17.1g)
+   reference (low bridge, wave freeboard only)   (minimum tangent 160 m, DP deck margin 0.3 m)
+      s     0.0  y  19.68  g1   1.50 %  g2   1.50 %  Lc    0 m
+      s   149.7  y  21.93  g1   1.50 %  g2  -4.00 %  Lc  281 m  K 51.1
+      s   508.9  y   7.53  g1  -4.00 %  g2  -0.50 %  Lc  102 m  K 29.1
+      s   868.2  y   5.73  g1  -0.50 %  g2   0.00 %  Lc   60 m  K 120.0
+      s  1067.8  y   5.73  g1   0.00 %  g2   3.00 %  Lc   87 m  K 29.0
+      s  1596.7  y  21.63  g1   3.00 %  g2   0.00 %  Lc   76 m  K 25.3
+      s  1786.3  y  21.63  g1   0.00 %  g2   0.00 %  Lc    0 m
+   option A: 6 m clearance (small boats)   (minimum tangent 120 m, DP deck margin 0.4 m)
+      s     0.0  y  19.68  g1   1.50 %  g2   1.50 %  Lc    0 m
+      s   119.7  y  21.48  g1   1.50 %  g2  -3.00 %  Lc  230 m  K 51.1
+      s   489.0  y  10.38  g1  -3.00 %  g2   0.50 %  Lc  102 m  K 29.1
+      s   658.6  y  11.23  g1   0.50 %  g2  -0.50 %  Lc   60 m  K 60.0
+      s   818.3  y  10.43  g1  -0.50 %  g2  -3.50 %  Lc   76 m  K 25.3
+      s   938.0  y   6.23  g1  -3.50 %  g2   0.00 %  Lc  102 m  K 29.1
+      s  1087.7  y   6.23  g1   0.00 %  g2   3.00 %  Lc   87 m  K 29.0
+      s  1596.7  y  21.53  g1   3.00 %  g2   0.00 %  Lc   76 m  K 25.3
+      s  1786.3  y  21.53  g1   0.00 %  g2   0.00 %  Lc    0 m
+   option B: 10 m clearance (small ships)   (minimum tangent 120 m, DP deck margin 0.4 m)
+      s     0.0  y  19.68  g1   1.50 %  g2   1.50 %  Lc    0 m
+      s   149.7  y  21.93  g1   1.50 %  g2  -2.50 %  Lc  204 m  K 51.0
+      s   459.0  y  14.18  g1  -2.50 %  g2   0.50 %  Lc   87 m  K 29.0
+      s   668.6  y  15.23  g1   0.50 %  g2  -0.50 %  Lc   60 m  K 60.0
+      s   818.3  y  14.48  g1  -0.50 %  g2  -4.00 %  Lc   88 m  K 25.1
+      s   958.0  y   8.88  g1  -4.00 %  g2  -3.00 %  Lc   60 m  K 60.0
+      s  1077.7  y   5.28  g1  -3.00 %  g2   3.00 %  Lc  174 m  K 29.0
+      s  1586.7  y  20.58  g1   3.00 %  g2   0.50 %  Lc   63 m  K 25.2
+      s  1786.3  y  21.58  g1   0.50 %  g2   0.00 %  Lc    0 m
+   option C: 15 m clearance (coasters / barges)   (minimum tangent 120 m, DP deck margin 0.4 m)
+      s     0.0  y  19.68  g1   1.50 %  g2   1.50 %  Lc    0 m
+      s   109.8  y  21.33  g1   1.50 %  g2  -1.50 %  Lc  153 m  K 51.0
+      s   239.5  y  19.38  g1  -1.50 %  g2  -2.50 %  Lc   60 m  K 60.0
+      s   389.2  y  15.63  g1  -2.50 %  g2   3.00 %  Lc  160 m  K 29.1
+      s   508.9  y  19.23  g1   3.00 %  g2   1.00 %  Lc   60 m  K 30.0
+      s   628.7  y  20.43  g1   1.00 %  g2  -0.50 %  Lc   60 m  K 40.0
+      s   818.3  y  19.48  g1  -0.50 %  g2  -4.00 %  Lc   88 m  K 25.1
+      s  1067.8  y   9.48  g1  -4.00 %  g2  -0.50 %  Lc  102 m  K 29.1
+      s  1187.5  y   8.88  g1  -0.50 %  g2   3.00 %  Lc  102 m  K 29.1
+      s  1576.7  y  20.58  g1   3.00 %  g2   0.50 %  Lc   63 m  K 25.2
+      s  1786.3  y  21.63  g1   0.50 %  g2   0.00 %  Lc    0 m
+
+3. ISLAND CROSS SLOPE WATCH (natural ground over the ROW +-36.35 m, limit 25 %, stations with >= 22 %)
+   steepest natural cross slope on the link: 25.1 % at s 1731; length above 25 %: 5 m
+   s 1706-1766: cross slope up to 25.1 %   edge cut / fill (pavement edge, whole stretch): R: cut 5.7 / fill 4.9 m | A: cut 5.8 / fill 4.8 m | B: cut 6.1 / fill 4.6 m | C: cut 6.1 / fill 4.7 m
+
+4. CHECKS (every line is a real test on the final profile; FAIL lines are findings for the user, not hidden)
+   --- data / method (all options) ---
+  PASS  ground sampler reproduces the 17.1c wet run on every 5 m station (centreline below sea level == s 529-818) 1 stations differ
+  PASS  start of the profile = finished J1-S arm end: level                                                  19.68 m vs 19.68 m
+  PASS  start grade within 0.5 % of the arm end grade (no kink in the profile at the node)                   1.50 % vs 1.54 %
+  FAIL  no stretch with natural cross slope above 25 % on the whole link (17.1c limit, island cross slope watch) steepest 25.1 % at s 1731
+  PASS  profile covers the whole 17.1c centreline                                                            last PVI s 1786.3 m, length 1786.27 m (stations are rounded to 0.1 m in the json)
+   --- reference (low bridge, wave freeboard only) ---
+  PASS  R: grade <= 4 % everywhere (final curves)                                                            max 4.00 %
+  PASS  R: every vertical curve K >= K from SSD (crest / sag, V100 or V80) and L >= 60 m                     5 curves, lowest K margin 0.1
+  PASS  R: no overlap of vertical curves (free tangent >= 0)                                                 shortest free tangent 9 m
+  PASS  R: first vertical curve starts after the node (s >= 0)                                               first curve starts s 9
+  PASS  R: road level over the whole wet crossing >= D = 5.5 m (clearance 1.5 m + structure 3.0 m + water 1.0 m) lowest 5.98 m
+  PASS  R: drainage: tangents on the structure have |grade| >= 0.5 %, curves there have K <= 167             0 flat stations
+  PASS  R: cut at the pavement edge <= 12 m everywhere                                                       max 7.4 m
+  PASS  R: fill at the pavement edge <= 7 m outside the structure (else it is viaduct)                       max 6.91 m
+  PASS  R: the structure is ONE run (gaps shorter than 100 m between viaducts are merged, a longer embankment between them would be a second structure) 1 run(s)
+  PASS  R: bridge + approach viaducts end before the horizontal curve (17.1c requirement, s <= 961)          structure s 509-818, margin 143 m
+  PASS  R: end of the profile at the island centre: level within 1.5 m of the ground and grade <= 2 %        level 21.63 m (ground 21.59 m), grade 0.00 %
+   --- option A: 6 m clearance (small boats) ---
+  PASS  A: grade <= 4 % everywhere (final curves)                                                            max 3.50 %
+  PASS  A: every vertical curve K >= K from SSD (crest / sag, V100 or V80) and L >= 60 m                     7 curves, lowest K margin 0.1
+  PASS  A: no overlap of vertical curves (free tangent >= 0)                                                 shortest free tangent 5 m
+  PASS  A: first vertical curve starts after the node (s >= 0)                                               first curve starts s 5
+  PASS  A: road level over the whole wet crossing >= D = 10.0 m (clearance 6.0 m + structure 3.0 m + water 1.0 m) lowest 10.14 m
+  PASS  A: drainage: tangents on the structure have |grade| >= 0.5 %, curves there have K <= 167             0 flat stations
+  PASS  A: cut at the pavement edge <= 12 m everywhere                                                       max 7.5 m
+  PASS  A: fill at the pavement edge <= 7 m outside the structure (else it is viaduct)                       max 7.00 m
+  PASS  A: the structure is ONE run (gaps shorter than 100 m between viaducts are merged, a longer embankment between them would be a second structure) 1 run(s)
+  PASS  A: bridge + approach viaducts end before the horizontal curve (17.1c requirement, s <= 961)          structure s 489-873, margin 88 m
+  PASS  A: end of the profile at the island centre: level within 1.5 m of the ground and grade <= 2 %        level 21.53 m (ground 21.59 m), grade 0.00 %
+   --- option B: 10 m clearance (small ships) ---
+  PASS  B: grade <= 4 % everywhere (final curves)                                                            max 4.00 %
+  PASS  B: every vertical curve K >= K from SSD (crest / sag, V100 or V80) and L >= 60 m                     7 curves, lowest K margin 0.1
+  PASS  B: no overlap of vertical curves (free tangent >= 0)                                                 shortest free tangent 3 m
+  PASS  B: first vertical curve starts after the node (s >= 0)                                               first curve starts s 48
+  PASS  B: road level over the whole wet crossing >= D = 14.0 m (clearance 10.0 m + structure 3.0 m + water 1.0 m) lowest 14.10 m
+  PASS  B: drainage: tangents on the structure have |grade| >= 0.5 %, curves there have K <= 167             0 flat stations
+  PASS  B: cut at the pavement edge <= 12 m everywhere                                                       max 8.1 m
+  PASS  B: fill at the pavement edge <= 7 m outside the structure (else it is viaduct)                       max 6.86 m
+  PASS  B: the structure is ONE run (gaps shorter than 100 m between viaducts are merged, a longer embankment between them would be a second structure) 1 run(s)
+  FAIL  B: bridge + approach viaducts end before the horizontal curve (17.1c requirement, s <= 961)          structure s 459-978, overshoot 17 m
+  PASS  B: end of the profile at the island centre: level within 1.5 m of the ground and grade <= 2 %        level 21.58 m (ground 21.59 m), grade 0.50 %
+   --- option C: 15 m clearance (coasters / barges) ---
+  PASS  C: grade <= 4 % everywhere (final curves)                                                            max 4.00 %
+  PASS  C: every vertical curve K >= K from SSD (crest / sag, V100 or V80) and L >= 60 m                     9 curves, lowest K margin 0.1
+  PASS  C: no overlap of vertical curves (free tangent >= 0)                                                 shortest free tangent 10 m
+  PASS  C: first vertical curve starts after the node (s >= 0)                                               first curve starts s 33
+  PASS  C: road level over the whole wet crossing >= D = 19.0 m (clearance 15.0 m + structure 3.0 m + water 1.0 m) lowest 19.09 m
+  PASS  C: drainage: tangents on the structure have |grade| >= 0.5 %, curves there have K <= 167             0 flat stations
+  PASS  C: cut at the pavement edge <= 12 m everywhere                                                       max 7.8 m
+  PASS  C: fill at the pavement edge <= 7 m outside the structure (else it is viaduct)                       max 7.00 m
+  PASS  C: the structure is ONE run (gaps shorter than 100 m between viaducts are merged, a longer embankment between them would be a second structure) 1 run(s)
+  FAIL  C: bridge + approach viaducts end before the horizontal curve (17.1c requirement, s <= 961)          structure s 429-1108, overshoot 147 m
+  PASS  C: end of the profile at the island centre: level within 1.5 m of the ground and grade <= 2 %        level 21.63 m (ground 21.59 m), grade 0.50 %
+
+  46 PASS, 3 FAIL
+
+5. WHAT THE FAILS MEAN (for the choice)
+   option B: 10 m clearance (small ships): the approach viaduct on the island side ends at s 978, 17 m after the start of the horizontal curve (s 961). Ways out: (a) redo 17.1c with the curve start moved to about s 1078 (the last straight would be about 343 m, rule >= 200 m; the 25 % cross slope check of the island must be run again, NOT done here), (b) accept an embankment higher than 7 m on the island side (breaks rule 17.2-5, the user must decide), (c) lower the structure depth A3 (a thinner deck lowers D).
+   option C: 15 m clearance (coasters / barges): the approach viaduct on the island side ends at s 1108, 147 m after the start of the horizontal curve (s 961). Ways out: (a) redo 17.1c with the curve start moved to about s 1208 (the last straight would be about 213 m, rule >= 200 m; the 25 % cross slope check of the island must be run again, NOT done here), (b) accept an embankment higher than 7 m on the island side (breaks rule 17.2-5, the user must decide), (c) lower the structure depth A3 (a thinner deck lowers D).
+   SENSITIVITY: structure length grows by about (A -> B: 34 m, B -> C: 32 m) per metre of road level on the strait (4 % grade on both sides), so A2 / A3 (+-0.5 m) move the approach viaducts by about +-15 m per option.
+   OPEN (first 300 m after the node): the first vertical curve starts at s R 9, A 5, B 48, C 33. 17.1b wants a weave zone of 300 m after the node. If the grade were kept CONSTANT (+1.5 %) for those 300 m, the road would still have to come down to the deck level D before the shore (s 529): grade needed R 8.2 %, A 6.2 %, B 4.4 %, C 2.3 % (limit 4 %). The 4-leg interchange (17.4c) decides; here a vertical curve inside the zone is allowed (no rule forbids it) and flagged.
+   CROSS SLOPE NOTE: 17.1c measured the cross slope every 10 m (24.98 %, nothing above 25 %); this step measures every 5 m on the same line and finds 25.1 % at s 1731 (5 m above 25 %): the same ground, a finer grid, so the 17.1c PASS was true only for its grid. It is on the last straight, the cut / fill there is shown in section 3 (cut 6.0 m at most), no structure is needed.
+   NOT done here: structures list (17.1e), interchange at the S node and island centre node (17.4c / 17.1f), quantities, the bridge design itself (18.x), game build (17.1g). tsc / npm run build / game: see the run list in the handoff row.

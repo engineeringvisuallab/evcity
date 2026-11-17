@@ -1,0 +1,453 @@
+{
+ "game": {
+  "deckClear": 32,
+  "deckTotal": 33.8,
+  "carriageHalf": 14,
+  "medianWidth": 4,
+  "structLen": 384.20000000000005,
+  "yMin": 8.51,
+  "yMax": 11.16,
+  "deepest": -7.35,
+  "depthDeepest": 8.35,
+  "wetLen": 294.4
+ },
+ "assumptions": [
+  {
+   "id": "VB3S",
+   "v": 77.5,
+   "unit": "m/s",
+   "text": "design wind speed, 3-s gust at 10 m, taken as valid over the water (NO extra terrain factor is added on top)",
+   "src": "BNBC 2020 Table 6.2.8 value for BAGERHAT (neighbour district; Khulna itself was not visible in the search snippet). It is a code design value, 1.25 x the Sidr gust: conservative. CONFIRM or lower it (--set VB3S=62)."
+  },
+  {
+   "id": "GUST2MEAN",
+   "v": 1.4339622641509433,
+   "unit": "-",
+   "text": "3-s gust / 10-min mean ratio (Durst: gust/hourly 1.52, 10-min/hourly 1.06)",
+   "src": "engineering assumption (Durst curve, open terrain)"
+  },
+  {
+   "id": "LIFE",
+   "v": 120,
+   "unit": "yr",
+   "text": "design working life (also the wind return period used)",
+   "src": "HANDOFF 18.3 point 1"
+  },
+  {
+   "id": "Z0",
+   "v": 0.003,
+   "unit": "m",
+   "text": "roughness length, sea / strait (EN 1991-1-4 terrain category 0)",
+   "src": "EN 1991-1-4 Table 4.1"
+  },
+  {
+   "id": "RHOAIR",
+   "v": 1.25,
+   "unit": "kg/m3",
+   "text": "air density",
+   "src": "EN 1991-1-4 recommended"
+  },
+  {
+   "id": "TMAX",
+   "v": 42,
+   "unit": "C",
+   "text": "max shade air temperature, 50-yr",
+   "src": "ASSUMED for Khulna (no BMD record looked up in this session)"
+  },
+  {
+   "id": "TMIN",
+   "v": 6,
+   "unit": "C",
+   "text": "min shade air temperature, 50-yr",
+   "src": "ASSUMED for Khulna (no BMD record looked up in this session)"
+  },
+  {
+   "id": "T0",
+   "v": 28,
+   "unit": "C",
+   "text": "bridge temperature when the structure is restrained (erection)",
+   "src": "ASSUMED (EN 1991-1-5 leaves it to the national annex)"
+  },
+  {
+   "id": "ZONEZ",
+   "v": 0.12,
+   "unit": "g",
+   "text": "seismic zone coefficient = PGA of the 475-yr event (zone 1)",
+   "src": "BNBC 2020 Table 6.2.15 value for BAGERHAT (0.12); reading Z as the 475-yr PGA is an ASSUMPTION. CONFIRM."
+  },
+  {
+   "id": "GAMI",
+   "v": 1.3,
+   "unit": "-",
+   "text": "importance factor (class III bridge, long-life landmark crossing)",
+   "src": "EN 1998-2 recommended value for greater than average importance"
+  },
+  {
+   "id": "SOILS",
+   "v": 1.35,
+   "unit": "-",
+   "text": "EN 1998-1 Type 1 spectrum, ground type D (soft delta soil): S",
+   "src": "EN 1998-1 Table 3.2 (TB 0.20, TC 0.80, TD 2.0); the soil is ASSUMED, no data in the game"
+  },
+  {
+   "id": "XI",
+   "v": 2,
+   "unit": "%",
+   "text": "viscous damping of the suspension system (steel, cables)",
+   "src": "ASSUMED (5 % is the code reference value; cable bridges use 2-3 %)"
+  },
+  {
+   "id": "SURGE",
+   "v": 1,
+   "unit": "m",
+   "text": "storm surge above the high water level in the design extreme water level",
+   "src": "ASSUMED; BMD list shows 1 m (1971 Khulna town) to several m on the open coast. Sensitivity 0-4 m is printed."
+  },
+  {
+   "id": "FETCH",
+   "v": 8000,
+   "unit": "m",
+   "text": "effective wave fetch at the strait",
+   "src": "ASSUMED (strait between the mainland and the island, open to the sea in the south). Sensitivity 2-30 km is printed."
+  },
+  {
+   "id": "UC",
+   "v": 1.5,
+   "unit": "m/s",
+   "text": "design tidal / river current at the piers",
+   "src": "ASSUMED (delta channel), no data in the game"
+  },
+  {
+   "id": "HWL",
+   "v": 1,
+   "unit": "m",
+   "text": "design high water level over sea level 0",
+   "src": "handoff 17.1d A2 (game rule: soffit >= HWL + 6 m)"
+  },
+  {
+   "id": "AIRGAP",
+   "v": 1,
+   "unit": "m",
+   "text": "minimum air gap soffit to wave crest (extreme water level)",
+   "src": "ASSUMED design practice, NOT a game rule"
+  },
+  {
+   "id": "AADT",
+   "v": 80000,
+   "unit": "veh/day",
+   "text": "traffic, both directions",
+   "src": "class 80 000 AADT of 17.1b (real AADT comes from 17.4a)"
+  },
+  {
+   "id": "HEAVY",
+   "v": 0.1,
+   "unit": "-",
+   "text": "share of heavy vehicles (> 3.5 t)",
+   "src": "ASSUMED (port / industry link)"
+  },
+  {
+   "id": "SLOW",
+   "v": 0.8,
+   "unit": "-",
+   "text": "share of the heavy vehicles of one direction that use the slow lane",
+   "src": "ASSUMED"
+  },
+  {
+   "id": "GSTEEL",
+   "v": 5,
+   "unit": "kN/m2",
+   "text": "PRELIMINARY steel of the deck (box girders, orthotropic plate, cross girders, cable anchorage zones)",
+   "src": "ASSUMED about 510 kg/m2; replaced by the sized section in 18.3"
+  },
+  {
+   "id": "TSUR",
+   "v": 0.08,
+   "unit": "m",
+   "text": "surfacing thickness",
+   "src": "ASSUMED (EN 1991-1-1 asphalt 23 kN/m3)"
+  },
+  {
+   "id": "GBAR",
+   "v": 4,
+   "unit": "kN/m",
+   "text": "edge barrier + kerb, per side (H2 class, steel / composite, not the heavy concrete placeholder)",
+   "src": "ASSUMED"
+  },
+  {
+   "id": "GMED",
+   "v": 8,
+   "unit": "kN/m",
+   "text": "median barrier (double sided)",
+   "src": "ASSUMED"
+  },
+  {
+   "id": "GSERV",
+   "v": 3,
+   "unit": "kN/m",
+   "text": "lighting, ducts, drainage pipes, SHM cables",
+   "src": "ASSUMED"
+  },
+  {
+   "id": "DGIRD",
+   "v": 3,
+   "unit": "m",
+   "text": "girder depth used for the wind area (the game soffit limit: deeper needs a higher road = user decision)",
+   "src": "HANDOFF 18.1"
+  },
+  {
+   "id": "HPAR",
+   "v": 1.1,
+   "unit": "m",
+   "text": "parapet / barrier height above the deck",
+   "src": "game parapet 1.1 m (RingBridgeGeometry IB)"
+  },
+  {
+   "id": "SETT",
+   "v": 20,
+   "unit": "mm",
+   "text": "differential support settlement (characteristic)",
+   "src": "ASSUMED, no soil data"
+  }
+ ],
+ "permanent": {
+  "gSteel": 169,
+  "gSurf": 51.52,
+  "gBar": 16,
+  "gServ": 3,
+  "gTotal": 239.52
+ },
+ "traffic": {
+  "nLanes": 4,
+  "udlPerCarriageway": 54.5,
+  "udlBoth": 109,
+  "tsPerCarriageway": 600,
+  "braking": 900
+ },
+ "fatigue": {
+  "nobsOwn": 1168000,
+  "nobsDesign": 2000000
+ },
+ "wind": {
+  "vb50": 54.04605263157895,
+  "cprob": 1.0483362920681885,
+  "vb": 56.65843841671164,
+  "table": [
+   [
+    10,
+    56.65843841671164,
+    0.12327829406137915,
+    3.7377475448233612
+   ],
+   [
+    15,
+    59.490513114228264,
+    0.11740957114930958,
+    4.029880016469468
+   ],
+   [
+    20,
+    61.49990209006705,
+    0.11357344312458731,
+    4.243231543505392
+   ],
+   [
+    30,
+    64.33197678758367,
+    0.10857362047581294,
+    4.552503248611818
+   ],
+   [
+    40,
+    66.34136576342246,
+    0.10528507443006226,
+    4.778015255312947
+   ],
+   [
+    60,
+    69.17344046093908,
+    0.10097452990122815,
+    5.104426193879693
+   ],
+   [
+    80,
+    71.18282943677788,
+    0.09812416403590049,
+    5.342098680246029
+   ],
+   [
+    100,
+    72.74143261360756,
+    0.09602169466878628,
+    5.529927460420161
+   ]
+  ],
+  "qpDeck": 3.8158320446202016,
+  "FwxNoTraffic": 20.338384797825675,
+  "FwxTraffic": 24.80290829003131,
+  "FwzUp": 116.07761079734652,
+  "vFlutterReqMean": 68.9100256582659,
+  "vFlutterReqGust": 93.76394312743541
+ },
+ "thermal": {
+  "TeMax": 58,
+  "TeMin": 3,
+  "dTexp": 30,
+  "dTcon": 25,
+  "rangeOneEnd": 0.253572,
+  "rangeMid": 0.126786
+ },
+ "seismic": {
+  "agR": 1.1772,
+  "ag": 1.5303600000000002,
+  "eta": 1.1952286093343936,
+  "S": 1.35,
+  "TB": 0.2,
+  "TC": 0.8,
+  "TD": 2,
+  "table": [
+   [
+    0,
+    0.21060000000000004,
+    0.21060000000000004,
+    0
+   ],
+   [
+    0.2,
+    0.5265000000000001,
+    0.6292878628145584,
+    0.00625487474809977
+   ],
+   [
+    0.8,
+    0.5265000000000001,
+    0.6292878628145583,
+    0.10007799596959631
+   ],
+   [
+    1,
+    0.4212000000000001,
+    0.5034302902516467,
+    0.1250974949619954
+   ],
+   [
+    2,
+    0.21060000000000004,
+    0.2517151451258233,
+    0.2501949899239908
+   ],
+   [
+    3,
+    0.09360000000000002,
+    0.11187339783369926,
+    0.2501949899239908
+   ],
+   [
+    4,
+    0.05265000000000001,
+    0.06292878628145583,
+    0.2501949899239908
+   ],
+   [
+    5,
+    0.03369600000000001,
+    0.040274423220131736,
+    0.2501949899239908
+   ],
+   [
+    6,
+    0.023400000000000004,
+    0.027968349458424815,
+    0.2501949899239908
+   ]
+  ]
+ },
+ "wave": {
+  "surge": 1,
+  "fetch": 8000,
+  "depth": 9.35,
+  "Hs": 2.3385426640074907,
+  "Tp": 6.037569510165864,
+  "Hmax": 4.58008862523959,
+  "crest": 2.9770576064057335,
+  "airGapTable": [
+   [
+    0,
+    1,
+    4.51602977322425,
+    3.9354193525957624,
+    3.0645806474042376
+   ],
+   [
+    1,
+    2,
+    4.58008862523959,
+    4.977057606405733,
+    2.022942393594267
+   ],
+   [
+    2,
+    3,
+    4.6308613027141945,
+    6.010059846764227,
+    0.9899401532357732
+   ],
+   [
+    3,
+    4,
+    4.671863012571613,
+    7.036710958171549,
+    -0.03671095817154857
+   ],
+   [
+    4,
+    5,
+    4.705509605663543,
+    8.058581243681303,
+    -1.058581243681303
+   ]
+  ],
+  "morison": [
+   [
+    1.5,
+    121.79380459448733,
+    785.4579602177897,
+    17.0640421875
+   ],
+   [
+    2.5,
+    226.3898616580172,
+    1429.80035790154,
+    28.4400703125
+   ],
+   [
+    4,
+    467.1300043083609,
+    2689.495353146493,
+    45.5041125
+   ]
+  ],
+  "scour": [
+   [
+    1.5,
+    2.8213175570449214,
+    1.9500000000000002,
+    2.8213175570449214,
+    -10.17131755704492
+   ],
+   [
+    2.5,
+    3.9323635215941275,
+    3.25,
+    3.9323635215941275,
+    -11.282363521594128
+   ],
+   [
+    4,
+    5.337423303613985,
+    5.2,
+    5.337423303613985,
+    -12.687423303613985
+   ]
+  ]
+ }
+}

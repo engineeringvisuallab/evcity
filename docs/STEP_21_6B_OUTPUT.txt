@@ -1,0 +1,62 @@
+STEP 21.6b SECTION MESH (headless; nothing in src changed; tsc / npm run build / game NOT RUN; my numbers, change the constants at the top)
+
+1. BANDS PER SECTION (metres from the centreline, ONE side, drive side LEFT; mirror for the other side; the median is the first band)
+   R6       paved edge 16.00  formation half 18.10  ROW half 33.90  crossfall 2.0 %  pavement 0.70 m  drain open ditch
+      median 0.00-2.00 | shoulder-in 2.00-3.00 | lanes 3.00-13.50 | shoulder-out 13.50-16.00 | barrier 16.00-16.60 | ditch 16.60-18.10 | clear-zone 18.10-25.90 | row-strip 25.90-33.90
+   R4-OPEN  paved edge 11.50  formation half 13.00  ROW half 20.50  crossfall 2.0 %  pavement 0.60 m  drain open ditch
+      median 0.00-2.00 | shoulder-in 2.00-2.50 | lanes 2.50-9.50 | shoulder-out 9.50-11.50 | ditch 11.50-13.00 | clear-zone 13.00-17.50 | row-strip 17.50-20.50
+   R4-ZONE  paved edge 10.00  formation half 14.00  ROW half 14.50  crossfall 2.0 %  pavement 0.60 m  drain kerb + gully
+      median 0.00-2.00 | shoulder-in 2.00-2.50 | lanes 2.50-9.50 | kerb 9.50-10.00 | footpath 10.00-12.50 | verge-drain 12.50-14.00 | row-strip 14.00-14.50
+   R2-OPEN  paved edge 4.50  formation half 6.20  ROW half 11.20  crossfall 2.0 %  pavement 0.45 m  drain open ditch
+      lanes 0.00-3.50 | shoulder-out 3.50-4.50 | earth-shoulder 4.50-5.00 | ditch 5.00-6.20 | clear-zone 6.20-9.20 | row-strip 9.20-11.20
+   R2-ZONE  paved edge 4.00  formation half 7.00  ROW half 7.50  crossfall 2.0 %  pavement 0.45 m  drain kerb + gully
+      lanes 0.00-3.50 | kerb 3.50-4.00 | footpath 4.00-6.00 | verge-drain 6.00-7.00 | row-strip 7.00-7.50
+   C-ZONE   paved edge 3.60  formation half 6.40  ROW half 6.70  crossfall 2.0 %  pavement 0.40 m  drain kerb + gully
+      lanes 0.00-3.30 | kerb 3.30-3.60 | footpath 3.60-5.40 | verge-drain 5.40-6.40 | row-strip 6.40-6.70
+   L-ZONE   paved edge 2.95  formation half 5.05  ROW half 5.25  crossfall 2.0 %  pavement 0.35 m  drain kerb + gully
+      lanes 0.00-2.75 | kerb 2.75-2.95 | footpath 2.95-4.45 | verge-drain 4.45-5.05 | row-strip 5.05-5.25
+
+2. STRETCHES AND TRANSITIONS PER LINE
+   R4-21  s  2547  R4-OPEN -> R4-ZONE  taper s 2532-2562  paved edge 11.50 -> 10.00  formation half 13.00 -> 14.00  ROW half 20.50 -> 14.50
+   R4-6   s   746  R4-ZONE -> R4-OPEN  taper s 731-761  paved edge 10.00 -> 11.50  formation half 14.00 -> 13.00  ROW half 14.50 -> 20.50
+   R4-23  s    95  R4-ZONE -> R4-OPEN  taper s 80-110  paved edge 10.00 -> 11.50  formation half 14.00 -> 13.00  ROW half 14.50 -> 20.50
+   R4-23  s  1034  R4-OPEN -> R4-ZONE  taper s 1019-1049  paved edge 11.50 -> 10.00  formation half 13.00 -> 14.00  ROW half 20.50 -> 14.50
+   R4-8   s   355  R4-ZONE -> R4-OPEN  taper s 340-370  paved edge 10.00 -> 11.50  formation half 14.00 -> 13.00  ROW half 14.50 -> 20.50
+   R4-13  s   841  R4-ZONE -> R4-OPEN  taper s 826-856  paved edge 10.00 -> 11.50  formation half 14.00 -> 13.00  ROW half 14.50 -> 20.50
+   R2-62  s  1695  R2-ZONE -> R2-OPEN  taper s 1680-1710  paved edge 4.00 -> 4.50  formation half 7.00 -> 6.20  ROW half 7.50 -> 11.20
+   R2-8   s  3114  R2-OPEN -> R2-ZONE  taper s 3099-3129  paved edge 4.50 -> 4.00  formation half 6.20 -> 7.00  ROW half 11.20 -> 7.50
+   R2-8   s  3704  R2-ZONE -> R2-OPEN  taper s 3689-3719  paved edge 4.00 -> 4.50  formation half 7.00 -> 6.20  ROW half 7.50 -> 11.20
+   R2-19  s  2476  R2-ZONE -> R2-OPEN  taper s 2461-2491  paved edge 4.00 -> 4.50  formation half 7.00 -> 6.20  ROW half 7.50 -> 11.20
+   R2-74  s   145  R2-OPEN -> R2-ZONE  taper s 130-160  paved edge 4.50 -> 4.00  formation half 6.20 -> 7.00  ROW half 11.20 -> 7.50
+   R2-74  s  2168  R2-ZONE -> R2-OPEN  taper s 2153-2183  paved edge 4.00 -> 4.50  formation half 7.00 -> 6.20  ROW half 7.50 -> 11.20
+   R2-58  s   446  R2-ZONE -> R2-OPEN  taper s 431-461  paved edge 4.00 -> 4.50  formation half 7.00 -> 6.20  ROW half 7.50 -> 11.20
+   R2-6   s   264  R2-ZONE -> R2-OPEN  taper s 249-279  paved edge 4.00 -> 4.50  formation half 7.00 -> 6.20  ROW half 7.50 -> 11.20
+   R2-6   s  1122  R2-OPEN -> R2-ZONE  taper s 1107-1137  paved edge 4.50 -> 4.00  formation half 6.20 -> 7.00  ROW half 11.20 -> 7.50
+   R2-55  s   235  R2-ZONE -> R2-OPEN  taper s 220-250  paved edge 4.00 -> 4.50  formation half 7.00 -> 6.20  ROW half 7.50 -> 11.20
+   R2-64  s   743  R2-OPEN -> R2-ZONE  taper s 728-758  paved edge 4.50 -> 4.00  formation half 6.20 -> 7.00  ROW half 11.20 -> 7.50
+   R2-70  s   347  R2-OPEN -> R2-ZONE  taper s 332-362  paved edge 4.50 -> 4.00  formation half 6.20 -> 7.00  ROW half 11.20 -> 7.50
+   R2-14  s   422  R2-OPEN -> R2-ZONE  taper s 407-437  paved edge 4.50 -> 4.00  formation half 6.20 -> 7.00  ROW half 11.20 -> 7.50
+   R4-9   s  1233  R4-ZONE -> R4-OPEN  taper s 1218-1248  paved edge 10.00 -> 11.50  formation half 14.00 -> 13.00  ROW half 14.50 -> 20.50
+   R4-9   s  2681  R4-OPEN -> R4-ZONE  taper s 2666-2696  paved edge 11.50 -> 10.00  formation half 13.00 -> 14.00  ROW half 20.50 -> 14.50
+   R2-75  s   633  R2-ZONE -> R2-OPEN  taper s 618-648  paved edge 4.00 -> 4.50  formation half 7.00 -> 6.20  ROW half 7.50 -> 11.20
+   154 lines, 176 stretches, 22 transitions
+
+3. LENGTH PER SECTION
+   R6          7.68 km
+   R4-OPEN    24.12 km
+   R4-ZONE    10.93 km
+   R2-OPEN    31.61 km
+   R2-ZONE    29.61 km
+   C-ZONE      3.78 km
+   L-ZONE      5.97 km
+
+4. CHECKS
+   PASS  every stretch names a known section (unknown 0)
+   PASS  stretches of every line follow each other without a gap (gaps 0)
+   PASS  last stretch ends at the line length of centre_fixed.json within 12 m (bad 0)
+   PASS  154 lines (154)
+   PASS  last band of every section ends at the ROW half
+   PASS  paved edge band (shoulder-out for OPEN and R6, kerb for ZONE) ends at the paved edge of the section
+   PASS  every transition has a taper
+   PASS  transitions only between OPEN and ZONE of the same class
+PASS 8 FAIL 0

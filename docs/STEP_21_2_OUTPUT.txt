@@ -1,0 +1,493 @@
+STEP 21.2 GROUND CHECK (headless, read only, nothing in src or data changed)
+157 new lines, sample every 10 m, natural grade over 30 m, grade limits R6 4 % / R4 6 % / R2 8 % / C 8 % / L 10 %, corridor half width R6 19 / R4 15 / R2 11 / C 10 / L 9 m (class half width + 3 m)
+rail edges 12, buildings 601
+
+1. PER LINE (id, class, length, wet m, max natural grade, m over the class limit, rail crossings, buildings, flags)
+   R6-9    6    737 m  wet    0  grade   1.6 %  over    0 m  rail 1  bld  0  <- RAIL crossed 1x
+   R6-10   6   1905 m  wet   20  grade  28.9 %  over 1430 m  rail 0  bld  0  <- WATER 20 m in 1 run(s); GRADE over 4.0 % for 1430 m, max 28.9 %; TUNNEL-CANDIDATE 1 stretch(es): natural grade over 2 x the limit for >= 100 m
+   R6-11   6   1444 m  wet   60  grade  33.3 %  over  850 m  rail 1  bld  1  <- WATER 60 m in 1 run(s); GRADE over 4.0 % for 850 m, max 33.3 %; TUNNEL-CANDIDATE 1 stretch(es): natural grade over 2 x the limit for >= 100 m; RAIL crossed 1x; BUILDINGS 1 in corridor
+   R6-12   6    269 m  wet    0  grade  31.3 %  over  270 m  rail 0  bld  0  <- GRADE over 4.0 % for 270 m, max 31.3 %; TUNNEL-CANDIDATE 1 stretch(es): natural grade over 2 x the limit for >= 100 m
+   R6-13   6    447 m  wet    0  grade  10.2 %  over  100 m  rail 0  bld  0  ok
+   R6-14   6    366 m  wet    0  grade  20.8 %  over  310 m  rail 0  bld  0  <- GRADE over 4.0 % for 310 m, max 20.8 %
+   R6-15   6   1988 m  wet    0  grade  28.5 %  over 1210 m  rail 1  bld  0  <- GRADE over 4.0 % for 1210 m, max 28.5 %; TUNNEL-CANDIDATE 2 stretch(es): natural grade over 2 x the limit for >= 100 m; RAIL crossed 1x; side slope > 25 % for 170 m (big cut / fill)
+   R4-1    4   1576 m  wet    0  grade  19.9 %  over  840 m  rail 0  bld  0  <- GRADE over 6.0 % for 840 m, max 19.9 %; side slope > 25 % for 320 m (big cut / fill)
+   R4-2    4   1113 m  wet    0  grade  29.3 %  over  580 m  rail 0  bld  0  <- GRADE over 6.0 % for 580 m, max 29.3 %; TUNNEL-CANDIDATE 1 stretch(es): natural grade over 2 x the limit for >= 100 m; side slope > 25 % for 130 m (big cut / fill)
+   R4-3    4    192 m  wet    0  grade  21.9 %  over  150 m  rail 0  bld  0  <- GRADE over 6.0 % for 150 m, max 21.9 %
+   R4-4    4    259 m  wet    0  grade   1.4 %  over    0 m  rail 0  bld  0  ok
+   R4-5    4    644 m  wet    0  grade  43.3 %  over  220 m  rail 0  bld  0  <- GRADE over 6.0 % for 220 m, max 43.3 %; TUNNEL-CANDIDATE 1 stretch(es): natural grade over 2 x the limit for >= 100 m
+   R4-6    4   1794 m  wet    0  grade  24.3 %  over  330 m  rail 0  bld  0  <- GRADE over 6.0 % for 330 m, max 24.3 %
+   R4-7    4   1613 m  wet    0  grade  19.6 %  over  910 m  rail 0  bld  0  <- GRADE over 6.0 % for 910 m, max 19.6 %
+   R4-8    4   1140 m  wet    0  grade  17.1 %  over  450 m  rail 0  bld  0  <- GRADE over 6.0 % for 450 m, max 17.1 %
+   R4-9    4   2964 m  wet    0  grade  49.2 %  over 1950 m  rail 0  bld  1  <- GRADE over 6.0 % for 1950 m, max 49.2 %; TUNNEL-CANDIDATE 1 stretch(es): natural grade over 2 x the limit for >= 100 m; BUILDINGS 1 in corridor; side slope > 25 % for 1250 m (big cut / fill)
+   R4-10   4   1118 m  wet    0  grade  20.5 %  over  440 m  rail 0  bld  0  <- GRADE over 6.0 % for 440 m, max 20.5 %
+   R4-11   4    216 m  wet    0  grade  11.4 %  over   60 m  rail 0  bld  0  ok
+   R4-12   4   1788 m  wet    0  grade  21.5 %  over  590 m  rail 0  bld 16  <- GRADE over 6.0 % for 590 m, max 21.5 %; TUNNEL-CANDIDATE 1 stretch(es): natural grade over 2 x the limit for >= 100 m; BUILDINGS 16 in corridor
+   R4-13   4    981 m  wet    0  grade   5.3 %  over    0 m  rail 0  bld  2  <- BUILDINGS 2 in corridor
+   R4-14   4    760 m  wet    0  grade   9.4 %  over   30 m  rail 0  bld  0  ok
+   R4-15   4    525 m  wet    0  grade   2.5 %  over    0 m  rail 0  bld  0  ok
+   R4-16   4    651 m  wet    0  grade   4.0 %  over    0 m  rail 0  bld  0  ok
+   R4-17   4    590 m  wet    0  grade   1.7 %  over    0 m  rail 0  bld  0  ok
+   R4-18   4   1126 m  wet    0  grade   3.7 %  over    0 m  rail 0  bld  0  ok
+   R4-19   4   3227 m  wet    0  grade   4.4 %  over    0 m  rail 0  bld  0  ok
+   R4-20   4   1945 m  wet   70  grade  33.0 %  over  360 m  rail 2  bld  6  <- WATER 70 m in 1 run(s); GRADE over 6.0 % for 360 m, max 33.0 %; RAIL crossed 2x; BUILDINGS 6 in corridor
+   R4-21   4   3041 m  wet    0  grade  13.1 %  over  340 m  rail 0  bld  0  <- GRADE over 6.0 % for 340 m, max 13.1 %
+   R4-22   4    674 m  wet    0  grade   9.1 %  over   90 m  rail 0  bld  0  ok
+   R4-23   4   1306 m  wet   30  grade  24.2 %  over  780 m  rail 0  bld  0  <- WATER 30 m in 1 run(s); GRADE over 6.0 % for 780 m, max 24.2 %; side slope > 25 % for 130 m (big cut / fill)
+   R4-24   4   2957 m  wet   20  grade  98.6 %  over 2240 m  rail 0  bld  0  <- WATER 20 m in 1 run(s); GRADE over 6.0 % for 2240 m, max 98.6 %; TUNNEL-CANDIDATE 5 stretch(es): natural grade over 2 x the limit for >= 100 m; side slope > 25 % for 2610 m (big cut / fill)
+   R4-25   4    552 m  wet    0  grade  14.2 %  over  290 m  rail 0  bld  0  <- GRADE over 6.0 % for 290 m, max 14.2 %
+   R4-26   4    435 m  wet    0  grade  15.9 %  over  190 m  rail 0  bld  0  <- GRADE over 6.0 % for 190 m, max 15.9 %
+   R4-27   4    628 m  wet    0  grade   7.1 %  over   30 m  rail 0  bld  0  ok
+   R4-28   4    349 m  wet    0  grade   1.2 %  over    0 m  rail 0  bld  0  ok
+   R4-29   4    903 m  wet   20  grade  24.6 %  over  230 m  rail 0  bld  0  <- WATER 20 m in 1 run(s)
+   R2-1    2   1235 m  wet    0  grade  55.6 %  over  690 m  rail 0  bld  0  <- GRADE over 8.0 % for 690 m, max 55.6 %; TUNNEL-CANDIDATE 1 stretch(es): natural grade over 2 x the limit for >= 100 m; side slope > 25 % for 170 m (big cut / fill)
+   R2-2    2   1630 m  wet    0  grade  43.0 %  over 1000 m  rail 0  bld  0  <- GRADE over 8.0 % for 1000 m, max 43.0 %; side slope > 25 % for 1590 m (big cut / fill)
+   R2-3    2    913 m  wet    0  grade  51.3 %  over  640 m  rail 0  bld  0  <- GRADE over 8.0 % for 640 m, max 51.3 %; TUNNEL-CANDIDATE 1 stretch(es): natural grade over 2 x the limit for >= 100 m; side slope > 25 % for 410 m (big cut / fill)
+   R2-4    2   1755 m  wet    0  grade  39.7 %  over  980 m  rail 0  bld  0  <- GRADE over 8.0 % for 980 m, max 39.7 %; side slope > 25 % for 860 m (big cut / fill)
+   R2-5    2    566 m  wet    0  grade  30.0 %  over  340 m  rail 0  bld  0  <- GRADE over 8.0 % for 340 m, max 30.0 %; TUNNEL-CANDIDATE 1 stretch(es): natural grade over 2 x the limit for >= 100 m; side slope > 25 % for 160 m (big cut / fill)
+   R2-6    2   1678 m  wet    0  grade  55.4 %  over  750 m  rail 0  bld  0  <- GRADE over 8.0 % for 750 m, max 55.4 %; TUNNEL-CANDIDATE 1 stretch(es): natural grade over 2 x the limit for >= 100 m; side slope > 25 % for 1080 m (big cut / fill)
+   R2-7    2    980 m  wet    0  grade  30.6 %  over  480 m  rail 0  bld  0  <- GRADE over 8.0 % for 480 m, max 30.6 %; side slope > 25 % for 100 m (big cut / fill)
+   R2-8    2   3909 m  wet    0  grade  16.4 %  over  110 m  rail 0  bld  0  <- side slope > 25 % for 330 m (big cut / fill)
+   R2-9    2    386 m  wet    0  grade  44.6 %  over  310 m  rail 0  bld  0  <- GRADE over 8.0 % for 310 m, max 44.6 %; TUNNEL-CANDIDATE 1 stretch(es): natural grade over 2 x the limit for >= 100 m
+   R2-10   2    413 m  wet    0  grade  38.7 %  over  280 m  rail 0  bld  0  <- GRADE over 8.0 % for 280 m, max 38.7 %
+   R2-11   2   3017 m  wet    0  grade  66.6 %  over 2170 m  rail 0  bld  0  <- GRADE over 8.0 % for 2170 m, max 66.6 %; TUNNEL-CANDIDATE 4 stretch(es): natural grade over 2 x the limit for >= 100 m; side slope > 25 % for 1070 m (big cut / fill)
+   R2-12   2    555 m  wet    0  grade  19.9 %  over  190 m  rail 0  bld  0  <- GRADE over 8.0 % for 190 m, max 19.9 %
+   R2-13   2    447 m  wet    0  grade  16.8 %  over   60 m  rail 0  bld  0  ok
+   R2-14   2    596 m  wet    0  grade   3.9 %  over    0 m  rail 0  bld  0  ok
+   R2-15   2    339 m  wet    0  grade   8.7 %  over   30 m  rail 0  bld  0  ok
+   R2-16   2    244 m  wet    0  grade  11.4 %  over   10 m  rail 0  bld  0  ok
+   R2-17   2   1171 m  wet    0  grade  18.8 %  over  370 m  rail 0  bld  0  <- GRADE over 8.0 % for 370 m, max 18.8 %
+   R2-18   2    217 m  wet    0  grade  11.7 %  over   50 m  rail 0  bld  4  <- BUILDINGS 4 in corridor
+   R2-19   2   2763 m  wet   70  grade  32.2 %  over  550 m  rail 0  bld  2  <- WATER 70 m in 1 run(s); GRADE over 8.0 % for 550 m, max 32.2 %; BUILDINGS 2 in corridor
+   R2-20   2    245 m  wet    0  grade  20.5 %  over  120 m  rail 0  bld  0  ok
+   R2-21   2    591 m  wet    0  grade   2.1 %  over    0 m  rail 0  bld  0  ok
+   R2-22   2    547 m  wet    0  grade   0.7 %  over    0 m  rail 0  bld  0  ok
+   R2-23   2    606 m  wet    0  grade   3.8 %  over    0 m  rail 0  bld  0  ok
+   R2-24   2   1149 m  wet    0  grade   3.2 %  over    0 m  rail 0  bld  0  ok
+   R2-25   2    583 m  wet    0  grade   3.3 %  over    0 m  rail 0  bld  0  ok
+   R2-26   2    632 m  wet    0  grade   3.8 %  over    0 m  rail 0  bld  0  ok
+   R2-27   2    640 m  wet    0  grade   3.4 %  over    0 m  rail 0  bld  0  ok
+   R2-28   2   1262 m  wet    0  grade   3.3 %  over    0 m  rail 2  bld 28  <- RAIL crossed 2x; BUILDINGS 28 in corridor
+   R2-29   2    430 m  wet    0  grade   2.0 %  over    0 m  rail 0  bld  3  <- BUILDINGS 3 in corridor
+   R2-30   2    258 m  wet    0  grade  13.0 %  over   30 m  rail 0  bld  0  ok
+   R2-31   2     79 m  wet    0  grade   3.7 %  over    0 m  rail 0  bld  0  ok
+   R2-32   2    533 m  wet    0  grade  11.5 %  over   30 m  rail 0  bld  0  ok
+   R2-33   2   1597 m  wet    0  grade  11.2 %  over   40 m  rail 1  bld  0  <- RAIL crossed 1x
+   R2-34   2    827 m  wet    0  grade   2.4 %  over    0 m  rail 0  bld  0  ok
+   R2-35   2    594 m  wet    0  grade   4.1 %  over    0 m  rail 0  bld  0  ok
+   R2-36   2    593 m  wet    0  grade   4.4 %  over    0 m  rail 0  bld  0  ok
+   R2-37   2    532 m  wet    0  grade   7.3 %  over    0 m  rail 0  bld  0  ok
+   R2-38   2    286 m  wet    0  grade  13.4 %  over  110 m  rail 0  bld  0  <- GRADE over 8.0 % for 110 m, max 13.4 %
+   R2-39   2    694 m  wet    0  grade  25.0 %  over  130 m  rail 0  bld  0  <- GRADE over 8.0 % for 130 m, max 25.0 %
+   R2-40   2    289 m  wet    0  grade   8.1 %  over   10 m  rail 0  bld  0  ok
+   R2-41   2    286 m  wet    0  grade   2.7 %  over    0 m  rail 0  bld  0  ok
+   R2-42   2    522 m  wet    0  grade   2.1 %  over    0 m  rail 0  bld  0  ok
+   R2-43   2    738 m  wet    0  grade  24.1 %  over  230 m  rail 0  bld  1  <- GRADE over 8.0 % for 230 m, max 24.1 %; BUILDINGS 1 in corridor
+   R2-44   2    924 m  wet    0  grade  13.1 %  over  270 m  rail 0  bld  0  <- GRADE over 8.0 % for 270 m, max 13.1 %
+   R2-45   2    892 m  wet    0  grade  18.6 %  over  240 m  rail 0  bld  0  ok
+   R2-46   2    451 m  wet    0  grade  16.4 %  over  110 m  rail 0  bld  0  <- GRADE over 8.0 % for 110 m, max 16.4 %
+   R2-47   2    817 m  wet    0  grade  35.5 %  over  670 m  rail 0  bld  0  <- GRADE over 8.0 % for 670 m, max 35.5 %; TUNNEL-CANDIDATE 1 stretch(es): natural grade over 2 x the limit for >= 100 m
+   R2-48   2    310 m  wet    0  grade   3.7 %  over    0 m  rail 0  bld  0  ok
+   R2-49   2    306 m  wet    0  grade   8.3 %  over   10 m  rail 0  bld  0  ok
+   R2-50   2    260 m  wet    0  grade   7.7 %  over    0 m  rail 0  bld  0  ok
+   R2-51   2   1507 m  wet    0  grade  16.2 %  over  480 m  rail 0  bld  0  <- GRADE over 8.0 % for 480 m, max 16.2 %
+   R2-52   2   1046 m  wet    0  grade  21.1 %  over  530 m  rail 0  bld  0  <- GRADE over 8.0 % for 530 m, max 21.1 %; side slope > 25 % for 100 m (big cut / fill)
+   R2-53   2    607 m  wet    0  grade  41.3 %  over  480 m  rail 0  bld  0  <- GRADE over 8.0 % for 480 m, max 41.3 %; side slope > 25 % for 110 m (big cut / fill)
+   R2-54   2    750 m  wet    0  grade  27.6 %  over  520 m  rail 0  bld  0  <- GRADE over 8.0 % for 520 m, max 27.6 %; TUNNEL-CANDIDATE 1 stretch(es): natural grade over 2 x the limit for >= 100 m
+   R2-55   2   1432 m  wet   20  grade  47.6 %  over  980 m  rail 0  bld  0  <- WATER 20 m in 1 run(s); GRADE over 8.0 % for 980 m, max 47.6 %; TUNNEL-CANDIDATE 1 stretch(es): natural grade over 2 x the limit for >= 100 m; side slope > 25 % for 600 m (big cut / fill)
+   R2-56   2   1503 m  wet    0  grade 126.2 %  over 1240 m  rail 0  bld  0  <- GRADE over 8.0 % for 1240 m, max 126.2 %; TUNNEL-CANDIDATE 5 stretch(es): natural grade over 2 x the limit for >= 100 m; side slope > 25 % for 960 m (big cut / fill)
+   R2-57   2    198 m  wet    0  grade  38.3 %  over  170 m  rail 0  bld  0  <- GRADE over 8.0 % for 170 m, max 38.3 %
+   R2-58   2   1912 m  wet    0  grade  33.9 %  over 1100 m  rail 0  bld  0  <- GRADE over 8.0 % for 1100 m, max 33.9 %; TUNNEL-CANDIDATE 1 stretch(es): natural grade over 2 x the limit for >= 100 m; side slope > 25 % for 1060 m (big cut / fill)
+   R2-59   2   1316 m  wet    0  grade 136.1 %  over 1100 m  rail 0  bld  0  <- GRADE over 8.0 % for 1100 m, max 136.1 %; TUNNEL-CANDIDATE 4 stretch(es): natural grade over 2 x the limit for >= 100 m; side slope > 25 % for 840 m (big cut / fill)
+   R2-60   2    884 m  wet    0  grade  68.7 %  over  690 m  rail 0  bld  0  <- GRADE over 8.0 % for 690 m, max 68.7 %; TUNNEL-CANDIDATE 1 stretch(es): natural grade over 2 x the limit for >= 100 m; side slope > 25 % for 390 m (big cut / fill)
+   R2-61   2   1433 m  wet    0  grade  66.1 %  over 1090 m  rail 0  bld  0  <- GRADE over 8.0 % for 1090 m, max 66.1 %; TUNNEL-CANDIDATE 1 stretch(es): natural grade over 2 x the limit for >= 100 m; side slope > 25 % for 380 m (big cut / fill)
+   R2-62   2   4299 m  wet    0  grade  84.7 %  over 2180 m  rail 0  bld  0  <- GRADE over 8.0 % for 2180 m, max 84.7 %; TUNNEL-CANDIDATE 2 stretch(es): natural grade over 2 x the limit for >= 100 m; side slope > 25 % for 810 m (big cut / fill)
+   R2-63   2    291 m  wet    0  grade  18.3 %  over  110 m  rail 0  bld  0  <- GRADE over 8.0 % for 110 m, max 18.3 %
+   R2-64   2    938 m  wet    0  grade  13.7 %  over   80 m  rail 0  bld  0  <- side slope > 25 % for 200 m (big cut / fill)
+   R2-65   2    444 m  wet    0  grade  17.0 %  over  120 m  rail 0  bld  0  <- GRADE over 8.0 % for 120 m, max 17.0 %
+   R2-66   2    294 m  wet    0  grade  16.8 %  over   50 m  rail 0  bld  0  ok
+   R2-67   2    537 m  wet    0  grade  16.9 %  over  250 m  rail 0  bld  0  <- GRADE over 8.0 % for 250 m, max 16.9 %
+   R2-68   2    182 m  wet   30  grade  32.2 %  over  150 m  rail 0  bld  0  <- WATER 30 m in 1 run(s); GRADE over 8.0 % for 150 m, max 32.2 %
+   R2-69   2    849 m  wet    0  grade  18.8 %  over  150 m  rail 0  bld  0  <- GRADE over 8.0 % for 150 m, max 18.8 %
+   R2-70   2    824 m  wet   50  grade  31.2 %  over  230 m  rail 0  bld  0  <- WATER 50 m in 1 run(s); GRADE over 8.0 % for 230 m, max 31.2 %
+   R2-71   2    961 m  wet    0  grade  47.3 %  over  680 m  rail 0  bld  0  <- GRADE over 8.0 % for 680 m, max 47.3 %; TUNNEL-CANDIDATE 1 stretch(es): natural grade over 2 x the limit for >= 100 m; side slope > 25 % for 620 m (big cut / fill)
+   R2-72   2   1178 m  wet    0  grade  23.3 %  over  510 m  rail 0  bld  0  <- GRADE over 8.0 % for 510 m, max 23.3 %
+   R2-73   2   1927 m  wet    0  grade 162.1 %  over 1770 m  rail 0  bld  0  <- GRADE over 8.0 % for 1770 m, max 162.1 %; TUNNEL-CANDIDATE 6 stretch(es): natural grade over 2 x the limit for >= 100 m; side slope > 25 % for 1370 m (big cut / fill)
+   R2-74   2   2464 m  wet    0  grade  28.0 %  over  390 m  rail 1  bld  0  <- GRADE over 8.0 % for 390 m, max 28.0 %; TUNNEL-CANDIDATE 1 stretch(es): natural grade over 2 x the limit for >= 100 m; RAIL crossed 1x; side slope > 25 % for 160 m (big cut / fill)
+   R2-75   2    772 m  wet    0  grade  16.4 %  over   20 m  rail 0  bld  0  ok
+   R2-76   2    797 m  wet    0  grade  19.4 %  over  290 m  rail 0  bld  0  <- GRADE over 8.0 % for 290 m, max 19.4 %
+   R2-77   2    605 m  wet    0  grade   9.0 %  over   40 m  rail 0  bld  4  <- BUILDINGS 4 in corridor
+   C-1     C    326 m  wet    0  grade  37.3 %  over  140 m  rail 0  bld  0  <- GRADE over 8.0 % for 140 m, max 37.3 %
+   C-2     C    494 m  wet    0  grade  21.9 %  over  150 m  rail 0  bld  0  <- GRADE over 8.0 % for 150 m, max 21.9 %
+   C-3     C    374 m  wet    0  grade  14.4 %  over   80 m  rail 0  bld  0  ok
+   C-4     C    290 m  wet    0  grade  28.1 %  over  120 m  rail 0  bld  0  ok
+   C-5     C    273 m  wet    0  grade   5.6 %  over    0 m  rail 0  bld  0  ok
+   C-6     C    272 m  wet    0  grade   0.8 %  over    0 m  rail 0  bld  0  ok
+   C-7     C    310 m  wet    0  grade   1.3 %  over    0 m  rail 0  bld  0  ok
+   C-8     C    320 m  wet    0  grade   8.4 %  over   20 m  rail 0  bld  0  ok
+   C-9     C    132 m  wet    0  grade   1.3 %  over    0 m  rail 0  bld  0  ok
+   C-10    C    116 m  wet    0  grade   1.3 %  over    0 m  rail 0  bld  0  ok
+   C-11    C    267 m  wet    0  grade  10.5 %  over   10 m  rail 0  bld  0  ok
+   C-12    C    239 m  wet    0  grade  10.1 %  over   20 m  rail 0  bld  0  ok
+   C-13    C    363 m  wet    0  grade   8.2 %  over   10 m  rail 0  bld  0  ok
+   L-1     L    191 m  wet    0  grade  13.7 %  over   50 m  rail 0  bld  0  ok
+   L-2     L    266 m  wet    0  grade   8.4 %  over    0 m  rail 0  bld  0  ok
+   L-3     L    270 m  wet    0  grade   4.4 %  over    0 m  rail 0  bld  0  ok
+   L-4     L    432 m  wet    0  grade  13.8 %  over   80 m  rail 0  bld  0  ok
+   L-5     L    520 m  wet    0  grade  19.7 %  over  160 m  rail 0  bld  0  <- side slope > 25 % for 160 m (big cut / fill)
+   L-6     L    331 m  wet    0  grade  24.2 %  over  130 m  rail 0  bld  0  <- GRADE over 10.0 % for 130 m, max 24.2 %; side slope > 25 % for 300 m (big cut / fill)
+   L-7     L    172 m  wet    0  grade  27.2 %  over   50 m  rail 0  bld  0  ok
+   L-8     L    150 m  wet    0  grade  10.6 %  over   20 m  rail 0  bld  0  ok
+   L-9     L    139 m  wet    0  grade  10.3 %  over   10 m  rail 0  bld  0  ok
+   L-10    L    133 m  wet    0  grade  16.2 %  over   50 m  rail 0  bld  0  ok
+   L-11    L    131 m  wet    0  grade  14.1 %  over   10 m  rail 0  bld  0  ok
+   L-12    L    149 m  wet    0  grade  12.2 %  over   10 m  rail 0  bld  0  ok
+   L-13    L    131 m  wet    0  grade  14.6 %  over   50 m  rail 0  bld  0  ok
+   L-14    L    147 m  wet    0  grade  15.0 %  over   60 m  rail 0  bld  0  ok
+   L-15    L    135 m  wet    0  grade  10.6 %  over   10 m  rail 0  bld  0  ok
+   L-16    L    129 m  wet    0  grade  18.3 %  over   40 m  rail 0  bld  0  ok
+   L-17    L    101 m  wet    0  grade   6.1 %  over    0 m  rail 0  bld  0  ok
+   L-18    L    150 m  wet    0  grade   8.4 %  over    0 m  rail 0  bld  0  ok
+   L-19    L    106 m  wet    0  grade   6.5 %  over    0 m  rail 0  bld  0  ok
+   L-20    L     75 m  wet    0  grade   7.4 %  over    0 m  rail 0  bld  0  ok
+   L-21    L     64 m  wet    0  grade   7.9 %  over    0 m  rail 0  bld  0  ok
+   L-22    L    120 m  wet    0  grade  10.3 %  over   10 m  rail 0  bld  0  ok
+   L-23    L    182 m  wet    0  grade   8.7 %  over    0 m  rail 0  bld  0  ok
+   L-24    L    180 m  wet    0  grade  12.9 %  over   30 m  rail 0  bld  0  ok
+   L-25    L    117 m  wet    0  grade  13.2 %  over   30 m  rail 0  bld  0  ok
+   L-26    L    131 m  wet    0  grade  18.4 %  over   50 m  rail 0  bld  0  ok
+   L-27    L    178 m  wet    0  grade  15.5 %  over   40 m  rail 0  bld  0  ok
+   L-28    L    205 m  wet    0  grade  14.1 %  over   20 m  rail 0  bld  0  ok
+   L-29    L    204 m  wet    0  grade  17.5 %  over   60 m  rail 0  bld  0  <- GRADE over 10.0 % for 60 m, max 17.5 %
+   L-30    L    502 m  wet    0  grade  10.7 %  over   10 m  rail 0  bld  0  ok
+   L-31    L    141 m  wet    0  grade  10.7 %  over   10 m  rail 0  bld  0  ok
+
+2. WATER: BRIDGE / CULVERT candidates (wet runs: depth = water above ground, max in the run; < 15 m culvert, 15..60 m short bridge, > 60 m long bridge)
+   R6-10   s  1343.. 1353 m    20 m wet at (-3149, -3856), depth 2.3 m  -> SHORT BRIDGE
+   R6-11   s   216..  266 m    60 m wet at (1629, -1282), depth 6.1 m  -> LONG BRIDGE
+   R4-20   s  1443.. 1505 m    72 m wet at (-104, 1613), depth 7.1 m  -> LONG BRIDGE
+   R4-23   s   424..  444 m    30 m wet at (2307, -3444), depth 2.9 m  -> SHORT BRIDGE
+   R4-24   s   953..  963 m    20 m wet at (3077, -3073), depth 2.3 m  -> SHORT BRIDGE
+   R4-29   s   354..  363 m    20 m wet at (-2022, -275), depth 2.5 m  -> SHORT BRIDGE
+   R2-19   s  2257.. 2316 m    70 m wet at (2413, -1117), depth 6.2 m  -> LONG BRIDGE
+   R2-55   s   944..  954 m    20 m wet at (3146, 367), depth 2.2 m  -> SHORT BRIDGE
+   R2-68   s    51..   71 m    30 m wet at (1763, -1950), depth 3.9 m  -> SHORT BRIDGE
+   R2-70   s   485..  525 m    49 m wet at (1400, -1592), depth 5.1 m  -> SHORT BRIDGE
+   10 wet runs on 10 lines, 390 m wet in total
+
+3. HILL RUNS (natural grade over the class limit for >= 60 m; the AI first tries to go ROUND, R12) and TUNNEL-CANDIDATES (natural grade over 2 x the class limit, i.e. R6 8 % / R4 12 % / R2 and C 16 % / L 20 %, for >= 100 m in a row: LISTED ONLY, the user decides)
+   R6-10   s    10..  186 m   187 m at (-2236, -3573) max grade 25.9 %
+   R6-10   s   355..  473 m   128 m at (-2541, -3596) max grade 20.7 %
+   R6-10   s   512..  769 m   267 m at (-2760, -3545) max grade 18.0 %
+   R6-10   s  1026.. 1190 m   174 m at (-3159, -3618) max grade 12.9 %
+   R6-10   s  1373.. 1433 m    70 m at (-3133, -3913) max grade 27.8 %
+   R6-10   s  1611.. 1670 m    69 m at (-3046, -4134) max grade 7.2 %
+   R6-10   s  1818.. 1905 m    97 m at (-2954, -4329) max grade 14.1 %
+   R6-11   s   176..  246 m    80 m at (1600, -1274) max grade 30.1 %
+   R6-11   s   266..  376 m   120 m at (1706, -1306) max grade 33.3 %
+   R6-11   s  1216.. 1325 m   119 m at (2602, -1605) max grade 16.0 %
+   R6-12   s    10..  269 m   268 m at (-111, -2202) max grade 31.3 %
+   R6-14   s    69..  178 m   119 m at (1249, 933) max grade 13.5 %
+   R6-14   s   287..  366 m    89 m at (1374, 766) max grade 20.8 %
+   R6-15   s   227..  406 m   189 m at (-1320, -66) max grade 22.1 %
+   R6-15   s   446..  516 m    80 m at (-1429, -182) max grade 12.7 %
+   R6-15   s   536..  656 m   130 m at (-1511, -269) max grade 22.3 %
+   R6-15   s   675..  922 m   257 m at (-1653, -408) max grade 28.5 %
+   R4-1    s   578..  688 m   120 m at (-2311, -4372) max grade 13.4 %
+   R4-1    s   708..  788 m    90 m at (-2194, -4393) max grade 19.0 %
+   R4-1    s   890..  951 m    71 m at (-2029, -4444) max grade 11.3 %
+   R4-1    s  1488.. 1576 m    99 m at (-1449, -4408) max grade 19.9 %
+   R4-2    s    89..  347 m   268 m at (-3088, -4492) max grade 29.3 %
+   R4-2    s   780..  839 m    69 m at (-3626, -4524) max grade 13.9 %
+   R4-2    s   968.. 1040 m    82 m at (-3812, -4494) max grade 17.6 %
+   R4-3    s    10..   71 m    71 m at (-3211, -3653) max grade 11.5 %
+   R4-3    s    91..  162 m    81 m at (-3292, -3651) max grade 21.9 %
+   R4-5    s   483..  644 m   171 m at (-3169, -807) max grade 43.3 %
+   R4-6    s  1198.. 1268 m    80 m at (-3559, 1463) max grade 10.3 %
+   R4-6    s  1431.. 1481 m    61 m at (-3734, 1592) max grade 11.3 %
+   R4-6    s  1610.. 1743 m   143 m at (-3949, 1626) max grade 18.1 %
+   R4-7    s   103..  280 m   188 m at (-3516, 1699) max grade 9.7 %
+   R4-7    s   301..  382 m    91 m at (-3471, 1839) max grade 16.6 %
+   R4-7    s   492..  543 m    60 m at (-3451, 2009) max grade 15.4 %
+   R4-7    s   593..  660 m    77 m at (-3432, 2114) max grade 14.9 %
+   R4-7    s   879..  972 m   103 m at (-3143, 2143) max grade 19.6 %
+   R4-7    s  1043.. 1165 m   132 m at (-3046, 2268) max grade 17.3 %
+   R4-7    s  1503.. 1613 m   120 m at (-3064, 2715) max grade 15.2 %
+   R4-8    s    31..  114 m    93 m at (-2047, 2280) max grade 11.3 %
+   R4-8    s   850..  900 m    60 m at (-2779, 2425) max grade 11.9 %
+   R4-8    s   960.. 1020 m    70 m at (-2899, 2422) max grade 17.1 %
+   R4-9    s    10..  176 m   176 m at (315, -1329) max grade 26.2 %
+   R4-9    s   298..  431 m   142 m at (89, -1439) max grade 31.3 %
+   R4-9    s   667..  796 m   139 m at (-202, -1645) max grade 35.3 %
+   R4-9    s  1076.. 1154 m    88 m at (-271, -2019) max grade 19.7 %
+   R4-9    s  1332.. 1486 m   164 m at (-304, -2273) max grade 24.4 %
+   R4-9    s  1576.. 1748 m   182 m at (-551, -2291) max grade 34.1 %
+   R4-9    s  1779.. 1849 m    80 m at (-701, -2289) max grade 31.6 %
+   R4-9    s  2574.. 2784 m   220 m at (-1443, -2192) max grade 49.2 %
+   R4-10   s   129..  247 m   128 m at (1486, -3105) max grade 20.5 %
+   R4-10   s   712..  771 m    69 m at (1394, -2634) max grade 11.0 %
+   R4-12   s   923..  981 m    68 m at (1012, -568) max grade 16.3 %
+   R4-12   s  1484.. 1615 m   141 m at (1113, -1121) max grade 21.5 %
+   R4-20   s  1302.. 1362 m    70 m at (-219, 1532) max grade 13.0 %
+   R4-20   s  1402.. 1474 m    82 m at (-134, 1585) max grade 33.0 %
+   R4-20   s  1505.. 1586 m    91 m at (-73, 1676) max grade 29.5 %
+   R4-21   s    69..  196 m   138 m at (4811, 3039) max grade 13.1 %
+   R4-21   s  1215.. 1326 m   121 m at (3754, 2724) max grade 10.1 %
+   R4-23   s   384..  494 m   120 m at (2307, -3444) max grade 24.2 %
+   R4-23   s   594..  673 m    90 m at (2108, -3449) max grade 19.5 %
+   R4-23   s   793..  902 m   119 m at (1899, -3440) max grade 17.3 %
+   R4-24   s   178..  307 m   139 m at (2702, -2467) max grade 28.1 %
+   R4-24   s   348..  508 m   171 m at (2790, -2634) max grade 27.7 %
+   R4-24   s   548..  744 m   206 m at (2901, -2820) max grade 53.6 %
+   R4-24   s   774..  833 m    70 m at (2991, -2950) max grade 28.7 %
+   R4-24   s  1141.. 1269 m   138 m at (3240, -3256) max grade 35.2 %
+   R4-24   s  1436.. 1495 m    69 m at (3399, -3466) max grade 35.1 %
+   R4-24   s  1574.. 1712 m   148 m at (3456, -3633) max grade 44.0 %
+   R4-24   s  1732.. 1800 m    78 m at (3500, -3741) max grade 46.9 %
+   R4-24   s  1918.. 2008 m   101 m at (3631, -3885) max grade 24.8 %
+   R4-24   s  2048.. 2099 m    60 m at (3719, -3953) max grade 32.2 %
+   R4-24   s  2188.. 2347 m   169 m at (3898, -4037) max grade 39.9 %
+   R4-24   s  2457.. 2585 m   138 m at (4130, -4128) max grade 56.6 %
+   R4-24   s  2653.. 2946 m   303 m at (4265, -4336) max grade 98.6 %
+   R4-25   s   141..  271 m   141 m at (2106, -1695) max grade 14.2 %
+   R4-25   s   301..  361 m    70 m at (2085, -1824) max grade 14.2 %
+   R4-26   s    51..  101 m    61 m at (1511, -1885) max grade 11.6 %
+   R4-26   s   364..  415 m    61 m at (1353, -2155) max grade 15.9 %
+   R2-1    s    10..   82 m    82 m at (-1372, -4401) max grade 33.9 %
+   R2-1    s   526..  626 m   110 m at (-880, -4522) max grade 38.9 %
+   R2-1    s   686..  736 m    60 m at (-768, -4455) max grade 25.5 %
+   R2-1    s   975.. 1042 m    77 m at (-548, -4264) max grade 24.9 %
+   R2-1    s  1082.. 1224 m   152 m at (-499, -4123) max grade 55.6 %
+   R2-2    s   366..  424 m    68 m at (-1736, -4161) max grade 28.2 %
+   R2-2    s   612..  673 m    71 m at (-1784, -3948) max grade 26.6 %
+   R2-2    s   815..  905 m   100 m at (-1612, -3826) max grade 26.9 %
+   R2-2    s   926..  986 m    70 m at (-1526, -3776) max grade 17.4 %
+   R2-2    s  1107.. 1225 m   128 m at (-1387, -3619) max grade 43.0 %
+   R2-2    s  1384.. 1435 m    61 m at (-1249, -3426) max grade 22.1 %
+   R2-2    s  1568.. 1630 m    72 m at (-1140, -3265) max grade 32.3 %
+   R2-3    s    31..   92 m    71 m at (-2895, -4421) max grade 13.5 %
+   R2-3    s   202..  270 m    78 m at (-2781, -4544) max grade 17.9 %
+   R2-3    s   319..  627 m   318 m at (-2595, -4689) max grade 51.3 %
+   R2-3    s   781..  903 m   132 m at (-2237, -4761) max grade 19.6 %
+   R2-4    s    30..  128 m   109 m at (-3951, -4430) max grade 18.1 %
+   R2-4    s   168..  236 m    78 m at (-3997, -4322) max grade 18.3 %
+   R2-4    s   455..  524 m    79 m at (-4165, -4091) max grade 30.6 %
+   R2-4    s   612..  684 m    82 m at (-4222, -3944) max grade 39.7 %
+   R2-4    s   907..  967 m    70 m at (-4241, -3651) max grade 33.6 %
+   R2-4    s   987.. 1047 m    70 m at (-4240, -3571) max grade 33.1 %
+   R2-4    s  1264.. 1324 m    70 m at (-4173, -3305) max grade 17.1 %
+   R2-4    s  1495.. 1565 m    81 m at (-4061, -3104) max grade 18.2 %
+   R2-5    s    10..   82 m    82 m at (-3944, -4542) max grade 30.0 %
+   R2-5    s   370..  507 m   147 m at (-4232, -4794) max grade 29.6 %
+   R2-6    s   573..  727 m   164 m at (-2747, -2921) max grade 18.8 %
+   R2-6    s   897..  996 m   109 m at (-2792, -2628) max grade 27.4 %
+   R2-6    s  1026.. 1145 m   129 m at (-2766, -2491) max grade 55.4 %
+   R2-6    s  1436.. 1527 m   101 m at (-2506, -2215) max grade 25.3 %
+   R2-7    s    10..  118 m   118 m at (-4072, 1680) max grade 29.5 %
+   R2-7    s   220..  528 m   318 m at (-4092, 1989) max grade 30.6 %
+   R2-9    s    10..  307 m   307 m at (-1816, -2087) max grade 44.6 %
+   R2-10   s    10..   71 m    71 m at (-972, -2318) max grade 38.7 %
+   R2-10   s   171..  303 m   141 m at (-1047, -2494) max grade 22.7 %
+   R2-11   s   342..  533 m   201 m at (-1795, -1909) max grade 35.5 %
+   R2-11   s   573..  633 m    70 m at (-1884, -1771) max grade 21.2 %
+   R2-11   s   683..  983 m   310 m at (-1895, -1539) max grade 50.9 %
+   R2-11   s  1012.. 1072 m    70 m at (-1860, -1338) max grade 17.5 %
+   R2-11   s  1113.. 1283 m   180 m at (-1771, -1216) max grade 41.4 %
+   R2-11   s  1303.. 1403 m   110 m at (-1628, -1157) max grade 40.8 %
+   R2-11   s  1432.. 1521 m    98 m at (-1510, -1143) max grade 38.3 %
+   R2-11   s  1706.. 1775 m    79 m at (-1276, -1243) max grade 28.2 %
+   R2-11   s  1883.. 1992 m   119 m at (-1133, -1379) max grade 41.3 %
+   R2-11   s  2091.. 2189 m   108 m at (-1081, -1573) max grade 66.6 %
+   R2-11   s  2219.. 2339 m   129 m at (-1042, -1704) max grade 32.4 %
+   R2-11   s  2548.. 2617 m    80 m at (-861, -1932) max grade 40.1 %
+   R2-11   s  2708.. 2769 m    71 m at (-735, -2032) max grade 27.0 %
+   R2-11   s  2895.. 2966 m    82 m at (-647, -2190) max grade 33.2 %
+   R2-12   s    49..  128 m    89 m at (1536, -2550) max grade 19.9 %
+   R2-17   s   393..  462 m    79 m at (1494, -578) max grade 17.6 %
+   R2-19   s  1424.. 1475 m    61 m at (1929, -438) max grade 11.8 %
+   R2-19   s  2167.. 2287 m   129 m at (2376, -1071) max grade 32.1 %
+   R2-19   s  2316.. 2396 m    90 m at (2457, -1172) max grade 32.2 %
+   R2-19   s  2525.. 2595 m    79 m at (2476, -1363) max grade 19.9 %
+   R2-38   s   128..  187 m    69 m at (-1974, 2096) max grade 13.4 %
+   R2-39   s   610..  694 m    94 m at (-2438, 1624) max grade 25.0 %
+   R2-43   s    40..   90 m    60 m at (954, 1149) max grade 24.1 %
+   R2-43   s   559..  689 m   139 m at (731, 718) max grade 13.5 %
+   R2-44   s    39..   98 m    69 m at (1240, 1066) max grade 9.6 %
+   R2-44   s   539..  642 m   114 m at (1389, 1522) max grade 13.1 %
+   R2-46   s   241..  321 m    90 m at (1650, 1139) max grade 16.4 %
+   R2-47   s    30..  293 m   273 m at (959, 1366) max grade 35.5 %
+   R2-47   s   342..  494 m   162 m at (924, 1606) max grade 20.7 %
+   R2-47   s   543..  639 m   107 m at (773, 1702) max grade 21.1 %
+   R2-47   s   658..  765 m   117 m at (673, 1760) max grade 22.6 %
+   R2-51   s  1287.. 1507 m   230 m at (3690, 2634) max grade 16.2 %
+   R2-52   s    10..  180 m   180 m at (4125, 2625) max grade 17.6 %
+   R2-52   s   489..  569 m    90 m at (4120, 2186) max grade 19.5 %
+   R2-53   s   239..  358 m   129 m at (4418, 2095) max grade 41.3 %
+   R2-53   s   388..  607 m   229 m at (4617, 2094) max grade 35.2 %
+   R2-54   s    10..  100 m   100 m at (4492, 2144) max grade 22.1 %
+   R2-54   s   410..  670 m   270 m at (4496, 2634) max grade 27.6 %
+   R2-54   s   700..  750 m    60 m at (4498, 2814) max grade 18.2 %
+   R2-55   s   142..  420 m   288 m at (3027, 1008) max grade 47.6 %
+   R2-55   s   586..  645 m    69 m at (3124, 694) max grade 29.0 %
+   R2-55   s   846..  954 m   118 m at (3143, 416) max grade 32.1 %
+   R2-55   s  1013.. 1072 m    70 m at (3151, 269) max grade 34.2 %
+   R2-55   s  1103.. 1254 m   161 m at (3149, 137) max grade 37.1 %
+   R2-56   s    10..  188 m   188 m at (3248, 277) max grade 106.1 %
+   R2-56   s   228..  329 m   111 m at (3421, 299) max grade 88.5 %
+   R2-56   s   350..  432 m    93 m at (3528, 266) max grade 38.6 %
+   R2-56   s   521..  583 m    72 m at (3687, 260) max grade 17.4 %
+   R2-56   s   604..  656 m    62 m at (3758, 275) max grade 90.0 %
+   R2-56   s   717..  799 m    92 m at (3867, 346) max grade 44.4 %
+   R2-56   s   871..  943 m    82 m at (3944, 465) max grade 70.0 %
+   R2-56   s   964.. 1085 m   131 m at (3947, 587) max grade 60.6 %
+   R2-56   s  1105.. 1232 m   137 m at (3958, 725) max grade 59.9 %
+   R2-56   s  1262.. 1381 m   129 m at (4019, 866) max grade 73.5 %
+   R2-56   s  1411.. 1503 m   102 m at (4052, 990) max grade 126.2 %
+   R2-57   s    79..  178 m   109 m at (3819, 623) max grade 32.0 %
+   R2-58   s   340..  433 m   103 m at (3394, -754) max grade 15.5 %
+   R2-58   s   581..  743 m   172 m at (3500, -968) max grade 33.9 %
+   R2-58   s   950.. 1074 m   134 m at (3496, -1308) max grade 27.3 %
+   R2-58   s  1237.. 1472 m   246 m at (3218, -1453) max grade 20.8 %
+   R2-58   s  1845.. 1902 m    68 m at (2813, -1654) max grade 12.9 %
+   R2-59   s    10..  142 m   142 m at (3577, -835) max grade 73.6 %
+   R2-59   s   215..  355 m   150 m at (3746, -952) max grade 42.4 %
+   R2-59   s   444..  593 m   158 m at (3893, -1122) max grade 46.7 %
+   R2-59   s   690..  850 m   170 m at (4144, -1167) max grade 136.1 %
+   R2-59   s  1002.. 1316 m   324 m at (4425, -1372) max grade 126.8 %
+   R2-60   s   232..  341 m   119 m at (-546, -1770) max grade 54.7 %
+   R2-60   s   361..  420 m    69 m at (-641, -1715) max grade 29.4 %
+   R2-60   s   469..  551 m    92 m at (-723, -1631) max grade 22.2 %
+   R2-60   s   572..  644 m    82 m at (-800, -1581) max grade 68.0 %
+   R2-60   s   665..  884 m   229 m at (-970, -1602) max grade 68.7 %
+   R2-61   s   205..  343 m   148 m at (-878, -1258) max grade 30.0 %
+   R2-61   s   392..  451 m    69 m at (-771, -1157) max grade 23.0 %
+   R2-61   s   481..  604 m   133 m at (-718, -1050) max grade 59.8 %
+   R2-61   s   703..  761 m    69 m at (-756, -873) max grade 38.9 %
+   R2-61   s  1204.. 1433 m   239 m at (-761, -323) max grade 66.1 %
+   R2-62   s    10..  147 m   147 m at (598, -3897) max grade 47.0 %
+   R2-62   s   392..  472 m    90 m at (751, -4208) max grade 39.5 %
+   R2-62   s   582..  652 m    80 m at (895, -4315) max grade 24.4 %
+   R2-62   s  1466.. 1526 m    70 m at (1725, -4557) max grade 24.6 %
+   R2-62   s  1576.. 1767 m   201 m at (1896, -4550) max grade 42.3 %
+   R2-62   s  1827.. 1918 m   100 m at (2096, -4542) max grade 21.0 %
+   R2-62   s  2618.. 2678 m    70 m at (2876, -4511) max grade 22.1 %
+   R2-62   s  3188.. 3248 m    70 m at (3445, -4486) max grade 19.0 %
+   R2-62   s  3798.. 3979 m   190 m at (4116, -4496) max grade 23.2 %
+   R2-62   s  4059.. 4299 m   250 m at (4406, -4500) max grade 84.7 %
+   R2-63   s    50..  111 m    70 m at (2128, -2056) max grade 17.1 %
+   R2-65   s   373..  444 m    81 m at (1702, -1668) max grade 17.0 %
+   R2-67   s    89..  159 m    80 m at (2356, -1974) max grade 11.5 %
+   R2-68   s    10..  152 m   152 m at (1746, -1961) max grade 32.2 %
+   R2-69   s   737..  798 m    71 m at (2123, -2626) max grade 18.8 %
+   R2-70   s   446..  515 m    79 m at (1422, -1613) max grade 30.2 %
+   R2-70   s   535..  604 m    79 m at (1357, -1552) max grade 31.2 %
+   R2-71   s    10..  237 m   237 m at (1243, -4598) max grade 38.6 %
+   R2-71   s   385..  485 m   111 m at (1511, -4737) max grade 24.7 %
+   R2-71   s   546..  617 m    81 m at (1651, -4756) max grade 21.2 %
+   R2-71   s   657..  708 m    61 m at (1748, -4783) max grade 24.0 %
+   R2-71   s   891..  961 m    81 m at (1902, -4928) max grade 47.3 %
+   R2-72   s    80..  151 m    80 m at (1233, -4375) max grade 23.3 %
+   R2-72   s   191..  344 m   163 m at (1289, -4238) max grade 16.1 %
+   R2-72   s   582..  643 m    71 m at (1535, -3992) max grade 16.3 %
+   R2-72   s   902..  962 m    69 m at (1605, -3686) max grade 17.4 %
+   R2-73   s    10..  402 m   402 m at (4289, -4013) max grade 132.6 %
+   R2-73   s   433..  553 m   130 m at (4555, -3896) max grade 125.8 %
+   R2-73   s   573..  642 m    80 m at (4642, -3829) max grade 78.0 %
+   R2-73   s   663..  713 m    61 m at (4708, -3782) max grade 46.6 %
+   R2-73   s   774..  923 m   159 m at (4835, -3687) max grade 162.1 %
+   R2-73   s  1003.. 1084 m    91 m at (4898, -3502) max grade 137.4 %
+   R2-73   s  1185.. 1552 m   377 m at (4924, -3181) max grade 157.0 %
+   R2-73   s  1591.. 1729 m   148 m at (4884, -2890) max grade 86.8 %
+   R2-73   s  1749.. 1927 m   188 m at (4817, -2725) max grade 84.8 %
+   R2-74   s    81..  353 m   282 m at (-381, -2512) max grade 28.0 %
+   R2-74   s   528..  627 m   109 m at (-264, -2847) max grade 16.2 %
+   R2-76   s   161..  282 m   131 m at (-1743, -236) max grade 18.4 %
+   R2-76   s   522..  600 m    87 m at (-1503, 5) max grade 19.4 %
+   C-1     s   198..  326 m   138 m at (-4352, 2229) max grade 37.3 %
+   C-2     s   323..  414 m   101 m at (-3142, 1493) max grade 15.4 %
+   L-6     s    50..  151 m   110 m at (-2993, 1533) max grade 24.2 %
+   L-29    s    10..   61 m    61 m at (1605, -443) max grade 17.5 %
+   231 hill runs on 67 lines
+   TUNNEL-CANDIDATE R6-10   s 10..176 m (177 m) at (-2230, -3566) max grade 25.9 %
+   TUNNEL-CANDIDATE R6-11   s 1226..1325 m (109 m) at (2612, -1607) max grade 16.0 %
+   TUNNEL-CANDIDATE R6-12   s 10..269 m (268 m) at (-111, -2202) max grade 31.3 %
+   TUNNEL-CANDIDATE R6-15   s 237..396 m (169 m) at (-1320, -66) max grade 22.1 %
+   TUNNEL-CANDIDATE R6-15   s 675..912 m (247 m) at (-1653, -408) max grade 28.5 %
+   TUNNEL-CANDIDATE R4-2    s 192..337 m (155 m) at (-3113, -4537) max grade 29.3 %
+   TUNNEL-CANDIDATE R4-5    s 493..644 m (161 m) at (-3169, -807) max grade 43.3 %
+   TUNNEL-CANDIDATE R4-9    s 2574..2754 m (190 m) at (-1439, -2183) max grade 49.2 %
+   TUNNEL-CANDIDATE R4-12   s 1504..1605 m (111 m) at (1114, -1131) max grade 21.5 %
+   TUNNEL-CANDIDATE R4-24   s 188..297 m (119 m) at (2702, -2467) max grade 28.1 %
+   TUNNEL-CANDIDATE R4-24   s 616..734 m (128 m) at (2918, -2844) max grade 53.6 %
+   TUNNEL-CANDIDATE R4-24   s 1584..1712 m (138 m) at (3456, -3633) max grade 44.0 %
+   TUNNEL-CANDIDATE R4-24   s 2457..2575 m (128 m) at (4130, -4128) max grade 56.6 %
+   TUNNEL-CANDIDATE R4-24   s 2653..2906 m (263 m) at (4265, -4315) max grade 98.6 %
+   TUNNEL-CANDIDATE R2-1    s 1093..1214 m (132 m) at (-499, -4123) max grade 55.6 %
+   TUNNEL-CANDIDATE R2-3    s 368..627 m (269 m) at (-2572, -4707) max grade 51.3 %
+   TUNNEL-CANDIDATE R2-5    s 380..497 m (127 m) at (-4232, -4794) max grade 29.6 %
+   TUNNEL-CANDIDATE R2-6    s 1036..1135 m (109 m) at (-2766, -2491) max grade 55.4 %
+   TUNNEL-CANDIDATE R2-9    s 10..267 m (267 m) at (-1809, -2069) max grade 44.6 %
+   TUNNEL-CANDIDATE R2-11   s 342..463 m (131 m) at (-1772, -1928) max grade 35.5 %
+   TUNNEL-CANDIDATE R2-11   s 704..795 m (101 m) at (-1895, -1630) max grade 31.0 %
+   TUNNEL-CANDIDATE R2-11   s 1124..1273 m (160 m) at (-1771, -1216) max grade 41.4 %
+   TUNNEL-CANDIDATE R2-11   s 1883..1992 m (119 m) at (-1133, -1379) max grade 41.3 %
+   TUNNEL-CANDIDATE R2-47   s 50..283 m (244 m) at (959, 1376) max grade 35.5 %
+   TUNNEL-CANDIDATE R2-54   s 430..640 m (220 m) at (4496, 2624) max grade 27.6 %
+   TUNNEL-CANDIDATE R2-55   s 192..410 m (228 m) at (3038, 991) max grade 47.6 %
+   TUNNEL-CANDIDATE R2-56   s 20..178 m (168 m) at (3248, 277) max grade 106.1 %
+   TUNNEL-CANDIDATE R2-56   s 964..1085 m (131 m) at (3947, 587) max grade 60.6 %
+   TUNNEL-CANDIDATE R2-56   s 1114..1222 m (118 m) at (3958, 725) max grade 59.9 %
+   TUNNEL-CANDIDATE R2-56   s 1262..1381 m (129 m) at (4019, 866) max grade 73.5 %
+   TUNNEL-CANDIDATE R2-56   s 1411..1503 m (102 m) at (4052, 990) max grade 126.2 %
+   TUNNEL-CANDIDATE R2-58   s 612..723 m (122 m) at (3500, -968) max grade 33.9 %
+   TUNNEL-CANDIDATE R2-59   s 10..142 m (142 m) at (3577, -835) max grade 73.6 %
+   TUNNEL-CANDIDATE R2-59   s 454..563 m (119 m) at (3884, -1119) max grade 46.7 %
+   TUNNEL-CANDIDATE R2-59   s 699..831 m (142 m) at (4134, -1168) max grade 136.1 %
+   TUNNEL-CANDIDATE R2-59   s 1012..1257 m (256 m) at (4417, -1343) max grade 126.8 %
+   TUNNEL-CANDIDATE R2-60   s 665..794 m (139 m) at (-921, -1594) max grade 68.7 %
+   TUNNEL-CANDIDATE R2-61   s 1204..1433 m (239 m) at (-761, -323) max grade 66.1 %
+   TUNNEL-CANDIDATE R2-62   s 10..147 m (147 m) at (598, -3897) max grade 47.0 %
+   TUNNEL-CANDIDATE R2-62   s 4069..4299 m (240 m) at (4406, -4500) max grade 84.7 %
+   TUNNEL-CANDIDATE R2-71   s 20..218 m (208 m) at (1243, -4598) max grade 38.6 %
+   TUNNEL-CANDIDATE R2-73   s 10..159 m (159 m) at (4189, -4079) max grade 132.6 %
+   TUNNEL-CANDIDATE R2-73   s 189..402 m (223 m) at (4374, -3981) max grade 110.7 %
+   TUNNEL-CANDIDATE R2-73   s 433..553 m (130 m) at (4555, -3896) max grade 125.8 %
+   TUNNEL-CANDIDATE R2-73   s 785..914 m (139 m) at (4835, -3687) max grade 162.1 %
+   TUNNEL-CANDIDATE R2-73   s 1185..1552 m (377 m) at (4924, -3181) max grade 157.0 %
+   TUNNEL-CANDIDATE R2-73   s 1749..1848 m (109 m) at (4832, -2762) max grade 84.8 %
+   TUNNEL-CANDIDATE R2-74   s 142..303 m (171 m) at (-380, -2522) max grade 28.0 %
+   48 tunnel-candidate stretches on 27 lines
+
+4. RAIL: crossings of a line with a rail edge (needs a bridge or underpass, or the line is moved; not decided here)
+   R6-9    x rail edge ring-north at (-1668, -2767)
+   R6-11   x rail edge ring-northeast at (2599, -1604)
+   R6-15   x rail edge ring-west at (-2486, -1033)
+   R4-20   x rail edge west-sw at (-388, 564)
+   R4-20   x rail edge ring-south at (-76, 1669)
+   R2-28   x rail edge south-1 at (59, 669)
+   R2-28   x rail edge east-1 at (334, 354)
+   R2-33   x rail edge ring-south at (-516, 1580)
+   R2-74   x rail edge north-1 at (534, -2924)
+   9 crossings on 7 lines; lines with samples within 25 m of a rail: 7
+
+5. BUILDINGS inside the road corridor (existing buildings that the road would hit)
+   R6-11   1 building(s)
+   R4-9    1 building(s)
+   R4-12   16 building(s)
+   R4-13   2 building(s)
+   R4-20   6 building(s)
+   R2-18   4 building(s)
+   R2-19   2 building(s)
+   R2-28   28 building(s)
+   R2-29   3 building(s)
+   R2-43   1 building(s)
+   R2-77   4 building(s)
+   68 building hits on 11 lines
+
+6. ENGINEERING AREAS passed (fenced land, R8: what is done at the location)
+   R2-74   eng-textile 180 m
+
+7. GROUND CLASS of all new lines (metres): {"A":18570,"F":790,"R":940,"X":3570,"C":28330,"D":16830,"B":30910,"~":350,"E":24550}   (A flat < 3 %, B 3-8 %, C 8-15 %, D 15-25 %, E > 25 %, ~ water / sea, R rail corridor, X fixed road, F airport / port / army / engineering land)
+
+SUMMARY
+  157 lines, 123 km. clean (no flag): 79; with water 10; grade over limit 67; rail crossed 7; buildings in corridor 11; tunnel-candidates 48
+  NOT RUN here: tsc of the whole game, npm run build, the game (no node_modules in the zip). Natural ground only: finished-profile grades come in step 21.4. This script changes no game file.

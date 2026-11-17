@@ -1,0 +1,16 @@
+===== J1-E (undefined, rail undefined) =====
+  rail crossings on this arm (rail design of the game now): north-1 s 424 rail top 33.82; east-1 s 919 rail top 24.85
+  best cost 8594.1; PVIs (s, level, curve): 0 (18.19, 0) | 130 (18.58, 0) | 266 (18.56, 0) | 339 (18.68, 122) | 599 (26.31, 0) | 808 (32.45, 0) | 957 (36.61, 291) | 1236 (28.41, 259) | 1476 (35.48, 213) | 1993 (29.09, 93) | 2381 (32.50, 121) | 2531 (30.25, 171) | 2717 (34.69, 190) | 2812 (33.42, 0)
+  OLD  PVIs: 0 (18.19, 0) | 130 (18.58, 125) | 240 (22.72, 0) | 366 (26.63, 0) | 524 (31.42, 206) | 681 (29.82, 95) | 1455 (38.60, 207) | 1702 (31.39, 167) | 1865 (32.79, 144) | 1993 (30.27, 100) | 2568 (31.97, 82) | 2632 (33.34, 0) | 2724 (34.90, 172) | 2812 (33.42, 0)
+  PASS  grade within the arm limits (pad stretch 3.0 %, hill 3.0 % to s 340, 3 % beyond) max grade 2.94 % (s 65..2812)
+  PASS  every vertical curve K >= minimum (crest / sag) and length >= 60 m     8 curves
+  PASS  vertical curves do not overlap                                         0 overlaps
+  PASS  first curve starts at s >= 60 (pad plane kept)                         first curve starts at s 278
+  PASS  end level = ring level at the T                                        end 33.42 m
+  PASS  centre cut <= 12 m in the changed part                                 max cut 7.1 m 
+  PASS  river: road >= 2.5 m over the water in the changed part                17.6 m
+  PASS  north-1 at s 424: rail over road, deck underside >= 7 m over the road  road 21.17 m (was 28.38), ground 18.19 m, rail top 33.82 m, gap 10.00 m (was 2.79)
+  PASS  east-1 at s 919: road over rail, road >= 9 m over the rail top         road 34.41 m (was 32.51), rail top 24.85 m, gap 9.56 m (was 7.66)
+  INFO  viaduct runs now (fill > 7 m): s 555..680 (max fill 8.9 m); s 760..969 (max fill 25.8 m); s 994..1184 (max fill 9.6 m); s 1683..1708 (max fill 7.7 m)
+SUMMARY: 9 PASS, 0 FAIL (only the checks of this script; the game checks must be run separately)
+written: docs/j1c7c_profile.json (E, new route). Next steps: structures list of E, tools/j1-arm-data.py, game checks, rail.

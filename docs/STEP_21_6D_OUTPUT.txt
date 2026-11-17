@@ -1,0 +1,67 @@
+STEP 21.6d DRAIN (headless; nothing in src changed; tsc / npm run build / game NOT RUN; my numbers, constants at the top of the script)
+   ditch / gully fall at least 0.5 % between outlets; outlet at every sag and at the low end of a line (reason SAG / LOW END), extra outlets SPAN (spacing) and FLAT (inside a flat run); outletMax R6 150 / R4 120 / R2 100 / C 80 / L 60 m; ditch depth gain limit 1.0 m; structure stretches of 21.6c carry no ditch (deck / wall drainage = 21.8)
+
+1. PER CLASS
+   class 6     7.7 km   ditch   4.8 km per side (lined  0.0 km)   kerb + gully   0.0 km,    10 inlets   outlets   35 (sag 5, low end 5, span 25, flat 0; 1 sags lie in a structure = 21.8)   flat runs 3 (290 m)   structure stretches without ditch 2.8 km
+   class 4    35.1 km   ditch  17.1 km per side (lined  5.4 km)   kerb + gully   9.1 km,   790 inlets   outlets  230 (sag 33, low end 24, span 170, flat 3; 5 sags lie in a structure = 21.8)   flat runs 17 (4615 m)   structure stretches without ditch 8.9 km
+   class 2    61.2 km   ditch  20.5 km per side (lined  8.1 km)   kerb + gully  22.8 km,  1988 inlets   outlets  463 (sag 80, low end 77, span 300, flat 6; 13 sags lie in a structure = 21.8)   flat runs 19 (3329 m)   structure stretches without ditch 17.9 km
+   class C     3.8 km   ditch   0.0 km per side (lined  0.0 km)   kerb + gully   3.6 km,   318 inlets   outlets   48 (sag 15, low end 6, span 27, flat 0; 1 sags lie in a structure = 21.8)   flat runs 2 (209 m)   structure stretches without ditch 0.2 km
+   class L     6.0 km   ditch   0.0 km per side (lined  0.0 km)   kerb + gully   5.3 km,   553 inlets   outlets  101 (sag 12, low end 26, span 63, flat 0; 0 sags lie in a structure = 21.8)   flat runs 2 (170 m)   structure stretches without ditch 0.7 km
+   TOTAL ditch 42.4 km per side (lined 13.4 km = 32 %), 3659 kerb inlets, 877 outlets
+   (a ditch is on BOTH sides of an OPEN road, so the ditch metres are per side; R6 / R4: the median drains with its own inlets at the same stations, count in 21.9)
+
+2. PER SECTION
+   C-ZONE   ditch   0.00 km  lined  0.00 km  kerb + gully   3.60 km  inlets   288
+   L-ZONE   ditch   0.00 km  lined  0.00 km  kerb + gully   5.29 km  inlets   529
+   R2-OPEN  ditch  20.45 km  lined  8.05 km  kerb + gully   0.00 km  inlets     0
+   R2-ZONE  ditch   0.00 km  lined  0.00 km  kerb + gully  22.85 km  inlets  1828
+   R4-OPEN  ditch  17.12 km  lined  5.37 km  kerb + gully   0.00 km  inlets     0
+   R4-ZONE  ditch   0.00 km  lined  0.00 km  kerb + gully   9.06 km  inlets   724
+   R6       ditch   4.84 km  lined  0.00 km  kerb + gully   0.00 km  inlets     0
+
+3. FLAT RUNS (road grade under 0.5 % for 60 m or more, structures left out): the ditch gets its own 0.5 % fall in spans between outlets (saw-tooth)
+   R4-6   s    90 ..   882   792 m  grade -0.04 %  R4-ZONE  outlets inside 8 (needed 8), span 111 m, ditch gain 0.56 m, ditch depth 0.56 m at the top of a span
+   R4-18  s   150 ..   658   508 m  grade  0.02 %  R4-OPEN  outlets inside 6 (needed 5), span 100 m, ditch gain 0.50 m, ditch depth 1.00 m at the top of a span
+   R4-19  s  2039 ..  2509   470 m  grade -0.12 %  R4-OPEN  outlets inside 4 (needed 4), span 120 m, ditch gain 0.60 m, ditch depth 1.10 m at the top of a span
+   R4-19  s  1459 ..  1889   430 m  grade -0.36 %  R4-OPEN  outlets inside 4 (needed 4), span 110 m, ditch gain 0.55 m, ditch depth 1.05 m at the top of a span
+   R2-28  s   812 ..  1183   371 m  grade  0.08 %  R2-ZONE  outlets inside 4 (needed 3), span 90 m, ditch gain 0.45 m, ditch depth 0.45 m at the top of a span
+   R4-28  s     0 ..   349   349 m  grade  0.00 %  R4-ZONE  outlets inside 3 (needed 2), span 90 m, ditch gain 0.45 m, ditch depth 0.45 m at the top of a span
+   R2-32  s     0 ..   333   333 m  grade  0.30 %  R2-ZONE  outlets inside 3 (needed 3), span 90 m, ditch gain 0.45 m, ditch depth 0.45 m at the top of a span
+   R4-20  s   541 ..   841   300 m  grade  0.25 %  R4-ZONE  outlets inside 3 (needed 3), span 100 m, ditch gain 0.50 m, ditch depth 0.50 m at the top of a span
+   R2-75  s    70 ..   359   289 m  grade -0.35 %  R2-ZONE  outlets inside 3 (needed 3), span 80 m, ditch gain 0.40 m, ditch depth 0.40 m at the top of a span
+   R2-28  s   261 ..   531   271 m  grade  0.25 %  R2-ZONE  outlets inside 5 (needed 4), span 70 m, ditch gain 0.35 m, ditch depth 0.35 m at the top of a span
+   R2-6   s    40 ..   289   249 m  grade  0.31 %  R2-ZONE  outlets inside 5 (needed 2), span 60 m, ditch gain 0.30 m, ditch depth 0.30 m at the top of a span
+   R2-33  s  1208 ..  1437   230 m  grade -0.30 %  R2-ZONE  outlets inside 3 (needed 3), span 80 m, ditch gain 0.40 m, ditch depth 0.40 m at the top of a span
+   R2-75  s   439 ..   659   220 m  grade  0.33 %  R2-ZONE  outlets inside 2 (needed 2), span 100 m, ditch gain 0.50 m, ditch depth 0.50 m at the top of a span
+   R4-27  s   171 ..   383   212 m  grade -0.29 %  R4-ZONE  outlets inside 2 (needed 2), span 101 m, ditch gain 0.51 m, ditch depth 0.51 m at the top of a span
+   R2-28  s     0 ..   211   211 m  grade  0.37 %  R2-ZONE  outlets inside 2 (needed 2), span 71 m, ditch gain 0.35 m, ditch depth 0.35 m at the top of a span
+   R4-20  s   140 ..   350   210 m  grade -0.37 %  R4-ZONE  outlets inside 2 (needed 2), span 120 m, ditch gain 0.60 m, ditch depth 0.60 m at the top of a span
+   R4-4   s    30 ..   233   203 m  grade -0.15 %  R4-ZONE  outlets inside 3 (needed 3), span 101 m, ditch gain 0.51 m, ditch depth 0.51 m at the top of a span
+   R4-1   s    70 ..   270   200 m  grade -0.29 %  R4-OPEN  outlets inside 2 (needed 2), span 110 m, ditch gain 0.55 m, ditch depth 1.05 m at the top of a span
+   R4-10  s   729 ..   928   200 m  grade -0.25 %  R4-OPEN  outlets inside 2 (needed 2), span 99 m, ditch gain 0.50 m, ditch depth 1.00 m at the top of a span
+   R4-19  s  2699 ..  2879   180 m  grade -0.25 %  R4-OPEN  outlets inside 1 (needed 1), span 110 m, ditch gain 0.55 m, ditch depth 1.05 m at the top of a span
+   R4-20  s  1031 ..  1201   170 m  grade -0.38 %  R4-ZONE  outlets inside 2 (needed 2), span 90 m, ditch gain 0.45 m, ditch depth 0.45 m at the top of a span
+   R2-33  s   160 ..   319   160 m  grade -0.34 %  R2-ZONE  outlets inside 2 (needed 2), span 80 m, ditch gain 0.40 m, ditch depth 0.40 m at the top of a span
+   R6-15  s  1322 ..  1462   140 m  grade  0.43 %  R6       outlets inside 1 (needed 1), span 130 m, ditch gain 0.65 m, ditch depth 1.15 m at the top of a span
+   R2-37  s    60 ..   199   139 m  grade -0.24 %  R2-ZONE  outlets inside 2 (needed 2), span 69 m, ditch gain 0.35 m, ditch depth 0.35 m at the top of a span
+   R2-70  s    70 ..   201   131 m  grade -0.31 %  R2-OPEN  outlets inside 1 (needed 1), span 91 m, ditch gain 0.45 m, ditch depth 0.85 m at the top of a span
+   R4-27  s   504 ..   625   121 m  grade -0.28 %  R4-ZONE  outlets inside 1 (needed 1), span 61 m, ditch gain 0.30 m, ditch depth 0.30 m at the top of a span
+   R2-40  s   169 ..   289   119 m  grade  0.18 %  R2-ZONE  outlets inside 1 (needed 1), span 60 m, ditch gain 0.30 m, ditch depth 0.30 m at the top of a span
+   R2-42  s    20 ..   130   110 m  grade -0.37 %  R2-ZONE  outlets inside 1 (needed 1), span 100 m, ditch gain 0.50 m, ditch depth 0.50 m at the top of a span
+   R2-36  s   139 ..   249   110 m  grade -0.25 %  R2-ZONE  outlets inside 1 (needed 1), span 100 m, ditch gain 0.50 m, ditch depth 0.50 m at the top of a span
+   C-11   s     0 ..   109   109 m  grade -0.45 %  C-ZONE   outlets inside 1 (needed 1), span 59 m, ditch gain 0.30 m, ditch depth 0.30 m at the top of a span
+   ... 13 more in docs/centre_drain.json
+   43 flat runs, 8615 m; R4-6 and R4-10 (the two of 21.5 section 4): R4-6 s 90-882 792 m, R4-10 s 729-928 200 m
+
+4. OUTLET TABLE: docs/centre_drain.json "lines" (per line: s, reason SAG / LOW END / SPAN / FLAT, kind = cross culvert D600 / ditch outfall for OPEN, gully line + storm pipe for ZONE, flag inStructure)
+   The low-end outlets of a line end at a junction node or a road: where the water goes there (the side ditch of the bigger road, a culvert, a stream) is decided in 21.7 / 21.8; here only the place and the kind are fixed.
+
+5. CHECKS
+   PASS  154 lines done (154)
+   PASS  every ditch run between a divide and its outlet is at most outletMax (474 pieces, worst span 100 % of outletMax)
+   PASS  every sag has an outlet (sags inside a structure stretch go to 21.8)
+   PASS  every flat run keeps the ditch depth gain within 1.0 m (worst 0.65 m)
+   PASS  every outlet lies on its line
+   PASS  ditch + gully + structure metres cover every R6 / R4 line
+   PASS  every section used is in the table of 21.6b
+PASS 7  FAIL 0

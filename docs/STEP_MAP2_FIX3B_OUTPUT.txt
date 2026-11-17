@@ -1,0 +1,25 @@
+STEP MAP2-FIX3b: built 6-lane roots, turn limit relaxed by BLEND (trim end of body 0..600 m, refit <= 60 m dev, arrival turn <= 75 deg).
+NOT joined before: R6 22, R4 49, R2 112. After: R6 22, R4 49, R2 104.
+
+BLEND  R2-5     end   -> R6-6A   25 m  trim 200 m  dev 33 m  minR 110  node J-144
+
+TRIED AND FAILED (last reason per line/root):
+  R2-165.1  -> R6-7    36 m : crosses a road (R1)
+  R4-27.2   -> R6-8    45 m : moves T-junction J-59
+  R4-81     -> R6-7    54 m : body too short after trim
+  R2-90     -> R6-5    63 m : body too short after trim
+  R6-23.1   -> R6-5    72 m : body too short after trim
+  R6-32     -> R6-8    96 m : body too short after trim
+  R6-29     -> R6-5   126 m : moves T-junction J-77
+  R2-107.2  -> R6-5   156 m : body too short after trim
+  R4-5.2    -> R6-6A  169 m : body too short after trim
+  R6-23.1   -> R6-8   257 m : body too short after trim
+  R2-117    -> M6-1   264 m : crosses a road (R1)
+  R2-109.1  -> R6-3   293 m : body too short after trim
+  R4-75     -> R6-7   294 m : body too short after trim
+  R2-110.1  -> R6-5   302 m : body too short after trim
+  R2-189    -> R6-6A  332 m : body too short after trim
+  R6-33     -> R6-5   332 m : body too short after trim
+  R2-106.3  -> R6-5   337 m : body too short after trim
+  R4-37     -> R6-3   340 m : body too short after trim
+  R2-190.2  -> R6-6A  342 m : body too short after trim

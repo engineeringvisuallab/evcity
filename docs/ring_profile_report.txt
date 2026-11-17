@@ -1,0 +1,78 @@
+grade-line nodes 322 every 60 m, level step 0.48 m, closure gap between lap 3 and lap 4: 0.00 m
+max |grade| 4.00 %   mean 2.14 %   share above 3 % 34.5 %
+TOTAL CUT 7.85 million m3   TOTAL FILL 8.22 million m3   net (cut - fill) -0.37 million m3
+
+DEEP CUT: centreline more than 12 m below the ground (3.7 limit; user decision = cut it)
+  station   2900 -   3220    320 m   max  31.1 m deep at 3050
+  station   6310 -   6700    390 m   max  54.8 m deep at 6520
+  station   8280 -   8860    580 m   max  53.4 m deep at 8700
+  station  14570 -  15070    500 m   max  47.4 m deep at 14830
+
+VERY DEEP CUT over 30 m
+  station   3040 -   3080     40 m   max  31.1 m deep at 3050
+  station   6360 -   6650    290 m   max  54.8 m deep at 6520
+  station   8560 -   8800    240 m   max  53.4 m deep at 8700
+  station  14640 -  14970    330 m   max  47.4 m deep at 14830
+
+TALL FILL: more than 7 m above the ground (3.7 limit)
+  station    800 -    880     80 m   max  12.2 m high at 820
+  station   2540 -   2560     20 m   max   7.1 m high at 2540
+  station   2590 -   2640     50 m   max   7.5 m high at 2620
+  station   3390 -   3520    130 m   max   8.3 m high at 3440
+  station   5660 -   5690     30 m   max   7.5 m high at 5670
+  station   5800 -   5910    110 m   max   9.3 m high at 5880
+  station   6080 -   6120     40 m   max   9.6 m high at 6100
+  station   6800 -   8060   1260 m   max  20.7 m high at 7000
+  station   8160 -   8200     40 m   max  10.6 m high at 8180
+  station   8990 -   9490    500 m   max  14.8 m high at 9250
+  station  11050 -  11190    140 m   max  11.9 m high at 11100
+  station  11820 -  11840     20 m   max   7.3 m high at 11820
+  station  12320 -  12350     30 m   max   7.4 m high at 12330
+  station  13960 -  14490    530 m   max  25.8 m high at 14290
+  station  15200 -  16200   1000 m   max  41.5 m high at 15540
+  station  16680 -  16750     70 m   max  10.8 m high at 16720
+  station  17770 -  17780     10 m   max   7.1 m high at 17770
+
+GRADE ABOVE 3 % (desirable limit; hard limit 4 %)
+  station   1580 -   1770    190 m   max   3.6 % at 1630
+  station   2680 -   2730     50 m   max   3.1 % at 2700
+  station   3200 -   3590    390 m   max   4.0 % at 3350
+  station   5300 -   6170    870 m   max   4.0 % at 5780
+  station   6620 -   7250    630 m   max   4.0 % at 6950
+  station   7700 -   8330    630 m   max   4.0 % at 8060
+  station   8780 -   9530    750 m   max   4.0 % at 9320
+  station  11780 -  11930    150 m   max   3.6 % at 11830
+  station  12520 -  12570     50 m   max   3.1 % at 12540
+  station  13820 -  14990   1170 m   max   4.0 % at 14750
+  station  15440 -  16490   1050 m   max   4.0 % at 15900
+  station  17840 -  18110    270 m   max   4.0 % at 17970
+  station  18560 -  19010    450 m   max   4.0 % at 18690
+
+CUT / FILL PER 1 km OF RING (million m3)
+     0-  1.0 km   cut   0.071   fill   0.096   max depth    6.8 /  -12.2 m
+     1-  2.0 km   cut   0.019   fill   0.025   max depth    5.6 /   -2.5 m
+     2-  3.0 km   cut   0.350   fill   0.181   max depth   23.3 /   -7.5 m
+     3-  4.0 km   cut   0.597   fill   0.161   max depth   31.1 /   -8.3 m
+     4-  5.0 km   cut   0.030   fill   0.106   max depth    4.0 /   -4.1 m
+     5-  6.0 km   cut   0.020   fill   0.233   max depth    3.4 /   -9.3 m
+     6-  7.0 km   cut   1.941   fill   0.375   max depth   54.8 /  -20.6 m
+     7-  8.0 km   cut   0.000   fill   1.141   max depth   -8.1 /  -20.7 m
+     8-  9.0 km   cut   2.126   fill   0.172   max depth   53.4 /  -17.1 m
+     9- 10.0 km   cut   0.006   fill   0.581   max depth    1.0 /  -14.8 m
+    10- 11.0 km   cut   0.178   fill   0.060   max depth   11.6 /   -3.8 m
+    11- 12.0 km   cut   0.128   fill   0.203   max depth    9.3 /  -11.9 m
+    12- 13.0 km   cut   0.080   fill   0.116   max depth    8.6 /   -7.4 m
+    13- 14.0 km   cut   0.049   fill   0.190   max depth    4.0 /  -15.7 m
+    14- 15.0 km   cut   1.752   fill   0.955   max depth   47.4 /  -25.8 m
+    15- 16.0 km   cut   0.116   fill   2.931   max depth   18.5 /  -41.5 m
+    16- 17.0 km   cut   0.033   fill   0.470   max depth    4.1 /  -27.7 m
+    17- 18.0 km   cut   0.134   fill   0.118   max depth   10.0 /   -7.1 m
+    18- 19.0 km   cut   0.217   fill   0.080   max depth    7.6 /   -6.8 m
+    19- 19.3 km   cut   0.001   fill   0.024   max depth    0.5 /   -5.0 m
+
+WATER STRETCHES (bridge): design height above the water level
+  station    800 -    890    90 m   water  14.5 m   road  19.1 m   clearance  4.3 m
+  station   8150 -   8200    50 m   water  43.5 m   road  50.2 m   clearance  5.1 m
+  station  12310 -  12350    40 m   water  22.2 m   road  25.8 m   clearance  3.4 m
+  station  14000 -  14020    20 m   water  19.0 m   road  37.7 m   clearance 18.3 m
+  station  15410 -  15430    20 m   water  42.3 m   road  76.9 m   clearance 34.3 m

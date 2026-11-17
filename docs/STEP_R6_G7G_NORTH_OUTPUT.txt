@@ -1,0 +1,32 @@
+R6 STEP G7g part 2: JX-2 HALF interchange on the NORTH side of J1-E + stem R6-8 (= L33 north part). Numbers + game data. npm run build / game run NOT run.
+Zones (G7c numbers, V50 slips R 75 Ls 35 Ts 93): toward J1 310 m (exit: nose, 115.7 m decel lane, 91.3 m taper), toward the ring 439 m (entry: merge, 151.5 m accel lane, 182.5 m taper). Full-width parts 219 / 257 m must be on ground (20 m from a viaduct), the thin taper ends may lie on a deck by <= 60 m (exit) / 100 m (entry).
+
+A. TAP WINDOW (north side): s 1730 .. 2005
+L33 (G5, re-routed): 50 points, crosses J1-E near point 25 (1235,633); north end E = (1530.5, 421.8); the south part (to R6-5) is NOT used (see r6-g7g-tap.ts: south side has a basin).
+
+B. STEM R6-8 + SLIPS for every tap of the window (step 5 m): tried 56; rejected {"stem radius < 229 after smoothing":39}; feasible 17
+   best (score = stem length + 8 x cut + 4 x fill + 5 x grade %):
+     tap s 1808: stem 219 m, min radius 229 m, grade 1.0 %, cut 6.5 m, fill 5.2 m, rail 399 m, other road 496 m, arm level 36.05
+     tap s 1808: stem 219 m, min radius 229 m, grade 1.0 %, cut 6.5 m, fill 5.2 m, rail 399 m, other road 496 m, arm level 36.05
+     tap s 1798: stem 214 m, min radius 233 m, grade 1.0 %, cut 7.1 m, fill 6.0 m, rail 399 m, other road 495 m, arm level 36.34
+     tap s 1798: stem 214 m, min radius 233 m, grade 1.0 %, cut 7.1 m, fill 6.0 m, rail 399 m, other road 495 m, arm level 36.34
+     tap s 1828: stem 223 m, min radius 234 m, grade 1.0 %, cut 6.8 m, fill 5.2 m, rail 399 m, other road 498 m, arm level 35.46
+     tap s 1828: stem 223 m, min radius 234 m, grade 1.0 %, cut 6.8 m, fill 5.2 m, rail 399 m, other road 498 m, arm level 35.46
+
+CHOSEN TAP s 1808 (arm level 36.05 m = ground): 1508.2 m from the J1 plaza edge (R5 600 m ok), 1228 m to the ring join (R5 1600 m NOT met; nothing on J1-E can meet it: s 900 .. 1437 is viaduct and water).
+   stem R6-8: 219 m from S0 (1469.1, 626) to E (1530.5, 421.8), min radius 229 m, grade 1.0 %, cut 6.5 m, fill 5.2 m, level 36.05 at S0, rail 399 m, other roads 496 m, arm 130 m
+   m1 exit slip (arm ring-bound -> stem): 168 m, nose at arm s 1705 (level 38.78), grade 1.6 %, cut 4.5 m, fill 0.2 m, rail 565 m
+   m2 entry slip (stem -> arm ring-bound): 188 m, merge at arm s 1913 (level 32.97), grade 1.6 %, cut 5.8 m, fill 0.6 m, rail 579 m
+   lane zones on the arm: s 1498 .. 2248 (viaducts: E3 ends 1422, E4 starts 2344); exit nose to entry merge 208 m
+PASS  WATER: stem, both slips and 35 m beside the stem are dry (sc.water > sc.h - 0.3 nowhere)
+PASS  WATER: no water within 35 m of the arm in the lane zones
+PASS  lane zones: full-width parts on ground (20 m from a viaduct), thin taper ends on a deck within the limits
+PASS  R3: stem min radius 229 m >= 229 m (the stem is a smoothed router path, NOT an exact spiral-arc alignment; the slips are exact)
+PASS  R11: stem grade 1.0 % <= 4 %
+PASS  slip grades <= 5 %
+PASS  rail >= 60 m
+PASS  no other game road within 60 m of the stem (496 m)
+PASS  cut <= 12 m and fill <= 7 m on stem and slips
+PASS  exit nose to entry merge >= 150 m (weaveMin)
+
+RESULT: all checks above PASS (numbers; build / game NOT run here)

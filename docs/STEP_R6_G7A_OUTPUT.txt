@@ -1,0 +1,17 @@
+STEP G7a (JX-3): can R6-6 pass the railway north-1 AND the arm J1-N with legal levels? (scripts/r6-g7a-probe2.ts, scripts/r6-g7a-search.ts; read-only, nothing in src/ changed)
+FACTS: JX-3 = (544, -1776) on J1-N, arm level 44.55 m = ground (no structure; N3 ends 50 m before). Rail north-1 runs N-S at x about 495, 49 m west of JX-3: rail 36.0 m on ground 41.7 (cutting) at JX-3, 36.1 on ground 48.8 (12 m cutting) at the arm crossing (491,-1690), rail 35.2 on ground 29.9 (5 m embankment) at z -1858. R6-6A end (435,-1880) level 27.8 (west of the rail), R6-6B start (605,-1700) level 39.5 (south-east of the arm). Buffers: rail over road 7.0 m (underside), road over rail 9.0 m, arm: road clearance 5.5 m + deck 2.0 m (assumed).
+
+SEARCH 1: rail crossing and arm crossing at most 220 m apart, R6 grade <= 3.5 %, cut <= 12 m, fill <= 7 m:
+feasible pairs 0
+
+SEARCH 2: grade <= 4 %, cut <= 12 m, fill <= 12 m (viaduct), shortest gap first:
+feasible pairs 9016
+rail-over/arm-over rail(496,-1818) R6 44.7 cut -8.3 | arm s1487 (626,-1875) R6 50.3 cut -7.5 | gap 142 m grade 4.0%
+rail-over/arm-over rail(494,-1758) R6 45.1 cut 1.3 | arm s1455 (604,-1851) R6 50.8 cut -7.5 | gap 144 m grade 4.0%
+rail-over/arm-over rail(496,-1838) R6 44.5 cut -9.5 | arm s1503 (638,-1886) R6 50.1 cut -7.5 | gap 149 m grade 3.8%
+rail-over/arm-over rail(497,-1858) R6 44.2 cut -9.5 | arm s1511 (643,-1891) R6 50.0 cut -7.5 | gap 150 m grade 3.9%
+rail-over/arm-under rail(499,-1938) R6 42.7 cut -9.5 | arm s1383 (558,-1796) R6 36.5 cut 7.8 | gap 154 m grade 4.0%
+rail-over/arm-over rail(498,-1898) R6 43.5 cut -9.5 | arm s1527 (655,-1902) R6 49.8 cut -7.5 | gap 157 m grade 4.0%
+rail-over/arm-under rail(500,-1958) R6 42.2 cut -9.5 | arm s1415 (578,-1821) R6 36.1 cut 7.8 | gap 158 m grade 3.9%
+
+READING: at JX-3 the rail is only 49 m from the arm, so R6 would need a level change of about 9-17 m in 49 m (18-35 %): NO legal solution. Legal only if the two crossings are >= about 140-150 m apart, with R6 on a viaduct 8-10 m high over the rail, 4 % grade (over the 3 % aim of R11), then under or over the arm.

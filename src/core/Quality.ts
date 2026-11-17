@@ -1,0 +1,378 @@
+/**
+ * Graphics quality: one preset per device class, picked automatically (Chrome, Safari, Firefox, phone, tablet, PC) and changeable in the settings menu.
+ *
+ *   initQuality()  - call ONCE in main.ts, BEFORE the engine is imported (LOD / shadow / fog numbers are read when the engine modules load).
+ *   Q              - the active preset (pixel ratio cap, antialiasing, shadow size, site draw distance, FPS cap ...).
+ *   DynamicResolution - lowers the render resolution by itself when the FPS drops, raises it again when there is room.
+ *
+ * Safari / iOS notes: Safari has no navigator.deviceMemory and hides the GPU name, so the detection uses the user agent (iPhone / iPad / iPadOS-as-Mac),
+ * the CPU core count and the touch points. All iPhone / iPad browsers (Chrome included) are WebKit, so they get the same treatment.
+ */
+import { Config } from './Config';
+
+export type QualityChoice = 'auto' | 'low' | 'medium' | 'high';
+export type QualityTier = 'low' | 'medium' | 'high';
+
+export interface QualitySettings {
+  tier: QualityTier;
+  /** Highest device pixel ratio of the picture (normal render mode). */
+  maxDpr: number;
+  /** Highest number of pixels of the picture (width x height x ratio^2) in normal render mode: protects 4K screens and tablets. */
+  maxPixels: number;
+  antialias: boolean;
+  powerPreference: 'default' | 'high-performance' | 'low-power';
+  shadowMapSize: number;
+  shadowExtent: number;
+  /** Terrain LOD distances (m); the last one is the load radius. */
+  lodDistances: number[];
+  /** Engineering sites are drawn (and built) within this distance (m) of the player. */
+  siteShowDist: number;
+  /** 0 = no limit. */
+  fpsCap: number;
+  /** Lowest resolution factor the dynamic resolution may use. */
+  minScale: number;
+
+  // ---- entity counts / densities (high = the original game values) ----
+  /** Chance multipliers of the placement in the chunk workers (trees, rocks, grass tufts). 1 = every one of the original set; lower = a thinner subset of the SAME set. */
+  treeMul: number;
+  rockMul: number;
+  grassMul: number;
+  /** Single grass tufts per accepted meadow cell (Config.vegetation.grass.dense): 7.5 = 7.5x density. */
+  grassDense: number;
+  /** Chunks up to this LOD get trees and rocks (see Config.vegetation.maxLod). */
+  treeMaxLod: number;
+  /** Grass draw radius (m); the LOD rings and the fade-out are squeezed to fit. */
+  grassRadius: number;
+  /** Blades per tuft model multiplier (Config.vegetation.grass.bladeDensity). */
+  grassBlades: number;
+  /** People on foot / AI cars / buses around the player. */
+  peopleTarget: number;
+  trafficTarget: number;
+  maxBuses: number;
+  /** Bird flocks (of 12), land animals, predators, dolphins, fish schools. */
+  flockCount: number;
+  landAnimals: number;
+  predators: number;
+  dolphins: number;
+  fishSchools: number;
+  /** Street lamp spacing multiplier (1 = original, 1.5 = a lamp every 1.5x as far). */
+  lampStepMul: number;
+  /** Vehicle headlight beams on the road are drawn only this close (m) to the player; the small lamp glows reach much farther. */
+  lightFxDist: number;
+  /** GRASS 4: draw radius multiplier of the roadside models (tree pits, hedges, guardrails, verge shrubs: Config.city.roadside.drawRadius) and wind sway strength of the grass (0 = still). */
+  roadsideMul: number;
+  grassWind: number;
+  /** Radius multiplier of the crop plants / farm crew around the player. */
+  farmMul: number;
+  /** Engineering sites farther than this x siteShowDist are disposed again to free memory (0 = never; they are rebuilt when the player returns). */
+  siteDisposeMul: number;
+  /** Engineering sites: merge their static meshes into few draw calls (same picture); ?merge=0 switches it off for comparing. */
+  siteMerge: boolean;
+  /** Engineering sites: meshes with a bounding radius below this (m) stop casting a sun shadow (0 = all keep it). */
+  siteShadowMinR: number;
+  /** Cap of the texture anisotropy (sharpness at grazing angles; cheaper on small GPUs). */
+  maxAniso: number;
+  /** The sun shadow map is redrawn every n-th frame (1 = every frame). */
+  shadowInterval: number;
+  /** Road sign boards: multiplier of the show / paint / unpaint distances in SIGN_FIELD (1 = high). */
+  signRadiusMul: number;
+  /** Road sign boards: at most this many get their text drawn (a canvas texture) in one frame. */
+  signPaintPerFrame: number;
+  /** EVLab step 8: how many cars (with their drivers) come to a presentation. */
+  evlabArrivals: number;
+  /** EVLab step 10: how many people come to a presentation by cycle (each one is a cycle of ~14 meshes + a rider). */
+  evlabCyclists: number;
+  /** EVLab step 12: how many people sit on the outdoor benches (real PersonModel each; the benches are 65, so most stay empty). */
+  evlabBenchSitters: number;
+  /** EVLab step 13: lake water detail: 0 = 2 waves + fresnel, 1 = 4 waves + quay ripples + foam, 2 = 5 waves + ripples at the bridges. */
+  evlabWater: 0 | 1 | 2;
+  /** EVLab Presentation Hall: share of the seats that get a person during a presentation (0.62 = about 1800 people; each one is 8 instanced parts). */
+  hallFill: number;
+  /** Junction road mirrors: how many nearby mirrors show the real scene at once (0 = only the painted picture). */
+  mirrorLive: number;
+  /** Junction road mirrors: a mirror shows the real scene only within this distance (m) of the camera. */
+  mirrorLiveDist: number;
+  /** Junction road mirrors: size (px) of the square picture a live mirror renders. */
+  mirrorTex: number;
+  /**
+   * PERF STEP 1, reef / sea fish (src/water/MarineLife.ts). Fish are drawn in 3 detail levels (near ~840, middle ~210, far ~130 triangles):
+   *   marineSchools                     most fish schools alive at once (also limited by the water quality button)
+   *   marineFishHi / Mid / Far          most fish drawn per level (the rest drop to the next cheaper level, then are not drawn)
+   *   marineFishNear / MidDist / FarDist  distance (m) up to which the near / middle / far model is used; farther = not drawn
+   * (a big fish counts as closer: the distance is divided by min(2.5, max(1, 2 x length)))
+   */
+  marineSchools: number;
+  marineFishHi: number;
+  marineFishMid: number;
+  marineFishFar: number;
+  marineFishNear: number;
+  marineFishMidDist: number;
+  marineFishFarDist: number;
+}
+
+export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
+  low: {
+    tier: 'low', maxDpr: 1.5, maxPixels: 1_300_000, antialias: false, powerPreference: 'default',
+    shadowMapSize: 1024, shadowExtent: 200, lodDistances: [220, 520, 1100, 2000], siteShowDist: 700, fpsCap: 30, minScale: 0.6,
+    treeMul: 0.3, rockMul: 0.3, grassMul: 0.6, grassDense: 2, treeMaxLod: 1, grassRadius: 35, grassBlades: 0.6,
+    peopleTarget: 12, trafficTarget: 12, maxBuses: 2, flockCount: 4, landAnimals: 24, predators: 2, dolphins: 3, fishSchools: 4,
+    lampStepMul: 1.6, roadsideMul: 0.55, grassWind: 0, lightFxDist: 45, farmMul: 0.65, siteDisposeMul: 2.5, siteMerge: true, siteShadowMinR: 1.2, maxAniso: 2, shadowInterval: 2,
+    signRadiusMul: 0.6, signPaintPerFrame: 1, evlabArrivals: 2, evlabCyclists: 2, evlabBenchSitters: 6, evlabWater: 0,
+    hallFill: 0.22,
+    mirrorLive: 0, mirrorLiveDist: 30, mirrorTex: 256, // low: no extra scene render for the road mirrors (the painted picture stays)
+    marineSchools: 8, marineFishHi: 32, marineFishMid: 64, marineFishFar: 120, marineFishNear: 14, marineFishMidDist: 38, marineFishFarDist: 75,
+  },
+  medium: {
+    tier: 'medium', maxDpr: 1.25, maxPixels: 2_800_000, antialias: false, powerPreference: 'default',
+    shadowMapSize: 2048, shadowExtent: 280, lodDistances: [300, 700, 1400, 2600], siteShowDist: 1300, fpsCap: 60, minScale: 0.6,
+    treeMul: 0.5, rockMul: 0.5, grassMul: 0.85, grassDense: 3, treeMaxLod: 1, grassRadius: 35, grassBlades: 0.8,
+    peopleTarget: 22, trafficTarget: 22, maxBuses: 3, flockCount: 8, landAnimals: 42, predators: 3, dolphins: 5, fishSchools: 7,
+    lampStepMul: 1.25, roadsideMul: 0.8, grassWind: 0, lightFxDist: 80, farmMul: 0.85, siteDisposeMul: 0, siteMerge: true, siteShadowMinR: 0.5, maxAniso: 4, shadowInterval: 1,
+    signRadiusMul: 0.8, signPaintPerFrame: 2, evlabArrivals: 4, evlabCyclists: 3, evlabBenchSitters: 12, evlabWater: 1,
+    hallFill: 0.4,
+    mirrorLive: 1, mirrorLiveDist: 40, mirrorTex: 384,
+    marineSchools: 14, marineFishHi: 64, marineFishMid: 110, marineFishFar: 200, marineFishNear: 20, marineFishMidDist: 55, marineFishFarDist: 100,
+  },
+  high: {
+    tier: 'high', maxDpr: 2, maxPixels: 8_300_000, antialias: true, powerPreference: 'high-performance',
+    shadowMapSize: 4096, shadowExtent: 350, lodDistances: [380, 900, 1900, 3600], siteShowDist: 2400, fpsCap: 60, minScale: 0.7,
+    treeMul: 0.7, rockMul: 0.7, grassMul: 1, grassDense: 4, treeMaxLod: 1, grassRadius: 35, grassBlades: 1,
+    peopleTarget: 34, trafficTarget: 34, maxBuses: 5, flockCount: 12, landAnimals: 64, predators: 4, dolphins: 8, fishSchools: 10,
+    lampStepMul: 1, roadsideMul: 1, grassWind: 0, lightFxDist: 130, farmMul: 1, siteDisposeMul: 0, siteMerge: true, siteShadowMinR: 0, maxAniso: 16, shadowInterval: 1,
+    signRadiusMul: 1, signPaintPerFrame: 3, evlabArrivals: 5, evlabCyclists: 4, evlabBenchSitters: 20, evlabWater: 2,
+    hallFill: 0.62,
+    mirrorLive: 2, mirrorLiveDist: 50, mirrorTex: 512,
+    marineSchools: 22, marineFishHi: 160, marineFishMid: 240, marineFishFar: 528, marineFishNear: 30, marineFishMidDist: 80, marineFishFarDist: 150,
+  },
+};
+
+/** The active settings (filled by initQuality; until then = high, the old behaviour). */
+export const Q: QualitySettings = { ...PRESETS.high, lodDistances: [...PRESETS.high.lodDistances] };
+
+const KEY = 'evcity.quality';
+const KEY_CAP = 'evcity.tierCap';
+const TIER_ORDER: readonly QualityTier[] = ['low', 'medium', 'high'];
+const isChoice = (v: unknown): v is QualityChoice => v === 'auto' || v === 'low' || v === 'medium' || v === 'high';
+
+export function getQualityChoice(): QualityChoice {
+  try {
+    const p = new URLSearchParams(location.search).get('quality'); // e.g. ?quality=low
+    if (isChoice(p)) {
+      localStorage.setItem(KEY, p);
+      return p;
+    }
+    const s = localStorage.getItem(KEY);
+    if (isChoice(s)) return s;
+  } catch {
+    /* storage blocked (Safari private mode): auto */
+  }
+  return 'auto';
+}
+
+/** Saves the choice; the new preset is used after a reload (shadow size, LOD and fog are read at start). */
+export function setQualityChoice(c: QualityChoice): void {
+  try {
+    localStorage.setItem(KEY, c);
+    localStorage.removeItem(KEY_CAP); // a new pick starts fresh: auto looks at the device again
+  } catch {
+    /* ignore */
+  }
+}
+
+/** The highest class auto may use on this device (set by SlowDeviceWatch when the game could not hold the speed even at its lowest settings). */
+function getTierCap(): QualityTier | null {
+  try {
+    const v = localStorage.getItem(KEY_CAP);
+    return v === 'low' || v === 'medium' ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The game is too slow for this class: the next start (auto) uses the class below. Returns the new class, or null when there is none. */
+export function noteSlowDevice(): QualityTier | null {
+  const lower = TIER_ORDER[TIER_ORDER.indexOf(Q.tier) - 1];
+  if (!lower) return null;
+  try {
+    localStorage.setItem(KEY_CAP, lower);
+  } catch {
+    /* ignore */
+  }
+  return lower;
+}
+
+function gpuName(): string {
+  try {
+    const c = document.createElement('canvas');
+    const gl = (c.getContext('webgl') || c.getContext('experimental-webgl')) as WebGLRenderingContext | null;
+    if (!gl) return '';
+    const e = gl.getExtension('WEBGL_debug_renderer_info');
+    const n = e ? String(gl.getParameter(e.UNMASKED_RENDERER_WEBGL)) : '';
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    return n;
+  } catch {
+    return '';
+  }
+}
+
+export function detectTier(): QualityTier {
+  const nav = navigator as Navigator & { deviceMemory?: number };
+  const ua = nav.userAgent || '';
+  const touch = (nav.maxTouchPoints || 0) > 1;
+  const iPhone = /iPhone|iPod/.test(ua);
+  const iPad = /iPad/.test(ua) || (/Macintosh/.test(ua) && touch); // iPadOS Safari reports itself as a Mac
+  const android = /Android/.test(ua);
+  const phone = iPhone || (android && /Mobile/.test(ua));
+  const tablet = iPad || (android && !/Mobile/.test(ua));
+  if (phone) return 'low';
+  if (tablet) return 'medium';
+  const cores = nav.hardwareConcurrency || 4;
+  const mem = nav.deviceMemory; // Chrome / Edge only (undefined in Safari, Firefox)
+  const gpu = gpuName();
+  if (/swiftshader|llvmpipe|software|basic render/i.test(gpu)) return 'low';
+  let tier: QualityTier = 'high';
+  if (cores <= 4 || (mem !== undefined && mem <= 4)) tier = 'medium';
+  const intelIgpu = /intel/i.test(gpu) && !/arc/i.test(gpu); // integrated Intel graphics
+  if (tier === 'high' && intelIgpu) tier = 'medium';
+  // low-end PCs: 2 cores or 2 GB, integrated Intel graphics together with a small CPU / RAM, the old entry-level GPUs
+  if (cores <= 2 || (mem !== undefined && mem <= 2)) tier = 'low';
+  else if (intelIgpu && (cores <= 4 || (mem !== undefined && mem <= 4))) tier = 'low';
+  else if (/\bmx\s?\d{2,3}\b|geforce\s*(gt\s?)?(7[0-4]\d|10[23]0)\b|radeon\s*(r[2-5]|hd\s?[2-6]\d{3})\b/i.test(gpu)) tier = 'low';
+  // the game itself found this PC too slow last time (see SlowDeviceWatch): not higher than that class
+  const cap = getTierCap();
+  if (cap && TIER_ORDER.indexOf(tier) > TIER_ORDER.indexOf(cap)) tier = cap;
+  return tier;
+}
+
+/** Picks the preset and writes the numbers the engine reads from Config. Call before the engine modules are imported. */
+export function initQuality(): QualitySettings {
+  const choice = getQualityChoice();
+  const tier = choice === 'auto' ? detectTier() : choice;
+  const p = PRESETS[tier];
+  Object.assign(Q, p, { lodDistances: [...p.lodDistances] });
+  try {
+    if (new URLSearchParams(location.search).get('merge') === '0') Q.siteMerge = false; // A/B test of the mesh merging
+  } catch {
+    /* ignore */
+  }
+  Config.environment.shadowMapSize = p.shadowMapSize;
+  Config.environment.shadowExtent = p.shadowExtent; // the live shadow level is set by ShadowManager (settings menu / auto) once the engine runs
+  // slow frames: fewer physics catch-up steps per picture (the game runs a little slower instead of getting even slower)
+  if (tier === 'low') Config.loop.maxSubSteps = 3;
+  else if (tier === 'medium') Config.loop.maxSubSteps = 4;
+  if (tier !== 'high') {
+    p.lodDistances.forEach((d, i) => {
+      Config.lod.distances[i] = d;
+    });
+    // same fog (about 95 % at the load radius) at the shorter radius: hides the pop-in of chunks
+    Config.environment.fogDensity *= PRESETS.high.lodDistances[3] / p.lodDistances[3];
+  }
+  // entity counts (main thread; the chunk workers get treeMul / rockMul / grassMul / treeMaxLod in their request messages, see ChunkLoader)
+  Config.people.target = p.peopleTarget;
+  Config.traffic.target = p.trafficTarget;
+  Config.traffic.maxBuses = p.maxBuses;
+  Config.vegetation.maxLod = p.treeMaxLod;
+  const G = Config.vegetation.grass;
+  Config.vegetation.grass.bladeDensity = p.grassBlades;
+  Config.vegetation.grass.look.wind = p.grassWind; // read by GrassAssets when it is built; the city lawn density follows grassMul (chunk workers)
+  if (p.grassRadius !== PRESETS.high.grassRadius) {
+    const r = p.grassRadius;
+    G.radius = r;
+    G.keep = r + 20;
+    G.fadeEnd = r - 2;
+    G.fadeStart = r - 30;
+    // the near ring keeps its size; the middle ring is squeezed in proportion, the last ring ends at the radius
+    G.lods[1].to = Math.round(G.lods[1].to * Math.min(1, (r - 40) / (PRESETS.high.grassRadius - 40)) + 0.0001);
+    G.lods[2].to = r;
+  }
+  (Q as { choice?: QualityChoice }).choice = choice;
+  return Q;
+}
+
+export function currentChoice(): QualityChoice {
+  return ((Q as { choice?: QualityChoice }).choice ?? 'auto');
+}
+
+/**
+ * Resolution factor 1 .. minScale. Every ~1.5 s the average FPS is checked: clearly below the target -> 10 % lower resolution;
+ * at the target for ~6 s -> 5 % higher again. The first seconds are ignored (shader compile, chunk start-up).
+ */
+export class DynamicResolution {
+  scale = 1;
+  private acc = 0;
+  private frames = 0;
+  private good = 0;
+  private warm = 5;
+
+  constructor(
+    private target: number,
+    private minScale: number,
+    private onChange: (scale: number) => void,
+  ) {}
+
+  sample(dt: number): void {
+    if (dt <= 0 || dt > 0.2) return; // a hitch / background tab is not a reason to blur the picture
+    this.acc += dt;
+    this.frames++;
+    if (this.acc < 1.5) return;
+    const fps = this.frames / this.acc;
+    this.acc = 0;
+    this.frames = 0;
+    if (this.warm > 0) {
+      this.warm -= 1.5;
+      return;
+    }
+    if (fps < this.target * 0.85 && this.scale > this.minScale + 0.001) {
+      this.scale = Math.max(this.minScale, this.scale - 0.1);
+      this.good = 0;
+      this.onChange(this.scale);
+    } else if (fps >= this.target * 0.97) {
+      if (++this.good >= 4 && this.scale < 1) {
+        this.scale = Math.min(1, this.scale + 0.05);
+        this.good = 0;
+        this.onChange(this.scale);
+      }
+    } else {
+      this.good = 0;
+    }
+  }
+}
+
+/**
+ * Auto class only. When the shadows are off, the resolution is at its lowest and the game STILL runs far below its FPS target for ~15 s,
+ * this PC is too weak for the class: it is remembered, and the next start uses the class below. `onSlow` is told once (the game shows a message).
+ */
+export class SlowDeviceWatch {
+  private acc = 0;
+  private frames = 0;
+  private warm = 20; // seconds ignored at the start (shader compile, chunk start-up)
+  private bad = 0;
+  private fired = false;
+
+  constructor(
+    private target: number,
+    private onSlow: (lower: QualityTier) => void,
+  ) {}
+
+  /** `floor` = shadows off and resolution at the minimum (nothing left to lower at run time). */
+  sample(dt: number, floor: boolean): void {
+    if (this.fired || dt <= 0 || dt > 0.5) return;
+    if (this.warm > 0) {
+      this.warm -= dt;
+      return;
+    }
+    this.acc += dt;
+    this.frames++;
+    if (this.acc < 3) return;
+    const fps = this.frames / this.acc;
+    this.acc = 0;
+    this.frames = 0;
+    if (floor && fps < this.target * 0.6) this.bad++;
+    else this.bad = Math.max(0, this.bad - 1);
+    if (this.bad >= 5) {
+      this.fired = true;
+      const lower = noteSlowDevice();
+      if (lower) this.onSlow(lower);
+    }
+  }
+}

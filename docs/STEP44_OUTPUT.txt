@@ -1,0 +1,68 @@
+=== 4.4 RING ROW, CLEAR ZONE AND FENCE (M8) ===
+  ring 19.293 km, 3859 stations every 4.999 m; the +normal side is the INNER side of the ring (total turn 360.0 deg)
+  offsets from the centreline: pavement edge 22.1, clear zone 24.200000000000003-32 (7.8 m), fence 39.5 (assumption: 0.5 m inside the ROW line), ROW boundary 40
+
+=== Line lengths (closed loops) ===
+  line                                                      offset   length m   expected L -+ 2 pi d   difference
+  pavement edge (inner side of the ring)                    22.1      19154          19154            -0.01
+  pavement edge (outer side of the ring)                    22.1      19432          19432            -0.01
+  clear zone inner (ditch top) (inner side of the ring)     24.2      19141          19141            -0.01
+  clear zone inner (ditch top) (outer side of the ring)     24.2      19445          19445            -0.01
+  clear zone outer (inner side of the ring)                 32.0      19092          19092            -0.01
+  clear zone outer (outer side of the ring)                 32.0      19494          19494            -0.01
+  fence (inner side of the ring)                            39.5      19045          19045            -0.01
+  fence (outer side of the ring)                            39.5      19541          19541            -0.01
+  ROW boundary (inner side of the ring)                     40.0      19041          19041            -0.01
+  ROW boundary (outer side of the ring)                     40.0      19544          19544            -0.01
+  PASS  every line length = ring length -+ 2 pi d (net turn 360 deg) worst 0.0001 %
+
+=== Geometry checks ===
+  PASS  ROW line is 40 m from the centreline everywhere (nearest point) 40.000 to 40.000 m
+  PASS  area between outer and inner ROW loop = 80 m x ring length   154.3 ha vs 154.3 ha
+  PASS  clear zone strip area, inner side (7.8 m wide)               14.91 ha vs 14.91 ha
+  PASS  clear zone strip area, outer side (7.8 m wide)               15.19 ha vs 15.19 ha
+  PASS  ROW line stays inside the 10 km map                          farthest ROW point 3861 m from the map centre (edge at 5000)
+
+=== Zones touched by the corridor (offsets -40, -32, -24.2, 0, +24.2, +32, +40 at every station) ===
+  35 zone stretches along the corridor, 25 of them built-up kinds (houses, shops, factories will be placed there later), 2 engineering / facility / sea
+   stations      0 -    135    140 m   south-bazaar (commercial)   [built-up: keep buildings out of the 80 m ROW]
+   stations      0 -    145    150 m   south-suburb (residential)   [built-up: keep buildings out of the 80 m ROW]
+   stations    130 -   1330   1205 m   south-utility (utility)   [built-up: keep buildings out of the 80 m ROW]
+   stations    150 -    640    495 m   river-delta (wetland)
+   stations   1310 -   3320   2015 m   sw-newtown (residential)   [built-up: keep buildings out of the 80 m ROW]
+   stations   3295 -   4474   1185 m   west-suburb (residential)   [built-up: keep buildings out of the 80 m ROW]
+   stations   4464 -   4644    185 m   west-lake (wetland)
+   stations   4629 -   5044    420 m   west-bazaar (commercial)   [built-up: keep buildings out of the 80 m ROW]
+   stations   4944 -   5864    925 m   west-farms (farmland)
+   stations   5824 -   6479    660 m   village-west (village)   [built-up: keep buildings out of the 80 m ROW]
+   stations   6469 -   7259    795 m   nw-solar (utility)   [built-up: keep buildings out of the 80 m ROW]
+   stations   7144 -   7649    510 m   nw-town (residential)   [built-up: keep buildings out of the 80 m ROW]
+   stations   7619 -   8014    400 m   nw-campus (education)   [built-up: keep buildings out of the 80 m ROW]
+   stations   8004 -   8339    340 m   nw-lake (wetland)
+   stations   8329 -   9264    940 m   north-labour (residential)   [built-up: keep buildings out of the 80 m ROW]
+   stations   9234 -   9684    455 m   north-logistics (logistics)   [built-up: keep buildings out of the 80 m ROW]
+   stations   9464 -  10049    590 m   north-power (utility)   [built-up: keep buildings out of the 80 m ROW]
+   stations   9964 -  10409    450 m   north-heavy (industrial)   [built-up: keep buildings out of the 80 m ROW]
+   stations  10399 -  11109    715 m   eng-steel (engineering)   [built-up: keep buildings out of the 80 m ROW]
+   stations  11074 -  11374    305 m   north-heavy (industrial)   [built-up: keep buildings out of the 80 m ROW]
+   stations  11374 -  11684    315 m   north-farms (farmland)
+   stations  11589 -  11724    140 m   ne-forest (forest)
+   stations  11649 -  11919    275 m   eng-aerospace (engineering)   [built-up: keep buildings out of the 80 m ROW]
+   stations  11849 -  12729    885 m   ne-forest (forest)
+   stations  12644 -  13174    535 m   east-farms (farmland)
+   stations  13074 -  14118   1050 m   ne-farms (farmland)
+   stations  14118 -  15043    930 m   village-east (village)   [built-up: keep buildings out of the 80 m ROW]
+   stations  14788 -  15128    345 m   east-works (industrial)   [built-up: keep buildings out of the 80 m ROW]
+   stations  15048 -  15608    565 m   east-lake (wetland)
+   stations  15313 -  16293    985 m   east-logistics (logistics)   [built-up: keep buildings out of the 80 m ROW]
+   stations  16253 -  17343   1095 m   east-suburb (residential)   [built-up: keep buildings out of the 80 m ROW]
+   stations  17323 -  18263    945 m   port-industry (industrial)   [built-up: keep buildings out of the 80 m ROW]
+   stations  18198 -  18323    130 m   se-dense (residential)   [built-up: keep buildings out of the 80 m ROW]
+   stations  18263 -  19288   1030 m   south-suburb (residential)   [built-up: keep buildings out of the 80 m ROW]
+   stations  18963 -  19288    330 m   south-bazaar (commercial)   [built-up: keep buildings out of the 80 m ROW]
+  PASS  no sea or facility fence area inside the corridor            0 sea stretches, 0 facility stretches
+  FAIL  no engineering area inside the corridor                      eng-steel 10399-11109; eng-aerospace 11649-11919
+        eng-steel: the CENTRELINE is inside the fenced rectangle from station 10409 to 11109 (705 m), so the ring cuts this area in two
+        eng-aerospace: the CENTRELINE is inside the fenced rectangle from station 11689 to 11884 (200 m), so the ring cuts this area in two
+
+1 CHECK(S) FAILED

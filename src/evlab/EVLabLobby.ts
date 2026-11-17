@@ -1,0 +1,183 @@
+import * as THREE from 'three';
+import { addChandeliers } from './EVLabHall';
+import { BLD, DIVIDER, PORTAL, RAMP, REAR_Y, WING, type Ramp, type Solid } from './EVLabLayout';
+import { Parts } from './EVLabParts';
+import { Furnish } from './EVLabFurniture';
+import { defineFurniture } from './EVLabFurnModels';
+import { CORES, LIFTS, STAIRS, rectMinus } from './EVLabTowerLayout';
+import { PODIUM, podium, podiumSolids } from './EVLabStructure';
+
+export interface LobbyBuild {
+  group: THREE.Group;
+  solids: Solid[];
+  ramps: Ramp[];
+  update(t: number): void;
+}
+
+const H = BLD.H;
+const XI = BLD.hx - 1; // inner side of the east / west walls
+const ZS = BLD.hz - 1; // inner side of the south wall
+
+/**
+ * The grand lobby (174 m x 42 m, 17 m high, marble and gold). You walk in through the portal into ONE big open hall:
+ *  - the stairs and the lifts stand on the two SIDES (west block: stair A + lift 1, east block: lift 2 + stair B), the middle is free;
+ *  - straight ahead on the far wall are the doors: Main Office (west), Conference / Presentation Hall (centre, three ramps), Engineering Lab (east).
+ * Building-local coordinates (see EVLabLayout).
+ */
+export function buildLobby(P: Parts): LobbyBuild {
+  const { k, t } = P;
+  const g = new THREE.Group();
+  g.name = 'EVLabLobby';
+  const solids: Solid[] = [];
+  const ramps: Ramp[] = [];
+  const anim: Array<(tt: number) => void> = [];
+  const marble = P.lit(t.marbleCream, 0xffffff, 0.34);
+  const dark = P.lit(t.marbleDark, 0xffffff, 0.3);
+  const stone = P.lit(t.stone, 0xffffff, 0.3);
+  const wood = P.lit(t.wood, 0xffffff, 0.34);
+  const gold = P.gold();
+  const cove = P.glow(0xffe2a8, 1.1);
+  const zl0 = DIVIDER.z + 0.5; // lobby starts at the divider wall
+  const pw = PORTAL.halfW;
+  const F = new Furnish(P, g);
+  defineFurniture(F, ['reception', 'sofaLeather', 'sofaVelvet', 'armLeather', 'armVelvet', 'coffeeTable', 'sideTable', 'floorLamp', 'rugRed', 'rugBlue', 'palm1', 'palm2', 'ficus1', 'ficus2', 'ficus3', 'roundTable', 'parkBench', 'clock', 'extinguisher', 'firstAid', 'bin']);
+
+  // ---------------------------------------------------------------- floor, with a dark marble border and a carpet from the portal to the hall
+  P.hplane(g, -XI, XI, zl0, ZS, 0.004, marble, 6, 6);
+  P.hplane(g, -XI, XI, ZS - 1.2, ZS, 0.006, dark, 6, 6);
+  const carpet = P.lit(t.carpet, 0xffffff, 0.32);
+  P.hplane(g, -6, 6, zl0 + 12.5, ZS, 0.012, carpet, 4, 4); // the way from the portal to the hall ramps
+  for (const x of [-6.2, 6.1]) P.tbox(g, x, x + 0.1, zl0 + 12.5, ZS, 0, 0.02, gold);
+
+  // ---------------------------------------------------------------- walls (inner lining), ceiling, cove
+  P.vplane(g, 'x', -XI + 0.03, zl0, ZS, 0, H, 1, wood, 7, 8);
+  P.vplane(g, 'x', XI - 0.03, zl0, ZS, 0, H, -1, wood, 7, 8);
+  // south wall lining, left and right of the portal and above it (the portal itself stays open)
+  P.vplane(g, 'z', ZS - 0.03, -XI, -pw, 0, H, -1, stone, 8, 8);
+  P.vplane(g, 'z', ZS - 0.03, pw, XI, 0, H, -1, stone, 8, 8);
+  P.vplane(g, 'z', ZS - 0.03, -pw, pw, PORTAL.h, H, -1, stone, 8, 8);
+  for (const b of rectMinus(-XI, XI, zl0, ZS, CORES.map((c) => [c.x0, c.x1, c.z0, c.z1] as const))) P.hplane(g, b[0], b[1], b[2], b[3], H, P.lit(t.ceiling, 0xffffff, 0.45), 6, 6, false);
+  P.tbox(g, -XI, XI, zl0, zl0 + 0.7, H - 0.5, H - 0.2, cove);
+  P.tbox(g, -XI, XI, ZS - 0.7, ZS, H - 0.5, H - 0.2, cove);
+  for (const x of [-72, -48, -24, 24, 48, 72]) P.tbox(g, x - 0.25, x + 0.25, zl0, ZS, H - 0.25, H - 0.05, cove);
+  addChandeliers(P, g, [[-62, 26], [62, 26], [0, 26], [-62, 48], [62, 48], [0, 48]], 13.4, 1.0);
+
+  // columns: marble shafts with gold bases and capitals (two rows, clear of the stair / lift blocks)
+  for (const x of [-76, -58, -40, 40, 58, 76]) {
+    for (const z of [22, 38]) {
+      P.cyl(g, 0.95, 1.0, H - 1.2, x, (H - 1.2) / 2 + 0.6, z, marble, 28);
+      P.cyl(g, 1.35, 1.35, 0.6, x, 0.3, z, gold, 28);
+      P.cyl(g, 1.35, 1.35, 0.6, x, H - 0.3, z, gold, 28);
+      solids.push([x - 1.1, x + 1.1, z - 1.1, z + 1.1, 0, H]);
+    }
+  }
+
+  // ---------------------------------------------------------------- the three ramps up to the Conference / Presentation Hall (carpet + gold rails)
+  const rampMat = P.lit(t.carpet, 0xffffff, 0.32);
+  for (const [a, b] of DIVIDER.openings) {
+    P.slope(g, a, b, RAMP.z1, 0, zl0, REAR_Y, rampMat, 4, 4);
+    ramps.push({ x0: a, x1: b, zA: RAMP.z1, yA: 0, zB: zl0, yB: REAR_Y });
+    for (const x of [a - 0.12, b + 0.12]) {
+      const len = Math.hypot(RAMP.z1 - zl0, REAR_Y);
+      const rail = P.tbox(g, x - 0.06, x + 0.06, 0, len, 0, 0.12, gold);
+      rail.position.set(x, REAR_Y / 2 + 1.0, (RAMP.z1 + zl0) / 2);
+      rail.rotation.x = -Math.atan2(REAR_Y, RAMP.z1 - zl0) * -1;
+    }
+  }
+
+  // ---------------------------------------------------------------- feature wall on the divider (lobby side): logo, art, gold frames, and the door signs
+  P.vplane(g, 'z', DIVIDER.z + 0.56, -9, 9, 9.2, 13.8, 1, k.own(new THREE.MeshBasicMaterial({ map: t.logo, toneMapped: false })), 18, 4.6);
+  P.tbox(g, -9.4, 9.4, DIVIDER.z + 0.5, DIVIDER.z + 0.58, 8.9, 14.1, gold);
+  [-16, 16].forEach((x, i) => {
+    const tex = t.art[i];
+    const y = 4.6;
+    P.tbox(g, x - 3.0, x + 3.0, DIVIDER.z + 0.5, DIVIDER.z + 0.62, y - 3.0, y + 3.0, gold);
+    P.vplane(g, 'z', DIVIDER.z + 0.64, x - 2.7, x + 2.7, y - 2.7, y + 2.7, 1, k.own(new THREE.MeshBasicMaterial({ map: tex, toneMapped: false })), 5.4, 5.4);
+  });
+  k.sign(g, 'CONFERENCE  /  PRESENTATION HALL', 0xd4af37, 0, 15.5, zl0 + 0.12, 22, 1.7, true);
+  for (const s of [-1, 1]) {
+    k.sign(g, s < 0 ? 'MAIN OFFICE' : 'ENGINEERING LAB', 0xd4af37, s * WING.door.c, WING.door.h + 2.2, zl0 + 0.12, 12, 1.8, true);
+    k.sign(g, s < 0 ? '\u2190 MAIN OFFICE' : 'ENGINEERING LAB \u2192', 0xffffff, s * 44, 8.0, zl0 + 0.12, 14, 1.3, false);
+  }
+  // art on the south wall, either side of the portal
+  [-45, 45, -70, 70].forEach((x, i) => {
+    const tex = t.art[i % 3];
+    P.tbox(g, x - 2.2, x + 2.2, ZS - 0.12, ZS, 5.0, 11.2, gold);
+    P.vplane(g, 'z', ZS - 0.14, x - 1.95, x + 1.95, 5.25, 10.95, -1, k.own(new THREE.MeshBasicMaterial({ map: tex, toneMapped: false })), 3.9, 5.7);
+  });
+
+  // ---------------------------------------------------------------- signs on the two blocks: stair + lift on each side
+  for (const [i, b] of CORES.entries()) {
+    const label = i === 0 ? 'STAIR A  \u00b7  LIFT 1' : 'LIFT 2  \u00b7  STAIR B';
+    // the doors face the lobby between the blocks: the sign hangs on that face (west block: +x, east block: -x)
+    const west = i === 0;
+    const sg = new THREE.Group();
+    sg.position.set((west ? b.x1 : b.x0) + (west ? 0.2 : -0.2), 0, (b.z0 + b.z1) / 2);
+    sg.rotation.y = west ? Math.PI / 2 : -Math.PI / 2;
+    g.add(sg);
+    k.sign(sg, label, 0xd4af37, 0, 5.3, 0, 11, 1.3, true);
+    // a gold plinth strip along the foot of the block
+    P.tbox(g, west ? b.x1 : b.x0 - 0.15, west ? b.x1 + 0.15 : b.x0, b.z0, b.z1, 0, 0.35, gold);
+  }
+  void LIFTS; void STAIRS;
+
+  // ---------------------------------------------------------------- reception desks, lounges, plants
+  const desk = (x: number, z: number): void => {
+    F.place('reception', x, 0, z, 0, 1);
+    solids.push([x - 6.2, x + 6.2, z - 1.5, z + 1.5, 0, 1.3]);
+  };
+  desk(-30, 52);
+  desk(30, 52);
+  const leather = P.lit(null, 0x5e3320, 0.18);
+  const velv = P.lit(null, 0x1f3a5c, 0.2);
+  const sofa = (x: number, z: number, yaw: number, mat: THREE.Material): void => {
+    F.place(mat === leather ? 'sofaLeather' : 'sofaVelvet', x, 0, z, yaw + Math.PI, 1.3);
+    const c = Math.cos(yaw), si = Math.sin(yaw);
+    const hx = Math.abs(1.8 * c) + Math.abs(0.7 * si), hz = Math.abs(1.8 * si) + Math.abs(0.7 * c);
+    solids.push([x - hx, x + hx, z - hz, z + hz, 0, 1.2]);
+  };
+  for (const [x, z, yaw, m] of [[-80, 30, Math.PI / 2, leather], [-80, 38, Math.PI / 2, leather], [80, 30, -Math.PI / 2, velv], [80, 38, -Math.PI / 2, velv], [-50, 24, 0, velv], [50, 24, 0, leather]] as const) sofa(x, z, yaw, m);
+  for (const [x, z] of [[-75, 34], [75, 34]]) {
+    k.cyl(g, 1.0, 1.0, 0.45, x, 0.225, z, dark, 24);
+    k.cyl(g, 1.05, 1.05, 0.05, x, 0.47, z, gold, 24);
+    solids.push([x - 1.1, x + 1.1, z - 1.1, z + 1.1, 0, 0.6]);
+  }
+  [[-84, 53], [84, 53], [-12, 53], [12, 53], [-84, 18], [84, 18], [-30, 18], [30, 18]].forEach(([x, z], i) => {
+    F.place(i % 2 ? 'palm2' : 'palm1', x, 0, z, i * 1.3, 1.25);
+    solids.push([x - 0.8, x + 0.8, z - 0.8, z + 0.8, 0, 2.5]);
+  });
+  // lounge groups (rug, two sofas over a coffee table, armchairs, side tables with lamps) and a small cafe of round tables
+  const lounge = (cx: number, cz: number, lea: boolean): void => {
+    F.place(lea ? 'rugRed' : 'rugBlue', cx, 0, cz, 0);
+    F.place(lea ? 'sofaLeather' : 'sofaVelvet', cx, 0, cz - 1.45, 0); F.place(lea ? 'sofaLeather' : 'sofaVelvet', cx, 0, cz + 1.45, Math.PI);
+    F.place('coffeeTable', cx, 0, cz, 0);
+    F.place(lea ? 'armVelvet' : 'armLeather', cx - 2.45, 0, cz, Math.PI / 2); F.place(lea ? 'armVelvet' : 'armLeather', cx + 2.45, 0, cz, -Math.PI / 2);
+    for (const sg of [-1, 1]) { F.place('sideTable', cx + sg * 2.45, 0, cz - 1.0); F.place('floorLamp', cx + sg * 2.45, 0, cz - 1.65); }
+    solids.push([cx - 3.0, cx + 3.0, cz - 2.0, cz + 2.0, 0, 0.95]);
+  };
+  lounge(-66, 47, true); lounge(66, 47, false);
+  for (const [x, z] of [[-53, 46], [-46, 46], [46, 46], [53, 46]] as const) { F.place('roundTable', x, 0, z, 0, 1); solids.push([x - 1.0, x + 1.0, z - 1.0, z + 1.0, 0, 0.9]); }
+  // benches at the portal, fire safety and a clock on the south wall
+  for (const x of [-14, 14]) { F.place('parkBench', x, 0, ZS - 0.7, Math.PI, 1.2); solids.push([x - 1.5, x + 1.5, ZS - 1.1, ZS - 0.3, 0, 0.6]); }
+  for (const x of [-50, 50]) { F.place('extinguisher', x, 0, ZS - 0.12, Math.PI, 1.4); F.place('firstAid', x + 0.8, 1.5, ZS - 0.1, Math.PI, 1.3); F.place('clock', x - 2, 4.2, ZS - 0.1, Math.PI, 2.5); }
+
+  // ---------------------------------------------------------------- step 1.1b: the tower columns continue to the ground through the lobby
+  // (square marble-clad columns with gold bands; the ones that would stand in a hall ramp are carried by a steel transfer girder under the ceiling)
+  const steel = P.lit(null, 0x2f353d, 0.28);
+  for (const c of podium().cols) {
+    P.tbox(g, c.x - c.s / 2, c.x + c.s / 2, c.z - c.s / 2, c.z + c.s / 2, 0, PODIUM.ceil, marble, 4, 4);
+    for (const [y0, y1] of [[0, 0.35], [PODIUM.ceil - 0.5, PODIUM.ceil]] as const) P.tbox(g, c.x - c.s / 2 - 0.06, c.x + c.s / 2 + 0.06, c.z - c.s / 2 - 0.06, c.z + c.s / 2 + 0.06, y0, y1, gold);
+  }
+  solids.push(...podiumSolids());
+  for (const gi of podium().girders) {
+    // the girder is as deep as the roof zone (the slab is part of it): only the lower part shows below the ceiling, with gold edge strips
+    P.tbox(g, gi.x0, gi.x1, gi.z - 0.7, gi.z + 0.7, PODIUM.girderBottom, PODIUM.ceil + 0.05, steel);
+    P.tbox(g, gi.x0, gi.x1, gi.z - 0.72, gi.z - 0.66, PODIUM.girderBottom, PODIUM.girderBottom + 0.1, gold);
+    P.tbox(g, gi.x0, gi.x1, gi.z + 0.66, gi.z + 0.72, PODIUM.girderBottom, PODIUM.girderBottom + 0.1, gold);
+    // bearing plates where the girder sits on its two columns
+    for (const x of [gi.x0, gi.x1]) P.tbox(g, x - 0.9, x + 0.9, gi.z - 0.9, gi.z + 0.9, PODIUM.girderBottom - 0.15, PODIUM.girderBottom, gold);
+  }
+
+  F.flush();
+  return { group: g, solids, ramps, update: (tt) => anim.forEach((f) => f(tt)) };
+}

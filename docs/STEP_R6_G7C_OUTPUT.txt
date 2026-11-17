@@ -1,0 +1,34 @@
+STEP G7c part 1 (JX-3 trumpet on J1-N: arm length budget + the two SE slip ramps; numbers + picture only, NO src/ change; build / game NOT run)
+Inputs: tap s 2069 (G7b), stem starts 130 m from the arm axis, free arm length s 1639 .. 2335 = 696 m (N3 ends 1619, N4 river bridge starts 2355, 20 m margin), arm speed 100, exit taper 91.3 m (1:25), entry taper 182.5 m (1:50, 17.1b), ramp centre at the nose 22 m from the arm axis, slips end on the stem lane lines p 10 (out) and -11.75 (in).
+
+A. BUDGET. Extent of the lane zones measured from the stem foot (p = 0) along the arm. NE = toward the ring, SW = toward J1.
+   m1 exit slip: nose at p = P_OUT + Ts, then taper + decel zone further NE.   m2 entry slip: merge at p = P_IN - Ts, then accel + taper further SW.
+   V   R    Ls   Ts   fits stem(Ts<=108)   entry taper   NE ext   SW ext   slips only: need / slack   full trumpet (lower bound): need / slack
+   60  115   40   136   NO                  182.5        336      446        782 /   -86                 874 /  -178
+   60  115   40   136   NO                   91.3        336      355        691 /     5                 692 /     4
+   50   75   35    93   yes                 182.5        310      439        749 /   -53                 860 /  -164
+   50   75   35    93   yes                  91.3        310      348        658 /    38                 678 /    18
+
+B. TAP WINDOW for the SE slips (V50, entry taper 1:50): the tap must lie in [LO + SW ext, HI - NE ext].
+   window s 2078 .. 2025 (width -53 m); G7b feasible taps: 2069, 1989, 1969
+
+C. TAP s 2069  (arm level 38.98 m, stem level 31.18 m)
+   m1 exit slip V50 R 75 m Ls 35 m: Ts 93.1 m, ramp 168 m, nose at arm s 2172 (level 37.48), grade 3.8 %, cut 6.0 m, fill 2.8 m, min radius 75 m, rail 387 m
+   m2 entry slip V50: ramp 188 m, merge at arm s 1964 (level 40.50), grade 5.0 %, cut 4.9 m, fill -0.4 m, rail 242 m
+   lane zones on the arm: s 1630 .. 2379 (allowed 1639 .. 2335); exit nose to entry merge distance 208 m
+PASS  slips fit between the arm and the stem start (Ts 93 m <= 108 m)
+PASS  alignment closes on the stem line (gap 0.00 / 0.00 m)
+PASS  ramp grades <= 5 % (3.8 / 5.0 %)
+PASS  ramp cut <= 12 m and fill <= 7 m
+PASS  ramps >= 60 m from the railway (242 m)
+FAIL  lane zones inside the free arm length (1630 .. 2379)
+PASS  exit nose to entry merge >= 150 m (weaveMin; no weave here, exit comes first)
+
+D. WHOLE TRUMPET (m3, m4 on the NW side, they must pass UNDER the arm at the bridge). Lower bound only, the loop is NOT drawn:
+   with V50 slips and the 1:50 entry taper the SE slips alone need 749 m (slack -53 m); the connector m4 (stem -> NE-bound arm, merge after the bridge) alone raises the NE side to 421 m, so the trumpet needs AT LEAST 860 m against 696 m free: slack -164 m.
+   what-if: entry taper 1:25 (NOT a handoff number, short) gives at least 678 m, slack 18 m, but the loop (R >= 41 m, V40) and its nesting with m4 are NOT counted.
+   MY reading of the topology (not drawn, check before trusting): in left-hand traffic m3 (NE-bound -> stem) and m4 (stem -> NE-bound) both leave the NW side through the same bridge. They do not cross each other only if one is a loop NESTED inside the other (the other then wraps around it), so the NW side is bigger than the lower bound above, not smaller.
+FAIL  SE slips only (half interchange): a G7b feasible tap lies in the window (none)
+FAIL  FULL trumpet fits the free arm length (need >= 860 m, free 696 m)
+
+RESULT: 3 FAIL

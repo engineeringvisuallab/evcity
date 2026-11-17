@@ -1,0 +1,36 @@
+=== 4.1 RING CROSS-SECTION (M8, 8 lanes), distances from the centreline in metres ===
+
+  RIGHT side of the direction of travel (positive offset), left side is the same, mirrored (negative offset)
+   no  element                                      from     to   width   cross fall / note
+   1  median (half of 6 m)                          0.0    3.0     3.0   kerb or barrier, planting or paved
+   2  inner paved shoulder                          3.0    4.5     1.5   4 % away from the median
+   3  4 travel lanes x 3.65 m                       4.5   19.1    14.6   2 % away from the median
+   4  outer paved shoulder (breakdown)             19.1   22.1     3.0   4 % away from the median
+   5  guardrail / barrier offset                   22.1   22.7     0.6   guardrail line
+   6  verge + drainage ditch                       22.7   24.2     1.5   ditch 1.5 m wide, 0.5 m deep
+   7  clear zone                                   24.2   32.0     7.8   slope 1:4 flat (1:3 max, 1:2 only with barrier)
+   8  right-of-way strip                           32.0   40.0     8.0   fence, planting, service road if used
+
+=== Derived numbers (both sides together) ===
+  carriageway of one direction (inner shoulder + 4 lanes + outer shoulder): 1.5 + 14.6 + 3.0 = 19.1 m
+  total width of the road between the two pavement edges (median 6.0 included): 2 x 22.1 = 44.2 m
+  paved width without the median: 38.2 m
+  formation (road body) width, pavement + guardrail + ditch: 2 x 24.2 = 48.4 m  (half 24.2 m is E_HALF of the profile tool)
+  clear zone beyond the ditch: 24.2 to 32.0 m = 7.8 m each side
+  right of way (ROW): 2 x 40.0 = 80.0 m
+  fall of the pavement from the median edge to the pavement edge: 0.060 + 0.292 + 0.120 = 0.472 m
+  per km of ring: ROW area 8.0 ha, paved area (median excluded) 3.82 ha
+  whole ring (19.293 km): ROW 154 ha, paved 74 ha
+
+=== Checks ===
+  PASS  elements follow each other, no gap or overlap        8 elements, last ends at 40.0 m
+  PASS  widths add up: sum of widths = ROW half width        40.0 m
+  PASS  lanes: 4 per direction = 8 lanes                     4 x 2
+  PASS  lane width 3.65 m                                    3.65 m
+  PASS  median 6.0 m in total                                6.0 m
+  PASS  pavement edge at 22.1 m (table 3.5)                  22.1 m
+  PASS  end of the ditch (formation edge) at 24.2 m          24.2 m
+  PASS  right of way 40 m each side = 80 m                   80.0 m
+  PASS  clear zone 7.8 m (24.2 to 32.0, "about 8" in table 3.5) 7.8 m
+
+ALL CHECKS PASS

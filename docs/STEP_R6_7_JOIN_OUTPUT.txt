@@ -1,0 +1,41 @@
+STEP R6-7-JOIN (headless, read only, nothing in src or data changed)
+WATER CHECK (sc.water > sc.h) on the built R6-7 itself: 291 points, 9 wet  FAIL (known bad ground)
+R6-7: 98 pts, 772 m, ends S (-1955, -3439) and N (-2000, -2983); z negative = north, x negative = west, so this is the NORTH-WEST
+1. DISTANCES of each end (nearest point of every 8-lane road, and every existing tap):
+  end S (-1955, -3439):
+    8-lane M8: 1057 m  (nearest point -1511, -2479)
+    8-lane J1-N: 3001 m  (nearest point 535, -1763)
+    8-lane J1-E: 3966 m  (nearest point 163, -85)
+    8-lane J1-S: 3801 m  (nearest point -279, -27)
+    8-lane J1-W: 3265 m  (nearest point -511, -511)
+    existing tap T7299 (-1812, -2340): straight 1108 m, tap is 0 m from the M8 centreline
+    existing tap T8919 (-418, -3135): straight 1567 m, tap is 0 m from the M8 centreline
+    existing tap T-N880 (401, -1321): straight 3168 m, tap is 1903 m from the M8 centreline
+  end N (-2000, -2983):
+    8-lane M8: 663 m  (nearest point -1727, -2379)
+    8-lane J1-N: 2807 m  (nearest point 490, -1688)
+    8-lane J1-E: 3616 m  (nearest point 163, -85)
+    8-lane J1-S: 3421 m  (nearest point -279, -27)
+    8-lane J1-W: 2886 m  (nearest point -518, -507)
+    existing tap T7299 (-1812, -2340): straight 670 m, tap is 0 m from the M8 centreline
+    existing tap T8919 (-418, -3135): straight 1589 m, tap is 0 m from the M8 centreline
+    existing tap T-N880 (401, -1321): straight 2920 m, tap is 1903 m from the M8 centreline
+  R5 spacing: the tap is an EXISTING one, so no new tap and no 1600 m / 600 m question; J1 plaza is more than 2800 m away.
+
+2. CANDIDATES (end tangent kept, straight - spiral Ls 80 - arc - spiral - straight to the M8 point of an EXISTING tap): 62 geometric candidates
+   passing every check: 0 of 62
+   best passing (shortest first):
+   NO passing candidate. Closest (fewest problems) per end / tap:
+   N>T7299 R320 s0 right: 757 m, grade max 2.0 %, R min 320 m, wet 0, rail 3, bld 0, ground [A119 R21 X13], node gap 571 m, meets M8 at 55 deg, R1 FAIL R2-165.1 at (-1961, -2967)  FAIL: rail | ground class R21,X13 | crosses R2-165.1 at (-1961, -2967)
+   S>T8919 R450 s0 right: 1569 m, grade max 119.0 %, R min 450 m, wet 11, rail 0, bld 0, ground [F42 ~10 C18 E200 B10 A10 D10 X15], node gap 327 m, meets M8 at 63 deg, R1 FAIL R4-81 at (-1697, -3408); R2-165.2 at (-1079, -3276)  FAIL: wet 11 pts | ground class F42,~10,E200,X15 | grade 119.0 % > 4 % | crosses R4-81 at (-1697, -3408); R2-165.2 at (-1079, -3276)
+   N>T8919 R320 s0 left: 1599 m, grade max 83.0 %, R min 320 m, wet 10, rail 0, bld 0, ground [A52 F60 C10 D11 ~10 E161 X17], node gap 327 m, meets M8 at 44 deg, R1 FAIL R2-165.1 at (-1959, -2968); R2-165.1 at (-1473, -2995); R2-165.1 at (-1322, -3015); R2-179 at (-1213, -3029)  FAIL: wet 10 pts | ground class F60,~10,E161,X17 | grade 83.0 % > 4 % | crosses R2-165.1 at (-1959, -2968); R2-165.1 at (-1473, -2995); R2-165.1 at (-1322, -3015); R2-179 at (-1213, -3029)
+   S>T7299 R320 s0 right: 1367 m, grade max 20.9 %, R min 320 m, wet 42, rail 3, bld 0, ground [F95 ~36 E5 D4 C28 B10 R21 A63 X13], node gap 571 m, meets M8 at 48 deg, R1 FAIL R2-165.1 at (-1604, -3006)  FAIL: wet 42 pts | rail | ground class F95,~36,E5,R21,X13 | grade 20.9 % > 4 % | crosses R2-165.1 at (-1604, -3006)
+
+   ALL candidates N end -> T7299 (the shortest way, 670 m straight):
+   N>T7299 R320 s0 right: 757 m, grade max 2.0 %, R min 320 m, wet 0, rail 3, bld 0, ground [A119 R21 X13], node gap 571 m, meets M8 at 55 deg, R1 FAIL R2-165.1 at (-1961, -2967)  FAIL: rail | ground class R21,X13 | crosses R2-165.1 at (-1961, -2967)
+   N>T7299 R320 s60 right: 812 m, grade max 2.1 %, R min 320 m, wet 0, rail 3, bld 0, ground [A125 F3 R22 X14], node gap 571 m, meets M8 at 41 deg, R1 FAIL R2-165.1 at (-1960, -2968)  FAIL: rail | ground class F3,R22,X14 | crosses R2-165.1 at (-1960, -2968)
+   N>T7299 R320 s120 right: 886 m, grade max 2.2 %, R min 319 m, wet 0, rail 2, bld 0, ground [A109 F15 R22 X33], node gap 571 m, meets M8 at 15 deg, R1 FAIL R2-165.1 at (-1960, -2968)  FAIL: rail | ground class F15,R22,X33 | crosses R2-165.1 at (-1960, -2968)
+   RAIL edges inside the box x -2250..-1700, z -3050..-2300 (points every ~50 m):
+     (-2082, -2309) (-2057, -2406) (-2023, -2500) (-1989, -2594)
+     (-1882, -2716) (-1785, -2739)
+     (-2001, -2652) (-2073, -2582) (-2145, -2513) (-2202, -2432) (-2229, -2336)

@@ -1,0 +1,13 @@
+rejected by: {"zone":7337,"road":2064,"arm":2511,"station":2101,"rail":1181,"wet":512}  passed: 1455
+centre (-960, 1920)  plot x -1200..-720 z 1700..2140  relief 5.9 m  sd 2.1  2274 m from the old site  2364 m from J1
+centre (-920, 1920)  plot x -1160..-680 z 1700..2140  relief 9.0 m  sd 2.5  2262 m from the old site  2350 m from J1
+centre (960, 880)  plot x 720..1200 z 660..1100  relief 15.4 m  sd 4.9  1678 m from the old site  1560 m from J1
+centre (960, 920)  plot x 720..1200 z 700..1140  relief 15.2 m  sd 4.9  1705 m from the old site  1590 m from J1
+centre (1000, 880)  plot x 760..1240 z 660..1100  relief 15.5 m  sd 4.9  1707 m from the old site  1588 m from J1
+centre (1000, 920)  plot x 760..1240 z 700..1140  relief 15.4 m  sd 4.9  1734 m from the old site  1617 m from J1
+centre (960, 840)  plot x 720..1200 z 620..1060  relief 16.0 m  sd 5.2  1651 m from the old site  1531 m from J1
+centre (920, 920)  plot x 680..1160 z 700..1140  relief 15.9 m  sd 5.2  1676 m from the old site  1564 m from J1
+centre (1000, 840)  plot x 760..1240 z 620..1060  relief 16.0 m  sd 5.1  1681 m from the old site  1559 m from J1
+centre (920, 880)  plot x 680..1160 z 660..1100  relief 16.5 m  sd 5.3  1648 m from the old site  1534 m from J1
+centre (960, 960)  plot x 720..1200 z 740..1180  relief 16.1 m  sd 5.0  1733 m from the old site  1621 m from J1
+centre (920, 960)  plot x 680..1160 z 740..1180  relief 16.3 m  sd 5.2  1704 m from the old site  1595 m from J1

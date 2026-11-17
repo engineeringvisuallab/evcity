@@ -1,0 +1,166 @@
+DEMAND + LANE LADDER (Step A3)   ALL parameters are PROPOSALS: {"vehPerPersonTrip":0.3,"pcuPerTruck":2.5,"K":0.1,"D":0.6,"circuity":1.2,"decay":0.08,"truckDecay":0.02,"minTrips":1000,"iters":8,"knn":3,"cMot":1800,"cArtD":950,"cArtU":800,"tapSpacing":1600,"tapFromJ1":600,"reuse":0.8,"loopMax":1800,"minAadt":1500}
+network: 52 nodes (8 ring nodes incl. 4 taps, 3 arm taps, J1, island centre, 39 zones), 83 links (16 fixed, 67 candidate corridors); zones kept 39 of 71 (dropped 32 zones with 11,720 trips = 1.4 %)
+
+FIXED LINKS: flow, design hour, capacity and v/c (one direction)
+link                                          len m   AADT veh+pcu   V dir/h   lanes/dir  capacity/dir   v/c
+ring R1205-R4265                               3,060        1,545        93         4        7,200    0.01
+ring R4265-T7299                               3,035        9,913       595         4        7,200    0.08
+ring T7299-T8919                               1,620        1,230        74         4        7,200    0.01
+ring T8919-R12094                              3,175        1,432        86         4        7,200    0.01
+ring R12094-T13738                             1,645        1,934       116         4        7,200    0.02
+ring T13738-R16813                             3,075        4,266       256         4        7,200    0.04
+ring R16813-T18838                             2,025       10,973       658         4        7,200    0.09
+ring T18838-R1205                              1,660       12,292       738         4        7,200    0.10
+J1-N part 1                                    1,145       18,781     1,127         4        7,200    0.16
+J1-N part 2                                    2,364        2,409       145         4        7,200    0.02
+J1-E part 1                                      874       49,753     2,985         4        7,200    0.41
+J1-E part 2                                    2,117       12,962       778         4        7,200    0.11
+J1-S                                           2,781       10,747       645         4        7,200    0.09
+J1-W part 1                                    1,224       56,704     3,402         4        7,200    0.47
+J1-W part 2                                    1,613        8,368       502         4        7,200    0.07
+M6-1 island link                               1,811            0         0         3        5,400    0.00
+
+CANDIDATE CORRIDORS that carry traffic (class from the flow; none = under 1500 AADT = local / rural road, designed later)
+corridor                                          len m   AADT     V dir/h  class  lanes/dir  total lanes  lanes/dir needed
+cand metro-core-T-E610                               877   77,069     4,624  A-D6          3           6           5   > max single road: parallel roads / grid needed
+cand se-dense-T-E610                               1,214   43,783     2,627  A-D6          3           6           3
+cand sw-homes-T-W960                               1,283   33,262     1,996  A-D6          3           6           3
+cand west-homes-T-W960                               726   25,221     1,513  A-D4          2           4           2
+cand east-homes-T-E610                             1,037   17,999     1,080  A-D4          2           4           2
+cand south-bazaar-se-dense (loop)                  1,425   14,679       881  A-2           1           2           1
+cand seaport-T18838                                1,923   13,481       809  A-2           1           2           1
+cand south-bazaar-T18838                             692   12,430       746  A-2           1           2           1
+cand sw-newtown-sw-homes                           1,235   11,966       718  A-2           1           2           1
+cand ne-business-T-N880                              947   10,584       635  A-2           1           2           1
+cand nw-town-T7299                                   528    7,833       470  A-2           1           2           1
+cand north-admin-T-N880                              516    7,645       459  A-2           1           2           1
+cand metro-core-eng-tech-park (loop)               1,624    7,592       456  A-2           1           2           1
+cand ne-business-eng-tech-park (loop)                523    7,384       443  A-2           1           2           1
+cand north-admin-north-homes (loop)                1,265    6,268       376  A-2           1           2           1
+cand south-suburb-T18838                             400    6,052       363  A-2           1           2           1
+cand airport-T13738                                3,002    5,747       345  A-2           1           2           1
+cand west-bazaar-west-homes                          987    5,290       317  A-2           1           2           1
+cand east-suburb-se-dense                          1,374    4,247       255  A-2           1           2           1
+cand se-dense-east-mall (loop)                       882    2,798       168  A-2           1           2           1
+cand sw-homes-west-suburb (loop)                   1,787    2,678       161  A-2           1           2           1
+cand east-homes-eng-structures (loop)              1,006    2,676       161  A-2           1           2           1
+cand port-industry-seaport                           780    2,347       141  A-2           1           2           1
+cand seaport-eng-chemical (loop)                     912    2,232       134  A-2           1           2           1
+cand east-works-eng-structures (loop)              1,202    2,011       121  A-2           1           2           1
+cand eng-structures-ne-business                      493    1,960       118  A-2           1           2           1
+cand north-heavy-north-homes (loop)                1,235    1,730       104  A-2           1           2           1
+cand north-labour-T8919                              120    1,579        95  A-2           1           2           1
+cand eng-geotech-T7299                             3,016    1,559        94  A-2           1           2           1
+cand eng-mech-works-east-homes                       624    1,275        77  none          0           0           0
+cand eng-chemical-eng-transport                      598    1,117        67  none          0           0           0
+cand nw-university-T-W960                          1,480    1,105        66  none          0           0           0
+cand eng-mining-eng-geotech                        1,445      908        55  none          0           0           0
+cand east-logistics-east-homes (loop)              1,259      787        47  none          0           0           0
+cand nw-campus-T7299                                 737      723        43  none          0           0           0
+cand east-works-T13738                             1,096      647        39  none          0           0           0
+cand eng-nuclear-eng-chemical (loop)               1,048      564        34  none          0           0           0
+cand eng-vehicle-T18838                            1,109      540        32  none          0           0           0
+cand eng-dam-eng-transport (loop)                  1,768      526        32  none          0           0           0
+cand eng-campus-nw-town                              584      507        30  none          0           0           0
+cand eng-mech-works-eng-automation (loop)            962      501        30  none          0           0           0
+cand eng-tech-park-T-N880                            480      438        26  none          0           0           0
+cand eng-gasfield-eng-mining                       3,392      333        20  none          0           0           0
+cand north-homes-T8919                             1,098      290        17  none          0           0           0
+cand eng-structures-metro-core (loop)              1,980      288        17  none          0           0           0
+cand north-heavy-T8919                             1,454      259        16  none          0           0           0
+cand eng-steel-north-homes (loop)                  1,784      241        14  none          0           0           0
+cand eng-steel-north-heavy                           556      215        13  none          0           0           0
+cand nw-university-north-admin (loop)              1,429      147         9  none          0           0           0
+cand west-suburb-sw-newtown                        1,634      138         8  none          0           0           0
+cand west-homes-nw-university (loop)               1,369      109         7  none          0           0           0
+cand eng-nuclear-seaport                           1,767       79         5  none          0           0           0
+cand east-mall-east-suburb                           688       49         3  none          0           0           0
+cand eng-tech-park-eng-structures (loop)             847       43         3  none          0           0           0
+cand eng-automation-east-works (loop)              1,659       41         2  none          0           0           0
+cand north-homes-north-labour (loop)               1,081       30         2  none          0           0           0
+cand nw-town-nw-campus (loop)                        776       28         2  none          0           0           0
+cand eng-automation-east-logistics                   341       24         1  none          0           0           0
+cand west-bazaar-nw-university (loop)              1,680       22         1  none          0           0           0
+cand north-labour-north-admin (loop)               2,003       21         1  none          0           0           0
+cand south-suburb-eng-vehicle (loop)                 990       14         1  none          0           0           0
+cand eng-transport-port-industry (loop)            1,199       10         1  none          0           0           0
+cand port-industry-eng-chemical (loop)               970       10         1  none          0           0           0
+cand east-logistics-eng-mech-works                   762        2         0  none          0           0           0
+cand eng-dam-eng-nuclear                           2,219        1         0  none          0           0           0
+cand eng-transport-eng-nuclear                     1,167        1         0  none          0           0           0
+cand nw-campus-eng-campus (loop)                     944        1         0  none          0           0           0
+
+LENGTH BY CLASS (km): M8 31.4, M6 1.8, A-D6 3.4, A-D4 1.8, A-2 27.9, none 47.0
+
+RING NODES used by candidate corridors (AADT of the corridors that touch the node; input of the junction schedule B-J, at most 5 extra fit, 17.1):
+  R1205     (arm join) corridors 0  AADT        0  
+  R4265     (arm join) corridors 0  AADT        0  
+  T7299     (tap)      corridors 2  AADT    9,392  nw-town-T7299 | eng-geotech-T7299
+  T8919     (tap)      corridors 1  AADT    1,579  north-labour-T8919
+  R12094    (arm join) corridors 0  AADT        0  
+  T13738    (tap)      corridors 1  AADT    5,747  airport-T13738
+  R16813    (arm join) corridors 0  AADT        0  
+  T18838    (tap)      corridors 3  AADT   31,963  south-bazaar-T18838 | south-suburb-T18838 | seaport-T18838
+  T-N880    (tap)      corridors 2  AADT   18,229  ne-business-T-N880 | north-admin-T-N880
+  T-E610    (tap)      corridors 3  AADT  138,852  metro-core-T-E610 | se-dense-T-E610 | east-homes-T-E610
+  T-W960    (tap)      corridors 2  AADT   58,483  sw-homes-T-W960 | west-homes-T-W960
+
+CHECKS (numbers only)
+PASS  network connected (1 component)
+PASS  R1 no corridor crosses a FIXED road (ring, 4 J1 arms, island link) or runs through the J1 plaza: 0 crossings
+PASS  R1 no two corridors cross each other (a crossing is a junction placeholder with both roads split): 0 crossings
+PASS  R1 every junction placeholder is at least 60 m from every other node (X1): min - m; 0 corridor(s) dropped because the crossing was closer: none
+PASS  R1 every junction placeholder joins exactly 4 corridor ends (two roads split by each other): 0 placeholders
+INFO  junction placeholders 0: none; nearest other node - (rule 3.11 X1: staggered junctions at least 60 m apart)
+PASS  R2 every drawn corridor carries at least 1500 AADT: 29 roads drawn, 38 corridors under the limit get NO road in A3 (local / rural access is designed in C, not here)
+INFO  13 of 39 zones have no A3 road of their own (they use the nearest road; C / D design their access): nw-university, nw-campus, eng-mining, eng-nuclear, eng-dam, eng-mech-works, eng-transport, east-logistics, eng-gasfield, eng-vehicle, eng-campus, eng-automation, eng-steel
+INFO  1 corridors need more lanes than one road gives (inside > 3 per direction, outside > 4): metro-core-T-E610 (5) -> the city needs PARALLEL streets (grid), designed in phase C / D
+PASS  no fixed road over capacity (v/c <= 1): 0 over
+PASS  trip conservation: assigned 150,946 of 150,946 vehicle + pcu trips generated per day (within 0.5 %)
+INFO  lane steps follow the demand (user rule): biggest difference between two roads at one node is 3 lanes per direction (at T7299); any step is allowed, it is built with an exit lane / taper at the node (3.13)
+PASS  R5 no branch leaves J1 or one of the 4 ring x arm joins: 0 branches
+PASS  R6 branches leave the M8 only at taps at least 1600 m from every other tap and join (3.8): 7 taps, closest pair 1,601 m
+INFO  ZONE CONNECTIONS (zone -> nearest road or zone, straight distance m):
+        metro-core       -> M8 tap on J1-E           731
+        se-dense         -> M8 tap on J1-E           1,012
+        sw-homes         -> M8 tap on J1-W           1,069
+        west-homes       -> M8 tap on J1-W           605
+        south-bazaar     -> M8 tap on ring           577
+        ne-business      -> M8 tap on J1-N           789
+        east-homes       -> M8 tap on J1-E           864
+        sw-newtown       -> sw-homes                 1,029
+        nw-town          -> M8 tap on ring           440
+        south-suburb     -> M8 tap on ring           334
+        north-homes      -> M8 tap on ring           915
+        west-bazaar      -> west-homes               822
+        east-suburb      -> se-dense                 1,145
+        seaport          -> M8 tap on ring           1,602
+        airport          -> M8 tap on ring           2,502
+        west-suburb      -> sw-newtown               1,362
+        east-mall        -> east-suburb              574
+        east-works       -> M8 tap on ring           913
+        port-industry    -> seaport                  650
+        north-labour     -> M8 tap on ring           100
+        north-heavy      -> M8 tap on ring           1,212
+        nw-university    -> M8 tap on J1-W           1,233
+        north-admin      -> M8 tap on J1-N           430
+        nw-campus        -> M8 tap on ring           615
+        eng-geotech      -> M8 tap on ring           2,513
+        eng-mining       -> eng-geotech              1,204
+        eng-nuclear      -> seaport                  1,472
+        eng-dam          -> eng-nuclear              1,849
+        eng-mech-works   -> east-homes               520
+        eng-transport    -> eng-nuclear              972
+        east-logistics   -> eng-mech-works           635
+        eng-tech-park    -> M8 tap on J1-N           400
+        eng-chemical     -> eng-transport            498
+        eng-gasfield     -> eng-mining               2,827
+        eng-vehicle      -> M8 tap on ring           925
+        eng-campus       -> nw-town                  486
+        eng-structures   -> ne-business              411
+        eng-automation   -> east-logistics           284
+        eng-steel        -> north-heavy              464
+INFO  ring AADT max 12,292 (plan value 120 000 in 3.13 is a planning figure, not a check; v/c is in the FIXED LINKS table)
+
+10 PASS, 0 FAIL (numbers only; no src/ file changed; game NOT run)
+SUMMARY SCALE 1: persons 141,772, ring AADT max 12,292 (v/c 0.10), arms AADT max 56,704, km by class M8 31, M6 2, A-D6 3, A-D4 2, A-2 28, none 47; 10 PASS 0 FAIL

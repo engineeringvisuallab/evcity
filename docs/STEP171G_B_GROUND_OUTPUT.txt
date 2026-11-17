@@ -1,0 +1,9 @@
+PASS 1 ground under the girder: 1127 probes over the deck width, 0 with the final ground above the soffit (worst: ground -0.05 m relative to the soffit, at design s 495.12, u -7.90; negative = clear)
+PASS 2 14 pier columns: final ground at the column axis within 1 m under the pile cap top and under the soffit (design s : ground) 534.97:-0.92 | 534.97:-1.34 | 582.79:-4.57 | 582.79:-4.73 | 630.60:-7.18 | 630.60:-6.98 | 678.42:-7.14 | 678.42:-6.77 | 726.24:-5.77 | 726.24:-5.21 | 774.06:-3.15 | 774.06:-2.57 | 821.88:-0.21 | 821.88:0.20; bad 0
+PASS 3 mainland abutment at design s 487.15: ground at the wall 9.05 m = 1.80 m under the road 10.85 m (embankment carried to the end, wall top 9.35 m)
+PASS 3 mainland: the next road point outside the structure has ground = road level (10.97 m / 10.97 m)
+PASS 3 island abutment at design s 869.70: ground at the wall 6.83 m = 1.80 m under the road 8.63 m (embankment carried to the end, wall top 7.13 m)
+PASS 3 island: the next road point outside the structure has ground = road level (8.35 m / 8.35 m)
+PASS 4 island end: last 120 m of the road (16 points): ground = road level on the centreline, max difference 0.00 m; road end y 21.53 m
+
+ALL PASS

@@ -1,0 +1,11 @@
+STEP G7d REDO with water check (JX-3 option A = half interchange: two SE left slips only; tap + stem re-search near s 2025; numbers only, NO src/ change; build / game NOT run)
+Inputs (same as G7c): V50 slips R 75 m, Ls 35 m, Ts 93.1 m; zone NE of the tap 310 m (nose + exit taper 1:25 + decel), SW of the tap 439 m (merge + accel + entry taper 1:50); N3 deck s 1526..1619, N4 river viaduct starts s 2355 (margin 20 m -> NE end must be <= 2335).
+Search: every arm point at s 1960..2110, stem start 130 m SE of the arm, ends on R6-6B at point k; stem radius >= 229 m, grade <= 3.5000000000000004 %, cut <= 12, fill <= 7, rail >= 60 m, other R6 >= 60 m, no water within 25 m (added in the G7e redo: the first G7d result ran the stem through a lake). The stem no longer passes under the arm (no NW side).
+rejected by: {"geom":13708,"water":1832,"zoneNE":9}
+feasible (stem OK): 0; of them with NE end <= 2335: 0
+Best stem per tap station (sorted by score; onN3 = metres of the entry-zone taper end that lie on the N3 deck):
+taps with a legal stem: none (0 stations)
+taps with NO N3 overlap: 0; smallest overlap among legal taps: n/a
+FAIL  a legal tap + stem pair exists for the half interchange
+
+RESULT: 1 FAIL

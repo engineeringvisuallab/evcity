@@ -1,0 +1,192 @@
+MAP-2 V3: class-sequence rule (R6 -> 8; R4 -> 8 / R6, never only R2; R2 -> 8 / R6 / R4). TOL 100 m. Nothing was moved.
+Roots: built 8-lane (M8, J1-N/E/S/W) and built 6-lane roads. JOINED = really touching now (<= 25 m or a junction); GAP = stops short (25-100 m). A line passes by touching a passing road of the needed class, or a passing road of its own class (chain).
+
+R6: 30 lines, JOINED 8, GAP (stops short, <= 100 m piece would join) 19, FAIL (nothing in 100 m) 3
+  R6-10     GAP   joins only through the GAP lines of its group (nearest joined road 429 m)
+  R6-11     GAP   stops 76 m short of R6-12: a 76 m piece would join it
+  R6-16     GAP   stops 92 m short of J1-S: a 92 m piece would join it
+  R6-17     GAP   joins only through the GAP lines of its group (nearest joined road 152 m)
+  R6-18     GAP   joins only through the GAP lines of its group (nearest joined road 505 m)
+  R6-19     GAP   stops 92 m short of M8: a 92 m piece would join it
+  R6-20.1   GAP   stops 91 m short of J1-E: a 91 m piece would join it
+  R6-20.2   GAP   stops 91 m short of J1-E: a 91 m piece would join it
+  R6-21     GAP   stops 92 m short of M8: a 92 m piece would join it
+  R6-22     GAP   joins only through the GAP lines of its group (nearest joined road 604 m)
+  R6-23.1   GAP   stops 72 m short of R6-5: a 72 m piece would join it
+  R6-24     GAP   stops 91 m short of M8: a 91 m piece would join it
+  R6-27     GAP   joins only through the GAP lines of its group (nearest joined road 332 m)
+  R6-29     GAP   joins only through the GAP lines of its group (nearest joined road 126 m)
+  R6-30     GAP   joins only through the GAP lines of its group (nearest joined road 425 m)
+  R6-31     GAP   stops 92 m short of M8: a 92 m piece would join it
+  R6-32     GAP   stops 96 m short of R6-23.2: a 96 m piece would join it
+  R6-34     GAP   joins only through the GAP lines of its group (nearest joined road 116 m)
+  R6-36     GAP   joins only through the GAP lines of its group (nearest joined road 289 m)
+  R6-13     FAIL  smallest change: extend end 763 m to M8 (> 70 m: ASK)
+  R6-33     FAIL  smallest change: extend end 476 m to J1-S (> 70 m: ASK)
+  R6-35     FAIL  smallest change: extend end 519 m to M8 (> 70 m: ASK)
+
+R4: 67 lines, JOINED 18, GAP (stops short, <= 100 m piece would join) 42, FAIL (nothing in 100 m) 7
+  R4-1      GAP   stops 94 m short of J1-N: a 94 m piece would join it
+  R4-5.1    GAP   joins only through the GAP lines of its group (nearest joined road 509 m)
+  R4-5.2    GAP   joins only through the GAP lines of its group (nearest joined road 168 m)
+  R4-6      GAP   joins only through the GAP lines of its group (nearest joined road 805 m)
+  R4-10.1   GAP   joins only through the GAP lines of its group (nearest joined road 404 m)
+  R4-10.2   GAP   stops 91 m short of M8: a 91 m piece would join it
+  R4-13     GAP   stops 93 m short of J1-N: a 93 m piece would join it
+  R4-14.1   GAP   joins only through the GAP lines of its group (nearest joined road 537 m)
+  R4-14.2   GAP   joins only through the GAP lines of its group (nearest joined road 536 m)
+  R4-19     GAP   joins only through the GAP lines of its group (nearest joined road 509 m)
+  R4-24     GAP   joins only through the GAP lines of its group (nearest joined road 620 m)
+  R4-26     GAP   joins only through the GAP lines of its group (nearest joined road 101 m)
+  R4-27.1   GAP   joins only through the GAP lines of its group (nearest joined road 171 m)
+  R4-27.2   GAP   stops 45 m short of R6-23.2: a 45 m piece would join it
+  R4-31     GAP   stops 94 m short of J1-E: a 94 m piece would join it
+  R4-34     GAP   stops 93 m short of M8: a 93 m piece would join it
+  R4-37     GAP   stops 87 m short of M8: a 87 m piece would join it
+  R4-45     GAP   joins only through the GAP lines of its group (nearest joined road 236 m)
+  R4-50.1   GAP   joins only through the GAP lines of its group (nearest joined road 296 m)
+  R4-50.2   GAP   joins only through the GAP lines of its group (nearest joined road 435 m)
+  R4-52     GAP   stops 91 m short of M8: a 91 m piece would join it
+  R4-54     GAP   joins only through the GAP lines of its group (nearest joined road 531 m)
+  R4-55     GAP   joins only through the GAP lines of its group (nearest joined road 250 m)
+  R4-56     GAP   stops 95 m short of M8: a 95 m piece would join it
+  R4-57.1   GAP   stops 91 m short of J1-W: a 91 m piece would join it
+  R4-57.2   GAP   stops 94 m short of J1-S: a 94 m piece would join it
+  R4-58     GAP   joins only through the GAP lines of its group (nearest joined road 394 m)
+  R4-60.2   GAP   stops 94 m short of J1-S: a 94 m piece would join it
+  R4-60.3   GAP   joins only through the GAP lines of its group (nearest joined road 296 m)
+  R4-61.1   GAP   joins only through the GAP lines of its group (nearest joined road 250 m)
+  R4-61.2   GAP   stops 92 m short of J1-W: a 92 m piece would join it
+  R4-62     GAP   stops 93 m short of M8: a 93 m piece would join it
+  R4-63     GAP   stops 93 m short of M8: a 93 m piece would join it
+  R4-71.1   GAP   joins only through the GAP lines of its group (nearest joined road 446 m)
+  R4-71.2   GAP   joins only through the GAP lines of its group (nearest joined road 473 m)
+  R4-73     GAP   stops 92 m short of M8: a 92 m piece would join it
+  R4-79     GAP   joins only through the GAP lines of its group (nearest joined road 451 m)
+  R4-81     GAP   stops 51 m short of R6-7: a 51 m piece would join it
+  R4-83.1   GAP   joins only through the GAP lines of its group (nearest joined road 473 m)
+  R4-83.2   GAP   joins only through the GAP lines of its group (nearest joined road 473 m)
+  R4-86     GAP   joins only through the GAP lines of its group (nearest joined road 155 m)
+  R4-88     GAP   stops 69 m short of M8: a 69 m piece would join it
+  R4-11     FAIL  smallest change: extend end 186 m to R6-31 (> 70 m: ASK)
+  R4-22     FAIL  smallest change: extend end 372 m to M8 (> 70 m: ASK)
+  R4-25     FAIL  smallest change: extend end 444 m to M8 (> 70 m: ASK)
+  R4-75     FAIL  smallest change: extend end 294 m to R6-7 (> 70 m: ASK)
+  R4-76     FAIL  smallest change: extend end 408 m to R6-7 (> 70 m: ASK)
+  R4-82     FAIL  smallest change: extend end 449 m to R6-7 (> 70 m: ASK)
+  R4-84     FAIL  smallest change: extend end 396 m to M8 (> 70 m: ASK)
+
+R2: 181 lines, JOINED 69, GAP (stops short, <= 100 m piece would join) 111, FAIL (nothing in 100 m) 1
+  R2-1      GAP   stops 89 m short of J1-N: a 89 m piece would join it
+  R2-2.1    GAP   stops 83 m short of R2-9.4: a 83 m piece would join it
+  R2-2.2    GAP   joins only through the GAP lines of its group (nearest joined road 322 m)
+  R2-5      GAP   stops 25 m short of R6-6A: a 25 m piece would join it
+  R2-6.1    GAP   joins only through the GAP lines of its group (nearest joined road 350 m)
+  R2-6.2    GAP   joins only through the GAP lines of its group (nearest joined road 326 m)
+  R2-6.3    GAP   joins only through the GAP lines of its group (nearest joined road 326 m)
+  R2-6.4    GAP   joins only through the GAP lines of its group (nearest joined road 451 m)
+  R2-7      GAP   stops 87 m short of M8: a 87 m piece would join it
+  R2-8      GAP   joins only through the GAP lines of its group (nearest joined road 286 m)
+  R2-12.1   GAP   joins only through the GAP lines of its group (nearest joined road 485 m)
+  R2-12.2   GAP   joins only through the GAP lines of its group (nearest joined road 467 m)
+  R2-12.3   GAP   stops 72 m short of R6-6A: a 72 m piece would join it
+  R2-16     GAP   joins only through the GAP lines of its group (nearest joined road 485 m)
+  R2-17     GAP   joins only through the GAP lines of its group (nearest joined road 495 m)
+  R2-19     GAP   stops 89 m short of M8: a 89 m piece would join it
+  R2-20     GAP   stops 88 m short of M8: a 88 m piece would join it
+  R2-21.1   GAP   joins only through the GAP lines of its group (nearest joined road 282 m)
+  R2-21.2   GAP   joins only through the GAP lines of its group (nearest joined road 282 m)
+  R2-30.1   GAP   stops 91 m short of J1-N: a 91 m piece would join it
+  R2-30.2   GAP   joins only through the GAP lines of its group (nearest joined road 467 m)
+  R2-30.3   GAP   joins only through the GAP lines of its group (nearest joined road 577 m)
+  R2-31.1   GAP   stops 89 m short of M8: a 89 m piece would join it
+  R2-31.2   GAP   joins only through the GAP lines of its group (nearest joined road 441 m)
+  R2-44.1   GAP   stops 94 m short of M8: a 94 m piece would join it
+  R2-44.2   GAP   joins only through the GAP lines of its group (nearest joined road 403 m)
+  R2-54.1   GAP   stops 91 m short of M8: a 91 m piece would join it
+  R2-54.2   GAP   joins only through the GAP lines of its group (nearest joined road 559 m)
+  R2-78.1   GAP   joins only through the GAP lines of its group (nearest joined road 337 m)
+  R2-78.2   GAP   joins only through the GAP lines of its group (nearest joined road 129 m)
+  R2-79     GAP   stops 90 m short of M8: a 90 m piece would join it
+  R2-80     GAP   stops 92 m short of M8: a 92 m piece would join it
+  R2-82     GAP   stops 91 m short of M8: a 91 m piece would join it
+  R2-86.1   GAP   stops 90 m short of M8: a 90 m piece would join it
+  R2-86.2   GAP   stops 91 m short of J1-E: a 91 m piece would join it
+  R2-86.3   GAP   stops 91 m short of J1-E: a 91 m piece would join it
+  R2-86.4   GAP   joins only through the GAP lines of its group (nearest joined road 337 m)
+  R2-86.5   GAP   joins only through the GAP lines of its group (nearest joined road 302 m)
+  R2-88.1   GAP   joins only through the GAP lines of its group (nearest joined road 454 m)
+  R2-88.2   GAP   joins only through the GAP lines of its group (nearest joined road 347 m)
+  R2-90     GAP   stops 52 m short of R6-5: a 52 m piece would join it
+  R2-106.1  GAP   joins only through the GAP lines of its group (nearest joined road 341 m)
+  R2-106.2  GAP   joins only through the GAP lines of its group (nearest joined road 330 m)
+  R2-106.3  GAP   joins only through the GAP lines of its group (nearest joined road 234 m)
+  R2-107.1  GAP   joins only through the GAP lines of its group (nearest joined road 330 m)
+  R2-107.2  GAP   joins only through the GAP lines of its group (nearest joined road 128 m)
+  R2-109.1  GAP   stops 94 m short of M8: a 94 m piece would join it
+  R2-109.2  GAP   joins only through the GAP lines of its group (nearest joined road 289 m)
+  R2-109.3  GAP   joins only through the GAP lines of its group (nearest joined road 148 m)
+  R2-110.1  GAP   joins only through the GAP lines of its group (nearest joined road 126 m)
+  R2-110.2  GAP   joins only through the GAP lines of its group (nearest joined road 345 m)
+  R2-110.3  GAP   joins only through the GAP lines of its group (nearest joined road 164 m)
+  R2-111    GAP   joins only through the GAP lines of its group (nearest joined road 173 m)
+  R2-114.1  GAP   stops 46 m short of J1-S: a 46 m piece would join it
+  R2-114.2  GAP   joins only through the GAP lines of its group (nearest joined road 125 m)
+  R2-115.1  GAP   joins only through the GAP lines of its group (nearest joined road 126 m)
+  R2-115.2  GAP   joins only through the GAP lines of its group (nearest joined road 164 m)
+  R2-117    GAP   stops 56 m short of M8: a 56 m piece would join it
+  R2-125.1  GAP   stops 91 m short of J1-S: a 91 m piece would join it
+  R2-125.2  GAP   joins only through the GAP lines of its group (nearest joined road 425 m)
+  R2-129.1  GAP   joins only through the GAP lines of its group (nearest joined road 425 m)
+  R2-129.2  GAP   joins only through the GAP lines of its group (nearest joined road 375 m)
+  R2-132.1  GAP   stops 89 m short of M8: a 89 m piece would join it
+  R2-132.2  GAP   joins only through the GAP lines of its group (nearest joined road 277 m)
+  R2-133    GAP   stops 56 m short of M8: a 56 m piece would join it
+  R2-134    GAP   stops 95 m short of M8: a 95 m piece would join it
+  R2-136    GAP   stops 93 m short of M8: a 93 m piece would join it
+  R2-138.1  GAP   joins only through the GAP lines of its group (nearest joined road 243 m)
+  R2-138.2  GAP   joins only through the GAP lines of its group (nearest joined road 119 m)
+  R2-138.3  GAP   joins only through the GAP lines of its group (nearest joined road 351 m)
+  R2-138.4  GAP   joins only through the GAP lines of its group (nearest joined road 342 m)
+  R2-138.5  GAP   joins only through the GAP lines of its group (nearest joined road 277 m)
+  R2-138.6  GAP   joins only through the GAP lines of its group (nearest joined road 277 m)
+  R2-138.7  GAP   joins only through the GAP lines of its group (nearest joined road 358 m)
+  R2-139.1  GAP   stops 90 m short of J1-W: a 90 m piece would join it
+  R2-139.2  GAP   joins only through the GAP lines of its group (nearest joined road 346 m)
+  R2-142.1  GAP   stops 94 m short of J1-W: a 94 m piece would join it
+  R2-142.2  GAP   joins only through the GAP lines of its group (nearest joined road 393 m)
+  R2-144.1  GAP   joins only through the GAP lines of its group (nearest joined road 366 m)
+  R2-144.2  GAP   stops 93 m short of J1-W: a 93 m piece would join it
+  R2-145    GAP   stops 54 m short of M8: a 54 m piece would join it
+  R2-150.1  GAP   stops 74 m short of M8: a 74 m piece would join it
+  R2-150.2  GAP   joins only through the GAP lines of its group (nearest joined road 298 m)
+  R2-151    GAP   joins only through the GAP lines of its group (nearest joined road 583 m)
+  R2-152    GAP   stops 92 m short of M8: a 92 m piece would join it
+  R2-153.1  GAP   joins only through the GAP lines of its group (nearest joined road 194 m)
+  R2-153.2  GAP   joins only through the GAP lines of its group (nearest joined road 194 m)
+  R2-154    GAP   joins only through the GAP lines of its group (nearest joined road 920 m)
+  R2-155    GAP   joins only through the GAP lines of its group (nearest joined road 582 m)
+  R2-160    GAP   joins only through the GAP lines of its group (nearest joined road 194 m)
+  R2-161    GAP   joins only through the GAP lines of its group (nearest joined road 476 m)
+  R2-163.1  GAP   joins only through the GAP lines of its group (nearest joined road 920 m)
+  R2-163.2  GAP   joins only through the GAP lines of its group (nearest joined road 739 m)
+  R2-165.1  GAP   stops 32 m short of R6-7: a 32 m piece would join it
+  R2-165.2  GAP   joins only through the GAP lines of its group (nearest joined road 438 m)
+  R2-173.1  GAP   joins only through the GAP lines of its group (nearest joined road 443 m)
+  R2-173.2  GAP   joins only through the GAP lines of its group (nearest joined road 433 m)
+  R2-173.3  GAP   joins only through the GAP lines of its group (nearest joined road 448 m)
+  R2-173.4  GAP   joins only through the GAP lines of its group (nearest joined road 372 m)
+  R2-176    GAP   joins only through the GAP lines of its group (nearest joined road 496 m)
+  R2-177    GAP   joins only through the GAP lines of its group (nearest joined road 654 m)
+  R2-178.1  GAP   joins only through the GAP lines of its group (nearest joined road 654 m)
+  R2-178.2  GAP   joins only through the GAP lines of its group (nearest joined road 505 m)
+  R2-179    GAP   stops 92 m short of M8: a 92 m piece would join it
+  R2-181    GAP   stops 50 m short of J1-W: a 50 m piece would join it
+  R2-183.1  GAP   joins only through the GAP lines of its group (nearest joined road 207 m)
+  R2-183.2  GAP   joins only through the GAP lines of its group (nearest joined road 443 m)
+  R2-184    GAP   joins only through the GAP lines of its group (nearest joined road 439 m)
+  R2-189    GAP   stops 37 m short of R4-2: a 37 m piece would join it
+  R2-190.1  GAP   stops 94 m short of M8: a 94 m piece would join it
+  R2-190.2  GAP   joins only through the GAP lines of its group (nearest joined road 342 m)
+  R2-141    FAIL  smallest change: extend end 142 m to J1-S (> 70 m: ASK)
+

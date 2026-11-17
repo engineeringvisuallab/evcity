@@ -1,0 +1,7 @@
+J1-g3 PAD FIT   J1 = (-87, -277), yaw 37.5 deg, paved open star (square +-91.6 m minus 4 corner disks R 68.2 m), 1183 samples every 4 m
+natural ground under the star: 17.72 .. 18.57 m  (range 0.85 m)
+free fit grade 0.35 %, used grade 0.35 %  (limit 2 %, minimum for drainage 0.3 %)
+pad centre height y = 18.2140 m, world plane a = -0.0007694 b = 0.0033875
+under the star: max fill 0.45 m, max cut 0.38 m, fill 1068 m3, cut 1068 m3
+under the whole pad square +-100 m: max fill 0.68 m, max cut 0.50 m -> embankment 30 m (slope 1:3)
+Config.roads.junctionJ1 = { x: -87, z: -277, yawDeg: 37.5, y: 18.213952768488063, a: -0.0007693744942258208, b: 0.003387472903877177, rCore: 100, emb: 30 }

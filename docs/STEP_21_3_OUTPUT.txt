@@ -1,0 +1,466 @@
+STEP 21.3 LINE FIXES + HORIZONTAL ALIGNMENT (headless; nothing in src or data changed, results go to docs/centre_fixed.json)
+157 lines worked on, 14 built roads fixed (R12). Natural ground only (finished-profile grades come in 21.4).
+Limits (3.3, R11): grade R6 4 % / R4 6 % / R2 8 % / C 8 % / L 10 %. Design speed per class (MY numbers, say if you disagree) -> minimum radius: R2 V40 -> 41 m, R4 V60 -> 113 m, R6 V80 -> 229 m, C V40 -> 41 m, L V30 -> 20 m
+Hill shift tier 1 +-25 m, tier 2 +-60 m; smoothing cap 35 m; join proposals up to 60 m; R5 trim at most 250 m.
+
+1. JOINS (21.1 proposals: an end 5..60 m from a road moves onto it; skipped: target smaller road, or shallow angle under 30 deg = reshape case for the user)
+   R6-9    start -> R6-7    22 m  NOT applied: shallow angle 3 deg
+   R4-15   start -> R4-16   50 m  NOT applied: would cross a road (R1)
+   R4-16   start -> R4-17   43 m, angle 90 deg  APPLIED
+   R4-26   start -> R2-70   9 m  NOT applied: target is a SMALLER road
+   R4-26   end   -> J1-N    11 m, angle 80 deg  APPLIED
+   R2-13   end   -> J1-N    32 m  NOT applied: R5: a R2 / C / L road does not join an 8-lane road directly
+   C-8     start -> M8      55 m  NOT applied: R5: a R2 / C / L road does not join an 8-lane road directly
+   C-9     end   -> M8      58 m  NOT applied: R5: a R2 / C / L road does not join an 8-lane road directly
+   L-15    end   -> R2-13   38 m, angle 59 deg  APPLIED
+   L-21    end   -> J1-N    40 m  NOT applied: R5: a R2 / C / L road does not join an 8-lane road directly
+   3 joins applied
+
+2. R5: a R2 / C / L line must not end on an 8-lane road. The end is trimmed back (<= 250 m) to the first point within 70 m of a bigger non-8-lane road (R2 -> R4 / R6; C / L -> R2 / R4 / R6) and the last point moves onto that road. Not possible = listed, nothing changed.
+   R2-6    end   at (-2358, -2082) on M8: DEAD END, cut 74 m (nearest bigger road R4-4 775 m away)  APPLIED
+   R2-9    end   at (-1903, -2298) on M8: DEAD END, cut 74 m (nearest bigger road R4-9 391 m away)  APPLIED
+   R2-10   end   at (-1119, -2661) on M8: DEAD END, cut 75 m (nearest bigger road R4-9 413 m away)  APPLIED
+   R2-12   end   at (1870, -2529) on J1-N: DEAD END, cut 75 m (nearest bigger road R4-10 377 m away)  APPLIED
+   R2-28   end   at (309, 27) on J1-E: DEAD END, cut 73 m (nearest bigger road R4-12 0 m away)  APPLIED
+   R2-33   start at (-999, 2307) on M8: DEAD END, cut 85 m (nearest bigger road M6-1 137 m away)  APPLIED
+   R2-33   end   at (-761, 964) on J1-S: DEAD END, cut 72 m (nearest bigger road R4-20 426 m away)  APPLIED
+   R2-34   end   at (-1106, 1943) on J1-S: DEAD END, cut 75 m (nearest bigger road M6-1 385 m away)  APPLIED
+   R2-35   end   at (-1287, 2296) on M8: DEAD END, cut 75 m (nearest bigger road M6-1 156 m away)  APPLIED
+   R2-36   end   at (-1494, 2288) on M8: DEAD END, cut 75 m (nearest bigger road M6-1 362 m away)  APPLIED
+   R2-37   end   at (-1710, 2280) on M8: DEAD END, cut 75 m (nearest bigger road R4-8 303 m away)  APPLIED
+   R2-38   end   at (-2007, 2220) on M8: DEAD END, cut 74 m (nearest bigger road R4-8 0 m away)  APPLIED
+   R2-39   end   at (-2483, 1630) on M8: DEAD END, cut 75 m (nearest bigger road R4-6 687 m away)  APPLIED
+   R2-44   end   at (1449, 1850) on M8: DEAD END, cut 74 m (nearest bigger road R6-2 760 m away)  APPLIED
+   R2-45   end   at (1840, 920) on J1-E: DEAD END, cut 72 m (nearest bigger road R6-8 473 m away)  APPLIED
+   R2-47   end   at (650, 1858) on M8: DEAD END, cut 71 m (nearest bigger road R4-14 120 m away)  APPLIED
+   R2-48   start at (1449, 1850) on M8: DEAD END, cut 70 m (nearest bigger road R6-2 760 m away)  APPLIED
+   R2-55   start at (2798, 1120) on M8: DEAD END, cut 78 m (nearest bigger road R4-22 981 m away)  APPLIED
+   R2-55   end   at (2990, 0) on M8: DEAD END, cut 73 m (nearest bigger road R6-8 1518 m away)  APPLIED
+   R2-58   start at (3045, -605) on M8: DEAD END, cut 83 m (nearest bigger road R6-11 1074 m away)  APPLIED
+   R2-58   end   at (2776, -1645) on M8: DEAD END, cut 72 m (nearest bigger road R6-11 0 m away)  APPLIED
+   R2-61   end   at (-669, -256) on J1-W: DEAD END, cut 71 m (nearest bigger road R6-15 576 m away)  APPLIED
+   R2-62   start at (580, -3821) on M8: DEAD END, cut 73 m (nearest bigger road R4-28 207 m away)  APPLIED
+   R2-69   end   at (2185, -2679) on M8: DEAD END, cut 73 m (nearest bigger road R4-24 518 m away)  APPLIED
+   R2-77   start at (-568, 439) on J1-S: DEAD END, cut 74 m (nearest bigger road R4-20 0 m away)  APPLIED
+   R2-77   end   at (-1083, 144) on J1-W: DEAD END, cut 80 m (nearest bigger road R6-15 0 m away)  APPLIED
+   0 ends trimmed onto a bigger road, 26 cut back to a dead end (70 m short of the 8-lane road), 0 still OPEN
+
+3. HILL SHIFT + 4. RADIUS: per line, tier 1 then tier 2; a result is kept only if it lowers the over-limit grade metres by >= 15 %, adds no water and no rail crossing, makes no NEW crossing (R1)
+   hill lines kept: 46 (tier 1 36, tier 2 10); hill lines with over-limit >= 60 m where no shift helped: 34; radius-only smoothing applied 28, failed / not allowed 0
+
+5. PER LINE (before -> after): length, metres over the grade limit, tunnel-candidate metres, wet, rail crossings, min radius (class minimum in brackets), max shift from the user line
+   R6-9    R6  len   737 ->   734  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 1->1  Rmin   48 ->  237 (229)  max shift   7 m   | SMOOTH min radius 48 -> 237 m
+   R6-10   R6  len  1905 ->  1838  over 1390 -> 1390 m  tun  870 ->  860  wet  20 ->  20  rail 0->0  Rmin   36 ->   37 (229)  max shift  35 m   | SMOOTH min radius 36 -> 37 m
+   R6-11   R6  len  1444 ->  1444  over  830 ->  830 m  tun  480 ->  480  wet  60 ->  60  rail 1->1  Rmin  126 ->  104 (229)  max shift   1 m   | SMOOTH min radius 126 -> 104 m
+   R6-12   R6  len   269 ->   267  over  270 ->  270 m  tun  270 ->  270  wet   0 ->   0  rail 0->0  Rmin   64 ->  229 (229)  max shift   4 m   | SMOOTH min radius 64 -> 229 m
+   R6-13   R6  len   447 ->   447  over   90 ->   90 m  tun   20 ->   20  wet   0 ->   0  rail 0->0  Rmin  552 ->  552 (229)  max shift   0 m
+   R6-14   R6  len   366 ->   366  over  310 ->  310 m  tun  190 ->  190  wet   0 ->   0  rail 0->0  Rmin  370 ->  370 (229)  max shift   0 m
+   R6-15   R6  len  1988 ->  2015  over 1160 ->  900 m  tun  670 ->  490  wet   0 ->   0  rail 1->1  Rmin  127 ->   55 (229)  max shift  36 m   | HILL tier 2: over-limit 1160 -> 900 m, tunnel-cand 670 -> 490 m
+   R4-1    R4  len  1576 ->  1602  over  870 ->  580 m  tun  300 ->  110  wet   0 ->   0  rail 0->0  Rmin   47 ->  114 (113)  max shift  22 m   | HILL tier 1: over-limit 870 -> 580 m, tunnel-cand 300 -> 110 m
+   R4-2    R4  len  1113 ->  1092  over  600 ->  370 m  tun  310 ->  140  wet   0 ->   0  rail 0->0  Rmin   38 ->  116 (113)  max shift  27 m   | HILL tier 1: over-limit 600 -> 370 m, tunnel-cand 310 -> 140 m
+   R4-3    R4  len   192 ->   198  over  150 ->   90 m  tun   70 ->   30  wet   0 ->   0  rail 0->0  Rmin 9999 ->  121 (113)  max shift  20 m   | HILL tier 1: over-limit 150 -> 90 m, tunnel-cand 70 -> 30 m
+   R4-4    R4  len   259 ->   253  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin   33 ->  118 (113)  max shift   9 m   | SMOOTH min radius 33 -> 118 m
+   R4-5    R4  len   644 ->   644  over  220 ->  220 m  tun  160 ->  160  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (113)  max shift   0 m
+   R4-6    R4  len  1794 ->  1793  over  340 ->  340 m  tun   80 ->   80  wet   0 ->   0  rail 0->0  Rmin   51 ->   44 (113)  max shift   1 m   | SMOOTH min radius 51 -> 44 m
+   R4-7    R4  len  1613 ->  1553  over  920 ->  720 m  tun  290 ->   90  wet   0 ->   0  rail 0->0  Rmin   20 ->   63 (113)  max shift  70 m   | HILL tier 2: over-limit 920 -> 720 m, tunnel-cand 290 -> 90 m
+   R4-8    R4  len  1140 ->  1161  over  470 ->  290 m  tun   50 ->   50  wet   0 ->   0  rail 0->0  Rmin   59 ->   70 (113)  max shift  23 m   | HILL tier 1: over-limit 470 -> 290 m, tunnel-cand 50 -> 50 m
+   R4-9    R4  len  2964 ->  2948  over 1940 -> 1850 m  tun 1240 -> 1240  wet   0 ->   0  rail 0->0  Rmin   14 ->   14 (113)  max shift   9 m   | SMOOTH min radius 14 -> 14 m
+   R4-10   R4  len  1118 ->  1117  over  420 ->  430 m  tun   90 ->   90  wet   0 ->   0  rail 0->0  Rmin   28 ->   25 (113)  max shift   1 m   | SMOOTH min radius 28 -> 25 m
+   R4-11   R4  len   216 ->   216  over   50 ->   50 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin   86 ->   75 (113)  max shift   0 m   | SMOOTH min radius 86 -> 75 m
+   R4-12   R4  len  1788 ->  1786  over  600 ->  590 m  tun  180 ->  190  wet   0 ->   0  rail 0->0  Rmin   24 ->   22 (113)  max shift   2 m   | SMOOTH min radius 24 -> 22 m
+   R4-13   R4  len   981 ->   980  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin   63 ->  133 (113)  max shift   2 m   | SMOOTH min radius 63 -> 133 m
+   R4-14   R4  len   760 ->   759  over   30 ->   30 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin   54 ->  119 (113)  max shift   3 m   | SMOOTH min radius 54 -> 119 m
+   R4-15   R4  len   525 ->   525  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (113)  max shift   0 m
+   R4-16   R4  len   651 ->   681  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (113)  max shift  43 m   | JOIN start -> R4-17 (43 m)
+   R4-17   R4  len   590 ->   590  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (113)  max shift   0 m
+   R4-18   R4  len  1126 ->  1116  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin   35 ->  116 (113)  max shift  13 m   | SMOOTH min radius 35 -> 116 m
+   R4-19   R4  len  3227 ->  3207  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin   29 ->   62 (113)  max shift  13 m   | SMOOTH min radius 29 -> 62 m
+   R4-20   R4  len  1945 ->  1931  over  360 ->  330 m  tun  170 ->  170  wet  80 ->  80  rail 2->2  Rmin   28 ->   31 (113)  max shift  18 m   | SMOOTH min radius 28 -> 31 m
+   R4-21   R4  len  3041 ->  3053  over  350 ->  210 m  tun   30 ->    0  wet   0 ->   0  rail 0->0  Rmin   72 ->   68 (113)  max shift  25 m   | HILL tier 1: over-limit 350 -> 210 m, tunnel-cand 30 -> 0 m
+   R4-22   R4  len   674 ->   677  over   90 ->   30 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 ->  117 (113)  max shift  15 m   | HILL tier 1: over-limit 90 -> 30 m, tunnel-cand 0 -> 0 m
+   R4-23   R4  len  1306 ->  1289  over  780 ->  740 m  tun  330 ->  320  wet  30 ->  30  rail 0->0  Rmin   23 ->  122 (113)  max shift  22 m   | SMOOTH min radius 23 -> 122 m
+   R4-24   R4  len  2957 ->  2979  over 2210 -> 1700 m  tun 1720 -> 1020  wet  20 ->  20  rail 0->0  Rmin   26 ->  117 (113)  max shift  27 m   | HILL tier 1: over-limit 2210 -> 1700 m, tunnel-cand 1720 -> 1020 m
+   R4-25   R4  len   552 ->   561  over  290 ->  240 m  tun  100 ->   60  wet   0 ->   0  rail 0->0  Rmin 9999 ->   70 (113)  max shift  14 m   | HILL tier 1: over-limit 290 -> 240 m, tunnel-cand 100 -> 60 m
+   R4-26   R4  len   435 ->   433  over  190 ->  120 m  tun   40 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 ->  117 (113)  max shift  24 m   | JOIN end -> J1-N (11 m); HILL tier 1: over-limit 190 -> 120 m, tunnel-cand 40 -> 0 m
+   R4-27   R4  len   628 ->   627  over   30 ->   30 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin   14 ->   13 (113)  max shift   2 m   | SMOOTH min radius 14 -> 13 m
+   R4-28   R4  len   349 ->   349  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (113)  max shift   0 m
+   R4-29   R4  len   903 ->   908  over  250 ->  200 m  tun   70 ->   80  wet  20 ->  20  rail 0->0  Rmin   44 ->   68 (113)  max shift  15 m   | HILL tier 1: over-limit 250 -> 200 m, tunnel-cand 70 -> 80 m
+   R2-1    R2  len  1235 ->  1235  over  680 ->  680 m  tun  420 ->  420  wet   0 ->   0  rail 0->0  Rmin   41 ->   41 (41)  max shift   0 m
+   R2-2    R2  len  1630 ->  1690  over 1000 ->  490 m  tun  550 ->  120  wet   0 ->   0  rail 0->0  Rmin   29 ->   45 (41)  max shift  25 m   | HILL tier 1: over-limit 1000 -> 490 m, tunnel-cand 550 -> 120 m
+   R2-3    R2  len   913 ->   941  over  650 ->  550 m  tun  370 ->  300  wet   0 ->   0  rail 0->0  Rmin   45 ->   46 (41)  max shift  25 m   | HILL tier 1: over-limit 650 -> 550 m, tunnel-cand 370 -> 300 m
+   R2-4    R2  len  1755 ->  1821  over  960 ->  640 m  tun  400 ->  160  wet   0 ->   0  rail 0->0  Rmin   74 ->   41 (41)  max shift  25 m   | HILL tier 1: over-limit 960 -> 640 m, tunnel-cand 400 -> 160 m
+   R2-5    R2  len   566 ->   566  over  350 ->  350 m  tun  220 ->  220  wet   0 ->   0  rail 0->0  Rmin   71 ->   71 (41)  max shift   0 m
+   R2-6    R2  len  1678 ->  1638  over  730 ->  570 m  tun  370 ->   60  wet   0 ->   0  rail 0->0  Rmin   32 ->   44 (41)  max shift  74 m   | R5 end dead end: cut 74 m, now 70 m or more from M8; HILL tier 1: over-limit 730 -> 570 m, tunnel-cand 370 -> 60 m
+   R2-7    R2  len   980 ->   980  over  480 ->  480 m  tun  280 ->  280  wet   0 ->   0  rail 0->0  Rmin  136 ->  136 (41)  max shift   0 m
+   R2-8    R2  len  3909 ->  3919  over  120 ->    0 m  tun   10 ->    0  wet   0 ->   0  rail 0->0  Rmin   51 ->   42 (41)  max shift  20 m   | HILL tier 1: over-limit 120 -> 0 m, tunnel-cand 10 -> 0 m
+   R2-9    R2  len   386 ->   312  over  310 ->  310 m  tun  270 ->  270  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift  74 m   | R5 end dead end: cut 74 m, now 70 m or more from M8
+   R2-10   R2  len   413 ->   339  over  280 ->  250 m  tun  140 ->  130  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift  75 m   | R5 end dead end: cut 75 m, now 70 m or more from M8
+   R2-11   R2  len  3017 ->  3158  over 2170 -> 1790 m  tun 1310 ->  790  wet   0 ->   0  rail 0->0  Rmin   46 ->   27 (41)  max shift  60 m   | HILL tier 2: over-limit 2170 -> 1790 m, tunnel-cand 1310 -> 790 m
+   R2-12   R2  len   555 ->   461  over  170 ->  130 m  tun   50 ->   20  wet   0 ->   0  rail 0->0  Rmin   15 ->   44 (41)  max shift  75 m   | R5 end dead end: cut 75 m, now 70 m or more from J1-N; HILL tier 1: over-limit 170 -> 130 m, tunnel-cand 50 -> 20 m
+   R2-13   R2  len   447 ->   445  over   70 ->   70 m  tun   10 ->   10  wet   0 ->   0  rail 0->0  Rmin   21 ->   19 (41)  max shift   2 m   | SMOOTH min radius 21 -> 19 m
+   R2-14   R2  len   596 ->   596  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin  121 ->  121 (41)  max shift   0 m
+   R2-15   R2  len   339 ->   339  over   30 ->   30 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   R2-16   R2  len   244 ->   244  over   10 ->   10 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   R2-17   R2  len  1171 ->  1203  over  350 ->  280 m  tun   50 ->   10  wet   0 ->   0  rail 0->0  Rmin   51 ->   23 (41)  max shift  26 m   | HILL tier 1: over-limit 350 -> 280 m, tunnel-cand 50 -> 10 m
+   R2-18   R2  len   217 ->   217  over   50 ->   50 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   R2-19   R2  len  2763 ->  2761  over  560 ->  550 m  tun  200 ->  200  wet  60 ->  60  rail 0->0  Rmin   37 ->   49 (41)  max shift   2 m   | SMOOTH min radius 37 -> 49 m
+   R2-20   R2  len   245 ->   223  over  140 ->  120 m  tun   40 ->   40  wet   0 ->   0  rail 0->0  Rmin   16 ->   43 (41)  max shift  18 m   | SMOOTH min radius 16 -> 43 m
+   R2-21   R2  len   591 ->   591  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   R2-22   R2  len   547 ->   547  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   R2-23   R2  len   606 ->   606  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   R2-24   R2  len  1149 ->  1149  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 1091 -> 1091 (41)  max shift   0 m
+   R2-25   R2  len   583 ->   583  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   R2-26   R2  len   632 ->   632  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   R2-27   R2  len   640 ->   640  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   R2-28   R2  len  1262 ->  1183  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 2->2  Rmin   30 ->   45 (41)  max shift  73 m   | R5 end dead end: cut 73 m, now 70 m or more from J1-E; SMOOTH min radius 27 -> 45 m
+   R2-29   R2  len   430 ->   430  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin  163 ->  163 (41)  max shift   0 m
+   R2-30   R2  len   258 ->   258  over   30 ->   30 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   R2-31   R2  len    79 ->    79  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   R2-32   R2  len   533 ->   524  over   30 ->   30 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin   20 ->   48 (41)  max shift   9 m   | SMOOTH min radius 20 -> 48 m
+   R2-33   R2  len  1597 ->  1437  over   40 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 1->1  Rmin   22 ->   39 (41)  max shift  85 m   | R5 start dead end: cut 85 m, now 70 m or more from M8; R5 end dead end: cut 72 m, now 70 m or more from J1-S; SMOOTH min radius 25 -> 39 m
+   R2-34   R2  len   827 ->   752  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift  75 m   | R5 end dead end: cut 75 m, now 70 m or more from J1-S
+   R2-35   R2  len   594 ->   519  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift  75 m   | R5 end dead end: cut 75 m, now 70 m or more from M8
+   R2-36   R2  len   593 ->   518  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift  75 m   | R5 end dead end: cut 75 m, now 70 m or more from M8
+   R2-37   R2  len   532 ->   457  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift  75 m   | R5 end dead end: cut 75 m, now 70 m or more from M8
+   R2-38   R2  len   286 ->   216  over  110 ->   80 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 ->   47 (41)  max shift  74 m   | R5 end dead end: cut 74 m, now 70 m or more from M8; HILL tier 1: over-limit 110 -> 80 m, tunnel-cand 0 -> 0 m
+   R2-39   R2  len   694 ->   621  over  120 ->   70 m  tun   70 ->    0  wet   0 ->   0  rail 0->0  Rmin   31 ->   49 (41)  max shift  74 m   | R5 end dead end: cut 75 m, now 70 m or more from M8; HILL tier 1: over-limit 120 -> 70 m, tunnel-cand 70 -> 0 m
+   R2-40   R2  len   289 ->   289  over   10 ->   10 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   R2-41   R2  len   286 ->   286  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 1311 -> 1311 (41)  max shift   0 m
+   R2-42   R2  len   522 ->   522  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   R2-43   R2  len   738 ->   762  over  230 ->  190 m  tun   30 ->   20  wet   0 ->   0  rail 0->0  Rmin   33 ->   43 (41)  max shift  28 m   | HILL tier 2: over-limit 230 -> 190 m, tunnel-cand 30 -> 20 m
+   R2-44   R2  len   924 ->   869  over  270 ->  210 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin   38 ->   44 (41)  max shift  74 m   | R5 end dead end: cut 74 m, now 70 m or more from M8; HILL tier 1: over-limit 270 -> 210 m, tunnel-cand 0 -> 0 m
+   R2-45   R2  len   892 ->   847  over  190 ->   80 m  tun   20 ->    0  wet   0 ->   0  rail 0->0  Rmin   36 ->   45 (41)  max shift  72 m   | R5 end dead end: cut 72 m, now 70 m or more from J1-E; HILL tier 1: over-limit 190 -> 80 m, tunnel-cand 20 -> 0 m
+   R2-46   R2  len   451 ->   467  over  110 ->   90 m  tun   20 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 ->   49 (41)  max shift  23 m   | HILL tier 1: over-limit 110 -> 90 m, tunnel-cand 20 -> 0 m
+   R2-47   R2  len   817 ->   745  over  650 ->  620 m  tun  440 ->  440  wet   0 ->   0  rail 0->0  Rmin   25 ->   43 (41)  max shift  71 m   | R5 end dead end: cut 71 m, now 70 m or more from M8
+   R2-48   R2  len   310 ->   240  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift  70 m   | R5 start dead end: cut 70 m, now 70 m or more from M8
+   R2-49   R2  len   306 ->   306  over   10 ->   10 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   R2-50   R2  len   260 ->   260  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   R2-51   R2  len  1507 ->  1564  over  470 ->  390 m  tun   20 ->    0  wet   0 ->   0  rail 0->0  Rmin   14 ->   12 (41)  max shift  57 m   | HILL tier 2: over-limit 470 -> 390 m, tunnel-cand 20 -> 0 m
+   R2-52   R2  len  1046 ->  1101  over  530 ->  420 m  tun  200 ->   30  wet   0 ->   0  rail 0->0  Rmin   14 ->   12 (41)  max shift  55 m   | HILL tier 2: over-limit 530 -> 420 m, tunnel-cand 200 -> 30 m
+   R2-53   R2  len   607 ->   607  over  480 ->  480 m  tun  230 ->  230  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   R2-54   R2  len   750 ->   750  over  520 ->  520 m  tun  340 ->  340  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   R2-55   R2  len  1432 ->  1288  over  980 ->  750 m  tun  610 ->  400  wet  20 ->  20  rail 0->0  Rmin   19 ->   31 (41)  max shift  78 m   | R5 start dead end: cut 78 m, now 70 m or more from M8; R5 end dead end: cut 73 m, now 70 m or more from M8; HILL tier 1: over-limit 980 -> 750 m, tunnel-cand 610 -> 400 m
+   R2-56   R2  len  1503 ->  1501  over 1250 -> 1250 m  tun 1050 -> 1030  wet   0 ->   0  rail 0->0  Rmin   39 ->   45 (41)  max shift   2 m   | SMOOTH min radius 39 -> 45 m
+   R2-57   R2  len   198 ->   198  over  170 ->  170 m  tun  160 ->  160  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   R2-58   R2  len  1912 ->  1730  over 1110 ->  550 m  tun  290 ->  120  wet   0 ->   0  rail 0->0  Rmin   31 ->   30 (41)  max shift  83 m   | R5 start dead end: cut 83 m, now 70 m or more from M8; R5 end dead end: cut 72 m, now 70 m or more from M8; HILL tier 1: over-limit 1110 -> 550 m, tunnel-cand 290 -> 120 m
+   R2-59   R2  len  1316 ->  1313  over 1070 -> 1100 m  tun  850 ->  860  wet   0 ->   0  rail 0->0  Rmin   35 ->   52 (41)  max shift   2 m   | SMOOTH min radius 35 -> 52 m
+   R2-60   R2  len   884 ->   882  over  700 ->  700 m  tun  520 ->  540  wet   0 ->   0  rail 0->0  Rmin   29 ->   47 (41)  max shift   4 m   | SMOOTH min radius 29 -> 47 m
+   R2-61   R2  len  1433 ->  1398  over 1070 ->  770 m  tun  790 ->  440  wet   0 ->   0  rail 0->0  Rmin   43 ->   44 (41)  max shift  71 m   | R5 end dead end: cut 71 m, now 70 m or more from J1-W; HILL tier 1: over-limit 1070 -> 770 m, tunnel-cand 790 -> 440 m
+   R2-62   R2  len  4299 ->  4398  over 2190 -> 1770 m  tun 1080 ->  650  wet   0 ->   0  rail 0->0  Rmin   59 ->   43 (41)  max shift  73 m   | R5 start dead end: cut 73 m, now 70 m or more from M8; HILL tier 1: over-limit 2190 -> 1770 m, tunnel-cand 1080 -> 650 m
+   R2-63   R2  len   291 ->   309  over  110 ->   50 m  tun   40 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 ->   48 (41)  max shift  40 m   | HILL tier 2: over-limit 110 -> 50 m, tunnel-cand 40 -> 0 m
+   R2-64   R2  len   938 ->   949  over   80 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin   42 ->   43 (41)  max shift  15 m   | HILL tier 1: over-limit 80 -> 0 m, tunnel-cand 0 -> 0 m
+   R2-65   R2  len   444 ->   465  over  120 ->  100 m  tun   10 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 ->   45 (41)  max shift  40 m   | HILL tier 2: over-limit 120 -> 100 m, tunnel-cand 10 -> 0 m
+   R2-66   R2  len   294 ->   294  over   50 ->   50 m  tun   10 ->   10  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   R2-67   R2  len   537 ->   567  over  250 ->  150 m  tun   10 ->    0  wet   0 ->   0  rail 0->0  Rmin  678 ->   43 (41)  max shift  21 m   | HILL tier 1: over-limit 250 -> 150 m, tunnel-cand 10 -> 0 m
+   R2-68   R2  len   182 ->   182  over  150 ->  150 m  tun  110 ->  110  wet  30 ->  30  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   R2-69   R2  len   849 ->   803  over  140 ->  100 m  tun   30 ->    0  wet   0 ->   0  rail 0->0  Rmin   73 ->   41 (41)  max shift  73 m   | R5 end dead end: cut 73 m, now 70 m or more from M8; HILL tier 1: over-limit 140 -> 100 m, tunnel-cand 30 -> 0 m
+   R2-70   R2  len   824 ->   824  over  210 ->  210 m  tun  100 ->  100  wet  50 ->  50  rail 0->0  Rmin   64 ->   64 (41)  max shift   0 m
+   R2-71   R2  len   961 ->   966  over  650 ->  450 m  tun  420 ->  330  wet   0 ->   0  rail 0->0  Rmin   21 ->   45 (41)  max shift  26 m   | HILL tier 1: over-limit 650 -> 450 m, tunnel-cand 420 -> 330 m
+   R2-72   R2  len  1178 ->  1290  over  510 ->  430 m  tun  100 ->    0  wet   0 ->   0  rail 0->0  Rmin   45 ->   43 (41)  max shift  60 m   | HILL tier 2: over-limit 510 -> 430 m, tunnel-cand 100 -> 0 m
+   R2-73   R2  len  1927 ->  1927  over 1790 -> 1790 m  tun 1620 -> 1620  wet   0 ->   0  rail 0->0  Rmin   43 ->   43 (41)  max shift   0 m
+   R2-74   R2  len  2464 ->  2464  over  390 ->  390 m  tun  220 ->  220  wet   0 ->   0  rail 1->1  Rmin   45 ->   45 (41)  max shift   0 m
+   R2-75   R2  len   772 ->   769  over   20 ->   20 m  tun   10 ->   10  wet   0 ->   0  rail 0->0  Rmin   28 ->   44 (41)  max shift   4 m   | SMOOTH min radius 28 -> 44 m
+   R2-76   R2  len   797 ->   845  over  280 ->  230 m  tun   80 ->    0  wet   0 ->   0  rail 0->0  Rmin   24 ->   42 (41)  max shift  25 m   | HILL tier 1: over-limit 280 -> 230 m, tunnel-cand 80 -> 0 m
+   R2-77   R2  len   605 ->   451  over   50 ->   40 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin   70 ->   63 (41)  max shift  80 m   | R5 start dead end: cut 74 m, now 70 m or more from J1-S; R5 end dead end: cut 80 m, now 70 m or more from J1-W
+   C-1     C   len   326 ->   326  over  140 ->  140 m  tun   90 ->   90  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   C-2     C   len   494 ->   494  over  150 ->  150 m  tun   30 ->   30  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   C-3     C   len   374 ->   377  over   80 ->   60 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 ->   53 (41)  max shift   5 m   | HILL tier 1: over-limit 80 -> 60 m, tunnel-cand 0 -> 0 m
+   C-4     C   len   290 ->   290  over  120 ->  120 m  tun   30 ->   30  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   C-5     C   len   273 ->   273  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   C-6     C   len   272 ->   272  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   C-7     C   len   310 ->   310  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   C-8     C   len   320 ->   320  over   20 ->   20 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin  274 ->  274 (41)  max shift   0 m
+   C-9     C   len   132 ->   132  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   C-10    C   len   116 ->   116  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   C-11    C   len   267 ->   267  over   10 ->   10 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   C-12    C   len   239 ->   239  over   20 ->   20 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   C-13    C   len   363 ->   363  over   10 ->   10 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (41)  max shift   0 m
+   L-1     L   len   191 ->   191  over   50 ->   50 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-2     L   len   266 ->   266  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-3     L   len   270 ->   270  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-4     L   len   432 ->   457  over   80 ->   20 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 ->   29 (20)  max shift  50 m   | HILL tier 2: over-limit 80 -> 20 m, tunnel-cand 0 -> 0 m
+   L-5     L   len   520 ->   538  over  160 ->   60 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 ->   46 (20)  max shift  25 m   | HILL tier 1: over-limit 160 -> 60 m, tunnel-cand 0 -> 0 m
+   L-6     L   len   331 ->   341  over  130 ->   20 m  tun   30 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 ->   45 (20)  max shift  25 m   | HILL tier 1: over-limit 130 -> 20 m, tunnel-cand 30 -> 0 m
+   L-7     L   len   172 ->   172  over   50 ->   50 m  tun   30 ->   30  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-8     L   len   150 ->   150  over   20 ->   20 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-9     L   len   139 ->   139  over   10 ->   10 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-10    L   len   133 ->   133  over   50 ->   50 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-11    L   len   131 ->   131  over   10 ->   10 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-12    L   len   149 ->   149  over   10 ->   10 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-13    L   len   131 ->   131  over   50 ->   50 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-14    L   len   147 ->   155  over   60 ->   50 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 ->   24 (20)  max shift  10 m   | HILL tier 1: over-limit 60 -> 50 m, tunnel-cand 0 -> 0 m
+   L-15    L   len   135 ->   168  over   10 ->   20 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift  38 m   | JOIN end -> R2-13 (38 m)
+   L-16    L   len   129 ->   129  over   40 ->   40 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-17    L   len   101 ->   101  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-18    L   len   150 ->   150  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-19    L   len   106 ->   106  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-20    L   len    75 ->    75  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-21    L   len    64 ->    64  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-22    L   len   120 ->   120  over   10 ->   10 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-23    L   len   182 ->   182  over    0 ->    0 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-24    L   len   180 ->   180  over   30 ->   30 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-25    L   len   117 ->   117  over   30 ->   30 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-26    L   len   131 ->   131  over   50 ->   50 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-27    L   len   178 ->   178  over   40 ->   40 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-28    L   len   205 ->   205  over   20 ->   20 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+   L-29    L   len   204 ->   213  over   60 ->   50 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 ->   51 (20)  max shift  20 m   | HILL tier 1: over-limit 60 -> 50 m, tunnel-cand 0 -> 0 m
+   L-30    L   len   502 ->   488  over   10 ->   10 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin   14 ->   25 (20)  max shift  11 m   | SMOOTH min radius 14 -> 25 m
+   L-31    L   len   141 ->   141  over   10 ->   10 m  tun    0 ->    0  wet   0 ->   0  rail 0->0  Rmin 9999 -> 9999 (20)  max shift   0 m
+
+6. EVERY SHIFT of 5 m or more (road, place along the line, where, metres; the shift is measured to the line the user drew, joins / trims are in sections 1 and 2)
+   R2-72   s   530.. 1140 m at (1610, -3884)  max 60.0 m
+   R2-11   s  2379.. 3138 m at (-878, -1995)  max 60.0 m
+   R4-7    s   801.. 1122 m at (-3121, 2212)  max 59.3 m
+   R2-51   s  1103.. 1534 m at (3650, 2507)  max 56.5 m
+   R2-11   s   420.. 1229 m at (-1920, -1624)  max 56.5 m
+   R2-52   s    20..  330 m at (4073, 2557)  max 55.4 m
+   L-4     s   189..  407 m at (-3371, 1647)  max 50.0 m
+   R2-72   s    40..  430 m at (1232, -4268)  max 46.0 m
+   R2-63   s    30..  279 m at (2180, -2105)  max 40.0 m
+   R2-65   s   208..  446 m at (1784, -1712)  max 40.0 m
+   R2-11   s    30..  370 m at (-1564, -1978)  max 36.5 m
+   R6-15   s   321..  802 m at (-1500, -220)  max 36.3 m
+   R2-51   s   501..  862 m at (3497, 2130)  max 35.0 m
+   R2-11   s  1259.. 1539 m at (-1665, -1189)  max 34.6 m
+   R6-10   s    20..  230 m at (-2291, -3578)  max 33.4 m
+   R2-52   s   420..  561 m at (4149, 2255)  max 30.3 m
+   R6-15   s   992.. 1503 m at (-1946, -724)  max 30.0 m
+   R2-43   s    30..  180 m at (929, 1115)  max 28.0 m
+   R6-10   s   809.. 1049 m at (-3081, -3544)  max 27.0 m
+   R2-11   s  2149.. 2279 m at (-1057, -1528)  max 26.9 m
+   R4-2    s   230..  511 m at (-3229, -4574)  max 26.6 m
+   R4-7    s  1212.. 1503 m at (-3072, 2581)  max 26.1 m
+   R2-6    s  1019.. 1459 m at (-2695, -2381)  max 25.6 m
+   R2-58   s   940.. 1200 m at (3393, -1392)  max 25.3 m
+   R2-58   s  1270.. 1580 m at (3065, -1466)  max 25.3 m
+   R2-17   s   561..  802 m at (1730, -603)  max 25.3 m
+   R2-2    s   840.. 1020 m at (-1586, -3786)  max 25.2 m
+   R2-3    s   560..  881 m at (-2378, -4731)  max 25.2 m
+   R2-58   s   580..  890 m at (3507, -1105)  max 25.1 m
+   R4-24   s  2299.. 2519 m at (4011, -4055)  max 25.1 m
+   R2-58   s    50..  420 m at (3334, -707)  max 25.1 m
+   R2-2    s  1200.. 1460 m at (-1340, -3516)  max 25.0 m
+   R2-55   s   279..  848 m at (3115, 685)  max 25.0 m
+   R2-62   s  3749.. 3889 m at (3974, -4469)  max 25.0 m
+   R4-21   s  1081.. 1321 m at (3834, 2737)  max 25.0 m
+   R2-51   s   341..  441 m at (3219, 2122)  max 25.0 m
+   R2-6    s  1489.. 1618 m at (-2488, -2170)  max 25.0 m
+   R2-62   s  1789.. 1959 m at (2106, -4523)  max 25.0 m
+   L-5     s   349..  518 m at (-3393, 1861)  max 25.0 m
+   R2-2    s   560..  810 m at (-1790, -3917)  max 25.0 m
+   L-6     s    60..  311 m at (-2952, 1468)  max 25.0 m
+   R2-61   s   180..  419 m at (-852, -1262)  max 25.0 m
+   R2-76   s   239..  726 m at (-1583, -61)  max 25.0 m
+   R2-62   s  1459.. 1609 m at (1779, -4580)  max 25.0 m
+   R2-2    s  1050.. 1170 m at (-1428, -3712)  max 25.0 m
+   R4-24   s   240.. 1339 m at (2956, -2944)  max 25.0 m
+   R2-3    s   130..  420 m at (-2773, -4576)  max 25.0 m
+   R2-4    s    60..  340 m at (-4009, -4330)  max 25.0 m
+   R2-69   s   682..  783 m at (2068, -2602)  max 25.0 m
+   R2-61   s  1088.. 1268 m at (-792, -481)  max 25.0 m
+   R4-21   s   110..  491 m at (4685, 2928)  max 25.0 m
+   R2-6    s   460..  709 m at (-2738, -2998)  max 25.0 m
+   R2-4    s   500..  951 m at (-4244, -3897)  max 25.0 m
+   R2-4    s  1071.. 1451 m at (-4232, -3377)  max 25.0 m
+   R2-11   s  1579.. 1749 m at (-1421, -1178)  max 24.9 m
+   R4-2    s   571..  942 m at (-3594, -4511)  max 24.9 m
+   R2-62   s  1999.. 2189 m at (2315, -4562)  max 24.8 m
+   R2-11   s  1779.. 2009 m at (-1220, -1268)  max 24.5 m
+   R2-71   s    30..  388 m at (1328, -4645)  max 24.4 m
+   R4-24   s  2579.. 2759 m at (4218, -4208)  max 24.2 m
+   R2-61   s   859.. 1008 m at (-813, -706)  max 23.4 m
+   R2-61   s   459..  669 m at (-734, -1043)  max 23.4 m
+   R2-62   s  3919.. 4099 m at (4153, -4520)  max 23.4 m
+   R4-24   s    30..  210 m at (2635, -2364)  max 23.3 m
+   R2-46   s   179..  308 m at (1598, 1123)  max 23.0 m
+   R4-26   s   201..  403 m at (1378, -2068)  max 22.9 m
+   R4-8    s   640.. 1141 m at (-2783, 2439)  max 22.6 m
+   R2-62   s   210..  450 m at (704, -4193)  max 22.3 m
+   R2-62   s  4159.. 4318 m at (4373, -4522)  max 22.0 m
+   R4-24   s  2789.. 2959 m at (4285, -4392)  max 21.9 m
+   R2-55   s  1018.. 1268 m at (3134, 126)  max 21.8 m
+   R4-1    s  1341.. 1572 m at (-1520, -4477)  max 21.7 m
+   R2-62   s  1000.. 1429 m at (1468, -4525)  max 21.5 m
+   R2-67   s   348..  537 m at (2396, -1682)  max 21.4 m
+   R2-67   s    30..  109 m at (2368, -2031)  max 21.4 m
+   R2-12   s    50..  130 m at (1545, -2531)  max 21.3 m
+   R2-45   s   538..  638 m at (1868, 1225)  max 21.2 m
+   R4-2    s    30..  190 m at (-3017, -4431)  max 21.1 m
+   R2-12   s   301..  371 m at (1738, -2661)  max 20.4 m
+   R2-61   s   719..  819 m at (-786, -859)  max 20.3 m
+   R4-3    s    30..  159 m at (-3256, -3632)  max 20.3 m
+   R4-24   s  1779.. 2109 m at (3589, -3872)  max 20.3 m
+   R4-1    s   400..  701 m at (-2395, -4376)  max 20.1 m
+   R2-8    s   360..  560 m at (-4479, 2794)  max 20.1 m
+   R2-62   s  3539.. 3669 m at (3763, -4511)  max 20.0 m
+   R2-62   s  2639.. 2729 m at (2885, -4530)  max 20.0 m
+   R2-17   s   852.. 1012 m at (1925, -707)  max 20.0 m
+   R2-45   s   319..  428 m at (1729, 1360)  max 20.0 m
+   L-29    s    30..  192 m at (1680, -419)  max 20.0 m
+   R2-71   s   637..  777 m at (1789, -4778)  max 20.0 m
+   R2-52   s   871..  951 m at (3873, 2074)  max 20.0 m
+   R2-6    s   739..  939 m at (-2803, -2753)  max 20.0 m
+   R4-8    s   440..  570 m at (-2400, 2433)  max 19.9 m
+   R2-71   s   826..  946 m at (1912, -4890)  max 19.7 m
+   R2-76   s    50..  209 m at (-1800, -315)  max 19.7 m
+   R2-61   s    40..  150 m at (-1034, -1355)  max 19.3 m
+   R2-62   s  2999.. 3149 m at (3257, -4503)  max 19.3 m
+   R4-7    s   301..  431 m at (-3451, 1849)  max 18.7 m
+   R2-17   s   331..  411 m at (1432, -596)  max 18.3 m
+   R2-4    s   390..  470 m at (-4116, -4135)  max 18.3 m
+   R4-8    s    50..  210 m at (-2061, 2335)  max 18.2 m
+   R2-52   s   671..  841 m at (4027, 2107)  max 18.2 m
+   R2-62   s  3259.. 3339 m at (3478, -4469)  max 18.2 m
+   R4-23   s    70..  140 m at (2608, -3502)  max 18.0 m
+   R2-62   s    20..  180 m at (624, -3983)  max 18.0 m
+   R4-1    s   741.. 1111 m at (-2036, -4430)  max 17.5 m
+   R4-1    s   210..  350 m at (-2657, -4335)  max 17.5 m
+   R4-20   s  1041.. 1131 m at (-409, 1393)  max 16.9 m
+   R4-7    s    20..  150 m at (-3582, 1604)  max 16.8 m
+   R2-62   s   480..  540 m at (861, -4271)  max 16.4 m
+   R2-62   s  2819.. 2899 m at (3058, -4517)  max 16.2 m
+   R6-15   s   100..  261 m at (-1208, 15)  max 15.3 m
+   R2-2    s   400..  450 m at (-1741, -4140)  max 15.3 m
+   R2-64   s   599..  859 m at (1649, -1513)  max 15.1 m
+   R2-71   s   428..  558 m at (1576, -4761)  max 15.0 m
+   R4-22   s    30..  368 m at (2824, 2577)  max 15.0 m
+   R2-62   s   740..  870 m at (1075, -4447)  max 15.0 m
+   L-5     s    30..  199 m at (-3136, 1683)  max 15.0 m
+   R2-69   s    30..  100 m at (1712, -2048)  max 15.0 m
+   R2-43   s   481..  582 m at (831, 745)  max 15.0 m
+   R2-62   s  3389.. 3489 m at (3611, -4476)  max 15.0 m
+   R2-58   s   470..  540 m at (3501, -879)  max 15.0 m
+   R4-2    s   972.. 1062 m at (-3847, -4512)  max 14.9 m
+   R4-29   s   369..  479 m at (-2076, -241)  max 14.5 m
+   R2-44   s   619..  679 m at (1409, 1561)  max 14.5 m
+   R2-51   s   942.. 1053 m at (3681, 2203)  max 14.3 m
+   R2-55   s    20..  140 m at (2947, 1115)  max 14.2 m
+   R4-25   s   330..  521 m at (2079, -1907)  max 13.8 m
+   R4-18   s   528..  628 m at (-1708, 3348)  max 13.3 m
+   R2-55   s   918..  978 m at (3136, 306)  max 13.1 m
+   R2-67   s   229..  279 m at (2388, -1864)  max 12.9 m
+   R2-20   s   112..  142 m at (2200, -974)  max 12.5 m
+   R4-26   s    20..  111 m at (1507, -1868)  max 12.3 m
+   R2-4    s   981.. 1041 m at (-4229, -3620)  max 12.1 m
+   R2-58   s  1620.. 1720 m at (2892, -1627)  max 12.1 m
+   R4-19   s  1528.. 1638 m at (-1059, 4700)  max 11.8 m
+   R2-62   s   580..  630 m at (915, -4342)  max 11.8 m
+   R4-29   s    40..  120 m at (-1815, -456)  max 11.7 m
+   R2-65   s   109..  149 m at (1975, -1717)  max 11.6 m
+   R2-61   s  1328.. 1378 m at (-771, -317)  max 11.6 m
+   R2-38   s   147..  186 m at (-1987, 2100)  max 11.6 m
+   R2-62   s  2499.. 2539 m at (2732, -4508)  max 11.4 m
+   R2-17   s  1093.. 1163 m at (2073, -822)  max 11.3 m
+   R4-19   s   460..  499 m at (-766, 3663)  max 10.5 m
+   R2-44   s   180..  210 m at (1340, 1125)  max 10.2 m
+   R2-4    s  1561.. 1691 m at (-4035, -3083)  max 10.1 m
+   R2-2    s   210..  370 m at (-1650, -4228)  max 10.0 m
+   R2-2    s  1570.. 1670 m at (-1153, -3301)  max 10.0 m
+   R2-67   s   149..  199 m at (2353, -1934)  max 10.0 m
+   R2-44   s    90..  140 m at (1268, 1095)  max 10.0 m
+   R2-46   s   377..  447 m at (1761, 1114)  max 10.0 m
+   R2-62   s  2289.. 2359 m at (2537, -4520)  max 10.0 m
+   R4-1    s    30..  160 m at (-2845, -4338)  max 10.0 m
+   R2-8    s  3069.. 3199 m at (-1925, 2773)  max 10.0 m
+   R2-17   s   180..  241 m at (1280, -593)  max 10.0 m
+   R2-17   s   441..  481 m at (1516, -568)  max 10.0 m
+   R2-44   s   339..  499 m at (1396, 1341)  max 10.0 m
+   R2-45   s   219..  289 m at (1624, 1413)  max 10.0 m
+   R2-69   s   522..  552 m at (1979, -2431)  max 10.0 m
+   L-14    s   107..  136 m at (1391, -2332)  max 10.0 m
+   R2-62   s   670..  710 m at (1000, -4370)  max 10.0 m
+   R2-8    s    20..   50 m at (-4778, 3095)  max 10.0 m
+   R4-25   s    50..  120 m at (2116, -1571)  max 9.8 m
+   R4-24   s  2129.. 2229 m at (3790, -4001)  max 9.8 m
+   R4-4    s    71..   91 m at (-1964, -2857)  max 9.5 m
+   R4-24   s  1619.. 1679 m at (3444, -3626)  max 9.3 m
+   R2-62   s  3189.. 3239 m at (3390, -4477)  max 9.1 m
+   R4-7    s   511..  561 m at (-3459, 2018)  max 9.0 m
+   R2-12   s   401..  421 m at (1809, -2636)  max 8.7 m
+   R4-9    s  1309.. 1389 m at (-273, -2243)  max 8.6 m
+   R2-45   s   777..  817 m at (1800, 1032)  max 8.4 m
+   R2-52   s  1031.. 1081 m at (3741, 2085)  max 8.3 m
+   R2-43   s   672..  702 m at (695, 694)  max 8.2 m
+   R2-3    s    60..  100 m at (-2878, -4431)  max 8.2 m
+   R4-7    s   631..  651 m at (-3421, 2119)  max 8.0 m
+   R6-15   s  1574.. 1644 m at (-2253, -910)  max 8.0 m
+   R6-15   s  1754.. 1834 m at (-2412, -1012)  max 7.5 m
+   R6-15   s   862..  922 m at (-1709, -472)  max 6.8 m
+   R4-29   s   240..  280 m at (-1958, -347)  max 6.7 m
+   R4-21   s    40..   60 m at (4871, 3089)  max 5.8 m
+   R6-15   s  1934.. 1965 m at (-2556, -1055)  max 5.6 m
+   R2-62   s  2929.. 2959 m at (3132, -4492)  max 5.0 m
+   R2-4    s  1721.. 1741 m at (-3967, -3000)  max 5.0 m
+   R4-22   s   408..  607 m at (2832, 2269)  max 5.0 m
+   R4-21   s   791..  821 m at (4227, 2741)  max 5.0 m
+   185 shifted stretches on 52 lines
+
+7. R1 (no NEW crossing; the 12 crossing pairs of 21.1 stay the listed junction nodes): PASS 0 new crossings
+8. R5: line ends on an 8-lane road now: 23 (R6 / R4: 23, kept as taps, tap spacing 1600 m is still broken by the user's own drawing: listed in 21.1, not changed; R2 / C / L: 0 left, PASS only at 0)
+   R4-26 T on J1-N (user: a little farther from J1, never closer): user line end 11 m from J1-N, T is 2280 m from the J1 plaza; after the join step 2280 m (not closer: OK). Moving it farther along J1-N is a tap decision (R5), NOT done in this step.
+
+9. RADIUS still under the class minimum after the small-shift smoothing (cap 35 m). PROPOSAL = what a cap of 70 m would give; NOT applied, your word needed (R10):
+   R6-10   Rmin 37 m at (-3169, -3650) needs 229 m; cap 70 m would give 24 m (further shift 31 m): STILL SHORT, the tight corner lies 4 m from a junction node (the other line ends there, so the corner is held)
+   R6-11   Rmin 104 m at (1701, -1303) needs 229 m; cap 70 m would give 103 m (further shift 0 m): STILL SHORT, the tight corner lies 5 m from a junction node (the other line ends there, so the corner is held)
+   R6-12   Rmin 229 m at (-99, -2197) needs 229 m; cap 70 m would give 246 m (further shift 0 m) = would pass
+   R6-15   Rmin 55 m at (-1764, -516) needs 229 m; cap 70 m would give 49 m (further shift 1 m): STILL SHORT, the tight corner lies 3 m from a junction node (the other line ends there, so the corner is held)
+   R4-6    Rmin 44 m at (-3602, 1524) needs 113 m; cap 70 m would give 43 m (further shift 0 m): STILL SHORT, the tight corner lies 5 m from a junction node (the other line ends there, so the corner is held)
+   R4-7    Rmin 63 m at (-3050, 2423) needs 113 m; cap 70 m would give 64 m (further shift 26 m): STILL SHORT, the tight corner lies 5 m from a junction node (the other line ends there, so the corner is held)
+   R4-8    Rmin 70 m at (-2018, 2235) needs 113 m; cap 70 m would give 68 m (further shift 0 m): STILL SHORT, a hairpin in the drawn line itself
+   R4-9    Rmin 14 m at (-1400, -2081) needs 113 m; cap 70 m would give 14 m (further shift 1 m): STILL SHORT, the tight corner lies 1 m from a junction node (the other line ends there, so the corner is held)
+   R4-10   Rmin 25 m at (1303, -2847) needs 113 m; cap 70 m would give 25 m (further shift 0 m): STILL SHORT, the tight corner lies 1 m from a junction node (the other line ends there, so the corner is held)
+   R4-11   Rmin 75 m at (834, -2152) needs 113 m; cap 70 m would give 75 m (further shift 0 m): STILL SHORT, the tight corner lies 1 m from a junction node (the other line ends there, so the corner is held)
+   R4-12   Rmin 22 m at (1071, -598) needs 113 m; cap 70 m would give 22 m (further shift 0 m): STILL SHORT, the tight corner lies 2 m from a junction node (the other line ends there, so the corner is held)
+   R4-19   Rmin 62 m at (-2051, 4144) needs 113 m; cap 70 m would give 55 m (further shift 1 m): STILL SHORT, the tight corner lies 1 m from a junction node (the other line ends there, so the corner is held)
+   R4-20   Rmin 31 m at (-430, 1348) needs 113 m; cap 70 m would give 30 m (further shift 0 m): STILL SHORT, the tight corner lies 8 m from a junction node (the other line ends there, so the corner is held)
+   R4-21   Rmin 68 m at (4498, 2844) needs 113 m; cap 70 m would give 62 m (further shift 2 m): STILL SHORT, the tight corner lies 0 m from a junction node (the other line ends there, so the corner is held)
+   R4-25   Rmin 70 m at (2135, -1515) needs 113 m; cap 70 m would give 72 m (further shift 1 m): STILL SHORT, a hairpin in the drawn line itself
+   R4-27   Rmin 13 m at (362, -3523) needs 113 m; cap 70 m would give 13 m (further shift 0 m): STILL SHORT, the tight corner lies 3 m from a junction node (the other line ends there, so the corner is held)
+   R4-29   Rmin 68 m at (-2127, -168) needs 113 m; cap 70 m would give 68 m (further shift 0 m): STILL SHORT, the tight corner lies 3 m from a junction node (the other line ends there, so the corner is held)
+   R2-11   Rmin 27 m at (-1078, -1613) needs 41 m; cap 70 m would give 28 m (further shift 1 m): STILL SHORT, the tight corner lies 1 m from a junction node (the other line ends there, so the corner is held)
+   R2-13   Rmin 19 m at (1227, -2358) needs 41 m; cap 70 m would give 19 m (further shift 0 m): STILL SHORT, the tight corner lies 5 m from a junction node (the other line ends there, so the corner is held)
+   R2-17   Rmin 23 m at (1866, -618) needs 41 m; cap 70 m would give 20 m (further shift 3 m): STILL SHORT, the tight corner lies 5 m from a junction node (the other line ends there, so the corner is held)
+   R2-33   Rmin 39 m at (-684, 1006) needs 41 m; cap 70 m would give 42 m (further shift 0 m) = would pass
+   R2-51   Rmin 12 m at (3689, 2096) needs 41 m; cap 70 m would give 13 m (further shift 2 m): STILL SHORT, the tight corner lies 4 m from a junction node (the other line ends there, so the corner is held)
+   R2-52   Rmin 12 m at (4119, 2102) needs 41 m; cap 70 m would give 12 m (further shift 0 m): STILL SHORT, the tight corner lies 6 m from a junction node (the other line ends there, so the corner is held)
+   R2-55   Rmin 31 m at (3152, 260) needs 41 m; cap 70 m would give 32 m (further shift 1 m): STILL SHORT, the tight corner lies 1 m from a junction node (the other line ends there, so the corner is held)
+   R2-58   Rmin 30 m at (3507, -831) needs 41 m; cap 70 m would give 31 m (further shift 1 m): STILL SHORT, the tight corner lies 4 m from a junction node (the other line ends there, so the corner is held)
+   25 lines
+
+10. BIG shifts (more than 40 m from the line you drew; "small shift" was your rule, so these are the ones to judge):
+   R4-7    70 m   HILL tier 2: over-limit 920 -> 720 m, tunnel-cand 290 -> 90 m
+   R4-16   43 m   JOIN start -> R4-17 (43 m)
+   R2-6    74 m   R5 end dead end: cut 74 m, now 70 m or more from M8; HILL tier 1: over-limit 730 -> 570 m, tunnel-cand 370 -> 60 m
+   R2-9    74 m   R5 end dead end: cut 74 m, now 70 m or more from M8
+   R2-10   75 m   R5 end dead end: cut 75 m, now 70 m or more from M8
+   R2-11   60 m   HILL tier 2: over-limit 2170 -> 1790 m, tunnel-cand 1310 -> 790 m
+   R2-12   75 m   R5 end dead end: cut 75 m, now 70 m or more from J1-N; HILL tier 1: over-limit 170 -> 130 m, tunnel-cand 50 -> 20 m
+   R2-28   73 m   R5 end dead end: cut 73 m, now 70 m or more from J1-E; SMOOTH min radius 27 -> 45 m
+   R2-33   85 m   R5 start dead end: cut 85 m, now 70 m or more from M8; R5 end dead end: cut 72 m, now 70 m or more from J1-S; SMOOTH min radius 25 -> 39 m
+   R2-34   75 m   R5 end dead end: cut 75 m, now 70 m or more from J1-S
+   R2-35   75 m   R5 end dead end: cut 75 m, now 70 m or more from M8
+   R2-36   75 m   R5 end dead end: cut 75 m, now 70 m or more from M8
+   R2-37   75 m   R5 end dead end: cut 75 m, now 70 m or more from M8
+   R2-38   74 m   R5 end dead end: cut 74 m, now 70 m or more from M8; HILL tier 1: over-limit 110 -> 80 m, tunnel-cand 0 -> 0 m
+   R2-39   74 m   R5 end dead end: cut 75 m, now 70 m or more from M8; HILL tier 1: over-limit 120 -> 70 m, tunnel-cand 70 -> 0 m
+   R2-44   74 m   R5 end dead end: cut 74 m, now 70 m or more from M8; HILL tier 1: over-limit 270 -> 210 m, tunnel-cand 0 -> 0 m
+   R2-45   72 m   R5 end dead end: cut 72 m, now 70 m or more from J1-E; HILL tier 1: over-limit 190 -> 80 m, tunnel-cand 20 -> 0 m
+   R2-47   71 m   R5 end dead end: cut 71 m, now 70 m or more from M8
+   R2-48   70 m   R5 start dead end: cut 70 m, now 70 m or more from M8
+   R2-51   57 m   HILL tier 2: over-limit 470 -> 390 m, tunnel-cand 20 -> 0 m
+   R2-52   55 m   HILL tier 2: over-limit 530 -> 420 m, tunnel-cand 200 -> 30 m
+   R2-55   78 m   R5 start dead end: cut 78 m, now 70 m or more from M8; R5 end dead end: cut 73 m, now 70 m or more from M8; HILL tier 1: over-limit 980 -> 750 m, tunnel-cand 610 -> 400 m
+   R2-58   83 m   R5 start dead end: cut 83 m, now 70 m or more from M8; R5 end dead end: cut 72 m, now 70 m or more from M8; HILL tier 1: over-limit 1110 -> 550 m, tunnel-cand 290 -> 120 m
+   R2-61   71 m   R5 end dead end: cut 71 m, now 70 m or more from J1-W; HILL tier 1: over-limit 1070 -> 770 m, tunnel-cand 790 -> 440 m
+   R2-62   73 m   R5 start dead end: cut 73 m, now 70 m or more from M8; HILL tier 1: over-limit 2190 -> 1770 m, tunnel-cand 1080 -> 650 m
+   R2-63   40 m   HILL tier 2: over-limit 110 -> 50 m, tunnel-cand 40 -> 0 m
+   R2-65   40 m   HILL tier 2: over-limit 120 -> 100 m, tunnel-cand 10 -> 0 m
+   R2-69   73 m   R5 end dead end: cut 73 m, now 70 m or more from M8; HILL tier 1: over-limit 140 -> 100 m, tunnel-cand 30 -> 0 m
+   R2-72   60 m   HILL tier 2: over-limit 510 -> 430 m, tunnel-cand 100 -> 0 m
+   R2-77   80 m   R5 start dead end: cut 74 m, now 70 m or more from J1-S; R5 end dead end: cut 80 m, now 70 m or more from J1-W
+   L-4     50 m   HILL tier 2: over-limit 80 -> 20 m, tunnel-cand 0 -> 0 m
+
+SUMMARY
+  joins 3, R5 trims 0 (open 0), hill lines kept 46 of 80 (tier 1 36, tier 2 10), radius-only smoothing 28
+  metres over the grade limit 43000 -> 35990; tunnel-candidate metres 22110 -> 17010; lines under the class minimum radius 50 -> 25 of 157; biggest shift 85 m (R2-33); R1 PASS
+  NOT RUN: tsc of the whole game, npm run build, the game (no game run in this chat). Curvature is made by smoothing the polyline; the real straight - spiral - arc - spiral - straight pieces are fitted at build time (21.6). Natural ground only.

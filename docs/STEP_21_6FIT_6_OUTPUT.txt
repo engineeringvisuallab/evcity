@@ -1,0 +1,72 @@
+STEP 21.6 FIT-1b class 6 (V 80, class minimum R 229 m, lane 3.5 m x 3, RCAP 6000 m, DEV_MAX 15 m, SHIFT_MAX 30 m, SLIDE_MAX 60 m, speeds 80/75/70/65/60/55/50/45/40 then corner 30/20/10 km/h): real straight - spiral - arc - spiral - straight fit of the drawn lines, with the ladder A1 shift / A2 slide / A3 speed / A4 corner
+
+1. PER LINE (stage = last rung used: 0 first fit already fine, 1 shift, 2 slide, 3 speed, 4 corner; before = first fit of FIT-1: max distance / end gap; after = this run)
+   line     len  PIs  stage  before dev/gap   after dev  mean  gap   minR  kink s/e  Vmin  shiftPI  endS endE  hard fails  warn  Ls<Lr
+   M6-1     1761    1     0      2 /   0.0        2.0   0.4  0.0    807  0/0     80       0     0    0         0     0     0  
+   R6-2     1966    4     1     20 /  21.0        6.8   1.4  0.0    266  1/1     80      30     0    2         0     0     0  
+   R6-3     1159    2     4     47 /  53.3       11.7   5.0  0.0    314  1/5     80      30     1    0         0     0     0  
+   R6-4      607    2     0      1 /   0.3        1.3   0.5  0.0    236  1/0     80       0     0    0         0     1     0  
+   R6-5      948    2     1     12 /   0.0        4.0   1.4  0.0    265  1/3     80      18     0    0         0     0     0  
+   R6-6A     501    1     0      3 /   0.0        2.6   1.0  0.0    776  0/0     80       0     0    0         0     0     0  
+   R6-6B     930    3     1     17 /  22.0       11.6   4.2  0.0    265  0/4     80      30     1    0         0     1     0  
+   R6-7      772    1     1     31 /  39.2       19.4  10.1  0.0    229  0/2     80      27    19   17         0     0     0  
+   R6-8      218    1     1     77 /  84.0       19.9   5.4  0.0    286  0/3     80      29     7   26         0     0     0  
+   R6-9      734    1     1      7 /   0.0        2.8   1.0  0.0    359  1/1     80      19    16    0         0     0     0  
+   R6-10    1837    3     3     86 /  82.6       24.9  12.1  0.0    168  5/5     70      26    25    0         0     0     0  
+   R6-11    1444    2     1     11 /  12.5        3.7   0.8  0.0    367  0/0     80      29     0    1         0     0     0  
+   R6-12     844    1     1      6 /   5.1        0.9   0.1  0.0    339  0/1     80       7     0    1         0     0     0  
+   R6-13     447    0     0      4 /   0.0        4.5   2.7  0.0      0  1/2     80       0     0    0         0     0     0  
+   R6-14     366    0     0      5 /   0.0        5.0   2.5  0.0      0  2/2     80       0     0    0         0     0     0  
+   R6-15    2011    8     2     47 /  46.2       14.8   7.4  0.0    280  2/4     80      30    10   14         0     7     0  
+   total  16545 m  50 measured bends -> 32 PIs; bends under the class minimum R (advisory / corner speed) 2; hard 6 V / 2 V fails 0; warnings 9; Ls shorter than runoff 0
+
+2. LADDER DETAIL: what each end is, what moved, PIs dropped (smoothing), advisory speeds, junction corners
+   R6-2: stage 1; start = pin: shared end node with R6-3, R6-4 (not moved here: it needs a joint refit of all lines at the node); end = free: free end (no other road there); start moved 0.0 m, end moved 2.0 m; biggest PI shift 30.0 m
+   R6-3: stage 4; start = free: free end (no other road there); end = pin: shared end node with R6-2, R6-4 (not moved here: it needs a joint refit of all lines at the node); start moved 1.1 m, end moved 0.0 m; biggest PI shift 30.0 m
+   R6-4: stage 0; start = pin: shared end node with R6-2, R6-3 (not moved here: it needs a joint refit of all lines at the node); end = free: free end (no other road there); start moved 0.0 m, end moved 0.0 m; biggest PI shift 0.0 m
+   R6-5: stage 1; start = pin: shared end node with R4-13, R4-14 (not moved here: it needs a joint refit of all lines at the node); end = pin: shared end node with R6-14, R2-44 (not moved here: it needs a joint refit of all lines at the node); start moved 0.0 m, end moved 0.0 m; biggest PI shift 18.5 m
+   R6-6B: stage 1; start = free: free end (no other road there); end = pin: shared end node with R6-11 (not moved here: it needs a joint refit of all lines at the node); start moved 0.9 m, end moved 0.0 m; biggest PI shift 29.9 m
+   R6-7: stage 1; start = free: free end (no other road there); end = free: free end (no other road there); start moved 19.4 m, end moved 17.2 m; biggest PI shift 26.8 m
+   R6-8: stage 1; start = free: free end (no other road there); end = free: free end (no other road there); start moved 7.0 m, end moved 26.3 m; biggest PI shift 29.0 m
+   R6-9: stage 1; start = free: free end (no other road there); end = pin: shared end node with R4-9 and M8 (not moved here: it needs a joint refit of all lines at the node); start moved 16.5 m, end moved 0.0 m; biggest PI shift 19.4 m
+        PI near (-1594, -2576) dropped (drawn wiggle, cost 221 -> 1)
+   R6-10: stage 3; start = free: free end (no other road there); end = pin: shared end node with R4-1, R4-2, R2-3 (not moved here: it needs a joint refit of all lines at the node); start moved 24.9 m, end moved 0.0 m; biggest PI shift 25.7 m
+        PI near (-2725, -3578) dropped (drawn wiggle, cost 3423 -> 2167)
+        PI near (-3131, -3997) dropped (drawn wiggle, cost 2167 -> 1501)
+        ADVISORY R6-10 bend 1 s~168 R 228 V 75 km/h
+        ADVISORY R6-10 bend 2 s~977 R 168 V 70 km/h
+        ADVISORY R6-10 bend 3 s~1740 R 242 V 75 km/h
+   R6-11: stage 1; start = pin: shared end node with R6-6B (not moved here: it needs a joint refit of all lines at the node); end = slide: T on M8 (class 8); start moved 0.0 m, end moved 1.0 m; biggest PI shift 29.2 m
+        PI near (2309, -1531) dropped (drawn wiggle, cost 189 -> 1)
+   R6-12: stage 1; start = pin: shared end node with R6-6A, R6-13 (not moved here: it needs a joint refit of all lines at the node); end = slide: T on R4-9 (class 4); start moved 0.0 m, end moved 0.8 m; biggest PI shift 7.2 m
+   R6-15: stage 2; start = slide: T on J1-W (class 8); end = slide: T on M8 (class 8); start moved 10.4 m, end moved 13.5 m; biggest PI shift 29.7 m
+        PI near (-2573, -1063) dropped (drawn wiggle, cost 3542 -> 3537)
+        PI near (-2110, -842) dropped (drawn wiggle, cost 3537 -> 2715)
+        PI near (-2008, -764) dropped (drawn wiggle, cost 2715 -> 2320)
+        PI near (-2228, -892) dropped (drawn wiggle, cost 2320 -> 2143)
+
+3. WARNINGS (the drawn line has two bends less than 80 m apart: the 6 V / 2 V rule cannot hold on the line the user drew; reason printed, not a FAIL)
+   WARN R6-4 bends 1-2 (reverse direction): straight 14 m, rule 160 m; the DRAWN line has these bends 35 m apart (< 80 m: WARNING, the drawn line itself breaks the rule)
+   WARN R6-6B bends 2-3 (reverse direction): straight 141 m, rule 160 m; the DRAWN line has these bends 30 m apart (< 80 m: WARNING, the drawn line itself breaks the rule)
+   WARN R6-15 bends 1-2 (reverse direction): straight 157 m, rule 160 m; the DRAWN line has these bends 70 m apart (< 80 m: WARNING, the drawn line itself breaks the rule)
+   WARN R6-15 bends 2-3 (reverse direction): straight 22 m, rule 160 m; the DRAWN line has these bends 10 m apart (< 80 m: WARNING, the drawn line itself breaks the rule)
+   WARN R6-15 bends 3-4 (reverse direction): straight 37 m, rule 160 m; the DRAWN line has these bends 10 m apart (< 80 m: WARNING, the drawn line itself breaks the rule)
+   WARN R6-15 bends 4-5 (reverse direction): straight 24 m, rule 160 m; the DRAWN line has these bends 15 m apart (< 80 m: WARNING, the drawn line itself breaks the rule)
+   WARN R6-15 bends 5-6 (reverse direction): straight 18 m, rule 160 m; the DRAWN line has these bends 65 m apart (< 80 m: WARNING, the drawn line itself breaks the rule)
+   WARN R6-15 bends 6-7 (reverse direction): straight 35 m, rule 160 m; the DRAWN line has these bends 20 m apart (< 80 m: WARNING, the drawn line itself breaks the rule)
+   WARN R6-15 bends 7-8 (same direction): straight 473 m, rule 480 m; the DRAWN line has these bends 15 m apart (< 80 m: WARNING, the drawn line itself breaks the rule)
+
+4. HARD 6 V / 2 V FAILS (drawn bends 80 m or more apart, rule still broken)
+
+5. CHECKS (PASS = the rule holds for the WHOLE class; a FAIL is listed above per line, it is a finding, not hidden)
+   PASS  every line has an alignment (16 lines)
+   PASS  every R is at least the minimum of the design speed of its own bend (V 80 where no advisory speed)
+   PASS  every alignment ends on the last point of its line (gap <= 0.5 m)
+   PASS  every alignment stays within 15 m of the drawn line (override by user OK: R6-7 25 m, R6-8 25 m, R6-10 25 m; PI shift )
+   PASS  every straight between two curves is at least 6 V (same direction) / 2 V (reverse) (WARN pairs of section 3 not counted)
+   PASS  every spiral is at least as long as the superelevation runoff (21.6e-3) and fits its bend (Ls <= R x delta)
+   FAIL  heading at the two ends is within 5 deg of the drawn line (no kink at a junction)
+   FAIL  literal target R >= 229 m on every bend (a FAIL here = bends that use an advisory speed or a junction corner, listed in section 2)
+   RESULT 6 PASS 2 FAIL
+   NOT RUN: tsc, npm run build, the game, the rail checks. Nothing in src changed. NOT DONE: junction node corners (21.7), R5 tap spacing recheck for a slid node, vertical re-run on the new length (the new line is a bit shorter / longer than the polyline).
+   LIMIT: search = seeded (1+1) evolution strategy, so the result is a feasible design that the checks above confirm, not a proven optimum; the deviation is measured against the 5 m resampled drawn line; R10: the deviation of every line from his line is printed above.

@@ -1,0 +1,13 @@
+// ROADFIX step 3: 4- and 2-lane lines whose HILL problem the re-route could not solve -> shortest straight tunnel that gives a legal profile (6 / 8 lane never). Writes docs/roadfix_tunnels.json
+import { readFileSync, writeFileSync } from 'fs';
+import { LIMIT, profileCheck, plen, hyp, hNat } from './roadfix-lib';
+const J = JSON.parse(readFileSync('docs/map_all_roads_v2.json', 'utf8')); const ids = (process.env.IDS || '').split(',').filter(Boolean);
+const at = (pts: number[][], s: number): number[] => { let c = 0; for (let i = 1; i < pts.length; i++) { const l = hyp(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); if (c + l >= s) { const t = (s - c) / l; return [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * t, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * t]; } c += l; } return pts[pts.length - 1]; };
+const straight = (pts: number[][], s0: number, s1: number): boolean => { const a = at(pts, s0), b = at(pts, s1); for (let s = s0; s <= s1; s += 10) { const q = at(pts, s); const bx = b[0] - a[0], bz = b[1] - a[1], l = hyp(bx, bz) || 1; if (Math.abs((q[0] - a[0]) * bz - (q[1] - a[1]) * bx) / l > 6) return false; } return true; };
+const out: any[] = []; let ok = 0;
+for (const id of ids) { const r = J.roads.find((x: any) => x.id === id); if (!r || !LIMIT[r.cls].tunnel) continue; const tot = plen(r.pts); let best: any = null;
+  const CURVED = !!process.env.CURVED; const MAXL = CURVED ? 1000 : 640;
+  const chords = (pts: number[][], s0: number, s1: number): number[][][] => { const o: number[][][] = []; for (let s = s0; s < s1 - 1e-6; s += 20) o.push([at(pts, s), at(pts, Math.min(s + 20, s1))]); return o; };
+  for (let len = 80; len <= MAXL && !best; len += 40) for (let s0 = 20; s0 + len <= tot - 20 && !best; s0 += 20) { if (!CURVED && !straight(r.pts, s0, s0 + len)) continue; const a = at(r.pts, s0), b = at(r.pts, s0 + len); const ex = CURVED ? chords(r.pts, s0, s0 + len) : [[a, b]]; const pc = profileCheck(r.pts, r.cls, ex); if (pc.ok) { const mid = at(r.pts, s0 + len / 2); best = { id, cls: r.cls, s0, s1: s0 + len, len, curved: CURVED, poly: CURVED ? [ex[0][0], ...ex.map((q) => q[1])].map((q) => q.map((v) => +v.toFixed(2))) : undefined, a: a.map((v) => +v.toFixed(1)), b: b.map((v) => +v.toFixed(1)), cover_mid_m: +(hNat(mid[0], mid[1])).toFixed(1) }; } }
+  console.log(' ', id.padEnd(9), 'cls', r.cls, best ? `TUNNEL ${best.len} m at s ${best.s0}-${best.s1}` : 'no tunnel <= ' + MAXL + ' m solves it'); if (best) { ok++; out.push(best); } }
+console.log('TUNNEL RESULT:', ok, 'of', ids.length); writeFileSync(process.env.OUT || 'docs/roadfix_tunnels.json', JSON.stringify(out));

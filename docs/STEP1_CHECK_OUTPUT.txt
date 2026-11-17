@@ -1,0 +1,130 @@
+=== 1.1 CRITERIA ===
+  emax 0.08, tPR 2.5 s, aBrake 3.4, aDecel 2.5, aAccel 1.2, weave 150/300 m, ramp max grade 0.05
+  friction f(V): 20:0.35  30:0.28  40:0.23  50:0.19  60:0.17  70:0.15  80:0.14  100:0.12  120:0.09
+  DESIGN: side left, lane 3.65 m, crown 0.02, C 0.6, radius margin 1.5, ring V 100, K 0.1, D 0.6
+  Rmin by speed: V120=667 m  V100=394 m  V80=229 m  V60=113 m  V50=73 m  V40=41 m  V30=20 m  V20=7 m
+
+=== 1.2 ROAD CLASSES ===
+  M8   Motorway 8 lane              lanes/dir 4-4  V 100-120  fully controlled, interchanges only; median: yes, 6 m
+  M6   Motorway 6 lane              lanes/dir 3-3  V 100-120  fully controlled; median: yes, 6 m
+  M4   Motorway 4 lane              lanes/dir 2-2  V 100-100  fully controlled; median: yes, 4 m
+  A-D  Arterial divided             lanes/dir 2-3  V 70-80    signals / interchanges; median: yes
+  A-U  Arterial undivided           lanes/dir 1-1  V 60-60    at-grade; median: painted
+  C    Collector                    lanes/dir 1-1  V 50-50    at-grade; median: no
+  L    Local street                 lanes/dir 1-1  V 30-40    at-grade; median: no
+  S    Service / frontage           lanes/dir 1-1  V 30-40    to adjacent land; median: no
+  R    Ramp                         lanes/dir 1-2  V 30-80    one-way; median: no
+  EX   Expressway                   lanes/dir 2-2  V 80-100   mostly controlled; median: yes, 3-6 m
+  I    Industrial / heavy vehicle   lanes/dir 1-2  V 50-60    at-grade, wide radii; median: optional
+  E    Earth / village track        lanes/dir 1-1  V 20-25    free; median: no
+  RB   Roundabout                   lanes/dir 1-2  V 30-30    yield; median: splitter islands
+  HP   Hill primary                 lanes/dir 1-1  V 40-60    at-grade, few; median: no
+  HS   Hill secondary               lanes/dir 1-1  V 30-40    at-grade; median: no
+  HG   Ghat road                    lanes/dir 1-1  V 20-30    at-grade; median: no
+  HT   Hill / mountain track        lanes/dir 1-1  V 15-25    free; median: no
+  T    Tunnel road                  lanes/dir 1-2  V 40-80    controlled; median: wall / barrier
+  CW   Causeway / dam crest         lanes/dir 1-1  V 40-50    at-grade; median: no
+
+=== 1.3 CROSS-SECTION (one side, from the centreline) ===
+  M8: pavement edge 22.1 m, right-of-way edge 40.0 m (ROW 80 m)
+      0.00 -   3.00   3.00  median (half of 6 m)  (kerb or concrete barrier + planting or paved)
+      3.00 -   4.50   1.50  inner paved shoulder
+      4.50 -  19.10  14.60  4 travel lanes x 3.65 m
+     19.10 -  22.10   3.00  outer paved shoulder (breakdown)
+     22.10 -  22.70   0.60  guardrail / barrier offset
+     22.70 -  24.20   1.50  verge + drainage ditch  (ditch 1.5 m wide, 0.5 m deep)
+     24.20 -  32.00   7.80  clear zone  (no trees, no poles; side slope 1:4 flat, 1:3 max, 1:2 only with barrier)
+     32.00 -  40.00   8.00  right-of-way strip  (fence, planting, service road if used)
+  M6: pavement edge 18.4 m, right-of-way edge 36.4 m (ROW 73 m)
+      0.00 -   3.00   3.00  median (half of 6 m)  (kerb or concrete barrier + planting or paved)
+      3.00 -   4.50   1.50  inner paved shoulder
+      4.50 -  15.45  10.95  3 travel lanes x 3.65 m
+     15.45 -  18.45   3.00  outer paved shoulder (breakdown)
+     18.45 -  19.05   0.60  guardrail / barrier offset
+     19.05 -  20.55   1.50  verge + drainage ditch  (ditch 1.5 m wide, 0.5 m deep)
+     20.55 -  28.35   7.80  clear zone  (no trees, no poles; side slope 1:4 flat, 1:3 max, 1:2 only with barrier)
+     28.35 -  36.35   8.00  right-of-way strip  (fence, planting, service road if used)
+  M4: pavement edge 13.8 m, right-of-way edge 31.7 m (ROW 63 m)
+      0.00 -   2.00   2.00  median (half of 4 m)  (kerb or concrete barrier + planting or paved)
+      2.00 -   3.50   1.50  inner paved shoulder
+      3.50 -  10.80   7.30  2 travel lanes x 3.65 m
+     10.80 -  13.80   3.00  outer paved shoulder (breakdown)
+     13.80 -  14.40   0.60  guardrail / barrier offset
+     14.40 -  15.90   1.50  verge + drainage ditch  (ditch 1.5 m wide, 0.5 m deep)
+     15.90 -  23.70   7.80  clear zone  (no trees, no poles; side slope 1:4 flat, 1:3 max, 1:2 only with barrier)
+     23.70 -  31.70   8.00  right-of-way strip  (fence, planting, service road if used)
+
+=== 1.4 WORKED EXAMPLES (section 13), PASS = within 2 % ===
+ Min radius table (section 3.2)
+  PASS  Rmin V120                                      got    666.975   expected 665
+  PASS  Rmin V100                                      got    393.701   expected 395
+  PASS  Rmin V80                                       got    229.062   expected 230
+  PASS  Rmin V60                                       got    113.386   expected 113
+  PASS  Rmin V50                                       got     72.908   expected 73
+  PASS  Rmin V40                                       got     40.640   expected 41
+  PASS  Rmin V30                                       got     19.685   expected 20
+ Example 1: ring R 2000 m, V100
+  PASS  Rmin V100                                      got    393.701   expected 394
+  PASS  margin R/Rmin                                  got      5.080   expected 5.1
+  PASS  needed e + f                                   got      0.039   expected 0.0394
+  PASS  keeps normal crown (e needed = 0)
+  PASS  heading change per 100 m (deg)                 got      2.865   expected 2.9
+  PASS  circle length 2 pi R (m)                       got  12566.371   expected 12570
+ Example 2: spiral V120, R1500, C0.6
+  PASS  comfort formula Ls                             got     41.088   expected 41
+  PASS  2-second rule                                  got     66.667   expected 67
+  PASS  Ls used (rounded up)                           got     70.000   expected 70
+ Example 3: stopping sight distance
+  PASS  SSD V120                                       got    246.976   expected 247
+  PASS  SSD V100                                       got    183.094   expected 183
+  PASS  SSD V80                                        got    128.300   expected 128
+ Example 4: vertical curve K
+  PASS  crest K V100                                   got     50.948   expected 51
+  PASS  crest L = K A, A 3 %                           got    152.843   expected 153
+  PASS  sag K V100                                     got     44.062   expected 44
+  PASS  crest K V120                                   got     92.701   expected 93
+ Example 5: exit and entry lanes, V100 -> ramp V50
+  PASS  exit deceleration lane (m)                     got    115.741   expected 116
+  PASS  exit taper 1:25 (m)                            got     91.250   expected 90
+  PASS  entry acceleration lane (m)                    got    241.127   expected 241
+  PASS  entry taper 1:50 (m)                           got    182.500   expected 183
+ Example 6: ramp radii
+  PASS  loop ramp V40 (m)                              got     40.640   expected 41
+  PASS  semi-direct ramp V60 (m)                       got    113.386   expected 113
+ Example 7: lane-drop taper
+  PASS  V100 (m)                                       got    226.300   expected 226
+  PASS  V60 (m)                                        got     84.774   expected 85
+ Example 8: lane balance
+  PASS  4 continuing + 2-lane exit -> lanes before     got      5.000   expected 5
+ Example 9: lanes from demand, AADT 120 000
+  PASS  lanes per direction (ring)                     got      4.000   expected 4
+  PASS  exact value                                    got      4.000   expected 4
+  PASS  branch AADT 80 000 -> lanes                    got      3.000   expected 3
+  PASS  outer link AADT 40 000 -> lanes                got      2.000   expected 2
+ Example 10 (hill, only the radius here; widening and grade compensation come in Step 7H)
+  PASS  hairpin Rmin V30 (m)                           got     19.685   expected 19.7
+
+=== Reference ring shape from Roads.zip (input of Step 2.2), V = 100 ===
+  raw points 659, resampled every 5 m: 4279, length 21.39 km, box 5710 x 6195 m
+  max heading step 42.69 deg per 5 m, kinks (> 0.1 deg change of step) 639
+  min radius (200 m arms) 223 m at station 13470 m
+  below 394 m: 5 places, 765 m in total
+     station   3090 -   3180   min R 373 m
+     station   3675 -   3875   min R 298 m
+     station   9545 -   9570   min R 368 m
+     station  13310 -  13540   min R 223 m
+     station  18710 -  18905   min R 228 m
+  below 591 m: 11 places, 2305 m in total
+     station    670 -    690   min R 587 m
+     station   1755 -   1955   min R 411 m
+     station   2285 -   2520   min R 434 m
+     station   2970 -   3255   min R 373 m
+     station   3595 -   3920   min R 298 m
+     station   7480 -   7670   min R 554 m
+     station   7740 -   7945   min R 429 m
+     station   8945 -   9005   min R 505 m
+     station   9480 -   9640   min R 368 m
+     station  13280 -  13575   min R 223 m
+     station  18665 -  18940   min R 228 m
+
+ALL WORKED EXAMPLES PASS

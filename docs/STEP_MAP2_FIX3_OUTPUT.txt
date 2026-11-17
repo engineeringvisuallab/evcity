@@ -1,0 +1,191 @@
+STEP MAP2-FIX3: class sequence (R6 -> 8; R4 -> 8 / R6; R2 -> 8 / R6 / R4).
+NOT joined before: R6 22, R4 49, R2 121 (of 30 / 67 / 181). NOT joined after: R6 22, R4 49, R2 112.
+Extensions made: 2 (chain 0, 8-lane 2). New 8-lane taps: 0. Ends moved only; no line body moved.
+
+8-LANE R2-41.5  end   -> J1-N    90 m  existing tap T-N880  node J-142
+8-LANE R2-99.1  start -> M8      93 m  existing tap T18838  node J-143
+
+STILL NOT JOINED (183 lines), reason / smallest change (nothing broken, USER decides):
+  R6 R6-10     no passing road of the needed class within 100 m of an end             | nearest candidate road R6-19 0 m
+  R6 R6-11     new end crosses a road (R1)                                            | nearest candidate road R6-27 0 m
+  R6 R6-13     no passing road of the needed class within 100 m of an end             | nearest candidate road R6-11 172 m
+  R6 R6-16     760 m from the ring x arm join R1205 (R5 no branch / spacing 1600 m);  | nearest candidate road R6-36 0 m
+  R6 R6-17     no passing road of the needed class within 100 m of an end             | nearest candidate road R6-30 100 m
+  R6 R6-18     no passing road of the needed class within 100 m of an end             | nearest candidate road R6-22 0 m
+  R6 R6-19     952 m from the ring x arm join R1205 (R5 no branch / spacing 1600 m);  | nearest candidate road R6-10 0 m
+  R6 R6-20.1   closer than 900 m to the J1 centre (R5); nearest existing tap T-E610 2 | nearest candidate road R6-30 84 m
+  R6 R6-20.2   closer than 900 m to the J1 centre (R5); nearest existing tap T-E610 2 | nearest candidate road R6-29 0 m
+  R6 R6-21     888 m from T8919 (tap spacing 1600 m); nearest existing tap T8919 888  | nearest candidate road R6-34 3 m
+  R6 R6-22     no passing road of the needed class within 100 m of an end             | nearest candidate road R6-18 0 m
+  R6 R6-23.1   extension to the 8-lane road failed: R3 refit failed (dev 62, minR 100 | nearest candidate road R6-5 72 m
+  R6 R6-24     1321 m from the ring x arm join R1205 (R5 no branch / spacing 1600 m); | nearest candidate road R6-22 80 m
+  R6 R6-27     no passing road of the needed class within 100 m of an end             | nearest candidate road R6-11 0 m
+  R6 R6-29     no passing road of the needed class within 100 m of an end             | nearest candidate road R6-20.2 0 m
+  R6 R6-30     no passing road of the needed class within 100 m of an end             | nearest candidate road R6-20.1 84 m
+  R6 R6-31     604 m from the ring x arm join R12094 (R5 no branch / spacing 1600 m); | nearest candidate road M8 92 m
+  R6 R6-32     new end crosses a road (R1)                                            | nearest candidate road R6-23.2 96 m
+  R6 R6-33     no passing road of the needed class within 100 m of an end             | nearest candidate road R6-36 179 m
+  R6 R6-34     no passing road of the needed class within 100 m of an end             | nearest candidate road R6-21 3 m
+  R6 R6-35     no passing road of the needed class within 100 m of an end             | nearest candidate road M8 519 m
+  R6 R6-36     no passing road of the needed class within 100 m of an end             | nearest candidate road R6-16 0 m
+  R4 R4-1      126 m from T-N880 (tap spacing 1600 m); nearest existing tap T-N880 12 | nearest candidate road R4-86 0 m
+  R4 R4-5.1    no passing road of the needed class within 100 m of an end             | nearest candidate road R4-5.2 0 m
+  R4 R4-5.2    no passing road of the needed class within 100 m of an end             | nearest candidate road R4-5.1 0 m
+  R4 R4-6      no passing road of the needed class within 100 m of an end             | nearest candidate road R6-34 1 m
+  R4 R4-10.1   no passing road of the needed class within 100 m of an end             | nearest candidate road R4-10.2 0 m
+  R4 R4-10.2   669 m from the ring x arm join R12094 (R5 no branch / spacing 1600 m); | nearest candidate road R4-10.1 0 m
+  R4 R4-11     no passing road of the needed class within 100 m of an end             | nearest candidate road R4-14.1 161 m
+  R4 R4-13     510 m from the ring x arm join R12094 (R5 no branch / spacing 1600 m); | nearest candidate road R4-10.1 0 m
+  R4 R4-14.1   no passing road of the needed class within 100 m of an end             | nearest candidate road R4-14.2 0 m
+  R4 R4-14.2   no passing road of the needed class within 100 m of an end             | nearest candidate road R4-14.1 0 m
+  R4 R4-19     no passing road of the needed class within 100 m of an end             | nearest candidate road R6-30 41 m
+  R4 R4-22     no passing road of the needed class within 100 m of an end             | nearest candidate road R4-25 97 m
+  R4 R4-24     no passing road of the needed class within 100 m of an end             | nearest candidate road R6-32 2 m
+  R4 R4-25     no passing road of the needed class within 100 m of an end             | nearest candidate road R4-22 97 m
+  R4 R4-26     no passing road of the needed class within 100 m of an end             | nearest candidate road R4-27.1 0 m
+  R4 R4-27.1   no passing road of the needed class within 100 m of an end             | nearest candidate road R4-26 0 m
+  R4 R4-27.2   turn to target 82 deg > 60                                             | nearest candidate road R4-26 0 m
+  R4 R4-31     480 m from the ring x arm join R16813 (R5 no branch / spacing 1600 m); | nearest candidate road J1-E 94 m
+  R4 R4-34     544 m from the ring x arm join R16813 (R5 no branch / spacing 1600 m); | nearest candidate road M8 93 m
+  R4 R4-37     958 m from the ring x arm join R1205 (R5 no branch / spacing 1600 m);  | nearest candidate road M8 87 m
+  R4 R4-45     no passing road of the needed class within 100 m of an end             | nearest candidate road R4-50.1 0 m
+  R4 R4-50.1   no passing road of the needed class within 100 m of an end             | nearest candidate road R4-45 0 m
+  R4 R4-50.2   no passing road of the needed class within 100 m of an end             | nearest candidate road R4-45 0 m
+  R4 R4-52     690 m from the ring x arm join R1205 (R5 no branch / spacing 1600 m);  | nearest candidate road R6-18 44 m
+  R4 R4-54     no passing road of the needed class within 100 m of an end             | nearest candidate road R4-57.1 0 m
+  R4 R4-55     no passing road of the needed class within 100 m of an end             | nearest candidate road R4-56 0 m
+  R4 R4-56     800 m from the ring x arm join R4265 (R5 no branch / spacing 1600 m);  | nearest candidate road R4-55 0 m
+  R4 R4-57.1   1231 m from the ring x arm join R4265 (R5 no branch / spacing 1600 m); | nearest candidate road R4-54 0 m
+  R4 R4-57.2   1379 m from the ring x arm join R1205 (R5 no branch / spacing 1600 m); | nearest candidate road R4-54 0 m
+  R4 R4-58     no passing road of the needed class within 100 m of an end             | nearest candidate road R4-61.1 0 m
+  R4 R4-60.2   closer than 900 m to the J1 centre (R5); nearest existing tap T-W960 5 | nearest candidate road R4-50.1 0 m
+  R4 R4-60.3   no passing road of the needed class within 100 m of an end             | nearest candidate road R4-50.1 0 m
+  R4 R4-61.1   no passing road of the needed class within 100 m of an end             | nearest candidate road R4-55 0 m
+  R4 R4-61.2   380 m from the ring x arm join R4265 (R5 no branch / spacing 1600 m);  | nearest candidate road R4-58 0 m
+  R4 R4-62     510 m from the ring x arm join R4265 (R5 no branch / spacing 1600 m);  | nearest candidate road M8 93 m
+  R4 R4-63     589 m from T7299 (tap spacing 1600 m); nearest existing tap T7299 589  | nearest candidate road M8 93 m
+  R4 R4-71.1   no passing road of the needed class within 100 m of an end             | nearest candidate road R4-71.2 0 m
+  R4 R4-71.2   no passing road of the needed class within 100 m of an end             | nearest candidate road R4-71.1 0 m
+  R4 R4-73     531 m from T7299 (tap spacing 1600 m); nearest existing tap T7299 531  | nearest candidate road R4-71.1 0 m
+  R4 R4-75     no passing road of the needed class within 100 m of an end             | nearest candidate road R4-76 0 m
+  R4 R4-76     no passing road of the needed class within 100 m of an end             | nearest candidate road R4-75 0 m
+  R4 R4-79     no passing road of the needed class within 100 m of an end             | nearest candidate road R4-71.1 0 m
+  R4 R4-81     turn to target 108 deg > 60                                            | nearest candidate road R6-7 51 m
+  R4 R4-82     no passing road of the needed class within 100 m of an end             | nearest candidate road R4-84 321 m
+  R4 R4-83.1   no passing road of the needed class within 100 m of an end             | nearest candidate road R4-71.2 0 m
+  R4 R4-83.2   no passing road of the needed class within 100 m of an end             | nearest candidate road R4-71.2 0 m
+  R4 R4-84     no passing road of the needed class within 100 m of an end             | nearest candidate road R4-82 321 m
+  R4 R4-86     no passing road of the needed class within 100 m of an end             | nearest candidate road R4-1 0 m
+  R4 R4-88     extension to the 8-lane road failed: new end crosses a road (R1)       | nearest candidate road R4-5.1 0 m
+  R2 R2-1      closer than 900 m to the J1 centre (R5); nearest existing tap T-N880 6 | nearest candidate road R2-2.1 0 m
+  R2 R2-2.1    new end crosses a road (R1)                                            | nearest candidate road R2-1 0 m
+  R2 R2-2.2    no passing road of the needed class within 100 m of an end             | nearest candidate road R2-1 0 m
+  R2 R2-5      turn to target 84 deg > 60                                             | nearest candidate road R2-30.2 0 m
+  R2 R2-6.1    no passing road of the needed class within 100 m of an end             | nearest candidate road R2-190.1 0 m
+  R2 R2-6.2    no passing road of the needed class within 100 m of an end             | nearest candidate road R2-190.1 0 m
+  R2 R2-6.3    no passing road of the needed class within 100 m of an end             | nearest candidate road R2-17 0 m
+  R2 R2-6.4    no passing road of the needed class within 100 m of an end             | nearest candidate road R2-17 0 m
+  R2 R2-7      902 m from T8919 (tap spacing 1600 m); nearest existing tap T8919 902  | nearest candidate road R2-21.1 0 m
+  R2 R2-8      no passing road of the needed class within 100 m of an end             | nearest candidate road R2-21.1 0 m
+  R2 R2-12.1   no passing road of the needed class within 100 m of an end             | nearest candidate road R2-12.2 0 m
+  R2 R2-12.2   no passing road of the needed class within 100 m of an end             | nearest candidate road R2-12.1 0 m
+  R2 R2-12.3   new end crosses a road (R1)                                            | nearest candidate road R2-12.2 0 m
+  R2 R2-16     no passing road of the needed class within 100 m of an end             | nearest candidate road R2-12.1 0 m
+  R2 R2-17     no passing road of the needed class within 100 m of an end             | nearest candidate road R2-6.3 0 m
+  R2 R2-19     1438 m from the ring x arm join R12094 (R5 no branch / spacing 1600 m) | nearest candidate road R6-21 2 m
+  R2 R2-20     1546 m from the ring x arm join R12094 (R5 no branch / spacing 1600 m) | nearest candidate road R2-21.1 0 m
+  R2 R2-21.1   no passing road of the needed class within 100 m of an end             | nearest candidate road R2-20 0 m
+  R2 R2-21.2   no passing road of the needed class within 100 m of an end             | nearest candidate road R2-20 0 m
+  R2 R2-30.1   1418 m from the ring x arm join R12094 (R5 no branch / spacing 1600 m) | nearest candidate road R2-12.2 0 m
+  R2 R2-30.2   no passing road of the needed class within 100 m of an end             | nearest candidate road R2-12.2 0 m
+  R2 R2-30.3   no passing road of the needed class within 100 m of an end             | nearest candidate road R2-30.2 0 m
+  R2 R2-31.1   989 m from the ring x arm join R12094 (R5 no branch / spacing 1600 m); | nearest candidate road R2-31.2 0 m
+  R2 R2-31.2   no passing road of the needed class within 100 m of an end             | nearest candidate road R2-31.1 0 m
+  R2 R2-44.1   329 m from the ring x arm join R12094 (R5 no branch / spacing 1600 m); | nearest candidate road R2-44.2 0 m
+  R2 R2-44.2   no passing road of the needed class within 100 m of an end             | nearest candidate road R2-44.1 0 m
+  R2 R2-54.1   61 m from the ring x arm join R12094 (R5 no branch / spacing 1600 m);  | nearest candidate road R2-54.2 0 m
+  R2 R2-54.2   no passing road of the needed class within 100 m of an end             | nearest candidate road R2-54.1 0 m
+  R2 R2-78.1   no passing road of the needed class within 100 m of an end             | nearest candidate road R2-78.2 0 m
+  R2 R2-78.2   no passing road of the needed class within 100 m of an end             | nearest candidate road R2-78.1 0 m
+  R2 R2-79     1539 m from the ring x arm join R16813 (R5 no branch / spacing 1600 m) | nearest candidate road R4-26 1 m
+  R2 R2-80     659 m from T13738 (tap spacing 1600 m); nearest existing tap T13738 65 | nearest candidate road M8 92 m
+  R2 R2-82     581 m from the ring x arm join R16813 (R5 no branch / spacing 1600 m); | nearest candidate road R4-31 22 m
+  R2 R2-86.1   672 m from the ring x arm join R16813 (R5 no branch / spacing 1600 m); | nearest candidate road R2-86.3 0 m
+  R2 R2-86.2   714 m from the ring x arm join R16813 (R5 no branch / spacing 1600 m); | nearest candidate road R2-86.4 0 m
+  R2 R2-86.3   687 m from the ring x arm join R16813 (R5 no branch / spacing 1600 m); | nearest candidate road R2-86.1 0 m
+  R2 R2-86.4   no passing road of the needed class within 100 m of an end             | nearest candidate road R2-78.1 0 m
+  R2 R2-86.5   no passing road of the needed class within 100 m of an end             | nearest candidate road R2-78.1 0 m
+  R2 R2-88.1   no passing road of the needed class within 100 m of an end             | nearest candidate road R2-88.2 0 m
+  R2 R2-88.2   no passing road of the needed class within 100 m of an end             | nearest candidate road R2-88.1 0 m
+  R2 R2-90     turn to target 124 deg > 60                                            | nearest candidate road R2-86.1 0 m
+  R2 R2-106.1  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-106.2 0 m
+  R2 R2-106.2  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-106.1 0 m
+  R2 R2-106.3  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-106.2 0 m
+  R2 R2-107.1  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-106.2 0 m
+  R2 R2-107.2  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-106.2 0 m
+  R2 R2-109.1  480 m from the ring x arm join R1205 (R5 no branch / spacing 1600 m);  | nearest candidate road R2-109.2 0 m
+  R2 R2-109.2  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-109.1 0 m
+  R2 R2-109.3  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-109.2 0 m
+  R2 R2-110.1  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-106.1 0 m
+  R2 R2-110.2  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-106.1 0 m
+  R2 R2-110.3  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-110.2 0 m
+  R2 R2-111    no passing road of the needed class within 100 m of an end             | nearest candidate road R4-37 1 m
+  R2 R2-114.1  568 m from the ring x arm join R1205 (R5 no branch / spacing 1600 m);  | nearest candidate road R2-109.1 0 m
+  R2 R2-114.2  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-109.1 0 m
+  R2 R2-115.1  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-110.3 0 m
+  R2 R2-115.2  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-110.3 0 m
+  R2 R2-117    250 m from the ring x arm join R1205 (R5 no branch / spacing 1600 m);  | nearest candidate road M8 56 m
+  R2 R2-125.1  907 m from the ring x arm join R1205 (R5 no branch / spacing 1600 m);  | nearest candidate road R2-125.2 0 m
+  R2 R2-125.2  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-125.1 0 m
+  R2 R2-129.1  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-125.1 0 m
+  R2 R2-129.2  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-125.1 0 m
+  R2 R2-132.1  570 m from the ring x arm join R1205 (R5 no branch / spacing 1600 m);  | nearest candidate road R2-132.2 0 m
+  R2 R2-132.2  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-132.1 0 m
+  R2 R2-133    815 m from the ring x arm join R4265 (R5 no branch / spacing 1600 m);  | nearest candidate road R2-138.3 0 m
+  R2 R2-134    1220 m from the ring x arm join R4265 (R5 no branch / spacing 1600 m); | nearest candidate road R2-138.4 0 m
+  R2 R2-136    395 m from the ring x arm join R4265 (R5 no branch / spacing 1600 m);  | nearest candidate road R2-138.2 0 m
+  R2 R2-138.1  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-138.2 0 m
+  R2 R2-138.2  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-136 0 m
+  R2 R2-138.3  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-133 0 m
+  R2 R2-138.4  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-133 0 m
+  R2 R2-138.5  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-132.2 0 m
+  R2 R2-138.6  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-132.2 0 m
+  R2 R2-138.7  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-132.1 0 m
+  R2 R2-139.1  1046 m from the ring x arm join R4265 (R5 no branch / spacing 1600 m); | nearest candidate road R2-139.2 0 m
+  R2 R2-139.2  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-139.1 0 m
+  R2 R2-141    no passing road of the needed class within 100 m of an end             | nearest candidate road J1-S 142 m
+  R2 R2-142.1  closer than 900 m to the J1 centre (R5); nearest existing tap T-W960 8 | nearest candidate road R2-139.1 0 m
+  R2 R2-142.2  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-139.1 0 m
+  R2 R2-144.1  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-144.2 0 m
+  R2 R2-144.2  470 m from the ring x arm join R4265 (R5 no branch / spacing 1600 m);  | nearest candidate road R2-144.1 0 m
+  R2 R2-145    955 m from the ring x arm join R4265 (R5 no branch / spacing 1600 m);  | nearest candidate road R2-138.1 0 m
+  R2 R2-150.1  1236 m from T7299 (tap spacing 1600 m); nearest existing tap T7299 123 | nearest candidate road R2-138.1 0 m
+  R2 R2-150.2  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-138.1 0 m
+  R2 R2-151    no passing road of the needed class within 100 m of an end             | nearest candidate road R4-63 2 m
+  R2 R2-152    1130 m from T7299 (tap spacing 1600 m); nearest existing tap T7299 113 | nearest candidate road R2-155 0 m
+  R2 R2-153.1  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-153.2 0 m
+  R2 R2-153.2  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-153.1 0 m
+  R2 R2-154    no passing road of the needed class within 100 m of an end             | nearest candidate road R2-163.1 0 m
+  R2 R2-155    no passing road of the needed class within 100 m of an end             | nearest candidate road R2-152 0 m
+  R2 R2-160    no passing road of the needed class within 100 m of an end             | nearest candidate road R2-153.1 0 m
+  R2 R2-161    no passing road of the needed class within 100 m of an end             | nearest candidate road R4-83.2 1 m
+  R2 R2-163.1  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-154 0 m
+  R2 R2-163.2  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-154 0 m
+  R2 R2-165.1  turn to target 117 deg > 60                                            | nearest candidate road R2-165.2 0 m
+  R2 R2-165.2  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-165.1 0 m
+  R2 R2-173.1  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-173.2 0 m
+  R2 R2-173.2  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-173.1 0 m
+  R2 R2-173.3  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-153.1 0 m
+  R2 R2-173.4  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-153.1 0 m
+  R2 R2-176    no passing road of the needed class within 100 m of an end             | nearest candidate road R2-178.1 0 m
+  R2 R2-177    no passing road of the needed class within 100 m of an end             | nearest candidate road R2-178.1 0 m
+  R2 R2-178.1  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-176 0 m
+  R2 R2-178.2  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-177 0 m
+  R2 R2-179    701 m from T8919 (tap spacing 1600 m); nearest existing tap T8919 701  | nearest candidate road R2-165.1 0 m
+  R2 R2-181    closer than 900 m to the J1 centre (R5); nearest existing tap T-W960 8 | nearest candidate road R2-173.4 0 m
+  R2 R2-183.1  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-173.1 0 m
+  R2 R2-183.2  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-173.1 0 m
+  R2 R2-184    no passing road of the needed class within 100 m of an end             | nearest candidate road R2-177 0 m
+  R2 R2-189    turn to target 157 deg > 60                                            | nearest candidate road R4-2 37 m
+  R2 R2-190.1  244 m from T8919 (tap spacing 1600 m); nearest existing tap T8919 244  | nearest candidate road R2-190.2 0 m
+  R2 R2-190.2  no passing road of the needed class within 100 m of an end             | nearest candidate road R2-190.1 0 m

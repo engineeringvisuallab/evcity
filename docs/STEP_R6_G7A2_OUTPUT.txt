@@ -1,0 +1,39 @@
+STEP G7a2: JX-3 tap on J1-N for R6-6B (option 1 = chain split; half interchange on the SE side, two left slips; numbers only, no src/ change)
+Frame: origin JX-3 (544.2, -1776.5) on J1-N (arm s 1669 m, level 44.55 m), u = along the SW-bound direction (toward J1), v = to the SE (R6-6B side). Arm heading NE (0.570, -0.821).
+R6-6B: the ramps join at point 9 of R6-6B (72 m from its present start; those first points are REPLACED by the ramps). Join point (651.4, -1645.5) = local u 46.5, v 162.8 m (v is 140.7 m beyond the arm pavement edge), level 38.07 m, heading turn from the SW direction 74.8 deg to the LEFT (slip ramp, no crossing)
+R6-6B carriageway ends: outbound centre u 39.5, v 164.7; inbound centre u 53.5, v 160.9 (carriageways 7.25 m each side of the axis)
+
+EXIT SLIP (SW-bound arm -> R6-6B outbound): ramp V60 needs R >= 113 m, exit zone on the arm 190 m (taper 91.3 + decel 98.8, 17.1b), lane = 2 lanes ramp
+  R 113 m: straight after the arc 59.5 m, nose at u -85.1 (s 1754 on the arm), ramp length 207 m ok
+  R 130 m: straight after the arc 46.5 m, nose at u -98.1 (s 1767 on the arm), ramp length 216 m ok
+  R 150 m: straight after the arc 31.2 m, nose at u -113.4 (s 1783 on the arm), ramp length 227 m ok
+  R 175 m: straight after the arc 12.1 m, nose at u -132.5 (s 1802 on the arm), ramp length 241 m ok
+  R 200 m: straight after the arc -7.1 m, nose at u -151.6 (s 1821 on the arm), ramp length 254 m NO (negative straight)
+  R 250 m: straight after the arc -45.3 m, nose at u -189.8 (s 1859 on the arm), ramp length 281 m NO (negative straight)
+
+ENTRY SLIP (R6-6B inbound -> SW-bound arm): entry zone on the arm 299 m (accel 60 -> 100 = 241 + taper 1:50 about 183 m, 17.1b, ramp speed 60 = PROPOSAL)
+  R 113 m: straight 55.5 m, merge point (end of the arc) at u -70.1 (s 1739), ramp length 203 m ok
+  R 130 m: straight 42.5 m, merge point (end of the arc) at u -83.1 (s 1752), ramp length 212 m ok
+  R 150 m: straight 27.2 m, merge point (end of the arc) at u -98.4 (s 1768), ramp length 223 m ok
+  R 175 m: straight 8.1 m, merge point (end of the arc) at u -117.5 (s 1787), ramp length 237 m ok
+  R 200 m: straight -11.0 m, merge point (end of the arc) at u -136.6 (s 1806), ramp length 250 m NO
+  R 250 m: straight -49.2 m, merge point (end of the arc) at u -174.8 (s 1844), ramp length 277 m NO
+
+PASS  both slips fit with R >= 113 m and a straight of at least 25 m before R6-6B
+CHOSEN exit R 150 m (ramp 227 m): exit lane starts u -303 = arm s 1973, nose u -113; entry R 150 m (ramp 223 m): merge u -98, accel lane ends u 201 = arm s 1469
+Exit nose at u -113, entry merge at u -98: the exit is 15 m BEFORE the merge (same carriageway, exit first, so no weave)
+FAIL  exit -> entry distance 15 m >= 150 m (weaveMin; 300 m desirable NOT met)
+Levels: arm at the exit nose 43.13 m, arm at the merge 43.34 m, R6-6B start 38.07 m. Ramp grades: exit 2.2 %, entry 2.4 % (limit 5 %)
+PASS  ramp grades <= 5 %
+Ground along the ramp centre lines (natural, ramp grade line straight from the arm level to B): max cut 4.1 m, max fill 0.8 m (limits 12 / 7 m)
+PASS  ramp cut <= 12 m and fill <= 7 m
+Nearest rail to any ramp point: 99 m (rule 60 m)
+PASS  ramps keep >= 60 m from the rail
+Nearest rail to the auxiliary lanes on the arm (SE edge): 2 m
+FAIL  auxiliary lanes keep >= 60 m from the rail
+Auxiliary lane zone on the arm: s 1469 .. 1973; arm structures: [366.5, 453.4] [1166, 1492.9] [1526.6, 1618.6] [2355.4, 2492.3] [3000, 3112]
+FAIL  no arm structure inside the auxiliary lane zone (+-20 m)
+PASS  R5: JX-3 is 1669 m from the J1 centre on J1-N (>= 600 m from the plaza edge; plaza radius 300 m); not on a ring join; the other taps of the A3 list were NOT re-checked here
+
+RESULT: 3 FAIL
+NOT provided: movements to / from the NE-bound carriageway (B <-> ring N side). They would have to cross the SW-bound carriageway (directional ramps through the median); decision for the user.

@@ -1,0 +1,34 @@
+STEP 21.6 FIT-1b class 4 (V 60, class minimum R 113 m, lane 3.5 m x 2, RCAP 6000 m, DEV_MAX 15 m, SHIFT_MAX 30 m, SLIDE_MAX 60 m, speeds 60/55/50/45/40/35/30 then corner 20/10 km/h): real straight - spiral - arc - spiral - straight fit of the drawn lines, with the ladder A1 shift / A2 slide / A3 speed / A4 corner
+
+1. PER LINE (stage = last rung used: 0 first fit already fine, 1 shift, 2 slide, 3 speed, 4 corner; before = first fit of FIT-1: max distance / end gap; after = this run)
+   line     len  PIs  stage  before dev/gap   after dev  mean  gap   minR  kink s/e  Vmin  shiftPI  endS endE  hard fails  warn  Ls<Lr
+   R4-1     1601    8     1     55 /  65.4       12.0   5.2  0.0    129  1/3     60      30     0    0         0     4     0  
+   R4-2     1092    4     1     73 /  73.2       11.8   5.9  0.0    193  4/2     60      30     0    0         0     0     0  
+   R4-4      253    1     1      8 /   9.4        0.4   0.1  0.0    135  0/0     60       0     0    7         0     0     0  
+   total  2946 m  29 measured bends -> 13 PIs; bends under the class minimum R (advisory / corner speed) 0; hard 6 V / 2 V fails 0; warnings 4; Ls shorter than runoff 0
+
+2. LADDER DETAIL: what each end is, what moved, PIs dropped (smoothing), advisory speeds, junction corners
+   R4-1: stage 1; start = pin: shared end node with R6-10, R4-2, R2-3 (not moved here: it needs a joint refit of all lines at the node); end = pin: shared end node with R2-1, R2-2 (not moved here: it needs a joint refit of all lines at the node); start moved 0.0 m, end moved 0.0 m; biggest PI shift 29.8 m
+   R4-2: stage 1; start = pin: shared end node with R6-10, R4-1, R2-3 (not moved here: it needs a joint refit of all lines at the node); end = pin: shared end node with R2-4, R2-5 (not moved here: it needs a joint refit of all lines at the node); start moved 0.0 m, end moved 0.0 m; biggest PI shift 29.9 m
+   R4-4: stage 1; start = slide: T on R6-9 (class 6); end = free: free end (no other road there); start moved 0.2 m, end moved 7.3 m; biggest PI shift 0.3 m
+
+3. WARNINGS (the drawn line has two bends less than 80 m apart: the 6 V / 2 V rule cannot hold on the line the user drew; reason printed, not a FAIL)
+   WARN R4-1 bends 1-2 (reverse direction): straight 51 m, rule 120 m; the DRAWN line has these bends 15 m apart (< 80 m: WARNING, the drawn line itself breaks the rule)
+   WARN R4-1 bends 2-3 (reverse direction): straight 67 m, rule 120 m; the DRAWN line has these bends 5 m apart (< 80 m: WARNING, the drawn line itself breaks the rule)
+   WARN R4-1 bends 6-7 (reverse direction): straight 53 m, rule 120 m; the DRAWN line has these bends 10 m apart (< 80 m: WARNING, the drawn line itself breaks the rule)
+   WARN R4-1 bends 7-8 (reverse direction): straight 43 m, rule 120 m; the DRAWN line has these bends 70 m apart (< 80 m: WARNING, the drawn line itself breaks the rule)
+
+4. HARD 6 V / 2 V FAILS (drawn bends 80 m or more apart, rule still broken)
+
+5. CHECKS (PASS = the rule holds for the WHOLE class; a FAIL is listed above per line, it is a finding, not hidden)
+   PASS  every line has an alignment (3 lines)
+   PASS  every R is at least the minimum of the design speed of its own bend (V 80 where no advisory speed)
+   PASS  every alignment ends on the last point of its line (gap <= 0.5 m)
+   PASS  every alignment stays within 15 m of the drawn line (override by user OK: R6-7 25 m, R6-8 25 m, R6-10 25 m; PI shift )
+   PASS  every straight between two curves is at least 6 V (same direction) / 2 V (reverse) (WARN pairs of section 3 not counted)
+   PASS  every spiral is at least as long as the superelevation runoff (21.6e-3) and fits its bend (Ls <= R x delta)
+   PASS  heading at the two ends is within 5 deg of the drawn line (no kink at a junction)
+   PASS  literal target R >= 113 m on every bend (a FAIL here = bends that use an advisory speed or a junction corner, listed in section 2)
+   RESULT 8 PASS 0 FAIL
+   NOT RUN: tsc, npm run build, the game, the rail checks. Nothing in src changed. NOT DONE: junction node corners (21.7), R5 tap spacing recheck for a slid node, vertical re-run on the new length (the new line is a bit shorter / longer than the polyline).
+   LIMIT: search = seeded (1+1) evolution strategy, so the result is a feasible design that the checks above confirm, not a proven optimum; the deviation is measured against the 5 m resampled drawn line; R10: the deviation of every line from his line is printed above.

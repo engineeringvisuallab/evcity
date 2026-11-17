@@ -1,0 +1,154 @@
+STEP 21.1 TOPOLOGY (headless, read only, nothing in src or data changed)
+lines: 157 new (key 3 data) + 14 built (8 / 6 lane, same as key 3). SNAP 60 m, TOUCH 5 m, CLUSTER 25 m, EDGE 3 m
+
+1. CROSSINGS (R1): 12 real crossings (both roads run through), 210 end touches (already joined)
+   8 between roads of the SAME class (4-leg junction, both split), 4 between DIFFERENT classes (the smaller road ends at the bigger one: small never crosses big)
+   J1-N    x R4-26   at (1333, -2189)  8/4  BUILT road involved
+   R4-16   x R2-24   at (-1524, 4358)  4/2
+   R4-27   x C-6     at (203, -3461)  4/C
+   R4-28   x C-7     at (503, -3574)  4/C
+   R2-21   x R2-26   at (-1551, 3644)  2/2
+   R2-22   x R2-27   at (-1027, 3848)  2/2
+   R2-23   x R2-24   at (-1260, 4460)  2/2
+   R2-24   x R2-25   at (-1796, 4247)  2/2
+   R2-34   x R2-35   at (-1291, 1943)  2/2
+   R2-34   x R2-36   at (-1495, 1943)  2/2
+   R2-34   x R2-37   at (-1712, 1944)  2/2
+   R2-40   x R2-42   at (-738, 1802)  2/2
+
+2. LINE ENDS: 314 ends of the new lines: 244 already joined (<= 5 m), 11 JOIN proposals (5..60 m), 59 DEAD ENDS (> 60 m)
+   JOIN proposals (end moves onto the nearest road; angle = angle between the two roads, 90 = square):
+   R4-26   start (1547, -1824) -> R2-70     9 m, angle 59  WARN: target is a SMALLER road
+   R4-26   end   (1327, -2199) -> J1-N     11 m, angle 80
+   R6-9    start (-2020, -2967) -> R6-7     22 m, angle 3  WARN: shallow angle
+   R2-13   end   (1235, -2190) -> J1-N     32 m, angle 75
+   L-15    end   (1271, -2295) -> R2-13    38 m, angle 59
+   R4-17   start (-1439, 4055) -> M6-1     39 m, angle 89
+   L-21    end   (949, -2112) -> J1-N     40 m, angle 83
+   R4-16   start (-1422, 4094) -> R4-17    43 m, angle 90
+   R4-15   start (-1372, 4094) -> R4-16    50 m, angle 86
+   C-8     start (627, -3766) -> M8       55 m, angle 61
+   C-9     end   (-32, -3512) -> M8       58 m, angle 70
+   DEAD ENDS (nearest other road is further than SNAP; the user says: real dead end / open end of the map / join anyway / move):
+   L-22    end   (721, -2029)  nearest J1-N 60 m
+   R2-31   end   (-629, 803)  nearest J1-S 67 m
+   L-14    end   (1416, -2304)  nearest L-15 68 m
+   L-20    end   (930, -2250)  nearest L-21 75 m
+   L-29    end   (1778, -434)  nearest R2-19 87 m
+   C-7     start (443, -3718)  nearest M8 88 m
+   C-6     start (144, -3603)  nearest M8 90 m
+   R4-11   end   (834, -2250)  nearest C-4 95 m
+   L-17    end   (719, -2250)  nearest L-22 101 m
+   R6-10   start (-2225, -3482)  nearest R6-7 103 m
+   L-19    end   (590, -2250)  nearest R2-16 106 m
+   R2-42   start (-643, 1688)  nearest R2-33 108 m
+   L-18    end   (593, -1994)  nearest J1-N 110 m
+   R2-42   end   (-977, 2089)  nearest R2-33 111 m
+   R2-41   end   (-967, 1830)  nearest J1-S 112 m
+   L-25    end   (2041, -975)  nearest R2-20 115 m
+   C-10    end   (56, -3280)  nearest R4-27 116 m
+   C-6     end   (248, -3352)  nearest R4-27 118 m
+   R2-41   start (-789, 1606)  nearest R2-40 127 m
+   L-2     end   (-4285, 2495)  nearest R2-8 131 m
+   R2-14   end   (857, -2820)  nearest R2-74 133 m
+   C-1     end   (-4421, 2228)  nearest L-2 148 m
+   R2-48   end   (1489, 2157)  nearest R2-50 149 m
+   C-7     end   (563, -3432)  nearest R4-28 154 m
+   L-7     end   (-3461, 1064)  nearest R4-6 172 m
+   C-12    end   (-2392, 13)  nearest M8 174 m
+   C-8     end   (765, -3478)  nearest R4-28 179 m
+   R4-4    end   (-2130, -2823)  nearest R6-9 181 m
+   L-23    end   (1876, -893)  nearest L-24 182 m
+   L-1     end   (-4274, 2038)  nearest R2-7 182 m
+   L-28    end   (1737, -774)  nearest L-23 183 m
+   C-13    end   (-2398, -411)  nearest M8 188 m
+   R2-49   end   (1165, 2047)  nearest M8 190 m
+   R4-3    end   (-3363, -3650)  nearest R6-10 192 m
+   R2-37   start (-1713, 1748)  nearest R2-34 196 m
+   R2-57   end   (3750, 625)  nearest R2-56 198 m
+   R2-35   start (-1294, 1702)  nearest R2-36 202 m
+   R2-36   start (-1496, 1695)  nearest R2-35 202 m
+   R2-50   end   (1727, 1976)  nearest M8 206 m
+   L-3     end   (-2986, 1246)  nearest L-6 207 m
+   L-6     end   (-2823, 1377)  nearest L-3 209 m
+   C-11    end   (-1886, 0)  nearest J1-W 215 m
+   R2-29   end   (-135, 1109)  nearest R4-20 217 m
+   R2-53   end   (4726, 2093)  nearest R2-54 234 m
+   R2-62   end   (4526, -4502)  nearest R4-24 261 m
+   R2-3    end   (-2166, -4764)  nearest R4-1 347 m
+   R2-71   end   (1909, -4968)  nearest R2-62 419 m
+   R2-56   end   (4047, 1041)  nearest R2-57 434 m
+   R6-13   end   (192, -2575)  nearest R6-12 446 m
+   R4-21   start (4915, 3113)  nearest R2-54 496 m
+   R2-2    end   (-1122, -3240)  nearest M8 526 m
+   R2-5    end   (-4359, -4810)  nearest R4-2 530 m
+   R2-1    end   (-476, -4045)  nearest M8 635 m
+   R4-5    end   (-3249, -804)  nearest M8 643 m
+   R4-23   start (2648, -3592)  nearest R4-24 651 m
+   R2-8    start (-4807, 3102)  nearest L-2 801 m
+   R2-4    end   (-3898, -2943)  nearest R4-3 887 m
+   R2-59   end   (4463, -1524)  nearest R2-58 987 m
+   R2-73   end   (4783, -2643)  nearest R2-59 1164 m
+
+3. JUNCTION NODES: 198 nodes (crossings + joins + joined ends, points within 25 m merged)
+   roads meeting at a node (number of lines): {"2":151,"3":45,"4":2}
+   node gaps under 60 m (R1 asks at least 60 m): 4
+   J-049 - J-050  43 m  (R4-16 R4-17 | R4-15 R4-16)
+   J-049 - J-053  39 m  (R4-16 R4-17 | R4-17 M6-1)
+   J-050 - J-053  49 m  (R4-15 R4-16 | R4-17 M6-1)
+   J-103 - J-107  48 m  (R2-62 M8 | C-8 M8)
+
+4. R5 (nothing leaves J1; a branch leaves an 8-lane road only at a tap, 1600 m from other taps, 600 m from the J1 plaza edge): 46 nodes lie on an 8-lane road (M8 or a J1 arm)
+   J1 centre (-87, -277), plaza radius 100 m, 11 existing taps known
+   J-016 (-2618, -1086) on M8  J1 plaza 2557 m, nearest tap R4265 1335 m, nearest other 8-lane node J-017 256 m  <- tap gap < 1600 m
+   J-017 (-2606, -830) on M8  J1 plaza 2479 m, nearest tap R4265 1079 m, nearest other 8-lane node J-016 256 m  <- tap gap < 1600 m
+   J-018 (-2523, 944) on M8  J1 plaza 2625 m, nearest tap R4265 697 m, nearest other 8-lane node J-019 687 m  <- tap gap < 1600 m
+   J-019 (-2483, 1630) on M8  J1 plaza 2962 m, nearest tap R4265 1384 m, nearest other 8-lane node J-018 687 m  <- tap gap < 1600 m
+   J-020 (-2358, -2082) on M8  J1 plaza 2801 m, nearest tap T7299 604 m, nearest other 8-lane node J-032 504 m  <- tap gap < 1600 m
+   J-024 (-2140, 227) on J1-W  J1 plaza 2014 m, nearest tap R4265 416 m, nearest other 8-lane node J-018 813 m  <- tap gap < 1600 m
+   J-028 (-2007, 2220) on M8  J1 plaza 3050 m, nearest tap R1205 879 m, nearest other 8-lane node J-040 303 m  <- tap gap < 1600 m
+   J-032 (-1903, -2298) on M8  J1 plaza 2617 m, nearest tap T7299 100 m, nearest other 8-lane node J-044 392 m  <- tap gap < 1600 m
+   J-040 (-1710, 2280) on M8  J1 plaza 2929 m, nearest tap R1205 579 m, nearest other 8-lane node J-047 216 m  <- tap gap < 1600 m
+   J-044 (-1547, -2463) on M8  J1 plaza 2529 m, nearest tap T7299 292 m, nearest other 8-lane node J-032 392 m  <- tap gap < 1600 m
+   J-047 (-1494, 2288) on M8  J1 plaza 2826 m, nearest tap R1205 362 m, nearest other 8-lane node J-058 207 m  <- tap gap < 1600 m
+   J-058 (-1287, 2296) on M8  J1 plaza 2739 m, nearest tap R1205 155 m, nearest other 8-lane node J-047 207 m  <- tap gap < 1600 m
+   J-063 (-1119, -2661) on M8  J1 plaza 2498 m, nearest tap T7299 764 m, nearest other 8-lane node J-044 472 m  <- tap gap < 1600 m
+   J-065 (-1106, 1943) on J1-S  J1 plaza 2343 m, nearest tap R1205 360 m, nearest other 8-lane node J-069 379 m  <- tap gap < 1600 m
+   J-066 (-1083, 144) on J1-W  J1 plaza 981 m, nearest tap T-W960 133 m, nearest other 8-lane node J-078 576 m  <- tap gap < 1600 m
+   J-069 (-999, 2307) on M8  J1 plaza 2640 m, nearest tap R1205 133 m, nearest other 8-lane node J-058 288 m  <- tap gap < 1600 m
+   J-076 (-761, 964) on J1-S  J1 plaza 1312 m, nearest tap T-W960 901 m, nearest other 8-lane node J-082 559 m  <- tap gap < 1600 m
+   J-078 (-669, -256) on J1-W  J1 plaza 483 m, nearest tap T-W960 451 m, nearest other 8-lane node J-066 576 m  <- NEAR J1 (<600 m), tap gap < 1600 m
+   J-082 (-568, 439) on J1-S  J1 plaza 763 m, nearest tap T-W960 529 m, nearest other 8-lane node J-076 559 m  <- tap gap < 1600 m
+   J-090 (-71, -3555) on M8  J1 plaza 3178 m, nearest tap T8919 545 m, nearest other 8-lane node J-095 380 m  <- tap gap < 1600 m
+   J-093 (68, 2046) on M8  J1 plaza 2228 m, nearest tap T18838 390 m, nearest other 8-lane node J-102 494 m  <- tap gap < 1600 m
+   J-095 (252, -3755) on M8  J1 plaza 3394 m, nearest tap T8919 913 m, nearest other 8-lane node J-103 335 m  <- tap gap < 1600 m
+   J-096 (309, 27) on J1-E  J1 plaza 399 m, nearest tap T-E610 420 m, nearest other 8-lane node J-111 525 m  <- NEAR J1 (<600 m), tap gap < 1600 m
+   J-099 (401, -1326) on J1-N  J1 plaza 1057 m, nearest tap T-N880 5 m, nearest other 8-lane node J-113 854 m  <- tap gap < 1600 m
+   J-102 (531, 1874) on M8  J1 plaza 2138 m, nearest tap T18838 105 m, nearest other 8-lane node J-108 120 m  <- tap gap < 1600 m
+   J-103 (580, -3821) on M8  J1 plaza 3506 m, nearest tap T8919 1211 m, nearest other 8-lane node J-107 48 m  <- tap gap < 1600 m
+   J-107 (628, -3821) on M8  J1 plaza 3516 m, nearest tap T8919 1251 m, nearest other 8-lane node J-103 48 m  <- tap gap < 1600 m
+   J-108 (650, 1858) on M8  J1 plaza 2159 m, nearest tap T18838 225 m, nearest other 8-lane node J-102 120 m  <- tap gap < 1600 m
+   J-111 (745, 320) on J1-E  J1 plaza 924 m, nearest tap T-E610 106 m, nearest other 8-lane node J-096 525 m  <- tap gap < 1600 m
+   J-113 (869, -2040) on J1-N  J1 plaza 1906 m, nearest tap T-N880 858 m, nearest other 8-lane node J-116 98 m  <- tap gap < 1600 m
+   J-116 (961, -2073) on J1-N  J1 plaza 1980 m, nearest tap T-N880 938 m, nearest other 8-lane node J-113 98 m  <- tap gap < 1600 m
+   J-131 (1245, -2159) on J1-N  J1 plaza 2206 m, nearest tap R12094 1047 m, nearest other 8-lane node J-135 92 m  <- tap gap < 1600 m
+   J-135 (1332, -2189) on J1-N  J1 plaza 2281 m, nearest tap R12094 959 m, nearest other 8-lane node J-131 92 m  <- tap gap < 1600 m
+   J-145 (1398, 735) on J1-E  J1 plaza 1697 m, nearest tap T-E610 880 m, nearest other 8-lane node J-164 479 m  <- tap gap < 1600 m
+   J-147 (1439, -3414) on M8  J1 plaza 3388 m, nearest tap R12094 927 m, nearest other 8-lane node J-158 264 m  <- tap gap < 1600 m
+   J-148 (1449, 1850) on M8  J1 plaza 2524 m, nearest tap R16813 997 m, nearest other 8-lane node J-108 799 m  <- tap gap < 1600 m
+   J-153 (1564, -2298) on J1-N  J1 plaza 2510 m, nearest tap R12094 709 m, nearest other 8-lane node J-135 257 m  <- tap gap < 1600 m
+   J-158 (1627, -3229) on M8  J1 plaza 3313 m, nearest tap R12094 663 m, nearest other 8-lane node J-147 264 m  <- tap gap < 1600 m
+   J-164 (1840, 920) on J1-E  J1 plaza 2169 m, nearest tap R16813 730 m, nearest other 8-lane node J-145 479 m  <- tap gap < 1600 m
+   J-165 (1870, -2529) on J1-N  J1 plaza 2884 m, nearest tap R12094 328 m, nearest other 8-lane node J-175 349 m  <- tap gap < 1600 m
+   J-175 (2185, -2679) on M8  J1 plaza 3206 m, nearest tap R12094 120 m, nearest other 8-lane node J-165 349 m  <- tap gap < 1600 m
+   J-181 (2536, -2297) on M8  J1 plaza 3211 m, nearest tap R12094 639 m, nearest other 8-lane node J-175 519 m  <- tap gap < 1600 m
+   J-182 (2776, -1645) on M8  J1 plaza 3073 m, nearest tap T13738 309 m, nearest other 8-lane node J-181 695 m  <- tap gap < 1600 m
+   J-183 (2798, 1120) on M8  J1 plaza 3105 m, nearest tap R16813 543 m, nearest other 8-lane node J-164 979 m  <- tap gap < 1600 m
+   J-186 (2990, 0) on M8  J1 plaza 2989 m, nearest tap T13738 1358 m, nearest other 8-lane node J-187 607 m  <- tap gap < 1600 m
+   J-187 (3045, -605) on M8  J1 plaza 3049 m, nearest tap T13738 767 m, nearest other 8-lane node J-186 607 m  <- tap gap < 1600 m
+   R5 summary: 2 nodes within 600 m of the J1 plaza, 46 of 46 8-lane nodes closer than 1600 m to a tap or to each other
+   (R10: the user's lines come first, so these are CONFLICTS to ask about, not changes the script makes)
+
+SUMMARY
+  crossings to split: 12 (same class 8, different class 4); joins proposed: 11; dead ends: 59; nodes: 198; gaps < 60 m: 4; R5 near J1: 2; R5 tap gaps: 46
+  NOT RUN here: tsc of the whole game, npm run build, the game (no node_modules in the zip). This script changes no game file.

@@ -1,0 +1,75 @@
+J1-b GEOMETRY CHECK SHEET   J1 = C10 (-87, -277), yaw 37.5 deg east of north, 8 lane x 8 lane, ground level, signalised "+"   (inputs: J1-a docs/j1a.json)
+61 elements, 341 convex cells, 152 zebra bars, 8 stop lines, 4 kerb arcs
+
+=== (1) CROSS-SECTION of one arm (distance o from the arm axis, + = inbound side = left of the traffic; left-hand traffic) and derived numbers
+  lane 3.65 m;  first through lane edge t0 = (island 3 + 2 pockets x 3.65) / 2 = 5.15 m (M8 mid-block: 4.50 m = median 6 / 2 + inner shoulder 1.5)
+  box half width B = t0 + 4 x 3.65 = 19.75 m  (J1-a assumed 27.05 m: symmetric 7 + 7 lanes, conservative);  stop line = B + zebra 4 m = 23.75 m from the centre (J1-a 31.05 m)
+  o  -23.40 .. -19.75  receiving lane of the slip lane of the previous arm (only beyond the corner arc);  -19.75 .. -5.15  4 outbound lanes;  -5.15 .. -2.15  median island 3 m
+     -2.15 .. 5.15  2 right pockets (R2 inner, R1 outer);  5.15 .. 19.75  4 inbound through lanes;  19.75 .. 23.40  left slip lane
+  at the stop line: 2 + 4 = 6 inbound lanes, 4 outbound.  At the corner arc join (s = 48.4 m): 7 inbound (slip lane included), 5 outbound (receiving lane included) = J1-a layout.
+  taper per lane at 60 km/h = W V^2 / 155 = 84.8 m;  braking 60 -> 0 km/h at 2.5 m/s2 = 55.6 m;  slip lane: 60 -> 25 km/h 45.9 m, 25 -> 60 km/h at 1.2 m/s2 95.6 m
+  median shift back to the M8 section: 0.65 m in 40.3 m (0.62 W V at 100 km/h, conservative: the step-down 100 -> 60 happens in the same stretch)
+
+=== (2) POCKETS, SLIP LANE and ZONE LENGTH per arm (all distances from the J1 centre along the arm axis; x = from the stop line)
+  arm   R1 full + taper (end)     R2 full + taper (end)     slip taper-in..arc start      receiving lane end    zone end (plain M8)   clear   J1-a pocket
+  N     116 + 85 (201 m, s 225)     86 + 85 (171 m, s 195)     s 179 .. 48               s 229              s 269          380     200
+  E     110 + 85 (195 m, s 219)     80 + 85 (165 m, s 189)     s 179 .. 48               s 229              s 269          350     194
+  S     116 + 85 (201 m, s 225)     86 + 85 (171 m, s 195)     s 179 .. 48               s 229              s 269          350     200
+  W     110 + 85 (195 m, s 219)     80 + 85 (165 m, s 189)     s 179 .. 48               s 229              s 269          330     194
+  slip lane: taper-in 84.8 m (s 179.1 -> 94.3), full width 45.9 m (s 94.3 -> 48.4), kerb arc R 25 m (lane centre R 26.8 m, outer edge R 28.6 m) from s 48.4 on the arm to s 48.4 on the cross road,
+  then the receiving lane: acceleration 95.6 m + merge taper 84.8 m = 180.4 m (ends at s 228.8 on the cross road)
+
+=== (3) LANES
+  PASS  every lane is 3.65 m wide where it has full width (through, pockets, slip) largest error 2.2e-15 m
+  PASS  lanes at the stop line: 6 inbound (2 pockets + 4 through), 4 outbound  counted 6 in, 4 out
+  PASS  lanes at the corner arc join: 7 inbound + 5 outbound (J1-a layout 1 + 4 + 2 / 4 + 1) counted 7 in, 5 out (J1-a 7 / 5)
+  PASS  left-hand traffic: inbound through lanes on the left of their heading, outbound on the right (all 4 arms) checked at the box edge
+  PASS  through lanes line up across the box (inbound lane i of one arm = outbound lane i of the opposite arm), no lateral shift largest offset 0.0e+0 m (distance between the box edges 2 B = 39.50 m)
+  PASS  the four arms are exact 90 deg turns of one design (slip lane, arc, corner island identical) areas equal on all arms
+  PASS  J1 is a right-angle "+" (rule 3.12-10: 70 - 110 deg)                   arms at 0 / 90 / 180 / 270 deg by construction
+
+=== (4) TAPERS and RADII
+  PASS  slip lane kerb radius 25 m >= Rmin of the slip speed 25 km/h           kerb R 25 m, lane centre R 26.8 m, Rmin(25) 12.5 m, margin x2.15
+  PASS  slip lane kerb radius is not more than the user limit of 25 m          R 25 m
+  PASS  pocket tapers >= laneDropTaper(60) per lane (R1 and R2, all arms)      84.8 m each = W V^2 / 155; the two tapers are staggered by 30 m, not on top of each other
+  PASS  slip lane taper-in >= laneDropTaper(60) and full-width part >= braking 60 -> 25 km/h taper 84.8 m, full width 45.9 m (needs 45.9 m)
+  PASS  receiving lane: acceleration 25 -> 60 km/h and merge taper >= laneDropTaper(60) 95.6 + 84.8 = 180.4 m
+  PASS  median shift taper >= laneDropTaper(100, 0.65 m) and starts after every lane taper of the arm 40.3 m, starts at s 228.8
+  PASS  R2 (inner pocket) full width >= the 95th percentile queue of one lane; R2 total length >= braking + storage N: 86 >= 59, 171 >= 115 | E: 80 >= 54, 165 >= 109 | S: 86 >= 59, 171 >= 115 | W: 80 >= 54, 165 >= 109
+  PASS  right turn from the inner pocket: the arc that fits in the box is >= Rmin(25 km/h) largest arc R 19.4 m (inside the box, tangent to pocket R2 and to outbound lane O1 of the next arm) vs Rmin 12.5 m
+
+=== (5) CONSISTENCY with the J1-a calculation sheet
+  PASS  built-in approach inputs = docs/j1a.json (clear length, queue per lane) largest difference 0.003 m
+  PASS  pocket R1 (full + taper) >= pocket wanted by J1-a (braking + storage + taper), all arms N 200.8 >= 199.8, E 194.8 >= 193.9, S 200.8 >= 199.8, W 194.8 >= 193.9
+  PASS  stop line distance <= J1-a stop line (31.05 m), box half <= J1-a box half stop line 23.75 <= 31.05, box 19.75 <= 27.05: J1-a signal numbers stay valid (they were conservative)
+  PASS  N: queue / pocket + step-down fit in the clear length from the REAL stop line need 300 m, available 356 m (J1-a 349); lane zone ends at s 269 of 380
+  PASS  E: queue / pocket + step-down fit in the clear length from the REAL stop line need 294 m, available 326 m (J1-a 319); lane zone ends at s 269 of 350
+  PASS  S: queue / pocket + step-down fit in the clear length from the REAL stop line need 300 m, available 326 m (J1-a 319); lane zone ends at s 269 of 350
+  PASS  W: queue / pocket + step-down fit in the clear length from the REAL stop line need 294 m, available 306 m (J1-a 299); lane zone ends at s 269 of 330
+
+=== (6) ISLANDS and ZEBRA
+  PASS  median island at the stop line is the J1-a width (3.0 m) and a refuge (>= 1.8 m) 3.00 m
+  PASS  corner island area: 3 deg cells vs 0.03 deg reference (difference < 0.5 %) cells 171.4 m2, reference 171.2 m2, full triangle without the nose cut 176.2 m2
+  PASS  corner island nose is at least 1 m wide where the kerb starts          1.00 m (sliver before it stays painted gore)
+  PASS  zebra at the stop line: 4 m long (>= 3 m), every bar lies fully on a traffic lane, none on an island 140 bars, coverage error 0.0e+0 m2, area on islands 0.0e+0 m2
+  PASS  zebra across the slip lane lies on the slip lane arc (chord error of a straight bar on a curved lane < 5 %) 3 bars per corner, at 45 deg of the arc, worst relative error 0.0 %
+
+=== (7) NO OVERLAP between different elements (all 4 arms, box, slip lanes, receiving lanes, islands)
+  PASS  no two elements overlap (largest overlap area of any pair of cells)    341 cells, 132 close pairs tested, largest overlap 5.7e-14 m2 (N-in-R1 x N-in-R2)
+  PASS  slip lane chain is continuous: taper/straight -> arc -> receiving lane (no gap, tangent joins) gaps 0.0e+0 m and 0.0e+0 m
+
+=== (8) SIGHT around the slip lane and the building line (ROW boundary of M8 = 40.0 m from each arm axis)
+  stopping sight distance at 25 km/h = 24.5 m (tPR 2.5 s, a 3.4 m/s2); the slip zebra is 21.1 m along the path from the start of the arc -> the driver's eye is 3.4 m before the arc, on the straight (eye 1.08 m)
+  pedestrian waiting points 0.5 m behind the kerb (corner side) and 0.5 m behind the island kerb at the zebra: world positions (-43.4, -282.7) and (-48.0, -282.1)
+  PASS  slip lane: straight run before the arc is long enough for the sight distance to the zebra eye 3.4 m before the arc, full-width straight 45.9 m
+  PASS  sight lines eye -> pedestrian (corner side and island side) stay clear of the building line (corner square beyond the ROW) nearest approach to the ROW corner 11.8 m / 14.9 m; keep buildings, trees > 0.6 m and signs out of the triangle (J1-f)
+  PASS  corner kerb arcs stay inside the union of the two M8 right-of-way strips (no extra land needed at the corners) kerb arc reaches 53.8 m from the centre; ROW half 40.0 m
+  footprint for J1-f (re-zoning): box 39.5 x 39.5 m, corner kerbs reach 53.8 m, lanes end at s 269 m, receiving lanes at s 229 m, ROW half 40.0 m
+
+=== WORLD positions of the key points (x east, z south) for the next steps
+  N: stop line axis point (-72.5, -295.8), end of the lane zone (plain M8 starts) (76.8, -490.5)
+  E: stop line axis point (-68.2, -262.5), end of the lane zone (plain M8 starts) (126.5, -113.2)
+  S: stop line axis point (-101.5, -258.2), end of the lane zone (plain M8 starts) (-250.8, -63.5)
+  W: stop line axis point (-105.8, -291.5), end of the lane zone (plain M8 starts) (-300.5, -440.8)
+
+SUMMARY: 32 PASS, 0 FAIL

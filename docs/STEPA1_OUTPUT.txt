@@ -1,0 +1,38 @@
+[road fix RC03] skipped: road not found
+BUILDABILITY MAP (Step A1)  map 10 x 10 km, cell 50 m (200 x 200), rail buffer 30 m, M8 ROW 40 m, M6 ROW 36.35 m, J1 pad 100 m
+  ~  water / sea                                      7751 cells     1938 ha   19.4 %
+  R  rail corridor                                    1184 cells      296 ha    3.0 %
+  X  fixed road ROW (M8, J1, M6-1)                    1332 cells      333 ha    3.3 %
+  F  airport / seaport / army / engineering land      2535 cells      634 ha    6.3 %
+  A  flat < 3 %                                       2695 cells      674 ha    6.7 %
+  B  gentle 3-8 %                                     3860 cells      965 ha    9.7 %
+  C  rolling 8-15 %                                   4241 cells     1060 ha   10.6 %
+  D  steep 15-25 %                                    3807 cells      952 ha    9.5 %
+  E  very steep > 25 %                               12595 cells     3149 ha   31.5 %
+
+PROPOSED HOUSING AREAS: land inside the zone circle (percent of cells) and free land (A+B+C) in hectares
+  zone            role                         r(m)  flat+gentle  rolling  steep+  water  rail+road  fence | free A-C ha  A+B ha
+  se-dense        H-C1 city 20 fl                 600    32 %        35 %     26 %     0 %      7 %      0 % |       76       36
+  west-homes      H-C2 city 10 fl (with sw-homes)  620    20 %        18 %     33 %     5 %     14 %      9 % |       47       25
+  sw-homes        H-C2 city 10 fl                 600    34 %        12 %     26 %     1 %     25 %      2 % |       52       38
+  east-homes      H-C3 city 5-10 fl               600    28 %        21 %     11 %    11 %      9 %     21 % |       56       32
+  south-suburb    H-S1 suburb 1-5 fl              550    59 %         3 %      1 %     0 %     17 %     20 % |       60       57
+  east-suburb     H-S2 suburb                     500    24 %        20 %      3 %     0 %     26 %     27 % |       35       19
+  sw-newtown      H-S3 suburb                     650    45 %        12 %     16 %     0 %     27 %      0 % |       77       60
+  west-suburb     H-S4 suburb                     500    25 %         7 %     35 %     1 %     32 %      0 % |       25       20
+  north-homes     H-S5 suburb                     450    49 %         5 %     10 %     0 %     11 %     25 % |       35       31
+  village-west    V1 village                      320     1 %         9 %     65 %     0 %     23 %      3 % |        3        0
+  village-east    V2 village                      320    23 %        10 %     47 %     0 %     20 %      0 % |       10        7
+  village-sw      V3 village                      320     0 %         9 %     91 %     0 %      0 %      0 % |        3        0
+  village-ne      V4 village                      300     2 %         8 %     90 %     0 %      0 %      0 % |        3        1
+
+CHECKS
+PASS  rail points read: 1605
+PASS  fixed roads read: ring 3859, arms 1112, island link 354 points
+PASS  every cell has exactly one class (40000 cells)
+PASS  se-dense: free land A-C 76 ha >= 40 ha (one housing needs about 40 ha, proposal)
+PASS  east-homes: free land A-C 56 ha >= 40 ha (one housing needs about 40 ha, proposal)
+PASS  south-suburb: free land A-C 60 ha >= 40 ha (one housing needs about 40 ha, proposal)
+PASS  sw-newtown: free land A-C 77 ha >= 40 ha (one housing needs about 40 ha, proposal)
+
+7 PASS, 0 FAIL (numbers only; no src/ file changed; game not run)

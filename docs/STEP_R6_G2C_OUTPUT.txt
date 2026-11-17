@@ -1,0 +1,33 @@
+R6 G2c: re-route of the lines G2b cut (cost A 1, B 1.2, C 2, D 5, E 40, F 3, R 2, X 1.5, sea blocked; corridor 400 m round the sketch line; MY proposal)
+G2b kept 22.0 km | re-routed OK 5 lines 3.9 km | still cut 23 lines 10.4 km | TOTAL R6 NOW 25.9 km (8-lane roads 31.4 km)
+
+RE-ROUTED (src line, new length, old length, min radius, steep+very steep+sea share):
+  line 7  237 m (sketch 237 m)  R_min 255  bad 0 %
+  line 21  1040 m (sketch 1025 m)  R_min 232  bad 14 %
+  line 45  1816 m (sketch 1662 m)  R_min 229  bad 39 %
+  line 57  420 m (sketch 422 m)  R_min 237  bad 0 %
+  line 62  356 m (sketch 349 m)  R_min 234  bad 39 %
+STILL CUT:
+  line 9  243 m  best path still bad: very steep + sea 100 %, steep + very steep + sea 100 %
+  line 11  291 m  best path still bad: very steep + sea 100 %, steep + very steep + sea 100 %
+  line 14  279 m  best path still bad: very steep + sea 64 %, steep + very steep + sea 71 %
+  line 16  192 m  best path still bad: very steep + sea 50 %, steep + very steep + sea 76 %
+  line 17  526 m  best path still bad: very steep + sea 72 %, steep + very steep + sea 80 %
+  line 18  553 m  best path still bad: very steep + sea 36 %, steep + very steep + sea 36 %
+  line 19  235 m  best path still bad: very steep + sea 0 %, steep + very steep + sea 51 %
+  line 30  707 m  an end lies on sea / outside the corridor cells
+  line 35  424 m  best path still bad: very steep + sea 20 %, steep + very steep + sea 52 %
+  line 38  228 m  an end lies on sea / outside the corridor cells
+  line 40  183 m  best path still bad: very steep + sea 29 %, steep + very steep + sea 100 %
+  line 42  331 m  best path still bad: very steep + sea 64 %, steep + very steep + sea 100 %
+  line 47  605 m  best path still bad: very steep + sea 40 %, steep + very steep + sea 84 %
+  line 49  224 m  best path still bad: very steep + sea 38 %, steep + very steep + sea 70 %
+  line 51  463 m  best path still bad: very steep + sea 32 %, steep + very steep + sea 100 %
+  line 52  513 m  best path still bad: very steep + sea 49 %, steep + very steep + sea 89 %
+  line 54  580 m  best path still bad: very steep + sea 87 %, steep + very steep + sea 92 %
+  line 55  497 m  best path still bad: very steep + sea 47 %, steep + very steep + sea 97 %
+  line 56  221 m  best path still bad: very steep + sea 54 %, steep + very steep + sea 54 %
+  line 58  1853 m  best path still bad: very steep + sea 36 %, steep + very steep + sea 46 %
+  line 60  586 m  best path still bad: very steep + sea 49 %, steep + very steep + sea 80 %
+  line 61  462 m  best path still bad: very steep + sea 54 %, steep + very steep + sea 61 %
+  line 63  172 m  no path

@@ -1,0 +1,33 @@
+R6 STEP G6d: R6-6 = north group L26 + L20 + L21. Numbers + game data, game NOT run.
+JX-3 (G5): end-touch on J1-N at (544, -1776), 1673 m from the J1 side. L20 start (536, -1786) and L21 start (536, -1786): 0 m apart, 12 m from the J1-N centreline.
+  L20 leaves JX-3 towards (-0.73, -0.68), L21 towards (0.63, 0.78): they run to OPPOSITE sides of J1-N (angle to the arm 82 / 74 deg); heading change L20 -> L21 through JX-3 = 8.2 deg. So the chain L26 + L20 + L21 crosses J1-N (R1 / interchange, rule 4).
+  Finished levels at JX-3 from the G5 solver: L20 33.21 m, L21 42.66 m (difference 9.5 m: the two ends are NOT level with each other).
+  Natural ground at JX-3: 43.0 m.
+  L20 touches / crosses the railway (north-1): closest 3 m. L21 closest rail 41 m. L26 closest rail 271 m.
+
+TRIM (ends near the 8-lane arm < 90 m or near rail < 60 m are cut; MY numbers = G6b): L20 405 -> 267 m (JX-3 end cut 138 m), L21 1040 -> 930 m (JX-3 end cut 110 m). L26 not trimmed (rail 271 m, J1-N 427 m).
+  gap L20 end -> L26 start: 13 m
+  blend 40 m: 503 m, min radius 274 m, grade 2.5 %, cut 4.1 m, fill 2.9 m, structure 0 m -> profile PASS, radius PASS
+  blend 60 m: 503 m, min radius 369 m, grade 3.0 %, cut 3.8 m, fill 3.1 m, structure 0 m -> profile PASS, radius PASS
+  blend 80 m: 502 m, min radius 466 m, grade 3.0 %, cut 4.5 m, fill 2.8 m, structure 0 m -> profile PASS, radius PASS
+  blend 100 m: 502 m, min radius 560 m, grade 3.0 %, cut 4.5 m, fill 2.9 m, structure 0 m -> profile PASS, radius PASS
+  blend 130 m: 501 m, min radius 708 m, grade 3.0 %, cut 4.4 m, fill 3.0 m, structure 0 m -> profile PASS, radius PASS
+  blend 160 m: 501 m, min radius 890 m, grade 3.0 %, cut 4.2 m, fill 3.2 m, structure 0 m -> profile PASS, radius PASS
+
+CHECKS (same solver and rules as G3 - G6c)
+  R6-6A (L20 + L26): 501 m, grade 3.0 % (limit 4), cut 4.2 m (limit 12), fill 3.2 m, wet 0 m, structure 0 m, min radius 890 m (V80 229), levels 27.82 -> 25.41 m -> PASS
+     rail: closest 63 m (>= 60 PASS); 8-lane roads: closest 149 m (>= 90 PASS); crossings with game roads: 0; crossings with the rail: 0
+     ends (both FREE, dead ends): (435, -1880) and (25, -2161)
+     nearest game road J1-N: 149 m
+  R6-6B (L21): 930 m, grade 2.0 % (limit 4), cut 4.4 m (limit 12), fill 2.7 m, wet 0 m, structure 0 m, min radius 254 m (V80 229), levels 39.51 -> 26.95 m -> PASS
+     rail: closest 113 m (>= 60 PASS); 8-lane roads: closest 93 m (>= 90 PASS); crossings with game roads: 0; crossings with the rail: 0
+     ends (both FREE, dead ends): (605, -1700) and (1396, -1258)
+     nearest game road J1-N: 93 m
+  R1 R6-6A x R6-6B crossings: 0; distance between the two pieces: 248 m (JX-3 lies between the two cut ends, which are 248 m apart)
+  R6-6B: another G5 line L6 (not built) comes within 54 m
+  R6-6B: another G5 line L20 (not built) comes within 110 m
+  R6-6B: another G5 line L41 (not built) comes within 54 m
+
+RESULT: PASS (profile, radius, rail clearance, no crossing). Exported as R6-6A (L26 + L20) and R6-6B (L21).
+NOT DONE (rule 4, for the user): (1) JX-3 = the crossing of R6-6 with the J1-N arm, 1673 m from J1 (R5: 900 m needed, met), no junction made: both pieces stop 90 m or more from J1-N, the gap between the two cut ends is the place of the interchange; the levels there differ by ~9 m (L20 33.2 m, L21 42.7 m) and are free. (2) L20 crosses the railway (north-1) about 45 m after JX-3: rail crossing NOT designed, so the part east of the rail is cut off (the cut part of L20 is 138 m).
+LIMITS as before: R2, vertical curves, buildings / city plan along the lines, AI traffic NOT checked; game run, in-game drive, npm run build NOT RUN.

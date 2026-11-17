@@ -1,0 +1,96 @@
+diff --git a/HANDOFF_ROAD_DESIGN.md b/HANDOFF_ROAD_DESIGN.md
+index 65af7e4..52322b6 100644
+--- a/HANDOFF_ROAD_DESIGN.md
++++ b/HANDOFF_ROAD_DESIGN.md
+@@ -569,7 +569,7 @@ Road signs, traffic lights logic changes, new vehicle types, weather effects on
+ | 2.5 | Ground check | done for version 3 | OK 2026-11-13 | scripts/ring-ground-check.ts, docs/ring_ground_check.txt (new). Version 3: 5 river crossings on the centreline (st 837 delta river 85 m wide, 8172, 12327, 14009, 15416; wet length 210 m, v2 220 m), STEEP ground 340 m (1.8 %, v2 345 m), hilly 18.9 % (v2 18.6 %: +46 m), same 265 m of lake edge inside the ROW (st 4185-4444, was also in v2), airport fence 235 m away, no fenced area crossed, 7 rail crossings (st 6830, 7047, 8794, 11270, 12550, 17294, 18860: all must be flyovers, X5). The pictures docs/ring_ground_check.png, ring_v2_map.png, ring_alignment.png, ring_marks.png, ring_shape_check.png and ring_overlay.html still show version 2 (not redrawn) |
+ | 3.1-3.5 | Ring profile | done for version 3 | OK 2026-11-13 | User decision: if a hill must be cut, cut it. tools/ring-profile.py + scripts/ring-profile-export.ts; docs/ring_profile.png/.csv/ring_profile_report.txt. Grade line every 60 m, max grade 4 %, K 75, closed. Cut 1:2 (first 8 m) then 8 m tiers 1:1.5 + 2 m bench, fill 1:3, formation half width 24.2 m. TOTAL cut 7.85 million m3, fill 8.22 million m3 (v2: 7.91 / 7.97; v1: 27.8 / 19.1). Deep cuts: st 6310-6700 (55 m), 8280-8860 (53 m), 14570-15070 (47 m), 2900-3220 (31 m). Tall fills over 7 m at 17 places (v2: 16), worst st 15200-16200 (41.5 m) and 13960-14490 (26 m), and 6800-8060 now one stretch with max 20.7 m: viaduct or accept embankment. 5 bridges. Open: accept the 4 deep cuts and tall fills; fill is +0.25 million m3 against v2 |
+ | 4.1-4.5 | Ring cross-section | 4.1 done, waiting OK (4.2-4.5 not started) | | 4.1: scripts/ring-section-table.ts (prints the offset table and 9 checks, all PASS), docs/STEP41_OUTPUT.txt, docs/ring_section_m8.png. Offsets from the centreline, one side (mirrored on the other side): median 0-3.0, inner shoulder 3.0-4.5, 4 lanes 4.5-19.1 (3.65 m each), outer shoulder 19.1-22.1, barrier 22.1-22.7, verge + ditch 22.7-24.2 (1.5 wide, 0.5 deep), clear zone 24.2-32.0, ROW strip 32.0-40.0. One direction 19.1 m, pavement edge to pavement edge 44.2 m (median included), paved width 38.2 m, formation 48.4 m, ROW 80.0 m. Ring (19.293 km): ROW 154 ha, paved 74 ha. Cross falls: lanes 2 %, shoulders 4 % (fall of 0.472 m from the median edge to the pavement edge). Same numbers as SECTION_M8 (src/roads/standards/SectionTable.ts), nothing in the code changed |
+-| 5.1-5.5 | Ring in game | not started | | |
++| 5.1-5.5 | Ring in game | 5.1 done, waiting OK (5.2-5.5 not started) | | 5.1: the ring is ONE closed tier-1 highway road `M8` in RoadNetwork (`layoutRing()`, Config.roads.ring.enabled, works with activeTier 0). roads/ring/RingRoad.ts (alignment sampled every ~8 m + SECTION_M8 fields), RingProfile.ts + RingProfileData.ts (grade line from docs/ring_profile.csv, regenerate with tools/ring-profile-to-ts.py), RawRoad.section override (the Config highway section would otherwise replace the M8 section). Heights are used exactly (fixedY). Checks: scripts/ring-profile-check.ts, ring-road-check.ts, ring-facade-check.ts, all PASS, output docs/STEP51_OUTPUT.txt. Max grade 4.009 % between neighbouring points (4 % limit, curve overshoot 0.009 %). NOT yet: bridges / viaducts / culverts (5.3), ring-specific mesh + terrain cut (5.2: the old road ribbon draws it for now), pads, physics check (5.4) |
+ | 6.1 | Four radials | not started | | |
+ | 6.2 | City centre node | not started | | |
+ | 6.3 | Outward M8 / M6 roads | not started | | |
+diff --git a/src/core/Config.ts b/src/core/Config.ts
+index 686635d..3f7f9e3 100644
+--- a/src/core/Config.ts
++++ b/src/core/Config.ts
+@@ -65,6 +65,8 @@ export const Config = {
+      * Stage 6A = 1, 6B = 2, 6C = 3.
+      */
+     activeTier: 0 as 0 | 1 | 2 | 3 | 4, // 0 = NO roads at all (roads removed; set 1-4 again when the new road design is ready)
++    /** ROADS STEP 5.1: the new 8-lane ring road (M8, roads/ring/RingRoad.ts). Works with activeTier 0. `step` = distance between centreline points (m). enabled = false: no ring. */
++    ring: { enabled: true as boolean, step: 8 },
+     /** The long bridge to the island and the island's road network (RoadPlan.ISLAND_PLAN). */
+     island: false,
+     /**
+diff --git a/src/roads/RoadNetwork.ts b/src/roads/RoadNetwork.ts
+index fc9fbef..92253b3 100644
+--- a/src/roads/RoadNetwork.ts
++++ b/src/roads/RoadNetwork.ts
+@@ -11,6 +11,7 @@ import { CityPlan } from '../city/CityPlan';
+ import { DIVIDED_SECTIONS, sectionFor } from './RoadSection';
+ import { buildInterchange, type InterchangeModel, type RoadSection as IcSection } from '../interchange';
+ import type { LocalAreaStat } from './LocalRoads';
++import { planRing } from './ring/RingRoad';
+ import { SCENARIOS, cutRange, nearestPoint, uvToWorld, type ScenarioSpec } from '../interchange/scenario/J6Scenario';
+ 
+ /** Natural terrain WITHOUT roads (hills, rivers, lakes, sea). Roads are planned on top of this. */
+@@ -74,6 +75,8 @@ interface RawRoad {
+   fixedY?: number[];
+   /** PROVISIONAL grade limit of a scenario road (default: the class limit, KIND). */
+   maxGrade?: number;
++  /** STEP 5.1 (the ring): own cross-section that replaces the Config section of the road kind (metres from the centreline, see roads/ring/RingRoad.ts). */
++  section?: { halfWidth: number; medianHalf: number; laneW: number; shyOuter: number; lanesPerDir: number };
+ }
+ 
+ /**
+@@ -168,6 +171,7 @@ export class RoadNetwork {
+         if (Config.roads.island) this.layoutIsland();
+       }
+     }
++    this.layoutRing(); // ROADS STEP 5.1: the 8-lane ring (Config.roads.ring), before the scenarios and the pads
+     this.applyScenarios(); // after all tiers, BEFORE the pads: pads, median, bridges, traffic graph then see the edited network
+     this.applyRoadFixes(); // RC03 (RoadCorrections.ts ROAD_FIXES): after the scenarios, before the pads and the railway
+     const pr = buildJunctionPads(this.roads, this.natural);
+@@ -191,6 +195,31 @@ export class RoadNetwork {
+     this.buildSegments();
+   }
+ 
++  /**
++   * ROADS STEP 5.1: the 8-lane RING ROAD (M8) as one closed highway road. Alignment (Step 2), height (Step 3) and cross-section (Step 4.1) come from
++   * roads/ring/RingRoad.ts; the surface heights are used exactly as designed (fixedY, like the interchange ramps). Nothing happens while Config.roads.ring.enabled is false.
++   * Bridges / viaducts / culverts of the ring are Step 5.3, the mesh and terrain cut Step 5.2 (until then the old road ribbon draws it).
++   */
++  private layoutRing(): void {
++    const C = Config.roads.ring;
++    if (!C.enabled) return;
++    const plan = planRing(C.step);
++    this.addRoad({
++      tier: 1,
++      kind: 'highway',
++      name: 'M8',
++      closed: true,
++      pts: plan.pts,
++      fixedY: plan.ys,
++      halfWidth: plan.section.halfWidth,
++      shoulder: plan.section.shoulder,
++      lanes: plan.section.lanesPerDir * 2,
++      speedKmh: plan.designKmh,
++      maxGrade: 0.04,
++      section: plan.section,
++    });
++  }
++
+   get segmentCount(): number {
+     return this.segRoad.length;
+   }
+@@ -1475,7 +1504,7 @@ export class RoadNetwork {
+     }
+     // ROADS STEP 1: the cross-section (median, lane width, half width) comes from Config.city.roadSections through roads/RoadSection.ts.
+     const oldLanes = raw.lanes ?? K.lanes;
+-    const sec = sectionFor(raw.kind, raw.tier, oldLanes, raw.earth);
++    const sec = raw.section ?? sectionFor(raw.kind, raw.tier, oldLanes, raw.earth);
+     const road: RoadSpec = {
+       id,
+       tier: raw.tier,

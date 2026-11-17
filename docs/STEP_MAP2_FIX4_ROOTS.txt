@@ -1,0 +1,9 @@
+  M6-1    CONNECTED to 8-lane (chain) | nearest: J1-S 25 m, M8 25 m, R6-3 724 m
+  R6-2    PLACEHOLDER GAP <= 150 m (counts as root) | nearest: R6-3 0 m, R6-4 0 m, M8 710 m
+  R6-3    PLACEHOLDER GAP <= 150 m (counts as root) | nearest: R6-2 0 m, R6-4 0 m, M8 97 m
+  R6-4    PLACEHOLDER GAP <= 150 m (counts as root) | nearest: R6-2 0 m, R6-3 0 m, M8 118 m
+  R6-5    ISOLATED (NOT a root) | nearest: J1-E 364 m, R6-8 496 m, M8 639 m
+  R6-6A   PLACEHOLDER GAP <= 150 m (counts as root) | nearest: J1-N 149 m, R6-6B 248 m, M8 1006 m
+  R6-6B   PLACEHOLDER GAP <= 150 m (counts as root) | nearest: J1-N 93 m, R6-6A 248 m, M8 1430 m
+  R6-7    ISOLATED (NOT a root) | nearest: M8 663 m, R6-6A 2186 m, J1-N 2807 m
+  R6-8    PLACEHOLDER GAP <= 150 m (counts as root) | nearest: J1-E 130 m, R6-5 496 m, M8 1119 m

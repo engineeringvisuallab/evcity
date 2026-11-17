@@ -1,0 +1,288 @@
+{
+ "SJ": 340,
+ "ROW": 40,
+ "checks": [
+  {
+   "name": "N: every wet centreline point is inside a structure",
+   "pass": true,
+   "detail": "55 m wet"
+  },
+  {
+   "name": "N: no sea on the centreline",
+   "pass": true,
+   "detail": "sea m = 0"
+  },
+  {
+   "name": "N: every river crossing is inside a structure",
+   "pass": true,
+   "detail": "1 crossings"
+  },
+  {
+   "name": "N: every rail crossing is inside a road structure, or the rail passes over the road with >= 7.0 m, and is in the profile list (X5)",
+   "pass": true,
+   "detail": "1 from the world, 1 in the profile, 0 of them rail over the road on the ground"
+  },
+  {
+   "name": "N: fill over 7 m only inside a structure (D4)",
+   "pass": true,
+   "detail": "0 ranges outside"
+  },
+  {
+   "name": "N: max cut on the centreline <= 12 m (3.7)",
+   "pass": true,
+   "detail": "max 11.9 m"
+  },
+  {
+   "name": "N: no facility fence (airport / seaport / army) or sea inside the ROW",
+   "pass": true,
+   "detail": "nearest fence airport 744 m"
+  },
+  {
+   "name": "N: ROW stays inside the map (>= 100 m from the edge)",
+   "pass": true,
+   "detail": "2238 m"
+  },
+  {
+   "name": "E: every wet centreline point is inside a structure",
+   "pass": true,
+   "detail": "215 m wet"
+  },
+  {
+   "name": "E: no sea on the centreline",
+   "pass": true,
+   "detail": "sea m = 0"
+  },
+  {
+   "name": "E: every river crossing is inside a structure",
+   "pass": true,
+   "detail": "2 crossings"
+  },
+  {
+   "name": "E: every rail crossing is inside a road structure, or the rail passes over the road with >= 7.0 m, and is in the profile list (X5)",
+   "pass": true,
+   "detail": "3 from the world, 3 in the profile, 1 of them rail over the road on the ground"
+  },
+  {
+   "name": "E: fill over 7 m only inside a structure (D4)",
+   "pass": true,
+   "detail": "0 ranges outside"
+  },
+  {
+   "name": "E: max cut on the centreline <= 12 m (3.7)",
+   "pass": true,
+   "detail": "max 8.1 m"
+  },
+  {
+   "name": "E: no facility fence (airport / seaport / army) or sea inside the ROW",
+   "pass": true,
+   "detail": "nearest fence seaport 1103 m"
+  },
+  {
+   "name": "E: ROW stays inside the map (>= 100 m from the edge)",
+   "pass": true,
+   "detail": "2645 m"
+  },
+  {
+   "name": "S: every wet centreline point is inside a structure",
+   "pass": true,
+   "detail": "40 m wet"
+  },
+  {
+   "name": "S: no sea on the centreline",
+   "pass": true,
+   "detail": "sea m = 0"
+  },
+  {
+   "name": "S: every river crossing is inside a structure",
+   "pass": true,
+   "detail": "1 crossings"
+  },
+  {
+   "name": "S: every rail crossing is inside a road structure, or the rail passes over the road with >= 7.0 m, and is in the profile list (X5)",
+   "pass": true,
+   "detail": "3 from the world, 3 in the profile, 1 of them rail over the road on the ground"
+  },
+  {
+   "name": "S: fill over 7 m only inside a structure (D4)",
+   "pass": true,
+   "detail": "0 ranges outside"
+  },
+  {
+   "name": "S: max cut on the centreline <= 12 m (3.7)",
+   "pass": true,
+   "detail": "max 2.6 m"
+  },
+  {
+   "name": "S: no facility fence (airport / seaport / army) or sea inside the ROW",
+   "pass": true,
+   "detail": "nearest fence airport-sea 1086 m"
+  },
+  {
+   "name": "S: ROW stays inside the map (>= 100 m from the edge)",
+   "pass": true,
+   "detail": "2698 m"
+  },
+  {
+   "name": "W: every wet centreline point is inside a structure",
+   "pass": true,
+   "detail": "30 m wet"
+  },
+  {
+   "name": "W: no sea on the centreline",
+   "pass": true,
+   "detail": "sea m = 0"
+  },
+  {
+   "name": "W: every river crossing is inside a structure",
+   "pass": true,
+   "detail": "1 crossings"
+  },
+  {
+   "name": "W: every rail crossing is inside a road structure, or the rail passes over the road with >= 7.0 m, and is in the profile list (X5)",
+   "pass": true,
+   "detail": "2 from the world, 2 in the profile, 1 of them rail over the road on the ground"
+  },
+  {
+   "name": "W: fill over 7 m only inside a structure (D4)",
+   "pass": true,
+   "detail": "0 ranges outside"
+  },
+  {
+   "name": "W: max cut on the centreline <= 12 m (3.7)",
+   "pass": true,
+   "detail": "max 11.5 m"
+  },
+  {
+   "name": "W: no facility fence (airport / seaport / army) or sea inside the ROW",
+   "pass": true,
+   "detail": "nearest fence army 2478 m"
+  },
+  {
+   "name": "W: ROW stays inside the map (>= 100 m from the edge)",
+   "pass": true,
+   "detail": "2444 m"
+  },
+  {
+   "name": "N x E: centrelines at least 80 m apart (two ROWs)",
+   "pass": true,
+   "detail": "856 m (s 605 / 605)"
+  },
+  {
+   "name": "N x S: centrelines at least 80 m apart (two ROWs)",
+   "pass": true,
+   "detail": "1209 m (s 605 / 605)"
+  },
+  {
+   "name": "N x W: centrelines at least 80 m apart (two ROWs)",
+   "pass": true,
+   "detail": "912 m (s 605 / 605)"
+  },
+  {
+   "name": "E x S: centrelines at least 80 m apart (two ROWs)",
+   "pass": true,
+   "detail": "853 m (s 605 / 605)"
+  },
+  {
+   "name": "E x W: centrelines at least 80 m apart (two ROWs)",
+   "pass": true,
+   "detail": "1103 m (s 605 / 635)"
+  },
+  {
+   "name": "S x W: centrelines at least 80 m apart (two ROWs)",
+   "pass": true,
+   "detail": "429 m (s 605 / 1034)"
+  }
+ ],
+ "arms": {
+  "N": {
+   "length": 3553.232885500155,
+   "structs": [
+    {
+     "id": "N1",
+     "s0": 366.5,
+     "s1": 453.4
+    },
+    {
+     "id": "N2",
+     "s0": 1166,
+     "s1": 1492.9
+    },
+    {
+     "id": "N3",
+     "s0": 1526.6013867039835,
+     "s1": 1618.6013867039835
+    },
+    {
+     "id": "N4",
+     "s0": 2355.4,
+     "s1": 2492.3
+    },
+    {
+     "id": "N5",
+     "s0": 3000,
+     "s1": 3112
+    }
+   ]
+  },
+  "E": {
+   "length": 3036.7237917360517,
+   "structs": [
+    {
+     "id": "E1",
+     "s0": 561.2,
+     "s1": 688.1
+    },
+    {
+     "id": "E2",
+     "s0": 746,
+     "s1": 1157.5
+    },
+    {
+     "id": "E3",
+     "s0": 1260.4,
+     "s1": 1422.2
+    },
+    {
+     "id": "E4",
+     "s0": 2344,
+     "s1": 2645.5948496942906
+    },
+    {
+     "id": "E5",
+     "s0": 2768.5,
+     "s1": 2880.4
+    }
+   ]
+  },
+  "S": {
+   "length": 2825.970770806321,
+   "structs": [
+    {
+     "id": "S1",
+     "s0": 1215.1,
+     "s1": 1292
+    },
+    {
+     "id": "S2",
+     "s0": 1903.9,
+     "s1": 2240.4
+    }
+   ]
+  },
+  "W": {
+   "length": 2881.461551158108,
+   "structs": [
+    {
+     "id": "W2",
+     "s0": 1829.4,
+     "s1": 1936.3
+    },
+    {
+     "id": "W3",
+     "s0": 2658.2,
+     "s1": 2865
+    }
+   ]
+  }
+ }
+}

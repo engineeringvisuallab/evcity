@@ -1,0 +1,62 @@
+[road fix RC03] skipped: road not found
+  R4-22     cls 4 no tunnel <= 1000 m solves it
+  R4-25     cls 4 no tunnel <= 1000 m solves it
+  R4-34     cls 4 TUNNEL 800 m at s 60-860
+  R4-35     cls 4 TUNNEL 440 m at s 20-460
+  R4-54     cls 4 no tunnel <= 1000 m solves it
+  R4-55     cls 4 TUNNEL 240 m at s 20-260
+  R4-56     cls 4 no tunnel <= 1000 m solves it
+  R4-57.2   cls 4 no tunnel <= 1000 m solves it
+  R4-58     cls 4 TUNNEL 360 m at s 20-380
+  R4-61.1   cls 4 no tunnel <= 1000 m solves it
+  R4-61.2   cls 4 no tunnel <= 1000 m solves it
+  R4-63     cls 4 TUNNEL 1000 m at s 40-1040
+  R4-66.1   cls 4 no tunnel <= 1000 m solves it
+  R4-71.2   cls 4 no tunnel <= 1000 m solves it
+  R4-73     cls 4 no tunnel <= 1000 m solves it
+  R4-82     cls 4 no tunnel <= 1000 m solves it
+  R4-83.1   cls 4 no tunnel <= 1000 m solves it
+  R4-84     cls 4 no tunnel <= 1000 m solves it
+  R2-1      cls 2 no tunnel <= 1000 m solves it
+  R2-2.1    cls 2 no tunnel <= 1000 m solves it
+  R2-2.2    cls 2 no tunnel <= 1000 m solves it
+  R2-3      cls 2 no tunnel <= 1000 m solves it
+  R2-7      cls 2 no tunnel <= 1000 m solves it
+  R2-8      cls 2 no tunnel <= 1000 m solves it
+  R2-9.1    cls 2 no tunnel <= 1000 m solves it
+  R2-9.4    cls 2 no tunnel <= 1000 m solves it
+  R2-31.2   cls 2 no tunnel <= 1000 m solves it
+  R2-41.1   cls 2 no tunnel <= 1000 m solves it
+  R2-80     cls 2 no tunnel <= 1000 m solves it
+  R2-87     cls 2 no tunnel <= 1000 m solves it
+  R2-88.1   cls 2 no tunnel <= 1000 m solves it
+  R2-88.2   cls 2 no tunnel <= 1000 m solves it
+  R2-132.2  cls 2 no tunnel <= 1000 m solves it
+  R2-138.4  cls 2 no tunnel <= 1000 m solves it
+  R2-138.5  cls 2 TUNNEL 360 m at s 20-380
+  R2-138.6  cls 2 no tunnel <= 1000 m solves it
+  R2-139.1  cls 2 no tunnel <= 1000 m solves it
+  R2-139.2  cls 2 no tunnel <= 1000 m solves it
+  R2-142.1  cls 2 no tunnel <= 1000 m solves it
+  R2-142.2  cls 2 no tunnel <= 1000 m solves it
+  R2-144.1  cls 2 no tunnel <= 1000 m solves it
+  R2-150.1  cls 2 TUNNEL 120 m at s 20-140
+  R2-150.2  cls 2 no tunnel <= 1000 m solves it
+  R2-151    cls 2 no tunnel <= 1000 m solves it
+  R2-152    cls 2 no tunnel <= 1000 m solves it
+  R2-153.1  cls 2 no tunnel <= 1000 m solves it
+  R2-153.2  cls 2 no tunnel <= 1000 m solves it
+  R2-155    cls 2 no tunnel <= 1000 m solves it
+  R2-158.1  cls 2 no tunnel <= 1000 m solves it
+  R2-161    cls 2 no tunnel <= 1000 m solves it
+  R2-165.2  cls 2 no tunnel <= 1000 m solves it
+  R2-173.1  cls 2 no tunnel <= 1000 m solves it
+  R2-173.2  cls 2 no tunnel <= 1000 m solves it
+  R2-173.3  cls 2 no tunnel <= 1000 m solves it
+  R2-173.4  cls 2 no tunnel <= 1000 m solves it
+  R2-176    cls 2 no tunnel <= 1000 m solves it
+  R2-181    cls 2 no tunnel <= 1000 m solves it
+  R2-183.1  cls 2 no tunnel <= 1000 m solves it
+  R2-183.2  cls 2 no tunnel <= 1000 m solves it
+  R2-189    cls 2 no tunnel <= 1000 m solves it
+TUNNEL RESULT: 7 of 60

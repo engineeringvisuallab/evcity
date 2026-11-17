@@ -1,0 +1,249 @@
+diff -ruN a/scripts/evlab-back-hill.ts b/scripts/evlab-back-hill.ts
+--- a/scripts/evlab-back-hill.ts	1970-01-01 00:00:00.000000000 +0000
++++ b/scripts/evlab-back-hill.ts	2026-11-14 13:34:41.284431953 +0000
+@@ -0,0 +1,23 @@
++// EVLab Step R5: cut / fill of the whole EVLab pad (plot + strips + gate roads + blend skirts) against the natural ground, and the grade of the hill slope behind the plot.
++// npx tsx scripts/evlab-back-hill.ts   (prints numbers, changes nothing)
++import { Config } from '../src/core/Config';
++import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
++import { EVLAB_PLOT } from '../src/evlab/EVLabSite';
++const gen = new TerrainGenerator(Config.world.seed);
++const e = gen.evlab, P = EVLAB_PLOT, sc = { h: 0, water: NaN, fx: 0, fz: 0 };
++const nat = (x: number, z: number): number => { gen.sampleNatural(x, z, sc); return sc.h; };
++const STEP = 6, A = STEP * STEP;
++let cut = 0, fill = 0, cutN = 0, fillN = 0, maxCut = 0, maxFill = 0;
++for (let x = P.x0 - 200; x <= P.x1 + 260; x += STEP) for (let z = P.z0 - 260; z <= P.z1 + 200; z += STEP) {
++  if (!e.near(x, z)) continue;
++  const h0 = nat(x, z), h1 = e.height(x, z, h0, 1), d = h1 - h0;
++  if (d < 0) { cut += -d * A; maxCut = Math.max(maxCut, -d); if (z < P.z0) cutN += -d * A; } else { fill += d * A; maxFill = Math.max(maxFill, d); if (z < P.z0) fillN += d * A; }
++}
++console.log(`pad + skirts: cut ${(cut / 1e6).toFixed(2)} Mm3, fill ${(fill / 1e6).toFixed(2)} Mm3 (max cut ${maxCut.toFixed(1)} m, max fill ${maxFill.toFixed(1)} m); of it north of the fence: cut ${(cutN / 1e6).toFixed(2)}, fill ${(fillN / 1e6).toFixed(2)} Mm3`);
++let worst = 0, top = 0;
++for (const x of [P.x0 + 30, -140, P.x1 - 30]) {
++  let prev = e.height(x, P.z0, nat(x, P.z0), 1), line = '';
++  for (let z = P.z0 - 6; z >= P.z0 - 300; z -= 6) { const h = e.height(x, z, nat(x, z), 1); worst = Math.max(worst, Math.abs(h - prev) / 6); if ((P.z0 - z) % 30 === 0) line += `${(h - e.floorY).toFixed(1)} `; prev = h; }
++  console.log(`profile north of the fence at x=${x} (every 30 m, height above the floor): ${line}`);
++}
++console.log(`steepest grade on those profiles: ${(worst * 100).toFixed(0)} %`);
+diff -ruN a/src/evlab/EVLabCampus.ts b/src/evlab/EVLabCampus.ts
+--- a/src/evlab/EVLabCampus.ts	2026-11-14 13:34:41.270352330 +0000
++++ b/src/evlab/EVLabCampus.ts	2026-11-14 13:34:41.271104428 +0000
+@@ -76,6 +76,12 @@
+   { id: 'E', style: 'truss', axis: 'x', across: GATE_Z, from: 119, to: 156, w: 16 }, // east gate: the car park (EVLabParking)
+ ];
+ 
++/**
++ * Step R5: the strip behind the plot (north of the fence, building-local z -130..-90, x -150..190 with the car park strip): the garden next to the fence (z -114..-90,
++ * a stone path along z -102.5), then the back road (centre z -120, 10 m wide), then a 5 m verge. The terrain pad covers it (EVLabSite), the hill slope starts north of it.
++ */
++export const BACK = { zNear: -90, zFar: -130, garden: { x0: -150, x1: 150, z0: -114, z1: -90 }, path: { z: -102.5, halfW: 1.6 }, road: { x0: -150, x1: 190, z: -120, halfW: 5 } } as const;
++
+ /** Rectangles (x0, x1, z0, z1) that are road / bridge / promenade: no trees there. */
+ export const ROAD_RECTS: ReadonlyArray<readonly [number, number, number, number]> = [
+   [-12, 12, 95, 156], // plaza link + ring crossing + south bridge (it ends at the plot's south fence)
+@@ -199,6 +205,15 @@
+       add(jx, jz, kind, big ? 0.7 + r() * 0.5 : 0.85 + r() * 0.4);
+     }
+   }
++  // 4. Step R5: the garden behind the plot: two staggered rows (north and south of the stone path) of the park's own trees; added AFTER the lawns, so no other tree moves
++  {
++    const rowN = [K.krishnachura, K.coconut, K.debdaru, K.datePalm], rowS = [K.coconut, K.krishnachura, K.datePalm, K.debdaru];
++    let i = 0;
++    for (let x = -144; x <= 144; x += 12, i++) {
++      add(x, BACK.path.z - 7 + (r() - 0.5), rowN[i % 4], 0.85 + r() * 0.25);
++      add(x + 6, BACK.path.z + 6.5 + (r() - 0.5), rowS[i % 4], 0.8 + r() * 0.25);
++    }
++  }
+   // the car park and its entry road (EVLabParking) stay free of trees. Filtering at the END keeps the random sequence, so every other tree stays exactly where it was.
+   // (the cycle rack on the plaza (EVLabCycleRack) also keeps the one plaza tree that stood on its pad away)
+   cache = out.filter((t) => !inParkingZone(t.x, t.z, 4) && !inRackZone(t.x, t.z, 2.5));
+diff -ruN a/src/evlab/EVLabGrounds.ts b/src/evlab/EVLabGrounds.ts
+--- a/src/evlab/EVLabGrounds.ts	2026-11-14 13:34:41.273864554 +0000
++++ b/src/evlab/EVLabGrounds.ts	2026-11-14 13:34:41.274589130 +0000
+@@ -6,7 +6,7 @@
+ import * as THREE from 'three';
+ import { BLD, BUILDING_Z, type Solid } from './EVLabLayout';
+ import { EVLAB_GATE_ROADS, EVLAB_POS } from './EVLabSite';
+-import { FOUNTAINS, GATE_Z, ISLAND, PLAZA, RING, ROAD_RECTS, contour } from './EVLabCampus';
++import { BACK, FOUNTAINS, GATE_Z, ISLAND, PLAZA, RING, ROAD_RECTS, contour } from './EVLabCampus';
+ import { buildBridges } from './EVLabBridges';
+ import { buildFountains } from './EVLabFountains';
+ import { buildLakeWater } from './EVLabLakeWater';
+@@ -76,6 +76,18 @@
+   }
+   for (const x of [-14, 14]) lampSpots.push([x, 118]); // beside the south link road, between the ring road and the bridge
+ 
++  // ---------------------------------------------------------------- Step R5: the garden and the back road behind the plot (north of the fence, on the level pad)
++  {
++    const lawn = P.lit(null, 0x4d7a3a, 0.02), pathMat = P.lit(t.stone, 0xffffff, 0.15), kerb = P.lit(null, 0x9a9ea3, 0.05);
++    const G = BACK.garden, R = BACK.road;
++    P.hplane(g, G.x0, G.x1, G.z0, G.z1, 0.02, lawn); // lawn (just above the pad, below the paths)
++    P.hplane(g, G.x0, G.x1, BACK.path.z - BACK.path.halfW, BACK.path.z + BACK.path.halfW, 0.04, pathMat, 8, 8); // stone path along the garden
++    P.tbox(g, G.x0, G.x1, G.z1 - 0.3, G.z1, 0, 0.35, kerb); // low wall between the garden and the fence line (the fence itself stays on the plot edge)
++    // the back road: a straight asphalt ribbon from the west end of the garden to the car park strip; the junction with the arm / gate roads is Step R6
++    roadStrip(g, k, [[R.x0, R.z], [R.x1, R.z]], R.halfW, y, road);
++    for (let x = R.x0 + 15; x <= R.x1 - 10; x += 30) lampSpots.push([x, R.z + R.halfW + 1.2]);
++  }
++
+   // ---------------------------------------------------------------- plaza in front of the portal
+   P.hplane(g, PLAZA.x0, PLAZA.x1, PLAZA.z0, PLAZA.z1, y, stone, 8, 8);
+   P.tbox(g, PLAZA.x0 - 1, PLAZA.x1 + 1, PLAZA.z1, PLAZA.z1 + 1, 0, y + 0.3, marble);
+diff -ruN a/src/evlab/EVLabParkTrees.ts b/src/evlab/EVLabParkTrees.ts
+--- a/src/evlab/EVLabParkTrees.ts	2026-11-14 13:34:41.277325018 +0000
++++ b/src/evlab/EVLabParkTrees.ts	2026-11-14 13:34:41.278066209 +0000
+@@ -1,25 +1,25 @@
+-// EVLab campus: the park trees (palms along the ring road and the lake shore, avenue trees, lawn trees) as ordinary game trees.
+-// They use the game's own tree kinds and join the normal trees of a chunk (same instancing, LOD, colliders, climbing): TreePlacer.place() appends them.
+-import { Config } from '../core/Config';
+-import { parkTrees } from './EVLabCampus';
+-import { BUILDING_Z } from './EVLabLayout';
+-import { EVLAB_POS } from './EVLabSite';
+-
+-const REACH = 160; // the park lies inside the 300 x 240 m plot (x +-150, local z -90..150): within this many metres of the building origin
+-
+-/** Park trees of the chunk whose minimum corner is (ox, oz), as a list per tree kind (chunk-local x, y, z, scale, yaw, tint). `floorY` = floor level of the campus. */
+-export function evlabParkTreesInChunk(floorY: number, ox: number, oz: number): { kind: number; v: number[] }[] {
+-  const S = Config.world.chunkSize;
+-  if (ox > EVLAB_POS.x + REACH || ox + S < EVLAB_POS.x - REACH || oz > BUILDING_Z + REACH || oz + S < BUILDING_Z - REACH) return [];
+-  const out = new Map<number, number[]>();
+-  const y = floorY - Config.vegetation.sink;
+-  const MAX = S - 0.001;
+-  for (const t of parkTrees()) {
+-    const wx = EVLAB_POS.x + t.x, wz = BUILDING_Z + t.z;
+-    if (wx < ox || wx >= ox + S || wz < oz || wz >= oz + S) continue;
+-    let l = out.get(t.kind);
+-    if (!l) { l = []; out.set(t.kind, l); }
+-    l.push(Math.min(MAX, wx - ox), y, Math.min(MAX, wz - oz), t.scale, t.yaw, t.tint);
+-  }
+-  return [...out].map(([kind, v]) => ({ kind, v }));
+-}
++// EVLab campus: the park trees (palms along the ring road and the lake shore, avenue trees, lawn trees) as ordinary game trees.
++// They use the game's own tree kinds and join the normal trees of a chunk (same instancing, LOD, colliders, climbing): TreePlacer.place() appends them.
++import { Config } from '../core/Config';
++import { parkTrees } from './EVLabCampus';
++import { BUILDING_Z } from './EVLabLayout';
++import { EVLAB_POS } from './EVLabSite';
++
++const REACH = 160; // the park lies inside the 300 x 240 m plot (x +-150, local z -90..150) plus the garden behind it (z -114..-90): within this many metres of the building origin
++
++/** Park trees of the chunk whose minimum corner is (ox, oz), as a list per tree kind (chunk-local x, y, z, scale, yaw, tint). `floorY` = floor level of the campus. */
++export function evlabParkTreesInChunk(floorY: number, ox: number, oz: number): { kind: number; v: number[] }[] {
++  const S = Config.world.chunkSize;
++  if (ox > EVLAB_POS.x + REACH || ox + S < EVLAB_POS.x - REACH || oz > BUILDING_Z + REACH || oz + S < BUILDING_Z - REACH) return [];
++  const out = new Map<number, number[]>();
++  const y = floorY - Config.vegetation.sink;
++  const MAX = S - 0.001;
++  for (const t of parkTrees()) {
++    const wx = EVLAB_POS.x + t.x, wz = BUILDING_Z + t.z;
++    if (wx < ox || wx >= ox + S || wz < oz || wz >= oz + S) continue;
++    let l = out.get(t.kind);
++    if (!l) { l = []; out.set(t.kind, l); }
++    l.push(Math.min(MAX, wx - ox), y, Math.min(MAX, wz - oz), t.scale, t.yaw, t.tint);
++  }
++  return [...out].map(([kind, v]) => ({ kind, v }));
++}
+diff -ruN a/src/evlab/EVLabSite.ts b/src/evlab/EVLabSite.ts
+--- a/src/evlab/EVLabSite.ts	2026-11-14 13:34:41.280665757 +0000
++++ b/src/evlab/EVLabSite.ts	2026-11-14 13:34:41.281480154 +0000
+@@ -1,6 +1,6 @@
+ // Where EVLab stands in the world, the level plot it needs, and the zone that local streets keep out of.
+ // Pure numbers + a few functions (no three.js / DOM), so the terrain generator, the road planner and their workers can use it.
+-import { GATE_Z, lakeDepth } from './EVLabCampus';
++import { BACK, GATE_Z, lakeDepth } from './EVLabCampus';
+ import { DRIVE_PTS } from './EVLabParking';
+ import { BUILDING_Z } from './EVLabLayout';
+ 
+@@ -98,9 +98,25 @@
+   { id: 'E', halfWidth: 5, pts: DRIVE_PTS.filter((_, i) => i % 4 === 0 || i === DRIVE_PTS.length - 1).map(([x, z]) => [EVLAB_POS.x + x, BUILDING_Z + z] as const) }, // = the car park entry road (EVLabParking.DRIVE_PTS, Step R3)
+ ];
+ 
++/** Soft minimum of a and b (rounded over `r` m). `lo` / `hi` = min / max of the two, passed in to save work. */
++function smoothMin(a: number, b: number, r: number, lo: number, hi: number): number {
++  const x = Math.max(0, r - (hi - lo)) / r;
++  return lo - x * x * r * 0.25 * (a === b ? 1 : 1);
++}
++
+ const FLAT_MARGIN = 4; // level ground outside the pad
+-/** Soft blend back to natural terrain. Step R5 makes it wider on the north (hill) side. */
++/**
++ * Soft blend back to natural terrain: 48 m on every side except the north. Step R5: behind the plot the hill is steep (about 65 % natural grade), a smoothstep skirt would
++ * leave a cliff or (if wider) cut away millions of m3, so there the ground is a graded CUT SLOPE instead: it climbs from the pad at GRADE_N (rise per metre) and follows
++ * the natural ground wherever that is lower (a 6 m soft join); the slope fades into natural ground between RAMP_END and RAMP_END + RAMP_FADE m from the pad edge.
++ */
+ const BLEND = 48;
++export const GRADE_N = 1.0;
++export const RAMP_END = 160;
++const RAMP_FADE = 40;
++export const BLEND_N = RAMP_END + RAMP_FADE;
++/** Step R5: the garden + back road strip behind the plot (north of the fence): local z -130..-90 = 40 m deep, as wide as the plot and the car park strip. */
++export const EVLAB_BACK_STRIP = { z0: BUILDING_Z + BACK.zFar, z1: EVLAB_PLOT.z0 };
+ /** Flat strip under a gate road (half width, m). */
+ const ROAD_FLAT = 14;
+ /** The terrain pad is slightly BELOW the floor, so the floor tiles never z-fight with the ground. */
+@@ -109,7 +125,7 @@
+ const STREET_KEEPOUT = 30;
+ 
+ // the level pad rectangle = plot + car park strip
+-const PAD = { x0: EVLAB_PLOT.x0, x1: EVLAB_PARKING_STRIP.x1, z0: EVLAB_PLOT.z0, z1: EVLAB_PLOT.z1 };
++const PAD = { x0: EVLAB_PLOT.x0, x1: EVLAB_PARKING_STRIP.x1, z0: EVLAB_BACK_STRIP.z0, z1: EVLAB_PLOT.z1 };
+ const PAD_CX = (PAD.x0 + PAD.x1) / 2, PAD_CZ = (PAD.z0 + PAD.z1) / 2, PAD_HX = (PAD.x1 - PAD.x0) / 2, PAD_HZ = (PAD.z1 - PAD.z0) / 2;
+ 
+ /** Distance from (x, z) to the segment a-b. */
+@@ -147,9 +163,25 @@
+     return Math.min(Math.hypot(dx, dz), gateRoadDist(x, z, ROAD_FLAT));
+   }
+ 
++  /**
++   * 0 .. 1: how much of the hill's graded slope replaces the normal skirt. 1 straight north of the pad, 0 beside / south of it, and smooth round the two north
++   * corners (the share of the way to the pad that lies north-south).
++   */
++  private northW(x: number, z: number): number {
++    const dz = Math.max(PAD.z0 - FLAT_MARGIN - z, 0);
++    if (dz <= 0) return 0;
++    const dx = Math.max(Math.abs(x - PAD_CX) - (PAD_HX + FLAT_MARGIN), 0);
++    return dz / (dz + dx);
++  }
++
++  /** Width of the skirt at (x, z) (the north slope reaches BLEND_N). */
++  private blendAt(x: number, z: number): number {
++    return BLEND + (BLEND_N - BLEND) * this.northW(x, z);
++  }
++
+   /** True if (x, z) is on the pad (+ margin): no trees, rocks or grass here. */
+   contains(x: number, z: number, margin = 0): boolean {
+-    return this.outside(x, z) <= BLEND * 0.5 + margin;
++    return this.outside(x, z) <= this.blendAt(x, z) * 0.5 + margin;
+   }
+ 
+   /** Inside the fenced rectangle (fence line included; `margin` < 0 = further inside). */
+@@ -160,15 +192,26 @@
+ 
+   /** Cheap pre-check: is (x, z) on the pad or its blend skirt? */
+   near(x: number, z: number): boolean {
+-    return this.outside(x, z) < BLEND;
++    return this.outside(x, z) < this.blendAt(x, z);
+   }
+ 
+   /** Flatten the ground: returns the new height for ground height `h` at (x, z). `k` (0..1) weakens the pad where a road is. */
+   height(x: number, z: number, h: number, k = 1): number {
+-    const d = this.outside(x, z);
+-    if (d >= BLEND) return h;
++    const d = this.outside(x, z), B = this.blendAt(x, z), w = this.northW(x, z);
++    if (d >= B) return h;
++    const base = this.floorY - EVLAB_PAD_SINK;
+     const t = (1 - smoothstep(0, BLEND, d)) * k;
+-    const flat = h + (this.floorY - EVLAB_PAD_SINK - h) * t;
++    let flat = h + (base - h) * t;
++    if (w > 0) {
++      // the hill behind the plot: graded cut slope (never fills), fading out into the natural ground at the far end
++      const ramp = base + GRADE_N * d;
++      const lo = Math.min(h, ramp), hi = Math.max(h, ramp);
++      const s = smoothMin(h, ramp, 6, lo, hi);
++      const fade = smoothstep(RAMP_END, RAMP_END + RAMP_FADE, d);
++      const slope = h + (Math.min(s, h) - h) * (1 - fade);
++      const northH = h + (slope - h) * k;
++      flat = flat * (1 - w) + northH * w;
++    }
+     // the lake around the tower: carved into the level pad (building-local coordinates, see EVLabCampus)
+     return t > 0.999 ? flat - lakeDepth(x - this.x, z - BUILDING_Z) : flat;
+   }

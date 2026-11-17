@@ -1,0 +1,50 @@
+ISLAND LINK M6-1 CENTRELINE (Step 17.1c)   start = S node (-1133.3, 2301.8), start heading = arm arrival 92.18 deg (atan2 dz,dx), end = island centre (-1400, 4050)
+   the straight continuation of the arm is wet from s 525 to s 820 (shore to shore 295 m)
+
+1. TWO PLACES FOR THE ONE CURVE (per radius: flattest island ground, then the earliest curve end; Ls = spiralLength(V, R))
+   A: curve on the LAND before the shore, V100, R >= 591 m, first straight >= 300 m, curve end >= 80 m before the water (s 525)
+   B: curve on the ISLAND after the strait, V80, R >= 344 m, curve starts >= 100 m after the island shore (s 820), last straight to the island centre >= 200 m
+   opt   R (m)   Ls (m)   a (m)   deflection   TS (m)   ST (m)   arc (m)   last straight   island cross slope max (m above 25 %)
+   A       591   no candidate fits
+   A       600   no candidate fits
+   A       800   no candidate fits
+   A      1000   no candidate fits
+   A      1500   no candidate fits
+   A      2000   no candidate fits
+   A      3000   no candidate fits
+   B       344      60    1070.0    16.22 deg      991     1148       37       637 m   25 % (0 m)
+   B       450      50    1080.0    16.45 deg      990     1169       79       616 m   25 % (0 m)
+   B       600      50    1105.0    17.04 deg      990     1219      128       567 m   25 % (0 m)
+   B       800      50    1110.0    17.17 deg      964     1254      190       532 m   25 % (0 m)
+   B      1000      50    1145.0    18.09 deg      961     1326      266       460 m   25 % (0 m)
+   B      1500      50    1215.0    20.24 deg      922     1502      480       285 m   26 % (30 m)
+   B      2000   no candidate fits
+   B      3000   no candidate fits
+
+   CHOICE: option B (curve on the island), R 1000 m: the whole land part, the viaduct approaches and the strait bridge are ONE straight (the bridge may be made higher and longer in 17.1d without touching a curve, alignment rule 8), the first straight after the node is 961 m, the curve is on island ground at V80, the radius is the largest one whose island ground has no stretch above 25 % cross slope.
+
+2. CHOSEN: option B, R 1000 m, Ls 50 m, PI at 1145.0 m from the node: PI (-1176.9, 3445.9), deflection 18.09 deg (clockwise = turns to the west of south on this map), alignment length 1786 m (chord 1768 m)
+   stations: first straight 0 - 961 m | spiral in 961 - 1011 | arc 1011 - 1276 (266 m) | spiral out 1276 - 1326 | last straight 1326 - 1786 m (460 m)
+   end heading 110.27 deg (the island centre node is built from it in 17.1f)
+
+3. GROUND ALONG THE REAL CENTRELINE AND THE ROW +-36.35 m (natural ground, every 10.0 m)
+   wet: 1 run(s) s 529-818, about 299 m, deepest 7.3 m; island ground max 27.2 m; steepest cross slope 25 % (0 m above 25 %); nearest rail 723 m (ring-south); facility land at the ROW edge: none
+
+4. CHECKS
+  PASS  R >= 1.5 x Rmin of V80 = 344 m                                                         R 1000 m
+  PASS  spiral Ls >= spiralLength(V80, R)                                                      Ls 50 m, needed 50 m
+  PASS  first straight after the node >= 300 m (17.1b requirement)                             961 m
+  PASS  start heading = arrival heading of the J1-S arm (no kink at the node)                  92.18 deg
+  PASS  dead reckoning reaches the island centre (position and heading)                        gap 9.4e-13 m, -1.3e-14 deg
+  PASS  no curve on the land, the viaduct approaches or the strait: the curve starts >= 100 m after the island shore (rule 8) water ends s 818, curve starts s 961: 143 m
+  PASS  last straight to the island centre >= 200 m (approach of the island centre node)       460 m
+  PASS  smooth: curvature continuous, change per 5 m <= 1/(R Ls) x 5 m                         max heading step 0.29 deg per 5 m, max dk per 5 m 9.98e-5, bound 9.98e-5
+  PASS  the strait is ONE crossing                                                             1 run(s)
+  PASS  deepest water <= 15 m (normal bridge foundations)                                      7.3 m
+  PASS  no steep ground (cross slope > 25 %) inside the ROW                                    steepest 25 %
+  PASS  no rail within ROW + 50 m                                                              723 m (ring-south)
+  PASS  no airport / seaport / army / engineering land at the ROW edge                         none
+  PASS  island ground on the centreline <= 40 m                                                27.2 m
+
+  14 PASS, 0 FAIL
+  NOT done here: vertical profile (17.1d), structures (17.1e), the node geometry (9.2 / 17.4c), the island centre node (17.1f), game build (17.1g). tsc / npm run build NOT run, game NOT looked at.

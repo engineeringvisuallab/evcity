@@ -1,0 +1,54 @@
+STEP 21.6e-2 SUPERELEVATION PER BEND (R of the measured bends of 21.6e-1; crown rule = Checks.superelevation; e rounded up to 0.5 %, min 2 %, max 8 %)
+
+1. SUMMARY PER CLASS (crown = keep 2 % crown; low = e needed under 2 %, so e = 2 %; rotate = 2.5 .. 8 %; MAX = R under the class minimum, e = 8 % and an advisory speed)
+   cls    V  bends  crown   low  rotate  MAX   e max used
+   8    100     30     22     5       2    1   8.0 %
+   6     80     50     13    11      21    5   8.0 %
+   4     60    216    119    37      43   17   8.0 %
+   2     40    499    481     8       6    4   8.0 %
+   C     40      6      6     0       0    0   0.0 %
+   L     30     18     18     0       0    0   0.0 %
+
+2. BENDS WITH e = 8 % BECAUSE R < CLASS MINIMUM (advisory speed = largest speed with Rmin(V) <= R; the user decides: bigger R, lower speed, or accept)
+   J1-W    #1  s    25-295   R  123  design V 100  e needed   52.2 %  advisory V 61 km/h
+   R6-3    #5  s  1089-1134  R   99  design V 80  e needed   36.9 %  advisory V 56 km/h
+   R6-7    #1  s    45-736   R  213  design V 80  e needed    9.6 %  advisory V 77 km/h
+   R6-8    #1  s    40-194   R  217  design V 80  e needed    9.3 %  advisory V 78 km/h
+   R6-10   #1  s    40-295   R  159  design V 80  e needed   17.7 %  advisory V 68 km/h
+   R6-10   #4  s   726-1121  R  177  design V 80  e needed   14.5 %  advisory V 71 km/h
+   R4-6    #6  s  1284-1329  R   74  design V 60  e needed   21.2 %  advisory V 50 km/h
+   R4-7    #7  s   511-726   R   98  design V 60  e needed   12.0 %  advisory V 56 km/h
+   R4-7    #11 s  1166-1206  R   99  design V 60  e needed   11.6 %  advisory V 56 km/h
+   R4-9    #6  s   855-905   R   94  design V 60  e needed   13.1 %  advisory V 55 km/h
+   R4-9    #8  s  1195-1325  R  100  design V 60  e needed   11.4 %  advisory V 56 km/h
+   R4-9    #10 s  1500-1550  R   99  design V 60  e needed   11.5 %  advisory V 56 km/h
+   R4-9    #13 s  2035-2080  R  104  design V 60  e needed   10.2 %  advisory V 57 km/h
+   R4-9    #15 s  2526-2566  R   23  design V 60  e needed  108.9 %  advisory V 31 km/h
+   R4-10   #3  s   491-531   R   48  design V 60  e needed   41.5 %  advisory V 42 km/h
+   R4-12   #5  s  1001-1041  R   40  design V 60  e needed   53.4 %  advisory V 39 km/h
+   R4-19   #6  s  2161-2201  R   95  design V 60  e needed   12.9 %  advisory V 55 km/h
+   R4-19   #9  s  2881-2921  R  112  design V 60  e needed    8.2 %  advisory V 59 km/h
+   R4-20   #2  s   335-375   R   98  design V 60  e needed   12.0 %  advisory V 56 km/h
+   R4-20   #6  s  1006-1046  R   51  design V 60  e needed   38.1 %  advisory V 43 km/h
+   R4-21   #1  s    30-105   R  109  design V 60  e needed    9.1 %  advisory V 58 km/h
+   R4-21   #5  s   485-525   R  101  design V 60  e needed   11.0 %  advisory V 57 km/h
+   R4-27   #2  s   235-275   R   22  design V 60  e needed  114.3 %  advisory V 31 km/h
+   R2-13   #2  s   250-295   R   32  design V 40  e needed   16.5 %  advisory V 36 km/h
+   R2-17   #11 s   794-869   R   35  design V 40  e needed   13.2 %  advisory V 37 km/h
+   R2-51   #9  s   854-904   R   20  design V 40  e needed   41.2 %  advisory V 29 km/h
+   R2-52   #8  s   631-676   R   18  design V 40  e needed   48.1 %  advisory V 28 km/h
+
+3. BENDS WITH e > 2 % (by e, the table that 21.6e-3 runoff needs: counts per e value)
+   2.0 %: 61, 2.5 %: 17, 3.0 %: 10, 3.5 %: 11, 4.0 %: 5, 4.5 %: 10, 5.0 %: 9, 5.5 %: 4, 6.0 %: 2, 6.5 %: 2, 7.0 %: 2, 8.0 %: 27
+
+4. CHECKS (these test the table and the rule, not the design)
+   PASS  no bend has e above 8 %
+   PASS  crown bends have e 0, all others e >= 2 %
+   PASS  every rotated bend has e of at least 2 %
+   PASS  rotated e covers e needed, over by less than 0.5 %
+   PASS  every MAX bend has an advisory speed below the design speed
+   PASS  worked values: V100 R2000 keeps the crown (handoff 13), V80 R229 needs e = 8.0 %
+   PASS  every bend of 21.6e-1 has a row (819)
+   RESULT 7 PASS 0 FAIL
+   NOT RUN: tsc, npm run build, the game. Nothing in src changed. NOT DONE: runoff / runout lengths, rotation axis, check Ls >= runoff (21.6e-3).
+   LIMIT: R is the measured R of 21.6e-1 (blurred under R 40 m); small wiggles of the drawn line get a bigger R in the real fit, so their e here is on the safe side.
