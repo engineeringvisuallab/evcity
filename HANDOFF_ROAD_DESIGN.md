@@ -1597,3 +1597,14 @@ FAIL = R4-24 (2977 m, 6 PIs): dev 41.0 m (limit 15), mean dev 16.8 m, stage 4 (l
 DECISION NEEDED (R4-24, the user): (a) accept DEV 42 m for R4-24 (add 'R4-24': 42 to DEV_OVR, rerun batch h; the road then follows his drawn line only on average, 16.8 m), or (b) he smooths / redraws the last third of R4-24 (s 2200 - 2960) in key-3 and I refit, or (c) a bigger PI shift limit for R4-24 only (PI_SHIFT 30 -> 60 m), rerun and measure.
 Batches: a = R4-1, R4-2, R4-4; b = R4-3, R4-5, R4-6; c = R4-7, R4-8, R4-10; d = R4-11..R4-13; e = R4-14..R4-17; f = R4-18, R4-22, R4-23; g = R4-25..R4-29; h = R4-20, R4-24. 26 lines done (R4-24 open). Left: R4-9, R4-19, R4-21 (3 long lines, one per batch).
 NEXT: batch I = R4-9 (2956 m) alone; then R4-19, R4-21; then merge all batches into docs/centre_fit_4.json, then S3 (FIT-3 R2). R4-24 waits for the decision.
+
+### 21.34 STEP S2 FIT-2 R4, BATCHES H (RERUN), I, J, K + MERGE (2026-11-17, headless scripts/centre-fit.ts RUN; nothing in src changed; tsc / npm run build / game NOT RUN: no node_modules)
+Decision (user: "tumi bolo", AI pick = option 1): R4-24 DEV 42 m. Change: scripts/centre-fit.ts DEV_OVR now also 'R4-24': 42.
+Files: docs/centre_fit_4_h.json, _i, _j, _k (+ STEP_21_6FIT_4_[h-k]_OUTPUT.txt), docs/centre_fit_4.json (MERGE of a..k, 29 lines R4-1..R4-29, no missing, no duplicate, 35042 m). Run (one batch at a time, ~1.5-4 min each): LINES=<ids> PART=<x> FIT_ITERS=3500 FIT_SMOOTH=500 node --experimental-strip-types --import ./scripts/reg.mjs scripts/centre-fit.ts docs 4
+- H: R4-20 stage 3, dev 12.0 m, min R 113; R4-24 stage 1, dev 41.7 m (limit 42), mean 16.0, min R 129, 3 WARN pairs (drawn bends 5 to 30 m apart), 8 PASS 0 FAIL.
+- K: R4-21 (3052 m, 9 PIs) stage 3, 8 PASS 0 FAIL, start free end moves 12.7 m, end slides 1.6 m on R6-2 (T).
+- I: R4-9 (2956 m, 6 PIs) stage 4, dev 27.6 m (limit 15) FAIL, 2 advisory bends (R 91 V 50, R 107 V 50), end pinned (shared with R6-9 and M8), start slides 5.6 m on J1-N (T). 6 PASS 2 FAIL.
+- J: R4-19 (3206 m, 4 PIs) stage 4, dev 28.5 m (limit 15) FAIL, both ends pinned (R4-18 / M6-1 and R4-17 / R4-18), min R 120, 7 PASS 1 FAIL.
+OPEN (user decides, same kind as R4-24): R4-9 and R4-19 miss DEV 15 m at the last rung. AI proposal: DEV 28 m for R4-9, DEV 29 m for R4-19 (add to DEV_OVR, rerun I / J), or he redraws. R4-9 R 91 / 107 stay as advisory 50 km/h unless he wants a redraw. R4-26 exception (straight 103 m, rule 120 m) stays accepted (21.32).
+NOT DONE: junction node corners (21.7), R5 tap spacing recheck for a slid node, vertical re-run on the new length.
+NEXT: user says OK / DEV for R4-9 and R4-19; then S3 FIT-3 R2 (R4 shared end nodes pinned), then C and L fit, R5 tap recheck + vertical re-run, then 21.6 build.
