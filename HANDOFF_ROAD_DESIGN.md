@@ -1608,3 +1608,11 @@ Files: docs/centre_fit_4_h.json, _i, _j, _k (+ STEP_21_6FIT_4_[h-k]_OUTPUT.txt),
 OPEN (user decides, same kind as R4-24): R4-9 and R4-19 miss DEV 15 m at the last rung. AI proposal: DEV 28 m for R4-9, DEV 29 m for R4-19 (add to DEV_OVR, rerun I / J), or he redraws. R4-9 R 91 / 107 stay as advisory 50 km/h unless he wants a redraw. R4-26 exception (straight 103 m, rule 120 m) stays accepted (21.32).
 NOT DONE: junction node corners (21.7), R5 tap spacing recheck for a slid node, vertical re-run on the new length.
 NEXT: user says OK / DEV for R4-9 and R4-19; then S3 FIT-3 R2 (R4 shared end nodes pinned), then C and L fit, R5 tap recheck + vertical re-run, then 21.6 build.
+
+### 21.35 STEP S2 FIT-2 R4 CLOSED: R4-9 and R4-19 RERUN (2026-11-17, headless; nothing in src changed; tsc / npm run build / game NOT RUN: no node_modules)
+Decision (user: "tumi kro", AI pick = option 1): R4-9 DEV 28 m, R4-19 DEV 29 m. Change: scripts/centre-fit.ts DEV_OVR now also 'R4-9': 28, 'R4-19': 29.
+- R4-9 (2956 m, 6 PIs): stage 2 (was 4), dev 26.7 m (limit 28), mean 10.4, min R 113, Vmin 60, NO advisory speed now, start slides 1.5 m on J1-N (T), end pinned (R6-9 / M8), 8 PASS 0 FAIL.
+- R4-19 (3206 m, 5 PIs): stage 3 (was 4), dev 26.1 m (limit 29), mean 7.4, both ends pinned. ADVISORY: bend 3 s~2176 R 86 V 45, bend 4 s~2568 R 114 V 50, bend 5 s~2986 R 154 V 50. 7 PASS 1 FAIL: the check 'literal target R >= 113 m' FAILS only because these bends use an advisory speed (finding, listed, not hidden). Redraw of the bend near s~2176 would remove the V 45.
+- docs/centre_fit_4.json merged again (R4-1..R4-29, 35042 m). S2 (FIT-2 R4) = DONE, open: R4-19 advisory speeds, R4-26 straight exception (accepted).
+NOT DONE: junction node corners (21.7), R5 tap spacing recheck for a slid node, vertical re-run on the new length.
+NEXT: S3 FIT-3 R2 (R4 shared end nodes pinned, batches, merge into docs/centre_fit_2.json) (the user says OK).

@@ -2,15 +2,17 @@ STEP 21.6 FIT-1b class 4 (V 60, class minimum R 113 m, lane 3.5 m x 2, RCAP 6000
 
 1. PER LINE (stage = last rung used: 0 first fit already fine, 1 shift, 2 slide, 3 speed, 4 corner; before = first fit of FIT-1: max distance / end gap; after = this run)
    line     len  PIs  stage  before dev/gap   after dev  mean  gap   minR  kink s/e  Vmin  shiftPI  endS endE  hard fails  warn  Ls<Lr
-   R4-19    3206    4     4      8 /   0.0       28.5   7.2  0.0    120  0/1     60      30     0    0         0     0     0  dev 28 m
-   total  3206 m  10 measured bends -> 4 PIs; bends under the class minimum R (advisory / corner speed) 0; hard 6 V / 2 V fails 0; warnings 0; Ls shorter than runoff 0
+   R4-19    3206    5     3      8 /   0.0       26.1   7.4  0.0     86  0/3     45      30     0    0         0     0     0  
+   total  3206 m  10 measured bends -> 5 PIs; bends under the class minimum R (advisory / corner speed) 1; hard 6 V / 2 V fails 0; warnings 0; Ls shorter than runoff 0
 
 2. LADDER DETAIL: what each end is, what moved, PIs dropped (smoothing), advisory speeds, junction corners
-   R4-19: stage 4; start = pin: shared end node with R4-18 and M6-1 (not moved here: it needs a joint refit of all lines at the node); end = pin: shared end node with R4-17, R4-18 (not moved here: it needs a joint refit of all lines at the node); start moved 0.0 m, end moved 0.0 m; biggest PI shift 30.0 m
-        PI near (-792, 4012) dropped (drawn wiggle, cost 2231 -> 1148)
-        PI near (-1917, 4447) dropped (drawn wiggle, cost 1148 -> 797)
-        PI near (-1434, 4728) dropped (drawn wiggle, cost 797 -> 735)
-        PI near (-1624, 4701) dropped (drawn wiggle, cost 735 -> 724)
+   R4-19: stage 3; start = pin: shared end node with R4-18 and M6-1 (not moved here: it needs a joint refit of all lines at the node); end = pin: shared end node with R4-17, R4-18 (not moved here: it needs a joint refit of all lines at the node); start moved 0.0 m, end moved 0.0 m; biggest PI shift 29.9 m
+        PI near (-1808, 4620) dropped (drawn wiggle, cost 2230 -> 998)
+        PI near (-781, 4013) dropped (drawn wiggle, cost 998 -> 573)
+        PI near (-1435, 4732) dropped (drawn wiggle, cost 573 -> 551)
+        ADVISORY R4-19 bend 3 s~2176 R 86 V 45 km/h
+        ADVISORY R4-19 bend 4 s~2568 R 114 V 50 km/h
+        ADVISORY R4-19 bend 5 s~2986 R 154 V 50 km/h
 
 3. WARNINGS (the drawn line has two bends less than 80 m apart: the 6 V / 2 V rule cannot hold on the line the user drew; reason printed, not a FAIL)
 
@@ -20,11 +22,11 @@ STEP 21.6 FIT-1b class 4 (V 60, class minimum R 113 m, lane 3.5 m x 2, RCAP 6000
    PASS  every line has an alignment (1 lines)
    PASS  every R is at least the minimum of the design speed of its own bend (V 80 where no advisory speed)
    PASS  every alignment ends on the last point of its line (gap <= 0.5 m)
-   FAIL  every alignment stays within 15 m of the drawn line (override by user OK: R6-7 25 m, R6-8 25 m, R6-10 25 m, R4-7 16 m, R4-8 17 m, R4-27 22 m, R4-24 42 m; PI shift )
+   PASS  every alignment stays within 15 m of the drawn line (override by user OK: R6-7 25 m, R6-8 25 m, R6-10 25 m, R4-7 16 m, R4-8 17 m, R4-27 22 m, R4-24 42 m, R4-9 28 m, R4-19 29 m; PI shift )
    PASS  every straight between two curves is at least 6 V (same direction) / 2 V (reverse) (WARN pairs of section 3 not counted)
    PASS  every spiral is at least as long as the superelevation runoff (21.6e-3) and fits its bend (Ls <= R x delta)
    PASS  heading at the two ends is within 5 deg of the drawn line (no kink at a junction)
-   PASS  literal target R >= 113 m on every bend (a FAIL here = bends that use an advisory speed or a junction corner, listed in section 2)
+   FAIL  literal target R >= 113 m on every bend (a FAIL here = bends that use an advisory speed or a junction corner, listed in section 2)
    RESULT 7 PASS 1 FAIL
    NOT RUN: tsc, npm run build, the game, the rail checks. Nothing in src changed. NOT DONE: junction node corners (21.7), R5 tap spacing recheck for a slid node, vertical re-run on the new length (the new line is a bit shorter / longer than the polyline).
    LIMIT: search = seeded (1+1) evolution strategy, so the result is a feasible design that the checks above confirm, not a proven optimum; the deviation is measured against the 5 m resampled drawn line; R10: the deviation of every line from his line is printed above.
