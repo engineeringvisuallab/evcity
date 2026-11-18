@@ -2881,6 +2881,8 @@ export class RoadNetwork {
     let dby = 0;
     let dcore = 0;
     let dcut = DAY_CUT;
+    let envLo = -Infinity; // STEP 5: every daylight road cuts / fills on its own slope: the highest fill line and the lowest cut line of ALL daylight pieces in range
+    let envHi = Infinity;
     // JUNCTION PLATEAU: inside a pad the terrain IS the pad plane (wins over every road strip); outside it blends back like an embankment
     const pl = this.padCells.get((Math.floor(x / CELL) + 512) * 1024 + (Math.floor(z / CELL) + 512));
     if (pl) {
@@ -2947,11 +2949,17 @@ export class RoadNetwork {
       // link there is no link ground: the ring platform owns that strip (the 4-leg interchange of 17.4c will rebuild this node). Integer compare only (hot loop).
       if (this.segRoad[s] === this.islandLinkId && this.behindLinkStart(x, z)) continue;
       if (this.sday[s]) {
+        const sy = this.say[s] + (this.sby[s] - this.say[s]) * t;
+        const sc = this.sca[s] + (this.scb[s] - this.sca[s]) * t;
+        const srun = d > core ? d - core : 0;
+        const slo = sy - srun * DAY_FILL, shi = sy + srun * sc;
+        if (slo > envLo) envLo = slo;
+        if (shi < envHi) envHi = shi;
         if (d < dd) {
           dd = d;
-          dby = this.say[s] + (this.sby[s] - this.say[s]) * t;
+          dby = sy;
           dcore = core;
-          dcut = this.sca[s] + (this.scb[s] - this.sca[s]) * t;
+          dcut = sc;
         }
         continue;
       }
@@ -2966,8 +2974,10 @@ export class RoadNetwork {
     if (dd < Infinity) {
       // flat platform up to `core`, then ground lower than the fill slope is raised to it and ground higher than the cut slope is cut down to it
       const run = dd > dcore ? dd - dcore : 0;
-      const lo = dby - run * DAY_FILL;
-      const hi = dby + run * dcut;
+      let lo = dby - run * DAY_FILL;
+      let hi = dby + run * dcut;
+      // STEP 5: outside the nearest road's platform the combined lines of all daylight roads in range decide; where they disagree (envLo > envHi) or on a platform, the nearest road decides as before
+      if (run > 0 && envLo <= envHi) { lo = Math.max(lo, envLo); hi = Math.min(hi, envHi); }
       // STEP 5.3b: under the inner part of a structure the ground is never raised (a valley is not dammed); the nearest road piece decides
       // STEP 3: the corners where natural ground meets the slope are rounded (soft clamp). The softness grows from 0 at the platform edge (road and platform stay exactly 0.00 m)
       // to DAY_SOFT after DAY_EASE_RUN m of run. A soft clamp only goes toward the slope side (cut a little more, fill a little more), so the face never gets steeper.

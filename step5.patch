@@ -1,0 +1,89 @@
+--- a/src/roads/RoadNetwork.ts	2026-11-18 22:37:58.000000000 +0000
++++ b/src/roads/RoadNetwork.ts	2026-11-18 16:44:47.791047056 +0000
+@@ -2881,6 +2881,8 @@
+     let dby = 0;
+     let dcore = 0;
+     let dcut = DAY_CUT;
++    let envLo = -Infinity; // STEP 5: every daylight road cuts / fills on its own slope: the highest fill line and the lowest cut line of ALL daylight pieces in range
++    let envHi = Infinity;
+     // JUNCTION PLATEAU: inside a pad the terrain IS the pad plane (wins over every road strip); outside it blends back like an embankment
+     const pl = this.padCells.get((Math.floor(x / CELL) + 512) * 1024 + (Math.floor(z / CELL) + 512));
+     if (pl) {
+@@ -2947,11 +2949,17 @@
+       // link there is no link ground: the ring platform owns that strip (the 4-leg interchange of 17.4c will rebuild this node). Integer compare only (hot loop).
+       if (this.segRoad[s] === this.islandLinkId && this.behindLinkStart(x, z)) continue;
+       if (this.sday[s]) {
++        const sy = this.say[s] + (this.sby[s] - this.say[s]) * t;
++        const sc = this.sca[s] + (this.scb[s] - this.sca[s]) * t;
++        const srun = d > core ? d - core : 0;
++        const slo = sy - srun * DAY_FILL, shi = sy + srun * sc;
++        if (slo > envLo) envLo = slo;
++        if (shi < envHi) envHi = shi;
+         if (d < dd) {
+           dd = d;
+-          dby = this.say[s] + (this.sby[s] - this.say[s]) * t;
++          dby = sy;
+           dcore = core;
+-          dcut = this.sca[s] + (this.scb[s] - this.sca[s]) * t;
++          dcut = sc;
+         }
+         continue;
+       }
+@@ -2966,8 +2974,10 @@
+     if (dd < Infinity) {
+       // flat platform up to `core`, then ground lower than the fill slope is raised to it and ground higher than the cut slope is cut down to it
+       const run = dd > dcore ? dd - dcore : 0;
+-      const lo = dby - run * DAY_FILL;
+-      const hi = dby + run * dcut;
++      let lo = dby - run * DAY_FILL;
++      let hi = dby + run * dcut;
++      // STEP 5: outside the nearest road's platform the combined lines of all daylight roads in range decide; where they disagree (envLo > envHi) or on a platform, the nearest road decides as before
++      if (run > 0 && envLo <= envHi) { lo = Math.max(lo, envLo); hi = Math.min(hi, envHi); }
+       // STEP 5.3b: under the inner part of a structure the ground is never raised (a valley is not dammed); the nearest road piece decides
+       // STEP 3: the corners where natural ground meets the slope are rounded (soft clamp). The softness grows from 0 at the platform edge (road and platform stay exactly 0.00 m)
+       // to DAY_SOFT after DAY_EASE_RUN m of run. A soft clamp only goes toward the slope side (cut a little more, fill a little more), so the face never gets steeper.
+--- a/scripts/ring-cut-check.ts	2026-11-17 21:46:00.000000000 +0000
++++ b/scripts/ring-cut-check.ts	2026-11-18 16:44:56.570906947 +0000
+@@ -15,6 +15,24 @@
+ const o = { h: 0, water: NaN, fx: 0, fz: 0 };
+ const nat = (x: number, z: number): { h: number; wet: boolean } => { gen.sampleNatural(x, z, o); return { h: o.h, wet: !Number.isNaN(o.water) && o.h < o.water + 0.3 }; };
+ const fin = (x: number, z: number): number => { gen.sampleGround(x, z, o); gen.roads.apply(x, z, o); return o.h; }; // ground + ROAD cut only (sample() adds rail, port, city flattening)
++// STEP 5: ground that another road (side road R*, link ...) or a junction pad shapes is not the ring's face. otherNear = a segment of another road is within its own platform + slope reach, or a pad is.
++const net: any = gen.roads; const ringId = net.roads.indexOf(ring);
++const otherNear = (x: number, z: number): boolean => {
++  const segs = net.cellOf(x, z); if (!segs) return false;
++  for (let q = 0; q < segs.length; q++) { const sg = segs[q]; if (net.segRoad[sg] === ringId || net.sbridge[sg]) continue;
++    const abx = net.sbx[sg] - net.sax[sg], abz = net.sbz[sg] - net.saz[sg]; const l2 = abx * abx + abz * abz; let t = l2 > 0 ? ((x - net.sax[sg]) * abx + (z - net.saz[sg]) * abz) / l2 : 0; t = t < 0 ? 0 : t > 1 ? 1 : t;
++    const d = Math.hypot(x - (net.sax[sg] + abx * t), z - (net.saz[sg] + abz * t)); const e = net.sea[sg] + (net.seb[sg] - net.sea[sg]) * t; if (d < net.score[sg] + e + 2) return true; }
++  const pl = net.padCells.get((Math.floor(x / 64) + 512) * 1024 + (Math.floor(z / 64) + 512)); if (pl) for (let q = 0; q < pl.length; q++) { const pd = net.pads[pl[q]]; if (Math.hypot(x - pd.x, z - pd.z) < pd.rCore + pd.emb + 2) return true; }
++  return false;
++};
++// STEP 5.3b rule: the ground is never RAISED where a structure slab (viaduct, bridge; of the ring or of a side road) is nearer than the embankment (a valley is not dammed): such a sample is the structure's, not a face.
++const structNear = (x: number, z: number, u: number): boolean => { const segs = net.cellOf(x, z); if (!segs) return false;
++  for (let q = 0; q < segs.length; q++) { const sg = segs[q]; if (net.sbridge[sg] !== 2) continue;
++    const abx = net.sbx[sg] - net.sax[sg], abz = net.sbz[sg] - net.saz[sg]; const l2 = abx * abx + abz * abz; let t = l2 > 0 ? ((x - net.sax[sg]) * abx + (z - net.saz[sg]) * abz) / l2 : 0; t = t < 0 ? 0 : t > 1 ? 1 : t;
++    if (Math.hypot(x - (net.sax[sg] + abx * t), z - (net.saz[sg] + abz * t)) < u) return true; }
++  return false;
++};
++let otherSkipped = 0;
+ const SIDES = [-1, 1];
+ const ROCK_MAX = 4; // = DAY_CUT_MAX in RoadNetwork: steepest rock-cut face (rise per metre of run)
+ let rock = 0; const wallSt: string[] = [];
+@@ -29,7 +47,7 @@
+     const hs: number[] = [], ns: number[] = [], ws: boolean[] = [];
+     for (const u of OFFS) {
+       const x = ring.xs[i] + ring.nx[i] * u * sd, z = ring.zs[i] + ring.nz[i] * u * sd;
+-      const n = nat(x, z); hs.push(fin(x, z)); ns.push(n.h); ws.push(n.wet);
++      const n = nat(x, z); hs.push(fin(x, z)); ns.push(n.h); const oth = !n.wet && (otherNear(x, z) || structNear(x, z, u + 2)); if (oth) otherSkipped++; ws.push(n.wet || oth);
+     }
+     for (let k = 0; k < OFFS.length; k++) {
+       const u = OFFS[k];
+@@ -53,7 +71,7 @@
+     if (!ws[last] && !onLink) { const w = Math.abs(hs[last] - ns[last]); if (w > 1) { wall++; if (wallAt.length < 6) wallAt.push(`pt ${i} (${(i * ring.length / ring.xs.length).toFixed(0)} m) ${sd < 0 ? 'left' : 'right'} ${w.toFixed(1)} m`); } wallWorst = Math.max(wallWorst, w); }
+   }
+ }
+-console.log(`ring points tested ${nPts}, platform half width ${core.toFixed(1)} m, wet samples skipped ${wet}`);
++console.log(`ring points tested ${nPts}, platform half width ${core.toFixed(1)} m, wet samples skipped ${wet}, other-road / pad samples skipped ${otherSkipped}`);
+ check(flatBad === 0, 'platform: ground equals the road surface across the whole width', `worst ${flatWorst.toFixed(3)} m, bad ${flatBad}`);
+ check(envBad === 0, 'beyond the platform: ground inside the envelope (fill 1:3 below, cut up to 4:1 above)', `worst outside ${envWorst.toFixed(2)} m, bad ${envBad}${envAt.length ? ' | ' + envAt.join(' | ') : ''}`);
+ console.log(`  info  rock-cut face samples steeper than 1:2 (made by the cut, natural ground is not): ${rock}`);
