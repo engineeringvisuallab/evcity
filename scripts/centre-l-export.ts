@@ -1,4 +1,4 @@
-// STEP B7-6 batch L-a: EXPORT the L lines L-1 .. L-4, L-7 .. L-12 (local street, V30, fitted in 21.36 - 21.38) as game data: fitted centreline every 10 m + finished heights from the vertical chain (docs/centre_vprofile.json: PVIs + parabolic curves).
+// STEP B7-6 batch L-a + L-b: EXPORT the L lines L-1 .. L-4, L-7 .. L-12 (local street, V30, fitted in 21.36 - 21.38) as game data: fitted centreline every 10 m + finished heights from the vertical chain (docs/centre_vprofile.json: PVIs + parabolic curves).
 // Same method as scripts/centre-c-export.ts (21.68). Writes src/roads/l/LNewLineData.ts and docs/STEP_B7_6_L_OUTPUT.txt. Changes NO other src file.
 // L-5 and L-6 (half viaduct / terrace, cut with walls) and L-14 (deep cut 14 m) wait for the structure batch; L-14 / L-15 / L-16 form a 4-arm node, they wait for their own batch. L-11 overshoots R2-14 by 6 m: trimmed at the R2-14 centre line (R1).
 // Run: node --experimental-transform-types --import ./scripts/reg.mjs scripts/centre-c-export.ts docs
@@ -9,7 +9,7 @@ const L: string[] = []; const pr = (s = ''): void => { L.push(s); console.log(s)
 let pass = 0, fail = 0; const chk = (ok: boolean, msg: string): void => { if (ok) pass++; else fail++; pr(`   ${ok ? 'PASS' : 'FAIL'}  ${msg}`); };
 const VP = JSON.parse(readFileSync(`${OUT}/centre_vprofile.json`, 'utf8'));
 const FX = JSON.parse(readFileSync(`${OUT}/fit_chain/centre_fixed.json`, 'utf8'));
-const BATCH = ['L-1', 'L-2', 'L-3', 'L-4', 'L-7', 'L-8', 'L-9', 'L-10', 'L-11', 'L-12'];   // batch C-a (21.68): water pre-check scripts/b7-c-water-pre.ts = 0 wet; C-2 has an 11 m retaining wall entry (no bridge)
+const BATCH = ['L-1', 'L-2', 'L-3', 'L-4', 'L-7', 'L-8', 'L-9', 'L-10', 'L-11', 'L-12', 'L-13', 'L-17', 'L-18', 'L-19', 'L-20', 'L-21', 'L-22', 'L-23', 'L-25', 'L-26'];   // L-a (21.69) + L-b (21.70); water pre-check 0 wet on all 31   // batch C-a (21.68): water pre-check scripts/b7-c-water-pre.ts = 0 wet; C-2 has an 11 m retaining wall entry (no bridge)
 function levelAt(v: any, s: number): number {
   const P: number[][] = v.pvi;
   const lineY = (q: number): number => { let k = 0; while (k < P.length - 2 && P[k + 1][0] < q) k++; const [s0, y0] = P[k], [s1, y1] = P[k + 1]; return y0 + ((y1 - y0) * (q - s0)) / (s1 - s0); };
@@ -25,7 +25,7 @@ const plen = (p: number[][]): number => { let s = 0; for (let i = 1; i < p.lengt
 const J = JSON.parse(readFileSync(`${OUT}/centre_junction.json`, 'utf8'));
 // B7-4d (21.67): R1 fixes by the engineer (user 2026-11-18: 'all problem you can fix because you are my engineer').
 const SPLIT: Record<string, string[]> = {};   // C-6 / C-7 cross the built R4-27 / R4-28 at the 4-arm roundabout nodes N122 / N123: cut at the node, both pieces END on the R4 road (R4 is not split, it passes through the node). Pieces C-6.1, C-6.2, C-7.1, C-7.2
-const TRIM: Record<string, { at: 'start' | 'end'; other: string }> = { 'L-11': { at: 'end', other: 'R2-14' } };   // L-11 end is 6.2 m past the R2-14 centre line (fit overshoot): cut there so it ENDS on R2-14 (R1)
+const TRIM: Record<string, { at: 'start' | 'end'; other: string }> = { 'L-11': { at: 'end', other: 'R2-14' }, 'L-13': { at: 'end', other: 'R2-14' } };   // L-11 end is 6.2 m past the R2-14 centre line (fit overshoot): cut there so it ENDS on R2-14 (R1)
 const ALLOW: Record<string, number> = {};   // PVI-length tolerance by NAME (C-6: 1.99 m short on 272 m, flat profile, effect on a level <= 2.0 m x 8 % = 0.16 m at worst); the general tolerance is NOT changed
 const BL = 80;   // m, the level pin of a trimmed end fades out over this length (grade change <= offset / BL)
 const dd = (a: number[], b: number[]): number => Math.hypot(a[0] - b[0], a[1] - b[1]);
@@ -44,7 +44,7 @@ function firstCross(P: number[][], Q: number[][]): { s: number; x: number[] } | 
   return null;
 }
 const nodeLev = new Map<string, { id: string; y: number }[]>();
-pr('STEP B7-6 batch L-a: export of the L lines as game data (headless; the game is changed only by the registration in RoadNetwork + Config switch)');
+pr('STEP B7-6 batch L-a + L-b: export of the L lines as game data (headless; the game is changed only by the registration in RoadNetwork + Config switch)');
 pr('   line      length m  points  y start  y end   max grade %  min / max level m  PVIs  curves');
 const out: string[] = []; let totalLen = 0;
 for (const id of BATCH) {

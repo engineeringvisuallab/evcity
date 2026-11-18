@@ -1,4 +1,4 @@
-// STEP B7-6 headless check of the L lines L-1 .. L-4, L-7 .. L-12 (10 game roads, L-11 trimmed at R2-14) in the REAL road network (Config.roads.lNew.enabled = true):
+// STEP B7-6 headless check of the L lines L-1 .. L-4, L-7 .. L-12 (20 game roads, L-11 / L-13 trimmed at R2-14) in the REAL road network (Config.roads.lNew.enabled = true):
 // WATER first (sc.water > sc.h on the natural ground at every game road point, and the finished level against the water level), then: exist, length, levels, grade, centre cut / fill, structures found by bridgeArm,
 // junction pads created, and which other roads they cross in plan (R1: a crossing without a junction is a LIST, not hidden; the lines have free ends until the junction phase).
 // Run: npx tsx scripts/b7-lnew-check.ts
@@ -7,7 +7,7 @@ import { Config } from '../src/core/Config';
 Config.roads.lNew.enabled = true;
 const gen: any = new TerrainGenerator(Config.world.seed);
 const roads = gen.roads.roads;
-const names = ['L-1', 'L-2', 'L-3', 'L-4', 'L-7', 'L-8', 'L-9', 'L-10', 'L-11', 'L-12'];
+const names = ['L-1', 'L-2', 'L-3', 'L-4', 'L-7', 'L-8', 'L-9', 'L-10', 'L-11', 'L-12', 'L-13', 'L-17', 'L-18', 'L-19', 'L-20', 'L-21', 'L-22', 'L-23', 'L-25', 'L-26'];
 let fails = 0;
 const chk = (ok: boolean, t: string): void => { if (!ok) fails++; console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${t}`); };
 const seg = (ax: number, az: number, bx: number, bz: number, cx: number, cz: number, dx: number, dz: number): boolean => {
