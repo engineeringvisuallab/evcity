@@ -21,9 +21,10 @@ import { R6_LINE_DATA } from './r6/R6LineData';
 import { R6_NEW_LINE_DATA } from './r6/R6NewLineData';
 import { R6_SLIP_DATA } from './r6/R6SlipData';
 import { R4_NEW_LINE_DATA } from './r4/R4NewLineData';
-import { CLASS_R4_OPEN, CLASS_R2_OPEN, CLASS_C_ZONE } from './standards/ClassSections';
+import { CLASS_R4_OPEN, CLASS_R2_OPEN, CLASS_C_ZONE, CLASS_L_ZONE } from './standards/ClassSections';
 import { R2_NEW_LINE_DATA } from './r2/R2NewLineData';
 import { C_NEW_LINE_DATA } from './c/CNewLineData';
+import { L_NEW_LINE_DATA } from './l/LNewLineData';
 import { STRUCT, STRUCT_CARVE } from './ring/RingStructures';
 import { SCENARIOS, cutRange, nearestPoint, uvToWorld, type ScenarioSpec } from '../interchange/scenario/J6Scenario';
 
@@ -301,7 +302,8 @@ export class RoadNetwork {
     const r4On = Config.roads.r4New.enabled; // STEP B7-3: the new R4 lines join at the same moment too
     const r2On = Config.roads.r2New.enabled; // STEP B7-4: the new R2 lines join at the same moment too
     const cOn = Config.roads.cNew.enabled; // STEP B7-5: the new C lines join at the same moment too
-    if ((!armsOn && !linkOn && !r6On && !r4On && !r2On && !cOn) || this.j1ArmsAdded) return;
+    const lOn = Config.roads.lNew.enabled; // STEP B7-6: the new L lines join at the same moment too
+    if ((!armsOn && !linkOn && !r6On && !r4On && !r2On && !cOn && !lOn) || this.j1ArmsAdded) return;
     this.j1ArmsAdded = true; // STEP RAIL-A: the railway calls this before its long section, TerrainGenerator calls it again later (no-op then)
     const before = this.roads.length;
     this.layoutJ1Arms();
@@ -310,6 +312,7 @@ export class RoadNetwork {
     this.layoutR4Roads();
     this.layoutR2Roads();
     this.layoutCRoads();
+    this.layoutLRoads();
     if (this.roads.length === before) return;
     this.chunkSegs.clear();
     this.padCells.clear();
@@ -495,6 +498,36 @@ export class RoadNetwork {
         ys.push(d.ys[j] + (d.ys[j + 1] - d.ys[j]) * t);
       }
       this.addRoad({ tier: 3, kind: 'collector', name: d.name, closed: false, pts, fixedY: ys, halfWidth: sec.halfWidth, shoulder: sec.shoulder, lanes: sec.lanesPerDir * 2, speedKmh: c.speed, maxGrade: 0.08, section: sec, daylight: true });
+      if (d.structs) this.bridgeArm(this.roads[this.roads.length - 1], { name: d.name, s: d.s, pts: d.pts, ys: d.ys, structs: d.structs });
+    }
+  }
+
+  /**
+   * STEP B7-6 (batch L-a): the new L lines (local street, 2 lanes, undivided, V30, CLASS_L_ZONE of 21.5) from LNewLineData.ts (made by scripts/centre-l-export.ts): fitted centreline and finished heights of the vertical chain.
+   * Game kind 'local' but tier 3 (like the earth tracks E-n): tier 4 would start the city local-street, footpath and junction-pad logic, which must stay off until the junction phase (21.61). Only the roadway is laid (kerb 0.2 m, verge 0.6 m); the footpath of the ZONE section comes with the zone work (21.6). Ends are free, no junction mouth.
+   */
+  private layoutLRoads(): void {
+    if (!Config.roads.lNew.enabled) return;
+    const c = CLASS_L_ZONE;
+    const el = (kind: string): number => c.elements.find((e) => e.kind === kind)?.width ?? 0;
+    const sec = { halfWidth: c.pavementEdge, medianHalf: 0, shyMedian: 0, laneW: c.laneW, lanesPerDir: c.lanesPerDir, shyOuter: el('kerb'), shoulder: el('verge-drain') };
+    for (const d of L_NEW_LINE_DATA) {
+      const m = d.pts.length;
+      const cum = [0];
+      for (let i = 1; i < m; i++) cum.push(cum[i - 1] + Math.hypot(d.pts[i][0] - d.pts[i - 1][0], d.pts[i][1] - d.pts[i - 1][1]));
+      const L = cum[m - 1];
+      const n = Math.max(2, Math.ceil(L / KIND.local.step)) + 1;
+      const pts: number[][] = [];
+      const ys: number[] = [];
+      let j = 0;
+      for (let k = 0; k < n; k++) {
+        const dd = (L * k) / (n - 1);
+        while (j < m - 2 && cum[j + 1] < dd) j++;
+        const t = cum[j + 1] > cum[j] ? Math.min(1, Math.max(0, (dd - cum[j]) / (cum[j + 1] - cum[j]))) : 0;
+        pts.push([d.pts[j][0] + (d.pts[j + 1][0] - d.pts[j][0]) * t, d.pts[j][1] + (d.pts[j + 1][1] - d.pts[j][1]) * t]);
+        ys.push(d.ys[j] + (d.ys[j + 1] - d.ys[j]) * t);
+      }
+      this.addRoad({ tier: 3, kind: 'local', name: d.name, closed: false, pts, fixedY: ys, halfWidth: sec.halfWidth, shoulder: sec.shoulder, lanes: sec.lanesPerDir * 2, speedKmh: c.speed, maxGrade: 0.1, section: sec, daylight: true });
       if (d.structs) this.bridgeArm(this.roads[this.roads.length - 1], { name: d.name, s: d.s, pts: d.pts, ys: d.ys, structs: d.structs });
     }
   }
