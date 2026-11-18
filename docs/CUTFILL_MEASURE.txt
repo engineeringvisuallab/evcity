@@ -1,0 +1,107 @@
+CUTFILL MEASURE  roads 181, stations 17440, samples 1295268, stride 10 m, offsets 40 x 2 m, layer = natural + residential flat + roads.apply
+LEDGE = a step across the verge that is bigger than the steps around it (m): a smooth slope has none. WALL = face steeper than 1:1. ALONG jump = ground height jump along the road at the same offset (m per 5 m, more than the ground under it had).
+
+=== A. per road class (profiles = cross sections measured, both sides) ===
+class                  profiles | with WALL | with LEDGE >0.3 | >0.5 m | >1 m | ALONG jumps >0.5 m | >1 m
+1:highway                 18810 |      3728 |            7282 |   5072 | 1320 |              24141 | 10051
+3:ramp                      136 |         8 |              68 |     49 |    8 |                403 |  233
+3:collector               15010 |      2896 |            6477 |   4563 | 1000 |              19785 | 7515
+3:local                     924 |       133 |             459 |    301 |  107 |               1079 |  598
+
+=== B. WORST 20 JUMPS / LEDGES (one per road / 60 m / side; rail, port and pad areas left out). Walls are in section D ===
+no  road      s(m)   side  offset  x, z                 type   step(m)  ledge(m)   why
+ 1  R4-9        1541 R       47   (-420, -2361)        along    10.40    10.84    segment switch plat -> free
+ 2  R4-29         16 L       15   (-1749, -510)        along    -8.70     8.70    two roads: R6-15 -> R4-29
+ 3  R2-10          8 L       12   (-968, -2271)        along     5.89     8.34    two roads: R4-9 -> R2-10
+ 4  R6-15        935 L       19   (-1747, -499)        along    -8.32     8.32    two roads: R6-15 -> R4-29
+ 5  R6-12        848 L       19   (188, -1340)         along    -5.77     8.12    cutwall -> plat
+ 6  R2-74          8 L       16   (-443, -2325)        along     7.88     8.11    two roads: R4-9 -> R2-74
+ 7  C-2          486 L       51   (-3030, 1565)        along     9.18     7.86    plat -> free
+ 8  R4-29          8 R       15   (-1765, -536)        along    -7.80     7.80    two roads: R6-15 -> R4-29
+ 9  R2-74         16 R       26   (-401, -2322)        along     6.99     7.80    plat -> free
+10  R2-73        120 L       20   (4581, -3901)        along    -0.53     7.66    segment switch free -> fill
+11  R6-12        856 R       71   (103, -1368)         along     9.19     7.28    plat -> free
+12  R2-73        104 R        8   (4551, -3889)        along    -0.26     7.16    cutwall -> cutwall
+13  R2-54          8 L       86   (4578, 2101)         along     5.55     6.89    plat -> free
+14  M8         16077 L       83   (2951, 973)          along     6.89     6.81    two roads: M8 -> R2-55
+15  R6-15        975 L       19   (-1772, -531)        along     6.74     6.74    two roads: R4-29 -> R6-15
+16  M8          6503 L       35   (-2529, -1979)       along    -6.08     6.73    cutwall -> cutwall
+17  M8          6503 R       27   (-2482, -1940)       along    -6.08     6.72    cutwall -> cutwall
+18  R2-64        934 L       80   (1774, -1326)        along     6.56     6.65    plat -> free
+19  R6-8:m2       60 R       81   (1375, 675)          along     5.92     6.49    two roads: J1-E -> R6-8:m1
+20  J1-N         824 L       91   (307, -1276)         along    -7.87     6.38    free -> plat
+
+=== C. CAUSE count among the places with ledge / jump >= 0.5 m (one per road / 60 m / side) ===
+   554  along: fill -> fill
+   380  cross: cutwall -> free
+   374  cross: plat -> free
+   363  cross: plat -> cut
+   292  along: cutwall -> cutwall
+   283  along: two roads
+   275  cross: plat -> fill
+   271  cross: cut -> cut
+   248  cross: fill -> fill
+   131  cross: cut -> free
+   108  cross: two roads
+    78  cross: fill -> free
+    60  along: plat -> free
+    29  along: segment switch fill -> free
+    27  along: plat -> plat
+    25  along: free -> plat
+    21  along: segment switch free -> fill
+    12  along: fill -> free
+    10  along: segment switch plat -> free
+    10  along: plat -> fill
+    10  along: segment switch cutwall -> free
+     9  along: fill -> plat
+     8  along: segment switch free -> cutwall
+     8  cross: plat -> cutwall
+     8  along: segment switch free -> plat
+     7  along: cut -> free
+     7  along: cut -> cut
+     6  along: free -> fill
+     5  along: free -> cutwall
+     4  along: plat -> cutwall
+     4  along: segment switch fill -> fill
+     3  along: segment switch fill -> none
+     3  along: fill -> none
+     3  along: strip -> strip
+     3  cross: strip+fill -> strip+fill
+     3  along: cutwall -> plat
+     3  along: cutwall -> free
+     2  along: segment switch plat -> cutwall
+     2  along: strip+fill -> strip+fill
+     2  along: segment switch plat -> fill
+     2  along: plat -> cut
+     2  along: segment switch free -> cut
+     2  along: segment switch none -> fill
+     2  along: segment switch fill -> cutwall
+     1  along: segment switch plat -> none
+     1  along: segment switch none -> plat
+     1  along: none -> fill
+     1  along: free -> free
+     1  along: j1+fill -> j1+fill
+     1  along: j1 -> j1
+     1  along: segment switch fill -> plat
+     1  cross: strip -> strip
+     1  along: strip -> strip+fill
+     1  cross: strip+fill -> strip
+     1  cross: free -> plat
+     1  cross: plat -> plat
+     1  along: segment switch cut -> free
+     1  along: free -> cut
+     1  along: segment switch cutwall -> fill
+places >= 0.5 m: 3674, >= 1 m: 1739; records inside rail / port / pad areas left out: 891
+
+=== D. WALLS (cut face steeper than 1:1): 6765 profiles on 113 roads; worst 10 (rise of the steep part, one per road / 120 m / side) ===
+ 1  R4-24     s   2595 R  (4183, -4109)  wall rise 101.0 m  cutwall
+ 2  R4-24     s   2642 R  (4221, -4142)  wall rise 82.1 m  cutwall
+ 3  M8        s   8663 L  (-611, -2969)  wall rise 72.0 m  cutwall
+ 4  M8        s   8639 L  (-630, -2954)  wall rise 69.4 m  cutwall
+ 5  R4-24     s   2762 R  (4289, -4246)  wall rise 66.6 m  cutwall
+ 6  M8        s   6559 L  (-2482, -2015)  wall rise 62.4 m  cutwall
+ 7  M8        s   6551 R  (-2453, -1975)  wall rise 62.3 m  cutwall
+ 8  M8        s  14814 L  (3049, -299)  wall rise 60.9 m  cutwall
+ 9  M8        s  14926 L  (3035, -188)  wall rise 59.0 m  cutwall
+10  M8        s  14758 L  (3055, -355)  wall rise 55.5 m  cutwall
+walls per road (profiles): M8 1199, R4-9 463, R4-24 327, R2-62 259, J1-N 187, R2-2 167, R2-55 164, R2-71 155, R4-2 154, R6-15 149, R2-58 139, R4-1 130
