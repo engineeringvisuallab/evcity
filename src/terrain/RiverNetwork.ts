@@ -410,6 +410,27 @@ export class RiverNetwork {
     return n.d < hw * 3.2 + 70;
   }
 
+  /** Query only: distance (m) from (x, z) to the water edge of the nearest river (negative inside the water), and its water level. `out.d` must start at Infinity. Used by ResidentialFlat. */
+  edgeDistance(x: number, z: number, out: { d: number; level: number }): void {
+    const ci = Math.floor((x - this.GMIN) / this.GC);
+    const cj = Math.floor((z - this.GMIN) / this.GC);
+    if (ci < 0 || cj < 0 || ci >= this.GN || cj >= this.GN) return;
+    const list = this.cells[cj * this.GN + ci];
+    // the smallest edge distance over ALL segments of the cell (not the nearest centre line: a wide river and a narrow tributary would swap and make a jump)
+    for (let n = 0; n < list.length; n++) {
+      const s = this.segments[list[n]];
+      const dx = s.bx - s.ax;
+      const dz = s.bz - s.az;
+      let t = ((x - s.ax) * dx + (z - s.az) * dz) / (s.len * s.len);
+      t = t < 0 ? 0 : t > 1 ? 1 : t;
+      const ex = s.ax + dx * t - x;
+      const ez = s.az + dz * t - z;
+      const hw = s.hwA + (s.hwB - s.hwA) * t;
+      const e = Math.sqrt(ex * ex + ez * ez) - (hw + 4);
+      if (e < out.d) { out.d = e; out.level = this.wsAt(s, t); }
+    }
+  }
+
   /** Carve the river channel and valley into `out.h`, and report the water surface + flow. */
   apply(x: number, z: number, out: TerrainSample): void {
     const n = this.nearest(x, z);

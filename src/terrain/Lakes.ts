@@ -108,6 +108,25 @@ export class LakeSet {
     return this.lakes.filter((l) => l.isPond).length;
   }
 
+  /**
+   * Query only (no change of any height): the distance (m) from (x, z) to the water edge of the nearest lake within `reach` m (negative inside the water),
+   * and the lake level. Used by ResidentialFlat to keep the flat ground away from lake banks. `out.d` must be set to Infinity before the first call.
+   */
+  edgeDistance(x: number, z: number, reach: number, out: { d: number; level: number }): void {
+    for (let n = 0; n < this.lakes.length; n++) {
+      const L = this.lakes[n];
+      const dx = x - L.x;
+      const dz = z - L.z;
+      const lim = L.R * (1 + L.wobble) * 1.08 + reach;
+      const d2 = dx * dx + dz * dz;
+      if (d2 > lim * lim) continue;
+      const th = Math.atan2(dz, dx);
+      const Rt = L.R * (1 + L.wobble * (0.55 * Math.sin(2 * th + L.p1) + 0.3 * Math.sin(3 * th + L.p2) + 0.15 * Math.sin(5 * th + L.p3)));
+      const e = Math.sqrt(d2) - Rt * 1.08;
+      if (e < out.d) { out.d = e; out.level = L.level; }
+    }
+  }
+
   apply(x: number, z: number, out: TerrainSample): void {
     for (let n = 0; n < this.lakes.length; n++) {
       const L = this.lakes[n];

@@ -17,6 +17,7 @@ import { EVLabSite } from '../evlab/EVLabSite';
 import { LibrarySite, LIBRARY_PLOT } from '../library/LibrarySite';
 import { ProtoSite, PROTO_PLOT } from '../buildings/ProtoSite';
 import { InfraSite, INFRA_PLACEMENTS } from '../engineering/InfraSites';
+import { ResidentialFlat, BANK_REACH } from './ResidentialFlat';
 
 const smoothstep = (a: number, b: number, x: number): number => {
   const t = x <= a ? 0 : x >= b ? 1 : (x - a) / (b - a);
@@ -83,6 +84,8 @@ export class TerrainGenerator {
   /** STEP 4: level pads of the road-side fuel stations / charge points (src/parking/RoadStationSites.ts). */
   readonly stationPads = new StationPads();
   private stationMask = new Float32Array(2);
+  /** FLAT RESIDENTIAL STEP 2: the 6 flat residential zones are levelled (ResidentialFlat.ts). Applied in sample() after the natural ground and before the road earthworks; roads / rail are planned on natural ground and are not changed. */
+  readonly residentialFlat = new ResidentialFlat((x, z, o) => { this.rivers.edgeDistance(x, z, o); this.lakes.edgeDistance(x, z, BANK_REACH, o); });
   private scratch: TerrainSample = { h: 0, water: NaN, fx: 0, fz: 0 };
   /** The building pads (mall, evlab, library) only exist once their floor heights are known: roads + railway are planned on natural ground. */
   private padsReady = false;
@@ -220,6 +223,7 @@ export class TerrainGenerator {
    */
   sample(x: number, z: number, out: TerrainSample): void {
     this.sampleGround(x, z, out);
+    this.residentialFlat.apply(x, z, out); // FLAT RESIDENTIAL STEP 2: before the road earthworks, so the embankments grade to the flat ground
     this.roads.apply(x, z, out);
     this.railForm.apply(x, z, out);
     this.portForm.apply(x, z, out); // STAGE 14: sea port earthworks

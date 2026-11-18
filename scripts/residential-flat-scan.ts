@@ -1,15 +1,17 @@
 // FLAT-RESIDENTIAL STEP 1 (headless, reads only, changes nothing in src/): terrain height + slope of every residential zone (and villages).
-// Run: npx tsx scripts/residential-flat-scan.ts [out-dir]   writes residential_scan.json, prints the table.
+// Run: npx tsx scripts/residential-flat-scan.ts [out-dir] [--flat]   writes residential_scan.json (with --flat: residential_scan_flat.json), prints the table.
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
 import { Config } from '../src/core/Config';
 import { getWorldZoneAt, WORLD_ZONES } from '../src/city/WorldZones';
 
-const out = process.argv[2] ?? 'docs';
+const out = process.argv.slice(2).find((a) => !a.startsWith('--')) ?? 'docs';
+// STEP 2: add --flat to scan the ground WITH the residential flattening (ResidentialFlat.ts); without it the natural ground is scanned (Step 1 numbers)
+const useFlat = process.argv.includes('--flat');
 mkdirSync(out, { recursive: true });
 const gen = new TerrainGenerator(Config.world.seed);
 const sc = { h: 0, water: NaN, fx: 0, fz: 0 };
-const nat = (x: number, z: number) => { gen.sampleNatural(x, z, sc); return { h: sc.h, w: sc.water }; };
+const nat = (x: number, z: number) => { gen.sampleNatural(x, z, sc); if (useFlat) gen.residentialFlat.apply(x, z, sc); return { h: sc.h, w: sc.water }; };
 const CELL = 25, HALF = 5000, D = 25;
 const ids = WORLD_ZONES.filter((z) => z.kind === 'residential' || z.kind === 'village').map((z) => z.id);
 const acc: Record<string, { h: number[]; s: number[]; water: number; n: number; xs: number[]; zs: number[] }> = {};
@@ -34,4 +36,4 @@ for (const id of ids) {
   rows.push(r);
   console.log(`${id.padEnd(16)} ${z.kind.padEnd(11)} ${f(r.ha, 0).padStart(5)} ${f(r.waterPct, 0).padStart(6)}  ${f(r.hMin).padStart(6)} ${f(r.h10).padStart(5)} ${f(r.hMed).padStart(5)} ${f(r.h90).padStart(5)} ${f(r.hMax).padStart(5)}  | ${f(r.sMed).padStart(7)} ${f(r.s90).padStart(5)}  | ${f(r.flat, 0).padStart(3)} ${f(r.gentle, 0).padStart(5)} ${f(r.rolling, 0).padStart(6)} ${f(r.steep, 0).padStart(5)}`);
 }
-writeFileSync(`${out}/residential_scan.json`, JSON.stringify(rows, null, 1));
+writeFileSync(`${out}/${useFlat ? 'residential_scan_flat' : 'residential_scan'}.json`, JSON.stringify(rows, null, 1));
