@@ -1,4 +1,4 @@
-// STEP B7-4 headless check of the R2-a + R2-b lines (20 lines) in the REAL road network (Config.roads.r2New.enabled = true):
+// STEP B7-4 headless check of the R2-a + R2-b + R2-c lines (30 lines) in the REAL road network (Config.roads.r2New.enabled = true):
 // WATER first (sc.water > sc.h on the natural ground at every game road point, and the finished level against the water level), then: exist, length, levels, grade, centre cut / fill, structures found by bridgeArm,
 // junction pads created, and which other roads they cross in plan (R1: a crossing without a junction is a LIST, not hidden; the lines have free ends until the junction phase).
 // Run: npx tsx scripts/b7-r2new-check.ts
@@ -7,7 +7,7 @@ import { Config } from '../src/core/Config';
 Config.roads.r2New.enabled = true;
 const gen: any = new TerrainGenerator(Config.world.seed);
 const roads = gen.roads.roads;
-const names = ['R2-12', 'R2-13', 'R2-14', 'R2-15', 'R2-16', 'R2-17', 'R2-18', 'R2-44', 'R2-63', 'R2-65', 'R2-21', 'R2-22', 'R2-23', 'R2-24', 'R2-25', 'R2-26', 'R2-27', 'R2-28', 'R2-29', 'R2-30'];
+const names = ['R2-12', 'R2-13', 'R2-14', 'R2-15', 'R2-16', 'R2-17', 'R2-18', 'R2-44', 'R2-63', 'R2-65', 'R2-21', 'R2-22', 'R2-23', 'R2-24', 'R2-25', 'R2-26', 'R2-27', 'R2-28', 'R2-29', 'R2-30', 'R2-31', 'R2-32', 'R2-38', 'R2-39', 'R2-41', 'R2-46', 'R2-48', 'R2-49', 'R2-50', 'R2-66'];
 let fails = 0;
 const chk = (ok: boolean, t: string): void => { if (!ok) fails++; console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${t}`); };
 const seg = (ax: number, az: number, bx: number, bz: number, cx: number, cz: number, dx: number, dz: number): boolean => {
@@ -47,7 +47,7 @@ for (const nm of names) {
   chk(g <= 0.082, `${nm} grade <= 8 % (+ rounding of the 10 m samples)`);
   chk(r.lanes === 2 && r.medianHalf === 0, `${nm} is 2 lanes, undivided`);
 }
-chk(names.every((n) => roads.some((q: any) => q.name === n)), 'all 20 lines exist as game roads');
+chk(names.every((n) => roads.some((q: any) => q.name === n)), `all ${names.length} lines exist as game roads`);
 const ra: any = gen.roads;
 for (const k of ['pads', 'junctionPads', 'padList']) if (Array.isArray(ra[k])) pads = ra[k].length;
 console.log(`   junction pad list on the network: ${pads} (must stay 0: junctions are node numbers only)`);
