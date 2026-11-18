@@ -1,0 +1,33 @@
+STEP B7a-1 (21.45): export of the 7 new R6 lines as game data (headless; game NOT changed; tsc / npm run build / game NOT RUN: no node_modules)
+   line    length m  points  y start  y end   max grade %  min / max level m  PVIs  curves
+   R6-9       715.8      73    16.35   28.42        3.53      16.4 / 28.4   5     3
+   PASS  R6-9 max grade 3.53 % <= 4 %
+   PASS  R6-9 last PVI station 716.5 m = line length 715.8 m
+   PASS  R6-9 end levels = PVI end levels
+   R6-10     1877.6     189    37.80   55.77        4.04      31.1 / 55.8   7     5
+   PASS  R6-10 max grade 4.04 % <= 4 %
+   PASS  R6-10 last PVI station 1878.8 m = line length 1877.6 m
+   PASS  R6-10 end levels = PVI end levels
+   R6-11     1442.9     146    26.95   28.10        4.04      21.2 / 34.9   8     6
+   PASS  R6-11 max grade 4.04 % <= 4 %
+   PASS  R6-11 last PVI station 1444.1 m = line length 1442.9 m
+   PASS  R6-11 end levels = PVI end levels
+   R6-12      864.1      88    25.41   57.93        3.84      25.4 / 57.9   2     0
+   PASS  R6-12 max grade 3.84 % <= 4 %
+   PASS  R6-12 last PVI station 864.2 m = line length 864.1 m
+   PASS  R6-12 end levels = PVI end levels
+   R6-13      446.4      46    25.41   19.35        3.00      19.4 / 25.4   4     2
+   PASS  R6-13 max grade 3.00 % <= 4 %
+   PASS  R6-13 last PVI station 446.8 m = line length 446.4 m
+   PASS  R6-13 end levels = PVI end levels
+   R6-14      366.2      38    31.19   36.32        3.03      31.2 / 36.3   3     1
+   PASS  R6-14 max grade 3.03 % <= 4 %
+   PASS  R6-14 last PVI station 366.3 m = line length 366.2 m
+   PASS  R6-14 end levels = PVI end levels
+   R6-15     2013.5     203    34.42   33.49        4.04      22.8 / 54.8   6     4
+   PASS  R6-15 max grade 4.04 % <= 4 %
+   PASS  R6-15 last PVI station 2014.9 m = line length 2013.5 m
+   PASS  R6-15 end levels = PVI end levels
+
+   NOT in this file (21.8 decides, R12): structures. Wet runs from 21.44 on these lines: R6-10 20 m (SHORT BRIDGE), R6-11 60 m (SHORT BRIDGE); viaduct / tunnel candidates of 21.40 are listed in docs/STEP_21_4C_OUTPUT.txt. The game build of a structure road needs bridgeArm() ranges (see G7f), they are NOT written here.
+   RESULT 21 PASS 0 FAIL

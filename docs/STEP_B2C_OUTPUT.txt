@@ -1,0 +1,85 @@
+STEP B2 (21.41): R5 tap spacing recheck on the fitted + joined lines (headless, read only; nothing in src or data changed; tsc / npm run build / game NOT RUN: no node_modules)
+
+BEFORE: docs/centre_fixed.json (the drawn lines after 21.3 / 21.6a, the input of the fit)
+   5 8-lane lines, 4 ring x arm joins, 11 known taps, J1 (-87, -277) plaza radius 100 m
+   23 line ends touch an 8-lane road (within 12 m): {"4":18,"6":5}
+
+AFTER: docs/fit_chain/centre_fixed.json (fitted alignments + B3 joint refit)
+   5 8-lane lines, 4 ring x arm joins, 11 known taps, J1 (-87, -277) plaza radius 100 m
+   23 line ends touch an 8-lane road (within 12 m): {"4":18,"6":5}
+
+TOUCH LIST (after): line end, 8-lane road, J1 plaza distance, nearest tap, nearest ring x arm join, nearest other touch, flags
+   R4-12 S   4  on J1-E     (305, 24)  J1   394 m  tap T-E610 425 m  join 2489 m  other R4-13E 664 m
+   R4-13 E   4  on J1-E     (860, 389)  J1  1058 m  tap T-E610 240 m  join 1825 m  other R6-14E 640 m
+   R6-14 E   6  on J1-E     (1398, 735)  J1  1697 m  tap T-E610 880 m  join 1186 m  other R4-13E 640 m
+   R4-9 S    4  on J1-N     (398, -1272)  J1  1007 m  tap T-N880 49 m  join 2262 m  other R4-11S 901 m
+   R4-11 S   4  on J1-N     (869, -2040)  J1  1906 m  tap T-N880 858 m  join 1427 m  other R4-26E 485 m
+   R4-26 E   4  on J1-N     (1331, -2189)  J1  2280 m  tap R12094 960 m  join 960 m  other R4-10E 258 m
+   R4-10 E   4  on J1-N     (1564, -2298)  J1  2510 m  tap R12094 709 m  join 709 m  other R4-26E 258 m
+   R4-20 S   4  on J1-S     (-568, 440)  J1   764 m  tap T-W960 530 m  join 1945 m  other R6-15S 587 m
+   R4-29 E   4  on J1-W     (-2140, 227)  J1  2014 m  tap R4265 416 m  join 416 m  other R4-6S 806 m
+   R6-15 S   6  on J1-W     (-1073, 140)  J1   971 m  tap T-W960 123 m  join 1486 m  other R4-20S 587 m  [SLID END]
+   R6-15 E   6  on M8       (-2619, -1099)  J1  2562 m  tap R4265 1348 m  join 1348 m  other R4-5S 270 m  [SLID END]
+   R4-5 S    4  on M8       (-2606, -830)  J1  2479 m  tap R4265 1079 m  join 1078 m  other R6-15E 270 m
+   R4-6 S    4  on M8       (-2523, 936)  J1  2622 m  tap R4265 690 m  join 691 m  other R4-29E 806 m
+   R4-8 S    4  on M8       (-2007, 2220)  J1  3050 m  tap R1205 879 m  join 878 m  other R4-6S 1384 m
+   R4-9 E    4  on M8       (-1547, -2463)  J1  2528 m  tap T7299 292 m  join 2891 m  other R6-15E 1734 m
+   R6-9 E    6  on M8       (-1547, -2463)  J1  2528 m  tap T7299 292 m  join 2891 m  other R6-15E 1734 m
+   R4-20 E   4  on M8       (68, 2046)  J1  2228 m  tap T18838 389 m  join 1229 m  other R4-14E 493 m
+   R4-27 S   4  on M8       (271, -3762)  J1  3403 m  tap T8919 932 m  join 2084 m  other R4-23E 1219 m
+   R4-14 E   4  on M8       (530, 1874)  J1  2138 m  tap T18838 105 m  join 1718 m  other R4-20E 493 m
+   R4-23 E   4  on M8       (1440, -3414)  J1  3388 m  tap R12094 926 m  join 927 m  other R4-10S 263 m
+   R4-10 S   4  on M8       (1627, -3229)  J1  3313 m  tap R12094 663 m  join 664 m  other R4-23E 263 m
+   R4-24 S   4  on M8       (2536, -2297)  J1  3211 m  tap R12094 639 m  join 638 m  other R6-11E 695 m
+   R6-11 E   6  on M8       (2776, -1645)  J1  3073 m  tap T13738 309 m  join 1306 m  other R4-24S 695 m  [SLID END]
+
+BEFORE / AFTER: position of every touch on the 8-lane road (the ends on an 8-lane road were pinned in the fit, only slid ends may move)
+   R4-12 S: moved 5.1 m along J1-E
+   R4-9 S: moved 1.5 m along J1-N
+   R4-20 S: moved 1.4 m along J1-S
+   R6-15 S: moved 10.4 m along J1-W
+   R6-15 E: moved 13.5 m along M8
+   R4-6 S: moved 7.6 m along M8
+   R4-27 S: moved 20.2 m along M8
+   7 touches moved more than 1 m, largest 20.2 m, 0 touches without a before partner
+
+NODES ON THE 8-LANE ROADS: 22 distinct nodes (touches within 60 m = one node) for 11 known taps
+PROPOSAL (NOT applied, R10): move every node along its 8-lane road to the nearest known tap; slide = straight distance to that tap. A tap may take several lines (4-leg / 3-leg junction on the M8 / arm), the lines need a refit of the last 100 - 300 m (like B3).
+   R1205   slide   879 m  node (-2007, 2220) on M8     legs R4-8S  <- over 450 m: needs a NEW tap or another road
+   R12094  slide   639 m  node (2536, -2297) on M8     legs R4-24S  <- over 450 m: needs a NEW tap or another road
+   R12094  slide   663 m  node (1627, -3229) on M8     legs R4-10S  <- over 450 m: needs a NEW tap or another road
+   R12094  slide   709 m  node (1564, -2298) on J1-N   legs R4-10E  <- over 450 m: needs a NEW tap or another road
+   R12094  slide   926 m  node (1440, -3414) on M8     legs R4-23E  <- over 450 m: needs a NEW tap or another road
+   R12094  slide   960 m  node (1331, -2189) on J1-N   legs R4-26E  <- over 450 m: needs a NEW tap or another road
+   R4265   slide   416 m  node (-2140, 227) on J1-W   legs R4-29E
+   R4265   slide   690 m  node (-2523, 936) on M8     legs R4-6S  <- over 450 m: needs a NEW tap or another road
+   R4265   slide  1079 m  node (-2606, -830) on M8     legs R4-5S  <- over 450 m: needs a NEW tap or another road
+   R4265   slide  1348 m  node (-2619, -1099) on M8     legs R6-15E  <- over 450 m: needs a NEW tap or another road
+   T-E610  slide   240 m  node (860, 389) on J1-E   legs R4-13E
+   T-E610  slide   425 m  node (305, 24) on J1-E   legs R4-12S
+   T-E610  slide   880 m  node (1398, 735) on J1-E   legs R6-14E  <- over 450 m: needs a NEW tap or another road
+   T-N880  slide    49 m  node (398, -1272) on J1-N   legs R4-9S  (already at the tap)
+   T-N880  slide   858 m  node (869, -2040) on J1-N   legs R4-11S  <- over 450 m: needs a NEW tap or another road
+   T-W960  slide   123 m  node (-1073, 140) on J1-W   legs R6-15S
+   T-W960  slide   530 m  node (-568, 440) on J1-S   legs R4-20S  <- over 450 m: needs a NEW tap or another road
+   T13738  slide   309 m  node (2776, -1645) on M8     legs R6-11E
+   T18838  slide   105 m  node (530, 1874) on M8     legs R4-14E
+   T18838  slide   389 m  node (68, 2046) on M8     legs R4-20E
+   T7299   slide   292 m  node (-1547, -2463) on M8     legs R4-9E R6-9E
+   T8919   slide   932 m  node (271, -3762) on M8     legs R4-27S  <- over 450 m: needs a NEW tap or another road
+   summary: 1 nodes already at a tap, 8 within 450 m of a tap (small slide), 13 farther (new tap or another road); taps with no node: R16813
+   nodes per tap: R1205 1, R12094 5, R4265 4, T-E610 3, T-N880 2, T-W960 2, T13738 1, T18838 2, T7299 1, T8919 1
+
+SLID ENDS (21.25 / 21.38 left their tap spacing for this step): R6-15 start / end, R6-11 end, R6-12 end
+   R6-15 S on J1-W: J1 971 m, tap T-W960 123 m, join 1486 m, other touch R4-20S 587 m  ok
+   R6-15 E on M8: J1 2562 m, tap R4265 1348 m, join 1348 m, other touch R4-5S 270 m  ok
+   R6-11 E on M8: J1 3073 m, tap T13738 309 m, join 1306 m, other touch R4-24S 695 m  ok
+   not on an 8-lane road (they end on another line, R5 does not apply to them): R6-12|E
+
+CHECKS
+   PASS  R5a no R2 / C / L end on an 8-lane road: 0 found (before 0)
+   PASS  R5b nothing leaves a ring x arm join: 0 found (before 0)
+   PASS  R5c nothing within 394 m of the J1 plaza edge: 0 found (before 0)
+   PASS  R5d every R6 / R4 touch is 1600 m from tap / join / other touch: 0 conflicts (before 2)
+   PASS  every touch lies on its 8-lane road (distance under 12 m)
+   RESULT 5 PASS 0 FAIL (a FAIL here is a LIST for the user, R10: his lines come first; the script moves nothing)

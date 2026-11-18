@@ -1,0 +1,72 @@
+STEP B2b (21.42): near nodes slide onto their taps, R4-29 leaves the join by 600 m (headless; nothing in src changed; tsc / npm run build / game NOT RUN: no node_modules)
+   stays: (398, -1272) on J1-N legs R4-9S already at tap T-N880 (49 m)
+   plan: 9 line ends on 8 near nodes; far nodes left as taps of their own (B): 13
+
+   line   end node                                           slide m   turn deg  junction deg  max shift m  fall m  new X   dependents
+      R4-29 fall 150: gap 0.000 minStr 8.8 turn 0.0 ja 89.3 shift 194.0 newX C-11/R2-76 brokenDeps R2-75S/R2-76S/C-11S/C-12S/C-13S -> no
+      R4-29 fall 250: gap 0.000 minStr 8.8 turn 0.0 ja 89.3 shift 194.0 newX C-11/R2-76 brokenDeps R2-75S/R2-76S/C-11S/C-12S/C-13S -> no
+      R4-29 fall 350: gap 0.000 minStr 8.8 turn 0.0 ja 89.3 shift 194.0 newX C-11/R2-76 brokenDeps R2-75S/R2-76S/C-11S/C-12S/C-13S -> no
+      R4-29 fall 500: gap 31.482 minStr 38.0 turn 135.7 ja 45.0 shift 214.4 newX C-11/R2-76 brokenDeps R2-75S/R2-76S/C-11S/C-12S/C-13S -> no
+      R4-29 fall 700: gap 180.501 minStr -180.5 turn 169.5 ja 78.8 shift 286.2 newX C-11/R2-76 brokenDeps R2-75S/R2-76S/C-11S/C-12S/C-13S -> no
+      R4-29 fall 900: gap 360.287 minStr -323.9 turn 162.4 ja 71.7 shift 455.9 newX R2-76/R6-15 brokenDeps R2-75S/R2-76S/C-11S/C-12S/C-13S -> no
+   FAIL  R4-29 E: no refit gives a valid alignment (ladder 150 / 250 / 350 / 500 / 700 / 900 m); target -1946.22, 217.88, R5b: 610 m from the join J1-W x M8 (direction -)
+      R4-13 fall 150: gap 68.509 minStr -68.5 turn 180.0 ja 82.4 shift 240.1 newX - brokenDeps - -> no
+      R4-13 fall 250: gap 61.965 minStr -59.0 turn 147.8 ja 65.4 shift 269.1 newX - brokenDeps R2-43E -> no
+      R4-13 fall 350: gap 121.519 minStr -32.9 turn 140.9 ja 43.3 shift 235.3 newX - brokenDeps R2-43E -> no
+      R4-13 fall 500: gap 17.575 minStr -10.9 turn 153.8 ja 56.2 shift 235.3 newX - brokenDeps R2-43E -> no
+      R4-13 fall 700: gap 157.272 minStr 4.4 turn 114.5 ja 16.9 shift 235.3 newX - brokenDeps R2-43E -> no
+      R4-13 fall 900: gap 32.094 minStr 12.8 turn 158.7 ja 61.1 shift 235.3 newX - brokenDeps R2-43E -> no
+   FAIL  R4-13 E: no refit gives a valid alignment (ladder 150 / 250 / 350 / 500 / 700 / 900 m); target 654.75, 264.72, tap T-E610 (tap point 0.0 m from the road line)
+      R4-12 fall 150: gap 5362.371 minStr -3255.8 turn 0.0 ja 82.8 shift 5357.8 newX C-3/L-13/L-15/L-8/L-9/R2-12/R2-13/R2-17/R2-19/R2-62/R2-68/R2-69/R2-71/R2-72/R4-23/R6-11 brokenDeps R2-17S/R2-18S -> no
+      R4-12 fall 250: gap 4959.136 minStr -2947.3 turn 0.0 ja 82.8 shift 4954.5 newX C-3/L-10/L-15/L-9/R2-12/R2-13/R2-17/R2-19/R2-62/R2-68/R2-69/R2-71/R2-72/R4-10/R4-23/R6-11 brokenDeps R2-17S/R2-18S -> no
+      R4-12 fall 350: gap 4214.488 minStr -2423.6 turn 0.0 ja 82.8 shift 4209.6 newX L-14/R2-12/R2-13/R2-17/R2-19/R2-62/R2-68/R2-69/R2-71/R2-72/R4-10/R4-23/R4-26/R6-11 brokenDeps R2-17S/R2-18S -> no
+      R4-12 fall 500: gap 3283.203 minStr -1858.1 turn 0.0 ja 82.8 shift 3278.2 newX L-16/R2-12/R2-17/R2-19/R2-68/R2-69/R4-10/R4-23/R4-26/R6-11 brokenDeps R2-17S/R2-18S -> no
+      R4-12 fall 700: gap 2439.123 minStr -1379.4 turn 0.0 ja 82.8 shift 2434.1 newX R2-12/R2-17/R2-19/R2-68/R2-69/R4-10/R4-23/R4-26/R6-11 brokenDeps R2-17S/R2-18S -> no
+      R4-12 fall 900: gap 1908.009 minStr -1084.3 turn 0.0 ja 82.8 shift 1903.0 newX R2-12/R2-17/R2-19/R2-68/R2-69/R4-26/R6-11 brokenDeps R2-17S/R2-18S -> no
+   FAIL  R4-12 S: no refit gives a valid alignment (ladder 150 / 250 / 350 / 500 / 700 / 900 m); target 654.75, 264.72, tap T-E610 (tap point 0.0 m from the road line)
+      R6-15 fall 150: gap 23.339 minStr -23.3 turn 0.0 ja 70.6 shift 123.1 newX - brokenDeps R2-76E -> no
+      R6-15 fall 250: gap 23.339 minStr -23.3 turn 0.0 ja 70.6 shift 123.1 newX - brokenDeps R2-76E -> no
+      R6-15 fall 350: gap 580.606 minStr -301.4 turn 0.0 ja 70.6 shift 575.9 newX R4-29 brokenDeps R4-29S/R2-76E -> no
+      R6-15 fall 500: gap 265.653 minStr -138.0 turn 0.0 ja 70.6 shift 261.0 newX R4-29 brokenDeps R4-29S/R2-76E -> no
+      R6-15 fall 700: gap 109.529 minStr -54.6 turn 0.0 ja 70.6 shift 123.1 newX - brokenDeps R2-76E -> no
+      R6-15 fall 900: gap 270.329 minStr -143.3 turn 0.1 ja 70.5 shift 265.8 newX - brokenDeps R4-29S/R2-76E -> no
+   FAIL  R6-15 S: no refit gives a valid alignment (ladder 150 / 250 / 350 / 500 / 700 / 900 m); target -962.77, 86.17, tap T-W960 (tap point 0.0 m from the road line)
+      R6-11 fall 150: gap 32.296 minStr 144.5 turn 93.3 ja 2.7 shift 340.6 newX R2-19 brokenDeps R4-25S/R2-19E/R2-64E/R2-67E -> no
+      R6-11 fall 250: gap 32.296 minStr 144.5 turn 93.3 ja 2.7 shift 340.6 newX R2-19 brokenDeps R4-25S/R2-19E/R2-64E/R2-67E -> no
+      R6-11 fall 350: gap 32.296 minStr 144.5 turn 93.3 ja 2.7 shift 340.6 newX R2-19 brokenDeps R4-25S/R2-19E/R2-64E/R2-67E -> no
+      R6-11 fall 500: gap 32.296 minStr 144.5 turn 93.3 ja 2.7 shift 340.6 newX R2-19 brokenDeps R4-25S/R2-19E/R2-64E/R2-67E -> no
+      R6-11 fall 700: gap 0.000 minStr 136.5 turn 0.1 ja 84.1 shift 309.1 newX R2-19 brokenDeps R4-25S/R2-19E/R2-64E/R2-67E -> no
+      R6-11 fall 900: gap 0.000 minStr 87.5 turn 0.1 ja 84.1 shift 309.1 newX R2-19 brokenDeps R4-25S/R2-19E/R2-64E/R2-67E -> no
+   FAIL  R6-11 E: no refit gives a valid alignment (ladder 150 / 250 / 350 / 500 / 700 / 900 m); target 2878.73, -1353.63, tap T13738 (tap point 0.0 m from the road line)
+      R4-14 fall 150: gap 0.000 minStr 193.3 turn 0.1 ja 68.0 shift 95.4 newX - brokenDeps - -> ok
+   R4-14  E   (530, 1874) on M8 legs R4-14E                  104.3       0.1         68.0        95.4     150  0      R6-5S R4-13S
+      R4-20 fall 150: gap 41.629 minStr 44.7 turn 77.7 ja 31.0 shift 428.4 newX R4-14 brokenDeps - -> no
+      R4-20 fall 250: gap 41.629 minStr 44.7 turn 77.7 ja 31.0 shift 428.4 newX R4-14 brokenDeps - -> no
+      R4-20 fall 350: gap 44.455 minStr 44.8 turn 78.1 ja 30.6 shift 431.1 newX R4-14 brokenDeps - -> no
+      R4-20 fall 500: gap 0.000 minStr 61.5 turn 0.0 ja 71.2 shift 389.4 newX R4-14 brokenDeps R2-32E -> no
+      R4-20 fall 700: gap 23.036 minStr 75.2 turn 136.0 ja 64.8 shift 389.4 newX R4-14 brokenDeps R2-32E -> no
+      R4-20 fall 900: gap 44.209 minStr 83.7 turn 134.8 ja 63.5 shift 389.4 newX R4-14 brokenDeps R2-32E -> no
+   FAIL  R4-20 E: no refit gives a valid alignment (ladder 150 / 250 / 350 / 500 / 700 / 900 m); target 428.2, 1896.63, tap T18838 (tap point 0.0 m from the road line)
+      R4-9 fall 150: gap 0.000 minStr 87.9 turn 0.0 ja 83.9 shift 292.3 newX - brokenDeps R6-9E -> no
+      R4-9 fall 250: gap 0.000 minStr 87.9 turn 0.0 ja 83.9 shift 292.3 newX - brokenDeps R6-9E -> no
+      R4-9 fall 350: gap 0.000 minStr 87.9 turn 0.0 ja 83.9 shift 292.3 newX - brokenDeps R6-9E -> no
+      R4-9 fall 500: gap 0.000 minStr 87.9 turn 0.0 ja 83.9 shift 292.3 newX - brokenDeps R6-9E -> no
+      R4-9 fall 700: gap 0.000 minStr 87.9 turn 0.0 ja 83.9 shift 292.3 newX - brokenDeps R6-9E/R2-10S -> no
+      R4-9 fall 900: gap 7.267 minStr 87.9 turn 23.2 ja 60.8 shift 295.1 newX - brokenDeps R6-9E/R2-10S -> no
+   FAIL  R4-9 E: no refit gives a valid alignment (ladder 150 / 250 / 350 / 500 / 700 / 900 m); target -1812.02, -2339.95, tap T7299 (tap point 0.0 m from the road line)
+      R6-9 fall 150: gap 18.435 minStr 227.8 turn 121.9 ja 36.5 shift 292.3 newX R4-4 brokenDeps R4-4S/R4-9E -> no
+      R6-9 fall 250: gap 18.435 minStr 227.8 turn 121.9 ja 36.5 shift 292.3 newX R4-4 brokenDeps R4-4S/R4-9E -> no
+      R6-9 fall 350: gap 18.435 minStr 227.8 turn 121.9 ja 36.5 shift 292.3 newX R4-4 brokenDeps R4-4S/R4-9E -> no
+      R6-9 fall 500: gap 18.435 minStr 227.8 turn 121.9 ja 36.5 shift 292.3 newX R4-4 brokenDeps R4-4S/R4-9E -> no
+      R6-9 fall 700: gap 18.435 minStr 227.8 turn 121.9 ja 36.5 shift 292.3 newX R4-4 brokenDeps R4-4S/R4-9E -> no
+      R6-9 fall 900: gap 18.435 minStr 227.8 turn 121.9 ja 36.5 shift 292.3 newX R4-4 brokenDeps R4-4S/R4-9E -> no
+   FAIL  R6-9 E: no refit gives a valid alignment (ladder 150 / 250 / 350 / 500 / 700 / 900 m); target -1812.02, -2339.95, tap T7299 (tap point 0.0 m from the road line)
+
+CHECKS
+   FAIL  every planned slide was refitted (1 of 9)
+   PASS  R4-14 E ends on M8 at the target (tap T18838 (tap point 0.0 m from the road line))
+   nodes on the 8-lane roads after the slides: 22 (before 22); smallest spacing between two nodes 258 m (R4-10E / R4-26E)
+   PASS  smallest node spacing >= 258 m, the value that rule B takes for R4 / R6 at-grade T junctions (21.7 point 4)
+   far nodes kept as taps (rule B, 13): R4-8S(879 m from R1205), R4-24S(639 m from R12094), R4-10S(663 m from R12094), R4-10E(709 m from R12094), R4-23E(926 m from R12094), R4-26E(960 m from R12094), R4-6S(690 m from R4265), R4-5S(1079 m from R4265), R6-15E(1348 m from R4265), R6-14E(880 m from T-E610), R4-11S(858 m from T-N880), R4-20S(530 m from T-W960), R4-27S(932 m from T8919)
+   RESULT 2 PASS 9 FAIL; 1 line ends slid on 1 lines; largest slide 424.6 m
+   DRY RUN: nothing written

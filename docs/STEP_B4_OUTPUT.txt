@@ -1,0 +1,24 @@
+STEP B4 (21.44): water check on the fitted + joined lines (headless, read only; nothing in src or data changed; tsc / npm run build / game NOT RUN: no node_modules)
+   154 new lines (before file: 154)
+
+   line    class  length m   wet m before -> after   wet runs after (s from..to m, length, depth at the deepest point, kind)
+   R2-19   2         2771       60 ->    70        2260..2320 70 m d 6.2 LONG BRIDGE
+   R2-55   2         1256       20 ->    20        880..890 20 m d 2.2 SHORT BRIDGE
+   R2-68   2          182       30 ->    30        50..70 30 m d 3.9 SHORT BRIDGE
+   R2-70   2          822       50 ->    50        490..530 50 m d 5.1 SHORT BRIDGE
+   R4-20   4         1934       80 ->    80        1430..1500 80 m d 7.1 LONG BRIDGE
+   R4-23   4         1293       40 ->    30        410..430 30 m d 2.9 SHORT BRIDGE
+   R4-24   4         3018       10 ->    20        960..970 20 m d 2.3 SHORT BRIDGE
+   R4-29   4          931       20 ->    20        380..390 20 m d 2.5 SHORT BRIDGE
+   R6-10   6         1878       20 ->    20        1310..1320 20 m d 2.3 SHORT BRIDGE
+   R6-11   6         1443       60 ->    60        210..260 60 m d 6.1 SHORT BRIDGE
+   total wet: before 390 m, after 400 m, 10 lines with water after
+
+NEW WET RUNS (after, with no wet run within 60 m before):
+   none
+
+CHECKS
+   PASS  same number of new lines before / after (154 / 154)
+   PASS  no NEW wet run on the fitted lines (0 found)
+   PASS  wet length after (400 m) is not more than 60 m over before (390 m)
+   RESULT 3 PASS 0 FAIL (a FAIL here is a LIST for the user, R10: nothing is moved)

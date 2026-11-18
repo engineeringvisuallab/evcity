@@ -1,0 +1,61 @@
+STEP B3 (21.40): joint refit of the 17 lost junction nodes (headless; nothing in src changed; tsc / npm run build / game NOT RUN: no node_modules)
+   node  place              leg(end)  slide m   end tangent turn deg  dev max before -> after m   junction angle deg   gap after m
+   N004  (164.7, -1332.7)  R6-12(E)     20.5        0.4        0.9 ->   20.4       87.2 (on R4-9)   0.0
+   N011  (-3613.9, 1517.5)  R4-7(S)      12.5        5.5       16.0 ->   16.0       65.7 (on R4-6)   0.0
+   N018  (-1662.0, 4710.4)  R4-16(E)     11.1        0.3        0.0 ->   11.1       75.8 (on R4-19)   0.0
+   N023  (4265.0, -4498.4)  R2-62(E)     13.9        4.2       23.5 ->   23.5       58.5 (on R4-24)   0.0
+   N028  (333.0, -3537.9)  R4-28(S)     34.8        3.7        0.0 ->   34.8       50.4 (on R4-27)   0.0
+   N030  (-1748.9, -532.0)  R4-29(S)     13.6        2.3        9.6 ->   13.6       79.4 (on R6-15)   0.0
+   N032  (-953.7, -2268.7)  R2-10(S)     12.5        0.5        0.1 ->   12.5       77.9 (on R4-9)   0.0
+   N035  (1236.5, -2358.0)  R2-14(S)     11.6        2.7        5.2 ->   11.6       51.5 (on R2-13)   0.0
+   N036  (1316.8, -2845.4)  R2-15(S)     13.8        1.3        0.0 ->   13.8       57.0 (on R4-10)   0.0
+   N040  (1061.5, -607.4)  R2-17(S)     12.4        0.0       14.9 ->   14.9       52.1 (on R4-12)   0.0   [+PI moved, variant 1]
+   N050  (-1365.9, 4742.4)  R2-23(E)     13.5        0.4        0.1 ->   13.5       73.0 (on R4-19)   0.0
+   N070  (3691.5, 2756.1)  R2-51(E)     12.0        2.0       16.9 ->   17.1       90.0 (on R4-21)   0.0
+   N071  (4123.6, 2728.1)  R2-52(S)     12.5        2.6       15.0 ->   15.0       55.9 (on R4-21)   0.0
+   N072  (3680.2, 2106.1)  R2-52(E)     22.8       15.8       15.0 ->   17.6       60.4 (on R2-51)   0.0
+   N073  (4107.2, 2108.0)  R2-53(S)     16.9        1.1        0.1 ->   16.9       40.0 (on R2-52)   0.0
+   N120  (1860.5, -631.7)  L-27(S)      16.5        0.5        0.1 ->   16.5       84.5 (on R2-17)   0.0
+   N120  (1860.5, -631.7)  L-28(S)      16.5        0.1        0.0 ->    0.4       88.4 (on R2-17)   0.0
+   N121  (1980.9, -461.3)  L-27(E)      16.3        1.4       16.5 ->   16.5       73.3 (on R2-19)   0.0
+
+CHECK: gap of the moved end to its through line (or to the kept end) must be < 0.05 m, and every old node place has all its legs within NODE_TOL of it
+   PASS  N004: distance of each leg line to the old node place 1.2 / 20.5 m (info; the real node test is the run of centre-vprofile.ts)
+   PASS  N011: distance of each leg line to the old node place 5.6 / 13.8 m (info; the real node test is the run of centre-vprofile.ts)
+   PASS  N018: distance of each leg line to the old node place 2.4 / 12.0 m (info; the real node test is the run of centre-vprofile.ts)
+   PASS  N023: distance of each leg line to the old node place 0.2 / 0.4 m (info; the real node test is the run of centre-vprofile.ts)
+   PASS  N028: distance of each leg line to the old node place 22.2 / 34.8 m (info; the real node test is the run of centre-vprofile.ts)
+   PASS  N030: distance of each leg line to the old node place 2.8 / 13.7 m (info; the real node test is the run of centre-vprofile.ts)
+   PASS  N032: distance of each leg line to the old node place 2.6 / 12.5 m (info; the real node test is the run of centre-vprofile.ts)
+   PASS  N035: distance of each leg line to the old node place 7.8 / 11.6 m (info; the real node test is the run of centre-vprofile.ts)
+   PASS  N036: distance of each leg line to the old node place 7.5 / 13.8 m (info; the real node test is the run of centre-vprofile.ts)
+   PASS  N040: distance of each leg line to the old node place 7.9 / 13.4 m (info; the real node test is the run of centre-vprofile.ts)
+   PASS  N050: distance of each leg line to the old node place 3.9 / 13.5 m (info; the real node test is the run of centre-vprofile.ts)
+   PASS  N070: distance of each leg line to the old node place 0.3 / 12.4 m (info; the real node test is the run of centre-vprofile.ts)
+   PASS  N071: distance of each leg line to the old node place 7.2 / 13.3 m (info; the real node test is the run of centre-vprofile.ts)
+   PASS  N072: distance of each leg line to the old node place 7.4 / 17.6 m (info; the real node test is the run of centre-vprofile.ts)
+   PASS  N073: distance of each leg line to the old node place 11.8 / 16.8 m (info; the real node test is the run of centre-vprofile.ts)
+   PASS  N120: distance of each leg line to the old node place 1.2 / 16.5 / 16.5 m (info; the real node test is the run of centre-vprofile.ts)
+   PASS  N121: distance of each leg line to the old node place 4.7 / 14.7 m (info; the real node test is the run of centre-vprofile.ts)
+   PASS  N004 R6-12 E lies on R4-9
+   PASS  N011 R4-7 S lies on R4-6
+   PASS  N018 R4-16 E lies on R4-19
+   PASS  N023 R2-62 E lies on R4-24
+   PASS  N028 R4-28 S lies on R4-27
+   PASS  N030 R4-29 S lies on R6-15
+   PASS  N032 R2-10 S lies on R4-9
+   PASS  N035 R2-14 S lies on R2-13
+   PASS  N036 R2-15 S lies on R4-10
+   PASS  N040 R2-17 S lies on R4-12
+   PASS  N050 R2-23 E lies on R4-19
+   PASS  N070 R2-51 E lies on R4-21
+   PASS  N071 R2-52 S lies on R4-21
+   PASS  N072 R2-52 E lies on R2-51
+   PASS  N073 R2-53 S lies on R2-52
+   PASS  N120 L-27 S lies on R2-17
+   PASS  N120 L-28 S lies on R2-17
+   PASS  N121 L-27 E lies on R2-19
+   PASS  every planned move was built (18 of 18)
+   PASS  every planned move was applied (16 lines changed)
+   RESULT 37 PASS 0 FAIL; 18 ends moved on 16 lines; largest slide 34.8 m
+   written: docs/centre_fit_<cls>.json (S / E of the moved ends); old files in docs/fit_chain/before_b3/
