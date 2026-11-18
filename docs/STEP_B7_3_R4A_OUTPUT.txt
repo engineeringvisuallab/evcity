@@ -1,125 +1,232 @@
-STEP B7-3 batches R4-a + R4-b: export of 21 R4 lines as game data (headless; the game is changed only by the registration in RoadNetwork + Config switch)
-   line    length m  points  y start  y end   max grade %  min / max level m  PVIs  curves
+STEP B7-6 batch L-a + L-b: export of the L lines as game data (headless; the game is changed only by the registration in RoadNetwork + Config switch)
+   line      length m  points  y start  y end   max grade %  min / max level m  PVIs  curves
    PASS  R4-1 is a new, not dropped, class 4 line
-   R4-1      1593.2     161    55.77  106.13        6.06      55.8 / 106.1   6     4
    PASS  R4-1 max PVI tangent grade 6.00 % <= 6 %
+   PASS  R4-1 last PVI station 1594.2 m = line length 1593.2 m (tolerance 2.4 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-1        1593.2     161    55.77  106.13        6.06      55.8 / 106.1   6     4
    PASS  R4-1 max sampled grade 6.06 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
-   PASS  R4-1 last PVI station 1594.2 m = line length 1593.2 m
-   PASS  R4-1 end levels = PVI end levels
+   PASS  R4-1 start level = PVI start level
+   PASS  R4-1 end level = PVI end level
    PASS  R4-2 is a new, not dropped, class 4 line
-   R4-2      1087.7     110    55.77   95.86        6.06      55.8 / 98.1   4     2
    PASS  R4-2 max PVI tangent grade 5.99 % <= 6 %
+   PASS  R4-2 last PVI station 1088.3 m = line length 1087.7 m (tolerance 1.6 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-2        1087.7     110    55.77   95.86        6.06      55.8 / 98.1   4     2
    PASS  R4-2 max sampled grade 6.06 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
-   PASS  R4-2 last PVI station 1088.3 m = line length 1087.7 m
-   PASS  R4-2 end levels = PVI end levels
+   PASS  R4-2 start level = PVI start level
+   PASS  R4-2 end level = PVI end level
    PASS  R4-3 is a new, not dropped, class 4 line
-   R4-3       198.9      21    35.93   30.40        6.05      30.4 / 35.9   3     1
    PASS  R4-3 max PVI tangent grade 5.96 % <= 6 %
+   PASS  R4-3 last PVI station 199.4 m = line length 198.9 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-3         198.9      21    35.93   30.40        6.05      30.4 / 35.9   3     1
    PASS  R4-3 max sampled grade 6.05 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
-   PASS  R4-3 last PVI station 199.4 m = line length 198.9 m
-   PASS  R4-3 end levels = PVI end levels
+   PASS  R4-3 start level = PVI start level
+   PASS  R4-3 end level = PVI end level
    PASS  R4-4 is a new, not dropped, class 4 line
-   R4-4       243.4      26    18.97   18.50        0.93      18.3 / 19.0   6     4
    PASS  R4-4 max PVI tangent grade 0.89 % <= 6 %
+   PASS  R4-4 last PVI station 244.1 m = line length 243.4 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-4         243.4      26    18.97   18.50        0.93      18.3 / 19.0   6     4
    PASS  R4-4 max sampled grade 0.93 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
-   PASS  R4-4 last PVI station 244.1 m = line length 243.4 m
-   PASS  R4-4 end levels = PVI end levels
+   PASS  R4-4 start level = PVI start level
+   PASS  R4-4 end level = PVI end level
    PASS  R4-5 is a new, not dropped, class 4 line
-   R4-5       642.1      66    24.24   50.40        6.11      24.2 / 50.4   5     3
    PASS  R4-5 max PVI tangent grade 5.98 % <= 6 %
+   PASS  R4-5 last PVI station 643.3 m = line length 642.1 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-5         642.1      66    24.24   50.40        6.11      24.2 / 50.4   5     3
    PASS  R4-5 max sampled grade 6.11 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
-   PASS  R4-5 last PVI station 643.3 m = line length 642.1 m
-   PASS  R4-5 end levels = PVI end levels
+   PASS  R4-5 start level = PVI start level
+   PASS  R4-5 end level = PVI end level
    PASS  R4-6 is a new, not dropped, class 4 line
-   R4-6      1790.1     181    20.07   60.92        5.75      18.1 / 60.9   6     4
    PASS  R4-6 max PVI tangent grade 5.67 % <= 6 %
+   PASS  R4-6 last PVI station 1791.3 m = line length 1790.1 m (tolerance 2.7 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-6        1790.1     181    20.07   60.92        5.75      18.1 / 60.9   6     4
    PASS  R4-6 max sampled grade 5.75 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
-   PASS  R4-6 last PVI station 1791.3 m = line length 1790.1 m
-   PASS  R4-6 end levels = PVI end levels
+   PASS  R4-6 start level = PVI start level
+   PASS  R4-6 end level = PVI end level
    PASS  R4-7 is a new, not dropped, class 4 line
-   R4-7      1540.1     156    33.57   21.70        5.35      21.7 / 56.8   6     4
    PASS  R4-7 max PVI tangent grade 5.33 % <= 6 %
+   PASS  R4-7 last PVI station 1540.4 m = line length 1540.1 m (tolerance 2.3 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-7        1540.1     156    33.57   21.70        5.35      21.7 / 56.8   6     4
    PASS  R4-7 max sampled grade 5.35 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
-   PASS  R4-7 last PVI station 1540.4 m = line length 1540.1 m
-   PASS  R4-7 end levels = PVI end levels
+   PASS  R4-7 start level = PVI start level
+   PASS  R4-7 end level = PVI end level
    PASS  R4-8 is a new, not dropped, class 4 line
-   R4-8      1147.3     116    33.60   33.03        5.85      33.0 / 53.5   6     4
    PASS  R4-8 max PVI tangent grade 5.83 % <= 6 %
+   PASS  R4-8 last PVI station 1148.3 m = line length 1147.3 m (tolerance 1.7 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-8        1147.3     116    33.60   33.03        5.85      33.0 / 53.5   6     4
    PASS  R4-8 max sampled grade 5.85 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
-   PASS  R4-8 last PVI station 1148.3 m = line length 1147.3 m
-   PASS  R4-8 end levels = PVI end levels
+   PASS  R4-8 start level = PVI start level
+   PASS  R4-8 end level = PVI end level
    PASS  R4-10 is a new, not dropped, class 4 line
-   R4-10     1115.3     113    35.94   35.30        5.29      22.5 / 36.9   9     7
    PASS  R4-10 max PVI tangent grade 5.23 % <= 6 %
+   PASS  R4-10 last PVI station 1116.6 m = line length 1115.3 m (tolerance 1.7 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-10       1115.3     113    35.94   35.30        5.29      22.5 / 36.9   9     7
    PASS  R4-10 max sampled grade 5.29 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
-   PASS  R4-10 last PVI station 1116.6 m = line length 1115.3 m
-   PASS  R4-10 end levels = PVI end levels
+   PASS  R4-10 start level = PVI start level
+   PASS  R4-10 end level = PVI end level
    PASS  R4-11 is a new, not dropped, class 4 line
-   R4-11      215.6      23    38.56   29.47        6.02      29.5 / 38.6   3     1
    PASS  R4-11 max PVI tangent grade 5.96 % <= 6 %
+   PASS  R4-11 last PVI station 215.7 m = line length 215.6 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-11        215.6      23    38.56   29.47        6.02      29.5 / 38.6   3     1
    PASS  R4-11 max sampled grade 6.02 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
-   PASS  R4-11 last PVI station 215.7 m = line length 215.6 m
-   PASS  R4-11 end levels = PVI end levels
+   PASS  R4-11 start level = PVI start level
+   PASS  R4-11 end level = PVI end level
    PASS  R4-14 is a new, not dropped, class 4 line
-   R4-14      760.0      77    31.99   38.33        4.00      23.6 / 38.3   5     3
    PASS  R4-14 max PVI tangent grade 3.94 % <= 6 %
+   PASS  R4-14 last PVI station 760.1 m = line length 760.0 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-14        760.0      77    31.99   38.33        4.00      23.6 / 38.3   5     3
    PASS  R4-14 max sampled grade 4.00 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
-   PASS  R4-14 last PVI station 760.1 m = line length 760.0 m
-   PASS  R4-14 end levels = PVI end levels
+   PASS  R4-14 start level = PVI start level
+   PASS  R4-14 end level = PVI end level
    PASS  R4-15 is a new, not dropped, class 4 line
-   R4-15      524.5      54    25.65    8.48        5.85      8.5 / 25.6   6     4
    PASS  R4-15 max PVI tangent grade 5.78 % <= 6 %
+   PASS  R4-15 last PVI station 524.8 m = line length 524.5 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-15        524.5      54    25.65    8.48        5.85      8.5 / 25.6   6     4
    PASS  R4-15 max sampled grade 5.85 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
-   PASS  R4-15 last PVI station 524.8 m = line length 524.5 m
-   PASS  R4-15 end levels = PVI end levels
+   PASS  R4-15 start level = PVI start level
+   PASS  R4-15 end level = PVI end level
    PASS  R4-16 is a new, not dropped, class 4 line
-   R4-16      692.3      71    24.00    2.00        5.20      2.0 / 25.3   4     2
    PASS  R4-16 max PVI tangent grade 5.07 % <= 6 %
+   PASS  R4-16 last PVI station 692.6 m = line length 692.3 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-16        692.3      71    24.00    2.00        5.20      2.0 / 25.3   4     2
    PASS  R4-16 max sampled grade 5.20 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
-   PASS  R4-16 last PVI station 692.6 m = line length 692.3 m
-   PASS  R4-16 end levels = PVI end levels
+   PASS  R4-16 start level = PVI start level
+   PASS  R4-16 end level = PVI end level
    PASS  R4-17 is a new, not dropped, class 4 line
-   R4-17      589.3      60    24.00    5.08        5.14      5.1 / 26.4   4     2
    PASS  R4-17 max PVI tangent grade 5.07 % <= 6 %
+   PASS  R4-17 last PVI station 590.4 m = line length 589.3 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-17        589.3      60    24.00    5.08        5.14      5.1 / 26.4   4     2
    PASS  R4-17 max sampled grade 5.14 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
-   PASS  R4-17 last PVI station 590.4 m = line length 589.3 m
-   PASS  R4-17 end levels = PVI end levels
+   PASS  R4-17 start level = PVI start level
+   PASS  R4-17 end level = PVI end level
    PASS  R4-18 is a new, not dropped, class 4 line
-   R4-18     1116.5     113     5.08    8.30        5.10      1.3 / 8.3   11     9
    PASS  R4-18 max PVI tangent grade 5.33 % <= 6 %
+   PASS  R4-18 last PVI station 1117.4 m = line length 1116.5 m (tolerance 1.7 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-18       1116.5     113     5.08    8.30        5.10      1.3 / 8.3   11     9
    PASS  R4-18 max sampled grade 5.10 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
-   PASS  R4-18 last PVI station 1117.4 m = line length 1116.5 m
-   PASS  R4-18 end levels = PVI end levels
+   PASS  R4-18 start level = PVI start level
+   PASS  R4-18 end level = PVI end level
    PASS  R4-22 is a new, not dropped, class 4 line
-   R4-22      675.0      69    22.12   33.00        5.99      22.1 / 37.4   6     4
    PASS  R4-22 max PVI tangent grade 5.98 % <= 6 %
+   PASS  R4-22 last PVI station 675.6 m = line length 675.0 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-22        675.0      69    22.12   33.00        5.99      22.1 / 37.4   6     4
    PASS  R4-22 max sampled grade 5.99 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
-   PASS  R4-22 last PVI station 675.6 m = line length 675.0 m
-   PASS  R4-22 end levels = PVI end levels
+   PASS  R4-22 start level = PVI start level
+   PASS  R4-22 end level = PVI end level
    PASS  R4-25 is a new, not dropped, class 4 line
-   R4-25      554.0      57    26.52   33.25        5.55      26.5 / 38.6   5     3
    PASS  R4-25 max PVI tangent grade 5.49 % <= 6 %
+   PASS  R4-25 last PVI station 554.6 m = line length 554.0 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-25        554.0      57    26.52   33.25        5.55      26.5 / 38.6   5     3
    PASS  R4-25 max sampled grade 5.55 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
-   PASS  R4-25 last PVI station 554.6 m = line length 554.0 m
-   PASS  R4-25 end levels = PVI end levels
+   PASS  R4-25 start level = PVI start level
+   PASS  R4-25 end level = PVI end level
    PASS  R4-26 is a new, not dropped, class 4 line
-   R4-26      435.7      45    32.25   33.09        3.03      30.9 / 33.1   4     2
    PASS  R4-26 max PVI tangent grade 2.94 % <= 6 %
+   PASS  R4-26 last PVI station 436.2 m = line length 435.7 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-26        435.7      45    32.25   33.09        3.03      30.9 / 33.1   4     2
    PASS  R4-26 max sampled grade 3.03 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
-   PASS  R4-26 last PVI station 436.2 m = line length 435.7 m
-   PASS  R4-26 end levels = PVI end levels
+   PASS  R4-26 start level = PVI start level
+   PASS  R4-26 end level = PVI end level
    PASS  R4-27 is a new, not dropped, class 4 line
-   R4-27      596.3      61    23.54   20.25        3.13      19.7 / 23.5   8     6
    PASS  R4-27 max PVI tangent grade 3.10 % <= 6 %
+   PASS  R4-27 last PVI station 596.8 m = line length 596.3 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-27        596.3      61    23.54   20.25        3.13      19.7 / 23.5   8     6
    PASS  R4-27 max sampled grade 3.13 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
-   PASS  R4-27 last PVI station 596.8 m = line length 596.3 m
-   PASS  R4-27 end levels = PVI end levels
+   PASS  R4-27 start level = PVI start level
+   PASS  R4-27 end level = PVI end level
    PASS  R4-28 is a new, not dropped, class 4 line
-   R4-28      373.3      39    20.00   20.00        0.92      19.6 / 20.6   5     3
    PASS  R4-28 max PVI tangent grade 0.88 % <= 6 %
+   PASS  R4-28 last PVI station 374.1 m = line length 373.3 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-28        373.3      39    20.00   20.00        0.92      19.6 / 20.6   5     3
    PASS  R4-28 max sampled grade 0.92 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
-   PASS  R4-28 last PVI station 374.1 m = line length 373.3 m
-   PASS  R4-28 end levels = PVI end levels
-   total length of the batch 15890.4 m
-   NOT in this file: structures (none in this batch: no wet run, no viaduct / tunnel candidate; checked again in scripts/b7-r4new-check.ts on the game terrain).
-   RESULT 100 PASS 0 FAIL
+   PASS  R4-28 start level = PVI start level
+   PASS  R4-28 end level = PVI end level
+   PASS  R4-9 is a new, not dropped, class 4 line
+   PASS  R4-9 max PVI tangent grade 5.59 % <= 6 %
+   PASS  R4-9 last PVI station 2941.4 m = line length 2938.9 m (tolerance 4.4 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-9        2938.9     295    44.47   28.42        5.65      28.4 / 84.5   8     6
+   PASS  R4-9 max sampled grade 5.65 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  R4-9 start level = PVI start level
+   PASS  R4-9 end level = PVI end level
+   R4-9      bridge ranges [[2688,2938.9]]
+   PASS  R4-12 is a new, not dropped, class 4 line
+   PASS  R4-12 max PVI tangent grade 5.96 % <= 6 %
+   PASS  R4-12 last PVI station 1780.7 m = line length 1779.2 m (tolerance 2.7 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-12       1779.2     179    22.66   28.02        6.06      17.5 / 36.9   10     8
+   PASS  R4-12 max sampled grade 6.06 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  R4-12 start level = PVI start level
+   PASS  R4-12 end level = PVI end level
+   PASS  R4-13 is a new, not dropped, class 4 line
+   PASS  R4-13 max PVI tangent grade 5.28 % <= 6 %
+   PASS  R4-13 last PVI station 984.5 m = line length 983.7 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-13        983.7     100    31.99   32.12        5.15      19.8 / 32.1   9     7
+   PASS  R4-13 max sampled grade 5.15 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  R4-13 start level = PVI start level
+   PASS  R4-13 end level = PVI end level
+   PASS  R4-19 is a new, not dropped, class 4 line
+   PASS  R4-19 max PVI tangent grade 5.55 % <= 6 %
+   PASS  R4-19 last PVI station 3230.3 m = line length 3228.0 m (tolerance 4.8 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-19       3228.0     324     8.30    5.08        5.40      -0.7 / 9.1   23     21
+   PASS  R4-19 max sampled grade 5.40 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  R4-19 start level = PVI start level
+   PASS  R4-19 end level = PVI end level
+   R4-19     bridge ranges [[417,581]]
+   PASS  R4-20 is a new, not dropped, class 4 line
+   PASS  R4-20 max PVI tangent grade 5.48 % <= 6 %
+   PASS  R4-20 last PVI station 1935.0 m = line length 1933.5 m (tolerance 2.9 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-20       1933.5     195    21.98   24.46        5.35      15.4 / 24.5   14     12
+   PASS  R4-20 max sampled grade 5.35 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  R4-20 start level = PVI start level
+   PASS  R4-20 end level = PVI end level
+   R4-20     bridge ranges [[1426,1506]]
+   PASS  R4-21 is a new, not dropped, class 4 line
+   PASS  R4-21 max PVI tangent grade 5.19 % <= 6 %
+   PASS  R4-21 last PVI station 3057.3 m = line length 3056.0 m (tolerance 4.6 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-21       3056.0     307    41.90   25.52        5.25      16.3 / 44.2   13     11
+   PASS  R4-21 max sampled grade 5.25 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  R4-21 start level = PVI start level
+   PASS  R4-21 end level = PVI end level
+   R4-21     bridge ranges [[355,885]]
+   PASS  R4-23 is a new, not dropped, class 4 line
+   PASS  R4-23 max PVI tangent grade 5.37 % <= 6 %
+   PASS  R4-23 last PVI station 1293.9 m = line length 1292.6 m (tolerance 1.9 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-23       1292.6     131    39.20   32.75        5.45      27.2 / 40.9   7     5
+   PASS  R4-23 max sampled grade 5.45 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  R4-23 start level = PVI start level
+   PASS  R4-23 end level = PVI end level
+   R4-23     bridge ranges [[380,460]]
+   PASS  R4-24 is a new, not dropped, class 4 line
+   PASS  R4-24 max PVI tangent grade 6.00 % <= 6 %
+   PASS  R4-24 last PVI station 3020.0 m = line length 3017.8 m (tolerance 4.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-24       3017.8     303    70.50  109.07        6.06      70.5 / 127.9   9     7
+   PASS  R4-24 max sampled grade 6.06 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  R4-24 start level = PVI start level
+   PASS  R4-24 end level = PVI end level
+   R4-24     bridge ranges [[0,586],[930,995],[2858,3017.8]]
+   PASS  R4-29 is a new, not dropped, class 4 line
+   PASS  R4-29 max PVI tangent grade 2.54 % <= 6 %
+   PASS  R4-29 last PVI station 931.1 m = line length 931.4 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   R4-29        931.4      95    27.19   25.20        2.63      22.5 / 27.2   6     4
+   PASS  R4-29 max sampled grade 2.63 % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  R4-29 start level = PVI start level
+   PASS  R4-29 end level = PVI end level
+   R4-29     bridge ranges [[355,420]]
+   TUNNEL / DEEP-CUT CANDIDATES (placed as open cut, the USER decides, R12): 16
+     R4-2 cut-and-cover tunnel 244-486 m (max 20.4 m)
+     R4-5 cut-and-cover tunnel 615-646 m (max 22.2 m)
+     R4-9 deep open cut with walls 156-255 m (max 18.3 m)
+     R4-9 cut-and-cover tunnel 346-405 m (max 20.7 m)
+     R4-9 deep open cut with walls 676-736 m (max 17.1 m)
+     R4-9 deep open cut with walls 756-786 m (max 14.9 m)
+     R4-9 deep open cut with walls 796-806 m (max 12.2 m)
+     R4-9 cut-and-cover tunnel 1386-1606 m (max 18 m)
+     R4-9 deep open cut with walls 1856-1866 m (max 12.6 m)
+     R4-9 deep open cut with walls 2007-2017 m (max 12.5 m)
+     R4-9 deep open cut with walls 2057-2136 m (max 17.1 m)
+     R4-9 cut-and-cover tunnel 2197-2597 m (max 34.9 m)
+     R4-12 deep open cut with walls 1447-1467 m (max 12.3 m)
+     R4-24 cut-and-cover tunnel 686-826 m (max 26.5 m)
+     R4-24 deep open cut with walls 1086-1106 m (max 13.4 m)
+     R4-24 cut-and-cover tunnel 2497-2817 m (max 55.7 m)
+   total length of the batch 35051.5 m
+   NOT in this file: structures (no wet run; L-1 / L-2 / retaining wall entries of 25 / 55 m are walls, not bridges; checked again in scripts/b7-lnew-check.ts on the game terrain).
+   RESULT 174 PASS 0 FAIL

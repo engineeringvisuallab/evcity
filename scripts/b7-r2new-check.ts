@@ -4,10 +4,11 @@
 // Run: npx tsx scripts/b7-r2new-check.ts
 import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
 import { Config } from '../src/core/Config';
+import { R2_NEW_LINE_DATA } from '../src/roads/r2/R2NewLineData';
 Config.roads.r2New.enabled = true;
 const gen: any = new TerrainGenerator(Config.world.seed);
 const roads = gen.roads.roads;
-const names = ['R2-12', 'R2-13', 'R2-14', 'R2-15', 'R2-16', 'R2-17', 'R2-18', 'R2-44', 'R2-63', 'R2-65', 'R2-21', 'R2-22', 'R2-23', 'R2-24', 'R2-25', 'R2-26', 'R2-27', 'R2-28', 'R2-29', 'R2-30', 'R2-31', 'R2-32', 'R2-38', 'R2-39', 'R2-41', 'R2-46', 'R2-48', 'R2-49', 'R2-50', 'R2-66', 'R2-20', 'R2-34.1', 'R2-34.2', 'R2-34.3', 'R2-34.4', 'R2-35.1', 'R2-35.2', 'R2-36.1', 'R2-36.2', 'R2-37.1', 'R2-37.2', 'R2-40.1', 'R2-40.2', 'R2-42.1', 'R2-42.2', 'R2-45', 'R2-69', 'R2-75', 'R2-77'];
+const names: string[] = R2_NEW_LINE_DATA.map((d) => d.name);   // every game road of the data file (21.72: all lines placed)
 let fails = 0;
 const chk = (ok: boolean, t: string): void => { if (!ok) fails++; console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${t}`); };
 const seg = (ax: number, az: number, bx: number, bz: number, cx: number, cz: number, dx: number, dz: number): boolean => {
@@ -17,16 +18,16 @@ const seg = (ax: number, az: number, bx: number, bz: number, cx: number, cz: num
 };
 const sc = gen.makeSample();
 console.log('1. WATER (first): natural ground wet under the centreline (sc.water > sc.h) and finished level vs water');
-let wetTotal = 0;
+let wetTotal = 0, wetBrTotal = 0;
 for (const nm of names) {
   const r = roads.find((q: any) => q.name === nm);
   if (!r) { chk(false, `${nm} exists`); continue; }
-  let wet = 0, low = 0;
-  for (let i = 0; i < r.xs.length; i++) { gen.sample(r.xs[i], r.zs[i], sc); if (!Number.isNaN(sc.water) && sc.water > sc.h) { wet++; if (r.ys[i] < sc.water + 1.5) low++; } }
-  wetTotal += wet;
-  console.log(`   ${nm.padEnd(6)} wet points ${wet} of ${r.xs.length}, of them finished level < water + 1.5 m: ${low}`);
+  let wet = 0, low = 0, wetBr = 0;
+  for (let i = 0; i < r.xs.length; i++) { gen.sample(r.xs[i], r.zs[i], sc); if (!Number.isNaN(sc.water) && sc.water > sc.h) { if (r.bridgeOf[i] >= 0) wetBr++; else { wet++; if (r.ys[i] < sc.water + 1.5) low++; } } }
+  wetTotal += wet; wetBrTotal += wetBr;
+  console.log(`   ${nm.padEnd(6)} wet points NOT on a bridge ${wet}, on a bridge deck ${wetBr}, of ${r.xs.length}, of them finished level < water + 1.5 m: ${low}`);
 }
-chk(wetTotal === 0, `no wet point on any line of the batch (${wetTotal})`);
+chk(wetTotal === 0, `no wet point outside a bridge deck (${wetTotal}; ${wetBrTotal} wet points lie on bridge decks)`);
 console.log('2. ROAD DATA');
 console.log('line    pts  length  y0->y1 (m)   maxGrade%  maxCut  maxFill  bridge pts  crosses');
 let pads = 0;

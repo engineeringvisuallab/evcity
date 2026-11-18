@@ -1,4 +1,4 @@
-STEP B7-5 batch C-a: export of the C lines as game data (headless; the game is changed only by the registration in RoadNetwork + Config switch)
+STEP B7-6 batch L-a + L-b: export of the L lines as game data (headless; the game is changed only by the registration in RoadNetwork + Config switch)
    line      length m  points  y start  y end   max grade %  min / max level m  PVIs  curves
    PASS  C-2 is a new, not dropped, class C line
    PASS  C-2 max PVI tangent grade 7.21 % <= 8 %
@@ -90,6 +90,16 @@ STEP B7-5 batch C-a: export of the C lines as game data (headless; the game is c
    PASS  C-13 max sampled grade 2.99 % <= 8 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
    PASS  C-13 start level = PVI start level
    PASS  C-13 end level = PVI end level
-   total length of the batch 3444.0 m
-   NOT in this file: structures (no wet run; C-2 retaining wall 11 m is a wall, not a bridge; checked again in scripts/b7-cnew-check.ts on the game terrain).
-   RESULT 76 PASS 0 FAIL
+   PASS  C-1 is a new, not dropped, class C line
+   PASS  C-1 max PVI tangent grade 5.19 % <= 8 %
+   PASS  C-1 last PVI station 326.1 m = line length 326.0 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   C-1          326.0      34    42.01   49.95        5.25      41.3 / 50.0   4     2
+   PASS  C-1 max sampled grade 5.25 % <= 8 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  C-1 start level = PVI start level
+   PASS  C-1 end level = PVI end level
+   C-1       bridge ranges [[0,115]]
+   TUNNEL / DEEP-CUT CANDIDATES (placed as open cut, the USER decides, R12): 1
+     C-1 cut-and-cover tunnel 295-329 m (max 22.3 m)
+   total length of the batch 3770.1 m
+   NOT in this file: structures (no wet run; L-1 / L-2 / retaining wall entries of 25 / 55 m are walls, not bridges; checked again in scripts/b7-lnew-check.ts on the game terrain).
+   RESULT 82 PASS 0 FAIL
