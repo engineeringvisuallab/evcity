@@ -694,7 +694,7 @@ export class VehicleModel {
     this.loft(SEDAN_LOWER, paint, 0);
     this.loft(SEDAN_CABIN, glass, 4);
     // roof: a 10 cm thick hat over the top of the glass (a little wider than the glass = roof edge), with the header rails
-    const roof: Section[] = [-1.12, -0.9, -0.7, -0.1, 0.3, 0.55].map((z) => {
+    const roof: Section[] = [-1.12, -0.9, -0.7, -0.1, 0.3, 0.34].map((z) => {
       const g = sectionAt(SEDAN_CABIN, z);
       const ht = g.ht + 0.008;
       return { z, w: g.w + 0.006, hb: ht - 0.1, ht, r: g.r, rb: 0.01 };
@@ -971,7 +971,7 @@ export class VehicleModel {
     // ---- shell: lower body, glass canopy, carbon roof, bonnet ----
     this.loft(HYPER_LOWER, paint, 0);
     this.loft(HYPER_CABIN, glass, 4);
-    const roof: Section[] = [-1.0, -0.5, 0.1, 0.55].map((z) => {
+    const roof: Section[] = [-1.0, -0.5, 0.1, 0.17].map((z) => {
       const g = sectionAt(HYPER_CABIN, z);
       const ht = g.ht + 0.008;
       return { z, w: g.w * 0.62, hb: ht - 0.06, ht, r: 0.12, rb: 0.01 };
@@ -1192,7 +1192,7 @@ export class VehicleModel {
     // ---- shell, canopy, roof, bonnet ----
     this.loft(SUP_SHELL, paint, 0);
     this.loft(SUP_CABIN, glass, 4);
-    const roof: Section[] = [-1.0, -0.5, 0.2, 0.7].map((z) => {
+    const roof: Section[] = [-1.0, -0.5, 0.2, 0.27].map((z) => {
       const gl = sectionAt(SUP_CABIN, z);
       return { z, w: gl.w * 0.55, hb: gl.ht - 0.12, ht: gl.ht + 0.03, r: 0.1, rb: 0.01 };
     });

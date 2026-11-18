@@ -309,6 +309,8 @@ export class Cockpit {
   private readonly gy: number;
   private spin: THREE.Group;
   private wipers: { g: THREE.Group; ph: number }[] = [];
+  /** Parent of the wipers: shown only while they work (parked wipers were black lines across the bottom of the windscreen). */
+  private wiperFrame: THREE.Group | null = null;
   private wipePhase = 0;
   private wipeAmt = 0;
   private clusterCtx: CanvasRenderingContext2D;
@@ -526,30 +528,20 @@ export class Cockpit {
     const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(X, Y, Z));
     const centre = new THREE.Vector3(0, this.gy + (gl.hTop + gl.hBase) / 2, (gl.zTop + gl.zBase) / 2).addScaledVector(Z, -0.012);
 
-    // sun band + frit border drawn on the glass
+    // sun band only: a soft blue-green tint at the top of the glass that fades to fully clear (no black border, no dots, no hard edge:
+    // from the driver's seat the real windscreen looks clear; the dotted frit of a real car is too fine to see and turned into big black dots here)
     const cv = document.createElement('canvas');
-    cv.width = 256;
+    cv.width = 4;
     cv.height = 128;
     const c = cv.getContext('2d')!;
     const grad = c.createLinearGradient(0, 0, 0, 128);
-    grad.addColorStop(0, 'rgba(8,40,62,0.7)');
-    grad.addColorStop(0.2, 'rgba(8,40,62,0.35)');
-    grad.addColorStop(0.34, 'rgba(8,40,62,0)');
+    grad.addColorStop(0, 'rgba(10,52,78,0.42)');
+    grad.addColorStop(0.12, 'rgba(10,52,78,0.26)');
+    grad.addColorStop(0.3, 'rgba(10,52,78,0.08)');
+    grad.addColorStop(0.45, 'rgba(10,52,78,0)');
+    grad.addColorStop(1, 'rgba(10,52,78,0)');
     c.fillStyle = grad;
-    c.fillRect(0, 0, 256, 128);
-    c.fillStyle = 'rgba(2,3,4,0.95)'; // frit border: solid black edge fading into dots
-    c.fillRect(0, 0, 256, 5);
-    c.fillRect(0, 0, 6, 128);
-    c.fillRect(250, 0, 6, 128);
-    c.fillRect(0, 123, 256, 5);
-    c.fillStyle = 'rgba(2,3,4,0.7)';
-    for (let i = 0; i < 256; i += 4) {
-      for (let k = 0; k < 4; k++) {
-        c.fillRect(i, 5 + k * 3, 2, 2);
-        c.fillRect(6 + k * 3, i % 128, 2, 2);
-        c.fillRect(250 - 3 - k * 3, i % 128, 2, 2);
-      }
-    }
+    c.fillRect(0, 0, 4, 128);
     const tex = new THREE.CanvasTexture(cv);
     tex.colorSpace = THREE.SRGBColorSpace;
     this.textures.push(tex);
@@ -579,6 +571,8 @@ export class Cockpit {
       frame.add(g);
       this.wipers.push({ g, ph: 0 });
     }
+    frame.visible = false;
+    this.wiperFrame = frame;
     this.group.add(frame);
   }
 
@@ -588,16 +582,20 @@ export class Cockpit {
   private buildLiner(l: NonNullable<CockpitDef['liner']>): void {
     const m = this.kit.cabin(l.color ?? 0xb9b4a8);
     const sb = new Batch();
-    const len = l.z1 - l.z0;
-    sb.add(new THREE.BoxGeometry(l.half * 2, 0.012, len), m, 0, this.gy + l.h, (l.z0 + l.z1) / 2);
-    if (l.drop) {
-      const [dz, dh] = l.drop;
-      const sl = Math.hypot(dz, dh);
-      sb.add(new THREE.BoxGeometry(l.half * 2, 0.012, sl), m, 0, this.gy + l.h - dh / 2, l.z1 + dz / 2, -Math.atan2(-dh, dz));
+    // The ceiling ends where its height meets the inside of the windscreen (it never hangs in front of the glass, never drops below the header).
+    const g = this.d.glass;
+    let zEnd = l.z1 + (l.drop ? l.drop[0] : 0);
+    if (g.hTop > g.hBase && l.h < g.hTop && l.h > g.hBase) {
+      zEnd = Math.min(zEnd, g.zTop + ((g.hTop - l.h) * (g.zBase - g.zTop)) / (g.hTop - g.hBase) - 0.01);
+    } else if (l.h >= g.hTop) {
+      zEnd = Math.min(zEnd, g.zTop);
     }
+    zEnd = Math.max(zEnd, l.z0 + 0.1);
+    const len = zEnd - l.z0;
+    sb.add(new THREE.BoxGeometry(l.half * 2, 0.012, len), m, 0, this.gy + l.h, (l.z0 + zEnd) / 2);
     // sun visors (driver side) and a dome light
     const vis = this.kit.cabin(0xa9a498);
-    sb.add(new THREE.BoxGeometry(0.34, 0.012, 0.2), vis, this.eye.x, this.gy + l.h - 0.02, l.z1 - 0.14, 0.12);
+    sb.add(new THREE.BoxGeometry(0.34, 0.012, 0.2), vis, this.eye.x, this.gy + l.h - 0.02, zEnd - 0.14, 0.12);
     sb.build(this.group, this.kit);
   }
 
@@ -681,6 +679,7 @@ export class Cockpit {
       }
       const sweep = this.wipeAmt > 0 ? (0.5 - 0.5 * Math.cos(this.wipePhase)) * 1.25 * this.wipeAmt : 0;
       for (const w of this.wipers) w.g.rotation.z = sweep;
+      if (this.wiperFrame) this.wiperFrame.visible = this.wipeAmt > 0;
     }
     if (!this.active) return;
     this.drawClock += dt;
