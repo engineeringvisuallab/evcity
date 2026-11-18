@@ -18,6 +18,7 @@ import { RING_DESIGN_SPEED } from './alignment/RingAlignment';
 import { J1_ARM_DATA, type J1ArmData } from './junction/J1ArmData';
 import { ISLAND_LINK_DATA } from './island/IslandLinkData';
 import { R6_LINE_DATA } from './r6/R6LineData';
+import { R6_NEW_LINE_DATA } from './r6/R6NewLineData';
 import { R6_SLIP_DATA } from './r6/R6SlipData';
 import { STRUCT, STRUCT_CARVE } from './ring/RingStructures';
 import { SCENARIOS, cutRange, nearestPoint, uvToWorld, type ScenarioSpec } from '../interchange/scenario/J6Scenario';
@@ -373,7 +374,7 @@ export class RoadNetwork {
   private layoutR6Roads(): void {
     if (!Config.roads.r6Roads.enabled) return;
     const sec = sectionFields(SECTION_M6);
-    for (const d of R6_LINE_DATA) {
+    for (const d of Config.roads.r6New.enabled ? [...R6_LINE_DATA, ...R6_NEW_LINE_DATA] : R6_LINE_DATA) { // STEP B7a-2: the new lines only when the switch is on (default off)
       const m = d.pts.length;
       const cum = [0];
       for (let i = 1; i < m; i++) cum.push(cum[i - 1] + Math.hypot(d.pts[i][0] - d.pts[i - 1][0], d.pts[i][1] - d.pts[i - 1][1]));

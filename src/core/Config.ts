@@ -78,6 +78,8 @@ export const Config = {
     islandLink: { enabled: true as boolean, bridgeDeck: true as boolean },
     /** STEP G6: the R6 (6-lane) roads from the G5 line set (src/roads/r6/R6LineData.ts, made by scripts/r6-export-line.ts), added together with the J1 arms and the island link (after the railway plan). First road: R6-2 (L65, south, 1.97 km, both ends free). false = none. */
     r6Roads: { enabled: true as boolean },
+    /** STEP B7a-2 (21.6 build): the 7 NEW R6 lines R6-9 .. R6-15 (src/roads/r6/R6NewLineData.ts, made by scripts/centre-r6-export.ts, 21.45) as game roads, same section / speed / daylight as r6Roads. DEFAULT FALSE: the lines have free ends, no junction nodes and no structures yet (21.7 / 21.8), so they cross other roads without a junction. true only for a look in the game, never as the shipped state. */
+    r6New: { enabled: false as boolean },
     /**
      * STEP RAIL-B2: ONE place for the road / rail buffer (m). Used by scripts/road-rail-buffer-check.ts (measure only; the design code does not read it yet).
      *   railOverRoad   : rail over a road: underside of the rail deck above the road surface.
