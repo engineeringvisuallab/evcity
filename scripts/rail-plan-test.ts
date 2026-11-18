@@ -93,7 +93,7 @@ for (const r of gen.roads.roads) {
     const nx = -dzz / l, nz = dx / l;
     for (const u of [0, -(r.halfWidth + r.shoulder), r.halfWidth + r.shoulder, -(r.halfWidth + r.shoulder + 6), r.halfWidth + r.shoulder + 6]) {
       const x = r.xs[i] + nx * u, z = r.zs[i] + nz * u;
-      gen.sampleNatural(x, z, sA); gen.roads.apply(x, z, sA);
+      gen.sampleNatural(x, z, sA); gen.residentialFlat.apply(x, z, sA); gen.roads.apply(x, z, sA); // same order as sample(): the residential flattening comes before the roads (it is not a railway change)
       gen.sample(x, z, sB);
       roadPts++;
       const d = Math.abs(sA.h - sB.h);
@@ -110,7 +110,7 @@ for (const p of gen.roads.pads) {
   if (!gen.railForm.inCorridor(p.x, p.z, p.rCore + p.emb + 40)) continue;
   for (let a = 0; a < 8; a++) {
     const x = p.x + Math.cos(a * 0.785) * p.rCore * 0.8, z = p.z + Math.sin(a * 0.785) * p.rCore * 0.8;
-    gen.sampleNatural(x, z, sA); gen.roads.apply(x, z, sA); gen.sample(x, z, sB);
+    gen.sampleNatural(x, z, sA); gen.residentialFlat.apply(x, z, sA); gen.roads.apply(x, z, sA); gen.sample(x, z, sB);
     if (Math.abs(sA.h - sB.h) > 0.02) padHurt++;
   }
 }
