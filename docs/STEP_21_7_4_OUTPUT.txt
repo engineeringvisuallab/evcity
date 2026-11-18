@@ -1,0 +1,17 @@
+STEP 21.7-4 SKEWED T JUNCTIONS (headless, read only; src / data NOT changed; tsc / build / game NOT RUN)
+constants (MY choices): kerb radius clamp 6 .. 25 m; acute x phi/90, obtuse x 90/phi; stop line edge 3 m; crossing speed 4 m/s; gap time TG 7.5 s (21.7-2)
+
+   N080  R2-65 x R2-64  41.8 deg  type T0  kerb acute 6.0 / obtuse 25.0 m  stop line 9.5 m from the major centre line  sight 83 -> 93 m (stopping 46)  turn pocket: -
+   N034  R2-14 x R2-13  48.9 deg  type T0  kerb acute 6.5 / obtuse 22.1 m  stop line 8.4 m from the major centre line  sight 83 -> 89 m (stopping 46)  turn pocket: -
+   N028  R4-28 x R4-27  50.8 deg  type TA  kerb acute 14.1 / obtuse 25.0 m  stop line 12.9 m from the major centre line  sight 125 -> 142 m (stopping 83)  turn pocket: NO (71 m free, short form 91 m)
+   N050  R2-24 x R4-19  51.2 deg  type TP  kerb acute 8.5 / obtuse 25.0 m  stop line 12.8 m from the major centre line  sight 125 -> 142 m (stopping 83)  turn pocket: FULL (344 m free, short form 76 m)
+   N039  R2-17 x R4-12  51.3 deg  type TP  kerb acute 8.6 / obtuse 25.0 m  stop line 12.8 m from the major centre line  sight 125 -> 141 m (stopping 83)  turn pocket: FULL (701 m free, short form 76 m)
+
+   PASS  all 5 nodes found in 21.7-2
+   PASS  every kerb radius is inside 6 .. 25 m and acute <= obtuse
+   PASS  every skew sight distance is >= the 90 deg value and >= the stopping sight
+   INFO  LIST for the user: N028 turn pocket does not fit even in the short form (71 m free, 91 m needed)
+   INFO  NOT RUN: the new sight triangle (length N080 93, N034 89, N028 142, N050 142, N039 142 m) against buildings and hills. 21.7-2 only checked the old, shorter triangle.
+   INFO  Stop control on every minor road above: STOP sign + stop line, major road has priority. Kerb radii and stop lines are numbers only; the mesh of the mouths is a build step (B7).
+
+SUMMARY 21.7-4: 3 PASS, 0 FAIL

@@ -1,0 +1,13 @@
+STEP 21.7-5 SIGHT TRIANGLES OF THE SKEWED T JUNCTIONS (headless, read only; src / data NOT changed; tsc / build / game NOT RUN)
+constants (MY choices): decision point = stop line + 4.5 m; eye 1.08 m, object 1.08 m; grid 3 m; natural ground only
+
+   N080  41.8 deg  sight 93 m   side +: buildings none, natural ground above the line 2.45 m at 51 m   |   side -: buildings none, natural ground above the line 0 m
+   N034  48.9 deg  sight 89 m   side +: buildings none, natural ground above the line 0 m   |   side -: buildings none, natural ground above the line 1.49 m at 48 m
+   N028  50.8 deg  sight 142 m   side +: buildings none, natural ground above the line 0 m   |   side -: buildings none, natural ground above the line 0 m
+   N050  51.2 deg  sight 142 m   side +: buildings none, natural ground above the line 0 m   |   side -: buildings none, natural ground above the line 0 m
+   N039  51.3 deg  sight 142 m   side +: buildings none, natural ground above the line 0 m   |   side -: buildings none, natural ground above the line 4.59 m at 63 m
+
+   PASS  every new sight triangle is free of buildings  [0 FAIL: ]
+   FAIL  natural ground does not block the line of sight  [3 FAIL = LIST for the user, natural ground only, the real road level is not used: N080 side + +2.45 m at 51 m; N034 side - +1.49 m at 48 m; N039 side - +4.59 m at 63 m]
+
+SUMMARY 21.7-5: 1 PASS, 1 FAIL
