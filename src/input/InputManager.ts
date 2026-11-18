@@ -79,8 +79,12 @@ export class InputManager {
     return this.down.has(code) || this.virtualDown.has(code) || (alt !== undefined && this.down.has(alt));
   }
 
+  /** Enter does the work of F (get in / out of vehicles and everything else on F) while the mouse is captured; the Engine turns it off where Enter has its own job (the race start prompt). */
+  enterAsF = true;
+
   /** True only on the frame the key went down. */
   wasPressed(code: string): boolean {
+    if (code === 'KeyF' && this.enterAsF && this.gameplayActive && (this.pressed.has('Enter') || this.pressed.has('NumpadEnter'))) return true;
     const alt = ARROW_ALIAS[code];
     return this.pressed.has(code) || this.virtualPressed.has(code) || (alt !== undefined && this.pressed.has(alt));
   }

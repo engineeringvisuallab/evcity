@@ -42,6 +42,9 @@ export class PlayerModel {
   /** RAIN: the umbrella (built on the first rain). */
   private umbrella: Umbrella | null = null;
   private umbrellaWant = false;
+  /** FIRST PERSON: the body is drawn with colour and depth writes off (invisible, but it still casts its shadow); the clones replace the real materials only while it is on. */
+  private fpOn = false;
+  private fpClones = new Map<THREE.Material, THREE.Material>();
 
   constructor() {
     const rig = buildHuman(ENGINEER_LOOK, (c) => {
@@ -95,6 +98,45 @@ export class PlayerModel {
       }
     }
     this.aimer.setGun(id, this.rig.handR ? this.gun : null);
+    if (this.fpOn) this.fpSweep();
+  }
+
+  /** How far the body is crouched, 0..1 (the first-person eye drops with it). */
+  get crouchAmount(): number {
+    return this.crouch;
+  }
+
+  /** FIRST PERSON: hide the body (head, arms, gun, umbrella) from the camera but keep its shadow. */
+  setFirstPerson(on: boolean): void {
+    if (on === this.fpOn) return;
+    this.fpOn = on;
+    this.fpSweep();
+  }
+
+  private hiddenOf(m: THREE.Material): THREE.Material {
+    let c = this.fpClones.get(m);
+    if (!c) {
+      c = m.clone();
+      c.colorWrite = false;
+      c.depthWrite = false;
+      this.fpClones.set(m, c);
+    }
+    return c;
+  }
+
+  private fpSweep(): void {
+    this.root.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      const saved = mesh.userData.fpMaterial as THREE.Material | THREE.Material[] | undefined;
+      if (this.fpOn && saved === undefined) {
+        mesh.userData.fpMaterial = mesh.material;
+        mesh.material = Array.isArray(mesh.material) ? mesh.material.map((x) => this.hiddenOf(x)) : this.hiddenOf(mesh.material);
+      } else if (!this.fpOn && saved !== undefined) {
+        mesh.material = saved;
+        delete mesh.userData.fpMaterial;
+      }
+    });
   }
 
   /** Crouch (hold C): knees bent, hips low, back leaning forward (the physics capsule keeps its size). */
@@ -128,7 +170,10 @@ export class PlayerModel {
   /** RAIN: umbrella up / down (it also folds by itself while swimming or aiming). */
   setUmbrella(on: boolean): void {
     this.umbrellaWant = on;
-    if (on && !this.umbrella) this.umbrella = new Umbrella(this.pivot, this.armL.position.x < 0 ? -1 : 1, 0.63);
+    if (on && !this.umbrella) {
+      this.umbrella = new Umbrella(this.pivot, this.armL.position.x < 0 ? -1 : 1, 0.63);
+      if (this.fpOn) this.fpSweep();
+    }
   }
 
   /** Both arms raised, pointing the gun where the camera looks. */
@@ -252,6 +297,7 @@ export class PlayerModel {
   /** The body geometry is shared by everyone (HumanBody.ts): only the materials belong to this model. */
   dispose(): void {
     for (const m of this.mats) m.dispose();
+    for (const c of this.fpClones.values()) c.dispose();
     this.rig.dispose?.();
   }
 }

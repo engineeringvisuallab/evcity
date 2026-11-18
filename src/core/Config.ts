@@ -770,6 +770,20 @@ export const Config = {
     shoulder: 0.9,
   },
 
+  /** FIRST PERSON (P on foot): the camera sits at the player's real eyes. */
+  firstPerson: {
+    /** Eye height above the feet (m) standing, how much it drops while crouching (C), and how far it sits in front of the capsule axis. */
+    eyeHeight: 1.62,
+    crouchDrop: 0.5,
+    eyeForward: 0.06,
+    /** Near plane (m): the body is hidden, so the eye may look at things right in front of the nose (the capsule keeps walls >= 0.29 m away). */
+    near: 0.22,
+    /** The eye is never closer than this to the terrain surface (m). */
+    groundClearance: 0.3,
+    /** Aiming (right mouse): how much of the field of view is cut at full aim (0.4 = 40 %). */
+    aimZoom: 0.4,
+  },
+
   camera: {
     fov: 70,
     near: 1,

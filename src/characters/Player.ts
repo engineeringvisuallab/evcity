@@ -97,6 +97,8 @@ export class Player {
   /** While aiming / shooting the body faces where the camera looks. */
   private aimOn = false;
   private aimHeading = 0;
+  /** FIRST PERSON: the body faces where the camera looks (null = off, it turns with the walking direction as usual). */
+  private lookHeading: number | null = null;
   /** TREE CLIMBING (null = on the ground). */
   private climb: Climb | null = null;
   private spaceWas = false;
@@ -357,6 +359,7 @@ export class Player {
     this.horizSpeed = Math.hypot(this.vel.x, this.vel.z);
     if (this.horizSpeed > 0.5) this.heading = Math.atan2(this.vel.x, this.vel.z);
     if (this.aimOn) this.heading = this.aimHeading;
+    else if (this.lookHeading !== null) this.heading = this.lookHeading;
     if (this.swimming) this.state = 'swim';
     else if (!this.grounded) this.state = 'air';
     else if (this.horizSpeed < 0.4) this.state = 'idle';
@@ -380,6 +383,18 @@ export class Player {
     const c = Math.cos(h);
     const s = Math.sin(h);
     return out.set(this.render.x + x * c + z * s, this.render.y - HALF + 1.45, this.render.z - x * s + z * c);
+  }
+
+  /** FIRST PERSON: face `heading` (radians, 0 = +Z) all the time, or null = back to the normal walking direction. */
+  setLookFacing(heading: number | null): void {
+    this.lookHeading = heading;
+  }
+
+  /** The real eye position (floating-origin local): Config.firstPerson eye height above the feet, a little in front of the capsule axis along `yaw`, lower while crouching. */
+  getEye(out: THREE.Vector3, yaw: number): THREE.Vector3 {
+    const F = Config.firstPerson;
+    const h = F.eyeHeight - F.crouchDrop * Math.max(0, Math.min(1, this.model.crouchAmount));
+    return out.set(this.render.x - Math.sin(yaw) * F.eyeForward, this.render.y - HALF + h, this.render.z - Math.cos(yaw) * F.eyeForward);
   }
 
   /** Get into / out of a vehicle: the model is hidden and the capsule removed from the physics world while inside. */

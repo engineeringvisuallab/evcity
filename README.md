@@ -70,13 +70,13 @@ Needs Node 18+ and a WebGL2 browser. Click the screen to capture the mouse.
 |---|---|
 | W A S D | move (relative to the camera) |
 | Shift | run (swim faster in water) |
-| F | get into / out of a vehicle (within 4 m; stop first to get out) |
+| F · Enter | get into / out of a vehicle (within 4 m; stop first to get out). Enter does the same as F while the mouse is captured, except at the race start prompt, where Enter starts the race |
 | Space | jump (in water: swim up) |
 | C | in water: swim down |
 | Mouse | orbit the camera around the player |
 | Mouse wheel | zoom 2.5 - 25 m |
 | V | switch player camera <-> free-fly debug camera |
-| P | (driving) camera at the driver's real eye position, P again = chase camera; mouse looks around the cabin |
+| P | (driving) camera at the driver's real eye position, P again = chase camera; mouse looks around the cabin. (on foot) first person at the player's real eyes: mouse looks (pitch +-85 deg), W A S D walk where you look, left / right mouse fire / aim as usual; P again = orbit camera. It ends by itself in any vehicle, in free-fly (V), while swimming and while loading |
 | T | (free-fly) bring the player to the camera position |
 | 1 / 2 | terrain wireframe / LOD colours |
 | F3 | debug panel |

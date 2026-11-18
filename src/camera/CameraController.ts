@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Config } from '../core/Config';
 import type { InputManager } from '../input/InputManager';
 import { FreeFlyCamera } from './FreeFlyCamera';
 import type { OrbitCamera } from './OrbitCamera';
@@ -8,11 +9,18 @@ export interface CameraMode {
   update(dt: number): void;
 }
 
+/** The first-person eye camera: enter() / exit() set it up and put the orbit camera's yaw / elevation right for the way back. */
+export interface FirstPersonMode extends CameraMode {
+  enter(): void;
+  exit(): void;
+}
+
 /**
  * Owns the camera and the active mode.
  * - orbit : third-person camera around the player (default, Stage 4)
  * - freefly: debug fly camera (V to toggle)
  * - driver : first-person camera at the driver's eyes (P while driving)
+ * - first  : first-person camera at the player's eyes (P on foot)
  * STAGE 5 HOOK: a vehicle chase-camera mode can be added the same way.
  */
 export class CameraController {
@@ -23,6 +31,7 @@ export class CameraController {
   private normalNear: number;
   private normalFov: number;
   private trainCam: CameraMode | null = null;
+  private firstCam: FirstPersonMode | null = null;
   private tmpDir = new THREE.Vector3();
   private mode: CameraMode;
 
@@ -66,6 +75,38 @@ export class CameraController {
 
   setOrbit(orbit: OrbitCamera): void {
     this.orbit = orbit;
+  }
+
+  setFirstPersonCamera(cam: FirstPersonMode): void {
+    this.firstCam = cam;
+  }
+
+  get isFirstPerson(): boolean {
+    return this.firstCam !== null && this.mode === this.firstCam;
+  }
+
+  /** The player's own eyes (on foot only: from the orbit camera, never from free-fly / driver / train). */
+  enterFirstPerson(): boolean {
+    if (!this.firstCam || !this.orbit || this.mode !== this.orbit) return false;
+    this.input.consumeMouseDelta();
+    this.input.consumeWheel();
+    this.firstCam.enter();
+    this.mode = this.firstCam;
+    this.camera.near = Config.firstPerson.near;
+    this.camera.updateProjectionMatrix();
+    return true;
+  }
+
+  /** Back to the orbit camera, looking the same way, with the normal near plane and lens. Does nothing when another camera has taken over (train, free-fly). */
+  exitFirstPerson(): void {
+    if (!this.isFirstPerson || !this.firstCam) return;
+    this.firstCam.exit();
+    this.input.consumeMouseDelta();
+    this.input.consumeWheel();
+    if (this.orbit) this.mode = this.orbit;
+    this.camera.near = this.normalNear;
+    this.camera.fov = this.normalFov;
+    this.camera.updateProjectionMatrix();
   }
 
   setDriverCamera(cam: CameraMode): void {

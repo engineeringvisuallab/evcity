@@ -160,6 +160,11 @@ export class RaceSystem {
   }
 
   /** The race is on (countdown or running): the Engine keeps the Jeep fuelled. */
+  /** True while the "Press Enter to start" prompt is on screen (Enter belongs to the race there, not to F). */
+  get startPromptShown(): boolean {
+    return this.prompt.style.display === 'block';
+  }
+
   get active(): boolean {
     return this.phase === 'countdown' || this.phase === 'running';
   }

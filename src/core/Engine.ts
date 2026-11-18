@@ -4,6 +4,7 @@ import { ShadowManager, SHADOW_NAMES_BN } from './ShadowQuality';
 import { CameraController } from '../camera/CameraController';
 import { OrbitCamera } from '../camera/OrbitCamera';
 import { DriverCamera } from '../camera/DriverCamera';
+import { FirstPersonCamera } from '../camera/FirstPersonCamera';
 import { TRAIN_VIEW_NAMES, TrainCamera } from '../camera/TrainCamera';
 import { TunnelProbe } from '../trains/TunnelProbe';
 import { setTrainViewer } from '../trains/TrainView';
@@ -281,6 +282,9 @@ export class Engine {
   /** The player as a train passenger (F at a platform next to a standing train; F again at a station to get off). */
   private trainRider!: TrainRider;
   private trainCam!: TrainCamera;
+  /** FIRST PERSON (P on foot): the eye camera and whether it is switched on (also true for a moment after another camera took over, until it is cleaned up). */
+  private firstPerson!: FirstPersonCamera;
+  private fpActive = false;
   /** Render quality: 0 normal, 1 high, 2 = 4K (Backquote cycles). */
   private renderQuality = 0;
   /** Lowers / raises the picture resolution by itself to hold the FPS target (normal render mode only). */
@@ -423,6 +427,9 @@ export class Engine {
     this.cameraController.setOrbit(this.orbit);
     this.cameraController.useOrbit();
     this.cameraController.setDriverCamera(new DriverCamera(this.camera, this.input, () => this.vehicles.driver));
+    // P on foot: the player's own eyes (the orbit camera's yaw / elevation / aimFactor stay in step, so walking and shooting work as before)
+    this.firstPerson = new FirstPersonCamera(this.camera, this.input, this.player, physics, this.world.terrain, this.world.origin, this.orbit, this.camera.fov);
+    this.cameraController.setFirstPersonCamera(this.firstPerson);
     // passenger camera of the trains: seat / aisle / driver's cab / outside / cinematic (C cycles while riding)
     this.trainCam = new TrainCamera(this.camera, this.input, () => this.trainRider.ride, this.world.origin, this.world.terrain, new TunnelProbe(this.rail));
     this.cameraController.setTrainCamera(this.trainCam);
@@ -1006,13 +1013,24 @@ export class Engine {
     }
 
     // V: switch between the player camera and the free-fly debug camera. T (free-fly): bring the player here.
+    this.input.enterAsF = !this.race.startPromptShown; // Enter = F (get in / out), except at the race start where Enter starts the race
     if (!this.trainRider.handleKeys() && !this.playerJet.handleKeys() && !this.planeRider.handleKeys() && !this.boats.handleKeys() && !this.helis.handleKeys()) this.vehicles.handleKeys();
-    // P (while driving): camera at the driver's real eye position, P again: back to the chase camera
-    if (this.input.wasPressed('KeyP')) this.setDriverView(!this.cameraController.isDriverView);
+    // P (while driving): camera at the driver's real eye position, P again: back to the chase camera. P (on foot): the player's own eyes (first person), P again: back to the orbit camera
+    if (this.input.wasPressed('KeyP')) {
+      if (this.fpActive) this.setFirstPerson(false);
+      else if (this.vehicles.driver || this.cameraController.isDriverView) this.setDriverView(!this.cameraController.isDriverView);
+      else if (this.canFirstPerson()) this.setFirstPerson(true);
+    }
     // C (on a train): next passenger camera. ` (Backquote): render quality normal / high / 4K
     if (this.trainRider.riding && this.cameraController.isTrainView && this.input.wasPressed('KeyC')) this.toast.show('🎥 ' + TRAIN_VIEW_NAMES[this.trainCam.next()], 2200);
     if (this.input.wasPressed('Backquote')) this.cycleRenderQuality();
     if (this.cameraController.isDriverView && (!this.vehicles.driver || this.cameraController.isFreeFly || this.helis.pilot || this.boats.skipper)) this.setDriverView(false);
+    // first person ends by itself in any vehicle (heli, boat, train, plane, car), in free-fly, while swimming and while the ground loads: you come back to the orbit camera (P again to return)
+    if (this.fpActive && !(this.cameraController.isFirstPerson && this.canFirstPerson())) {
+      const swam = this.player.active && !this.player.inVehicle && this.player.swimming;
+      this.setFirstPerson(false);
+      if (swam) this.toast.show(bn.camera.firstPersonSwim, 2600);
+    }
     if (this.input.wasPressed('KeyV') && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.planeRider.riding && !this.playerJet.riding) this.toggleFreeFly();
     if (this.cameraController.isFreeFly && this.input.wasPressed('KeyT')) {
       this.world.origin.toWorld(this.camera.position, this.tmpVec);
@@ -1097,6 +1115,7 @@ export class Engine {
       if (diving && this.orbit.elevation > 0.1) this.orbit.elevation += (0.1 - this.orbit.elevation) * Math.min(1, 3 * dt);
     }
     this.cameraController.update(dt);
+    if (this.fpActive && this.cameraController.isFirstPerson) this.player.setLookFacing(this.firstPerson.heading); // the body faces where the eye looks
     this.infra.applyCamera(dt, this.camera); // a running plant tour owns the camera
     {
       // RAIN: clouds, falling rain, wet ground, sea storm (BEFORE the world / water / environment update); people and the player open umbrellas
@@ -1612,7 +1631,33 @@ export class Engine {
     }
   }
 
+  /** First person is possible only on foot, on the ground that has loaded, not swimming, and from the orbit camera. */
+  private canFirstPerson(): boolean {
+    const p = this.player;
+    return (
+      p.active && p.ready && !p.inVehicle && !p.swimming && !this.cameraController.isFreeFly && !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper &&
+      !this.trainRider.riding && !this.planeRider.riding && !this.playerJet.riding
+    );
+  }
+
+  private setFirstPerson(on: boolean): void {
+    if (on) {
+      if (this.fpActive || !this.canFirstPerson() || !this.cameraController.enterFirstPerson()) return;
+      this.fpActive = true;
+      this.player.model.setFirstPerson(true);
+      this.player.setLookFacing(this.firstPerson.heading);
+      this.toast.show(bn.camera.firstPersonOn, 2400);
+    } else {
+      if (!this.fpActive) return;
+      this.fpActive = false;
+      this.cameraController.exitFirstPerson();
+      this.player.model.setFirstPerson(false);
+      this.player.setLookFacing(null);
+    }
+  }
+
   private toggleFreeFly(): void {
+    if (this.fpActive) this.setFirstPerson(false); // free-fly starts from the orbit camera's yaw / pitch, which the eye camera has kept
     this.cameraController.toggle();
     this.player.active = !this.cameraController.isFreeFly;
   }
