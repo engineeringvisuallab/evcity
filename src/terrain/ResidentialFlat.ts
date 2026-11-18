@@ -32,19 +32,19 @@ export const FLAT_CAP = 8;
 /** Inside |nat - level| <= FLAT_FULL the ground is exactly flat; between FLAT_FULL and the cap it eases off. */
 const FLAT_FULL = 6;
 /** The flat ground fades out towards a river / lake: 0 at the water edge, 1 at BANK_FADE m from it (smoothstep), so banks keep their shape and nothing floods. */
-const BANK_FADE = 60;
+const BANK_FADE = 90;
 /** How far (m) beyond a lake's own shore the lake query looks. */
 export const BANK_REACH = BANK_FADE + 20;
 /** Sea: the ground fades out between 0.6 m and 3.6 m above sea level. */
 const SEA_FADE = 3;
 
 export const FLAT_ZONES: readonly FlatZoneDef[] = [
-  { id: 'nw-town', level: 19.2, blend: 120 },
-  { id: 'south-suburb', level: 33.2, blend: 120 },
-  { id: 'north-homes', level: 20.3, blend: 120 },
-  { id: 'east-suburb', level: 30.2, blend: 120 },
-  { id: 'east-homes', level: 31.9, blend: 120 },
-  { id: 'sw-homes', level: 14.8, blend: 120 },
+  { id: 'nw-town', level: 19.2, blend: 200 },
+  { id: 'south-suburb', level: 33.2, blend: 200 },
+  { id: 'north-homes', level: 20.3, blend: 200 },
+  { id: 'east-suburb', level: 30.2, blend: 200 },
+  { id: 'east-homes', level: 31.9, blend: 200 },
+  { id: 'sw-homes', level: 14.8, blend: 200 },
 ];
 
 const smoothstep = (a: number, b: number, x: number): number => {
