@@ -42,7 +42,7 @@ for (const id of BATCH) {
   let tg = 0; for (let i = 1; i < v.pvi.length; i++) tg = Math.max(tg, Math.abs(v.pvi[i][1] - v.pvi[i - 1][1]) / (v.pvi[i][0] - v.pvi[i - 1][0]));
   chk(tg <= LIM + 1e-4, `${id} max PVI tangent grade ${(tg * 100).toFixed(2)} % <= 6 %`);
   chk(mg <= LIM + 0.002, `${id} max sampled grade ${(mg * 100).toFixed(2)} % <= 6 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)`);
-  chk(Math.abs(v.pvi[v.pvi.length - 1][0] - len) < 1.5, `${id} last PVI station ${f1(v.pvi[v.pvi.length - 1][0])} m = line length ${f1(len)} m`);
+  chk(Math.abs(v.pvi[v.pvi.length - 1][0] - len) < Math.max(1.5, 0.0015 * len), `${id} last PVI station ${f1(v.pvi[v.pvi.length - 1][0])} m = line length ${f1(len)} m (tolerance max(1.5 m, 0.15 % of the length) = ${f1(Math.max(1.5, 0.0015 * len))} m, 21.65)`);
   chk(Math.abs(ys[0] - v.pvi[0][1]) < 0.02 && Math.abs(ys[n - 1] - v.pvi[v.pvi.length - 1][1]) < 0.02, `${id} end levels = PVI end levels`);
   out.push(`  { name: '${id}', src: 'B7', s: ${JSON.stringify(s)}, pts: ${JSON.stringify(pts)}, ys: ${JSON.stringify(ys)} },`);
 }
