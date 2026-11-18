@@ -1,0 +1,95 @@
+STEP B7-5 batch C-a: export of the C lines as game data (headless; the game is changed only by the registration in RoadNetwork + Config switch)
+   line      length m  points  y start  y end   max grade %  min / max level m  PVIs  curves
+   PASS  C-2 is a new, not dropped, class C line
+   PASS  C-2 max PVI tangent grade 7.21 % <= 8 %
+   PASS  C-2 last PVI station 494.0 m = line length 493.7 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   C-2          493.7      51    18.21   39.47        7.34      16.8 / 40.1   5     3
+   PASS  C-2 max sampled grade 7.34 % <= 8 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  C-2 start level = PVI start level
+   PASS  C-2 end level = PVI end level
+   PASS  C-3 is a new, not dropped, class C line
+   PASS  C-3 max PVI tangent grade 6.25 % <= 8 %
+   PASS  C-3 last PVI station 374.6 m = line length 374.4 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   C-3          374.4      39    26.03   29.06        6.26      23.6 / 29.1   5     3
+   PASS  C-3 max sampled grade 6.26 % <= 8 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  C-3 start level = PVI start level
+   PASS  C-3 end level = PVI end level
+   PASS  C-4 is a new, not dropped, class C line
+   PASS  C-4 max PVI tangent grade 4.97 % <= 8 %
+   PASS  C-4 last PVI station 290.0 m = line length 289.8 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   C-4          289.8      30    31.77   32.50        5.05      31.8 / 37.0   4     2
+   PASS  C-4 max sampled grade 5.05 % <= 8 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  C-4 start level = PVI start level
+   PASS  C-4 end level = PVI end level
+   PASS  C-5 is a new, not dropped, class C line
+   PASS  C-5 max PVI tangent grade 3.70 % <= 8 %
+   PASS  C-5 last PVI station 270.2 m = line length 271.1 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   C-5          271.1      29    33.50   30.20        3.72      30.2 / 33.5   5     3
+   PASS  C-5 max sampled grade 3.72 % <= 8 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  C-5 start level = PVI start level
+   PASS  C-5 end level = PVI end level
+   PASS  C-6 is a new, not dropped, class C line
+   PASS  C-6 max PVI tangent grade 3.27 % <= 8 %
+   PASS  C-6 last PVI station 269.7 m = line length 271.7 m (tolerance 2.1 m, NAMED allowance of this line, 21.67)
+   PASS  C-6 node N122 lies on the line (0.16 m)
+   C-6.1        164.4      18    20.55   20.00        3.36      18.5 / 20.6   5     3
+   PASS  C-6.1 max sampled grade 3.36 % <= 8 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  C-6.1 start level = PVI start level
+   C-6.2        107.3      12    20.00   19.80        0.62      19.8 / 20.1   5     3
+   PASS  C-6.2 max sampled grade 0.62 % <= 8 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  C-6.2 end level = PVI end level
+   PASS  C-7 is a new, not dropped, class C line
+   PASS  C-7 max PVI tangent grade 1.00 % <= 8 %
+   PASS  C-7 last PVI station 310.3 m = line length 310.2 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   PASS  C-7 node N123 lies on the line (0.10 m)
+   C-7.1        143.4      16    20.30   20.25        0.95      20.0 / 20.4   6     4
+   PASS  C-7.1 max sampled grade 0.95 % <= 8 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  C-7.1 start level = PVI start level
+   C-7.2        166.7      18    20.25   20.00        0.82      19.6 / 20.3   6     4
+   PASS  C-7.2 max sampled grade 0.82 % <= 8 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  C-7.2 end level = PVI end level
+   PASS  C-8 is a new, not dropped, class C line
+   PASS  C-8 max PVI tangent grade 7.94 % <= 8 %
+   PASS  C-8 last PVI station 319.7 m = line length 319.1 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   C-8          319.1      33    25.10   19.90        7.89      19.8 / 25.1   7     5
+   PASS  C-8 max sampled grade 7.89 % <= 8 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  C-8 start level = PVI start level
+   PASS  C-8 end level = PVI end level
+   PASS  C-9 is a new, not dropped, class C line
+   PASS  C-9 max PVI tangent grade 1.24 % <= 8 %
+   PASS  C-9 last PVI station 132.3 m = line length 132.2 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   C-9          132.2      15    20.25   20.00        1.28      19.7 / 20.3   4     2
+   PASS  C-9 max sampled grade 1.28 % <= 8 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  C-9 start level = PVI start level
+   PASS  C-9 end level = PVI end level
+   PASS  C-10 is a new, not dropped, class C line
+   PASS  C-10 max PVI tangent grade 2.00 % <= 8 %
+   PASS  C-10 last PVI station 116.1 m = line length 116.1 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   C-10         116.1      13    20.25   20.20        1.96      19.8 / 20.3   3     1
+   PASS  C-10 max sampled grade 1.96 % <= 8 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  C-10 start level = PVI start level
+   PASS  C-10 end level = PVI end level
+   PASS  C-11 is a new, not dropped, class C line
+   PASS  C-11 max PVI tangent grade 7.90 % <= 8 %
+   PASS  C-11 last PVI station 267.6 m = line length 267.3 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   C-11         267.3      28    23.05   25.50        7.97      20.9 / 25.5   4     2
+   PASS  C-11 max sampled grade 7.97 % <= 8 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  C-11 start level = PVI start level
+   PASS  C-11 end level = PVI end level
+   PASS  C-12 is a new, not dropped, class C line
+   PASS  C-12 max PVI tangent grade 5.56 % <= 8 %
+   PASS  C-12 last PVI station 238.0 m = line length 238.0 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   C-12         238.0      25    23.05   21.70        5.56      21.5 / 23.8   4     2
+   PASS  C-12 max sampled grade 5.56 % <= 8 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  C-12 start level = PVI start level
+   PASS  C-12 end level = PVI end level
+   PASS  C-13 is a new, not dropped, class C line
+   PASS  C-13 max PVI tangent grade 2.94 % <= 8 %
+   PASS  C-13 last PVI station 360.4 m = line length 360.5 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   C-13         360.5      38    24.67   20.95        2.99      20.9 / 24.7   3     1
+   PASS  C-13 max sampled grade 2.99 % <= 8 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  C-13 start level = PVI start level
+   PASS  C-13 end level = PVI end level
+   total length of the batch 3444.0 m
+   NOT in this file: structures (no wet run; C-2 retaining wall 11 m is a wall, not a bridge; checked again in scripts/b7-cnew-check.ts on the game terrain).
+   RESULT 76 PASS 0 FAIL

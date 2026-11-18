@@ -21,8 +21,9 @@ import { R6_LINE_DATA } from './r6/R6LineData';
 import { R6_NEW_LINE_DATA } from './r6/R6NewLineData';
 import { R6_SLIP_DATA } from './r6/R6SlipData';
 import { R4_NEW_LINE_DATA } from './r4/R4NewLineData';
-import { CLASS_R4_OPEN, CLASS_R2_OPEN } from './standards/ClassSections';
+import { CLASS_R4_OPEN, CLASS_R2_OPEN, CLASS_C_ZONE } from './standards/ClassSections';
 import { R2_NEW_LINE_DATA } from './r2/R2NewLineData';
+import { C_NEW_LINE_DATA } from './c/CNewLineData';
 import { STRUCT, STRUCT_CARVE } from './ring/RingStructures';
 import { SCENARIOS, cutRange, nearestPoint, uvToWorld, type ScenarioSpec } from '../interchange/scenario/J6Scenario';
 
@@ -299,7 +300,8 @@ export class RoadNetwork {
     const r6On = Config.roads.r6Roads.enabled; // STEP G6: the R6 roads join at the same moment (the railway plan must not see them either)
     const r4On = Config.roads.r4New.enabled; // STEP B7-3: the new R4 lines join at the same moment too
     const r2On = Config.roads.r2New.enabled; // STEP B7-4: the new R2 lines join at the same moment too
-    if ((!armsOn && !linkOn && !r6On && !r4On && !r2On) || this.j1ArmsAdded) return;
+    const cOn = Config.roads.cNew.enabled; // STEP B7-5: the new C lines join at the same moment too
+    if ((!armsOn && !linkOn && !r6On && !r4On && !r2On && !cOn) || this.j1ArmsAdded) return;
     this.j1ArmsAdded = true; // STEP RAIL-A: the railway calls this before its long section, TerrainGenerator calls it again later (no-op then)
     const before = this.roads.length;
     this.layoutJ1Arms();
@@ -307,6 +309,7 @@ export class RoadNetwork {
     this.layoutR6Roads();
     this.layoutR4Roads();
     this.layoutR2Roads();
+    this.layoutCRoads();
     if (this.roads.length === before) return;
     this.chunkSegs.clear();
     this.padCells.clear();
@@ -446,6 +449,36 @@ export class RoadNetwork {
     const el = (kind: string): number => c.elements.find((e) => e.kind === kind)?.width ?? 0;
     const sec = { halfWidth: c.pavementEdge, medianHalf: 0, shyMedian: 0, laneW: c.laneW, lanesPerDir: c.lanesPerDir, shyOuter: el('shoulder-out'), shoulder: el('ditch') };
     for (const d of R2_NEW_LINE_DATA) {
+      const m = d.pts.length;
+      const cum = [0];
+      for (let i = 1; i < m; i++) cum.push(cum[i - 1] + Math.hypot(d.pts[i][0] - d.pts[i - 1][0], d.pts[i][1] - d.pts[i - 1][1]));
+      const L = cum[m - 1];
+      const n = Math.max(2, Math.ceil(L / KIND.collector.step)) + 1;
+      const pts: number[][] = [];
+      const ys: number[] = [];
+      let j = 0;
+      for (let k = 0; k < n; k++) {
+        const dd = (L * k) / (n - 1);
+        while (j < m - 2 && cum[j + 1] < dd) j++;
+        const t = cum[j + 1] > cum[j] ? Math.min(1, Math.max(0, (dd - cum[j]) / (cum[j + 1] - cum[j]))) : 0;
+        pts.push([d.pts[j][0] + (d.pts[j + 1][0] - d.pts[j][0]) * t, d.pts[j][1] + (d.pts[j + 1][1] - d.pts[j][1]) * t]);
+        ys.push(d.ys[j] + (d.ys[j + 1] - d.ys[j]) * t);
+      }
+      this.addRoad({ tier: 3, kind: 'collector', name: d.name, closed: false, pts, fixedY: ys, halfWidth: sec.halfWidth, shoulder: sec.shoulder, lanes: sec.lanesPerDir * 2, speedKmh: c.speed, maxGrade: 0.08, section: sec, daylight: true });
+      if (d.structs) this.bridgeArm(this.roads[this.roads.length - 1], { name: d.name, s: d.s, pts: d.pts, ys: d.ys, structs: d.structs });
+    }
+  }
+
+  /**
+   * STEP B7-5 (batch C-a): the new C lines (collector street, 2 lanes, undivided, V40, CLASS_C_ZONE of 21.5) from CNewLineData.ts (made by scripts/centre-c-export.ts): fitted centreline and finished heights of the vertical chain.
+   * Same game kind as the R2 lines ('collector', tier 3). Only the roadway is laid (kerb 0.3 m, verge 1.0 m); the footpath of the ZONE section comes with the zone work (21.6), not here. Ends are free, no junction mouth (21.61).
+   */
+  private layoutCRoads(): void {
+    if (!Config.roads.cNew.enabled) return;
+    const c = CLASS_C_ZONE;
+    const el = (kind: string): number => c.elements.find((e) => e.kind === kind)?.width ?? 0;
+    const sec = { halfWidth: c.pavementEdge, medianHalf: 0, shyMedian: 0, laneW: c.laneW, lanesPerDir: c.lanesPerDir, shyOuter: el('kerb'), shoulder: el('verge-drain') };
+    for (const d of C_NEW_LINE_DATA) {
       const m = d.pts.length;
       const cum = [0];
       for (let i = 1; i < m; i++) cum.push(cum[i - 1] + Math.hypot(d.pts[i][0] - d.pts[i - 1][0], d.pts[i][1] - d.pts[i - 1][1]));
