@@ -26,7 +26,7 @@ export const BUILDING_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'bamboo-hut', x: -2260, z: -1560, yaw: 0, W: 8, D: 8, zone: 'village-west' },
   { id: 'house-tin', x: -2180, z: -1400, yaw: 0, W: 11, D: 12, zone: 'village-west' },
   { id: 'house-semi-pucca', x: -2160, z: -1460, yaw: 0, W: 11, D: 12, zone: 'village-west' },
-  { id: 'house-brick-2', x: -600, z: 750, yaw: 0, W: 13, D: 16, zone: 'sw-homes' }, // moved from (-680, 680): it stood on the J1-S earthwork (23 m from the centre line), FLAT STEP 3 (first (-710, 690), but its pad blend met the pad of the plot at (-720, 640))
+  { id: 'house-brick-2', x: -640, z: 760, yaw: 0, W: 13, D: 16, zone: 'sw-homes' }, // moved from (-680, 680): it stood on the J1-S earthwork (23 m from the centre line), FLAT STEP 3 (first (-710, 690), but its pad blend met the pad of the plot at (-720, 640))
   { id: 'house-brick-3', x: 960, z: 100, yaw: 0, W: 13, D: 16, zone: 'east-homes' },
   { id: 'row-house', x: 920, z: 80, yaw: -1.5708, W: 21, D: 10, zone: 'east-homes' },
   { id: 'villa', x: 690, z: 760, yaw: 3.1416, W: 24, D: 28, zone: 'se-dense' },
