@@ -18,6 +18,8 @@ import { LibrarySite, LIBRARY_PLOT } from '../library/LibrarySite';
 import { ProtoSite, PROTO_PLOT } from '../buildings/ProtoSite';
 import { InfraSite, INFRA_PLACEMENTS } from '../engineering/InfraSites';
 import { ResidentialFlat, BANK_REACH } from './ResidentialFlat';
+import { BUILDING_PLACEMENTS } from '../buildings/Placements';
+import { FILL_PLACEMENTS } from '../buildings/PlacementsFill';
 
 const smoothstep = (a: number, b: number, x: number): number => {
   const t = x <= a ? 0 : x >= b ? 1 : (x - a) / (b - a);
@@ -208,6 +210,12 @@ export class TerrainGenerator {
       gh.sort((a, b) => a - b);
       this.agro.floorY = gh[gh.length >> 1];
     }
+    // FLAT RESIDENTIAL STEP 3: flat pads under the building plots of the 6 flat zones (level = median of the zone ground over the plot)
+    this.residentialFlat.buildPlots([...BUILDING_PLACEMENTS, ...FILL_PLACEMENTS], (x, z) => {
+      this.sampleGround(x, z, this.scratch);
+      this.residentialFlat.apply(x, z, this.scratch);
+      return this.scratch.h;
+    });
     this.padsReady = true;
   }
 

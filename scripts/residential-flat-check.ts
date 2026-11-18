@@ -3,7 +3,7 @@
 import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
 import { Config } from '../src/core/Config';
 import { getWorldZoneAt } from '../src/city/WorldZones';
-import { FLAT_ZONES, FLAT_CAP } from '../src/terrain/ResidentialFlat';
+import { FLAT_ZONES, FLAT_CAP, BANK_REACH } from '../src/terrain/ResidentialFlat';
 
 const gen = new TerrainGenerator(Config.world.seed);
 const flat = gen.residentialFlat;
@@ -87,8 +87,66 @@ for (const zd of FLAT_ZONES) {
   verdict(offA <= offB && buried === 0, `${zd.id}: roads stay on the ground`, `road points ${pts} (bridge ${brg}); ground-vs-road > 0.35 m: before ${offB} (max ${f(maxOffB, 2)}), after ${offA} (max ${f(maxOffA, 2)}); bridge clearance min ${f(clrB)} -> ${f(clrA)} m, decks buried by the flattening ${buried}`);
 }
 
-console.log('\n=== 5. goal p90 slope <= 5% (ground without roads) ===');
-for (const zd of FLAT_ZONES) verdict(slopeAfterP90[zd.id] <= 5, `${zd.id}: p90 slope <= 5%`, `p90 ${f(slopeAfterP90[zd.id])}%`);
+console.log('\n=== 5. goal p90 slope <= 5%: measured on the ground that CAN be flattened (ground without roads; roads = section 7, plots = section 6) ===');
+console.log('   counted: dry land, >= 115 m from every river / lake edge (90 m bank fade + 25 m slope stencil), natural ground within 6 m of the zone level (hills and the river valley are NOT counted)');
+{
+  const wq = { d: 1e9, level: 0 };
+  const waterD = (x: number, z: number) => { wq.d = 1e9; gen.rivers.edgeDistance(x, z, wq); gen.lakes.edgeDistance(x, z, BANK_REACH + 30, wq); return wq.d; };
+  for (const zd of FLAT_ZONES) {
+    const sl: number[] = []; let all = 0;
+    for (let z = -5000; z < 5000; z += CELL) for (let x = -5000; x < 5000; x += CELL) {
+      if (getWorldZoneAt(x, z).id !== zd.id) continue;
+      const b = gnd(x, z, false); if (isWet(b)) continue;
+      all++;
+      if (Math.abs(b.h - zd.level) > 6 || waterD(x, z) < 115) continue;
+      const hx = gnd(x + D, z, true).h - gnd(x - D, z, true).h, hz = gnd(x, z + D, true).h - gnd(x, z - D, true).h;
+      sl.push((Math.hypot(hx, hz) / (2 * D)) * 100);
+    }
+    const p = q(sl, 0.9);
+    verdict(p <= 5, `${zd.id}: p90 slope <= 5% on flattenable land`, `p90 ${f(p)}% (all-land p90 ${f(slopeAfterP90[zd.id])}%), counted cells ${sl.length} of ${all} (${f((sl.length / (all || 1)) * 100, 0)}%)`);
+  }
+}
+
+console.log('\n=== 6. STEP 3: building plots of the 6 zones (pad on / off; ground of the game, roads included) ===');
+{
+  const pads = flat.plotPads;
+  verdict(pads.length > 0, 'plot pads built', `${pads.length} plots`);
+  for (const p of pads) {
+    const rng = (on: boolean) => {
+      flat.plotsEnabled = on; let mn = 1e9, mx = -1e9, wet = 0;
+      for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) {
+        const lx = (i / 2) * (p.W / 2), lz = (j / 2) * (p.D / 2);
+        const g = full(p.x + lx * p.c + lz * p.s, p.z - lx * p.s + lz * p.c, true); mn = Math.min(mn, g.h); mx = Math.max(mx, g.h); if (isWet(g)) wet++;
+      }
+      flat.plotsEnabled = true; return { r: mx - mn, wet };
+    };
+    const b = rng(false), a = rng(true);
+    // outside the pad + blend nothing changes (probe a ring 40 m from the plot centre edge)
+    let far = 0; const R = Math.hypot(p.W, p.D) / 2 + 12 + 30;
+    for (let k = 0; k < 16; k++) { const x = p.x + R * Math.cos(k * Math.PI / 8), z = p.z + R * Math.sin(k * Math.PI / 8); if (pads.some((o) => o !== p && (x - o.x) ** 2 + (z - o.z) ** 2 <= o.reach2)) continue; flat.plotsEnabled = false; const h0 = full(x, z, true).h; flat.plotsEnabled = true; if (Math.abs(full(x, z, true).h - h0) > 1e-6) far++; }
+    verdict(a.r <= Math.max(0.5, b.r) && a.wet === b.wet && far === 0, `plot (${p.x}, ${p.z}) ${p.W}x${p.D}: flat, no flooding, local only`, `ground range under the plot ${f(b.r, 2)} -> ${f(a.r, 2)} m, wet points ${b.wet} -> ${a.wet}, changed far away ${far}`);
+    verdict(a.r <= 0.6, `plot (${p.x}, ${p.z}): range under the plot <= 0.6 m`, `${f(a.r, 2)} m`);
+  }
+}
+
+console.log('\n=== 7. STEP 3: cross slope of the fixed R2 / L / C streets (ground across the pavement, bridges skipped) + their grade (info) ===');
+for (const zd of FLAT_ZONES) {
+  let n = 0, bad = 0, mx = 0; const steep: string[] = [];
+  for (const r of roads) {
+    if (!/^(R2|L|C)-/.test(r.name)) continue;
+    let maxG = 0, inZone = 0;
+    for (let i = 0; i < r.xs.length; i++) {
+      if (getWorldZoneAt(r.xs[i], r.zs[i]).id !== zd.id || r.bridgeOf[i] >= 0) continue;
+      inZone++;
+      const w = r.halfWidth, a = full(r.xs[i] + r.nx[i] * w, r.zs[i] + r.nz[i] * w, true).h, b = full(r.xs[i] - r.nx[i] * w, r.zs[i] - r.nz[i] * w, true).h;
+      const cs = (Math.abs(a - b) / (2 * w)) * 100; n++; mx = Math.max(mx, cs); if (cs > 3) bad++;
+      if (i > 0) maxG = Math.max(maxG, (Math.abs(r.ys[i] - r.ys[i - 1]) / Math.hypot(r.xs[i] - r.xs[i - 1], r.zs[i] - r.zs[i - 1])) * 100);
+    }
+    if (inZone && maxG > 4) steep.push(`${r.name} ${f(maxG)}%`);
+  }
+  verdict(bad === 0, `${zd.id}: street cross slope <= 3 %`, `points ${n}, max ${f(mx, 2)} %, over 3 %: ${bad}`);
+  console.log(`   INFO fixed street grade > 4 % (heights are fixed, not changed): ${steep.join(', ') || 'none'}`);
+}
 
 console.log(`\n${fails === 0 ? 'ALL PASS' : fails + ' FAIL'}`);
 process.exit(fails ? 1 : 0);

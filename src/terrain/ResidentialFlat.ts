@@ -1,5 +1,5 @@
 import type { TerrainSample } from './Lakes';
-import { WORLD_ZONES, FACILITIES } from '../city/WorldZones';
+import { WORLD_ZONES, FACILITIES, getWorldZoneAt } from '../city/WorldZones';
 import { ENGINEERING_AREAS } from '../city/EngineeringZones';
 
 /**
@@ -47,6 +47,17 @@ export const FLAT_ZONES: readonly FlatZoneDef[] = [
   { id: 'sw-homes', level: 14.8, blend: 200 },
 ];
 
+/** STEP 3, building plots: a plot (footprint rectangle) gets a flat pad; it blends to the ground over PLOT_BLEND m outside the plot. */
+export const PLOT_BLEND = 12;
+/** Plot pad cut / fill: flat exactly where |ground - level| <= PLOT_FULL, eases to PLOT_CAP (a hill under the plot stays a hill). */
+export const PLOT_FULL = 3;
+export const PLOT_CAP = 4;
+/** The plot pad fades to the natural ground towards water: 0 at the edge, 1 at PLOT_BANK_FADE m. */
+const PLOT_BANK_FADE = 25;
+
+export interface PlotInput { x: number; z: number; yaw: number; W: number; D: number }
+export interface PlotPad { x: number; z: number; yaw: number; W: number; D: number; level: number; c: number; s: number; hw: number; hd: number; reach2: number }
+
 const smoothstep = (a: number, b: number, x: number): number => {
   const t = x <= a ? 0 : x >= b ? 1 : (x - a) / (b - a);
   return t * t * (3 - 2 * t);
@@ -57,6 +68,14 @@ export function flatShift(d: number): number {
   const a = d < 0 ? -d : d;
   if (a <= FLAT_FULL) return d;
   const r = FLAT_FULL + (FLAT_CAP - FLAT_FULL) * Math.tanh((a - FLAT_FULL) / (FLAT_CAP - FLAT_FULL));
+  return d < 0 ? -r : r;
+}
+
+/** Cut / fill actually applied by a plot pad for an offset d (m). */
+export function plotShift(d: number): number {
+  const a = d < 0 ? -d : d;
+  if (a <= PLOT_FULL) return d;
+  const r = PLOT_FULL + (PLOT_CAP - PLOT_FULL) * Math.tanh((a - PLOT_FULL) / (PLOT_CAP - PLOT_FULL));
   return d < 0 ? -r : r;
 }
 
@@ -171,9 +190,39 @@ export class ResidentialFlat {
   private readonly wq = { d: Infinity, level: 0 };
   /** Set false to get the natural ground back (checks compare before / after). */
   enabled = true;
+  /** STEP 3: set false to switch the building plot pads off (checks compare before / after). */
+  plotsEnabled = true;
+  private plots: PlotPad[] = [];
 
   /** `waterEdge(x, z, out)`: lowers out.d to the distance (m) to the nearest river / lake edge (negative inside) and sets out.level (query only). */
   constructor(private readonly waterEdge: (x: number, z: number, out: { d: number; level: number }) => void) {}
+
+  /**
+   * STEP 3: building plots of the 6 flat zones. `ground(x, z)` = the ground with the zone flattening but WITHOUT plot pads and roads. The pad level is the
+   * MEDIAN of 5 x 5 points over the plot (same footprint formula as PlacedBuildings: world = p + lx * (c, -s) + lz * (s, c)). Plots outside the 6 zones are ignored.
+   * Runs once (constructor of TerrainGenerator); apply() only reads the small table.
+   */
+  buildPlots(list: readonly PlotInput[], ground: (x: number, z: number) => number): void {
+    const ids = new Set(FLAT_ZONES.map((d) => d.id));
+    this.plots = []; // ground() below must not see half built pads
+    const built: PlotPad[] = [];
+    for (const p of list) {
+      if (!ids.has(getWorldZoneAt(p.x, p.z).id)) continue;
+      const c = Math.cos(p.yaw), s = Math.sin(p.yaw), hw = p.W / 2, hd = p.D / 2;
+      const hs: number[] = [];
+      for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) {
+        const lx = (i / 2) * hw, lz = (j / 2) * hd;
+        hs.push(ground(p.x + lx * c + lz * s, p.z - lx * s + lz * c));
+      }
+      hs.sort((a, b) => a - b);
+      const reach = Math.hypot(hw, hd) + PLOT_BLEND + 1;
+      built.push({ x: p.x, z: p.z, yaw: p.yaw, W: p.W, D: p.D, level: hs[12], c, s, hw, hd, reach2: reach * reach });
+    }
+    this.plots = built;
+  }
+
+  /** The plot pads that were built (checks, tools). */
+  get plotPads(): readonly PlotPad[] { return this.plots; }
 
   /** Flattens out.h (natural ground, rivers and lakes already in). */
   apply(x: number, z: number, out: TerrainSample): void {
@@ -197,5 +246,29 @@ export class ResidentialFlat {
       h -= w * flatShift(h - zn.level);
     }
     out.h = h;
+    if (this.plotsEnabled && this.plots.length > 0) this.applyPlots(x, z, out, nat);
+  }
+
+  /** Plot pads (STEP 3): same water fade idea as the zones, shorter (PLOT_BANK_FADE). */
+  private applyPlots(x: number, z: number, out: TerrainSample, nat: number): void {
+    let fade = -1;
+    for (let i = 0; i < this.plots.length; i++) {
+      const p = this.plots[i];
+      const dx = x - p.x, dz = z - p.z;
+      if (dx * dx + dz * dz > p.reach2) continue;
+      const lx = dx * p.c - dz * p.s, lz = dx * p.s + dz * p.c;
+      const ex = Math.abs(lx) - p.hw, ez = Math.abs(lz) - p.hd;
+      const outside = Math.hypot(ex > 0 ? ex : 0, ez > 0 ? ez : 0);
+      if (outside >= PLOT_BLEND) continue;
+      let w = 1 - smoothstep(0, PLOT_BLEND, outside);
+      if (fade < 0) {
+        this.wq.d = Infinity;
+        this.waterEdge(x, z, this.wq);
+        fade = smoothstep(0, PLOT_BANK_FADE, this.wq.d) * smoothstep(0.6, 0.6 + SEA_FADE, nat);
+      }
+      w *= fade;
+      if (w <= 0) continue;
+      out.h -= w * plotShift(out.h - p.level);
+    }
   }
 }
