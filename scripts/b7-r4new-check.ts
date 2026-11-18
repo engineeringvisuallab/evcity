@@ -1,4 +1,4 @@
-// STEP B7-3 headless check of the R4-a lines (R4-1 .. R4-8, R4-10, R4-11) in the REAL road network (Config.roads.r4New.enabled = true):
+// STEP B7-3 headless check of the R4-a + R4-b lines (20 lines) in the REAL road network (Config.roads.r4New.enabled = true):
 // WATER first (sc.water > sc.h on the natural ground at every game road point, and the finished level against the water level), then: exist, length, levels, grade, centre cut / fill, structures found by bridgeArm,
 // junction pads created, and which other roads they cross in plan (R1: a crossing without a junction is a LIST, not hidden; the lines have free ends until the junction phase).
 // Run: npx tsx scripts/b7-r4new-check.ts
@@ -7,7 +7,7 @@ import { Config } from '../src/core/Config';
 Config.roads.r4New.enabled = true;
 const gen: any = new TerrainGenerator(Config.world.seed);
 const roads = gen.roads.roads;
-const names = ['R4-1', 'R4-2', 'R4-3', 'R4-4', 'R4-5', 'R4-6', 'R4-7', 'R4-8', 'R4-10', 'R4-11'];
+const names = ['R4-1', 'R4-2', 'R4-3', 'R4-4', 'R4-5', 'R4-6', 'R4-7', 'R4-8', 'R4-10', 'R4-11', 'R4-14', 'R4-15', 'R4-16', 'R4-17', 'R4-18', 'R4-22', 'R4-25', 'R4-26', 'R4-27', 'R4-28'];
 let fails = 0;
 const chk = (ok: boolean, t: string): void => { if (!ok) fails++; console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${t}`); };
 const seg = (ax: number, az: number, bx: number, bz: number, cx: number, cz: number, dx: number, dz: number): boolean => {
@@ -47,7 +47,7 @@ for (const nm of names) {
   chk(g <= 0.062, `${nm} grade <= 6 % (+ rounding of the 10 m samples)`);
   chk(r.lanes === 4 && r.medianHalf === 2, `${nm} is 4 lanes, divided (median half 2.0 m)`);
 }
-chk(names.every((n) => roads.some((q: any) => q.name === n)), 'all 10 lines exist as game roads');
+chk(names.every((n) => roads.some((q: any) => q.name === n)), 'all 20 lines exist as game roads');
 const ra: any = gen.roads;
 for (const k of ['pads', 'junctionPads', 'padList']) if (Array.isArray(ra[k])) pads = ra[k].length;
 console.log(`   junction pad list on the network: ${pads} (R6 only state was 0)`);

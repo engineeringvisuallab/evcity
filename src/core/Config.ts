@@ -80,7 +80,7 @@ export const Config = {
     r6Roads: { enabled: true as boolean },
     /** STEP B7a-2 (21.6 build): the 7 NEW R6 lines R6-9 .. R6-15 (src/roads/r6/R6NewLineData.ts, made by scripts/centre-r6-export.ts, 21.45) as game roads, same section / speed / daylight as r6Roads. DEFAULT FALSE: the lines have free ends, no junction nodes and no structures yet (21.7 / 21.8), so they cross other roads without a junction. true only for a look in the game, never as the shipped state. */
     r6New: { enabled: true as boolean },
-    /** STEP B7-3 (21.6 build, batch R4-a): the first R4 lines R4-1 .. R4-8, R4-10, R4-11 (src/roads/r4/R4NewLineData.ts, made by scripts/centre-r4-export.ts) as game roads, 4 lanes divided, V60, grade <= 6 %. Ends are free (no junction mouth, no structure yet, 21.61). false = none. */
+    /** STEP B7-3 (21.6 build, batch R4-a): the R4 lines of batches R4-a (R4-1 .. R4-8, R4-10, R4-11) and R4-b (R4-14 .. R4-18, R4-22, R4-25 .. R4-28) (src/roads/r4/R4NewLineData.ts, made by scripts/centre-r4-export.ts) as game roads, 4 lanes divided, V60, grade <= 6 %. Ends are free (no junction mouth, no structure yet, 21.61). false = none. */
     r4New: { enabled: true as boolean },
     /** STEP B7-4 (21.6 build, batch R2-a): the first R2 lines R2-12 .. R2-18, R2-44, R2-63, R2-65 (src/roads/r2/R2NewLineData.ts, made by scripts/centre-r2-export.ts) as game roads, 2 lanes undivided, V40, grade <= 8 %. Ends are free (no junction mouth, no structure yet, 21.61). false = none. */
     r2New: { enabled: true as boolean },
