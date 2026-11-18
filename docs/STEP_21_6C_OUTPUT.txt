@@ -3,141 +3,141 @@ STEP 21.6c EARTHWORK / FORMATION (headless; nothing in src changed; tsc / npm ru
 
    (run time 1 s)
 1. VOLUMES AND STRUCTURES PER CLASS (final 21.4c profile, 154 lines)
-   class 6     7.7 km   cut 0.39 Mm3   fill 0.22 Mm3   tunnel-candidate 230 m   viaduct 1250 m   bridge 70 m   side-hill structure 1305 m   catch point outside ROW 665 m (over 5 m: 85 m)
-   class 4    35.1 km   cut 1.08 Mm3   fill 0.54 Mm3   tunnel-candidate 1335 m   viaduct 2000 m   bridge 140 m   side-hill structure 5445 m   catch point outside ROW 14835 m (over 5 m: 6705 m)
-   class 2    61.4 km   cut 0.88 Mm3   fill 0.35 Mm3   tunnel-candidate 1690 m   viaduct 4555 m   bridge 160 m   side-hill structure 11555 m   catch point outside ROW 31155 m (over 5 m: 10945 m)
-   class C     3.8 km   cut 0.06 Mm3   fill 0.04 Mm3   tunnel-candidate 35 m   viaduct 115 m   bridge 0 m   side-hill structure 45 m   catch point outside ROW 3625 m (over 5 m: 730 m)
-   class L     6.0 km   cut 0.06 Mm3   fill 0.05 Mm3   tunnel-candidate 85 m   viaduct 0 m   bridge 0 m   side-hill structure 595 m   catch point outside ROW 5280 m (over 5 m: 1535 m)
-   side-hill split: slope does not catch the ground in 60 m 9215 m, slope face higher than 12 m cut / 7 m fill 9730 m
-   TOTAL cut 2.47 Mm3, fill 1.20 Mm3 (net 1.27 Mm3: surplus to spoil); structures 3.4 km tunnel-candidate, 7.9 km viaduct, 0.4 km bridge, 18.9 km side-hill (retaining wall / half viaduct)
-   (21.5 on the same profile, one section per class and the centre ground across the road: cut 4.18 Mm3, fill 1.78 Mm3)
+   class 6     7.8 km   cut 0.39 Mm3   fill 0.24 Mm3   tunnel-candidate 185 m   viaduct 1290 m   bridge 80 m   side-hill structure 1200 m   catch point outside ROW 740 m (over 5 m: 95 m)
+   class 4    35.2 km   cut 1.04 Mm3   fill 0.55 Mm3   tunnel-candidate 1755 m   viaduct 2420 m   bridge 150 m   side-hill structure 5055 m   catch point outside ROW 14530 m (over 5 m: 6235 m)
+   class 2    60.9 km   cut 0.93 Mm3   fill 0.32 Mm3   tunnel-candidate 1595 m   viaduct 4280 m   bridge 170 m   side-hill structure 11345 m   catch point outside ROW 31035 m (over 5 m: 10335 m)
+   class C     3.8 km   cut 0.06 Mm3   fill 0.05 Mm3   tunnel-candidate 35 m   viaduct 115 m   bridge 0 m   side-hill structure 45 m   catch point outside ROW 3605 m (over 5 m: 920 m)
+   class L     5.8 km   cut 0.05 Mm3   fill 0.04 Mm3   tunnel-candidate 135 m   viaduct 0 m   bridge 0 m   side-hill structure 545 m   catch point outside ROW 5070 m (over 5 m: 1410 m)
+   side-hill split: slope does not catch the ground in 60 m 8285 m, slope face higher than 12 m cut / 7 m fill 9905 m
+   TOTAL cut 2.48 Mm3, fill 1.21 Mm3 (net 1.27 Mm3: surplus to spoil); structures 3.7 km tunnel-candidate, 8.1 km viaduct, 0.4 km bridge, 18.2 km side-hill (retaining wall / half viaduct)
+   (21.5 on the same profile, one section per class and the centre ground across the road: cut 4.26 Mm3, fill 1.92 Mm3)
 
 2. PER SECTION (what the mesh builder will carry)
-   C-ZONE     3.82 km   cut 0.06 Mm3   fill 0.04 Mm3   cut per km 14855 m3   fill per km 10233 m3   catch outside ROW 3625 m, over 5 m 730 m
-   L-ZONE     6.03 km   cut 0.06 Mm3   fill 0.05 Mm3   cut per km 9766 m3   fill per km 8047 m3   catch outside ROW 5280 m, over 5 m 1535 m
-   R2-OPEN   31.73 km   cut 0.49 Mm3   fill 0.18 Mm3   cut per km 15443 m3   fill per km 5782 m3   catch outside ROW 9730 m, over 5 m 4790 m
-   R2-ZONE   29.70 km   cut 0.39 Mm3   fill 0.17 Mm3   cut per km 13230 m3   fill per km 5601 m3   catch outside ROW 21425 m, over 5 m 6155 m
-   R4-OPEN   24.18 km   cut 0.78 Mm3   fill 0.29 Mm3   cut per km 32331 m3   fill per km 12193 m3   catch outside ROW 6000 m, over 5 m 3070 m
-   R4-ZONE   10.95 km   cut 0.30 Mm3   fill 0.25 Mm3   cut per km 27429 m3   fill per km 22820 m3   catch outside ROW 8835 m, over 5 m 3635 m
-   R6         7.71 km   cut 0.39 Mm3   fill 0.22 Mm3   cut per km 50006 m3   fill per km 27904 m3   catch outside ROW 665 m, over 5 m 85 m
+   C-ZONE     3.80 km   cut 0.06 Mm3   fill 0.05 Mm3   cut per km 15345 m3   fill per km 12281 m3   catch outside ROW 3605 m, over 5 m 920 m
+   L-ZONE     5.82 km   cut 0.05 Mm3   fill 0.04 Mm3   cut per km 9091 m3   fill per km 7663 m3   catch outside ROW 5070 m, over 5 m 1410 m
+   R2-OPEN   31.39 km   cut 0.48 Mm3   fill 0.17 Mm3   cut per km 15427 m3   fill per km 5522 m3   catch outside ROW 9570 m, over 5 m 4390 m
+   R2-ZONE   29.55 km   cut 0.45 Mm3   fill 0.15 Mm3   cut per km 15244 m3   fill per km 5124 m3   catch outside ROW 21465 m, over 5 m 5945 m
+   R4-OPEN   24.20 km   cut 0.75 Mm3   fill 0.30 Mm3   cut per km 31177 m3   fill per km 12479 m3   catch outside ROW 5695 m, over 5 m 2915 m
+   R4-ZONE   10.96 km   cut 0.28 Mm3   fill 0.25 Mm3   cut per km 25737 m3   fill per km 22404 m3   catch outside ROW 8835 m, over 5 m 3320 m
+   R6         7.76 km   cut 0.39 Mm3   fill 0.24 Mm3   cut per km 50881 m3   fill per km 31507 m3   catch outside ROW 740 m, over 5 m 95 m
 
 3. STRUCTURE LIST FOR 21.8 (merged stretches, metres along the line; one row per stretch)
-   BRIDGE (10 stretches, 371 m):
-      R4-20  cls 4  s  1426 ..  1507    80 m  max 10.2 m above bed
-      R6-11  cls 6  s   205 ..   266    61 m  max 11.2 m above bed
-      R2-19  cls 2  s  2256 ..  2316    60 m  max 9.8 m above bed
-      R2-70  cls 2  s   485 ..   535    50 m  max 10.6 m above bed
-      R4-23  cls 4  s   405 ..   435    30 m  max 8.7 m above bed
-      R2-68  cls 2  s    46 ..    75    29 m  max 10.2 m above bed
-      R2-55  cls 2  s   874 ..   894    20 m  max 4.3 m above bed
-      R4-29  cls 4  s   365 ..   385    20 m  max 8.2 m above bed
-      R6-10  cls 6  s  1275 ..  1285    10 m  max 13.8 m above bed
-      R4-24  cls 4  s   966 ..   976    10 m  max 3.9 m above bed
-   VIADUCT (76 stretches, 7936 m):
-      R4-24  cls 4  s     0 ..   515   515 m  max 29.3 m fill
-      R4-21  cls 4  s   335 ..   846   511 m  max 18.2 m fill
-      R2-72  cls 2  s    85 ..   435   350 m  max 16.2 m fill
-      R2-7   cls 2  s   386 ..   725   339 m  max 16.4 m fill
-      R6-15  cls 6  s   876 ..  1186   310 m  max 10.7 m fill
-      R2-52  cls 2  s   355 ..   645   290 m  max 15.5 m fill
-      R2-4   cls 2  s    35 ..   295   260 m  max 13.8 m fill
-      R6-10  cls 6  s   615 ..   866   251 m  max 12.9 m fill
-      R4-9   cls 4  s  2714 ..  2958   243 m  max 12.3 m fill
-      R2-1   cls 2  s   765 ..  1005   240 m  max 13.4 m fill
-      R2-11  cls 2  s   923 ..  1160   237 m  max 41.7 m fill
-      R2-53  cls 2  s    55 ..   285   230 m  max 16.6 m fill
-      R2-33  cls 2  s   686 ..   906   219 m  max 9.8 m fill
-      R2-54  cls 2  s   545 ..   753   208 m  max 25.7 m fill
-      R6-9   cls 6  s   325 ..   525   200 m  max 8.5 m fill
-      R2-62  cls 2  s  3951 ..  4129   178 m  max 25.4 m fill
-      R2-2   cls 2  s   165 ..   325   161 m  max 10.7 m fill
-      R4-24  cls 4  s  2828 ..  2982   155 m  max 27.4 m fill
-      R2-11  cls 2  s   424 ..   574   150 m  max 13.8 m fill
-      R6-14  cls 6  s   195 ..   335   140 m  max 12.4 m fill
-      R2-55  cls 2  s     0 ..   124   124 m  max 15.0 m fill
-      R6-9   cls 6  s   615 ..   737   121 m  max 9.6 m fill
-      R2-74  cls 2  s   305 ..   425   119 m  max 10.8 m fill
+   BRIDGE (10 stretches, 400 m):
+      R4-20  cls 4  s  1426 ..  1506    80 m  max 9.8 m above bed
+      R2-19  cls 2  s  2256 ..  2326    71 m  max 11.0 m above bed
+      R6-11  cls 6  s   205 ..   266    60 m  max 11.1 m above bed
+      R2-70  cls 2  s   485 ..   535    50 m  max 9.3 m above bed
+      R4-23  cls 4  s   405 ..   435    30 m  max 8.5 m above bed
+      R2-68  cls 2  s    46 ..    75    29 m  max 10.4 m above bed
+      R4-29  cls 4  s   375 ..   395    21 m  max 8.5 m above bed
+      R2-55  cls 2  s   875 ..   895    20 m  max 4.7 m above bed
+      R4-24  cls 4  s   956 ..   976    20 m  max 4.4 m above bed
+      R6-10  cls 6  s  1306 ..  1326    19 m  max 12.5 m above bed
+   VIADUCT (78 stretches, 8109 m):
+      R4-24  cls 4  s     0 ..   586   586 m  max 36.9 m fill
+      R4-21  cls 4  s   355 ..   885   530 m  max 18.5 m fill
+      R6-15  cls 6  s   836 ..  1216   381 m  max 13.4 m fill
+      R2-7   cls 2  s   385 ..   726   341 m  max 16.9 m fill
+      R2-72  cls 2  s    95 ..   435   340 m  max 17.4 m fill
+      R2-1   cls 2  s   765 ..  1086   320 m  max 14.4 m fill
+      R6-10  cls 6  s   616 ..   896   280 m  max 14.3 m fill
+      R2-52  cls 2  s   365 ..   626   261 m  max 15.4 m fill
+      R4-9   cls 4  s  2688 ..  2944   256 m  max 13.0 m fill
+      R2-4   cls 2  s    35 ..   285   250 m  max 15.3 m fill
+      R2-11  cls 2  s   916 ..  1160   245 m  max 41.3 m fill
+      R2-62  cls 2  s  3777 ..  4008   230 m  max 35.7 m fill
+      R2-53  cls 2  s    75 ..   305   230 m  max 17.4 m fill
+      R2-54  cls 2  s   545 ..   753   208 m  max 25.9 m fill
+      R6-9   cls 6  s   314 ..   485   171 m  max 8.1 m fill
+      R4-24  cls 4  s  2858 ..  3023   165 m  max 38.0 m fill
+      R4-7   cls 4  s   655 ..   816   161 m  max 10.4 m fill
+      R2-10  cls 2  s   195 ..   352   157 m  max 23.7 m fill
+      R6-14  cls 6  s   195 ..   336   140 m  max 12.5 m fill
+      R2-33  cls 2  s   786 ..   906   120 m  max 9.7 m fill
+      R2-62  cls 2  s  1466 ..  1586   120 m  max 11.5 m fill
+      R2-60  cls 2  s    75 ..   193   118 m  max 41.7 m fill
       C-1    cls C  s     0 ..   115   115 m  max 11.1 m fill
-      R2-62  cls 2  s  1505 ..  1615   110 m  max 10.4 m fill
-      ... 51 more in docs/centre_earthwork.json
-   TUNNEL (48 stretches, 3370 m):
-      R4-9   cls 4  s  2176 ..  2614   438 m  max 36.6 m cut
-      R2-71  cls 2  s   154 ..   454   300 m  max 24.2 m cut
-      R4-2   cls 4  s   245 ..   475   230 m  max 20.1 m cut
-      R2-7   cls 2  s    45 ..   266   221 m  max 26.4 m cut
-      R4-9   cls 4  s  1386 ..  1575   190 m  max 21.6 m cut
-      R4-24  cls 4  s  2588 ..  2758   170 m  max 29.0 m cut
-      R2-74  cls 2  s     0 ..   165   165 m  max 21.2 m cut
-      R2-53  cls 2  s   445 ..   610   165 m  max 32.9 m cut
-      R2-5   cls 2  s   465 ..   569   103 m  max 18.2 m cut
-      R6-15  cls 6  s   375 ..   476   100 m  max 14.4 m cut
-      R2-55  cls 2  s   254 ..   355   100 m  max 13.4 m cut
-      R6-15  cls 6  s   635 ..   726    91 m  max 20.2 m cut
-      R2-11  cls 2  s   754 ..   843    90 m  max 19.8 m cut
-      R4-24  cls 4  s   746 ..   826    80 m  max 16.0 m cut
-      R2-11  cls 2  s     0 ..    65    65 m  max 16.7 m cut
-      R4-9   cls 4  s  2056 ..  2116    60 m  max 16.4 m cut
-      L-6    cls L  s   115 ..   175    60 m  max 13.6 m cut
-      R4-9   cls 4  s   336 ..   385    49 m  max 18.6 m cut
-      R2-1   cls 2  s  1125 ..  1173    48 m  max 23.6 m cut
-      R2-19  cls 2  s  2126 ..  2167    41 m  max 13.2 m cut
-      R2-1   cls 2  s   485 ..   525    41 m  max 14.3 m cut
-      R4-9   cls 4  s   676 ..   716    40 m  max 15.4 m cut
-      R2-54  cls 2  s   285 ..   325    40 m  max 12.9 m cut
-      R2-54  cls 2  s   375 ..   415    40 m  max 13.2 m cut
-      R2-73  cls 2  s    76 ..   116    40 m  max 26.9 m cut
-      ... 23 more in docs/centre_earthwork.json
-   SIDEHILL (232 stretches, 18911 m):
-      R2-2   cls 2  s   325 ..  1686  1361 m  max 7.8 m centre cut / fill
-      R2-6   cls 2  s   465 ..  1638  1172 m  max 9.8 m centre cut / fill
-      R4-24  cls 4  s  1727 ..  2587   860 m  max 11.9 m centre cut / fill
-      R2-4   cls 2  s  1034 ..  1816   782 m  max 2.5 m centre cut / fill
-      R4-24  cls 4  s  1046 ..  1717   671 m  max 7.0 m centre cut / fill
-      R2-58  cls 2  s   804 ..  1304   500 m  max 1.5 m centre cut / fill
-      R2-58  cls 2  s     0 ..   445   445 m  max 11.4 m centre cut / fill
-      R4-9   cls 4  s    35 ..   335   300 m  max 11.5 m centre cut / fill
-      R4-9   cls 4  s   386 ..   675   290 m  max 11.2 m centre cut / fill
-      R6-15  cls 6  s  1467 ..  1746   279 m  max 1.4 m centre cut / fill
-      R2-64  cls 2  s   505 ..   765   261 m  max 3.8 m centre cut / fill
-      R2-55  cls 2  s   355 ..   614   260 m  max 11.4 m centre cut / fill
-      R2-71  cls 2  s   454 ..   704   250 m  max 11.8 m centre cut / fill
-      R4-1   cls 4  s   385 ..   616   230 m  max 4.8 m centre cut / fill
-      L-5    cls L  s     0 ..   225   225 m  max 11.2 m centre cut / fill
-      R4-1   cls 4  s  1366 ..  1586   220 m  max 6.4 m centre cut / fill
-      R2-58  cls 2  s   455 ..   675   220 m  max 11.8 m centre cut / fill
-      R2-62  cls 2  s  2064 ..  2273   209 m  max 2.7 m centre cut / fill
-      R2-74  cls 2  s  1396 ..  1596   200 m  max 4.7 m centre cut / fill
-      R4-24  cls 4  s   546 ..   746   200 m  max 10.9 m centre cut / fill
-      R2-62  cls 2  s  1306 ..  1505   199 m  max 6.2 m centre cut / fill
-      R2-61  cls 2  s  1012 ..  1183   171 m  max 10.7 m centre cut / fill
-      L-6    cls L  s   175 ..   342   167 m  max 11.9 m centre cut / fill
-      R2-62  cls 2  s   376 ..   536   160 m  max 11.7 m centre cut / fill
-      R2-8   cls 2  s   386 ..   546   160 m  max 1.1 m centre cut / fill
-      ... 207 more in docs/centre_earthwork.json
+      R6-9   cls 6  s   606 ..   719   113 m  max 9.7 m fill
+      R2-74  cls 2  s   305 ..   416   111 m  max 10.6 m fill
+      ... 53 more in docs/centre_earthwork.json
+   TUNNEL (55 stretches, 3686 m):
+      R4-9   cls 4  s  2197 ..  2597   400 m  max 34.9 m cut
+      R4-24  cls 4  s  2497 ..  2817   320 m  max 55.7 m cut
+      R4-2   cls 4  s   244 ..   486   241 m  max 20.4 m cut
+      R4-9   cls 4  s  1386 ..  1606   220 m  max 18.0 m cut
+      R2-7   cls 2  s    45 ..   265   220 m  max 24.0 m cut
+      R2-71  cls 2  s   145 ..   345   200 m  max 23.8 m cut
+      R2-74  cls 2  s     0 ..   165   165 m  max 21.9 m cut
+      R2-53  cls 2  s   466 ..   622   157 m  max 35.6 m cut
+      R4-24  cls 4  s   686 ..   826   139 m  max 26.5 m cut
+      L-6    cls L  s    55 ..   175   120 m  max 17.8 m cut
+      R2-5   cls 2  s   465 ..   570   105 m  max 18.9 m cut
+      R4-9   cls 4  s   156 ..   255   100 m  max 18.3 m cut
+      R6-15  cls 6  s   646 ..   726    80 m  max 19.0 m cut
+      R2-59  cls 2  s    95 ..   175    80 m  max 15.7 m cut
+      R4-9   cls 4  s  2057 ..  2136    79 m  max 17.1 m cut
+      R2-11  cls 2  s   766 ..   836    70 m  max 23.0 m cut
+      R4-9   cls 4  s   676 ..   736    60 m  max 17.1 m cut
+      R4-9   cls 4  s   346 ..   405    59 m  max 20.7 m cut
+      R6-15  cls 6  s   386 ..   436    50 m  max 13.7 m cut
+      R2-71  cls 2  s   935 ..   978    43 m  max 27.7 m cut
+      R2-1   cls 2  s  1126 ..  1166    41 m  max 20.6 m cut
+      R2-55  cls 2  s   325 ..   365    40 m  max 15.1 m cut
+      R6-10  cls 6  s   295 ..   335    40 m  max 15.4 m cut
+      R2-54  cls 2  s   285 ..   325    40 m  max 12.7 m cut
+      R2-54  cls 2  s   375 ..   415    40 m  max 13.0 m cut
+      ... 30 more in docs/centre_earthwork.json
+   SIDEHILL (237 stretches, 18189 m):
+      R2-2   cls 2  s     5 ..  1447  1442 m  max 8.7 m centre cut / fill
+      R2-6   cls 2  s   646 ..  1624   978 m  max 11.3 m centre cut / fill
+      R4-24  cls 4  s  1326 ..  2187   861 m  max 11.9 m centre cut / fill
+      R2-4   cls 2  s  1026 ..  1759   734 m  max 4.1 m centre cut / fill
+      R2-58  cls 2  s   705 ..  1266   561 m  max 6.9 m centre cut / fill
+      R2-58  cls 2  s     0 ..   445   445 m  max 11.8 m centre cut / fill
+      R2-71  cls 2  s   345 ..   655   310 m  max 10.4 m centre cut / fill
+      R2-74  cls 2  s  1306 ..  1586   281 m  max 4.9 m centre cut / fill
+      R4-9   cls 4  s   406 ..   676   270 m  max 11.4 m centre cut / fill
+      R6-15  cls 6  s  1456 ..  1726   270 m  max 3.9 m centre cut / fill
+      R2-55  cls 2  s    65 ..   324   260 m  max 11.0 m centre cut / fill
+      R2-64  cls 2  s   616 ..   866   250 m  max 8.6 m centre cut / fill
+      R4-1   cls 4  s  1336 ..  1586   249 m  max 5.9 m centre cut / fill
+      R2-55  cls 2  s   365 ..   605   240 m  max 10.9 m centre cut / fill
+      R6-15  cls 6  s   436 ..   646   210 m  max 12.0 m centre cut / fill
+      R2-58  cls 2  s   465 ..   665   200 m  max 11.9 m centre cut / fill
+      R2-2   cls 2  s  1456 ..  1652   196 m  max 6.7 m centre cut / fill
+      R4-21  cls 4  s   175 ..   355   180 m  max 6.9 m centre cut / fill
+      R2-8   cls 2  s   396 ..   575   179 m  max 1.2 m centre cut / fill
+      R4-1   cls 4  s   555 ..   726   171 m  max 6.9 m centre cut / fill
+      R2-62  cls 2  s  2047 ..  2217   170 m  max 1.5 m centre cut / fill
+      R4-1   cls 4  s   376 ..   546   170 m  max 6.9 m centre cut / fill
+      L-6    cls L  s   175 ..   332   157 m  max 11.4 m centre cut / fill
+      L-5    cls L  s     0 ..   156   156 m  max 10.6 m centre cut / fill
+      R2-71  cls 2  s   675 ..   815   140 m  max 10.1 m centre cut / fill
+      ... 212 more in docs/centre_earthwork.json
 
 4. CATCH POINT MORE THAN 5 M OUTSIDE THE ROW (the slope runs well past the land strip: land take, a steeper slope or a retaining wall; decision later; the any-distance figure is in 1 and 2)
-   R2-62   1400 m
-   R4-12    760 m
-   R4-13    650 m
-   R2-74    650 m
-   R2-19    630 m
-   R4-6     600 m
-   R2-43    580 m
-   R2-72    570 m
-   R2-76    560 m
-   R2-51    540 m
-   R4-7     510 m
-   R2-8     510 m
-   R4-20    500 m
-   R4-1     490 m
-   R4-9     460 m
-   109 lines, 20210 m in all (structures and side-hill stretches are not counted here)
+   R2-62   1280 m
+   R4-12    950 m
+   R2-19    680 m
+   R4-6     640 m
+   R2-43    560 m
+   R2-74    540 m
+   R2-76    530 m
+   R2-8     480 m
+   R4-7     460 m
+   R4-9     420 m
+   R4-1     410 m
+   R4-13    370 m
+   R4-20    360 m
+   R2-52    360 m
+   R2-1     350 m
+   111 lines, 19210 m in all (structures and side-hill stretches are not counted here)
 
 5. CHECKS
    PASS  154 lines done (154)
    PASS  all volumes finite
    PASS  no negative volume
-   PASS  km per class 114.12 = km per section 114.12
+   PASS  km per class 113.48 = km per section 113.48
    PASS  every structure stretch has a length
    PASS  L class volumes exist (sanity)
 PASS 6  FAIL 0

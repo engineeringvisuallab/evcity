@@ -1,6 +1,6 @@
 STEP 21.4 VERTICAL PROFILE ANALYSIS (headless; nothing in src or data changed; natural ground only, no vertical curves, no junction levels, no rail / building check)
 0. WATER CHECK first: stations with sc.water > sc.h on the 10 m samples of every line (dry = fine, wet = bridge or culvert in 21.8)
-   154 lines, 11517 stations, 40 wet (0.3 %)
+   154 lines, 11502 stations, 40 wet (0.3 %)
    R6-10   6  wet 20 m of 1880 m
    R6-11   6  wet 60 m of 1450 m
    R4-20   4  wet 80 m of 1940 m
@@ -62,7 +62,7 @@ STEP 21.4 VERTICAL PROFILE ANALYSIS (headless; nothing in src or data changed; n
    R2-12   2    450 m  natG 22.0%  finG 8.0%  cut 1.1 fill 3.7  cutV 1k fillV 3k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    R2-13   2    440 m  natG 16.8%  finG 8.0%  cut 0.4 fill 1.0  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    R2-14   2    610 m  natG 3.8%  finG 4.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
-   R2-15   2    350 m  natG 11.1%  finG 8.0%  cut 0.1 fill 0.3  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-15   2    360 m  natG 11.1%  finG 8.0%  cut 0.1 fill 0.3  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    R2-16   2    250 m  natG 11.5%  finG 8.0%  cut 0.2 fill 0.3  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    R2-17   2   1180 m  natG 17.9%  finG 8.0%  cut 2.9 fill 1.4  cutV 3k fillV 2k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    R2-18   2    220 m  natG 12.4%  finG 8.0%  cut 0.5 fill 0.8  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
@@ -93,12 +93,12 @@ STEP 21.4 VERTICAL PROFILE ANALYSIS (headless; nothing in src or data changed; n
    R2-43   2    750 m  natG 22.5%  finG 8.0%  cut 1.9 fill 3.3  cutV 2k fillV 4k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    R2-44   2    850 m  natG 14.9%  finG 8.0%  cut 1.8 fill 1.8  cutV 1k fillV 2k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    R2-45   2    840 m  natG 21.9%  finG 8.0%  cut 2.1 fill 1.8  cutV 1k fillV 1k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
-   R2-46   2    460 m  natG 18.2%  finG 8.0%  cut 2.4 fill 2.5  cutV 1k fillV 1k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-46   2    460 m  natG 18.4%  finG 8.0%  cut 2.4 fill 2.4  cutV 1k fillV 1k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    R2-48   2    240 m  natG 5.3%  finG 5.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    R2-49   2    310 m  natG 9.9%  finG 8.0%  cut 0.2 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    R2-50   2    260 m  natG 9.7%  finG 8.0%  cut 0.1 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    R2-51   2   1520 m  natG 16.0%  finG 8.0%  cut 1.1 fill 6.9  cutV 2k fillV 9k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
-   R2-52   2   1080 m  natG 33.3%  finG 8.0%  cut 4.9 fill 6.9  cutV 6k fillV 17k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-52   2   1080 m  natG 31.9%  finG 8.0%  cut 4.5 fill 6.9  cutV 6k fillV 17k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    R2-53   2    620 m  natG 52.3%  finG 8.0%  cut 29.1 fill 19.3  cutV 38k fillV 54k m3  viaduct 290 m  bridge 0 m  tunnel? 110 m
    R2-54   2    750 m  natG 29.2%  finG 8.0%  cut 13.2 fill 25.7  cutV 40k fillV 51k m3  viaduct 210 m  bridge 0 m  tunnel? 80 m
    R2-55   2   1260 m  natG 46.0%  finG 8.0%  cut 12.6 fill 13.3  cutV 41k fillV 24k m3  viaduct 110 m  bridge 20 m  tunnel? 30 m
@@ -143,15 +143,15 @@ STEP 21.4 VERTICAL PROFILE ANALYSIS (headless; nothing in src or data changed; n
    L-5     L    530 m  natG 19.8%  finG 10.0%  cut 0.8 fill 0.7  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    L-6     L    330 m  natG 18.8%  finG 10.0%  cut 1.9 fill 1.3  cutV 1k fillV 1k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    L-7     L    180 m  natG 28.5%  finG 10.0%  cut 5.1 fill 1.9  cutV 1k fillV 1k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
-   L-8     L    150 m  natG 14.0%  finG 10.0%  cut 0.3 fill 0.5  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
-   L-9     L    140 m  natG 12.9%  finG 10.0%  cut 0.2 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
-   L-10    L    130 m  natG 20.1%  finG 10.0%  cut 1.6 fill 0.5  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-8     L    110 m  natG 11.0%  finG 10.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-9     L    100 m  natG 12.9%  finG 10.0%  cut 0.2 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-10    L     90 m  natG 20.1%  finG 10.0%  cut 1.6 fill 0.5  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    L-11    L    130 m  natG 17.3%  finG 10.0%  cut 0.0 fill 1.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    L-12    L    150 m  natG 13.6%  finG 10.0%  cut 0.3 fill 0.3  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    L-13    L    130 m  natG 19.4%  finG 10.0%  cut 0.5 fill 1.0  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    L-14    L    150 m  natG 17.8%  finG 10.0%  cut 0.3 fill 1.4  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    L-15    L    170 m  natG 15.3%  finG 10.0%  cut 0.0 fill 0.7  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
-   L-16    L    130 m  natG 18.6%  finG 10.0%  cut 0.8 fill 1.7  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-16    L     90 m  natG 18.6%  finG 10.0%  cut 0.8 fill 1.7  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    L-17    L    100 m  natG 7.8%  finG 7.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    L-18    L    150 m  natG 10.0%  finG 10.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
    L-19    L    110 m  natG 8.4%  finG 9.0%  cut 0.0 fill 0.0  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
@@ -203,5 +203,5 @@ STEP 21.4 VERTICAL PROFILE ANALYSIS (headless; nothing in src or data changed; n
    4   29 lines 35.2 km  cut 0.8 Mm3  fill 1.2 Mm3  viaduct 1820 m  bridge 150 m  tunnel? 660 m  max cut 40.8 max fill 54.7
    2   74 lines 60.9 km  cut 0.7 Mm3  fill 0.8 Mm3  viaduct 2790 m  bridge 170 m  tunnel? 1130 m  max cut 29.1 max fill 38.0
    C   13 lines 3.8 km  cut 0 Mm3  fill 0 Mm3  viaduct 40 m  bridge 0 m  tunnel? 20 m  max cut 14.0 max fill 7.1
-   L   31 lines 6.0 km  cut 0 Mm3  fill 0 Mm3  viaduct 0 m  bridge 0 m  tunnel? 0 m  max cut 5.1 max fill 1.9
+   L   31 lines 5.8 km  cut 0 Mm3  fill 0 Mm3  viaduct 0 m  bridge 0 m  tunnel? 0 m  max cut 5.1 max fill 1.9
    NOT DONE: vertical curves, junction levels (two lines at a node can differ), rail crossings, building clearance, drainage; only a level DP on natural ground.

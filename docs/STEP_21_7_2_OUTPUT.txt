@@ -3,7 +3,7 @@ constants (MY choices): design speed R6 80 / R4 60 / R2 and C 40 / L 30 km/h (21
    storage priority 15 m, signalised 30 m (ASSUMED); slip lane R 25 m width 4; sight gap 7.5 s; angle: >= 70 PASS, 60 - 70 PASS with skew design, < 60 FIX LIST; roundabout ICD 1-lane 30,45 / 2-lane 50,70 m, edge 8 m, rail 25 m
 Standards.ts: aDecel 2.5 m/s2, tPR 2.5 s, aBrake 3.4 m/s2. Ground data: 601 building footprints, 1605 rail points, terrain water + natural height (TerrainGenerator).
 
-   PASS  arms rebuilt as in 21.7-1: the skew angle of every 3- and 4-arm node equals docs/centre_junction.json (122 nodes)
+   PASS  arms rebuilt as in 21.7-1: the skew angle of every 3- and 4-arm node equals docs/centre_junction.json (118 nodes)
 1. ROUNDABOUTS: 37 nodes with 4 arms (21.47 text said 36 crossing nodes; the node list has 37 four-arm nodes: 13 two-through-line crossings + 23 one line through with two ends on opposite sides + 1 with four ends; your 36 = 13 + 23, the 37th is the one node where four line ENDS meet, it is a roundabout too and is counted here)
    lanes: 24 one-lane (ICD 30 - 45 m), 13 two-lane (ICD 50 - 70 m); rule of 21.47: a 2-lane roundabout where an R4 / R6 arm meets, else 1-lane
    ICD rule: the arc between two neighbouring arm axes at the circle edge (ICD/2 x angle) must hold both arm mouths (entry + exit + splitter island 3 m) and 2 m of kerb; mouth = 2 x entry width 4.5 (1 lane) / 7 (2 lanes) + 3
@@ -24,30 +24,30 @@ Standards.ts: aDecel 2.5 m/s2, tPR 2.5 s, aBrake 3.4 m/s2. Ground data: 601 buil
    N099  1      C L C L                 88 deg          18.2 -> 30 m     19    5.5  15/20       11 / 0 / 11 / 0
    N100  1      C L C L                 81 deg          19.9 -> 30 m     19    5.5  15/20       11 / 0 / 11 / 0
    N103  1      C L C L                 88 deg          18.2 -> 30 m     19    5.5  15/20       11 / 0 / 11 / 0
-   N105  1      C L C L                 87 deg          18.4 -> 30 m     19    5.5  15/20       11 / 0 / 11 / 0
-   N107  1      C L C L                 86 deg          18.7 -> 30 m     19    5.5  15/20       11 / 0 / 11 / 0
-   N112  1      L L L L                 86 deg          18.6 -> 30 m     19    5.5  15/20       0 / 0 / 0 / 0
-   N115  1      L R2 L R2               86 deg          18.6 -> 30 m     19    5.5  15/20       0 / 11 / 0 / 11
-   N116  1      L C L C                 85 deg          18.9 -> 30 m     19    5.5  15/20       0 / 11 / 0 / 11
-   N117  1      L R2 L R2               87 deg          18.3 -> 30 m     19    5.5  15/20       0 / 11 / 0 / 11
-   N119  1      L R2 L R2               83 deg          19.4 -> 30 m     19    5.5  15/20       0 / 11 / 0 / 11
-   N121  1      L C L C                 74 deg          21.8 -> 30 m     19    5.5  15/20       0 / 11 / 0 / 11
-   N124  2      R6 R2 R6 R2             67 deg          28.4 -> 50 m     32    9.0  20/30       85 / 11 / 85 / 11
-   N125  2      R2 R4 R2 R4             87 deg          21.7 -> 50 m     32    9.0  20/30       11 / 42 / 11 / 42
-   N126  2      C R4 C R4               86 deg          22.1 -> 50 m     32    9.0  20/30       11 / 42 / 11 / 42
-   N127  2      C R4 C R4               83 deg          22.7 -> 50 m     32    9.0  20/30       11 / 42 / 11 / 42
-   N128  1      L R2 L R2               82 deg          19.6 -> 30 m     19    5.5  15/20       0 / 11 / 0 / 11
+   N104  1      C L C L                 87 deg          18.4 -> 30 m     19    5.5  15/20       11 / 0 / 11 / 0
+   N105  1      C L C L                 86 deg          18.7 -> 30 m     19    5.5  15/20       11 / 0 / 11 / 0
+   N109  1      L L L L                 86 deg          18.6 -> 30 m     19    5.5  15/20       0 / 0 / 0 / 0
+   N111  1      L R2 L R2               86 deg          18.6 -> 30 m     19    5.5  15/20       0 / 11 / 0 / 11
+   N112  1      L C L C                 85 deg          18.9 -> 30 m     19    5.5  15/20       0 / 11 / 0 / 11
+   N113  1      L R2 L R2               87 deg          18.3 -> 30 m     19    5.5  15/20       0 / 11 / 0 / 11
+   N115  1      L R2 L R2               83 deg          19.4 -> 30 m     19    5.5  15/20       0 / 11 / 0 / 11
+   N117  1      L C L C                 74 deg          21.8 -> 30 m     19    5.5  15/20       0 / 11 / 0 / 11
+   N120  2      R6 R2 R6 R2             67 deg          28.4 -> 50 m     32    9.0  20/30       85 / 11 / 85 / 11
+   N121  2      R2 R4 R2 R4             87 deg          21.7 -> 50 m     32    9.0  20/30       11 / 42 / 11 / 42
+   N122  2      C R4 C R4               86 deg          22.1 -> 50 m     32    9.0  20/30       11 / 42 / 11 / 42
+   N123  2      C R4 C R4               83 deg          22.7 -> 50 m     32    9.0  20/30       11 / 42 / 11 / 42
+   N124  1      L R2 L R2               82 deg          19.6 -> 30 m     19    5.5  15/20       0 / 11 / 0 / 11
+   N125  1      R2 R2 R2 R2             90 deg          17.9 -> 30 m     19    5.5  15/20       11 / 11 / 11 / 11
+   N126  1      R2 R2 R2 R2             90 deg          17.8 -> 30 m     19    5.5  15/20       11 / 11 / 11 / 11
+   N127  1      R2 R2 R2 R2             89 deg          17.9 -> 30 m     19    5.5  15/20       11 / 11 / 11 / 11
+   N128  1      R2 R2 R2 R2             90 deg          17.9 -> 30 m     19    5.5  15/20       11 / 11 / 11 / 11
    N129  1      R2 R2 R2 R2             90 deg          17.9 -> 30 m     19    5.5  15/20       11 / 11 / 11 / 11
-   N130  1      R2 R2 R2 R2             90 deg          17.8 -> 30 m     19    5.5  15/20       11 / 11 / 11 / 11
+   N130  1      R2 R2 R2 R2             90 deg          17.9 -> 30 m     19    5.5  15/20       11 / 11 / 11 / 11
    N131  1      R2 R2 R2 R2             89 deg          17.9 -> 30 m     19    5.5  15/20       11 / 11 / 11 / 11
-   N132  1      R2 R2 R2 R2             90 deg          17.9 -> 30 m     19    5.5  15/20       11 / 11 / 11 / 11
-   N133  1      R2 R2 R2 R2             90 deg          17.9 -> 30 m     19    5.5  15/20       11 / 11 / 11 / 11
-   N134  1      R2 R2 R2 R2             90 deg          17.9 -> 30 m     19    5.5  15/20       11 / 11 / 11 / 11
-   N135  1      R2 R2 R2 R2             89 deg          17.9 -> 30 m     19    5.5  15/20       11 / 11 / 11 / 11
-   N136  1      R2 R2 R2 R2             87 deg          18.4 -> 30 m     19    5.5  15/20       11 / 11 / 11 / 11
+   N132  1      R2 R2 R2 R2             87 deg          18.4 -> 30 m     19    5.5  15/20       11 / 11 / 11 / 11
    PASS  every roundabout fits its lane class ICD range from the arm angles  [0 FAIL: ]
 
-2. T JUNCTIONS: 83 at-grade T nodes = signalised A x A 12, priority T + right-turn pocket (LHT) 29, priority T 42 (the 2 grade-separated nodes N030, N074 are 21.8)
+2. T JUNCTIONS: 79 at-grade T nodes = signalised A x A 12, priority T + right-turn pocket (LHT) 25, priority T 42 (the 2 grade-separated nodes N030, N074 are 21.8)
    2.1 STANDARD SHEET PER TYPE (every number from Standards.ts / Step 8 / 3.13 point 4; the formulas are printed so they can be audited)
    kerb radius (Step 8: 8 - 15 m collector, up to 25 m with a slip lane on arterials), turning speed from V^2 / (127 (0.02 + f)), f of Standards.ts:
       T signalised A x A (slip lane both left corners)     R 25 m   turning speed 30 km/h
@@ -66,22 +66,18 @@ Standards.ts: aDecel 2.5 m/s2, tPR 2.5 s, aBrake 3.4 m/s2. Ground data: 601 buil
    signalised minor arm flare (right-turn lane + slip): the same formula with the minor class (R4 / R6: taper + decel + 30 m)
    sight (priority T): stopping sight SSD = Standards.ts stoppingSight; sight distance along the major road from the minor stop line = 0.278 V 7.5 s (V80 167 m, V60 125 m, V40 83 m, V30 63 m); decision point 4.5 m behind the major kerb line
    check values: SSD V80 128 m, V60 83 m, V40 46 m, V30 31 m; Rmin (e 8 %): R6 229, R4 113, R2 / C 41, L 20 m
-3. FIT BETWEEN NEIGHBOURING JUNCTIONS: 163 node pairs along a line. Each junction needs along the arm: roundabout ICD/2 + 25 m; T = largest kerb radius + 10 m (+ 30 m flare on a signalised minor arm); the two must not overlap (a pocket comes after this, 3.2).
+3. FIT BETWEEN NEIGHBOURING JUNCTIONS: 155 node pairs along a line. Each junction needs along the arm: roundabout ICD/2 + 25 m; T = largest kerb radius + 10 m (+ 30 m flare on a signalised minor arm); the two must not overlap (a pocket comes after this, 3.2).
    FAIL  every pair of neighbouring junctions has its two footprints apart  [1 FAIL = list below]
-      N094 - N112 on L-14: gap 79 m, need 80 m (40 + 40)   short by 1 m
-   INFO  full deceleration to 30 km/h (ICD/2 + decel + 10 m) does not fit on 3 roundabout arms: the approach needs an advisory / reduced speed there (same device as 21.47 (c)); not a FAIL
+      N094 - N109 on L-14: gap 79 m, need 80 m (40 + 40)   short by 1 m
+   INFO  full deceleration to 30 km/h (ICD/2 + decel + 10 m) does not fit on 2 roundabout arms: the approach needs an advisory / reduced speed there (same device as 21.47 (c)); not a FAIL
 
-   3.2 POCKET FIT: 41 T nodes have a right-turn pocket. The pocket lies on the major arm whose traffic turns RIGHT into the minor arm (left-hand traffic). Available = distance to the next junction - kerb radius - that junction's own footprint.
-   FULL = standard pocket fits 33; SHORT = only the 40 km/h pocket fits (advisory sign) 3; NO = not even that 5
-   FAIL  every pocket fits at least in the SHORT version  [5 FAIL: N009 avail 71 m < 92 m; N028 avail 71 m < 91 m; N104 avail 45 m < 76 m; N108 avail 75 m < 76 m; N114 avail 21 m < 76 m]
+   3.2 POCKET FIT: 37 T nodes have a right-turn pocket. The pocket lies on the major arm whose traffic turns RIGHT into the minor arm (left-hand traffic). Available = distance to the next junction - kerb radius - that junction's own footprint.
+   FULL = standard pocket fits 33; SHORT = only the 40 km/h pocket fits (advisory sign) 2; NO = not even that 2
+   FAIL  every pocket fits at least in the SHORT version  [2 FAIL: N009 avail 71 m < 92 m; N028 avail 71 m < 91 m]
       N009 TA R6 on R6-9: available 71 m to (line end), full 170 m, short 92 m -> NO
-      N028 TA R4 on R4-27: available 71 m to N126, full 167 m, short 91 m -> NO
+      N028 TA R4 on R4-27: available 71 m to N122, full 167 m, short 91 m -> NO
       N056 TP R4 on R4-20: available 142 m to N058, full 152 m, short 76 m -> SHORT
       N058 TP R4 on R4-20: available 142 m to N056, full 152 m, short 76 m -> SHORT
-      N104 TP R4 on R4-10: available 45 m to N035, full 152 m, short 76 m -> NO
-      N106 TP R4 on R4-10: available 78 m to N104, full 152 m, short 76 m -> SHORT
-      N108 TP R4 on R4-10: available 75 m to N106, full 152 m, short 76 m -> NO
-      N114 TP R4 on R4-10: available 21 m to N033, full 152 m, short 76 m -> NO
 
 4. GROUND OF THE 37 ROUNDABOUTS (disc ICD/2 + 8 m and the arm corridors ICD/2 .. ICD/2 + 25 m, grid 4 m; buildings = 601 footprints incl. yard, water = terrain water above ground, rail = 25 m from the circle edge)
    node  ICD  nearest building (m)  rail (m)  water m2  slope across ICD %  result
@@ -101,31 +97,31 @@ Standards.ts: aDecel 2.5 m/s2, tPR 2.5 s, aBrake 3.4 m/s2. Ground data: 601 buil
    N099  30     >340                >400         0       7.8              FIT
    N100  30     >340                >400         0       5.6              FIT
    N103  30     >340                >400         0       5.9              FIT
-   N105  30     >340                >400         0       6.8              FIT
-   N107  30     >340                >400         0      10.4              FIT
-   N112  30     >340                >400         0      14.2              FIT
-   N115  30     >340                 213         0       5.8              FIT
-   N116  30     >340                >400         0       7.1              FIT
-   N117  30     >340                 497         0       8.9              FIT
-   N119  30     >340                 429         0       4.1              FIT
-   N121  30     >340                 386         0      10.3              FIT
-   N124  50      133                 154         0      17.8              FIT
-   N125  50     >340                >400         0       4.6              FIT
-   N126  50     >340                 186         0       0.9              FIT
-   N127  50     >340                 250         0       0.6              FIT
-   N128  30     >340                 332         0       7.4              FIT
-   N129  30     >340                >400         0       1.6              FIT
-   N130  30     >340                >400         0       1.6              FIT
-   N131  30     >340                >400         0       3.6              FIT
-   N132  30     >340                >400         0       3.5              FIT
-   N133  30     >340                 250         0       2.4              FIT
-   N134  30     >340                 301         0       2.2              FIT
-   N135  30     >340                 343         0       2.0              FIT
-   N136  30     >340                 244         0       1.4              FIT
+   N104  30     >340                >400         0       6.8              FIT
+   N105  30     >340                >400         0      10.4              FIT
+   N109  30     >340                >400         0      14.2              FIT
+   N111  30     >340                 213         0       5.8              FIT
+   N112  30     >340                >400         0       7.1              FIT
+   N113  30     >340                 497         0       8.9              FIT
+   N115  30     >340                 429         0       4.1              FIT
+   N117  30     >340                 386         0      10.3              FIT
+   N120  50      133                 154         0      17.8              FIT
+   N121  50     >340                >400         0       4.6              FIT
+   N122  50     >340                 186         0       0.9              FIT
+   N123  50     >340                 250         0       0.6              FIT
+   N124  30     >340                 332         0       7.4              FIT
+   N125  30     >340                >400         0       1.6              FIT
+   N126  30     >340                >400         0       1.6              FIT
+   N127  30     >340                >400         0       3.6              FIT
+   N128  30     >340                >400         0       3.5              FIT
+   N129  30     >340                 250         0       2.4              FIT
+   N130  30     >340                 301         0       2.2              FIT
+   N131  30     >340                 343         0       2.0              FIT
+   N132  30     >340                 244         0       1.4              FIT
    PASS  every roundabout has room on the ground (no building, water or rail inside)  [0 FAIL: ]
-   INFO  natural slope across the ICD above 4 %: 24 roundabouts (N033 9.7, N037 11.5, N040 5.9, N043 9.8, N079 13.8, N084 12.5, N088 4.3, N091 5.6, N094 6.9, N097 4.4, N099 7.8, N100 5.6, N103 5.9, N105 6.8, N107 10.4, N112 14.2, N115 5.8, N116 7.1, N117 8.9, N119 4.1, N121 10.3, N124 17.8, N125 4.6, N128 7.4); the circulating roadway is built flat to 2 - 3 % crossfall, so these need cut / fill (21.6c earthwork), not a FAIL
+   INFO  natural slope across the ICD above 4 %: 24 roundabouts (N033 9.7, N037 11.5, N040 5.9, N043 9.8, N079 13.8, N084 12.5, N088 4.3, N091 5.6, N094 6.9, N097 4.4, N099 7.8, N100 5.6, N103 5.9, N104 6.8, N105 10.4, N109 14.2, N111 5.8, N112 7.1, N113 8.9, N115 4.1, N117 10.3, N120 17.8, N121 4.6, N124 7.4); the circulating roadway is built flat to 2 - 3 % crossfall, so these need cut / fill (21.6c earthwork), not a FAIL
 
-   4.2 GROUND OF THE 83 T PADS (major rectangle with the pocket, minor arm rectangle, kerb returns): 76 clear
+   4.2 GROUND OF THE 79 T PADS (major rectangle with the pocket, minor arm rectangle, kerb returns): 72 clear
       N008 TA R6-10+R6-10 x R4-3: water 64 m2
       N041 TP R4-12+R4-12 x R2-18: 6 building(s) inside the pad: shop-house-4#229, mixed-use-6#230, restaurant#231, office-slim-12#530, slim-tower-20#77, shop-house-3#297
       N056 TP R4-20+R4-20 x R2-28: 1 building(s) inside the pad: house-tin#447
@@ -136,17 +132,17 @@ Standards.ts: aDecel 2.5 m/s2, tPR 2.5 s, aBrake 3.4 m/s2. Ground data: 601 buil
    FAIL  every T pad is free of buildings, water and rail  [7 FAIL = list above]
    FAIL  every priority T has its sight triangles free of buildings  [5 FAIL: N041 (2 bld), N056 (1 bld), N057 (1 bld), N064 (1 bld), N078 (1 bld)]
 
-   FAIL  roundabout pad cut / fill half-depth (natural slope x ICD / 2) <= 3 m  [2 FAIL: N079 3.5 m (slope 13.8 %, ICD 50); N124 4.5 m (slope 17.8 %, ICD 50)]  (natural ground only; the real level comes from the node level of 21.12)
+   FAIL  roundabout pad cut / fill half-depth (natural slope x ICD / 2) <= 3 m  [2 FAIL: N079 3.5 m (slope 13.8 %, ICD 50); N120 4.5 m (slope 17.8 %, ICD 50)]  (natural ground only; the real level comes from the node level of 21.12)
       N008: pad clear with the SHORT pocket: yes; with NO pocket: yes
       N041: pad clear with the SHORT pocket: no; with NO pocket: no
       N056: pad clear with the SHORT pocket: no; with NO pocket: yes
       N064: pad clear with the SHORT pocket: no; with NO pocket: no
       N078: pad clear with the SHORT pocket: yes; with NO pocket: yes
       N098: pad clear with the SHORT pocket: yes; with NO pocket: yes
-   INFO  arms that end at a TAP interchange (21.8 designs it, its ramps are NOT in the footprints above): 17: N004 R4-9 241 m; N013 R4-8 1147 m; N026 R4-26 436 m; N028 R4-27 240 m; N035 R4-10 509 m; N037 R4-11 119 m; N041 R4-12 266 m; N043 R6-11 367 m; N056 R4-20 367 m; N060 R4-20 907 m; N064 R4-13 376 m; N085 R4-23 182 m; N089 R6-15 293 m; N091 R4-6 889 m; N097 R4-29 214 m; N114 R4-10 147 m; N124 R6-15 317 m
-   INFO  arms that end at a free line end (a line end that is not a node and not a tap = a dead-end stub): 84: N006 R2-1 1163 m; N006 R2-2 1648 m; N007 R2-4 1756 m; N007 R2-5 567 m; N008 R4-3 199 m; N008 R6-10 1115 m; N009 R4-4 243 m; N009 R6-9 98 m; N012 R2-8 1940 m; N021 R4-21 846 m; N027 C-9 132 m; N027 C-10 116 m; N029 C-8 179 m; N029 C-8 140 m; N031 R2-8 904 m; N032 R2-10 350 m; N033 R2-12 450 m; N036 R2-14 219 m; N037 R4-11 97 m; N038 L-18 150 m; N038 L-19 106 m; N040 L-25 117 m; N048 R4-15 239 m; N057 R2-29 430 m; N057 R2-28 966 m; N059 R2-31 78 m; N061 R2-38 213 m; N061 R2-39 627 m; N062 R2-33 956 m; N062 R2-33 478 m; N063 R2-41 159 m; N063 R2-41 127 m; N064 R2-43 745 m; N065 R2-44 332 m; N067 R2-45 154 m; N068 R2-49 306 m; N068 R2-50 260 m; N068 R2-48 149 m; N068 R2-48 91 m; N073 R2-53 234 m; N074 R4-21 517 m; N075 R2-60 190 m; N075 R2-11 24 m; N076 R2-61 1295 m; N076 R2-11 914 m; N078 R6-11 306 m; N083 R2-69 799 m; N084 R2-71 975 m; N084 R2-62 925 m; N085 R4-23 1111 m; N091 L-7 172 m; N092 L-6 329 m; N097 C-11 267 m; N097 C-12 238 m; N098 C-13 361 m; N099 L-1 191 m; N099 C-1 148 m; N099 L-2 266 m; N100 L-3 270 m; N112 L-14 68 m; N113 R2-13 106 m; N115 L-17 101 m; N115 L-22 120 m; N116 L-20 75 m; N116 L-21 63 m; N117 L-23 182 m; N119 L-28 188 m; N121 L-29 209 m; N122 L-30 293 m; N124 R2-75 15 m; N126 C-6 106 m; N126 C-6 165 m; N127 C-7 167 m; N127 C-7 143 m; N128 L-24 18 m; N133 R2-37 261 m; N133 R2-37 196 m; N134 R2-36 269 m; N134 R2-36 248 m; N135 R2-34 110 m; N135 R2-35 277 m; N135 R2-35 241 m; N136 R2-42 373 m; N136 R2-42 149 m
+   INFO  arms that end at a TAP interchange (21.8 designs it, its ramps are NOT in the footprints above): 17: N004 R4-9 241 m; N013 R4-8 1147 m; N026 R4-26 436 m; N028 R4-27 240 m; N033 R4-10 228 m; N035 R4-10 509 m; N037 R4-11 119 m; N041 R4-12 266 m; N043 R6-11 367 m; N056 R4-20 367 m; N060 R4-20 907 m; N064 R4-13 376 m; N085 R4-23 182 m; N089 R6-15 293 m; N091 R4-6 889 m; N097 R4-29 214 m; N120 R6-15 317 m
+   INFO  arms that end at a free line end (a line end that is not a node and not a tap = a dead-end stub): 88: N006 R2-1 1163 m; N006 R2-2 1648 m; N007 R2-4 1756 m; N007 R2-5 567 m; N008 R4-3 199 m; N008 R6-10 1115 m; N009 R4-4 243 m; N009 R6-9 98 m; N012 R2-8 1940 m; N021 R4-21 846 m; N027 C-9 132 m; N027 C-10 116 m; N029 C-8 179 m; N029 C-8 140 m; N031 R2-8 904 m; N032 R2-10 350 m; N033 R2-12 450 m; N036 R2-14 219 m; N037 R4-11 97 m; N038 L-18 150 m; N038 L-19 106 m; N040 L-25 117 m; N048 R4-15 239 m; N057 R2-29 430 m; N057 R2-28 966 m; N059 R2-31 78 m; N061 R2-38 213 m; N061 R2-39 627 m; N062 R2-33 956 m; N062 R2-33 478 m; N063 R2-41 159 m; N063 R2-41 127 m; N064 R2-43 745 m; N065 R2-44 332 m; N067 R2-45 154 m; N068 R2-49 306 m; N068 R2-50 260 m; N068 R2-48 149 m; N068 R2-48 91 m; N073 R2-53 234 m; N074 R4-21 517 m; N075 R2-60 190 m; N075 R2-11 24 m; N076 R2-61 1295 m; N076 R2-11 914 m; N078 R6-11 306 m; N083 R2-69 799 m; N084 R2-71 975 m; N084 R2-62 925 m; N085 R4-23 1111 m; N091 L-7 172 m; N092 L-6 329 m; N097 C-11 267 m; N097 C-12 238 m; N098 C-13 361 m; N099 L-1 191 m; N099 C-1 148 m; N099 L-2 266 m; N100 L-3 270 m; N103 L-8 104 m; N104 L-9 95 m; N105 L-10 91 m; N109 L-16 91 m; N109 L-14 68 m; N110 R2-13 106 m; N111 L-17 101 m; N111 L-22 120 m; N112 L-20 75 m; N112 L-21 63 m; N113 L-23 182 m; N115 L-28 188 m; N117 L-29 209 m; N118 L-30 293 m; N120 R2-75 15 m; N122 C-6 106 m; N122 C-6 165 m; N123 C-7 167 m; N123 C-7 143 m; N124 L-24 18 m; N129 R2-37 261 m; N129 R2-37 196 m; N130 R2-36 269 m; N130 R2-36 248 m; N131 R2-34 110 m; N131 R2-35 277 m; N131 R2-35 241 m; N132 R2-42 373 m; N132 R2-42 149 m
 
-5. MERGED FIX LIST (37 places; letters: a = skew angle < 70 (21.7-1), b = 3.8 local street on an R4 (21.7-1), c = corner under Rmin (21.7-1), d = new in 21.7-2). NOTHING is moved: every line is a question for the user (R10).
+5. MERGED FIX LIST (30 places; letters: a = skew angle < 70 (21.7-1), b = 3.8 local street on an R4 (21.7-1), c = corner under Rmin (21.7-1), d = new in 21.7-2). NOTHING is moved: every line is a question for the user (R10).
    N008  at (-3168, -3655)  (c) corner under Rmin on R6-10 at N008 | (d) pad of the T is not free
         number: [c] R 168 m, class minimum 229 m (R 168 gives 70 km/h, class 80 km/h), 101 m from the node N008
         number: [d] water 64 m2 | with the short pocket: clear; with no pocket: clear
@@ -157,7 +153,7 @@ Standards.ts: aDecel 2.5 m/s2, tPR 2.5 s, aBrake 3.4 m/s2. Ground data: 601 buil
    N028  at (333, -3538)  (a) skew angle 50.7 deg < 70 | (d) right-turn pocket does not fit, not even the 40 km/h one
         number: [a] legs R4-28 x R4-27, swing to 90 deg = 39 deg, a point 100 m out on the minor arm moves 63 m sideways if the arm is turned to 90 deg about the node
         number: [a] type signalised A x A, major R4 (V 60)
-        number: [d] signalised R4 on R4-27: 71 m available to N126, short pocket 91 m, full 167 m
+        number: [d] signalised R4 on R4-27: 71 m available to N122, short pocket 91 m, full 167 m
         option: [a] 1) realign the last 100 - 200 m of the minor line towards 90 deg (like B3 of 21.38), then check the angle again
         option: [a] 2) accept a skew T only with a staggered / offset design (not a plain skew T below 60 deg)
         option: [d] 1) no pocket: the right-turning cars wait in the through lane (signal: a shared lane), advisory speed
@@ -187,10 +183,10 @@ Standards.ts: aDecel 2.5 m/s2, tPR 2.5 s, aBrake 3.4 m/s2. Ground data: 601 buil
         option: [d] 1) move the node along the major line / refit the minor line away from the building (buildings are fixed, so the line moves, R10 asks you)
         option: [d] 2) remove or move the building (your decision, not mine)
         option: [d] 1) stop sign + advisory speed on the major road, or 2) a mirror-free solution: make it a roundabout / move the node
-   N072  at (4107, 2108)  (a) skew angle 52.0 deg < 70 | (c) corner under Rmin on R2-52 at N072
-        number: [a] legs R2-53 x R2-52, swing to 90 deg = 38 deg, a point 100 m out on the minor arm moves 62 m sideways if the arm is turned to 90 deg about the node
+   N072  at (4107, 2108)  (a) skew angle 52.1 deg < 70 | (c) corner under Rmin on R2-52 at N072
+        number: [a] legs R2-53 x R2-52, swing to 90 deg = 38 deg, a point 100 m out on the minor arm moves 61 m sideways if the arm is turned to 90 deg about the node
         number: [a] type priority T, major R2 (V 40)
-        number: [c] R 22 m, class minimum 41 m (R 22 gives 25 km/h, class 40 km/h), 1 m from the node N072
+        number: [c] R 22 m, class minimum 41 m (R 22 gives 25 km/h, class 40 km/h), 0 m from the node N072
         option: [a] 1) realign the last 100 - 200 m of the minor line towards 90 deg (like B3 of 21.38), then check the angle again
         option: [a] 2) accept a skew T only with a staggered / offset design (not a plain skew T below 60 deg)
         option: [c] 1) advisory speed sign 25 km/h (my reading of 21.47 c)
@@ -210,30 +206,6 @@ Standards.ts: aDecel 2.5 m/s2, tPR 2.5 s, aBrake 3.4 m/s2. Ground data: 601 buil
         option: [a] 3) make the minor line a one-way slip into the major road (design only, not a normal T)
         option: [b] 1) end L-5 on the nearest collector (521 m away) and delete the last piece
         option: [b] 2) keep as a recorded EXCEPTION (a local street with a priority T and a right-turn pocket on the arterial)
-   N104  at (1331, -2757)  (b) 3.8 local street L-8 straight onto R4-10 | (d) right-turn pocket does not fit, not even the 40 km/h one
-        number: [b] angle 76.3 deg, nearest collector (R2 / C) not at the node: 84 m (R2-15)
-        number: [d] priority R4 on R4-10: 45 m available to N035, short pocket 76 m, full 152 m
-        option: [b] 1) end L-8 on the nearest collector (84 m away) and delete the last piece
-        option: [b] 2) keep as a recorded EXCEPTION (a local street with a priority T and a right-turn pocket on the arterial)
-        option: [d] 1) no pocket: the right-turning cars wait in the through lane (signal: a shared lane), advisory speed
-        option: [d] 2) merge the two neighbouring nodes (move one T 30 - 60 m)
-        option: [d] 3) make it a roundabout (needs the ground check of part 4)
-   N108  at (1424, -2566)  (b) 3.8 local street L-10 straight onto R4-10 | (d) right-turn pocket does not fit, not even the 40 km/h one
-        number: [b] angle 89.7 deg, nearest collector (R2 / C) not at the node: 73 m (R2-12)
-        number: [d] priority R4 on R4-10: 75 m available to N106, short pocket 76 m, full 152 m
-        option: [b] 1) end L-10 on the nearest collector (73 m away) and delete the last piece
-        option: [b] 2) keep as a recorded EXCEPTION (a local street with a priority T and a right-turn pocket on the arterial)
-        option: [d] 1) no pocket: the right-turning cars wait in the through lane (signal: a shared lane), advisory speed
-        option: [d] 2) merge the two neighbouring nodes (move one T 30 - 60 m)
-        option: [d] 3) make it a roundabout (needs the ground check of part 4)
-   N114  at (1496, -2428)  (b) 3.8 local street L-16 straight onto R4-10 | (d) right-turn pocket does not fit, not even the 40 km/h one
-        number: [b] angle 88.3 deg, nearest collector (R2 / C) not at the node: 81 m (R2-13)
-        number: [d] priority R4 on R4-10: 21 m available to N033, short pocket 76 m, full 152 m
-        option: [b] 1) end L-16 on the nearest collector (81 m away) and delete the last piece
-        option: [b] 2) keep as a recorded EXCEPTION (a local street with a priority T and a right-turn pocket on the arterial)
-        option: [d] 1) no pocket: the right-turning cars wait in the through lane (signal: a shared lane), advisory speed
-        option: [d] 2) merge the two neighbouring nodes (move one T 30 - 60 m)
-        option: [d] 3) make it a roundabout (needs the ground check of part 4)
    N009  at (-1915, -2921)  (d) right-turn pocket does not fit, not even the 40 km/h one
         number: [d] signalised R6 on R6-9: 71 m available to (line end), short pocket 92 m, full 170 m
         option: [d] 1) no pocket: the right-turning cars wait in the through lane (signal: a shared lane), advisory speed
@@ -254,11 +226,6 @@ Standards.ts: aDecel 2.5 m/s2, tPR 2.5 s, aBrake 3.4 m/s2. Ground data: 601 buil
         option: [a] 1) realign the last 150 - 250 m of the minor line (the swing is more than 40 deg)
         option: [a] 2) end the minor line at the nearest collector instead (needs your decision on 3.8, list b)
         option: [a] 3) make the minor line a one-way slip into the major road (design only, not a normal T)
-   N035  at (1317, -2845)  (a) skew angle 56.8 deg < 70
-        number: [a] legs R2-15 x R4-10, swing to 90 deg = 33 deg, a point 100 m out on the minor arm moves 55 m sideways if the arm is turned to 90 deg about the node
-        number: [a] type priority T + right pocket, major R4 (V 60)
-        option: [a] 1) realign the last 100 - 200 m of the minor line towards 90 deg (like B3 of 21.38), then check the angle again
-        option: [a] 2) accept a skew T only with a staggered / offset design (not a plain skew T below 60 deg)
    N039  at (1062, -607)  (a) skew angle 51.3 deg < 70
         number: [a] legs R2-17 x R4-12, swing to 90 deg = 39 deg, a point 100 m out on the minor arm moves 62 m sideways if the arm is turned to 90 deg about the node
         number: [a] type priority T + right pocket, major R4 (V 60)
@@ -279,16 +246,6 @@ Standards.ts: aDecel 2.5 m/s2, tPR 2.5 s, aBrake 3.4 m/s2. Ground data: 601 buil
         number: [a] type priority T, major R2 (V 40)
         option: [a] 1) accept as a SKEW T: kerb acute R 16 m / obtuse R 9 m (rule R x 90 / phi, R x phi / 90, kerb base 12 m), no change of line
         option: [a] 2) realign the last 100 - 200 m of the minor line to 90 deg (like B3)
-   N067  at (1817, 1117)  (a) skew angle 57.8 deg < 70
-        number: [a] legs R2-46 x R2-45, swing to 90 deg = 32 deg, a point 100 m out on the minor arm moves 53 m sideways if the arm is turned to 90 deg about the node
-        number: [a] type priority T, major R2 (V 40)
-        option: [a] 1) realign the last 100 - 200 m of the minor line towards 90 deg (like B3 of 21.38), then check the angle again
-        option: [a] 2) accept a skew T only with a staggered / offset design (not a plain skew T below 60 deg)
-   N070  at (4124, 2728)  (a) skew angle 55.8 deg < 70
-        number: [a] legs R2-52 x R4-21, swing to 90 deg = 34 deg, a point 100 m out on the minor arm moves 56 m sideways if the arm is turned to 90 deg about the node
-        number: [a] type priority T + right pocket, major R4 (V 60)
-        option: [a] 1) realign the last 100 - 200 m of the minor line towards 90 deg (like B3 of 21.38), then check the angle again
-        option: [a] 2) accept a skew T only with a staggered / offset design (not a plain skew T below 60 deg)
    N071  at (3680, 2106)  (a) skew angle 61.8 deg < 70
         number: [a] legs R2-52 x R2-51, swing to 90 deg = 28 deg, a point 100 m out on the minor arm moves 47 m sideways if the arm is turned to 90 deg about the node
         number: [a] type priority T, major R2 (V 40)
@@ -317,7 +274,7 @@ Standards.ts: aDecel 2.5 m/s2, tPR 2.5 s, aBrake 3.4 m/s2. Ground data: 601 buil
         number: [b] angle 76.6 deg, nearest collector (R2 / C) not at the node: 839 m (R2-7)
         option: [b] 1) end L-7 on the nearest collector (839 m away) and delete the last piece
         option: [b] 2) keep as a recorded EXCEPTION (a local street with a priority T and a right-turn pocket on the arterial)
-   N094/N112  at (1351, -2436)  (d) two junction footprints overlap
+   N094/N109  at (1351, -2436)  (d) two junction footprints overlap
         number: [d] L-14: gap 79 m, need 80 m (40 + 40), short by 1 m
         option: [d] 1) 1 m is inside my RB_FLARE rounding: reduce the flare of the two 30 m circles from 25 m to 24 m, or shift one node 1 - 2 m along L-14
    N098  at (-2129, -172)  (d) pad of the T is not free
@@ -328,16 +285,12 @@ Standards.ts: aDecel 2.5 m/s2, tPR 2.5 s, aBrake 3.4 m/s2. Ground data: 601 buil
         number: [b] angle 72.3 deg, nearest collector (R2 / C) not at the node: 432 m (C-2)
         option: [b] 1) end L-4 on the nearest collector (432 m away) and delete the last piece
         option: [b] 2) keep as a recorded EXCEPTION (a local street with a priority T and a right-turn pocket on the arterial)
-   N106  at (1377, -2658)  (b) 3.8 local street L-9 straight onto R4-10
-        number: [b] angle 88.4 deg, nearest collector (R2 / C) not at the node: 135 m (C-3)
-        option: [b] 1) end L-9 on the nearest collector (135 m away) and delete the last piece
-        option: [b] 2) keep as a recorded EXCEPTION (a local street with a priority T and a right-turn pocket on the arterial)
-   N113  at (1233, -2296)  (a) skew angle 67.6 deg < 70
+   N110  at (1233, -2296)  (a) skew angle 67.6 deg < 70
         number: [a] legs L-15 x R2-13, swing to 90 deg = 22 deg, a point 100 m out on the minor arm moves 38 m sideways if the arm is turned to 90 deg about the node
         number: [a] type priority T, major R2 (V 40)
         option: [a] 1) accept as a SKEW T: kerb acute R 13 m / obtuse R 8 m (rule R x 90 / phi, R x phi / 90, kerb base 10 m), no change of line
         option: [a] 2) realign the last 100 - 200 m of the minor line to 90 deg (like B3)
-   N124  at (-2337, -955)  (d) roundabout pad needs a big cut / fill
+   N120  at (-2337, -955)  (d) roundabout pad needs a big cut / fill
         number: [d] natural slope 17.8 % across ICD 50 m -> half-depth 4.5 m (my limit 3 m); 2-lane, arms R6 R2 R6 R2
         option: [d] 1) retaining wall on the uphill side (21.6c earthwork)
         option: [d] 2) use a priority junction here instead of a roundabout (the node is on a slope)
@@ -350,12 +303,12 @@ Standards.ts: aDecel 2.5 m/s2, tPR 2.5 s, aBrake 3.4 m/s2. Ground data: 601 buil
         number: [c] R 228 m, class minimum 229 m (R 228 gives 75 km/h, class 80 km/h), 199 m from the node line end
         option: [c] 1) advisory speed sign 75 km/h (my reading of 21.47 c)
         option: [c] 2) widen the radius when the line is refitted (needs a refit of that line)
-   count: a 17 nodes, b 7, c 5, d 15; nodes with 2 or more reasons: N008, N028, N041, N056, N057, N064, N072, N078, N102, N104, N108, N114
-   PASS  every 70 deg FAIL node of 21.7-1 is in the merged list (17 nodes, one of them the grade-separated N074)
-   PASS  lists (b) 7 and (c) 5 of 21.7-1 are in the merged list
+   count: a 14 nodes, b 3, c 5, d 12; nodes with 2 or more reasons: N008, N028, N041, N056, N057, N064, N072, N078, N102
+   PASS  every 70 deg FAIL node of 21.7-1 is in the merged list (14 nodes, one of them the grade-separated N074)
+   PASS  lists (b) 3 and (c) 5 of 21.7-1 are in the merged list
 
 6. HARD RULES: R1 no crossing: no line was moved, no line was added (read only), the crossing check of 21.7-1 / 21.40 stands. R2: no road was added or removed. R10: sketch kept: every FAIL above is a LIST, no line moved. R8: ground checked in part 4 (buildings, water, rail, engineering area, natural slope).
    what this step does NOT do: no signal phasing / cycle time, no demand per node (storage 15 / 30 m is ASSUMED), no 3D, no game change, no TAP interchange ramp (21.8), no vertical design of the pads (21.12 levels).
 
 SUMMARY 21.7-2: 5 PASS, 5 FAIL
-   roundabouts 37 (1-lane 24: ICD 30 - 35 m; 2-lane 13: ICD 50 - 50 m); T nodes 83; merged fix list 37 places.
+   roundabouts 37 (1-lane 24: ICD 30 - 35 m; 2-lane 13: ICD 50 - 50 m); T nodes 79; merged fix list 30 places.

@@ -1,0 +1,55 @@
+STEP 21.8-1 STRUCTURE INVENTORY AND TYPE RULE (headless, read only; src / data NOT changed; tsc / build / game NOT RUN)
+rules (MY choices): viaduct span 35 m, bridge span 30 m; fill stretch <= 80 m long and <= 12 m high = RE-wall embankment, else viaduct, > 25 m = high viaduct; cut stretch <= 120 m and <= 20 m deep = open cut with walls, <= 400 m = cut-and-cover, longer = bored tunnel (tunnel candidates all SHIFT-FIRST, R12); side-hill <= 100 m retaining wall, longer half viaduct / terrace, >= 300 m SHIFT-FIRST
+
+TOTALS PER TYPE: type  stretches  metres  (spans)  largest height / depth
+   single-span girder bridge       6     139 m  (6 spans)  max 12.5 m
+   multi-span girder bridge        4     261 m  (11 spans)  max 11.1 m
+   embankment with RE walls       45    1577 m    max 11.2 m
+   viaduct                        24    4732 m  (148 spans)  max 23.7 m
+   high viaduct                    9    1796 m  (55 spans)  max 41.7 m
+   deep open cut with walls       39    1307 m    max 19.0 m
+   cut-and-cover tunnel           16    2380 m    max 55.7 m
+   retaining wall                193    6812 m    max 12.0 m
+   half viaduct / terrace         44   11373 m    max 12.0 m
+
+LARGEST TUNNEL STRETCHES:
+   R4-9   s 2197-2597  400 m  max 34.9 m  -> cut-and-cover tunnel  [SHIFT-FIRST]
+   R4-24  s 2497-2817  320 m  max 55.7 m  -> cut-and-cover tunnel  [SHIFT-FIRST]
+   R4-2   s 244-486  242 m  max 20.4 m  -> cut-and-cover tunnel  [SHIFT-FIRST]
+   R4-9   s 1386-1606  220 m  max 18.0 m  -> cut-and-cover tunnel  [SHIFT-FIRST]
+   R2-7   s 45-265  220 m  max 24.0 m  -> cut-and-cover tunnel  [SHIFT-FIRST]
+   R2-71  s 145-345  200 m  max 23.8 m  -> cut-and-cover tunnel  [SHIFT-FIRST]
+LARGEST VIADUCT STRETCHES:
+   R4-24  s 0-586  586 m  max 36.9 m  -> high viaduct (17 spans)
+   R4-21  s 355-885  530 m  max 18.5 m  -> viaduct (16 spans)
+   R6-15  s 836-1216  380 m  max 13.4 m  -> viaduct (11 spans)
+   R2-7   s 385-726  341 m  max 16.9 m  -> viaduct (10 spans)
+   R2-72  s 95-435  340 m  max 17.4 m  -> viaduct (10 spans)
+   R2-1   s 765-1086  321 m  max 14.4 m  -> viaduct (10 spans)
+LARGEST BRIDGE STRETCHES:
+   R4-20  s 1426-1506  80 m  max 9.8 m  -> multi-span girder bridge (3 spans)
+   R2-19  s 2256-2326  70 m  max 11.0 m  -> multi-span girder bridge (3 spans)
+   R6-11  s 205-266  61 m  max 11.1 m  -> multi-span girder bridge (3 spans)
+   R2-70  s 485-535  50 m  max 9.3 m  -> multi-span girder bridge (2 spans)
+   R4-23  s 405-435  30 m  max 8.5 m  -> single-span girder bridge (1 spans)
+   R2-68  s 46-75  29 m  max 10.4 m  -> single-span girder bridge (1 spans)
+   R6-10  s 1306-1326  20 m  max 12.5 m  -> single-span girder bridge (1 spans)
+   R4-24  s 956-976  20 m  max 4.4 m  -> single-span girder bridge (1 spans)
+   R4-29  s 375-395  20 m  max 8.5 m  -> single-span girder bridge (1 spans)
+   R2-55  s 875-895  20 m  max 4.7 m  -> single-span girder bridge (1 spans)
+LARGEST SIDEHILL STRETCHES:
+   R2-2   s 5-1447  1442 m  max 8.7 m  -> half viaduct / terrace  [SHIFT-FIRST]
+   R2-6   s 646-1624  978 m  max 11.3 m  -> half viaduct / terrace  [SHIFT-FIRST]
+   R4-24  s 1326-2187  861 m  max 11.9 m  -> half viaduct / terrace  [SHIFT-FIRST]
+   R2-4   s 1026-1759  733 m  max 4.1 m  -> half viaduct / terrace  [SHIFT-FIRST]
+   R2-58  s 705-1266  561 m  max 6.9 m  -> half viaduct / terrace  [SHIFT-FIRST]
+
+LINES WITH THE MOST STRUCTURE METRES (candidates to SHIFT or re-route first): R4-24 3022 m, R4-9 2366 m, R2-62 1707 m, R2-2 1648 m, R2-4 1269 m, R2-58 1266 m, R6-15 1210 m, R2-6 1108 m
+   INFO  SHIFT-FIRST (R12, a tunnel candidate or a side-hill of 300 m or more: first look for a shift along the hillside): 62 stretches, 9017 m
+   INFO  STALE (line changed by 21.7-3, earthwork not re-run): 0 stretches on none
+
+   PASS  all 380 stretches got a type
+   PASS  metres per kind equal the per-line totals of 21.6c within 1 % (the stretches are merged and rounded to 5 m: viaduct 8105 vs 8105, tunnel 3687 vs 3705, bridge 400 vs 400, sidehill 18185 vs 18190)
+   INFO  NOT DONE: no span layout per structure, no foundation, no cost, no check of the bridge deck against water + 1.5 m (21.4), no game range (bridgeArm) and no game mesh; those are the next micro-steps and B7.
+
+SUMMARY 21.8-1: 2 PASS, 0 FAIL

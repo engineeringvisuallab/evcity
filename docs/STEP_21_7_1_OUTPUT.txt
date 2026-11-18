@@ -2,19 +2,19 @@ STEP 21.7-1 JUNCTION INVENTORY (read only; lines = docs/fit_chain/centre_fixed.j
 constants (MY choices): END 12 m, tangent chord 20 m, skew angle >= 70 deg (Step 8), serious < 50 deg, roundabout arms >= 30 deg apart, node gap >= 60 m, corner = within 150 m of a node
 class mapping (HousingStreetData.ts + 3.9): R6 / R4 = arterial (A), R2 = 2-lane road (treated as collector class, MY decision), C = collector street, L = LOCAL street; only L is a local street for section 3.8
 
-1. NODE INVENTORY: 136 nodes, legs 308, arms 431
-   class pair of the legs (count): R2xR2 29, R2xR4 28, R4xR4 9, R2xR2xR4 8, CxLxL 8, LxR2 8, R4xR6 6, LxR4 6, R2xR2xR2 5, CxR2 5, R2xR6 4, CxR4 4, LxLxR2 4, CxCxR4 2, R4xR4xR6 1, R6xR6 1, R4xR4xR4 1, CxR2xR4 1, LxLxR2xR2 1, R2xR2xR6 1, CxLxR4 1, CxLxR2 1, LxLxL 1, LxL 1
-   TYPE decided by the rule below (count): T priority 42 | T priority + left pocket on the arterial 29 | ROUNDABOUT 1-lane (30-45 m) 24 | CONTINUATION (no junction) 14 | ROUNDABOUT 2-lane (50-70 m) 13 | T signalised, turn pockets (A x A) 12 | GRADE-SEPARATED 2
+1. NODE INVENTORY: 132 nodes, legs 300, arms 419
+   class pair of the legs (count): R2xR2 29, R2xR4 28, R4xR4 9, R2xR2xR4 8, CxLxL 8, LxR2 8, R4xR6 6, R2xR2xR2 5, CxR2 5, R2xR6 4, CxR4 4, LxLxR2 4, CxCxR4 2, LxR4 2, R4xR4xR6 1, R6xR6 1, R4xR4xR4 1, CxR2xR4 1, LxLxR2xR2 1, R2xR2xR6 1, CxLxR4 1, CxLxR2 1, LxLxL 1, LxL 1
+   TYPE decided by the rule below (count): T priority 42 | T priority + left pocket on the arterial 25 | ROUNDABOUT 1-lane (30-45 m) 24 | CONTINUATION (no junction) 14 | ROUNDABOUT 2-lane (50-70 m) 13 | T signalised, turn pockets (A x A) 12 | GRADE-SEPARATED 2
    RULE (MY decision; X1 / X2 / 3.9 / Step 8): 4 or more arms at one node = roundabout (no + at grade); 3 arms = T; T with only arterials (R6 / R4) = signalised with turn pockets; T with an arterial major road = priority T with a left pocket on the arterial; T of collectors / local = priority T; 2 arms = the line only continues; nodes where 21.16 / 21.40 decided GRADE-SEPARATED stay so (design in 21.8); every touch on an 8-lane road = TAP interchange (never at grade, 3.9 + user override)
-   PASS  class-pair counts agree with the handover of 21.46 (R2xR2 29, R2xR4 28, R4xR4 9, R2xR2xR4 8, CxLxL 8, LxR2 8, R4xR6 6, LxR4 6)
-   PASS  node count 136 (21.40)
+   PASS  class-pair counts agree with the handover of 21.46 after 21.49 (R2xR2 29, R2xR4 28, R4xR4 9, R2xR2xR4 8, CxLxL 8, LxR2 8, R4xR6 6, LxR4 2)
+   PASS  node count 132 (136 of 21.40 minus the 4 nodes of the cut-back L streets, 21.49 / B7-1)
    PASS  every leg line passes within 13 m of its node place (legs farther: 0)
    4-arm nodes by pattern of legs: one through + 2 ends, opposite sides 23, ends only 1, two through lines (+ crossing) 13
-   arms: 3-arm 85, 4-arm or more 37, 2-arm 14
-   B3 labels: the node numbers of centre-joint.ts (21.40) and of centre-vprofile.json differ by one at some nodes; matched by place: N034 = B3 N035, N035 = B3 N036, N039 = B3 N040, N049 = B3 N050, N069 = B3 N070, N070 = B3 N071, N071 = B3 N072, N072 = B3 N073, N119 = B3 N120, N120 = B3 N121
+   arms: 3-arm 81, 4-arm or more 37, 2-arm 14
+   B3 labels: the node numbers of centre-joint.ts (21.40) and of centre-vprofile.json differ by one at some nodes; matched by place: N034 = B3 N035, N035 = B3 N036, N039 = B3 N040, N049 = B3 N050, N069 = B3 N070, N070 = B3 N071, N071 = B3 N072, N072 = B3 N073, N115 = B3 N120, N116 = B3 N121
 
 2. JUNCTION ANGLE of every T (skew angle = end arm vs through line, folded to 0..90 deg; Step 8: >= 70 deg, else realign)
-   T nodes 85: >= 70 deg 68, 50..70 deg 14, < 50 deg 3
+   T nodes 81: >= 70 deg 67, 50..70 deg 11, < 50 deg 3
    node  B3     place               legs (axis / minor arm)         class      angle  turn to reach 70
    N102         (-3456,  1947)  R4-7 / L-5                  LxR4        25.6   44.4 deg  SERIOUS
    N080         ( 1659, -1664)  R2-64 / R2-65               R2xR2       41.7   28.3 deg  SERIOUS
@@ -22,31 +22,28 @@ class mapping (HousingStreetData.ts + 3.9): R6 / R4 = arterial (A), R2 = 2-lane 
    N028         (  333, -3538)  R4-27 / R4-28               R4xR4       50.7   19.3 deg 
    N050         (-2050,  4143)  R4-19 / R2-24               R2xR4       51.2   18.8 deg 
    N039  N040   ( 1062,  -607)  R4-12 / R2-17               R2xR4       51.3   18.7 deg 
-   N072  N073   ( 4107,  2108)  R2-53+R2-52 / R2-52         R2xR2       52.0   18.0 deg 
-   N070  N071   ( 4124,  2728)  R4-21 / R2-52               R2xR4       55.8   14.2 deg 
-   N035  N036   ( 1317, -2845)  R4-10 / R2-15               R2xR4       56.8   13.2 deg 
-   N067         ( 1817,  1117)  R2-45 / R2-46               R2xR2       57.8   12.2 deg 
+   N072  N073   ( 4107,  2108)  R2-53+R2-52 / R2-52         R2xR2       52.1   17.9 deg 
    N071  N072   ( 3680,  2106)  R2-51 / R2-52               R2xR2       61.8    8.2 deg 
    N059         ( -586,   870)  R2-32+R2-31 / R2-30         R2xR2xR2    63.6    6.4 deg 
    N011         (-3614,  1518)  R4-6 / R4-7                 R4xR4       65.5    4.5 deg 
    N066         ( 1370,  1177)  R2-44 / R2-46               R2xR2       66.9    3.1 deg 
    N074         ( 4499,  2842)  R4-21 / R2-54               R2xR4       66.9    3.1 deg 
    N089         (-1302,   -43)  R6-15 / R2-76               R2xR6       67.0    3.0 deg 
-   N113         ( 1233, -2296)  R2-13 / L-15                LxR2        67.6    2.4 deg 
-   INFO  B3 sharp node N073 = N072: 52.0 deg here (B3 printed: N073 40.0 / 42, N028 50.4, N040 52.1, N035 51.5 / 52; chord 20 m here vs the last polyline segment in B3, +-4 deg is the method)
+   N110         ( 1233, -2296)  R2-13 / L-15                LxR2        67.6    2.4 deg 
+   INFO  B3 sharp node N073 = N072: 52.1 deg here (B3 printed: N073 40.0 / 42, N028 50.4, N040 52.1, N035 51.5 / 52; chord 20 m here vs the last polyline segment in B3, +-4 deg is the method)
    INFO  B3 sharp node N028 = N028: 50.7 deg here (B3 printed: N073 40.0 / 42, N028 50.4, N040 52.1, N035 51.5 / 52; chord 20 m here vs the last polyline segment in B3, +-4 deg is the method)
    INFO  B3 sharp node N040 = N039: 51.3 deg here (B3 printed: N073 40.0 / 42, N028 50.4, N040 52.1, N035 51.5 / 52; chord 20 m here vs the last polyline segment in B3, +-4 deg is the method)
    INFO  B3 sharp node N035 = N034: 48.9 deg here (B3 printed: N073 40.0 / 42, N028 50.4, N040 52.1, N035 51.5 / 52; chord 20 m here vs the last polyline segment in B3, +-4 deg is the method)
    INFO  N072 (B3 N073): the through line R2-52 has the R 22 m corner AT the node (section 3), so its angle depends on the method: 40 deg (B3, end tangent) to 52 deg (widest-arm axis, 20 m chord); it FAILs 70 deg either way
-   FAIL  every T has a skew angle >= 70 deg  [17 FAIL = list above, the user decides (R10)]
-   ROUNDABOUT nodes 37: smallest angle between neighbouring arms: N033 87 deg (4 arms), N037 81 deg (4 arms), N040 78 deg (4 arms), N043 77 deg (4 arms), N048 86 deg (4 arms), N052 89 deg (4 arms), N068 90 deg (4 arms), N079 81 deg (4 arms), N084 46 deg (4 arms), N088 80 deg (4 arms), N091 74 deg (4 arms), N094 85 deg (4 arms), N097 86 deg (4 arms), N099 88 deg (4 arms), N100 81 deg (4 arms), N103 88 deg (4 arms), N105 87 deg (4 arms), N107 86 deg (4 arms), N112 86 deg (4 arms), N115 86 deg (4 arms), N116 85 deg (4 arms), N117 87 deg (4 arms), N119 83 deg (4 arms), N121 74 deg (4 arms), N124 67 deg (4 arms), N125 87 deg (4 arms), N126 86 deg (4 arms), N127 83 deg (4 arms), N128 82 deg (4 arms), N129 90 deg (4 arms), N130 90 deg (4 arms), N131 89 deg (4 arms), N132 90 deg (4 arms), N133 90 deg (4 arms), N134 90 deg (4 arms), N135 89 deg (4 arms), N136 87 deg (4 arms)
+   FAIL  every T has a skew angle >= 70 deg  [14 FAIL = list above, the user decides (R10)]
+   ROUNDABOUT nodes 37: smallest angle between neighbouring arms: N033 87 deg (4 arms), N037 81 deg (4 arms), N040 78 deg (4 arms), N043 77 deg (4 arms), N048 86 deg (4 arms), N052 89 deg (4 arms), N068 90 deg (4 arms), N079 81 deg (4 arms), N084 46 deg (4 arms), N088 80 deg (4 arms), N091 74 deg (4 arms), N094 85 deg (4 arms), N097 86 deg (4 arms), N099 88 deg (4 arms), N100 81 deg (4 arms), N103 88 deg (4 arms), N104 87 deg (4 arms), N105 86 deg (4 arms), N109 86 deg (4 arms), N111 86 deg (4 arms), N112 85 deg (4 arms), N113 87 deg (4 arms), N115 83 deg (4 arms), N117 74 deg (4 arms), N120 67 deg (4 arms), N121 87 deg (4 arms), N122 86 deg (4 arms), N123 83 deg (4 arms), N124 82 deg (4 arms), N125 90 deg (4 arms), N126 90 deg (4 arms), N127 89 deg (4 arms), N128 90 deg (4 arms), N129 90 deg (4 arms), N130 90 deg (4 arms), N131 89 deg (4 arms), N132 87 deg (4 arms)
    PASS  every roundabout has arms at least 30 deg apart  [0 FAIL: ]
    CONTINUATION nodes (two lines only meet end to end, no junction): 14
 
 3. R < Rmin CORNERS (fitted PI tables of 21.24 - 21.40; Rmin = class minimum of the design speed; a corner is a bend with an advisory / corner speed below the class speed)
    bends with R < Rmin(class): 5 on 4 lines (R6 2, R4 2, R2 1); each has its own lower speed V with R >= Rmin(V) (21.24 check)
    line     s(m)    R(m)  Rmin(class)  speed km/h (class)  nearest node / dist along the line  within 150 m
-   R2-52     644      22      41       25 (40)        N072         1 m   junction corner
+   R2-52     645      22      41       25 (40)        N072         0 m   junction corner
    R4-12     577      95     113       50 (60)        N041       311 m   NOT AT A NODE
    R4-19    2184      86     113       45 (60)        N018        16 m   junction corner
    R6-10     199     228     229       75 (80)        line end   199 m   NOT AT A NODE
@@ -56,16 +53,12 @@ class mapping (HousingStreetData.ts + 3.9): R6 / R4 = arterial (A), R2 = 2-lane 
    FAIL  every R < Rmin corner lies within 150 m of a node of its own line (junction corner, advisory speed there)  [2 FAIL: R4-12@577 R95 vs 113, R6-10@199 R228 vs 229]
 
 4. SECTION 3.8 CHECK: no local street (L) straight onto a divided arterial (R4), a motorway (R6, M8, J1 arms); 3.9: A x L = no (via C); C x A is allowed
-   local street meets R4 / R6 / 8-lane road directly: 7 pairs
+   local street meets R4 / R6 / 8-lane road directly: 3 pairs
    node   local     arterial  node angle  nearest R2 / C road not at the node
    N091   L-7       R4-6       76.6      R2-7 839 m
    N101   L-4       R4-7       72.3      C-2 432 m
    N102   L-5       R4-7       25.6      C-2 521 m
-   N104   L-8       R4-10      76.3      R2-15 84 m
-   N106   L-9       R4-10      88.4      C-3 135 m
-   N108   L-10      R4-10      89.7      R2-12 73 m
-   N114   L-16      R4-10      88.3      R2-13 81 m
-   FAIL  no local street (L) straight onto a divided arterial / motorway  [7 FAIL = list above; smallest fix = the L street ends on a collector (C / R2) or a frontage road, or the user accepts it as an exception (R10)]
+   FAIL  no local street (L) straight onto a divided arterial / motorway  [3 FAIL = list above; smallest fix = the L street ends on a collector (C / R2) or a frontage road, or the user accepts it as an exception (R10)]
 
 5. NODE GAPS (X6 / R1: at least 60 m between nodes; node place = mean of its leg points)
    PASS  all node pairs at least 60 m apart  [0 FAIL]
@@ -114,7 +107,7 @@ class mapping (HousingStreetData.ts + 3.9): R6 / R4 = arterial (A), R2 = 2-lane 
         INFO: to meet at grade the minor road R2-54 would have to climb 7.88 m at its class limit 8 % = 99 m of road; 21.16 rejected the regrade (legs still 7.88 m apart). Type kept: grade-separated, design in 21.8 (R12: tunnel last).
         also: skew angle 66.9 deg below 70
    PASS  exactly N030 and N074 are grade-separated (21.16 / 21.40)
-   INFO  131 nodes have no level conflict (spread <= 0.03 m, 21.40); N033 / N089 / N108 were regraded to 0.00 m (21.16)
+   INFO  129 nodes have no level conflict (spread <= 0.03 m, 21.40); N033 / N089 / N108 were regraded to 0.00 m (21.16)
 
 SUMMARY 21.7-1: 11 PASS, 3 FAIL
-FAIL LISTS (the user decides, R10): angle < 70 deg 17 T nodes (3 below 50), 3.8 local street on an arterial 7, corners not at a node 2, node gaps < 60 m 0, roundabout arms < 30 0
+FAIL LISTS (the user decides, R10): angle < 70 deg 14 T nodes (3 below 50), 3.8 local street on an arterial 3, corners not at a node 2, node gaps < 60 m 0, roundabout arms < 30 0

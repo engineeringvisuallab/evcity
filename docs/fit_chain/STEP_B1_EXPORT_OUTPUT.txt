@@ -49,7 +49,7 @@ STEP B1 (21.39): fitted alignments -> docs/fit_chain/centre_fixed.json
    R2-12   2         460       450    -10.0     92   0.0 / 0.0
    R2-13   2         445       437     -7.8     89   0.0 / 0.0
    R2-14   2         596       606    +10.5    123   0.0 / 0.0
-   R2-15   2         339       349    +10.1     71   0.0 / 0.0
+   R2-15   2         339       353    +14.2     72   0.0 / 0.0
    R2-16   2         244       243     -0.8     50   0.0 / 0.0
    R2-17   2        1199      1174    -25.3    236   0.0 / 0.0
    R2-18   2         217       217     -0.0     45   0.0 / 0.0
@@ -80,12 +80,12 @@ STEP B1 (21.39): fitted alignments -> docs/fit_chain/centre_fixed.json
    R2-43   2         760       745    -15.3    151   0.0 / 0.0
    R2-44   2         867       843    -24.0    170   0.0 / 0.0
    R2-45   2         845       835    -10.2    168   0.0 / 0.0
-   R2-46   2         466       456     -9.7     93   0.0 / 0.0
+   R2-46   2         466       457     -9.3     93   0.0 / 0.0
    R2-48   2         240       239     -0.3     49   0.0 / 0.0
    R2-49   2         306       306     -0.0     63   0.0 / 0.0
    R2-50   2         260       260     -0.0     54   0.0 / 0.0
    R2-51   2        1558      1517    -40.8    305   0.0 / 0.0
-   R2-52   2        1097      1077    -19.5    217   0.0 / 0.0
+   R2-52   2        1097      1078    -18.1    217   0.0 / 0.0
    R2-53   2         607       619    +12.0    125   0.0 / 0.0
    R2-54   2         750       750     -0.0    152   0.0 / 0.0
    R2-55   2        1282      1256    -26.5    253   0.0 / 0.0
@@ -130,15 +130,15 @@ STEP B1 (21.39): fitted alignments -> docs/fit_chain/centre_fixed.json
    L-5     L         538       527    -10.6    107   0.0 / 0.0
    L-6     L         341       330    -11.1     67   0.0 / 0.0
    L-7     L         172       172     -0.0     36   0.0 / 0.0
-   L-8     L         150       149     -0.4     31   0.0 / 0.0
-   L-9     L         139       139     -0.7     29   0.0 / 0.0
-   L-10    L         133       132     -1.7     28   0.0 / 0.0
+   L-8     L         150       104    -45.4     22   0.0 / 0.0
+   L-9     L         139        95    -44.2     21   0.0 / 0.0
+   L-10    L         133        91    -42.2     20   0.0 / 0.0
    L-11    L         131       131     -0.0     28   0.0 / 0.0
    L-12    L         149       148     -1.0     31   0.0 / 0.0
    L-13    L         131       131     -0.0     28   0.0 / 0.0
    L-14    L         155       147     -7.8     31   0.0 / 0.0
    L-15    L         168       167     -1.7     35   0.0 / 0.0
-   L-16    L         129       128     -1.0     27   0.0 / 0.0
+   L-16    L         129        91    -38.5     20   0.0 / 0.0
    L-17    L         101       101     +0.0     22   0.0 / 0.0
    L-18    L         150       150     +0.0     32   0.0 / 0.0
    L-19    L         106       106     +0.0     23   0.0 / 0.0
@@ -154,10 +154,10 @@ STEP B1 (21.39): fitted alignments -> docs/fit_chain/centre_fixed.json
    L-29    L         213       209     -3.6     43   0.0 / 0.0
    L-30    L         487       482     -5.7     98   0.0 / 0.0
    L-31    L         141       141     -0.0     30   0.0 / 0.0
-   total 154 lines: drawn 113692 m, fitted 113190 m (-502.4 m)
-   biggest length changes: R2-62 -127.8 m, R2-4 -60.6 m, R2-51 -40.8 m, R4-24 +40.6 m, R6-10 +40.5 m, R2-72 -40.5 m
+   total 154 lines: drawn 113692 m, fitted 113029 m (-663.0 m)
+   biggest length changes: R2-62 -127.8 m, R2-4 -60.6 m, L-8 -45.4 m, L-9 -44.2 m, L-10 -42.2 m, R2-51 -40.8 m
    PASS  every new line has a fit (154 of 154)
    PASS  replaced lines = new lines of centre_fixed.json (built / 8-lane / dropped are copied unchanged)
    PASS  the sampled alignment starts at S and ends at E of the fit (gap < 0.05 m)
-   PASS  no line changes length by more than 8 % or 35 m (sanity check; B3 21.40: short junction lines L-27 / L-28 / R4-28 move up to 30 m, looked at, OK)
-   RESULT 4 PASS 0 FAIL
+   FAIL  no line changes length by more than 8 % or 35 m (sanity check; B3 21.40: short junction lines L-27 / L-28 / R4-28 move up to 30 m, looked at, OK)
+   RESULT 3 PASS 1 FAIL

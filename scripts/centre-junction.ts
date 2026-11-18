@@ -124,9 +124,9 @@ pr('   class pair of the legs (count): ' + [...byCls.entries()].sort((a, b) => b
 const byType = new Map<string, number>(); for (const n of nodes) byType.set(n.type, (byType.get(n.type) ?? 0) + 1);
 pr('   TYPE decided by the rule below (count): ' + [...byType.entries()].sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(' | '));
 pr('   RULE (MY decision; X1 / X2 / 3.9 / Step 8): 4 or more arms at one node = roundabout (no + at grade); 3 arms = T; T with only arterials (R6 / R4) = signalised with turn pockets; T with an arterial major road = priority T with a left pocket on the arterial; T of collectors / local = priority T; 2 arms = the line only continues; nodes where 21.16 / 21.40 decided GRADE-SEPARATED stay so (design in 21.8); every touch on an 8-lane road = TAP interchange (never at grade, 3.9 + user override)');
-const exp: [string, number][] = [['R2xR2', 29], ['R2xR4', 28], ['R4xR4', 9], ['R2xR2xR4', 8], ['CxLxL', 8], ['LxR2', 8], ['R4xR6', 6], ['LxR4', 6]];
-chk(exp.every(([k, v]) => byCls.get(k) === v), `class-pair counts agree with the handover of 21.46 (${exp.map(([k, v]) => k + ' ' + v).join(', ')})`);
-chk(nodes.length === 136, 'node count 136 (21.40)');
+const exp: [string, number][] = [['R2xR2', 29], ['R2xR4', 28], ['R4xR4', 9], ['R2xR2xR4', 8], ['CxLxL', 8], ['LxR2', 8], ['R4xR6', 6], ['LxR4', 2]];   // B7-1: LxR4 6 -> 2 (N104 / N106 / N108 / N114 gone, 21.49)
+chk(exp.every(([k, v]) => byCls.get(k) === v), `class-pair counts agree with the handover of 21.46 after 21.49 (${exp.map(([k, v]) => k + ' ' + v).join(', ')})`);
+chk(nodes.length === 132, 'node count 132 (136 of 21.40 minus the 4 nodes of the cut-back L streets, 21.49 / B7-1)');
 const cp = new Map<string, number>(); for (const n of nodes) for (const g of n.legs) cp.set(g, (cp.get(g) ?? 0) + 1);
 // distance leg -> node place
 let far = 0; for (const n of nodes) for (const g of n.legs) { const d = proj(g, n.x, n.z).d; if (d > END_M + 1) far++; }
@@ -174,7 +174,7 @@ for (const c of Object.keys(fits)) {
   for (const ln of d.lines) {
     if (!poly.has(ln.id)) continue;
     for (const q of ln.pis) {
-      const strict = q.R < d.params.RMIN - 1e-6;
+      const strict = q.R < d.params.RMIN - 0.01;   // B7-1: PI radii are stored rounded to 0.01 m (R 40.64 vs Rmin 40.64008 is not a violation)
       if (!strict && !(q.V < d.V)) continue;
       const pr0 = proj(ln.id, q.x, q.z), nl = nodesOfLine.get(ln.id) ?? [];
       let best = { node: '-', dn: Infinity }; for (const m of nl) { const dd = Math.abs(m.s - pr0.s); if (dd < best.dn) best = { node: m.node, dn: dd }; }
