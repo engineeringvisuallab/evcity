@@ -1,0 +1,115 @@
+{
+"note": "STEP 21.7-6 decisions of the AI for the remaining 21.7-2 lists (decisions only, no data change)",
+"decisions": [
+{
+"node": "N011",
+"list": "a",
+"decision": "accept as SKEW T (65.5 deg), kerb radii from docs/centre_junction_geom.json"
+},
+{
+"node": "N059",
+"list": "a",
+"decision": "accept as SKEW T (63.6 deg)"
+},
+{
+"node": "N066",
+"list": "a",
+"decision": "accept as SKEW T (66.9 deg)"
+},
+{
+"node": "N071",
+"list": "a",
+"decision": "accept as SKEW T (61.8 deg)"
+},
+{
+"node": "N089",
+"list": "a",
+"decision": "accept as SKEW T (67.0 deg)"
+},
+{
+"node": "N113",
+"list": "a",
+"decision": "accept as SKEW T (67.6 deg)"
+},
+{
+"node": "N074",
+"list": "a",
+"decision": "grade-separated, angle belongs to the 21.8 structure design"
+},
+{
+"node": "N008",
+"list": "c+d",
+"decision": "R6-10 corner R 168 m: advisory 70 km/h; T pad water 64 m2: SHORT right-turn pocket (advisory 40 km/h), pad then clear"
+},
+{
+"node": "R6-10@199",
+"list": "c",
+"decision": "advisory 75 km/h (R 228 m, class minimum 229 m)"
+},
+{
+"node": "N018",
+"list": "c",
+"decision": "advisory 45 km/h (R 86 m, class minimum 113 m)"
+},
+{
+"node": "R4-12@577",
+"list": "c",
+"decision": "advisory 50 km/h (R 95 m, class minimum 113 m)"
+},
+{
+"node": "N072",
+"list": "a+c",
+"decision": "exception: R2-52 corner R 22 m at the node, advisory 25 km/h; skew 52 deg stays (see 21.49)"
+},
+{
+"node": "N098",
+"list": "d",
+"decision": "SHORT pocket (advisory 40 km/h), pad then misses the water 896 m2; the water crossing itself goes to 21.8"
+},
+{
+"node": "N009",
+"list": "d",
+"decision": "no pocket (71 m free, 92 m short form needed): shared lane at the signal, advisory speed on R6-9"
+},
+{
+"node": "N056",
+"list": "d",
+"decision": "no pocket (pad clear with no pocket); sight triangle blocked by house-tin#447: building is relocated later (buildings are replaced, ROADFIX rule), road not moved"
+},
+{
+"node": "N057",
+"list": "d",
+"decision": "sight triangle / pad blocked by townhouse-3#398: building relocated later, road not moved"
+},
+{
+"node": "N041",
+"list": "d",
+"decision": "6 buildings in the pad (shop-house-4#229, mixed-use-6#230, restaurant#231, office-slim-12#530, slim-tower-20#77, shop-house-3#297): relocated later, road not moved, no pocket"
+},
+{
+"node": "N064",
+"list": "d",
+"decision": "mosque#34 and villa#7 in the pad: relocated later, road not moved. A MOSQUE is a special building: the user must confirm before it is moved"
+},
+{
+"node": "N078",
+"list": "d",
+"decision": "SHORT pocket (clear); sight blocked by village_farm#44: building relocated later"
+},
+{
+"node": "N079",
+"list": "d",
+"decision": "keep the roundabout, retaining wall on the uphill side (half-depth 3.5 m, limit 3 m), sized in 21.6c / 21.12"
+},
+{
+"node": "N124",
+"list": "d",
+"decision": "keep the roundabout, retaining wall on the uphill side (half-depth 4.5 m, limit 3 m), sized in 21.6c / 21.12; the biggest wall, check first"
+},
+{
+"node": "N094/N112",
+"list": "d",
+"decision": "reduce the flare of the two 30 m circles from 25 m to 24 m (gap 79 m, need 80 m); NOT re-run"
+}
+]
+}
