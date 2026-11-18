@@ -20,6 +20,8 @@ import { ISLAND_LINK_DATA } from './island/IslandLinkData';
 import { R6_LINE_DATA } from './r6/R6LineData';
 import { R6_NEW_LINE_DATA } from './r6/R6NewLineData';
 import { R6_SLIP_DATA } from './r6/R6SlipData';
+import { R4_NEW_LINE_DATA } from './r4/R4NewLineData';
+import { CLASS_R4_OPEN } from './standards/ClassSections';
 import { STRUCT, STRUCT_CARVE } from './ring/RingStructures';
 import { SCENARIOS, cutRange, nearestPoint, uvToWorld, type ScenarioSpec } from '../interchange/scenario/J6Scenario';
 
@@ -294,12 +296,14 @@ export class RoadNetwork {
     const armsOn = Config.roads.junctionJ1Arms.enabled && Config.roads.junctionJ1.enabled;
     const linkOn = Config.roads.islandLink.enabled && Config.roads.ring.enabled; // STEP 17.1g-a: the island link M6-1 joins at the same moment (the railway plan must not see it either)
     const r6On = Config.roads.r6Roads.enabled; // STEP G6: the R6 roads join at the same moment (the railway plan must not see them either)
-    if ((!armsOn && !linkOn && !r6On) || this.j1ArmsAdded) return;
+    const r4On = Config.roads.r4New.enabled; // STEP B7-3: the new R4 lines join at the same moment too
+    if ((!armsOn && !linkOn && !r6On && !r4On) || this.j1ArmsAdded) return;
     this.j1ArmsAdded = true; // STEP RAIL-A: the railway calls this before its long section, TerrainGenerator calls it again later (no-op then)
     const before = this.roads.length;
     this.layoutJ1Arms();
     this.layoutIslandLink();
     this.layoutR6Roads();
+    this.layoutR4Roads();
     if (this.roads.length === before) return;
     this.chunkSegs.clear();
     this.padCells.clear();
@@ -395,6 +399,37 @@ export class RoadNetwork {
     }
     // STEP G7g: the two slip roads of the JX-2 half interchange (north side of J1-E, stem R6-8): one-way ramps, 1 lane, finished heights used exactly (R6SlipData.ts, made by scripts/r6-export-slips.ts).
     for (const q of R6_SLIP_DATA) this.addRoad({ tier: 3, kind: 'ramp', name: q.name, closed: false, pts: q.pts.map((p) => [p[0], p[1]]), halfWidth: 4.2, lanes: 1, speedKmh: 50, fixedY: q.ys.slice() });
+  }
+
+  /**
+   * STEP B7-3 (batch R4-a): the new R4 lines (4 lanes, divided, V60, CLASS_R4_OPEN of 21.5) from R4NewLineData.ts (made by scripts/centre-r4-export.ts): fitted centreline and finished heights of the vertical chain (grade <= 6 %, R11).
+   * Same method as layoutR6Roads: heights are used exactly (fixedY), the terrain follows daylight slopes. Ends are FREE (they just meet / end at the node point, levels equal within 0.1 m); NO junction mouth, ramp, pad or structure yet (user order of 2026-11-18, 21.61).
+   * Kind 'highway' (like R6): the existing AI / graph code treats it as a through road and no junction pad is made at the ends. Section = the OPEN variant (no kerb, paved + earth shoulder, ditch).
+   */
+  private layoutR4Roads(): void {
+    if (!Config.roads.r4New.enabled) return;
+    const c = CLASS_R4_OPEN;
+    const el = (kind: string): number => c.elements.find((e) => e.kind === kind)?.width ?? 0;
+    const sec = { halfWidth: c.pavementEdge, medianHalf: el('median'), shyMedian: el('shoulder-in'), laneW: c.laneW, lanesPerDir: c.lanesPerDir, shyOuter: el('shoulder-out'), shoulder: el('ditch') };
+    for (const d of R4_NEW_LINE_DATA) {
+      const m = d.pts.length;
+      const cum = [0];
+      for (let i = 1; i < m; i++) cum.push(cum[i - 1] + Math.hypot(d.pts[i][0] - d.pts[i - 1][0], d.pts[i][1] - d.pts[i - 1][1]));
+      const L = cum[m - 1];
+      const n = Math.max(2, Math.ceil(L / KIND.highway.step)) + 1;
+      const pts: number[][] = [];
+      const ys: number[] = [];
+      let j = 0;
+      for (let k = 0; k < n; k++) {
+        const dd = (L * k) / (n - 1);
+        while (j < m - 2 && cum[j + 1] < dd) j++;
+        const t = cum[j + 1] > cum[j] ? Math.min(1, Math.max(0, (dd - cum[j]) / (cum[j + 1] - cum[j]))) : 0;
+        pts.push([d.pts[j][0] + (d.pts[j + 1][0] - d.pts[j][0]) * t, d.pts[j][1] + (d.pts[j + 1][1] - d.pts[j][1]) * t]);
+        ys.push(d.ys[j] + (d.ys[j + 1] - d.ys[j]) * t);
+      }
+      this.addRoad({ tier: 1, kind: 'highway', name: d.name, closed: false, pts, fixedY: ys, halfWidth: sec.halfWidth, shoulder: sec.shoulder, lanes: sec.lanesPerDir * 2, speedKmh: c.speed, maxGrade: 0.06, section: sec, daylight: true });
+      if (d.structs) this.bridgeArm(this.roads[this.roads.length - 1], { name: d.name, s: d.s, pts: d.pts, ys: d.ys, structs: d.structs });
+    }
   }
 
   /** STEP 17.1g-a: true for a piece of ribbon that is the inner deck of the island strait structure while its mesh does not exist yet (Config.roads.islandLink.bridgeDeck = false). */

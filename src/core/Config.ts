@@ -80,6 +80,8 @@ export const Config = {
     r6Roads: { enabled: true as boolean },
     /** STEP B7a-2 (21.6 build): the 7 NEW R6 lines R6-9 .. R6-15 (src/roads/r6/R6NewLineData.ts, made by scripts/centre-r6-export.ts, 21.45) as game roads, same section / speed / daylight as r6Roads. DEFAULT FALSE: the lines have free ends, no junction nodes and no structures yet (21.7 / 21.8), so they cross other roads without a junction. true only for a look in the game, never as the shipped state. */
     r6New: { enabled: true as boolean },
+    /** STEP B7-3 (21.6 build, batch R4-a): the first R4 lines R4-1 .. R4-8, R4-10, R4-11 (src/roads/r4/R4NewLineData.ts, made by scripts/centre-r4-export.ts) as game roads, 4 lanes divided, V60, grade <= 6 %. Ends are free (no junction mouth, no structure yet, 21.61). false = none. */
+    r4New: { enabled: true as boolean },
     /**
      * STEP RAIL-B2: ONE place for the road / rail buffer (m). Used by scripts/road-rail-buffer-check.ts (measure only; the design code does not read it yet).
      *   railOverRoad   : rail over a road: underside of the rail deck above the road surface.
