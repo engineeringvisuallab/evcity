@@ -1,0 +1,326 @@
+STEP 21.4c VERTICAL CURVES + NODE LEVELS (headless; nothing in src or data changed; natural ground, no rail / building check)
+0. WATER CHECK first (sc.water > sc.h on the 10 m stations; dry = fine; wet = deck at least water + 1.5 m, bridge / culvert in 21.8)
+   154 lines, 11566 stations, 37 wet (0.3 %)
+   R6-10   6  wet 10 m of 1838 m
+   R6-11   6  wet 60 m of 1445 m
+   R4-20   4  wet 80 m of 1932 m
+   R4-23   4  wet 30 m of 1289 m
+   R4-24   4  wet 10 m of 2980 m
+   R4-29   4  wet 20 m of 917 m
+   R2-19   2  wet 60 m of 2762 m
+   R2-55   2  wet 20 m of 1280 m
+   R2-68   2  wet 30 m of 183 m
+   R2-70   2  wet 50 m of 824 m
+   21.4 DP profile: 1 wet stations with deck lower than water + 1.5 m (must be 0)
+   built-road level check: J1 arm ends vs ring profile, max difference 0.02 m (ring length 19293 m)
+
+1. NODES between the profiled lines: 136 nodes (ends within 12 m of another line, crossings, merged within 15 m); lines on an 8-lane / built road (level of that road NOT matched here): 40
+   relaxation of the node levels: 6 rounds, biggest node level change per round 0.00 / 8.72 / 3.04 / 1.13 / 0.48 / 0.32 / 0.25 m
+   rail crossings of the profiled lines: 9 on 7 lines (clearance 7.4 m inside +-40 m, rail design level as given)
+
+2. NODE LEVELS (compromise level per node by relaxation, class-weighted; final solve with hard pins; then the exact level is set on the parabola)
+   level difference between the lines at a node in 21.4 (before): max 31.92 m, over 0.03 m at 105 of 136 nodes
+   AFTER (exact, on the final curves): max 11.41 m (N030), over 0.03 m at 2 of 136 nodes
+   N030 (-1760, -524) R4-29 26.75 | R6-15 38.16  spread 11.41 m
+   N075 (4498, 2844) R2-54 51.80 | R4-21 44.07  spread 7.73 m
+   OPEN legs (grade limit between two pinned nodes of the same line cannot be met, the line keeps its own level there): 6 = N030|R4-29, N075|R2-54, N030|R6-15, N088|R6-15, N089|R6-15, N108|R4-10
+   (a node that stays open = two pinned nodes on one smaller line are too far apart in level for its grade limit, or too close in distance: that is a real conflict, it needs a structure, a moved node or a bigger cut / fill)
+
+3. VERTICAL CURVES (parabolas): PVIs by Douglas-Peucker on the pinned level, smallest tolerance (0.1 .. 1.5 m) whose curves do not overlap; curve K from SSD of the design speed (R6 V80, R4 V60, R2 / C V40, L V30), L = max(K |A|, 0.6 V), |A| under 0.5 % = no curve; PVIs dropped only if even 1.5 m overlaps
+   per line: PVIs, curves, tolerance, dropped PVIs, max grade vs limit, max deviation from the 21.4 level, max cut / fill, viaduct, bridge, tunnel-candidate, pinned nodes
+   C-1     C  PVI   4 curves   2 tol 0.3 m0.92 dropped  0 kinks 0  maxG 5.2% / 8% ok  dev 10.17 m  cut 22.2 fill 11.1  viaduct 120 m  bridge 0 m  tunnel? 40 m  pins 2
+   C-2     C  PVI   5 curves   2 tol 1.0 m0.92 dropped  0 kinks 0  maxG 7.4% / 8% ok  dev 4.22 m  cut 11.2 fill 5.4  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 3
+   C-3     C  PVI   5 curves   3 tol 1.5 m0.92 dropped  1 kinks 0  maxG 4.8% / 8% ok  dev 3.26 m  cut 1.4 fill 3.7  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 5
+   C-4     C  PVI   4 curves   2 tol 1.5 m0.92 dropped  1 kinks 0  maxG 4.9% / 8% ok  dev 7.89 m  cut 7.9 fill 2.0  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 3
+   C-5     C  PVI   5 curves   3 tol 1.0 m0.92 dropped  0 kinks 0  maxG 3.7% / 8% ok  dev 0.82 m  cut 0.7 fill 0.9  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 3
+   C-6     C  PVI   5 curves   3 tol 0.2 m0.92 dropped  0 kinks 0  maxG 5.4% / 8% ok  dev 1.39 m  cut 1.4 fill 1.1  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   C-7     C  PVI   6 curves   4 tol 0.2 m0.92 dropped  0 kinks 0  maxG 1.3% / 8% ok  dev 0.21 m  cut 0.1 fill 0.2  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   C-8     C  PVI   9 curves   7 tol 0.2 m0.92 dropped  0 kinks 0  maxG 7.9% / 8% ok  dev 0.24 m  cut 0.2 fill 0.1  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   C-9     C  PVI   4 curves   2 tol 0.1 m0.92 dropped  0 kinks 0  maxG 1.2% / 8% ok  dev 0.10 m  cut 0.1 fill 0.1  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   L-1     L  PVI   3 curves   1 tol 0.8 m0.92 dropped  0 kinks 0  maxG 9.9% / 10% ok  dev 5.70 m  cut 0.8 fill 5.7  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   L-2     L  PVI   3 curves   1 tol 1.5 m0.92 dropped  1 kinks 0  maxG 3.0% / 10% ok  dev 5.70 m  cut 0.7 fill 5.7  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   L-3     L  PVI   5 curves   3 tol 0.5 m0.92 dropped  0 kinks 0  maxG 8.9% / 10% ok  dev 4.60 m  cut 0.3 fill 4.6  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   L-4     L  PVI   9 curves   5 tol 0.5 m0.92 dropped  0 kinks 0  maxG 9.9% / 10% ok  dev 4.49 m  cut 0.2 fill 4.5  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   L-5     L  PVI   8 curves   6 tol 1.0 m0.92 dropped  0 kinks 0  maxG 9.9% / 10% ok  dev 11.12 m  cut 11.2 fill 0.6  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   L-6     L  PVI   3 curves   1 tol 0.8 m0.92 dropped  0 kinks 0  maxG 10.0% / 10% ok  dev 13.64 m  cut 13.6 fill 0.2  viaduct 0 m  bridge 0 m  tunnel? 70 m  pins 1
+   L-7     L  PVI   3 curves   1 tol 0.8 m0.92 dropped  0 kinks 0  maxG 10.0% / 10% ok  dev 1.20 m  cut 6.0 fill 1.5  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   L-8     L  PVI   3 curves   1 tol 1.5 m0.92 dropped  1 kinks 0  maxG 2.9% / 10% ok  dev 2.95 m  cut 3.1 fill 1.4  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   L-9     L  PVI   3 curves   1 tol 0.8 m0.92 dropped  0 kinks 0  maxG 3.0% / 10% ok  dev 3.13 m  cut 0.1 fill 3.2  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   C-10    C  PVI   3 curves   1 tol 0.5 m0.92 dropped  0 kinks 0  maxG 2.0% / 8% ok  dev 0.27 m  cut 0.1 fill 0.3  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   C-11    C  PVI   4 curves   2 tol 1.5 m0.92 dropped  1 kinks 0  maxG 7.9% / 8% ok  dev 1.11 m  cut 1.1 fill 1.1  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   C-12    C  PVI   6 curves   4 tol 0.8 m0.92 dropped  0 kinks 0  maxG 6.5% / 8% ok  dev 1.89 m  cut 0.6 fill 1.9  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   C-13    C  PVI   5 curves   3 tol 0.8 m0.92 dropped  0 kinks 0  maxG 7.8% / 8% ok  dev 0.57 m  cut 0.6 fill 0.3  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   L-10    L  PVI   3 curves   1 tol 1.5 m0.92 dropped  1 kinks 0  maxG 2.9% / 10% ok  dev 4.13 m  cut 4.2 fill 2.8  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   L-11    L  PVI   5 curves   2 tol 0.5 m0.92 dropped  0 kinks 0  maxG 7.0% / 10% ok  dev 3.49 m  cut 3.5 fill 0.0  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   L-12    L  PVI   3 curves   1 tol 1.0 m0.92 dropped  0 kinks 0  maxG 3.0% / 10% ok  dev 4.57 m  cut 4.6 fill 0.2  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   L-13    L  PVI   3 curves   0 tol 1.5 m0.92 dropped  1 kinks 0  maxG 0.8% / 10% ok  dev 4.23 m  cut 4.3 fill 3.1  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   L-14    L  PVI   3 curves   1 tol 1.5 m0.92 dropped  0 kinks 0  maxG 9.9% / 10% ok  dev 14.10 m  cut 14.4 fill 1.6  viaduct 0 m  bridge 0 m  tunnel? 20 m  pins 2
+   L-15    L  PVI   3 curves   1 tol 1.5 m0.92 dropped  1 kinks 0  maxG 3.0% / 10% ok  dev 3.31 m  cut 3.3 fill 1.7  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   L-16    L  PVI   4 curves   1 tol 0.5 m0.92 dropped  0 kinks 0  maxG 9.9% / 10% ok  dev 1.97 m  cut 2.0 fill 0.8  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   L-17    L  PVI   4 curves   2 tol 0.2 m0.92 dropped  0 kinks 0  maxG 6.5% / 10% ok  dev 0.67 m  cut 0.1 fill 0.7  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   L-18    L  PVI   6 curves   4 tol 0.3 m0.92 dropped  0 kinks 0  maxG 10.0% / 10% ok  dev 1.16 m  cut 1.2 fill 0.3  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   L-19    L  PVI   3 curves   1 tol 0.5 m0.92 dropped  0 kinks 0  maxG 4.7% / 10% ok  dev 1.03 m  cut 0.1 fill 1.0  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   L-20    L  PVI   3 curves   1 tol 0.5 m0.92 dropped  0 kinks 0  maxG 3.5% / 10% ok  dev 1.18 m  cut 1.2 fill 0.0  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   L-21    L  PVI   4 curves   1 tol 0.2 m0.92 dropped  0 kinks 0  maxG 5.2% / 10% ok  dev 1.75 m  cut 1.8 fill 0.4  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   L-22    L  PVI   5 curves   1 tol 0.2 m0.92 dropped  0 kinks 0  maxG 10.0% / 10% ok  dev 1.72 m  cut 1.7 fill 0.2  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   L-23    L  PVI   6 curves   3 tol 0.5 m0.92 dropped  0 kinks 0  maxG 9.9% / 10% ok  dev 1.73 m  cut 0.2 fill 1.8  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   L-24    L  PVI   5 curves   3 tol 0.5 m0.92 dropped  0 kinks 0  maxG 7.6% / 10% ok  dev 1.75 m  cut 0.3 fill 2.0  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   L-25    L  PVI   3 curves   1 tol 0.8 m0.92 dropped  0 kinks 0  maxG 7.5% / 10% ok  dev 3.06 m  cut 0.0 fill 3.3  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   L-26    L  PVI   3 curves   1 tol 0.3 m0.92 dropped  0 kinks 0  maxG 4.6% / 10% ok  dev 3.56 m  cut 3.9 fill 1.0  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   L-27    L  PVI   3 curves   1 tol 0.8 m0.92 dropped  0 kinks 0  maxG 8.1% / 10% ok  dev 1.67 m  cut 0.4 fill 2.3  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   L-28    L  PVI   6 curves   4 tol 0.5 m0.92 dropped  0 kinks 0  maxG 9.9% / 10% ok  dev 0.76 m  cut 0.6 fill 1.3  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   L-29    L  PVI   7 curves   5 tol 0.2 m0.92 dropped  0 kinks 0  maxG 10.0% / 10% ok  dev 2.23 m  cut 2.3 fill 0.3  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   L-30    L  PVI   8 curves   6 tol 1.5 m0.92 dropped  0 kinks 0  maxG 7.7% / 10% ok  dev 1.27 m  cut 1.1 fill 1.3  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 3
+   L-31    L  PVI   4 curves   2 tol 0.5 m0.92 dropped  0 kinks 0  maxG 7.0% / 10% ok  dev 2.39 m  cut 2.4 fill 0.3  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   R2-1    2  PVI   6 curves   3 tol 1.0 m0.92 dropped  0 kinks 0  maxG 8.0% / 8% ok  dev 10.39 m  cut 23.6 fill 13.4  viaduct 300 m  bridge 0 m  tunnel? 130 m  pins 1
+   R2-2    2  PVI   9 curves   7 tol 1.5 m0.92 dropped  2 kinks 0  maxG 8.0% / 8% ok  dev 10.19 m  cut 7.8 fill 10.7  viaduct 160 m  bridge 0 m  tunnel? 0 m  pins 1
+   R2-4    2  PVI  10 curves   8 tol 1.5 m0.92 dropped  0 kinks 0  maxG 8.0% / 8% ok  dev 11.05 m  cut 5.7 fill 13.8  viaduct 300 m  bridge 0 m  tunnel? 0 m  pins 1
+   R2-5    2  PVI   2 curves   0 tol 0.3 m0.92 dropped  0 kinks 0  maxG 8.0% / 8% ok  dev 4.15 m  cut 18.1 fill 6.5  viaduct 0 m  bridge 0 m  tunnel? 110 m  pins 1
+   R2-6    2  PVI   8 curves   6 tol 0.8 m0.92 dropped  0 kinks 0  maxG 8.0% / 8% ok  dev 2.98 m  cut 9.8 fill 6.2  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 0
+   R2-7    2  PVI   5 curves   2 tol 1.0 m0.92 dropped  0 kinks 0  maxG 7.7% / 8% ok  dev 16.51 m  cut 26.4 fill 16.4  viaduct 360 m  bridge 0 m  tunnel? 220 m  pins 3
+   R2-8    2  PVI  25 curves  21 tol 1.5 m0.92 dropped  1 kinks 0  maxG 7.2% / 8% ok  dev 8.27 m  cut 2.1 fill 8.3  viaduct 100 m  bridge 0 m  tunnel? 0 m  pins 2
+   R2-9    2  PVI   2 curves   0 tol 0.1 m0.92 dropped  0 kinks 0  maxG 8.0% / 8% ok  dev 1.62 m  cut 17.7 fill 27.1  viaduct 110 m  bridge 0 m  tunnel? 30 m  pins 0
+   R4-1    4  PVI   8 curves   6 tol 1.5 m0.92 dropped  1 kinks 0  maxG 6.0% / 6% ok  dev 5.51 m  cut 4.7 fill 6.4  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   R4-2    4  PVI   4 curves   2 tol 1.5 m0.92 dropped  1 kinks 0  maxG 6.0% / 6% ok  dev 7.44 m  cut 20.1 fill 7.9  viaduct 60 m  bridge 0 m  tunnel? 230 m  pins 2
+   R4-3    4  PVI   3 curves   1 tol 0.5 m0.92 dropped  0 kinks 0  maxG 5.9% / 6% ok  dev 4.26 m  cut 4.9 fill 2.7  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R4-4    4  PVI   6 curves   3 tol 0.1 m0.92 dropped  0 kinks 0  maxG 1.3% / 6% ok  dev 0.14 m  cut 0.1 fill 0.1  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R4-5    4  PVI   5 curves   3 tol 1.0 m0.92 dropped  0 kinks 0  maxG 6.0% / 6% ok  dev 2.96 m  cut 22.9 fill 8.6  viaduct 60 m  bridge 0 m  tunnel? 40 m  pins 0
+   R4-6    4  PVI   6 curves   4 tol 1.5 m0.92 dropped  0 kinks 0  maxG 5.7% / 6% ok  dev 4.93 m  cut 5.9 fill 8.0  viaduct 50 m  bridge 0 m  tunnel? 0 m  pins 3
+   R4-7    4  PVI   7 curves   5 tol 1.5 m0.92 dropped  2 kinks 0  maxG 5.6% / 6% ok  dev 8.05 m  cut 8.2 fill 4.2  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 5
+   R4-8    4  PVI   7 curves   5 tol 1.5 m0.92 dropped  1 kinks 0  maxG 5.9% / 6% ok  dev 7.90 m  cut 7.9 fill 1.7  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R4-9    4  PVI   9 curves   7 tol 1.5 m0.92 dropped  5 kinks 0  maxG 5.0% / 6% ok  dev 24.87 m  cut 36.6 fill 12.3  viaduct 310 m  bridge 0 m  tunnel? 800 m  pins 4
+   R6-9    6  PVI   5 curves   3 tol 0.5 m0.92 dropped  0 kinks 0  maxG 3.6% / 4% ok  dev 9.71 m  cut 1.5 fill 9.6  viaduct 330 m  bridge 0 m  tunnel? 0 m  pins 2
+   R2-10   2  PVI   3 curves   1 tol 0.1 m0.92 dropped  0 kinks 0  maxG 7.8% / 8% ok  dev 2.80 m  cut 11.7 fill 9.7  viaduct 70 m  bridge 0 m  tunnel? 0 m  pins 1
+   R2-11   2  PVI   3 curves   0 tol 1.5 m0.92 dropped  3 kinks 0  maxG 5.5% / 8% ok  dev 9.69 m  cut 19.8 fill 41.7  viaduct 570 m  bridge 0 m  tunnel? 170 m  pins 1
+   R2-12   2  PVI   5 curves   3 tol 1.5 m0.92 dropped  1 kinks 0  maxG 8.0% / 8% ok  dev 3.73 m  cut 3.8 fill 2.1  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R2-13   2  PVI   7 curves   5 tol 1.5 m0.92 dropped  1 kinks 0  maxG 7.3% / 8% ok  dev 1.56 m  cut 1.6 fill 1.6  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 4
+   R2-14   2  PVI   7 curves   3 tol 1.0 m0.92 dropped  0 kinks 0  maxG 1.6% / 8% ok  dev 1.06 m  cut 0.4 fill 1.1  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 5
+   R2-15   2  PVI   8 curves   4 tol 1.5 m0.92 dropped  0 kinks 0  maxG 4.7% / 8% ok  dev 1.77 m  cut 1.8 fill 1.2  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 3
+   R2-16   2  PVI   3 curves   1 tol 1.5 m0.92 dropped  0 kinks 0  maxG 2.6% / 8% ok  dev 2.19 m  cut 1.5 fill 2.2  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 3
+   R2-17   2  PVI  12 curves  10 tol 1.5 m0.92 dropped  0 kinks 0  maxG 7.3% / 8% ok  dev 1.81 m  cut 3.4 fill 1.8  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 6
+   R2-18   2  PVI   4 curves   1 tol 0.5 m0.92 dropped  0 kinks 0  maxG 8.0% / 8% ok  dev 0.43 m  cut 0.8 fill 0.7  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   R2-19   2  PVI  21 curves  16 tol 1.5 m0.92 dropped  4 kinks 0  maxG 7.2% / 8% ok  dev 3.62 m  cut 13.2 fill 6.4  viaduct 0 m  bridge 60 m  tunnel? 40 m  pins 8
+   R2-20   2  PVI   3 curves   1 tol 0.5 m0.92 dropped  0 kinks 0  maxG 7.9% / 8% ok  dev 6.10 m  cut 7.6 fill 2.5  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   R2-21   2  PVI   7 curves   5 tol 0.8 m0.92 dropped  0 kinks 0  maxG 7.2% / 8% ok  dev 3.07 m  cut 3.1 fill 0.4  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 3
+   R2-22   2  PVI   9 curves   7 tol 0.5 m0.92 dropped  0 kinks 0  maxG 7.9% / 8% ok  dev 4.19 m  cut 4.2 fill 1.5  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 3
+   R2-23   2  PVI  10 curves   8 tol 0.5 m0.92 dropped  0 kinks 0  maxG 7.0% / 8% ok  dev 1.72 m  cut 0.6 fill 2.2  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 3
+   R2-24   2  PVI  10 curves   8 tol 1.5 m0.92 dropped  0 kinks 0  maxG 6.0% / 8% ok  dev 1.31 m  cut 1.4 fill 1.4  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 5
+   R2-25   2  PVI   9 curves   7 tol 0.8 m0.92 dropped  0 kinks 0  maxG 5.9% / 8% ok  dev 2.76 m  cut 2.8 fill 1.7  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 3
+   R2-26   2  PVI  10 curves   8 tol 0.8 m0.92 dropped  0 kinks 0  maxG 7.9% / 8% ok  dev 2.40 m  cut 1.5 fill 2.4  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 3
+   R2-27   2  PVI   5 curves   3 tol 1.5 m0.92 dropped  1 kinks 0  maxG 6.2% / 8% ok  dev 5.04 m  cut 5.0 fill 4.1  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 3
+   R2-28   2  PVI  10 curves   7 tol 0.5 m0.92 dropped  0 kinks 0  maxG 2.6% / 8% ok  dev 0.48 m  cut 0.4 fill 0.5  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   R2-29   2  PVI  11 curves   7 tol 0.2 m0.92 dropped  0 kinks 0  maxG 2.0% / 8% ok  dev 0.21 m  cut 0.1 fill 0.2  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R2-30   2  PVI   5 curves   3 tol 0.5 m0.92 dropped  0 kinks 0  maxG 7.9% / 8% ok  dev 1.09 m  cut 0.3 fill 1.6  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   R2-31   2  PVI   3 curves   1 tol 0.2 m0.92 dropped  0 kinks 0  maxG 3.4% / 8% ok  dev 0.13 m  cut 0.1 fill 0.1  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R2-32   2  PVI   4 curves   2 tol 0.5 m0.92 dropped  0 kinks 0  maxG 3.7% / 8% ok  dev 3.33 m  cut 3.3 fill 0.9  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   R2-33   2  PVI  13 curves  11 tol 0.5 m0.92 dropped  0 kinks 0  maxG 7.9% / 8% ok  dev 9.83 m  cut 1.0 fill 9.8  viaduct 220 m  bridge 0 m  tunnel? 0 m  pins 1
+   R2-34   2  PVI  15 curves  10 tol 0.3 m0.92 dropped  0 kinks 0  maxG 2.9% / 8% ok  dev 0.31 m  cut 0.3 fill 0.3  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 4
+   R2-35   2  PVI  11 curves   9 tol 0.3 m0.92 dropped  0 kinks 0  maxG 4.8% / 8% ok  dev 0.20 m  cut 0.2 fill 0.2  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R2-36   2  PVI   5 curves   3 tol 0.5 m0.92 dropped  0 kinks 0  maxG 7.9% / 8% ok  dev 2.03 m  cut 2.0 fill 0.4  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R2-37   2  PVI   5 curves   3 tol 0.5 m0.92 dropped  0 kinks 0  maxG 6.4% / 8% ok  dev 1.15 m  cut 1.1 fill 0.8  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R2-38   2  PVI   4 curves   2 tol 0.3 m0.92 dropped  0 kinks 0  maxG 8.0% / 8% ok  dev 0.55 m  cut 1.5 fill 0.5  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R2-39   2  PVI   8 curves   6 tol 0.3 m0.92 dropped  0 kinks 0  maxG 8.0% / 8% ok  dev 0.33 m  cut 0.6 fill 0.4  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R2-40   2  PVI   7 curves   5 tol 0.3 m0.92 dropped  0 kinks 0  maxG 4.2% / 8% ok  dev 0.42 m  cut 0.4 fill 0.4  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 3
+   R2-41   2  PVI   9 curves   7 tol 0.2 m0.92 dropped  0 kinks 0  maxG 2.8% / 8% ok  dev 0.21 m  cut 0.2 fill 0.2  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R2-42   2  PVI   7 curves   5 tol 0.3 m0.92 dropped  0 kinks 0  maxG 1.4% / 8% ok  dev 0.33 m  cut 0.3 fill 0.3  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R2-43   2  PVI   6 curves   4 tol 1.5 m0.92 dropped  1 kinks 0  maxG 8.0% / 8% ok  dev 4.10 m  cut 3.2 fill 5.1  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R2-44   2  PVI  10 curves   6 tol 1.5 m0.92 dropped  0 kinks 0  maxG 7.5% / 8% ok  dev 4.31 m  cut 4.3 fill 1.9  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 3
+   R2-45   2  PVI   8 curves   6 tol 1.5 m0.92 dropped  1 kinks 0  maxG 6.1% / 8% ok  dev 1.95 m  cut 2.8 fill 1.2  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   R2-46   2  PVI   6 curves   4 tol 0.8 m0.92 dropped  0 kinks 0  maxG 7.8% / 8% ok  dev 1.28 m  cut 2.3 fill 1.8  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   R2-48   2  PVI   3 curves   1 tol 0.8 m0.92 dropped  0 kinks 0  maxG 1.2% / 8% ok  dev 0.65 m  cut 0.6 fill 0.7  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R2-49   2  PVI   3 curves   0 tol 1.5 m0.92 dropped  1 kinks 0  maxG 1.2% / 8% ok  dev 1.68 m  cut 1.2 fill 1.7  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R2-50   2  PVI   5 curves   3 tol 0.8 m0.92 dropped  0 kinks 0  maxG 6.6% / 8% ok  dev 0.59 m  cut 0.3 fill 0.7  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R2-51   2  PVI   9 curves   6 tol 1.5 m0.92 dropped  2 kinks 0  maxG 6.1% / 8% ok  dev 6.83 m  cut 6.8 fill 7.3  viaduct 10 m  bridge 0 m  tunnel? 0 m  pins 3
+   R2-52   2  PVI   4 curves   2 tol 1.5 m0.92 dropped  1 kinks 0  maxG 7.0% / 8% ok  dev 11.72 m  cut 12.8 fill 15.5  viaduct 320 m  bridge 0 m  tunnel? 40 m  pins 3
+   R2-53   2  PVI   3 curves   1 tol 0.3 m0.92 dropped  0 kinks 0  maxG 8.0% / 8% ok  dev 5.35 m  cut 33.0 fill 16.6  viaduct 230 m  bridge 0 m  tunnel? 170 m  pins 2
+   R2-54   2  PVI   3 curves   1 tol 1.5 m0.92 dropped  0 kinks 0  maxG 8.0% / 8% ok  dev 3.33 m  cut 13.2 fill 25.7  viaduct 210 m  bridge 0 m  tunnel? 80 m  pins 1
+   R2-55   2  PVI   7 curves   5 tol 1.5 m0.92 dropped  0 kinks 0  maxG 8.0% / 8% ok  dev 2.13 m  cut 13.4 fill 15.0  viaduct 170 m  bridge 20 m  tunnel? 100 m  pins 0
+   R2-57   2  PVI   3 curves   1 tol 0.2 m0.92 dropped  0 kinks 0  maxG 8.0% / 8% ok  dev 2.20 m  cut 12.9 fill 9.2  viaduct 50 m  bridge 0 m  tunnel? 10 m  pins 0
+   R2-58   2  PVI  12 curves  10 tol 1.0 m0.92 dropped  0 kinks 0  maxG 8.0% / 8% ok  dev 2.88 m  cut 12.5 fill 7.2  viaduct 30 m  bridge 0 m  tunnel? 10 m  pins 0
+   R2-59   2  PVI   4 curves   2 tol 1.5 m0.92 dropped  0 kinks 0  maxG 8.0% / 8% ok  dev 8.75 m  cut 14.7 fill 37.7  viaduct 100 m  bridge 0 m  tunnel? 40 m  pins 0
+   R2-60   2  PVI   2 curves   0 tol 1.5 m0.92 dropped  1 kinks 0  maxG 4.5% / 8% ok  dev 7.25 m  cut 15.0 fill 41.2  viaduct 110 m  bridge 0 m  tunnel? 20 m  pins 1
+   R2-61   2  PVI   6 curves   4 tol 1.5 m0.92 dropped  1 kinks 0  maxG 8.0% / 8% ok  dev 4.04 m  cut 12.5 fill 22.2  viaduct 100 m  bridge 0 m  tunnel? 20 m  pins 0
+   R2-62   2  PVI  22 curves  19 tol 1.5 m0.92 dropped  3 kinks 1  maxG 8.0% / 8% ok  dev 25.26 m  cut 12.5 fill 25.4  viaduct 370 m  bridge 0 m  tunnel? 10 m  pins 2
+   R2-63   2  PVI   4 curves   2 tol 1.0 m0.92 dropped  0 kinks 0  maxG 7.8% / 8% ok  dev 5.68 m  cut 5.7 fill 1.3  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   R2-64   2  PVI   9 curves   6 tol 1.5 m0.92 dropped  0 kinks 0  maxG 7.3% / 8% ok  dev 6.41 m  cut 6.4 fill 3.7  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 4
+   R2-65   2  PVI   5 curves   3 tol 1.5 m0.92 dropped  0 kinks 0  maxG 7.9% / 8% ok  dev 2.33 m  cut 2.3 fill 1.2  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   R2-66   2  PVI   4 curves   2 tol 1.5 m0.92 dropped  0 kinks 0  maxG 5.8% / 8% ok  dev 1.39 m  cut 3.0 fill 1.3  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   R2-67   2  PVI   6 curves   4 tol 1.5 m0.92 dropped  0 kinks 0  maxG 7.5% / 8% ok  dev 2.77 m  cut 2.9 fill 2.1  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 3
+   R2-68   2  PVI   3 curves   1 tol 0.8 m0.92 dropped  0 kinks 0  maxG 7.5% / 8% ok  dev 4.06 m  cut 3.2 fill 6.2  viaduct 0 m  bridge 30 m  tunnel? 0 m  pins 2
+   R2-69   2  PVI  11 curves   9 tol 0.8 m0.92 dropped  0 kinks 0  maxG 7.5% / 8% ok  dev 2.68 m  cut 3.2 fill 2.2  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R2-70   2  PVI  10 curves   7 tol 1.5 m0.92 dropped  1 kinks 0  maxG 7.9% / 8% ok  dev 3.80 m  cut 3.2 fill 4.9  viaduct 0 m  bridge 50 m  tunnel? 0 m  pins 3
+   R2-71   2  PVI   2 curves   0 tol 0.5 m0.92 dropped  0 kinks 0  maxG 8.0% / 8% ok  dev 11.72 m  cut 24.2 fill 9.4  viaduct 50 m  bridge 0 m  tunnel? 310 m  pins 1
+   R2-72   2  PVI   7 curves   5 tol 1.5 m0.92 dropped  0 kinks 0  maxG 8.0% / 8% ok  dev 11.41 m  cut 4.2 fill 16.2  viaduct 380 m  bridge 0 m  tunnel? 0 m  pins 2
+   R2-73   2  PVI   3 curves   1 tol 0.5 m0.92 dropped  0 kinks 0  maxG 8.0% / 8% ok  dev 1.21 m  cut 26.9 fill 20.2  viaduct 120 m  bridge 0 m  tunnel? 50 m  pins 0
+   R2-74   2  PVI   7 curves   5 tol 1.5 m0.92 dropped  0 kinks 0  maxG 7.3% / 8% ok  dev 4.81 m  cut 21.2 fill 10.8  viaduct 190 m  bridge 0 m  tunnel? 170 m  pins 2
+   R2-75   2  PVI   8 curves   5 tol 1.0 m0.92 dropped  0 kinks 0  maxG 6.3% / 8% ok  dev 4.27 m  cut 4.3 fill 3.8  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   R2-76   2  PVI   6 curves   4 tol 1.5 m0.92 dropped  1 kinks 0  maxG 7.9% / 8% ok  dev 8.91 m  cut 8.9 fill 2.2  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   R2-77   2  PVI   8 curves   6 tol 0.3 m0.92 dropped  0 kinks 0  maxG 7.8% / 8% ok  dev 0.41 m  cut 0.4 fill 0.3  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 0
+   R4-10   4  PVI  11 curves   7 tol 1.5 m0.92 dropped  2 kinks 0  maxG 5.2% / 6% ok  dev 6.36 m  cut 6.4 fill 7.1  viaduct 10 m  bridge 0 m  tunnel? 0 m  pins 5
+   R4-11   4  PVI   3 curves   1 tol 1.5 m0.92 dropped  1 kinks 0  maxG 5.6% / 6% ok  dev 5.66 m  cut 0.0 fill 5.7  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R4-12   4  PVI  10 curves   7 tol 1.5 m0.92 dropped  2 kinks 0  maxG 6.0% / 6% ok  dev 7.10 m  cut 12.6 fill 8.1  viaduct 120 m  bridge 0 m  tunnel? 20 m  pins 3
+   R4-13   4  PVI   5 curves   2 tol 1.5 m0.92 dropped  1 kinks 0  maxG 4.2% / 6% ok  dev 8.54 m  cut 1.9 fill 8.7  viaduct 70 m  bridge 0 m  tunnel? 0 m  pins 2
+   R4-14   4  PVI   7 curves   3 tol 1.0 m0.92 dropped  0 kinks 0  maxG 6.0% / 6% ok  dev 5.89 m  cut 0.6 fill 5.9  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R4-15   4  PVI   6 curves   4 tol 1.5 m0.92 dropped  1 kinks 0  maxG 5.8% / 6% ok  dev 4.63 m  cut 9.8 fill 3.2  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   R4-16   4  PVI   4 curves   2 tol 1.0 m0.92 dropped  0 kinks 0  maxG 5.0% / 6% ok  dev 3.16 m  cut 7.8 fill 1.9  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 3
+   R4-17   4  PVI   4 curves   1 tol 1.5 m0.92 dropped  1 kinks 0  maxG 5.1% / 6% ok  dev 2.46 m  cut 3.0 fill 4.1  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 3
+   R4-18   4  PVI  11 curves   6 tol 0.8 m0.92 dropped  0 kinks 0  maxG 4.8% / 6% ok  dev 4.50 m  cut 1.4 fill 4.5  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 4
+   R4-19   4  PVI  22 curves  17 tol 1.0 m0.92 dropped  0 kinks 0  maxG 5.1% / 6% ok  dev 4.48 m  cut 2.7 fill 4.5  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 10
+   R4-20   4  PVI  14 curves   9 tol 1.5 m0.92 dropped  2 kinks 0  maxG 6.0% / 6% ok  dev 5.54 m  cut 7.7 fill 2.9  viaduct 0 m  bridge 80 m  tunnel? 0 m  pins 3
+   R4-21   4  PVI  13 curves  11 tol 1.5 m0.92 dropped  2 kinks 0  maxG 5.2% / 6% ok  dev 18.20 m  cut 0.9 fill 18.2  viaduct 580 m  bridge 0 m  tunnel? 0 m  pins 4
+   R4-22   4  PVI   5 curves   3 tol 1.0 m0.92 dropped  0 kinks 0  maxG 5.8% / 6% ok  dev 1.10 m  cut 0.6 fill 1.1  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   R4-23   4  PVI   7 curves   5 tol 1.5 m0.92 dropped  5 kinks 0  maxG 5.4% / 6% ok  dev 7.65 m  cut 4.8 fill 7.6  viaduct 40 m  bridge 30 m  tunnel? 0 m  pins 1
+   R4-24   4  PVI   8 curves   6 tol 1.5 m0.92 dropped  4 kinks 0  maxG 6.0% / 6% ok  dev 7.20 m  cut 29.0 fill 29.3  viaduct 720 m  bridge 10 m  tunnel? 250 m  pins 1  WET-LOW 1
+   R4-25   4  PVI   5 curves   2 tol 1.5 m0.92 dropped  0 kinks 0  maxG 4.9% / 6% ok  dev 3.51 m  cut 4.1 fill 6.1  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 3
+   R4-26   4  PVI   4 curves   1 tol 1.5 m0.92 dropped  2 kinks 0  maxG 3.2% / 6% ok  dev 4.09 m  cut 2.1 fill 4.1  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R4-27   4  PVI   9 curves   4 tol 0.3 m0.92 dropped  0 kinks 0  maxG 2.8% / 6% ok  dev 2.45 m  cut 0.3 fill 2.4  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 3
+   R4-28   4  PVI   4 curves   1 tol 0.3 m0.92 dropped  0 kinks 0  maxG 0.4% / 6% ok  dev 0.34 m  cut 0.1 fill 0.3  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 3
+   R4-29   4  PVI   7 curves   5 tol 1.5 m0.92 dropped  2 kinks 0  maxG 3.0% / 6% ok  dev 3.26 m  cut 4.0 fill 4.6  viaduct 0 m  bridge 20 m  tunnel? 0 m  pins 3
+   R6-10   6  PVI   6 curves   4 tol 1.5 m0.92 dropped  0 kinks 0  maxG 4.0% / 4% ok  dev 5.72 m  cut 13.1 fill 12.9  viaduct 380 m  bridge 10 m  tunnel? 30 m  pins 2
+   R6-11   6  PVI   8 curves   6 tol 1.5 m0.92 dropped  3 kinks 0  maxG 3.9% / 4% ok  dev 5.15 m  cut 12.1 fill 11.0  viaduct 100 m  bridge 60 m  tunnel? 10 m  pins 3
+   R6-12   6  PVI   2 curves   0 tol 0.2 m0.92 dropped  0 kinks 0  maxG 3.5% / 4% ok  dev 4.67 m  cut 8.2 fill 4.9  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 2
+   R6-13   6  PVI   4 curves   2 tol 1.5 m0.92 dropped  1 kinks 0  maxG 3.4% / 4% ok  dev 4.02 m  cut 4.9 fill 0.2  viaduct 0 m  bridge 0 m  tunnel? 0 m  pins 1
+   R6-14   6  PVI   3 curves   1 tol 1.5 m0.92 dropped  1 kinks 0  maxG 3.0% / 4% ok  dev 8.75 m  cut 6.5 fill 12.4  viaduct 140 m  bridge 0 m  tunnel? 0 m  pins 1
+   R6-15   6  PVI   7 curves   3 tol 1.5 m0.92 dropped  0 kinks 0  maxG 4.0% / 4% ok  dev 4.63 m  cut 20.2 fill 10.7  viaduct 310 m  bridge 0 m  tunnel? 190 m  pins 0
+
+3b. RAIL CROSSINGS (X5: no crossing at grade; road over rail = road >= rail + 7.4 m, road under rail = road <= rail - 7.4 m, rail design level as given)
+   R6-9    x rail ring-north s   404 at (-1675, -2766)  rail 19.40 m  road 27.83 m  diff +8.43 m  road OVER rail (rail in a cut & cover box)  ok
+   R2-28   x rail south-1 s   394 at (59, 669)  rail 31.93 m  road 18.59 m  diff -13.34 m  road UNDER rail (rail on a viaduct)  ok
+   R2-28   x rail east-1 s   885 at (334, 354)  rail 32.78 m  road 18.10 m  diff -14.68 m  road UNDER rail (rail on a viaduct)  ok
+   R2-33   x rail ring-south s   810 at (-519, 1580)  rail 19.10 m  road 28.79 m  diff +9.70 m  road OVER rail (rail in a cut & cover box)  ok
+   R2-74   x rail north-1 s  1512 at (534, -2923)  rail 22.90 m  road 30.78 m  diff +7.88 m  road OVER rail (rail in a cut & cover box)  ok
+   R4-20   x rail west-sw s   223 at (-390, 565)  rail 31.25 m  road 18.26 m  diff -13.00 m  road UNDER rail (rail on a viaduct)  ok
+   R4-20   x rail ring-south s  1526 at (-75, 1669)  rail 22.73 m -> 24.23 m (+1.5 m)  road 16.47 m  diff -7.76 m  road UNDER rail (rail on a viaduct)  ok WITH RAIL LEVEL CHANGE
+   R6-11   x rail ring-northeast s  1263 at (2599, -1604)  rail 29.28 m -> 26.28 m (-3.0 m)  road 34.54 m  diff +8.26 m  road OVER rail (rail in a cut & cover box)  ok WITH RAIL LEVEL CHANGE
+   R6-15   x rail ring-west s  1869 at (-2486, -1033)  rail 46.98 m  road 28.85 m  diff -18.13 m  road UNDER rail (rail on a viaduct)  ok
+      -> R4-20 x ring-south: rail RAISED 1.5 m (22.73 -> 24.23 m), ground at the crossing 20.18 m (rail 4.1 m over the ground), road -7.76 m over / under the rail; the rail ramps back at 2.5 % = 60 m each side of the +-40 m zone, so the rail changes over about 200 m; RailPlan entry for 21.6: RAIL_OVER_ROAD_RISE key 'R4-20|ring-south'
+      -> R6-11 x ring-northeast: rail LOWERED 3.0 m (29.28 -> 26.28 m), ground at the crossing 29.60 m (rail 3.3 m under the ground), road 8.26 m over / under the rail; the rail ramps back at 2.5 % = 120 m each side of the +-40 m zone, so the rail changes over about 320 m; RailPlan entry for 21.6: RAIL_UNDER_BRIDGE_FORCE + RAIL_UNDER_BRIDGE_DROP key 'R6-11|ring-northeast'
+   9 rail crossings, 9 clear, 0 not clear (cannot be solved inside the grade limit / node levels: structure or moved line, decision for 21.8)
+
+3c. JUNCTION APPROACH GRADE (non-top legs and line ends on built roads: |grade| <= 3.0 % inside +-30 m of the node)
+   R4-9    s  2955  max grade 3.9 %  OVER 3.0 %
+   R4-9    s   240  max grade 5.0 %  OVER 3.0 %
+   R4-9    s  2955  max grade 3.9 %  OVER 3.0 %
+   R4-9    s     0  max grade 4.4 %  OVER 3.0 %
+   R4-2    s     0  max grade 6.0 %  OVER 3.0 %
+   R2-1    s     0  max grade 3.6 %  OVER 3.0 %
+   R2-4    s     0  max grade 7.3 %  OVER 3.0 %
+   R2-5    s     0  max grade 8.0 %  OVER 3.0 %
+   R2-7    s     0  max grade 4.6 %  OVER 3.0 %
+   R2-8    s  1980  max grade 6.1 %  OVER 3.0 %
+   R2-51   s  1556  max grade 5.7 %  OVER 3.0 %
+   R4-25   s     0  max grade 4.5 %  OVER 3.0 %
+   R2-10   s     0  max grade 6.9 %  OVER 3.0 %
+   R2-12   s     0  max grade 5.8 %  OVER 3.0 %
+   R2-13   s     0  max grade 5.7 %  OVER 3.0 %
+   C-4     s     0  max grade 4.9 %  OVER 3.0 %
+   L-26    s     0  max grade 4.6 %  OVER 3.0 %
+   R2-22   s     0  max grade 4.3 %  OVER 3.0 %
+   R2-24   s  1150  max grade 4.0 %  OVER 3.0 %
+   R2-24   s   553  max grade 6.0 %  OVER 3.0 %
+   R2-26   s     0  max grade 4.8 %  OVER 3.0 %
+   R2-43   s   761  max grade 5.1 %  OVER 3.0 %
+   R2-52   s     0  max grade 6.9 %  OVER 3.0 %
+   R2-54   s   750  max grade 8.0 %  OVER 3.0 %
+   R2-74   s     0  max grade 7.3 %  OVER 3.0 %
+   R2-76   s     0  max grade 4.1 %  OVER 3.0 %
+   L-5     s     0  max grade 4.8 %  OVER 3.0 %
+   L-6     s     0  max grade 5.6 %  OVER 3.0 %
+   C-3     s     0  max grade 3.1 %  OVER 3.0 %
+   C-3     s   376  max grade 4.8 %  OVER 3.0 %
+   L-14    s     0  max grade 3.4 %  OVER 3.0 %
+   L-4     s   457  max grade 6.2 %  OVER 3.0 %
+   L-22    s     0  max grade 3.7 %  OVER 3.0 %
+   L-27    s     0  max grade 8.1 %  OVER 3.0 %
+   L-27    s   178  max grade 3.6 %  OVER 3.0 %
+   L-29    s     0  max grade 7.9 %  OVER 3.0 %
+   R6-11   s  1445  max grade 3.9 %  OVER 3.0 %
+   R6-15   s     0  max grade 3.8 %  OVER 3.0 %
+   R4-10   s  1118  max grade 5.1 %  OVER 3.0 %
+   R4-24   s     0  max grade 6.0 %  OVER 3.0 %
+   R4-11   s     0  max grade 5.6 %  OVER 3.0 %
+   R4-13   s   986  max grade 4.2 %  OVER 3.0 %
+   R6-12   s     0  max grade 3.5 %  OVER 3.0 %
+   158 junction legs checked, 115 ok, 43 over 3.0 % (listed above; the class limit still holds: they sit on steep ground where the node level and the grade limit leave no room)
+
+3d. DRAINAGE (tangent of 60 m or more needs |grade| >= 0.3 %)
+   R4-6    s    65  length 826 m  grade 0.04 %  FLAT
+   R4-10   s   770  length 120 m  grade 0.29 %  FLAT
+   2 flat tangents, 945 m (two pinned node / road levels at the same height with no room for a crest: they need a drain / cross-fall design in 21.5)
+
+3e. WET STATIONS after the curves (deck must be >= water + 1.5 m; the lines below go to the bridge / culvert design 21.8)
+   R4-24   wet 10 m, LOW by 0.27 m at s 971 (x 3075, z -3079): deck must rise 0.27 m there, the grade limit / pinned node levels do not allow it  -> bridge deck / structure in 21.8
+
+3f. DECISIONS FOR THE OPEN POINTS (items 2 and 4 of the 21.4c hand-over; item 1 is in 3b, item 3 = ground of the island lines is fixed in centre-profile.ts)
+   RULES (mine): a node that stays open is decided by the class rule 'the bigger road keeps its level': (1) REGRADE: every smaller leg is pinned to the bigger leg's level and re-solved, accepted if the legs meet within 0.03 m, no grade limit is broken, and the structure metres of the re-solved lines grow by at most 100 m (cut / fill is paid for, no new bridge); (2) else the node is a real conflict: a level gap of 7 m or more = GRADE-SEPARATED CROSSING (the smaller line goes over / under, 21.8, with ramps 21.7), a gap of 20 m or more cannot be a crossing either = RE-ROUTE (21.3: the line is too short / too steep for the level change, it needs a longer alignment, a moved node or a lower class); a smaller gap = RAMP (21.7). LINE ENDS on a built road: pinned to the road level if the line grade holds and its structure metres grow by at most 100 m, else RAMP (21.7).
+   END R4-24 start on M8: road 34.59 m, own free level 58.60 m  RAMP  pin rejected: structure metres 970 -> 1890 (over +100); end stays free, ramp (21.7)
+   N030 (-1760, -524)  GRADE-SEPARATED CROSSING  major leg R6-15 (38.16 m)  spread 11.41 m -> 11.41 m   R4-29 4 s 0: 26.75 -> 26.75 m | R6-15 6 s 964: 38.16 -> 38.16 m
+           regrade rejected: legs still 11.41 m apart after the regrade
+   N075 (4498, 2844)  GRADE-SEPARATED CROSSING  major leg R4-21 (44.07 m)  spread 7.73 m -> 7.73 m   R2-54 2 s 750: 51.80 -> 51.80 m | R4-21 4 s 511: 44.07 -> 44.07 m
+           regrade rejected: legs still 7.73 m apart after the regrade
+   N088 (-2336, -972)  REGRADE  major leg R6-15 (27.76 m)  spread 0.81 m -> 0.00 m   R2-75 2 s 768: 28.57 -> 27.76 m | R6-15 6 s 1706: 27.76 -> 27.76 m
+           R2-75 regraded to R6-15 level 27.76 m; structure metres of the regraded lines 0 -> 0 m (limit +100)
+   N089 (-1298, -45)  REGRADE  major leg R6-15 (45.24 m)  spread 3.99 m -> 0.00 m   R2-76 2 s 842: 49.22 -> 45.24 m | R6-15 6 s 289: 45.24 -> 45.24 m
+           R2-76 regraded to R6-15 level 45.24 m; structure metres of the regraded lines 0 -> 0 m (limit +100)
+   N108 (1428, -2568)  REGRADE  major leg R4-10 (27.47 m)  spread 3.16 m -> 0.00 m   L-10 L s 133: 30.64 -> 27.47 m | R4-10 4 s 815: 27.47 -> 27.47 m
+           L-10 regraded to R4-10 level 27.47 m; structure metres of the regraded lines 0 -> 0 m (limit +100)
+   5 nodes were open: 3 regraded, 2 grade-separated crossings, 0 ramps, 0 re-routes
+
+   LINE ENDS NOT PINNED (1): decision = RAMP / INTERCHANGE (21.7); numbers: ramp length at 6 % between the line level and the road level, junction ground, where the main road runs on the ground
+   R4-24  start on M8     (own level more than 15 m from the road, or the grade limit cannot take the pin)
+           main road 34.59 m, line level 64.15 m (own free 58.60 m), junction ground 39.29 m; gap 29.6 m -> ramp 493 m at 6 % (the line has 2980 m to its next node / end); the main road is near the ground
+
+4. SUMMARY
+   154 lines, 669 interior PVIs, 607 parabolic curves (302 crest, 305 sag), 62 grade breaks under 0.5 % without a curve, 74 PVIs dropped for overlap, 1 node PVIs made a kink (no curve, curves too close)
+   PVI optimiser: 156 of 154 lines improved, total cost gain 1975142
+   grade over the class limit: 0 lines; lines with a wet station under water + 1.5 m: 1; node spread over 0.03 m: 2 of 136
+   COST OF NODE LEVELS + CURVES vs the free 21.4 profile (tunnel-candidate m / viaduct m): 21.4 1600 / 4300  ->  now 3430 / 8030
+      class 6  21.4 160 / 420  ->  now 230 / 1260
+      class 4  21.4 460 / 1230  ->  now 1340 / 2020
+      class 2  21.4 960 / 2620  ->  now 1730 / 4630
+      class C  21.4 20 / 30  ->  now 40 / 120
+      class L  21.4 0 / 0  ->  now 90 / 0
+   max deviation of the curve profile from the 21.4 DP level: 25.26 m; tunnel-candidate (cut over 12 m) 3430 m; viaduct (fill over 7 m) 8030 m; bridge (wet) 370 m
+   LINE ENDS ON A BUILT / 8-LANE ROAD: 40 found, 39 pinned to the road level, 1 NOT pinned (road level more than 15 m from the line's own level, or the grade limit cannot take it: kept free, ramp = 21.7), 0 on a road with no level source (own level kept)
+   R6-9    end   on M8    road level 28.41 m, line level 28.41 m, own free level 18.70 m
+   R6-11   end   on M8    road level 28.10 m, line level 28.10 m, own free level 26.10 m
+   R6-15   end   on M8    road level 33.00 m, line level 33.00 m, own free level 30.40 m
+   R4-5    start on M8    road level 24.24 m, line level 24.24 m, own free level 27.20 m
+   R4-6    start on M8    road level 20.32 m, line level 20.32 m, own free level 15.40 m
+   R4-8    start on M8    road level 33.60 m, line level 33.60 m, own free level 38.30 m
+   R4-9    end   on M8    road level 28.41 m, line level 28.41 m, own free level 38.70 m
+   R4-10   start on M8    road level 35.94 m, line level 35.94 m, own free level 42.30 m
+   R4-14   end   on M8    road level 38.37 m, line level 38.37 m, own free level 35.10 m
+   R4-20   end   on M8    road level 24.46 m, line level 24.46 m, own free level 24.40 m
+   R4-23   end   on M8    road level 32.75 m, line level 32.75 m, own free level 25.10 m
+   R4-24   start on M8    road level 34.59 m, line level 64.15 m, own free level 58.60 m  OPEN
+   R4-27   start on M8    road level 23.26 m, line level 23.26 m, own free level 21.90 m
+   R4-9    start on J1-N  road level 44.50 m, line level 44.50 m, own free level 48.50 m
+   R4-10   end   on J1-N  road level 35.30 m, line level 35.30 m, own free level 34.30 m
+   R4-11   start on J1-N  road level 38.56 m, line level 38.56 m, own free level 32.90 m
+   R4-26   end   on J1-N  road level 33.09 m, line level 33.09 m, own free level 29.80 m
+   R6-14   end   on J1-E  road level 36.32 m, line level 36.32 m, own free level 29.00 m
+   R4-12   start on J1-E  road level 22.80 m, line level 22.80 m, own free level 17.80 m
+   R4-13   end   on J1-E  road level 32.12 m, line level 32.12 m, own free level 24.50 m
+   R4-20   start on J1-S  road level 21.98 m, line level 21.98 m, own free level 19.60 m
+   R6-15   start on J1-W  road level 34.38 m, line level 34.38 m, own free level 37.90 m
+   R4-29   end   on J1-W  road level 25.20 m, line level 25.20 m, own free level 24.90 m
+   R4-18   end   on M6-1  road level 8.30 m, line level 8.30 m, own free level 3.80 m
+   R4-19   start on M6-1  road level 8.30 m, line level 8.30 m, own free level 3.90 m
+   R2-8    end   on M6-1  road level 13.57 m, line level 13.57 m, own free level 15.00 m
+   R2-21   start on M6-1  road level 17.63 m, line level 17.63 m, own free level 20.70 m
+   R2-22   start on M6-1  road level 17.63 m, line level 17.63 m, own free level 20.80 m
+   R4-21   end   on R6-2  road level 25.48 m, line level 25.48 m, own free level 25.60 m
+   R6-14   start on R6-5  road level 31.19 m, line level 31.19 m, own free level 35.50 m
+   R4-13   start on R6-5  road level 31.99 m, line level 31.99 m, own free level 26.10 m
+   R4-14   start on R6-5  road level 31.99 m, line level 31.99 m, own free level 26.10 m
+   R2-43   start on R6-5  road level 38.68 m, line level 38.68 m, own free level 39.90 m
+   R2-44   start on R6-5  road level 31.19 m, line level 31.19 m, own free level 35.50 m
+   R6-12   start on R6-6A road level 25.41 m, line level 25.41 m, own free level 28.90 m
+   R6-13   start on R6-6A road level 25.41 m, line level 25.41 m, own free level 29.00 m
+   R6-11   start on R6-6B road level 26.95 m, line level 26.95 m, own free level 26.40 m
+   R4-12   end   on R6-6B road level 28.02 m, line level 28.02 m, own free level 25.60 m
+   R2-70   end   on R6-6B road level 28.02 m, line level 28.02 m, own free level 26.40 m
+   R2-6    start on R6-7  road level 19.84 m, line level 19.84 m, own free level 19.00 m
+   R4-24 start on M8: road level 34.59 m, own level 58.60 m (24.0 m apart): NOT pinned (too far from the line's own level, island / structure end), ramp = 21.7
+   NOT DONE: building clearance, drainage (min grade 0.3 % only as a soft cost), junction cross-grade check, deck depth of bridges.

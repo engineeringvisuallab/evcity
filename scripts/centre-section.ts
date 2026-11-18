@@ -7,7 +7,7 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { DESIGN } from '../src/roads/standards/Criteria';
 import { SECTION_M6 } from '../src/roads/standards/SectionTable';
-import { CLASS_SECTIONS, SECTION_FOR_VOLUME, ClassSection } from '../src/roads/standards/ClassSections';
+import { CLASS_SECTIONS, SECTION_FOR_VOLUME, type ClassSection } from '../src/roads/standards/ClassSections';
 
 const OUT = process.argv[2] ?? 'docs';
 const DS = 10, MAXCUT = DESIGN.maxCut, MAXFILL = DESIGN.maxFill, CUT_SLOPE = DESIGN.cutSlope, FILL_SLOPE = DESIGN.fillSlope;

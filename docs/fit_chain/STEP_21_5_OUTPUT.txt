@@ -1,0 +1,96 @@
+STEP 21.5 CROSS-SECTION PER CLASS (headless; nothing in src/ is used by the game yet: NEW src/roads/standards/ClassSections.ts is pure data; my numbers, change them in that file)
+
+1. SECTION TABLE (metres from the centreline, ONE side, drive side LEFT; R6 = the built M6 section)
+   R6       M6 (V80)  V80  3 lanes/direction x 3.50 m, median 4.0 m, pavement 0.70 m thick, cross fall 2.0 %
+          0.00 ..   2.00   2.00  median (half of 4 m)  (kerb or concrete barrier + planting or paved)
+          2.00 ..   3.00   1.00  inner paved shoulder
+          3.00 ..  13.50  10.50  3 travel lanes x 3.5 m
+         13.50 ..  16.00   2.50  outer paved shoulder (breakdown)
+         16.00 ..  16.60   0.60  guardrail / barrier offset
+         16.60 ..  18.10   1.50  verge + drainage ditch  (ditch 1.5 m wide, 0.5 m deep)
+         18.10 ..  25.90   7.80  clear zone  (no trees, no poles; side slope 1:4 flat, 1:3 max, 1:2 only with barrier)
+         25.90 ..  33.90   8.00  right-of-way strip  (fence, planting, service road if used)
+        paved edge 16.00 m, formation (earthwork) half 18.10 m, ROW half 33.90 m  ->  carriageway kerb-to-kerb / edge-to-edge 32.0 m, formation 36.2 m, ROW 67.8 m
+        drain: open ditch 1.5 m wide, 0.5 m deep, min grade 0.3 %, outlet at least every 150 m, ditch lined above 4 % grade
+   R4-OPEN  A-D divided arterial, rural (V60)  V60  2 lanes/direction x 3.50 m, median 4.0 m, pavement 0.60 m thick, cross fall 2.0 %
+          0.00 ..   2.00   2.00  median (half of 4.0 m)  (kerbed island: 0.5 m kerb strip + 1.5 m soil with the game grass and flowers)
+          2.00 ..   2.50   0.50  inner paved shoulder
+          2.50 ..   9.50   7.00  2 travel lanes x 3.5 m
+          9.50 ..  11.50   2.00  outer paved shoulder  (1.5 m clear + 0.5 m edge)
+         11.50 ..  13.00   1.50  open ditch  (ditch 1.5 m wide, 0.5 m deep)
+         13.00 ..  17.50   4.50  clear zone (V60)  (no trees, no poles; side slope 1:4 flat, 1:3 max)
+         17.50 ..  20.50   3.00  right-of-way strip  (fence)
+        paved edge 11.50 m, formation (earthwork) half 13.00 m, ROW half 20.50 m  ->  carriageway kerb-to-kerb / edge-to-edge 23.0 m, formation 26.0 m, ROW 41.0 m
+        drain: open ditch 1.5 m wide, 0.5 m deep, min grade 0.3 %, outlet at least every 120 m, ditch lined above 4 % grade
+   R4-ZONE  A-D divided arterial, urban (V60)  V60  2 lanes/direction x 3.50 m, median 4.0 m, pavement 0.60 m thick, cross fall 2.0 %
+          0.00 ..   2.00   2.00  median (half of 4.0 m)  (kerbed island, soil + grass + flowers)
+          2.00 ..   2.50   0.50  inner shy
+          2.50 ..   9.50   7.00  2 travel lanes x 3.5 m
+          9.50 ..  10.00   0.50  outer kerb + shy
+         10.00 ..  12.50   2.50  footpath (light block)  (walk / cycle)
+         12.50 ..  14.00   1.50  verge + drain strip  (kerb inlets, trees, poles)
+         14.00 ..  14.50   0.50  right-of-way margin
+        paved edge 10.00 m, formation (earthwork) half 14.00 m, ROW half 14.50 m  ->  carriageway kerb-to-kerb / edge-to-edge 20.0 m, formation 28.0 m, ROW 29.0 m
+        drain: kerb + gully, min grade 0.3 %, outlet at least every 120 m, gully every 25 m
+   R2-OPEN  rural paved road / sub-arterial (V40)  V40  1 lane/direction x 3.50 m, median none, pavement 0.45 m thick, cross fall 2.0 %
+          0.00 ..   3.50   3.50  1 travel lane x 3.5 m  (crown on the centreline)
+          3.50 ..   4.50   1.00  paved shoulder
+          4.50 ..   5.00   0.50  earth shoulder  (slope 4 %)
+          5.00 ..   6.20   1.20  open ditch  (ditch 1.2 m wide, 0.4 m deep)
+          6.20 ..   9.20   3.00  clear zone (V40)  (side slope 1:3)
+          9.20 ..  11.20   2.00  right-of-way strip
+        paved edge 4.50 m, formation (earthwork) half 6.20 m, ROW half 11.20 m  ->  carriageway kerb-to-kerb / edge-to-edge 9.0 m, formation 12.4 m, ROW 22.4 m
+        drain: open ditch 1.2 m wide, 0.4 m deep, min grade 0.3 %, outlet at least every 100 m, ditch lined above 5 % grade
+   R2-ZONE  sub-arterial / collector, kerbed (V40)  V40  1 lane/direction x 3.50 m, median none, pavement 0.45 m thick, cross fall 2.0 %
+          0.00 ..   3.50   3.50  1 travel lane x 3.5 m  (crown on the centreline)
+          3.50 ..   4.00   0.50  kerb + shy
+          4.00 ..   6.00   2.00  footpath (light block)
+          6.00 ..   7.00   1.00  verge + drain strip  (kerb inlets, trees)
+          7.00 ..   7.50   0.50  right-of-way margin
+        paved edge 4.00 m, formation (earthwork) half 7.00 m, ROW half 7.50 m  ->  carriageway kerb-to-kerb / edge-to-edge 8.0 m, formation 14.0 m, ROW 15.0 m
+        drain: kerb + gully, min grade 0.3 %, outlet at least every 100 m, gully every 25 m
+   C-ZONE   C collector street (V40)  V40  1 lane/direction x 3.30 m, median none, pavement 0.40 m thick, cross fall 2.0 %
+          0.00 ..   3.30   3.30  1 travel lane x 3.3 m  (crown on the centreline; a 2.0 m parking bay is added where the zone asks for one (21.6))
+          3.30 ..   3.60   0.30  kerb + gutter
+          3.60 ..   5.40   1.80  footpath (light block)
+          5.40 ..   6.40   1.00  verge + drain strip
+          6.40 ..   6.70   0.30  right-of-way margin
+        paved edge 3.60 m, formation (earthwork) half 6.40 m, ROW half 6.70 m  ->  carriageway kerb-to-kerb / edge-to-edge 7.2 m, formation 12.8 m, ROW 13.4 m
+        drain: kerb + gully, min grade 0.3 %, outlet at least every 80 m, gully every 25 m
+   L-ZONE   L local street (V30)  V30  1 lane/direction x 2.75 m, median none, pavement 0.35 m thick, cross fall 2.0 %
+          0.00 ..   2.75   2.75  1 travel lane x 2.75 m  (no lane line; crown on the centreline)
+          2.75 ..   2.95   0.20  kerb + gutter
+          2.95 ..   4.45   1.50  footpath (light block)
+          4.45 ..   5.05   0.60  verge + drain strip
+          5.05 ..   5.25   0.20  right-of-way margin
+        paved edge 2.95 m, formation (earthwork) half 5.05 m, ROW half 5.25 m  ->  carriageway kerb-to-kerb / edge-to-edge 5.9 m, formation 10.1 m, ROW 10.5 m
+        drain: kerb + gully, min grade 0.3 %, outlet at least every 60 m, gully every 20 m
+
+2. CHECKS
+   PASS  R6 is the built M6 section: paved edge 16.00 m (built 16.00), ROW half 33.90 m (built 33.90), median 4.0 m
+   PASS  every section: paved edge < formation half < ROW half
+   PASS  every section: lane element = lanes per direction x lane width
+   PASS  median on R6 and R4 only (21.2 plan row), 3-6 m (handoff 7), none on R2 / C / L
+   PASS  footpath (>= 1.5 m) on every ZONE section, none on R6 (motorway class)
+   PASS  paved half width falls with the class: 16.00 > 11.50 > 4.50 > 3.60 > 2.95 m
+   PASS  drain minimum grade 0.3 % and cross fall 2.0 % = DESIGN
+   PASS  OPEN sections drain to a ditch, ZONE sections to kerb + gully
+   (width per class, finished: R6 32.0 m paved, R4 open 23.0 / zone 20.0 + 2 x 2.5 footpath, R2 open 9.0 / zone 7.0 + 2 x 2.0 footpath, C 6.6 + 2 x 1.8, L 5.5 + 2 x 1.5; the old 21.4 volumes used 32 / 22 / 12 / 9 / 7 m)
+
+3. EARTHWORK WITH THE REAL FORMATION WIDTH (final 21.4c profile every 10 m, ground from 21.4; cut 1:2, fill 1:3; pavement thickness dug below / built above the finished surface;
+   cut over 12 m = tunnel-candidate, fill over 7 m = viaduct, wet = bridge: counted in metres, no volume)
+   class 6  R6         7 lines    7.7 km   cut 0.80 Mm3   fill 0.28 Mm3   tunnel-candidate 175 m   viaduct 1360 m   ditch lining needed 0 m
+   class 4  R4-OPEN   29 lines   35.0 km   cut 1.53 Mm3   fill 0.81 Mm3   tunnel-candidate 1425 m   viaduct 2750 m   ditch lining needed 11730 m
+   class 2  R2-OPEN   74 lines   60.6 km   cut 1.78 Mm3   fill 0.70 Mm3   tunnel-candidate 1540 m   viaduct 3715 m   ditch lining needed 26550 m
+   class C  C-ZONE    13 lines    3.8 km   cut 0.07 Mm3   fill 0.05 Mm3   tunnel-candidate 35 m   viaduct 115 m   ditch lining needed 0 m
+   class L  L-ZONE    31 lines    5.9 km   cut 0.12 Mm3   fill 0.05 Mm3   tunnel-candidate 135 m   viaduct 0 m   ditch lining needed 0 m
+   TOTAL cut 4.29 Mm3, fill 1.88 Mm3 (net 2.41 Mm3: surplus to spoil); 21.4 used indicative widths on the free DP profile, this is the real width on the final 21.4c curves
+   (the biggest single lines are in docs/centre_sections.json, "lines"; structures on the 154 lines: 7.9 km of viaduct / 3.3 km tunnel-candidate, they go to 21.8)
+
+4. DRAINAGE OF THE FLAT TANGENTS (21.4c-r 3d: a tangent of 60 m or more with grade under 0.3 %). The pavement itself drains across (2 % cross fall); the LONGITUDINAL drain must not follow the flat road, it gets its own fall:
+   RULE for 21.6 (every line, not only these two): a ditch / gully line is graded to at least 0.5 % between outlets, outlets at every sag (low point of the profile) and at most every `outletMax` m; the ditch is lined (concrete) where the road grade is above the lining limit of its section (R6 4 %, R4 4 %, R2 5 %).
+
+5. WHAT 21.5 DOES NOT DO (goes to later steps)
+   OPEN or ZONE per stretch = by zone use (R8) in 21.6; superelevation in curves (up to 8 %, rotate about the median edge on divided roads, runoff along the spiral, handoff 3.4) = in the build step 21.6 (the horizontal alignment of 21.3 gives R and spiral length);
+   junction widening, turn pockets, bus bays, roundabout geometry = 21.7; bridge / viaduct / tunnel cross-sections = 21.8; markings, lamps, planting = 21.9.
+PASS 8  FAIL 0

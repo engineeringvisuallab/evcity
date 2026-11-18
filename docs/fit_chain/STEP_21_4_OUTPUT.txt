@@ -1,0 +1,205 @@
+STEP 21.4 VERTICAL PROFILE ANALYSIS (headless; nothing in src or data changed; natural ground only, no vertical curves, no junction levels, no rail / building check)
+0. WATER CHECK first: stations with sc.water > sc.h on the 10 m samples of every line (dry = fine, wet = bridge or culvert in 21.8)
+   154 lines, 11496 stations, 40 wet (0.3 %)
+   R6-10   6  wet 20 m of 1880 m
+   R6-11   6  wet 60 m of 1450 m
+   R4-20   4  wet 80 m of 1940 m
+   R4-23   4  wet 30 m of 1300 m
+   R4-24   4  wet 20 m of 3020 m
+   R4-29   4  wet 20 m of 920 m
+   R2-19   2  wet 70 m of 2770 m
+   R2-55   2  wet 20 m of 1260 m
+   R2-68   2  wet 30 m of 190 m
+   R2-70   2  wet 50 m of 820 m
+
+1. PER LINE: length, natural max grade (10 m), finished max grade, max cut / fill, cut + fill volume (indicative, class width), viaduct (fill over 7 m), wet bridge, tunnel-candidate (cut over 12 m runs)
+   R6-9    6    720 m  natG 2.0%  finG 2.0%  cut 0.1 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R6-10   6   1880 m  natG 28.8%  finG 4.0%  cut 16.1 fill 13.8  cutV 148k fillV 119k m3  viaduct 220 m  bridge 20 m  tunnel? 90 m
+   R6-11   6   1450 m  natG 47.1%  finG 4.0%  cut 10.4 fill 5.9  cutV 79k fillV 28k m3  viaduct 0 m  bridge 60 m  tunnel? 0 m
+   R6-12   6    850 m  natG 25.6%  finG 4.0%  cut 8.7 fill 7.0  cutV 23k fillV 35k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R6-13   6    450 m  natG 11.6%  finG 4.0%  cut 1.7 fill 0.5  cutV 2k fillV 1k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R6-14   6    370 m  natG 24.1%  finG 4.0%  cut 5.9 fill 4.4  cutV 13k fillV 15k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R6-15   6   2020 m  natG 38.5%  finG 4.0%  cut 22.2 fill 10.0  cutV 153k fillV 122k m3  viaduct 260 m  bridge 0 m  tunnel? 100 m
+   R4-1    4   1600 m  natG 20.7%  finG 6.0%  cut 6.9 fill 6.0  cutV 25k fillV 30k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-2    4   1090 m  natG 24.1%  finG 6.0%  cut 12.4 fill 10.4  cutV 58k fillV 37k m3  viaduct 110 m  bridge 0 m  tunnel? 30 m
+   R4-3    4    200 m  natG 21.2%  finG 6.0%  cut 1.6 fill 4.1  cutV 1k fillV 4k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-4    4    250 m  natG 1.4%  finG 2.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-5    4    650 m  natG 47.3%  finG 6.0%  cut 20.5 fill 9.9  cutV 20k fillV 35k m3  viaduct 90 m  bridge 0 m  tunnel? 40 m
+   R4-6    4   1790 m  natG 28.5%  finG 6.0%  cut 9.5 fill 3.2  cutV 11k fillV 10k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-7    4   1530 m  natG 19.8%  finG 6.0%  cut 5.5 fill 6.1  cutV 18k fillV 26k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-8    4   1150 m  natG 19.1%  finG 6.0%  cut 3.3 fill 1.6  cutV 8k fillV 5k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-9    4   2940 m  natG 52.1%  finG 6.0%  cut 16.8 fill 25.6  cutV 208k fillV 232k m3  viaduct 410 m  bridge 0 m  tunnel? 160 m
+   R4-10   4   1120 m  natG 22.6%  finG 6.0%  cut 3.4 fill 7.0  cutV 9k fillV 18k m3  viaduct 10 m  bridge 0 m  tunnel? 0 m
+   R4-11   4    220 m  natG 12.6%  finG 6.0%  cut 0.4 fill 1.2  cutV 0k fillV 1k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-12   4   1780 m  natG 24.5%  finG 6.0%  cut 8.5 fill 3.7  cutV 20k fillV 17k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-13   4    990 m  natG 35.4%  finG 6.0%  cut 3.8 fill 0.5  cutV 2k fillV 1k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-14   4    760 m  natG 10.9%  finG 6.0%  cut 0.4 fill 0.3  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-15   4    530 m  natG 21.2%  finG 6.0%  cut 6.1 fill 4.5  cutV 9k fillV 9k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-16   4    680 m  natG 22.7%  finG 6.0%  cut 5.5 fill 3.1  cutV 8k fillV 7k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-17   4    590 m  natG 16.8%  finG 6.0%  cut 1.7 fill 2.2  cutV 4k fillV 7k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-18   4   1120 m  natG 5.7%  finG 6.0%  cut 0.1 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-19   4   3230 m  natG 6.7%  finG 6.0%  cut 0.1 fill 0.1  cutV 1k fillV 1k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-20   4   1940 m  natG 52.4%  finG 6.0%  cut 3.3 fill 1.5  cutV 10k fillV 2k m3  viaduct 0 m  bridge 80 m  tunnel? 0 m
+   R4-21   4   3060 m  natG 18.5%  finG 6.0%  cut 2.1 fill 2.0  cutV 6k fillV 7k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-22   4    680 m  natG 11.5%  finG 6.0%  cut 0.1 fill 0.6  cutV 0k fillV 1k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-23   4   1300 m  natG 36.5%  finG 6.0%  cut 2.1 fill 5.3  cutV 8k fillV 22k m3  viaduct 0 m  bridge 30 m  tunnel? 0 m
+   R4-24   4   3020 m  natG 84.6%  finG 6.0%  cut 40.8 fill 54.7  cutV 319k fillV 672k m3  viaduct 1200 m  bridge 20 m  tunnel? 430 m
+   R4-25   4    560 m  natG 16.7%  finG 6.0%  cut 4.6 fill 3.2  cutV 7k fillV 6k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-26   4    440 m  natG 14.2%  finG 6.0%  cut 1.1 fill 1.6  cutV 1k fillV 2k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-27   4    600 m  natG 8.7%  finG 6.0%  cut 0.3 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-28   4    350 m  natG 2.1%  finG 2.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R4-29   4    920 m  natG 34.2%  finG 6.0%  cut 1.0 fill 4.2  cutV 1k fillV 3k m3  viaduct 0 m  bridge 20 m  tunnel? 0 m
+   R2-1    2   1170 m  natG 81.6%  finG 8.0%  cut 23.3 fill 11.4  cutV 36k fillV 44k m3  viaduct 250 m  bridge 0 m  tunnel? 100 m
+   R2-2    2   1650 m  natG 39.2%  finG 8.0%  cut 6.0 fill 6.8  cutV 13k fillV 23k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-4    2   1760 m  natG 39.7%  finG 8.0%  cut 7.3 fill 4.2  cutV 16k fillV 15k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-5    2    570 m  natG 34.1%  finG 8.0%  cut 14.3 fill 10.6  cutV 18k fillV 23k m3  viaduct 130 m  bridge 0 m  tunnel? 60 m
+   R2-6    2   1620 m  natG 34.2%  finG 8.0%  cut 10.5 fill 7.0  cutV 24k fillV 24k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-7    2    980 m  natG 38.4%  finG 8.0%  cut 20.4 fill 17.0  cutV 39k fillV 60k m3  viaduct 330 m  bridge 0 m  tunnel? 140 m
+   R2-8    2   3930 m  natG 12.9%  finG 8.0%  cut 0.7 fill 0.2  cutV 1k fillV 1k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-9    2    200 m  natG 48.5%  finG 8.0%  cut 19.3 fill 25.5  cutV 12k fillV 23k m3  viaduct 100 m  bridge 0 m  tunnel? 50 m
+   R2-10   2    340 m  natG 38.8%  finG 8.0%  cut 11.1 fill 7.1  cutV 14k fillV 7k m3  viaduct 10 m  bridge 0 m  tunnel? 0 m
+   R2-11   2   1160 m  natG 69.0%  finG 8.0%  cut 24.0 fill 31.6  cutV 47k fillV 68k m3  viaduct 240 m  bridge 0 m  tunnel? 100 m
+   R2-12   2    450 m  natG 22.0%  finG 8.0%  cut 1.1 fill 3.7  cutV 1k fillV 3k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-13   2    440 m  natG 16.8%  finG 8.0%  cut 0.4 fill 1.0  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-14   2    600 m  natG 4.4%  finG 4.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-15   2    340 m  natG 9.5%  finG 8.0%  cut 0.1 fill 0.2  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-16   2    250 m  natG 11.5%  finG 8.0%  cut 0.2 fill 0.3  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-17   2   1170 m  natG 17.8%  finG 8.0%  cut 2.8 fill 1.5  cutV 3k fillV 2k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-18   2    220 m  natG 12.4%  finG 8.0%  cut 0.5 fill 0.8  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-19   2   2770 m  natG 47.4%  finG 8.0%  cut 12.0 fill 3.7  cutV 20k fillV 4k m3  viaduct 0 m  bridge 70 m  tunnel? 10 m
+   R2-20   2    220 m  natG 23.0%  finG 8.0%  cut 1.8 fill 3.5  cutV 1k fillV 2k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-21   2    590 m  natG 14.4%  finG 8.0%  cut 0.9 fill 0.2  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-22   2    550 m  natG 16.3%  finG 8.0%  cut 0.4 fill 1.5  cutV 0k fillV 1k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-23   2    610 m  natG 13.6%  finG 8.0%  cut 0.4 fill 0.6  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-24   2   1150 m  natG 14.6%  finG 8.0%  cut 0.5 fill 0.7  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-25   2    580 m  natG 12.4%  finG 8.0%  cut 0.3 fill 0.5  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-26   2    640 m  natG 13.8%  finG 8.0%  cut 1.0 fill 0.6  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-27   2    640 m  natG 16.8%  finG 8.0%  cut 1.6 fill 1.6  cutV 1k fillV 1k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-28   2   1190 m  natG 4.2%  finG 4.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-29   2    430 m  natG 2.3%  finG 3.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-30   2    260 m  natG 14.8%  finG 8.0%  cut 0.6 fill 0.9  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-31   2     80 m  natG 3.7%  finG 4.0%  cut 0.0 fill 0.0  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-32   2    530 m  natG 11.5%  finG 8.0%  cut 0.2 fill 0.7  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-33   2   1440 m  natG 7.8%  finG 8.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-34   2    760 m  natG 3.3%  finG 3.0%  cut 0.1 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-35   2    520 m  natG 4.7%  finG 5.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-36   2    520 m  natG 5.0%  finG 5.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-37   2    460 m  natG 7.5%  finG 7.0%  cut 0.1 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-38   2    220 m  natG 13.8%  finG 8.0%  cut 1.3 fill 0.5  cutV 1k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-39   2    630 m  natG 10.7%  finG 8.0%  cut 0.3 fill 0.4  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-40   2    290 m  natG 8.1%  finG 8.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-41   2    290 m  natG 3.0%  finG 3.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-42   2    520 m  natG 2.6%  finG 3.0%  cut 0.1 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-43   2    750 m  natG 22.5%  finG 8.0%  cut 1.9 fill 3.3  cutV 2k fillV 4k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-44   2    850 m  natG 14.9%  finG 8.0%  cut 1.8 fill 1.8  cutV 1k fillV 2k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-45   2    840 m  natG 21.9%  finG 8.0%  cut 2.1 fill 1.8  cutV 1k fillV 1k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-46   2    460 m  natG 18.2%  finG 8.0%  cut 2.4 fill 2.5  cutV 1k fillV 1k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-48   2    240 m  natG 5.3%  finG 5.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-49   2    310 m  natG 9.9%  finG 8.0%  cut 0.2 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-50   2    260 m  natG 9.7%  finG 8.0%  cut 0.1 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-51   2   1510 m  natG 16.0%  finG 8.0%  cut 1.1 fill 6.6  cutV 2k fillV 8k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-52   2   1050 m  natG 30.0%  finG 8.0%  cut 4.8 fill 7.0  cutV 5k fillV 16k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-53   2    610 m  natG 47.8%  finG 8.0%  cut 27.6 fill 19.1  cutV 36k fillV 52k m3  viaduct 280 m  bridge 0 m  tunnel? 110 m
+   R2-54   2    750 m  natG 29.2%  finG 8.0%  cut 13.2 fill 25.7  cutV 40k fillV 51k m3  viaduct 210 m  bridge 0 m  tunnel? 80 m
+   R2-55   2   1260 m  natG 46.0%  finG 8.0%  cut 12.6 fill 13.3  cutV 41k fillV 24k m3  viaduct 110 m  bridge 20 m  tunnel? 30 m
+   R2-57   2    200 m  natG 45.2%  finG 8.0%  cut 14.1 fill 8.0  cutV 9k fillV 6k m3  viaduct 30 m  bridge 0 m  tunnel? 10 m
+   R2-58   2   1700 m  natG 25.2%  finG 8.0%  cut 12.0 fill 7.0  cutV 26k fillV 17k m3  viaduct 10 m  bridge 0 m  tunnel? 10 m
+   R2-59   2    470 m  natG 73.1%  finG 8.0%  cut 14.9 fill 38.0  cutV 25k fillV 29k m3  viaduct 120 m  bridge 0 m  tunnel? 40 m
+   R2-60   2    190 m  natG 67.1%  finG 8.0%  cut 15.6 fill 33.9  cutV 7k fillV 25k m3  viaduct 70 m  bridge 0 m  tunnel? 30 m
+   R2-61   2   1300 m  natG 77.0%  finG 8.0%  cut 15.8 fill 27.1  cutV 48k fillV 38k m3  viaduct 140 m  bridge 0 m  tunnel? 60 m
+   R2-62   2   4000 m  natG 52.2%  finG 8.0%  cut 13.1 fill 17.7  cutV 85k fillV 48k m3  viaduct 160 m  bridge 0 m  tunnel? 60 m
+   R2-63   2    310 m  natG 17.1%  finG 8.0%  cut 0.9 fill 1.1  cutV 0k fillV 1k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-64   2    950 m  natG 11.7%  finG 8.0%  cut 0.2 fill 0.3  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-65   2    460 m  natG 17.2%  finG 8.0%  cut 0.8 fill 1.2  cutV 1k fillV 1k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-66   2    300 m  natG 20.4%  finG 8.0%  cut 1.9 fill 0.8  cutV 1k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-67   2    550 m  natG 18.0%  finG 8.0%  cut 1.7 fill 1.2  cutV 1k fillV 1k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-68   2    190 m  natG 43.9%  finG 8.0%  cut 4.1 fill 3.6  cutV 4k fillV 1k m3  viaduct 0 m  bridge 30 m  tunnel? 0 m
+   R2-69   2    800 m  natG 16.5%  finG 8.0%  cut 0.7 fill 3.8  cutV 0k fillV 2k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-70   2    820 m  natG 42.7%  finG 8.0%  cut 3.0 fill 2.9  cutV 3k fillV 1k m3  viaduct 0 m  bridge 50 m  tunnel? 0 m
+   R2-71   2    980 m  natG 52.3%  finG 8.0%  cut 24.6 fill 20.0  cutV 44k fillV 38k m3  viaduct 200 m  bridge 0 m  tunnel? 80 m
+   R2-72   2   1250 m  natG 21.2%  finG 8.0%  cut 7.6 fill 5.5  cutV 10k fillV 10k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-73   2    200 m  natG 145.9%  finG 8.0%  cut 26.2 fill 20.0  cutV 12k fillV 22k m3  viaduct 120 m  bridge 0 m  tunnel? 50 m
+   R2-74   2   2470 m  natG 30.5%  finG 8.0%  cut 16.9 fill 13.3  cutV 28k fillV 45k m3  viaduct 250 m  bridge 0 m  tunnel? 100 m
+   R2-75   2    770 m  natG 17.6%  finG 8.0%  cut 1.0 fill 0.5  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-76   2    820 m  natG 17.9%  finG 8.0%  cut 3.7 fill 2.2  cutV 3k fillV 2k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   R2-77   2    460 m  natG 9.7%  finG 8.0%  cut 0.3 fill 0.2  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   C-1     C    330 m  natG 41.0%  finG 8.0%  cut 14.0 fill 7.1  cutV 4k fillV 13k m3  viaduct 40 m  bridge 0 m  tunnel? 20 m
+   C-2     C    500 m  natG 23.2%  finG 8.0%  cut 7.0 fill 3.3  cutV 4k fillV 3k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   C-3     C    380 m  natG 14.5%  finG 8.0%  cut 0.6 fill 1.3  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   C-4     C    290 m  natG 30.1%  finG 8.0%  cut 0.9 fill 6.0  cutV 0k fillV 2k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   C-5     C    270 m  natG 6.1%  finG 6.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   C-6     C    270 m  natG 1.5%  finG 1.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   C-7     C    310 m  natG 1.8%  finG 2.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   C-8     C    320 m  natG 8.4%  finG 8.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   C-9     C    140 m  natG 1.7%  finG 2.0%  cut 0.0 fill 0.0  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   C-10    C    120 m  natG 3.6%  finG 4.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   C-11    C    270 m  natG 12.6%  finG 8.0%  cut 0.4 fill 0.4  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   C-12    C    240 m  natG 11.8%  finG 8.0%  cut 0.4 fill 0.2  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   C-13    C    360 m  natG 10.2%  finG 8.0%  cut 0.1 fill 0.2  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-1     L    190 m  natG 17.4%  finG 10.0%  cut 1.1 fill 0.8  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-2     L    270 m  natG 9.2%  finG 9.0%  cut 0.0 fill 0.0  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-3     L    270 m  natG 4.6%  finG 5.0%  cut 0.1 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-4     L    460 m  natG 11.9%  finG 10.0%  cut 0.1 fill 0.2  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-5     L    530 m  natG 19.8%  finG 10.0%  cut 0.8 fill 0.7  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-6     L    330 m  natG 18.8%  finG 10.0%  cut 1.9 fill 1.3  cutV 1k fillV 1k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-7     L    180 m  natG 28.5%  finG 10.0%  cut 5.1 fill 1.9  cutV 1k fillV 1k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-8     L    150 m  natG 14.0%  finG 10.0%  cut 0.3 fill 0.5  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-9     L    140 m  natG 12.9%  finG 10.0%  cut 0.2 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-10    L    130 m  natG 20.1%  finG 10.0%  cut 1.6 fill 0.5  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-11    L    130 m  natG 17.3%  finG 10.0%  cut 0.0 fill 1.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-12    L    150 m  natG 13.6%  finG 10.0%  cut 0.3 fill 0.3  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-13    L    130 m  natG 19.4%  finG 10.0%  cut 0.5 fill 1.0  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-14    L    150 m  natG 17.8%  finG 10.0%  cut 0.3 fill 1.4  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-15    L    170 m  natG 15.3%  finG 10.0%  cut 0.0 fill 0.7  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-16    L    130 m  natG 18.6%  finG 10.0%  cut 0.8 fill 1.7  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-17    L    100 m  natG 7.8%  finG 7.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-18    L    150 m  natG 10.0%  finG 10.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-19    L    110 m  natG 8.4%  finG 9.0%  cut 0.0 fill 0.0  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-20    L     80 m  natG 8.4%  finG 8.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-21    L     70 m  natG 9.6%  finG 9.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-22    L    120 m  natG 11.7%  finG 10.0%  cut 0.1 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-23    L    180 m  natG 10.9%  finG 10.0%  cut 0.0 fill 0.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-24    L    180 m  natG 15.6%  finG 10.0%  cut 0.4 fill 0.5  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-25    L    120 m  natG 16.0%  finG 10.0%  cut 0.2 fill 0.9  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-26    L    130 m  natG 21.3%  finG 10.0%  cut 0.9 fill 1.8  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-27    L    180 m  natG 16.7%  finG 10.0%  cut 0.7 fill 1.1  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-28    L    210 m  natG 16.8%  finG 10.0%  cut 0.5 fill 0.8  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-29    L    210 m  natG 16.7%  finG 10.0%  cut 0.5 fill 1.0  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-30    L    480 m  natG 13.6%  finG 10.0%  cut 0.2 fill 0.3  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+   L-31    L    140 m  natG 14.1%  finG 10.0%  cut 0.1 fill 0.4  cutV 0k fillV 0k m3  viaduct 0 m  bridge 0 m  tunnel? 0 m
+
+2. TUNNEL-CANDIDATE RUNS (finished level still more than 12 m under natural ground even with the grade limit; R12: tunnel is the LAST choice, never taken silently)
+   R4-24   4  430 m  s 680-860 at (2910, -2852); s 2520-2770 at (4111, -4084)
+   R4-9    4  160 m  s 380-390 at (72, -1434); s 1570-1580 at (-447, -2312); s 2370-2380 at (-1218, -2147); s 2390-2420 at (-1236, -2138); s 2430-2530 at (-1273, -2121)
+   R2-7    2  140 m  s 130-270 at (-4076, 1751)
+   R2-53   2  110 m  s 510-610 at (4629, 2093)
+   R6-15   6  100 m  s 640-740 at (-1557, -274)
+   R2-1    2  100 m  s 490-530 at (-960, -4537); s 1120-1170 at (-508, -4152)
+   R2-11   2  100 m  s 0-20 at (-1869, -1327); s 760-840 at (-1207, -1293)
+   R2-74   2  100 m  s 40-140 at (-422, -2343)
+   R6-10   6  90 m  s 290-370 at (-2432, -3629); s 380-390 at (-2521, -3619)
+   R2-54   2  80 m  s 290-330 at (4494, 2384); s 380-420 at (4495, 2474)
+   R2-71   2  80 m  s 220-260 at (1337, -4653); s 950-980 at (1910, -4970)
+   R2-5    2  60 m  s 490-500 at (-4284, -4801); s 530-570 at (-4324, -4806)
+   R2-61   2  60 m  s 150-170 at (-977, -1314); s 480-490 at (-736, -1105); s 1160-1190 at (-802, -458)
+   R2-62   2  60 m  s 480-500 at (828, -4267); s 1710-1740 at (1984, -4543); s 1830-1840 at (2103, -4523)
+   R2-9    2  50 m  s 0-50 at (-1764, -1959)
+   R2-73   2  50 m  s 60-70 at (4521, -3921); s 80-120 at (4537, -3909)
+   R4-5    4  40 m  s 620-650 at (-3225, -805)
+   R2-59   2  40 m  s 100-130 at (3625, -848); s 170-180 at (3686, -882)
+   R4-2    4  30 m  s 320-350 at (-3185, -4561)
+   R2-55   2  30 m  s 340-360 at (3061, 891); s 790-800 at (3124, 447)
+   R2-60   2  30 m  s 0-30 at (-889, -1588)
+   C-1     C  20 m  s 320-330 at (-4415, 2228)
+   R2-19   2  10 m  s 2150-2160 at (2329, -1008)
+   R2-57   2  10 m  s 50-60 at (3898, 620)
+   R2-58   2  10 m  s 450-460 at (3509, -852)
+   25 lines, 1990 m
+
+3. SUMMARY PER CLASS
+   6    7 lines 7.7 km  cut 0.4 Mm3  fill 0.3 Mm3  viaduct 480 m  bridge 80 m  tunnel? 190 m  max cut 22.2 max fill 13.8
+   4   29 lines 35.1 km  cut 0.8 Mm3  fill 1.2 Mm3  viaduct 1820 m  bridge 150 m  tunnel? 660 m  max cut 40.8 max fill 54.7
+   2   74 lines 60.8 km  cut 0.7 Mm3  fill 0.8 Mm3  viaduct 2760 m  bridge 170 m  tunnel? 1120 m  max cut 27.6 max fill 38.0
+   C   13 lines 3.8 km  cut 0 Mm3  fill 0 Mm3  viaduct 40 m  bridge 0 m  tunnel? 20 m  max cut 14.0 max fill 7.1
+   L   31 lines 6.0 km  cut 0 Mm3  fill 0 Mm3  viaduct 0 m  bridge 0 m  tunnel? 0 m  max cut 5.1 max fill 1.9
+   NOT DONE: vertical curves, junction levels (two lines at a node can differ), rail crossings, building clearance, drainage; only a level DP on natural ground.
