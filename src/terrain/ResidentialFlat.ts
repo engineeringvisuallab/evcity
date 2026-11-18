@@ -3,7 +3,7 @@ import { WORLD_ZONES, FACILITIES, getWorldZoneAt } from '../city/WorldZones';
 import { ENGINEERING_AREAS } from '../city/EngineeringZones';
 
 /**
- * FLAT RESIDENTIAL, STEP 2: the 6 flat / gentle residential zones get ONE flat level inside the zone and a smooth blend back to the natural
+ * FLAT RESIDENTIAL, STEP 2 + 3: the flat / gentle residential zones (6 in step 2, 4 more in step 3) get ONE flat level inside the zone and a smooth blend back to the natural
  * ground outside it (user choice "upay C, part A"). The hilly residential zones and the villages are NOT in this table (later step).
  *
  *   h = nat - w * smoothClamp(nat - level, CAP)
@@ -25,6 +25,8 @@ export interface FlatZoneDef {
   level: number;
   /** Width (m) of the blend outside the zone border. */
   blend: number;
+  /** Sea fade width (m of height above sea): the ground fades out between 0.6 m and 0.6 + seaFade m above sea level. Default SEA_FADE. */
+  seaFade?: number;
 }
 
 /** Max cut / fill (m) of the flattening. */
@@ -45,10 +47,18 @@ export const FLAT_ZONES: readonly FlatZoneDef[] = [
   { id: 'east-suburb', level: 30.2, blend: 200 },
   { id: 'east-homes', level: 31.9, blend: 200 },
   { id: 'sw-homes', level: 14.8, blend: 200 },
+  // STEP 3 / task 3: four more zones. level = median natural height of the gentle (slope < 8 %) dry cells that the six zones above do NOT already
+  // shift (neighbour blend), so the old zones' blend does not pull the new level. Zones listed after the first six: flatShift runs on the ground
+  // the earlier zones already moved. NOT in the table on purpose: north-labour (80 % of it is more than 8 m from any level, median 68 m high)
+  // and the 4 hill villages (76-95 % steep): a flat level with an 8 m cap would do nothing there.
+  { id: 'se-dense', level: 30.3, blend: 320 },
+  { id: 'west-homes', level: 29.0, blend: 320 },
+  { id: 'west-suburb', level: 16.4, blend: 320 },
+  { id: 'sw-newtown', level: 19.3, blend: 320, seaFade: 30 },
 ];
 
 /** STEP 3, building plots: a plot (footprint rectangle) gets a flat pad; it blends to the ground over PLOT_BLEND m outside the plot. */
-export const PLOT_BLEND = 50;
+export const PLOT_BLEND = 80;
 /** Plot pad cut / fill: flat exactly where |ground - level| <= PLOT_FULL, eases to PLOT_CAP (a hill under the plot stays a hill). */
 export const PLOT_FULL = 1.5;
 export const PLOT_CAP = 2;
@@ -87,6 +97,7 @@ interface Rect { x0: number; z0: number; x1: number; z1: number }
 class FlatZone {
   readonly level: number;
   readonly blend: number;
+  readonly seaFade: number;
   /** Half-planes of the zone cell: inside when c - (nx * x + nz * z) >= 0 (normalised, so the value is the distance in metres). */
   private nx: number[] = [];
   private nz: number[] = [];
@@ -104,6 +115,7 @@ class FlatZone {
   constructor(def: FlatZoneDef) {
     this.level = def.level;
     this.blend = def.blend;
+    this.seaFade = def.seaFade ?? SEA_FADE;
     const me = WORLD_ZONES.find((z) => z.id === def.id);
     if (!me) throw new Error(`ResidentialFlat: unknown zone ${def.id}`);
     // power diagram: p is in zone i when |p-si|^2 - wi^2 is the smallest. Against j that is a half-plane. Clip a big square by all of them
@@ -231,24 +243,29 @@ export class ResidentialFlat {
   apply(x: number, z: number, out: TerrainSample): void {
     if (!this.enabled) return;
     const nat = out.h;
-    let h = nat;
+    // STEP 3: where two flat zones meet their blends overlap. Every zone pulls the NATURAL ground towards its own level; if the weights add up
+    // to more than 1 the shifts are averaged (weight-normalised), so cut / fill stays <= FLAT_CAP and the ground eases from one level to the
+    // other. With a weight sum <= 1 (one zone, or no overlap) this is exactly the plain shift of before.
+    let shift = 0;
+    let wsum = 0;
+    let waterFade = 1;
     let queried = false;
-    let fade = 1;
     for (let i = 0; i < this.zones.length; i++) {
       const zn = this.zones[i];
-      const w0 = zn.weight(x, z);
-      if (w0 <= 0) continue;
+      const w = zn.weight(x, z);
+      if (w <= 0) continue;
       if (!queried) {
         queried = true;
         this.wq.d = Infinity;
         this.waterEdge(x, z, this.wq);
-        fade = linearFade(this.wq.d, BANK_FADE) * smoothstep(0.6, 0.6 + SEA_FADE, nat);
+        waterFade = linearFade(this.wq.d, BANK_FADE);
       }
-      const w = w0 * fade;
-      if (w <= 0) continue;
-      h -= w * flatShift(h - zn.level);
+      // the sea fade is per zone (a zone whose land reaches the beach can ask for a wider one, see FlatZoneDef.seaFade)
+      shift += w * flatShift(nat - zn.level) * smoothstep(0.6, 0.6 + zn.seaFade, nat);
+      wsum += w;
     }
-    out.h = h;
+    // normalise by the zone weights only (NOT by the water fade), then fade the whole shift towards water: the fade must scale the final shift
+    out.h = nat - waterFade * (wsum > 1 ? shift / wsum : shift);
     if (this.plotsEnabled && this.plots.length > 0) this.applyPlots(x, z, out, nat);
   }
 

@@ -3,7 +3,8 @@
 import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
 import { Config } from '../src/core/Config';
 import { getWorldZoneAt } from '../src/city/WorldZones';
-import { FLAT_ZONES, FLAT_CAP, BANK_REACH, PLOT_BLEND } from '../src/terrain/ResidentialFlat';
+import { RAIL_DESIGN as RD } from '../src/rail/RailPlan';
+import { FLAT_ZONES, FLAT_CAP, BANK_REACH, PLOT_BLEND, PLOT_CAP } from '../src/terrain/ResidentialFlat';
 
 const gen = new TerrainGenerator(Config.world.seed);
 const flat = gen.residentialFlat;
@@ -23,19 +24,23 @@ console.log('=== 1. slope of the zone ground (ground without roads; land cells; 
 console.log('zone            p90 before -> after | <3% before -> after | 3-8% before -> after | max |change| m');
 const slopeAfterP90: Record<string, number> = {};
 for (const zd of FLAT_ZONES) {
-  const sb: number[] = [], sa: number[] = []; let maxChange = 0;
+  const sb: number[] = [], sa: number[] = []; let maxChange = 0, maxTotal = 0;
   for (let z = -5000; z < 5000; z += CELL) for (let x = -5000; x < 5000; x += CELL) {
     if (getWorldZoneAt(x, z).id !== zd.id) continue;
     const b = gnd(x, z, false); if (isWet(b)) continue;
     const a = gnd(x, z, true);
-    maxChange = Math.max(maxChange, Math.abs(a.h - b.h));
+    // STEP 3: the 8 m cap is the ZONE flattening alone; a building plot pad on top may add up to PLOT_CAP (own rule, section 6)
+    flat.plotsEnabled = false; const az = gnd(x, z, true); flat.plotsEnabled = true;
+    maxChange = Math.max(maxChange, Math.abs(az.h - b.h));
+    maxTotal = Math.max(maxTotal, Math.abs(a.h - b.h));
     const sl = (on: boolean) => { const hx = gnd(x + D, z, on).h - gnd(x - D, z, on).h, hz = gnd(x, z + D, on).h - gnd(x, z - D, on).h; return (Math.hypot(hx, hz) / (2 * D)) * 100; };
     sb.push(sl(false)); sa.push(sl(true));
   }
   const sh = (v: number[], lo: number, hi: number) => (v.filter((s) => s >= lo && s < hi).length / (v.length || 1)) * 100;
   slopeAfterP90[zd.id] = q(sa, 0.9);
   console.log(`${zd.id.padEnd(14)}  ${f(q(sb, 0.9)).padStart(5)} -> ${f(q(sa, 0.9)).padEnd(5)}      | ${f(sh(sb, 0, 3), 0).padStart(3)}% -> ${f(sh(sa, 0, 3), 0).padStart(3)}%       | ${f(sh(sb, 3, 8), 0).padStart(3)}% -> ${f(sh(sa, 3, 8), 0).padStart(3)}%         | ${f(maxChange)}`);
-  verdict(maxChange <= FLAT_CAP + 0.01, `${zd.id}: cut/fill <= ${FLAT_CAP} m`, `max change ${f(maxChange, 2)} m`);
+  verdict(maxChange <= FLAT_CAP + 0.01, `${zd.id}: cut/fill <= ${FLAT_CAP} m`, `max change of the zone alone ${f(maxChange, 2)} m`);
+  verdict(maxTotal <= FLAT_CAP + PLOT_CAP + 0.01, `${zd.id}: cut/fill incl. plot pads <= ${FLAT_CAP + PLOT_CAP} m`, `max change ${f(maxTotal, 2)} m`);
 }
 
 console.log('\n=== 2. blend jump: steps per 5 m that the flattening MADE steeper (the flattening makes a step more than 0.5 m / 5 m steeper than the natural step) ===');
@@ -132,7 +137,7 @@ console.log('\n=== 6. STEP 3: building plots of the 6 zones (pad on / off; groun
 
 console.log('\n=== 7. STEP 3: cross slope of the fixed R2 / L / C streets (ground across the pavement, bridges skipped) + their grade (info) ===');
 for (const zd of FLAT_ZONES) {
-  let n = 0, bad = 0, mx = 0; const steep: string[] = [];
+  let n = 0, bad = 0, mx = 0; const steep: string[] = []; const badPts: string[] = [];
   for (const r of roads) {
     if (!/^(R2|L|C)-/.test(r.name)) continue;
     let maxG = 0, inZone = 0;
@@ -140,13 +145,44 @@ for (const zd of FLAT_ZONES) {
       if (getWorldZoneAt(r.xs[i], r.zs[i]).id !== zd.id || r.bridgeOf[i] >= 0) continue;
       inZone++;
       const w = r.halfWidth, a = full(r.xs[i] + r.nx[i] * w, r.zs[i] + r.nz[i] * w, true).h, b = full(r.xs[i] - r.nx[i] * w, r.zs[i] - r.nz[i] * w, true).h;
-      const cs = (Math.abs(a - b) / (2 * w)) * 100; n++; mx = Math.max(mx, cs); if (cs > 3) bad++;
+      const cs = (Math.abs(a - b) / (2 * w)) * 100; n++; mx = Math.max(mx, cs);
+      if (cs > 3) {
+        bad++;
+        // STEP 3: is it the flattening or the fixed road's own earthwork? same point with the flattening switched off
+        const ao = full(r.xs[i] + r.nx[i] * w, r.zs[i] + r.nz[i] * w, false).h, bo = full(r.xs[i] - r.nx[i] * w, r.zs[i] - r.nz[i] * w, false).h;
+        badPts.push(`${r.name} (${Math.round(r.xs[i])}, ${Math.round(r.zs[i])}) ${f(cs)} % (flattening off: ${f((Math.abs(ao - bo) / (2 * w)) * 100)} %)`);
+      }
       if (i > 0) maxG = Math.max(maxG, (Math.abs(r.ys[i] - r.ys[i - 1]) / Math.hypot(r.xs[i] - r.xs[i - 1], r.zs[i] - r.zs[i - 1])) * 100);
     }
     if (inZone && maxG > 4) steep.push(`${r.name} ${f(maxG)}%`);
   }
   verdict(bad === 0, `${zd.id}: street cross slope <= 3 %`, `points ${n}, max ${f(mx, 2)} %, over 3 %: ${bad}`);
   console.log(`   INFO fixed street grade > 4 % (heights are fixed, not changed): ${steep.join(', ') || 'none'}`);
+  for (const t of badPts) console.log(`   INFO street point over 3 %: ${t}`);
+}
+
+console.log('\n=== 8. STEP 3: railway in the zones: ground line formation + viaduct / bridge clearance, flattening on vs off (rail was planned on natural ground and is NOT changed) ===');
+for (const zd of FLAT_ZONES) {
+  let pts = 0, gr = 0, grBad = 0, st = 0, clrOff = 1e9, clrOn = 1e9, buried = 0, tun = 0, tunLower = 0;
+  for (const e of gen.rail.edges) for (let i = 1; i < e.xs.length - 1; i++) {
+    if (getWorldZoneAt(e.xs[i], e.zs[i]).id !== zd.id) continue;
+    const seg = e.segments.find((q: any) => e.cum[i] >= q.s0 && e.cum[i] <= q.s1);
+    if (!seg) continue;
+    pts++;
+    const on = full(e.xs[i], e.zs[i], true).h;
+    if (seg.kind === 'ground') {
+      if (e.cum[i] - seg.s0 < 30 || seg.s1 - e.cum[i] < 30) continue; // ends of a ground stretch are trimmed by the neighbouring structure
+      gr++; if (Math.abs(on - (e.design[i] - RD.ballast)) > 0.08) grBad++;
+    } else if (seg.kind === 'bridge') {
+      st++; const off = full(e.xs[i], e.zs[i], false).h;
+      const co = e.design[i] - RD.ballast - RD.deckThick - off, cn = e.design[i] - RD.ballast - RD.deckThick - on;
+      clrOff = Math.min(clrOff, co); clrOn = Math.min(clrOn, cn); if (cn < 0.5 && co >= 0.5) buried++;
+    } else {
+      // tunnel / cut-and-cover: the ground above is changed by the flattening; the cover over the roof is only reported (info), not judged
+      tun++; const off = full(e.xs[i], e.zs[i], false).h; tunLower = Math.max(tunLower, off - on);
+    }
+  }
+  verdict(grBad <= gr * 0.02 && buried === 0, `${zd.id}: rail stays on its formation, no deck buried`, `rail points ${pts}; ground-line samples ${gr}, off the designed level ${grBad}; bridge points ${st}, deck clearance min off ${st ? f(clrOff) : '-'} -> on ${st ? f(clrOn) : '-'} m, buried by the flattening ${buried}; tunnel / cut-and-cover points ${tun} (info: ground above lowered by the flattening up to ${f(tunLower, 2)} m)`);
 }
 
 console.log(`\n${fails === 0 ? 'ALL PASS' : fails + ' FAIL'}`);
