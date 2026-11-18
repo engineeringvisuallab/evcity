@@ -48,15 +48,18 @@ export const FLAT_ZONES: readonly FlatZoneDef[] = [
 ];
 
 /** STEP 3, building plots: a plot (footprint rectangle) gets a flat pad; it blends to the ground over PLOT_BLEND m outside the plot. */
-export const PLOT_BLEND = 12;
+export const PLOT_BLEND = 50;
 /** Plot pad cut / fill: flat exactly where |ground - level| <= PLOT_FULL, eases to PLOT_CAP (a hill under the plot stays a hill). */
-export const PLOT_FULL = 3;
-export const PLOT_CAP = 4;
+export const PLOT_FULL = 1.5;
+export const PLOT_CAP = 2;
 /** The plot pad fades to the natural ground towards water: 0 at the edge, 1 at PLOT_BANK_FADE m. */
 const PLOT_BANK_FADE = 25;
 
 export interface PlotInput { x: number; z: number; yaw: number; W: number; D: number }
 export interface PlotPad { x: number; z: number; yaw: number; W: number; D: number; level: number; c: number; s: number; hw: number; hd: number; reach2: number }
+
+/** STEP 3: LINEAR water fade (0 at the edge, 1 at `len` m): its steepest slope is 1 / len, a smoothstep's is 1.5 / len, so the flattening adds less steepness near water. */
+const linearFade = (d: number, len: number): number => (d <= 0 ? 0 : d >= len ? 1 : d / len);
 
 const smoothstep = (a: number, b: number, x: number): number => {
   const t = x <= a ? 0 : x >= b ? 1 : (x - a) / (b - a);
@@ -239,7 +242,7 @@ export class ResidentialFlat {
         queried = true;
         this.wq.d = Infinity;
         this.waterEdge(x, z, this.wq);
-        fade = smoothstep(0, BANK_FADE, this.wq.d) * smoothstep(0.6, 0.6 + SEA_FADE, nat);
+        fade = linearFade(this.wq.d, BANK_FADE) * smoothstep(0.6, 0.6 + SEA_FADE, nat);
       }
       const w = w0 * fade;
       if (w <= 0) continue;
@@ -264,7 +267,7 @@ export class ResidentialFlat {
       if (fade < 0) {
         this.wq.d = Infinity;
         this.waterEdge(x, z, this.wq);
-        fade = smoothstep(0, PLOT_BANK_FADE, this.wq.d) * smoothstep(0.6, 0.6 + SEA_FADE, nat);
+        fade = linearFade(this.wq.d, PLOT_BANK_FADE) * smoothstep(0.6, 0.6 + SEA_FADE, nat);
       }
       w *= fade;
       if (w <= 0) continue;

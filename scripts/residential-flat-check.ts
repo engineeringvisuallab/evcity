@@ -3,7 +3,7 @@
 import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
 import { Config } from '../src/core/Config';
 import { getWorldZoneAt } from '../src/city/WorldZones';
-import { FLAT_ZONES, FLAT_CAP, BANK_REACH } from '../src/terrain/ResidentialFlat';
+import { FLAT_ZONES, FLAT_CAP, BANK_REACH, PLOT_BLEND } from '../src/terrain/ResidentialFlat';
 
 const gen = new TerrainGenerator(Config.world.seed);
 const flat = gen.residentialFlat;
@@ -38,26 +38,27 @@ for (const zd of FLAT_ZONES) {
   verdict(maxChange <= FLAT_CAP + 0.01, `${zd.id}: cut/fill <= ${FLAT_CAP} m`, `max change ${f(maxChange, 2)} m`);
 }
 
-console.log('\n=== 2. blend outside the zones: jump per 5 m that the flattening ADDED (natural step <= 0.5 m, after step > 0.5 m) ===');
+console.log('\n=== 2. blend jump: steps per 5 m that the flattening MADE steeper (the flattening makes a step more than 0.5 m / 5 m steeper than the natural step) ===');
+console.log('   natural ground has steps > 0.5 m / 5 m nearly everywhere, so only what the flattening ADDED counts (a step the flattening made flatter never counts)');
 for (const zd of FLAT_ZONES) {
-  // box around the zone
   let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
   for (let z = -5000; z < 5000; z += 50) for (let x = -5000; x < 5000; x += 50) if (getWorldZoneAt(x, z).id === zd.id) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
-  const m = zd.blend + 60; let added = 0, worst = 0, n = 0, natBig = 0, wx = 0, wz = 0;
+  const m = zd.blend + 60; let steps = 0, bad = 0, worstAdd = 0, wx = 0, wz = 0, over3 = 0;
   for (let z = z0 - m; z < z1 + m; z += 5) for (let x = x0 - m; x < x1 + m; x += 5) {
-    if (getWorldZoneAt(x, z).id === zd.id) continue; // outside the zone only (inside it is the level itself)
     const b = gnd(x, z, false); if (isWet(b)) continue;
     const a = gnd(x, z, true); if (Math.abs(a.h - b.h) < 1e-6) continue; // not touched
-    n++;
     for (const [dx, dz] of [[5, 0], [0, 5]]) {
       const b2 = gnd(x + dx, z + dz, false), a2 = gnd(x + dx, z + dz, true); if (isWet(b2)) continue;
-      const jb = Math.abs(b2.h - b.h), ja = Math.abs(a2.h - a.h);
-      if (jb > 0.5) natBig++;
-      if (ja > 0.5 && jb <= 0.5) { added++; if (ja > worst) { worst = ja; wx = x; wz = z; } }
+      steps++;
+      const jb = Math.abs(b2.h - b.h), ja = Math.abs(a2.h - a.h), add = ja - jb;
+      if (add > 0.3) over3++;
+      if (add > worstAdd) { worstAdd = add; wx = x; wz = z; }
+      if (add > 0.5) bad++;
     }
   }
-  verdict(added === 0, `${zd.id}: no jump > 0.5 m / 5 m added in the blend`, `touched cells ${n}, jumps added ${added}, worst ${f(worst, 2)} m / 5 m at (${Math.round(wx)}, ${Math.round(wz)}), (natural steps > 0.5 m: ${natBig})`);
+  verdict(bad === 0, `${zd.id}: flattening adds no step > 0.5 m / 5 m`, `steps ${steps}, bad ${bad} (${f((bad / (steps || 1)) * 100, 3)} %), steeper by > 0.3 m: ${over3}, worst +${f(worstAdd, 2)} m / 5 m at (${Math.round(wx)}, ${Math.round(wz)})`);
 }
+
 
 console.log('\n=== 3. water: no wet ground is changed, no dry ground is flooded (ground without roads) ===');
 for (const zd of FLAT_ZONES) {
@@ -122,7 +123,7 @@ console.log('\n=== 6. STEP 3: building plots of the 6 zones (pad on / off; groun
     };
     const b = rng(false), a = rng(true);
     // outside the pad + blend nothing changes (probe a ring 40 m from the plot centre edge)
-    let far = 0; const R = Math.hypot(p.W, p.D) / 2 + 12 + 30;
+    let far = 0; const R = Math.hypot(p.W, p.D) / 2 + PLOT_BLEND + 30;
     for (let k = 0; k < 16; k++) { const x = p.x + R * Math.cos(k * Math.PI / 8), z = p.z + R * Math.sin(k * Math.PI / 8); if (pads.some((o) => o !== p && (x - o.x) ** 2 + (z - o.z) ** 2 <= o.reach2)) continue; flat.plotsEnabled = false; const h0 = full(x, z, true).h; flat.plotsEnabled = true; if (Math.abs(full(x, z, true).h - h0) > 1e-6) far++; }
     verdict(a.r <= Math.max(0.5, b.r) && a.wet === b.wet && far === 0, `plot (${p.x}, ${p.z}) ${p.W}x${p.D}: flat, no flooding, local only`, `ground range under the plot ${f(b.r, 2)} -> ${f(a.r, 2)} m, wet points ${b.wet} -> ${a.wet}, changed far away ${far}`);
     verdict(a.r <= 0.6, `plot (${p.x}, ${p.z}): range under the plot <= 0.6 m`, `${f(a.r, 2)} m`);
