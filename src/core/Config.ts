@@ -82,6 +82,8 @@ export const Config = {
     r6New: { enabled: true as boolean },
     /** STEP B7-3 (21.6 build, batch R4-a): the first R4 lines R4-1 .. R4-8, R4-10, R4-11 (src/roads/r4/R4NewLineData.ts, made by scripts/centre-r4-export.ts) as game roads, 4 lanes divided, V60, grade <= 6 %. Ends are free (no junction mouth, no structure yet, 21.61). false = none. */
     r4New: { enabled: true as boolean },
+    /** STEP B7-4 (21.6 build, batch R2-a): the first R2 lines R2-12 .. R2-18, R2-44, R2-63, R2-65 (src/roads/r2/R2NewLineData.ts, made by scripts/centre-r2-export.ts) as game roads, 2 lanes undivided, V40, grade <= 8 %. Ends are free (no junction mouth, no structure yet, 21.61). false = none. */
+    r2New: { enabled: true as boolean },
     /**
      * STEP RAIL-B2: ONE place for the road / rail buffer (m). Used by scripts/road-rail-buffer-check.ts (measure only; the design code does not read it yet).
      *   railOverRoad   : rail over a road: underside of the rail deck above the road surface.
