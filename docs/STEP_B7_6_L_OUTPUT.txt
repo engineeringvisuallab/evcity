@@ -140,6 +140,48 @@ STEP B7-6 batch L-a + L-b: export of the L lines as game data (headless; the gam
    PASS  L-26 max sampled grade 4.46 % <= 10 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
    PASS  L-26 start level = PVI start level
    PASS  L-26 end level = PVI end level
-   total length of the batch 3086.3 m
+   PASS  L-24 is a new, not dropped, class L line
+   PASS  L-24 max PVI tangent grade 9.01 % <= 10 %
+   PASS  L-24 last PVI station 179.7 m = line length 179.2 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   PASS  L-24 end trimmed 17.3 m at the centre line of R2-19; level 27.61 pinned to 27.58 (offset -0.03 m, fades over 80 m)
+   L-24         161.9      18    34.53   27.58        9.03      27.5 / 34.5   5     3
+   PASS  L-24 max sampled grade 9.03 % <= 10 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  L-24 start level = PVI start level
+   PASS  L-27 is a new, not dropped, class L line
+   PASS  L-27 max PVI tangent grade 9.99 % <= 10 %
+   PASS  L-27 last PVI station 209.1 m = line length 208.6 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   L-27         208.6      22    41.69   29.25       10.08      28.5 / 41.8   6     4
+   PASS  L-27 max sampled grade 10.08 % <= 10 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  L-27 start level = PVI start level
+   PASS  L-27 end level = PVI end level
+   PASS  L-28 is a new, not dropped, class L line
+   PASS  L-28 max PVI tangent grade 9.96 % <= 10 %
+   PASS  L-28 last PVI station 188.7 m = line length 188.3 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   L-28         188.3      20    41.69   32.60        9.88      32.4 / 41.7   6     4
+   PASS  L-28 max sampled grade 9.88 % <= 10 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  L-28 start level = PVI start level
+   PASS  L-28 end level = PVI end level
+   PASS  L-29 is a new, not dropped, class L line
+   PASS  L-29 max PVI tangent grade 9.51 % <= 10 %
+   PASS  L-29 last PVI station 209.3 m = line length 208.9 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   L-29         208.9      22    32.25   45.60        9.07      32.3 / 45.8   5     3
+   PASS  L-29 max sampled grade 9.07 % <= 10 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  L-29 start level = PVI start level
+   PASS  L-29 end level = PVI end level
+   PASS  L-30 is a new, not dropped, class L line
+   PASS  L-30 max PVI tangent grade 5.29 % <= 10 %
+   PASS  L-30 last PVI station 479.9 m = line length 481.6 m (tolerance 1.8 m, NAMED allowance of this line, 21.67)
+   L-30         481.6      50    32.25   31.60        5.33      30.2 / 36.1   6     4
+   PASS  L-30 max sampled grade 5.33 % <= 10 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  L-30 start level = PVI start level
+   PASS  L-30 end level = PVI end level
+   PASS  L-31 is a new, not dropped, class L line
+   PASS  L-31 max PVI tangent grade 8.00 % <= 10 %
+   PASS  L-31 last PVI station 140.2 m = line length 141.1 m (tolerance 1.5 m: max(1.5 m, 0.15 % of the length), 21.65)
+   L-31         141.1      16    35.00   29.50        7.42      29.5 / 35.0   4     2
+   PASS  L-31 max sampled grade 7.42 % <= 10 % + 0.2 % (heights rounded to 0.01 m at both ends of a 10 m step = up to 0.2 %)
+   PASS  L-31 start level = PVI start level
+   PASS  L-31 end level = PVI end level
+   total length of the batch 4476.8 m
    NOT in this file: structures (no wet run; L-1 / L-2 / retaining wall entries of 25 / 55 m are walls, not bridges; checked again in scripts/b7-lnew-check.ts on the game terrain).
-   RESULT 120 PASS 0 FAIL
+   RESULT 156 PASS 0 FAIL
