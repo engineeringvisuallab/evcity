@@ -60,6 +60,9 @@ const MAX_EMB = 40;
 const DAY_CUT = 1 / 2;
 const DAY_FILL = 1 / 3;
 const DAY_MAX = 200;
+/** STEP 3: softness (m) of the rounded corners of the daylight slope, and the run (m) over which it grows from 0 at the platform edge. */
+const DAY_SOFT = 1.0;
+const DAY_EASE_RUN = 2;
 /** Where the hill is steeper than the 1:2 cut slope, the cut face gets steeper (a rock cut) up to this rise per metre of run (4 = 76 degrees); steeper hills stay a wall (needs a tunnel / retaining wall). User decision: if a hill must be cut, cut it. */
 const DAY_CUT_MAX = 4;
 const BRIDGE_MIN_WET = 1; // wet width (m) from which a bridge is built. Every river crossing is a bridge: an embankment would dam the river
@@ -2966,9 +2969,18 @@ export class RoadNetwork {
       const lo = dby - run * DAY_FILL;
       const hi = dby + run * dcut;
       // STEP 5.3b: under the inner part of a structure the ground is never raised (a valley is not dammed); the nearest road piece decides
+      // STEP 3: the corners where natural ground meets the slope are rounded (soft clamp). The softness grows from 0 at the platform edge (road and platform stay exactly 0.00 m)
+      // to DAY_SOFT after DAY_EASE_RUN m of run. A soft clamp only goes toward the slope side (cut a little more, fill a little more), so the face never gets steeper.
+      const k = DAY_SOFT * smoothstep(0, DAY_EASE_RUN, run);
       if (out.h < lo) {
         if (!(inner < dd)) out.h = lo;
       } else if (out.h > hi) out.h = hi;
+      else if (k > 1e-3 && run > 0) {
+        const gh = hi - out.h; // ground below the cut line by gh: near the corner cut it slightly
+        if (gh < k) { const f = 1 - gh / k; out.h -= 0.25 * k * f * f; }
+        const gl = out.h - lo; // ground above the fill line by gl: near the corner raise it slightly (never under a structure)
+        if (gl < k && !(inner < dd)) { const f = 1 - gl / k; out.h += 0.25 * k * f * f; }
+      }
     }
     if (bw > 0) out.h += (by - out.h) * bw;
     // where a normal (on-ground) road also claims the cell, that road wins: the abutment must meet the road surface exactly

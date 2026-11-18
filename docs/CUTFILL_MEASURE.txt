@@ -91,6 +91,8 @@ no  road      s(m)   side  offset  x, z                 type   step(m)  ledge(m)
      1  along: segment switch cut -> free
      1  along: free -> cut
      1  along: segment switch cutwall -> fill
+WHO MAKES IT (places >= 0.5 m): earthwork of SEVERAL roads / a pad reaches the point: 463 (>= 1 m: 323); only ONE road reaches it: 3211 (>= 1 m: 1416)
+  single-road causes: along: fill -> fill 508 | cross: cutwall -> free 358 | cross: plat -> free 355 | cross: plat -> cut 337 | along: cutwall -> cutwall 277 | cross: plat -> fill 264 | cross: cut -> cut 258 | cross: fill -> fill 240
 places >= 0.5 m: 3674, >= 1 m: 1739; records inside rail / port / pad areas left out: 891
 
 === D. WALLS (cut face steeper than 1:1): 6765 profiles on 113 roads; worst 10 (rise of the steep part, one per road / 120 m / side) ===
@@ -105,3 +107,4 @@ places >= 0.5 m: 3674, >= 1 m: 1739; records inside rail / port / pad areas left
  9  M8        s  14926 L  (3035, -188)  wall rise 59.0 m  cutwall
 10  M8        s  14758 L  (3055, -355)  wall rise 55.5 m  cutwall
 walls per road (profiles): M8 1199, R4-9 463, R4-24 327, R2-62 259, J1-N 187, R2-2 167, R2-55 164, R2-71 155, R4-2 154, R6-15 149, R2-58 139, R4-1 130
+=== E. (only meaningful when PROTO=1) road platform (offset 0 .. core) old rule vs blend rule: 218151 points; ON THE ROAD (offset <= halfWidth): 168 differ > 1 mm (must be 0); on the shoulder / platform edge (halfWidth .. core): 81 differ; max diff all 11.940 m ===

@@ -16,10 +16,11 @@ const STRIDE = Number(process.env.STRIDE ?? 10);
 const OFFS = Number(process.env.OFFS ?? 40); // number of 2 m offsets (80 m)
 const OUT = process.argv[2] ?? 'docs/CUTFILL_MEASURE.txt';
 const smooth = (a: number, b: number, x: number) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+const PROTO = process.env.PROTO === '1'; // PROTO=1: daylight cut/fill blends all near daylight pieces (weight 1/run^2) instead of the nearest piece only (prototype, src is NOT changed)
 const CELL = 64, DAY_CUT = 1 / 2, DAY_FILL = 1 / 3;
 const sc = { h: 0, water: NaN, fx: 0, fz: 0 };
 
-interface Diag { h: number; kind: string; road: number; seg: number }
+interface Diag { h: number; kind: string; road: number; seg: number; nr?: number }
 /** Ground without the roads (natural + residential flat). */
 function ref0(x: number, z: number): { h: number; wet: boolean } {
   gen.sampleGround(x, z, sc); gen.residentialFlat.apply(x, z, sc);
@@ -27,7 +28,7 @@ function ref0(x: number, z: number): { h: number; wet: boolean } {
   return { h: sc.h, wet };
 }
 /** Diagnostic copy of RoadNetwork.apply(): same result in h, plus which part decided. */
-function diag(x: number, z: number): Diag {
+function diag(x: number, z: number, proto = PROTO): Diag {
   gen.sampleGround(x, z, sc); gen.residentialFlat.apply(x, z, sc);
   const out = sc;
   const segs: Int32Array | undefined = rn.cellOf(x, z);
@@ -36,6 +37,8 @@ function diag(x: number, z: number): Diag {
   let bw = 0, by = 0, bd = Infinity, bseg = -1, bkind = 'none';
   let carve = Infinity, carveW = 0, carveD = Infinity, nbBeyond = false, nbD = Infinity;
   let dd = Infinity, inner = Infinity, dby = 0, dcore = 0, dcut = 0.5, dseg = -1;
+  const reachRoads = new Set<number>();
+  const cand: { d: number; by: number; core: number; cut: number; fade: number; seg: number }[] = [];
   const pl = rn.padCells.get((Math.floor(x / CELL) + 512) * 1024 + (Math.floor(z / CELL) + 512));
   if (pl) for (let q = 0; q < pl.length; q++) {
     const p = rn.pads[pl[q]]; const d = Math.hypot(x - p.x, z - p.z);
@@ -70,7 +73,9 @@ function diag(x: number, z: number): Diag {
     const e = rn.sea[s] + (rn.seb[s] - rn.sea[s]) * t;
     if (d >= core + e) continue;
     if (rn.segRoad[s] === rn.islandLinkId && rn.behindLinkStart(x, z)) continue;
+    reachRoads.add(rn.segRoad[s]);
     if (rn.sday[s]) {
+      cand.push({ d, by: rn.say[s] + (rn.sby[s] - rn.say[s]) * t, core, cut: rn.sca[s] + (rn.scb[s] - rn.sca[s]) * t, fade: 1 - smooth(core + Math.max(0, e - 10), core + e, d), seg: s });
       if (d < dd) { dd = d; dby = rn.say[s] + (rn.sby[s] - rn.say[s]) * t; dcore = core; dcut = rn.sca[s] + (rn.scb[s] - rn.sca[s]) * t; dseg = s; }
       continue;
     }
@@ -78,6 +83,15 @@ function diag(x: number, z: number): Diag {
     if (w > bw + 1e-6 || (w > bw - 1e-6 && d < bd)) { bw = w; bd = d; by = rn.say[s] + (rn.sby[s] - rn.say[s]) * t; bseg = s; bkind = 'strip'; }
   }
   let kind = 'none', road = -1, seg = -1;
+  if (proto && cand.length) {
+    const h0 = out.h; let sw = 0, sh = 0, flat = -1, fd = Infinity;
+    for (let q = 0; q < cand.length; q++) { const c = cand[q]; if (c.d <= c.core && c.d < fd) { fd = c.d; flat = q; } }
+    let hc = h0, kd = 'free', bestW = -1;
+    const one = (c: typeof cand[0]) => { const run = c.d > c.core ? c.d - c.core : 0; const lo = c.by - run * DAY_FILL, hi = c.by + run * c.cut; let k = 'free'; let v = h0; if (h0 < lo) { if (!(inner < c.d)) { v = lo; k = run === 0 ? 'plat' : 'fill'; } } else if (h0 > hi) { v = hi; k = run === 0 ? 'plat' : c.cut > 1 ? 'cutwall' : 'cut'; } return { v, k }; };
+    if (flat >= 0) { const r1 = one(cand[flat]); hc = r1.v; kd = r1.k; road = rn.segRoad[cand[flat].seg]; seg = cand[flat].seg; }
+    else { for (const c of cand) { const w = c.fade / Math.pow(c.d - c.core, 2); if (w <= 0) continue; const r1 = one(c); sw += w; sh += w * r1.v; if (w > bestW) { bestW = w; kd = r1.k; road = rn.segRoad[c.seg]; seg = c.seg; } } if (sw > 0) hc = sh / sw; }
+    out.h = hc; kind = kd;
+  } else
   if (dd < Infinity) {
     const run = dd > dcore ? dd - dcore : 0;
     const lo = dby - run * DAY_FILL, hi = dby + run * dcut;
@@ -89,11 +103,11 @@ function diag(x: number, z: number): Diag {
   if (bw > 0) { out.h += (by - out.h) * bw; kind = bkind + (kind === 'none' || kind === 'free' ? '' : '+' + kind); if (bseg >= 0 && bseg < 100000) { road = rn.segRoad[bseg]; seg = bseg; } else { road = -2; seg = bseg; } }
   carveW *= 1 - bw; if (nbBeyond) carveW = 0;
   if (carveW > 0 && out.h > carve) { out.h -= (out.h - carve) * carveW; kind += '+carve'; }
-  return { h: out.h, kind, road, seg };
+  return { h: out.h, kind, road, seg, nr: reachRoads.size + (pl ? 1 : 0) };
 }
 
 const names = (id: number) => (id >= 0 ? rn.roads[id].name : id === -2 ? 'pad/J1' : '-');
-interface Rec { road: string; roadId: number; cum: number; side: number; off: number; x: number; z: number; type: 'cross' | 'along'; step: number; added: number; why: string; other: boolean }
+interface Rec { road: string; roadId: number; cum: number; side: number; off: number; x: number; z: number; type: 'cross' | 'along'; step: number; added: number; why: string; other: boolean; multi?: boolean }
 const recs: Rec[] = [];
 const walls: Rec[] = [];
 const stat: Record<string, { prof: number; wallP: number; jumpP: number; jump05: number; jump1: number; a05: number; a1: number }> = {};
@@ -116,13 +130,14 @@ for (const r of rn.roads) {
     const dl = r.cum[j] - r.cum[i];
     if (dl < 1) continue;
     for (const sd of [-1, 1]) {
+      const nrs: number[] = [];
       const h: number[] = [], kinds: string[] = [], roadsAt: number[] = [], wet: boolean[] = [], touched: boolean[] = [];
       let untouched = 0;
       for (let k = 0; k <= OFFS; k++) {
         const o = core + k * DS;
         const px = r.xs[i] + r.nx[i] * o * sd, pz = r.zs[i] + r.nz[i] * o * sd;
         const d = diag(px, pz); const r0 = ref0(px, pz); nSamples += 2;
-        h.push(d.h); kinds.push(d.kind); roadsAt.push(d.road); wet.push(r0.wet || d.kind === 'wet');
+        nrs.push(d.nr ?? 0); h.push(d.h); kinds.push(d.kind); roadsAt.push(d.road); wet.push(r0.wet || d.kind === 'wet');
         const t = Math.abs(d.h - r0.h) > 0.02; touched.push(t);
         // ALONG jump at the same offset (not in the first 2 m: that is the pavement edge)
         if (k >= 1 && !r0.wet) {
@@ -133,7 +148,7 @@ for (const r of rn.roads) {
             if (added > 0.5) S.a05++; if (added > 1) S.a1++;
             if (added > 0.3) {
               const why = d.road !== d2.road ? `two roads: ${names(d.road)} -> ${names(d2.road)}` : d.seg !== d2.seg && d.kind !== d2.kind ? `segment switch ${d.kind} -> ${d2.kind}` : `${d.kind} -> ${d2.kind}`;
-              recs.push({ road: r.name, roadId: r.id, cum: r.cum[i], side: sd, off: o, x: px, z: pz, type: 'along', step: st, added, why, other: false });
+              recs.push({ road: r.name, roadId: r.id, cum: r.cum[i], side: sd, off: o, x: px, z: pz, type: 'along', step: st, added, why, other: false, multi: (d.nr ?? 0) > 1 || (d2.nr ?? 0) > 1 });
             }
           }
         }
@@ -161,13 +176,13 @@ for (const r of rn.roads) {
       if (wk >= 0 && worstLedge > 0.3) {
         S.jumpP++; if (worstLedge > 0.5) S.jump05++; if (worstLedge > 1) S.jump1++;
         const why = roadsAt[wk] !== roadsAt[wk + 1] ? `two roads: ${names(roadsAt[wk])} -> ${names(roadsAt[wk + 1])}` : `${kinds[wk]} -> ${kinds[wk + 1]}`;
-        recs.push({ road: r.name, roadId: r.id, cum: r.cum[i], side: sd, off: core + wk * DS, x: r.xs[i] + r.nx[i] * (core + wk * DS) * sd, z: r.zs[i] + r.nz[i] * (core + wk * DS) * sd, type: 'cross', step: st[wk], added: worstLedge, why, other: false });
+        recs.push({ road: r.name, roadId: r.id, cum: r.cum[i], side: sd, off: core + wk * DS, x: r.xs[i] + r.nx[i] * (core + wk * DS) * sd, z: r.zs[i] + r.nz[i] * (core + wk * DS) * sd, type: 'cross', step: st[wk], added: worstLedge, why, other: false, multi: (nrs[wk] ?? 0) > 1 || (nrs[wk + 1] ?? 0) > 1 });
       }
     }
   }
 }
 // does rail / port / pads change the point? (then the cause is not the road)
-for (const q of recs) { gen.sample(q.x, q.z, fullS); const d = diag(q.x, q.z); q.other = Math.abs(fullS.h - d.h) > 0.05; }
+for (const q of recs) { gen.sample(q.x, q.z, fullS); const d = diag(q.x, q.z, false); q.other = Math.abs(fullS.h - d.h) > 0.05; }
 
 // cluster: keep the worst per (road, 60 m window, side)
 const score = (q: Rec) => q.added;
@@ -190,6 +205,10 @@ const why: Record<string, number> = {};
 for (const q of best.values()) { if (score(q) < 0.5) continue; const k = q.type + ': ' + q.why.replace(/two roads: .*/, 'two roads').replace(/\+carve/g, ''); why[k] = (why[k] ?? 0) + 1; }
 lines.push('=== C. CAUSE count among the places with ledge / jump >= 0.5 m (one per road / 60 m / side) ===');
 for (const [k, v] of Object.entries(why).sort((a, b) => b[1] - a[1])) lines.push(`${String(v).padStart(6)}  ${k}`);
+{ const big = [...best.values()].filter((q) => score(q) >= 0.5); const m = big.filter((q) => q.multi), sg = big.filter((q) => !q.multi); const m1 = m.filter((q) => score(q) >= 1).length, s1 = sg.filter((q) => score(q) >= 1).length;
+  lines.push(`WHO MAKES IT (places >= 0.5 m): earthwork of SEVERAL roads / a pad reaches the point: ${m.length} (>= 1 m: ${m1}); only ONE road reaches it: ${sg.length} (>= 1 m: ${s1})`);
+  const c1: Record<string, number> = {}; for (const q of sg) { const k = q.type + ': ' + q.why.replace(/\+carve/g, ''); c1[k] = (c1[k] ?? 0) + 1; }
+  lines.push('  single-road causes: ' + Object.entries(c1).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, v]) => k + ' ' + v).join(' | ')); }
 lines.push(`places >= 0.5 m: ${[...best.values()].filter((q) => score(q) >= 0.5).length}, >= 1 m: ${[...best.values()].filter((q) => score(q) >= 1).length}; records inside rail / port / pad areas left out: ${recs.filter((q) => q.other).length}`);
 lines.push('');
 const wallBy = new Map<string, Rec>();
@@ -200,6 +219,10 @@ for (const q of walls) wallRoad[q.road] = (wallRoad[q.road] ?? 0) + 1;
 lines.push(`=== D. WALLS (cut face steeper than 1:1): ${walls.length} profiles on ${Object.keys(wallRoad).length} roads; worst 10 (rise of the steep part, one per road / 120 m / side) ===`);
 wl.slice(0, 10).forEach((q, n) => lines.push(`${String(n + 1).padStart(2)}  ${q.road.padEnd(9)} s ${q.cum.toFixed(0).padStart(6)} ${q.side > 0 ? 'L' : 'R'}  (${q.x.toFixed(0)}, ${q.z.toFixed(0)})  wall rise ${q.step.toFixed(1)} m  ${q.why}`));
 lines.push('walls per road (profiles): ' + Object.entries(wallRoad).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, v]) => `${k} ${v}`).join(', '));
+// E. road surface and platform must not change: old rule vs the blend rule on the platform (offset 0 .. core, every station, both sides) + the strip 0..core+6
+let cl = 0, clSh = 0, clMax = 0, clN = 0;
+for (const r of rn.roads) { if (r.length < 20 || !r.daylight) continue; const core = r.halfWidth + r.shoulder; for (let i = 2; i < r.xs.length - 1; i += 3) { if (r.bridgeOf[i] >= 0) continue; for (const sd of [-1, 0, 1]) for (let o = 0; o <= core + 6; o += 1.5) { const px = r.xs[i] + r.nx[i] * o * sd, pz = r.zs[i] + r.nz[i] * o * sd; const a = diag(px, pz, false).h, b = diag(px, pz, true).h; clN++; const dlt = Math.abs(a - b); if (o <= core - 0.01) { if (o > r.halfWidth) { if (dlt > 0.001) clSh++; } else if (dlt > 0.001) { cl++; if (process.env.LISTE && cl <= 25) { const A = diag(px, pz, false), B = diag(px, pz, true); console.log('E', r.name, 'i', i, 'o', o.toFixed(1), 'core', core.toFixed(1), 'old', A.h.toFixed(2), A.kind, names(A.road), 'new', B.h.toFixed(2), B.kind, names(B.road)); } } clMax = Math.max(clMax, dlt); } } } }
+lines.push('=== E. (only meaningful when PROTO=1) road platform (offset 0 .. core) old rule vs blend rule: ' + clN + ' points; ON THE ROAD (offset <= halfWidth): ' + cl + ' differ > 1 mm (must be 0); on the shoulder / platform edge (halfWidth .. core): ' + clSh + ' differ; max diff all ' + clMax.toFixed(3) + ' m ===');
 const text = lines.join('\n') + '\n';
 fs.writeFileSync(OUT, text);
 console.log(text);
