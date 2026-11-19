@@ -56,6 +56,32 @@ export function buildBrickHouse(floors: 2 | 3, seed = 0): BuiltBuilding {
   k.boundaryWall(0, zc - 0.5, bw + 4.4, bd + 5.4, 0xcfc7b6, 0xa7a49c);
   k.box(-bw / 2 - 1.6, 0, zc + bd / 2 + 1.8, 1.4, 0.04, 1.4, 0x6b9a4a);
   k.tree(bw / 2 + 1.5, zc + bd / 2 + 1.6, 4.2);
+  // ---- decoration: gate pillars + open gate, path, hedges, window grills, meter box, name plate, clothes line, dish, drain pipe
+  const gz = zc - 0.5 + (bd + 5.4) / 2 - 0.11; // gate line (front wall)
+  for (const sx of [-1, 1]) {
+    k.box(sx * 1.95, 0, gz, 0.45, 2.2, 0.45, 0xcfc7b6);
+    k.box(sx * 1.95, 2.2, gz, 0.6, 0.1, 0.6, 0xa7a49c);
+    k.sphere(sx * 1.95, 2.45, gz, 0.13, 0xfff1b0);
+    k.box(sx * 1.62, 0, gz - 0.9, 0.05, 1.5, 1.7, 0x2b3037); // gate leaf swung open
+    k.box(sx * 1.62, 0.7, gz - 0.9, 0.06, 0.06, 1.7, 0x555a60);
+  }
+  k.box(0, 0, (gz + zc + bd / 2 + 0.9) / 2, 1.6, 0.05, gz - (zc + bd / 2 + 0.9), 0xb7b1a4); // path gate -> steps
+  for (const sx of [-1, 1]) k.box(sx * 3.4, 0, gz - 0.6, 3.0, 0.5, 0.6, 0x3f7a3a); // hedges
+  const fz = zc + bd / 2;
+  for (const t of [-bw / 3, bw / 3]) { // grills on the ground-floor front windows
+    for (const dx of [-0.45, -0.15, 0.15, 0.45]) k.box(t + dx, 0.45 + 0.95, fz + 0.12, 0.03, 1.35, 0.03, 0x2b3037);
+    k.box(t, 0.45 + 1.6, fz + 0.12, 1.3, 0.03, 0.03, 0x2b3037);
+  }
+  k.box(1.25, 1.5, fz + 0.04, 0.5, 0.25, 0.04, 0xd9d9d6); // name plate
+  k.box(-1.5, 1.2, fz + 0.06, 0.35, 0.45, 0.12, 0x8a8f95); // meter box
+  for (const sx of [-1, 1]) { k.box(sx * 1.2, 0.45, fz + 1.0, 0.4, 0.3, 0.4, 0xa4552f); k.sphere(sx * 1.2, 1.0, fz + 1.0, 0.32, 0x3f7a3a, 0.9); }
+  k.cyl(bw / 2 + 0.1, 0.45, zc - bd / 2 + 0.2, 0.06, 0.06, H, 0x6a6a68, 6); // drain pipe
+  k.cyl(-bw / 2 + 0.9, top + 0.18, zc + 1.2, 0.03, 0.03, 1.8, 0x555a60, 5); // clothes line poles + line + clothes
+  k.cyl(bw / 2 - 0.9, top + 0.18, zc + 1.2, 0.03, 0.03, 1.8, 0x555a60, 5);
+  k.box(0, top + 1.9, zc + 1.2, bw - 1.8, 0.02, 0.02, 0x888888);
+  for (let i = 0; i < 4; i++) k.box(-2.4 + i * 1.3, top + 1.25, zc + 1.2, 0.5, 0.6, 0.03, [0xd94f4f, 0x3f7fbf, 0xe8c547, 0xf2f2f2][i]!);
+  k.cyl(bw / 2 - 1.0, top + 0.18, zc + 0.2, 0.04, 0.04, 1.3, 0x555a60, 5); // dish
+  k.sphere(bw / 2 - 1.0, top + 1.55, zc + 0.2, 0.45, 0xdddddd, 0.25);
   return k.finish(bw + 4.4, bd + 5.4, top + 3);
 }
 
@@ -135,11 +161,27 @@ export function buildVilla(seed = 0): BuiltBuilding {
   k.box(-7, 0, 10.5, 5, 0.05, 6, 0x6b9a4a);
   k.box(4.6, 0, 7.4, 1.4, 0.04, 2.6, 0xb7b1a4);
   // trees + shrubs
-  k.tree(-9.5, 11.5, 5.2);
+  k.tree(-11.0, 11.5, 5.2);
   k.tree(8.8, 11.8, 4.4);
   for (const x of [-4.8, -3.6, 5.2, 6.4]) k.sphere(x, 0.45, 5.4, 0.55, 0x3f7a3a, 0.8);
   // boundary wall
   k.boundaryWall(0, 4.2, 24, 28, 0xe6e1d4, 0x6a6a68, 4.6, 1.9);
+  // ---- decoration: gate pillars with lamps, driveway to the carport, pool loungers, AC units, wall lamps, planters, bollard lights
+  const vgz = 4.2 + 14 - 0.11;
+  for (const sx of [-1, 1]) {
+    k.box(sx * 2.55, 0, vgz, 0.55, 2.3, 0.55, 0x3d3d3f);
+    k.box(sx * 2.55, 2.3, vgz, 0.7, 0.1, 0.7, 0xa7a49c);
+    k.sphere(sx * 2.55, 2.55, vgz, 0.14, 0xfff1b0);
+  }
+  k.box(-8.2, 0, 11.4, 3.6, 0.08, 14.0, 0x8d8b86); // driveway (gate-side lawn sits lower)
+  for (let i = 0; i < 6; i++) k.box(-8.2, 0.08, 6.0 + i * 2.4, 3.6, 0.01, 0.05, 0x6a6a68); // paving joints
+  for (const x of [-0.5, 1.8]) { k.box(x, 0, 13.6, 0.7, 0.3, 1.8, 0xf2f2f2); k.box(x, 0.3, 14.3, 0.7, 0.35, 0.1, 0xf2f2f2); }
+  for (const x of [0.4, 3.0]) k.box(x, 4.35, -3.25, 0.9, 0.55, 0.35, 0xeeeeee); // AC on the back of the upper block
+  k.sphere(3.8, 2.4, 4.6, 0.1, 0xfff1b0); // wall lamps by the door
+  k.sphere(-4.2, 2.4, 4.6, 0.1, 0xfff1b0);
+  for (const x of [-3.2, 3.2, 6.0]) { k.box(x, 0.4, 5.1, 0.7, 0.4, 0.7, 0x3d3d3f); k.sphere(x, 1.0, 5.1, 0.4, 0x3f7a3a, 0.9); }
+  for (const z of [8.0, 10.0, 12.0]) k.cyl(6.4, 0, z, 0.06, 0.06, 0.5, 0x30343a, 5);
+  k.box(0, 3.0, 4.55, 2.0, 0.12, 1.0, slab); // door canopy
   return k.finish(24, 28, 9.0);
 }
 

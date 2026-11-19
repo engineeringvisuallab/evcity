@@ -270,6 +270,22 @@ export function buildTownhouse3(seed = 0): BuiltBuilding {
   const top = 0.25 + floors * GF;
   k.hip(0, top, 0, W + 0.8, D + 0.8, 2.4, 0xa8452b);
   k.waterTank(2.2, top + 0.1, -2.0, 0.8);
+  // ---- decoration: sunshades, grills, door canopy + steps, name plate, AC units, pots, drain pipe, dish
+  for (const side of ['front', 'back'] as const) k.onSide(side, 0, 0, W, D, (len, half) => {
+    for (let f = 1; f < floors; f++) for (let c = 0; c < 2; c++) {
+      const t = -len / 2 + (len * (c + 0.5)) / 2;
+      k.box(t, f * GF + 0.25 + 0.9 + 1.4 + 0.1, half + 0.2, 1.8, 0.07, 0.4, 0xf4efe4);
+    }
+  });
+  for (const dx of [-0.45, -0.15, 0.15, 0.45]) k.box(1.6 + dx, 0.9, D / 2 + 0.1, 0.03, 1.5, 0.03, 0x2b3037); // grill on the ground window
+  k.box(-1.8, 2.6, D / 2 + 0.5, 2.0, 0.12, 1.0, 0xf4efe4); // door canopy
+  for (let i = 0; i < 2; i++) k.box(-1.8, i * 0.12, D / 2 + 0.3 + (1 - i) * 0.3, 1.8, 0.12 + i * 0.12, 0.35, 0x9b968c);
+  k.box(-0.6, 1.4, D / 2 + 0.07, 0.4, 0.22, 0.04, 0xd9d9d6); // name plate
+  for (const f of [1, 2]) k.box(W / 2 + 0.3, f * GF + 1.3, 1.5, 0.35, 0.55, 0.9, 0xeeeeee); // AC on the right wall
+  for (const x of [-3.0, 3.0]) { k.box(x, 0.25, D / 2 + 0.6, 0.4, 0.3, 0.4, 0xa4552f); k.sphere(x, 0.8, D / 2 + 0.6, 0.3, 0x3f7a3a, 0.9); }
+  k.cyl(-W / 2 - 0.08, 0.25, -D / 2 + 0.3, 0.05, 0.05, floors * GF, 0x6a6a68, 6); // drain pipe
+  k.cyl(-2.5, top + 0.1, 1.5, 0.04, 0.04, 1.2, 0x555a60, 5); // dish
+  k.sphere(-2.5, top + 1.35, 1.5, 0.4, 0xdddddd, 0.25);
   return k.finish(W + 0.4, D + 1.2, top + 2.6);
 }
 
