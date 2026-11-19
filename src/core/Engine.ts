@@ -52,6 +52,7 @@ import { BuildingManager, FillBuildings, PlacedBuildings, setBuildingTextureQual
 import { LazyInfra } from '../engineering/LazyInfra';
 import { Minimap, type MapMarker, type MapState } from '../ui/Minimap';
 import { VehicleMenu } from '../ui/VehicleMenu';
+import { GotoPanel } from '../ui/GotoPanel';
 import { VehicleHUD } from '../ui/VehicleHUD';
 import { type Vehicle, VehicleManager, NightLamps, CabinState, SEDAN, JEEP, HYPERCAR, EVHYPAR, RICKSHAW, AUTO, BUS, SPECS } from '../vehicles';
 import { VehicleModel } from '../vehicles/VehicleModel';
@@ -240,6 +241,7 @@ export class Engine {
   private minimap: Minimap;
   /** N key: pick any vehicle and it is brought next to the player. */
   private vehicleMenu: VehicleMenu;
+  private gotoPanel: GotoPanel;
   /** STAGE 10A: which area of the city is for what (data only, no buildings yet). */
   readonly cityPlan: CityPlan;
   /** Guns: shooting, wanted level, police. The player cannot die. */
@@ -751,6 +753,23 @@ export class Engine {
       (id) => this.summonVehicle(id),
       this.renderer.domElement,
       () => !!this.vehicles.driver?.spec.amphibious, // N = flight mode while driving the Suprim
+    );
+
+    // --- 0 key: type X and Z, the player (on foot only) is taken there. Made AFTER the N menu: while that menu is open it keeps the 0 key ---
+    this.gotoPanel = new GotoPanel(
+      container,
+      (x, z) => this.gotoPosition(x, z),
+      this.renderer.domElement,
+      () =>
+        !this.player.active || this.player.inVehicle || this.cameraController.isFreeFly || !!this.vehicles.driver || !!this.helis.pilot || !!this.boats.skipper ||
+        this.trainRider.riding || this.planeRider.riding || this.playerJet.riding || this.mall.inside || this.library.inside || this.agro.inside ||
+        this.settingsMenu.isOpen || this.exportPanel.isOpen || this.missions.isOpen || this.vehicleMenu.isOpen,
+      () => {
+        const p = this.player.getWorldPosition(new THREE.Vector3());
+        return { x: p.x, z: p.z };
+      },
+      '📍 এই সুবিধা শুধু হেঁটে চলার সময় কাজ করে — আগে যানবাহন/ভবন থেকে বেরিয়ে আসুন।',
+      (t) => this.toast.show(t, 3400),
     );
 
     // --- the always-on site map (top-right) ---
@@ -1516,6 +1535,18 @@ export class Engine {
    * N menu: bring vehicle `id` (a road vehicle, the tank or 'heli') next to the player, nose the way the player faces. Returns a Bangla message
    * when it cannot be done (inside a building, driving, swimming...), null when the vehicle now stands there.
    */
+  /** 0 key: take the walking player to world (x, z). Returns null when done, or a Bangla message. */
+  private gotoPosition(x: number, z: number): string | null {
+    const half = Config.world.size / 2;
+    if (!Number.isFinite(x) || !Number.isFinite(z) || Math.abs(x) > half || Math.abs(z) > half) return `X আর Z দুটোই -${half} থেকে ${half}-এর মধ্যে হতে হবে।`;
+    if (!this.player.ready) return 'একটু অপেক্ষা করুন — জায়গাটা এখনো লোড হচ্ছে।';
+    // a little above the ground: the player drops down once the ground there has loaded (Player.teleportTo)
+    const y = this.world.terrain.heightAt(x, z) + 3;
+    this.player.teleportTo(new THREE.Vector3(x, y, z));
+    this.toast.show(`📍 X ${Math.round(x)}, Z ${Math.round(z)} এ পৌঁছে গেছেন`, 3000);
+    return null;
+  }
+
   private summonVehicle(id: string): string | null {
     const m = bn.vehicleMenu;
     if (!this.player.ready) return m.notReady;
@@ -1712,6 +1743,7 @@ export class Engine {
     this.waterFx.dispose();
     this.oxygenHud.dispose();
     this.vehicleMenu.dispose();
+    this.gotoPanel.dispose();
     this.parking.dispose();
     this.stationStructures.dispose();
     this.mall.dispose();

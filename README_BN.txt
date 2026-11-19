@@ -1,7 +1,5 @@
-4ta file EVCity folder-er moddhe same jaygay replace korun:
-  src/buildings/models/urban.ts
-  src/buildings/models/rural.ts
-  src/buildings/models/registry.ts
-  src/buildings/PlacedBuildings.ts
+2ta file EVCity folder-er moddhe same jaygay rakhun (notun ta add, Engine.ts replace):
+  src/ui/GotoPanel.ts      (notun file)
+  src/core/Engine.ts       (replace)
 Tarpor game bondho kore abar chalan (npm run dev), browser-e Ctrl+F5 dian.
-City-r building gula age-r moto thakbe. Shudhu city-r baire-r abasik building sajano.
+Hete thaka obosthay 0 key chaple X ar Z chaibe. Enter chaple player oikhane jabe.
