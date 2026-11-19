@@ -49,6 +49,7 @@ import { MallManager, loadCatalog, type Catalog } from '../mall';
 import { EngineeringBoundary } from '../zones';
 import { LibraryManager } from '../library';
 import { BuildingManager, FillBuildings, PlacedBuildings, setBuildingTextureQuality } from '../buildings';
+import { BuildingPhysics } from '../buildings/BuildingPhysics';
 import { LazyInfra } from '../engineering/LazyInfra';
 import { Minimap, type MapMarker, type MapState } from '../ui/Minimap';
 import { VehicleMenu } from '../ui/VehicleMenu';
@@ -162,6 +163,8 @@ export class Engine {
   private ringStructurePhysics: RingStructurePhysics;
   /** STEP 3: colliders of the fuel stations / charge points (same class as the road signs' physics: bodies only near the player). */
   private stationPhysics: SignPhysics;
+  /** Solid colliders of all buildings (hand placed + city fill), bodies only near the player. */
+  private buildingPhysics: BuildingPhysics;
   /** Convex road mirrors at the junctions (2 draw calls for the whole map). */
   /** GRASS 4: tree pits, hedges, guardrails and verge shrubs beside the roads (instanced, grouped in 250 m squares). */
   private lighthouseLight: LighthouseLight | null = null;
@@ -517,6 +520,8 @@ export class Engine {
       terrain: this.world.terrain,
       playerWorld: (out) => this.focusWorld(out),
     });
+
+    this.buildingPhysics = new BuildingPhysics(physics, this.world.origin, this.world.terrain);
 
     // lighthouse in the sea: its lantern shines at night (stands on its own, so it is visible from far away)
     const lh = this.placedBuildings.anchorOf('lighthouse');
@@ -1201,6 +1206,7 @@ export class Engine {
       this.j1Masts.update(lamp);
       this.stationPhysics.update(dt, this.world.playerWorld.x, this.world.playerWorld.z);
       this.ringStructurePhysics.update(dt, this.world.playerWorld.x, this.world.playerWorld.z);
+      this.buildingPhysics.update(dt, this.world.playerWorld.x, this.world.playerWorld.z);
       this.stationStructures.update(this.world.playerWorld.x, this.world.playerWorld.z, lamp); // builds the near sites, frees the far ones; canopy lights, kiosk windows, price displays and signs follow the day / night
       NightLamps.on = lamp; // vehicle headlights / tail lights
       this.lighthouseLight?.update(lamp, this.time.elapsed, fov, px);
@@ -1789,6 +1795,7 @@ export class Engine {
     this.groundJ1.dispose();
     this.stationPhysics.dispose();
     this.ringStructurePhysics.dispose();
+    this.buildingPhysics.dispose();
     this.lighthouseLight?.dispose();
     this.trainRider.dispose();
     this.ridePrompt.dispose();

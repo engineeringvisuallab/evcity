@@ -1,0 +1,28 @@
+// SOLID BUILDINGS test: BuildingPhysics makes a box near the player, none far away, and a ray from outside hits the walls. Run: npx tsx scripts/building-physics-test.ts
+import RAPIER from '@dimforge/rapier3d-compat';
+import { BuildingPhysics } from '../src/buildings/BuildingPhysics';
+import { BUILDING_PLACEMENTS } from '../src/buildings/Placements';
+await RAPIER.init();
+const world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
+const physics: any = { RAPIER, world };
+const origin: any = { origin: { x: 0, y: 0, z: 0 } };
+const terrain: any = { heightAt: () => 10 };
+const bp = new BuildingPhysics(physics, origin, terrain);
+let fails = 0;
+const ok = (n: string, c: boolean): void => { console.log(`${c ? 'PASS' : 'FAIL'} ${n}`); if (!c) fails++; };
+const h = BUILDING_PLACEMENTS.find((p) => p.id === 'hospital')!;
+bp.update(1, h.x + 5000, h.z + 5000);
+ok('far from everything: no bodies', bp.activeCount === 0);
+bp.update(1, h.x, h.z);
+world.step();
+ok(`near the hospital: bodies made (${bp.activeCount} of ${bp.total})`, bp.activeCount >= 1);
+const c = Math.cos(h.yaw), s = Math.sin(h.yaw), lx = -(h.W / 2 + 5), y = 11.5;
+const from = { x: h.x + lx * c, y, z: h.z - lx * s }, dir = { x: c, y: 0, z: -s };
+const hit = world.castRay(new RAPIER.Ray(from, dir), 100, true);
+ok('ray from outside hits the wall', !!hit);
+if (hit) ok(`wall is at the footprint edge (inset 1 m): ${hit.timeOfImpact.toFixed(1)} m`, Math.abs(hit.timeOfImpact - (5 + 1)) < 0.2);
+bp.update(1, h.x + 5000, h.z + 5000);
+ok('walking far away frees the bodies', bp.activeCount === 0);
+bp.dispose();
+console.log(fails ? `${fails} FAILED` : 'ALL PASS');
+process.exit(fails ? 1 : 0);
