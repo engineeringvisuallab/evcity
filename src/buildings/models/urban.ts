@@ -6,7 +6,7 @@ const PLASTER = [0xe8dcc0, 0xe9d9a0, 0xcfe0c4, 0xe9c9c0, 0xd6dde6] as const;
 const GLASS = 0x2f4f66;
 
 /** ইটের/পাকা বাড়ি: RCC frame house with plastered walls, sunshades, roof tank, expansion rebars, boundary wall. */
-export function buildBrickHouse(floors: 2 | 3, seed = 0): BuiltBuilding {
+export function buildBrickHouse(floors: 2 | 3, seed = 0, outer = false): BuiltBuilding {
   const k = new Kit();
   const plaster = pick(seed, PLASTER);
   const trim = 0xf4efe4;
@@ -56,37 +56,39 @@ export function buildBrickHouse(floors: 2 | 3, seed = 0): BuiltBuilding {
   k.boundaryWall(0, zc - 0.5, bw + 4.4, bd + 5.4, 0xcfc7b6, 0xa7a49c);
   k.box(-bw / 2 - 1.6, 0, zc + bd / 2 + 1.8, 1.4, 0.04, 1.4, 0x6b9a4a);
   k.tree(bw / 2 + 1.5, zc + bd / 2 + 1.6, 4.2);
-  // ---- decoration: gate pillars + open gate, path, hedges, window grills, meter box, name plate, clothes line, dish, drain pipe
-  const gz = zc - 0.5 + (bd + 5.4) / 2 - 0.11; // gate line (front wall)
-  for (const sx of [-1, 1]) {
-    k.box(sx * 1.95, 0, gz, 0.45, 2.2, 0.45, 0xcfc7b6);
-    k.box(sx * 1.95, 2.2, gz, 0.6, 0.1, 0.6, 0xa7a49c);
-    k.sphere(sx * 1.95, 2.45, gz, 0.13, 0xfff1b0);
-    k.box(sx * 1.62, 0, gz - 0.9, 0.05, 1.5, 1.7, 0x2b3037); // gate leaf swung open
-    k.box(sx * 1.62, 0.7, gz - 0.9, 0.06, 0.06, 1.7, 0x555a60);
+  if (outer) {
+    // ---- decoration: gate pillars + open gate, path, hedges, window grills, meter box, name plate, clothes line, dish, drain pipe
+    const gz = zc - 0.5 + (bd + 5.4) / 2 - 0.11; // gate line (front wall)
+    for (const sx of [-1, 1]) {
+      k.box(sx * 1.95, 0, gz, 0.45, 2.2, 0.45, 0xcfc7b6);
+      k.box(sx * 1.95, 2.2, gz, 0.6, 0.1, 0.6, 0xa7a49c);
+      k.sphere(sx * 1.95, 2.45, gz, 0.13, 0xfff1b0);
+      k.box(sx * 1.62, 0, gz - 0.9, 0.05, 1.5, 1.7, 0x2b3037); // gate leaf swung open
+      k.box(sx * 1.62, 0.7, gz - 0.9, 0.06, 0.06, 1.7, 0x555a60);
+    }
+    k.box(0, 0, (gz + zc + bd / 2 + 0.9) / 2, 1.6, 0.05, gz - (zc + bd / 2 + 0.9), 0xb7b1a4); // path gate -> steps
+    for (const sx of [-1, 1]) k.box(sx * 3.4, 0, gz - 0.6, 3.0, 0.5, 0.6, 0x3f7a3a); // hedges
+    const fz = zc + bd / 2;
+    for (const t of [-bw / 3, bw / 3]) { // grills on the ground-floor front windows
+      for (const dx of [-0.45, -0.15, 0.15, 0.45]) k.box(t + dx, 0.45 + 0.95, fz + 0.12, 0.03, 1.35, 0.03, 0x2b3037);
+      k.box(t, 0.45 + 1.6, fz + 0.12, 1.3, 0.03, 0.03, 0x2b3037);
+    }
+    k.box(1.25, 1.5, fz + 0.04, 0.5, 0.25, 0.04, 0xd9d9d6); // name plate
+    k.box(-1.5, 1.2, fz + 0.06, 0.35, 0.45, 0.12, 0x8a8f95); // meter box
+    for (const sx of [-1, 1]) { k.box(sx * 1.2, 0.45, fz + 1.0, 0.4, 0.3, 0.4, 0xa4552f); k.sphere(sx * 1.2, 1.0, fz + 1.0, 0.32, 0x3f7a3a, 0.9); }
+    k.cyl(bw / 2 + 0.1, 0.45, zc - bd / 2 + 0.2, 0.06, 0.06, H, 0x6a6a68, 6); // drain pipe
+    k.cyl(-bw / 2 + 0.9, top + 0.18, zc + 1.2, 0.03, 0.03, 1.8, 0x555a60, 5); // clothes line poles + line + clothes
+    k.cyl(bw / 2 - 0.9, top + 0.18, zc + 1.2, 0.03, 0.03, 1.8, 0x555a60, 5);
+    k.box(0, top + 1.9, zc + 1.2, bw - 1.8, 0.02, 0.02, 0x888888);
+    for (let i = 0; i < 4; i++) k.box(-2.4 + i * 1.3, top + 1.25, zc + 1.2, 0.5, 0.6, 0.03, [0xd94f4f, 0x3f7fbf, 0xe8c547, 0xf2f2f2][i]!);
+    k.cyl(bw / 2 - 1.0, top + 0.18, zc + 0.2, 0.04, 0.04, 1.3, 0x555a60, 5); // dish
+    k.sphere(bw / 2 - 1.0, top + 1.55, zc + 0.2, 0.45, 0xdddddd, 0.25);
   }
-  k.box(0, 0, (gz + zc + bd / 2 + 0.9) / 2, 1.6, 0.05, gz - (zc + bd / 2 + 0.9), 0xb7b1a4); // path gate -> steps
-  for (const sx of [-1, 1]) k.box(sx * 3.4, 0, gz - 0.6, 3.0, 0.5, 0.6, 0x3f7a3a); // hedges
-  const fz = zc + bd / 2;
-  for (const t of [-bw / 3, bw / 3]) { // grills on the ground-floor front windows
-    for (const dx of [-0.45, -0.15, 0.15, 0.45]) k.box(t + dx, 0.45 + 0.95, fz + 0.12, 0.03, 1.35, 0.03, 0x2b3037);
-    k.box(t, 0.45 + 1.6, fz + 0.12, 1.3, 0.03, 0.03, 0x2b3037);
-  }
-  k.box(1.25, 1.5, fz + 0.04, 0.5, 0.25, 0.04, 0xd9d9d6); // name plate
-  k.box(-1.5, 1.2, fz + 0.06, 0.35, 0.45, 0.12, 0x8a8f95); // meter box
-  for (const sx of [-1, 1]) { k.box(sx * 1.2, 0.45, fz + 1.0, 0.4, 0.3, 0.4, 0xa4552f); k.sphere(sx * 1.2, 1.0, fz + 1.0, 0.32, 0x3f7a3a, 0.9); }
-  k.cyl(bw / 2 + 0.1, 0.45, zc - bd / 2 + 0.2, 0.06, 0.06, H, 0x6a6a68, 6); // drain pipe
-  k.cyl(-bw / 2 + 0.9, top + 0.18, zc + 1.2, 0.03, 0.03, 1.8, 0x555a60, 5); // clothes line poles + line + clothes
-  k.cyl(bw / 2 - 0.9, top + 0.18, zc + 1.2, 0.03, 0.03, 1.8, 0x555a60, 5);
-  k.box(0, top + 1.9, zc + 1.2, bw - 1.8, 0.02, 0.02, 0x888888);
-  for (let i = 0; i < 4; i++) k.box(-2.4 + i * 1.3, top + 1.25, zc + 1.2, 0.5, 0.6, 0.03, [0xd94f4f, 0x3f7fbf, 0xe8c547, 0xf2f2f2][i]!);
-  k.cyl(bw / 2 - 1.0, top + 0.18, zc + 0.2, 0.04, 0.04, 1.3, 0x555a60, 5); // dish
-  k.sphere(bw / 2 - 1.0, top + 1.55, zc + 0.2, 0.45, 0xdddddd, 0.25);
   return k.finish(bw + 4.4, bd + 5.4, top + 3);
 }
 
 /** সারি বাড়ি / টাউনহাউস: 5 narrow 3-storey units side by side, each with its own colour. */
-export function buildRowHouse(seed = 0): BuiltBuilding {
+export function buildRowHouse(seed = 0, outer = false): BuiltBuilding {
   const k = new Kit();
   const n = 5, uw = 4.2, d = 9.5, floors = 3, H = floors * FLOOR_H;
   const cols = [0xe9c9a8, 0xcfe0c4, 0xe6d8a0, 0xd6c1d8, 0xc3d6e6, 0xe9b8a8];
@@ -118,11 +120,30 @@ export function buildRowHouse(seed = 0): BuiltBuilding {
   }
   // party-wall pilasters
   for (let i = 0; i <= n; i++) k.box(-W / 2 + uw * i, 0.4, d / 2 + 0.06, 0.25, H, 0.12, 0xbfb8aa);
+  if (outer) {
+    // decoration: door canopies + steps, window grills, name plates, AC units, pots, sunshades, drain pipes, dishes
+    for (let i = 0; i < n; i++) {
+      const cx = -W / 2 + uw * (i + 0.5);
+      k.box(cx - 0.8, 2.75, d / 2 + 0.45, 1.5, 0.1, 0.9, 0xeeeae0);
+      k.box(cx - 0.8, 0, d / 2 + 0.35, 1.5, 0.2, 0.4, 0x9b968c);
+      for (const dx of [-0.4, -0.13, 0.13, 0.4]) k.box(cx + 0.9 + dx, 0.4 + 0.9, d / 2 + 0.11, 0.03, 1.3, 0.03, 0x2b3037);
+      k.box(cx - 0.1, 1.5, d / 2 + 0.05, 0.3, 0.2, 0.04, 0xd9d9d6);
+      k.box(cx + 1.6, 0.4, d / 2 + 0.6, 0.4, 0.3, 0.4, 0xa4552f);
+      k.sphere(cx + 1.6, 0.95, d / 2 + 0.6, 0.3, 0x3f7a3a, 0.9);
+      for (let f = 1; f < floors; f++) {
+        k.box(cx - 1.65, 0.4 + f * FLOOR_H + 1.2, d / 2 + 0.2, 0.7, 0.45, 0.3, 0xeeeeee);
+        k.box(cx + 0.9, 0.4 + f * FLOOR_H + 0.95 + 1.3 + 0.1, d / 2 + 0.2, 1.5, 0.07, 0.4, 0xeeeae0);
+      }
+      k.cyl(cx + 1.2, 0.4 + H + 0.2, -d / 2 + 1.2, 0.04, 0.04, 1.2, 0x555a60, 5);
+      k.sphere(cx + 1.2, 0.4 + H + 1.5, -d / 2 + 1.2, 0.38, 0xdddddd, 0.25);
+    }
+    for (const sx of [-1, 1]) k.cyl(sx * (W / 2 + 0.05), 0.4, -d / 2 + 0.2, 0.06, 0.06, H, 0x6a6a68, 6);
+  }
   return k.finish(W + 0.3, d + 0.3, H + 2.4);
 }
 
 /** ভিলা / ডুপ্লেক্স: modern two-storey villa, glass front, terracotta roof, carport, pool, garden. */
-export function buildVilla(seed = 0): BuiltBuilding {
+export function buildVilla(seed = 0, outer = false): BuiltBuilding {
   const k = new Kit();
   const wall = 0xf1eee6, wood = pick(seed, [0xc8a77d, 0xb98a5c]), tile = 0xa8452b, slab = 0x3d3d3f;
   // ground floor
@@ -161,32 +182,34 @@ export function buildVilla(seed = 0): BuiltBuilding {
   k.box(-7, 0, 10.5, 5, 0.05, 6, 0x6b9a4a);
   k.box(4.6, 0, 7.4, 1.4, 0.04, 2.6, 0xb7b1a4);
   // trees + shrubs
-  k.tree(-11.0, 11.5, 5.2);
+  k.tree(outer ? -11.0 : -9.5, 11.5, 5.2);
   k.tree(8.8, 11.8, 4.4);
   for (const x of [-4.8, -3.6, 5.2, 6.4]) k.sphere(x, 0.45, 5.4, 0.55, 0x3f7a3a, 0.8);
   // boundary wall
   k.boundaryWall(0, 4.2, 24, 28, 0xe6e1d4, 0x6a6a68, 4.6, 1.9);
-  // ---- decoration: gate pillars with lamps, driveway to the carport, pool loungers, AC units, wall lamps, planters, bollard lights
-  const vgz = 4.2 + 14 - 0.11;
-  for (const sx of [-1, 1]) {
-    k.box(sx * 2.55, 0, vgz, 0.55, 2.3, 0.55, 0x3d3d3f);
-    k.box(sx * 2.55, 2.3, vgz, 0.7, 0.1, 0.7, 0xa7a49c);
-    k.sphere(sx * 2.55, 2.55, vgz, 0.14, 0xfff1b0);
+  if (outer) {
+    // ---- decoration: gate pillars with lamps, driveway to the carport, pool loungers, AC units, wall lamps, planters, bollard lights
+    const vgz = 4.2 + 14 - 0.11;
+    for (const sx of [-1, 1]) {
+      k.box(sx * 2.55, 0, vgz, 0.55, 2.3, 0.55, 0x3d3d3f);
+      k.box(sx * 2.55, 2.3, vgz, 0.7, 0.1, 0.7, 0xa7a49c);
+      k.sphere(sx * 2.55, 2.55, vgz, 0.14, 0xfff1b0);
+    }
+    k.box(-8.2, 0, 11.4, 3.6, 0.08, 14.0, 0x8d8b86); // driveway (gate-side lawn sits lower)
+    for (let i = 0; i < 6; i++) k.box(-8.2, 0.08, 6.0 + i * 2.4, 3.6, 0.01, 0.05, 0x6a6a68); // paving joints
+    for (const x of [-0.5, 1.8]) { k.box(x, 0, 13.6, 0.7, 0.3, 1.8, 0xf2f2f2); k.box(x, 0.3, 14.3, 0.7, 0.35, 0.1, 0xf2f2f2); }
+    for (const x of [0.4, 3.0]) k.box(x, 4.35, -3.25, 0.9, 0.55, 0.35, 0xeeeeee); // AC on the back of the upper block
+    k.sphere(3.8, 2.4, 4.6, 0.1, 0xfff1b0); // wall lamps by the door
+    k.sphere(-4.2, 2.4, 4.6, 0.1, 0xfff1b0);
+    for (const x of [-3.2, 3.2, 6.0]) { k.box(x, 0.4, 5.1, 0.7, 0.4, 0.7, 0x3d3d3f); k.sphere(x, 1.0, 5.1, 0.4, 0x3f7a3a, 0.9); }
+    for (const z of [8.0, 10.0, 12.0]) k.cyl(6.4, 0, z, 0.06, 0.06, 0.5, 0x30343a, 5);
+    k.box(0, 3.0, 4.55, 2.0, 0.12, 1.0, slab); // door canopy
   }
-  k.box(-8.2, 0, 11.4, 3.6, 0.08, 14.0, 0x8d8b86); // driveway (gate-side lawn sits lower)
-  for (let i = 0; i < 6; i++) k.box(-8.2, 0.08, 6.0 + i * 2.4, 3.6, 0.01, 0.05, 0x6a6a68); // paving joints
-  for (const x of [-0.5, 1.8]) { k.box(x, 0, 13.6, 0.7, 0.3, 1.8, 0xf2f2f2); k.box(x, 0.3, 14.3, 0.7, 0.35, 0.1, 0xf2f2f2); }
-  for (const x of [0.4, 3.0]) k.box(x, 4.35, -3.25, 0.9, 0.55, 0.35, 0xeeeeee); // AC on the back of the upper block
-  k.sphere(3.8, 2.4, 4.6, 0.1, 0xfff1b0); // wall lamps by the door
-  k.sphere(-4.2, 2.4, 4.6, 0.1, 0xfff1b0);
-  for (const x of [-3.2, 3.2, 6.0]) { k.box(x, 0.4, 5.1, 0.7, 0.4, 0.7, 0x3d3d3f); k.sphere(x, 1.0, 5.1, 0.4, 0x3f7a3a, 0.9); }
-  for (const z of [8.0, 10.0, 12.0]) k.cyl(6.4, 0, z, 0.06, 0.06, 0.5, 0x30343a, 5);
-  k.box(0, 3.0, 4.55, 2.0, 0.12, 1.0, slab); // door canopy
   return k.finish(24, 28, 9.0);
 }
 
 /** ফ্ল্যাট বিল্ডিং (6 তলা): pilotis car-park ground floor, balconies, stair/lift core, roof tanks. */
-export function buildApartmentMid(seed = 0): BuiltBuilding {
+function buildApartmentMidDeco(seed = 0): BuiltBuilding {
   const k = new Kit();
   const rnd = rng(seed + 7);
   const W = 18, D = 13, floors = 6, GF = 3.4;
@@ -303,6 +326,59 @@ export function buildApartmentMid(seed = 0): BuiltBuilding {
     k.tree(sx * (W / 2 - 0.2), D / 2 + 1.4, 4.2);
   }
   return k.finish(W + 0.4, D + 2.8, top + 3);
+}
+
+export function buildApartmentMid(seed = 0, outer = false): BuiltBuilding {
+  if (outer) return buildApartmentMidDeco(seed);
+  const k = new Kit();
+  const W = 18, D = 13, floors = 6, GF = 3.4;
+  const body = pick(seed, [0xe3d7c2, 0xdfe3d3, 0xe6d1c4]);
+  const accent = pick(seed, [0xb85c38, 0x4f7a8a, 0x8a6aa0]);
+  // plinth + pilotis
+  k.box(0, 0, 0, W + 0.4, 0.2, D + 0.4, 0x8d8b86);
+  for (const x of [-7.5, -2.5, 2.5, 7.5]) for (const z of [-5.5, 0, 5.5]) k.box(x, 0.2, z, 0.55, GF - 0.2, 0.55, 0xb9b6ae);
+  // lobby / lift core at the back
+  k.box(0, 0.2, -4.6, 5.2, GF - 0.2, 3.6, accent);
+  k.box(0, 0.2, -2.78, 3.0, 2.6, 0.1, 0x2b3037);
+  // guard cabin
+  k.box(-7.5, 0.2, 3.0, 2.4, 2.4, 2.4, 0xcfc7b6);
+  k.glass(-7.5, 1.0, 4.22, 1.8, 1.0, 0.04, GLASS);
+  // parked cars
+  for (const [x, c] of [[-2.5, 0xb02a2a], [2.5, 0xd9d9d6], [7.5, 0x2f3b4a]] as const) {
+    k.box(x, 0.3, 3.4, 1.8, 0.7, 4.0, c);
+    k.box(x, 1.0, 3.5, 1.6, 0.55, 2.0, 0x2f4f66);
+  }
+  // typical floors
+  const y0 = GF;
+  k.box(0, y0, 0, W, floors * FLOOR_H, D, body);
+  for (let f = 0; f <= floors; f++) k.box(0, y0 + f * FLOOR_H - 0.12, 0, W + 0.18, 0.24, D + 0.18, 0xf4efe4);
+  // coloured core stripe on the front
+  k.box(0, y0, D / 2 + 0.05, 3.4, floors * FLOOR_H, 0.12, accent);
+  const g = { y0, floors, ww: 1.4, wh: 1.4, sill: 0.95, glass: GLASS, frame: 0xf4efe4 };
+  k.windowGrid('front', 0, 0, W, D, { ...g, cols: 6, skip: (_f, c) => c === 2 || c === 3 });
+  k.windowGrid('back', 0, 0, W, D, { ...g, cols: 6 });
+  k.windowGrid('left', 0, 0, W, D, { ...g, cols: 4 });
+  k.windowGrid('right', 0, 0, W, D, { ...g, cols: 4 });
+  // balconies (front: two per floor, back: kitchen balconies)
+  for (let f = 0; f < floors; f++) {
+    const y = y0 + f * FLOOR_H;
+    k.balcony('front', 0, 0, W, D, y, -8.6, -1.9, 1.3, 0xf4efe4, 0x7a7a78);
+    k.balcony('front', 0, 0, W, D, y, 1.9, 8.6, 1.3, 0xf4efe4, 0x7a7a78);
+    k.glass(-5.25, y + 0.3, D / 2 + 0.04, 2.8, 2.2, 0.05, GLASS);
+    k.glass(5.25, y + 0.3, D / 2 + 0.04, 2.8, 2.2, 0.05, GLASS);
+    k.balcony('back', 0, 0, W, D, y, -2.0, 2.0, 0.9, 0xf4efe4, 0x7a7a78);
+  }
+  // roof
+  const top = y0 + floors * FLOOR_H;
+  k.box(0, top, 0, W + 0.3, 0.2, D + 0.3, 0xa7a49c);
+  k.parapet(0, top + 0.2, 0, W + 0.3, D + 0.3, 1.0, 0.2, body);
+  k.box(0, top + 0.2, -2.0, 5.6, 2.6, 4.2, accent);
+  k.box(0, top + 2.8, -2.0, 6.0, 0.18, 4.6, 0xa7a49c);
+  k.waterTank(-6.5, top + 0.2, 2.5, 1.1);
+  k.waterTank(-6.5, top + 0.2, -3.5, 1.1);
+  k.waterTank(6.5, top + 0.2, 2.5, 1.1);
+  k.cyl(7.0, top + 0.2, -4.5, 0.05, 0.05, 6.0, 0x555a60, 5); // antenna
+  return k.finish(W + 0.4, D + 0.4, top + 3);
 }
 
 /** বহুতল ফ্ল্যাট (12 তলা): ground-floor shops, tall slab with glazed bands, balconies, set-back top, roof gym. */

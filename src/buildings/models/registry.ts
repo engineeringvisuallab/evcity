@@ -27,7 +27,8 @@ export interface BuildingModelDef {
   grade: 1 | 2 | 3 | 4 | 5;
   floors: number;
   cityId?: string;
-  build: (seed?: number) => BuiltBuilding;
+  /** `outer` = true only for the hand placed buildings outside the city (PlacedBuildings): they get the extra decoration. */
+  build: (seed?: number, outer?: boolean) => BuiltBuilding;
 }
 
 export const BUILDING_MODELS: BuildingModelDef[] = [
@@ -35,8 +36,8 @@ export const BUILDING_MODELS: BuildingModelDef[] = [
   { id: 'bamboo-hut', bn: 'বাঁশের ঘর (ছনের চাল)', en: 'Bamboo-thatch hut', group: 'residential', grade: 1, floors: 1, build: buildBambooHut },
   { id: 'house-tin', bn: 'টিনশেড বাড়ি', en: 'Tin-shed house', group: 'residential', grade: 2, floors: 1, cityId: 'house-tin', build: (s) => buildTinHouse({ walls: 'tin' }, s) },
   { id: 'house-semi-pucca', bn: 'আধা-পাকা বাড়ি', en: 'Semi-pucca house', group: 'residential', grade: 2, floors: 1, build: (s) => buildTinHouse({ walls: 'semi' }, s) },
-  { id: 'house-brick-2', bn: 'ইটের/পাকা বাড়ি (২ তলা)', en: 'Brick house, 2 floors', group: 'residential', grade: 3, floors: 2, cityId: 'house-brick', build: (s) => buildBrickHouse(2, s) },
-  { id: 'house-brick-3', bn: 'ইটের/পাকা বাড়ি (৩ তলা)', en: 'Brick house, 3 floors', group: 'residential', grade: 3, floors: 3, cityId: 'house-brick', build: (s) => buildBrickHouse(3, s) },
+  { id: 'house-brick-2', bn: 'ইটের/পাকা বাড়ি (২ তলা)', en: 'Brick house, 2 floors', group: 'residential', grade: 3, floors: 2, cityId: 'house-brick', build: (s, o) => buildBrickHouse(2, s, o) },
+  { id: 'house-brick-3', bn: 'ইটের/পাকা বাড়ি (৩ তলা)', en: 'Brick house, 3 floors', group: 'residential', grade: 3, floors: 3, cityId: 'house-brick', build: (s, o) => buildBrickHouse(3, s, o) },
   { id: 'row-house', bn: 'সারি বাড়ি (টাউনহাউস)', en: 'Row house', group: 'residential', grade: 3, floors: 3, cityId: 'row-house', build: buildRowHouse },
   { id: 'villa', bn: 'ভিলা / ডুপ্লেক্স', en: 'Villa', group: 'residential', grade: 5, floors: 2, cityId: 'villa', build: buildVilla },
   { id: 'apartment-mid', bn: 'ফ্ল্যাট বিল্ডিং (৬ তলা)', en: 'Apartment block, 6 floors', group: 'residential', grade: 3, floors: 7, cityId: 'apartment-mid', build: buildApartmentMid },

@@ -71,7 +71,7 @@ export class PlacedBuildings {
   private show(sl: Slot): void {
     if (!sl.built) {
       const { p } = sl;
-      const b = BUILDING_MODEL_BY_ID[p.id]!.build(p.seed ?? 0);
+      const b = BUILDING_MODEL_BY_ID[p.id]!.build(p.seed ?? 0, true);
       b.root.position.set(p.x, sl.floorY, p.z);
       b.root.rotation.y = p.yaw;
       this.d.root.add(b.root);
