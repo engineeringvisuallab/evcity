@@ -1,0 +1,27 @@
+CRR-2b loops at the real ENDs of the rail-corridor roads (T on an existing small road, V50 R >= 75 m, R3 straight-spiral-arc-spiral-straight)
+  reasons: {"ground grade # %":7821,"crosses R#-#":178}
+south-1: 49855 shapes, 8001 checked, 2 pass
+  BEST leave at s 380 (END 450), bend R 100 Ls 40 deflection 97.4 deg, straight before 8.8 m / after 57.9 m, loop 277 m, T on R2-29 at (-103,889), ground grade <= 5.4 %, nearest 8/6-lane road 432 m, water 0
+  alt  leave at s 370 (END 450), bend R 75 Ls 35 deflection 96 deg, straight before 6.9 m / after 85.7 m, loop 253 m, T on R2-29 at (-104,849), ground grade <= 1.8 %, nearest 8/6-lane road 456 m, water 0
+  reasons: {"ground grade # %":866,"rail # m":11,"crosses R#-#":13}
+north-1: 24276 shapes, 893 checked, 3 pass
+  BEST leave at s 550 (END 640), bend R 100 Ls 40 deflection 117 deg, straight before 2.9 m / after 69.6 m, loop 317 m, T on R4-12 at (522,-252), ground grade <= 4.5 %, nearest 8/6-lane road 186 m, water 0
+  alt  leave at s 560 (END 640), bend R 75 Ls 35 deflection 116.6 deg, straight before 1.7 m / after 96.7 m, loop 286 m, T on R4-12 at (503,-227), ground grade <= 3.8 %, nearest 8/6-lane road 195 m, water 0
+  alt  leave at s 450 (END 640), bend R 75 Ls 35 deflection 119.6 deg, straight before 8.6 m / after 50.1 m, loop 250 m, T on R4-12 at (448,-158), ground grade <= 3.4 %, nearest 8/6-lane road 98 m, water 0
+  reasons: {"ground grade # %":3229,"crosses R#-#":4770}
+east-1: 14667 shapes, 8001 checked, 2 pass
+  BEST leave at s 80 (END 350), bend R 100 Ls 40 deflection -48.4 deg, straight before 3 m / after 66.2 m, loop 194 m, T on R2-28 at (319,258), ground grade <= 1.6 %, nearest 8/6-lane road 179 m, water 0
+  alt  leave at s 60 (END 350), bend R 100 Ls 40 deflection -49.5 deg, straight before 4.3 m / after 76.3 m, loop 207 m, T on R2-28 at (308,246), ground grade <= 1.6 %, nearest 8/6-lane road 175 m, water 0
+  reasons: {"ground grade # %":345}
+west-nw (user hint): 6437 shapes, 348 checked, 3 pass
+  BEST leave at s 580 (END 830), bend R 75 Ls 35 deflection -99 deg, straight before 1.2 m / after 389.1 m, loop 555 m, T on R2-77 at (-810,348), ground grade <= 4.6 %, nearest 8/6-lane road 117 m, water 0
+  alt  leave at s 570 (END 830), bend R 75 Ls 35 deflection -98.7 deg, straight before 3.2 m / after 387.6 m, loop 555 m, T on R2-77 at (-803,351), ground grade <= 3.9 %, nearest 8/6-lane road 125 m, water 0
+  alt  leave at s 460 (END 830), bend R 75 Ls 35 deflection -97.6 deg, straight before 0.4 m / after 372.5 m, loop 536 m, T on R2-77 at (-700,391), ground grade <= 6 %, nearest 8/6-lane road 108 m, water 0
+  reasons: {"ground grade # %":58,"crosses R#-#":200,"rail # m":80}
+west-sw (user hint): 338 shapes, 338 checked, 0 pass
+  NO loop passes the checks: see the reasons in the handoff (needs a decision)
+  reasons: {"J#-S # m < #":1982,"ground grade # %":1771,"crosses R#-#":4}
+west-sw (hint-free, the hint gave nothing): 48353 shapes, 3760 checked, 3 pass
+  BEST leave at s 610 (END 780), bend R 75 Ls 35 deflection -146.6 deg, straight before 4.7 m / after 169.5 m, loop 401 m, T on R4-20 at (-340,830), ground grade <= 4.9 %, nearest 8/6-lane road 71 m, water 0
+  alt  leave at s 570 (END 780), bend R 100 Ls 40 deflection -146.7 deg, straight before 3.6 m / after 120.5 m, loop 420 m, T on R4-20 at (-338,854), ground grade <= 4.7 %, nearest 8/6-lane road 89 m, water 0
+  alt  leave at s 470 (END 780), bend R 75 Ls 35 deflection -145.9 deg, straight before 0.3 m / after 49.4 m, loop 276 m, T on R4-20 at (-343,750), ground grade <= 3.6 %, nearest 8/6-lane road 152 m, water 0

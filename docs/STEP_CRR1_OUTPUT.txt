@@ -1,0 +1,6 @@
+CRR-1 reach of the 4-lane road along the rail (median = pier row, half width 11.2 m, clearance need 7 m, station ignored)
+south-1: start s 0 m, END s 450 m (low) at (80, 814), reach 450 m; clearance 4.8..13.3 m, shallow-cut 30 m, cross slope > 3 m 0 m; crossings with small roads: R2-28@310; nearest small road to the end: R2-28 145 m
+north-1: start s 0 m, END s 350 m (big-road J1-E) at (252, -29), reach 350 m; clearance 10.4..13.5 m, shallow-cut 0 m, cross slope > 3 m 0 m; crossings with small roads: none; nearest small road to the end: R4-12 75 m
+east-1: start s 0 m, END s 350 m (low) at (414, 341), reach 350 m; clearance 4.8..13.2 m, shallow-cut 20 m, cross slope > 3 m 0 m; crossings with small roads: R2-28@270; nearest small road to the end: R2-28 81 m
+west-nw: start s 0 m, END s 360 m (big-road J1-S) at (-347, 47), reach 360 m; clearance 12.9..14.4 m, shallow-cut 0 m, cross slope > 3 m 0 m; crossings with small roads: none; nearest small road to the end: R4-20 449 m
+west-sw: start s 0 m, END s 780 m (water) at (-695, 789), reach 780 m; clearance 9.8..19.9 m, shallow-cut 0 m, cross slope > 3 m 0 m; crossings with small roads: R4-20@400; nearest small road to the end: R2-31 69 m

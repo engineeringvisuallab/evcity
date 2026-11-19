@@ -157,3 +157,6 @@ User thought the 360 photo would turn with the mouse; the JPG is flat in a norma
 - STEP AUTOHIDE-2: `holdUi` also in `TourUI.ts` (`showSites` / `hideSites`), `Photo360.ts` and `export/ExportPanel.ts` (`open` / `close`), keys 'tour', 'photo360', 'export'. Their panels now keep the button row visible while open.
 - Checks: `tsc` on AutoHide, Toolbar, GoldHUD alone = 0 errors. Full `tsc` and `npm run build` NOT RUN (no node_modules, no network). Not tested in a browser or on a phone.
 - NEXT: look at it in the game (PC + phone).
+
+## Pointer: rail-corridor city road (CRR)
+The 4-lane road along the rail viaduct (pier row = median) is in `HANDOFF_CITY_ROAD_DESIGN.md` section 11 (CRR-1, CRR-2, CRR-1b, CRR-2b, CRR-5a done 2026-11-19, next CRR-5b (put the roads in the game, see section 11): `scripts/city-rail-road-reach.ts`, `tools/city-rail-road-plot.py`, docs/city_rail_road_reach.*). Road work uses that file and `HANDOFF_ROAD_DESIGN.md`, not this one.
