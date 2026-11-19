@@ -14,8 +14,6 @@ Created 2026-11-18. Zones Z01-Z10 come from `HANDOFF_CITY_DESIGN.md` section 2 (
 - From the twin (apply to the streets): "jaiga sonkulan na hoy" (not cramped), hospital on the OUTER side with more land, university toward a SIDE with big land, "real engineering hoy. kono ajgobi kisu na koro" (real numbers, nothing random). The road design follows the land-use layout.
 - From the road work (HANDOFF_ROAD_DESIGN.md, 2026-11-18): roads first, junctions are only numbers now, junction connection roads (mouths, ramps, slips, loops, pads, markings) come later. The user does not code: act as his engineer, decide and fix yourself, say only when something conflicts with a fixed item.
 
-- 2026-11-19 (Bengali, user, with 4 reference images of a J1 city road plan): "follow the idea of the 4 images, roughly (they are only a rough scale). The 8-lane roads are FIXED, the railway is FIXED, the existing roads are FIXED. Design all the other roads you need, by your own engineering. A road may go UNDER the railway. The terrain may be a little low: manage it (grade / deck). Structures are no problem: the existing buildings will be replaced / relocated LATER. After the roads we design the structures again to fit the roads." = the 4 images are the IDEA (hierarchy, radial + ring, roundabouts, blocks), not the geometry; the red sketch is NOT needed any more; buildings may be removed later; roads first, then structures.
-
 ## 1. HARD RULES (every session, every step; a step with a FAIL is NOT done)
 
 | # | Rule | Check |
@@ -103,9 +101,9 @@ C0 -> R0 -> C1 -> C2 -> C3 -> R1 -> C4 (Z10, Z01) -> R2 -> C4 (other zones) -> R
 | Step | Status | Note |
 |---|---|---|
 | Handoff written | done 2026-11-18 | this file; nothing in src or data changed; NOT RUN: water check, scripts, tsc, npm run build, game |
-| R0 | partly done 2026-11-19 | free-land grid and faces, rail viaduct heights, existing taps found (section 11); the full per-zone list is NOT done |
+| R0 | not started | next step (after twin C0) |
 | R1 | not started | |
-| R2 | v1 done 2026-11-19 (partial) | skeleton R4 + C for the faces, checks PASS, see section 11; user looks at `docs/city_roads_v1.png`, then more work on curves, the north pocket, zone use |
+| R2 | not started | |
 | R3 | not started | |
 | R4 | not started | |
 | R5 | not started | |
@@ -114,12 +112,3 @@ C0 -> R0 -> C1 -> C2 -> C3 -> R1 -> C4 (Z10, Z01) -> R2 -> C4 (other zones) -> R
 ## 10. HOW TO START IN A NEW CHAT
 
 Paste: "Read HANDOFF_CITY_ROAD_DESIGN.md completely (rules first), then HANDOFF_CITY_DESIGN.md, then the HARD RULES block and 'CURRENT ORDER' at the top of HANDOFF_ROAD_DESIGN.md. Work as a city road engineer. Do ONLY step R0 (list the roads, fixed objects and old local streets inside each red zone). Run the water check first, say the plan first, change no src before telling me in plain words, PASS / FAIL list (NOT RUN where not run), then STOP. Reply in short Banglish. Changed files only in a versioned zip."
-
-## 11. DECISIONS AND FINDINGS OF 2026-11-19 (read these before R2 / R3)
-
-- **J1 junction is 315 m deep.** The arms in `J1ArmData.ts` start at s = 315 m from the J1 centre (-87, -277). Inside that circle is the ground J1 (pad rCore 100, approach, slips): no new street there. `tools/city-road-design.py` keeps new streets >= 170 m from J1 and >= 45 m from every arm axis.
-- **The railway near the centre is on a VIADUCT, 12-19 m above the ground** (Central station 34 m, ground 18 m): all five lines (west-nw, west-sw, south-1, east-1, north-1) run on bridge from the station to about 1.5-2 km. Streets may pass UNDER it (user order). Rule used: >= 8 m clear (`design - ground` in the rail data), cut streets where it is lower. Pier spacing and pier clearance NOT checked yet (R4 / R5).
-- **Free land by faces** (`docs/city_free_land_grid.json`, 10 m cells, made by `scripts/city-freeland-export.ts`): free = slope < 15 %, no water, no 8-lane ROW, no J1; rail corridor counts as free where on viaduct. The arms cut it into faces: NW sector (40 ha, City Mall side), north pocket (9.5 ha, EVLab side), NE sector (35 ha), the big south / centre face (89 ha, station and civic core), small bits. Rivers close the east and south-west.
-- **Existing taps on the 8-lane arms (already in the game):** SW arm at about s 890 (R4-20 east, R2-77 west, near (-590, 430)); E arm at about s 500 (R4-12, near (318, -10)). The new streets use these. NO new tap on an arm was made (CR5 kept).
-- **OPEN QUESTION FOR THE USER (CR5):** the 4 images show roundabouts on the 8-lane arms every 400-800 m. CR5 allows one tap per arm >= 600 m from the plaza edge. The north pocket (between the W arm and the N arm, EVLab side, 9.5 ha) cannot be reached without a tap on an arm or a branch from J1. Decide: new tap on an arm (with numbers), a street under or over an arm without a join, or leave the pocket to EVLab only.
-- **v1 design (this step, R2 partial):** `tools/city-road-design.py` -> `docs/city_roads_v1.json`, `docs/city_roads_v1.png`, `docs/STEPCITYR2_OUTPUT.txt`. Station-centred radial + ring city in the big face (5 radial R4 streets, forecourt ring r 120, ring r 220, collector arc r 300, roundabouts at the ring x radial nodes), and one primary spine with collector ribs and a frontage loop in each other face. Short streets / loops that broke the 60 m node rule were removed, cut-off groups were joined by one collector each. All run checks PASS (see the output file). This is a SKELETON: shapes are straight / arc, local L streets (80-120 m blocks) are NOT made, levels / cut / fill are NOT made, the existing 601 buildings were NOT checked against the streets.
