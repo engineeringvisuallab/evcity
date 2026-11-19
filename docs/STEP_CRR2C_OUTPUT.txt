@@ -1,0 +1,29 @@
+CRR-2c loops at the real ENDs of the rail-corridor roads (T on an existing small road, V50 R >= 75 m, R3 straight-spiral-arc-spiral-straight; own pier test centre offset >= 14.7 m, under-deck >= 7 m, rail earthworks <= 0.1 m)
+  reasons: {"under deck # m < #":506,"own pier # m < #":110402}
+  closest misses of the own pier test (leave s, R, deflection, target, worst pier s, its distance): [s450 R150 92deg R2-33 pier s610 14.6 m] [s449.99999986379424 R150 92deg R2-33 pier s610 14.6 m] [s449.99999986379424 R200 65deg R2-33 pier s610 14.4 m] [s450 R200 65deg R2-33 pier s610 14.4 m] [s450 R100 108deg R2-29 pier s610 14.4 m]
+south-1: 110908 shapes, 0 checked, 0 pass
+  NO loop passes the checks: see the reasons in the handoff (needs a decision)
+  reasons: {"under deck # m < #":5018,"own pier # m < #":49229}
+  closest misses of the own pier test (leave s, R, deflection, target, worst pier s, its distance): [s259.99994630917087 R75 108deg R4-13 pier s308 11.6 m] [s259.99994630917087 R100 98deg R4-13 pier s308 10.9 m] [s259.99994630917087 R100 108deg R4-13 pier s308 10.7 m] [s210 R100 96deg R4-13 pier s260 10.2 m] [s209.99998847512455 R100 96deg R4-13 pier s260 10.2 m]
+north-1: 54247 shapes, 0 checked, 0 pass
+  NO loop passes the checks: see the reasons in the handoff (needs a decision)
+  reasons: {"own pier # m < #":31399}
+  closest misses of the own pier test (leave s, R, deflection, target, worst pier s, its distance): [s209.99890807960227 R150 23deg R4-13 pier s276 12.2 m] [s210 R150 23deg R4-13 pier s276 12.2 m] [s210 R100 23deg R4-13 pier s276 11.2 m] [s209.99890807960227 R100 23deg R4-13 pier s276 11.2 m] [s210 R300 26deg R4-13 pier s276 9.5 m]
+east-1: 31399 shapes, 0 checked, 0 pass
+  NO loop passes the checks: see the reasons in the handoff (needs a decision)
+  reasons: {"own pier # m < #":14347}
+  closest misses of the own pier test (leave s, R, deflection, target, worst pier s, its distance): [s209.9999839761708 R150 -106deg R2-77 pier s270 2.2 m] [s209.9999839761708 R150 -106deg R2-77 pier s270 2.2 m] [s209.9999839761708 R200 -106deg R2-77 pier s270 2.2 m] [s209.9999839761708 R150 -106deg R2-77 pier s270 2.2 m] [s209.9999839761708 R100 -106deg R2-77 pier s270 2.2 m]
+west-nw (user hint): 14347 shapes, 0 checked, 0 pass
+  NO loop passes the checks: see the reasons in the handoff (needs a decision)
+  reasons: {"own pier # m < #":43683}
+  closest misses of the own pier test (leave s, R, deflection, target, worst pier s, its distance): [s210 R75 -104deg R4-20 pier s270 10.0 m] [s209.9999839761708 R75 -104deg R4-20 pier s270 10.0 m] [s269.99990717300096 R75 -99deg R4-20 pier s324 7.5 m] [s270 R75 -99deg R4-20 pier s324 7.5 m] [s210 R75 -103deg R4-20 pier s270 6.9 m]
+west-nw (hint-free, the hint gave nothing): 43683 shapes, 0 checked, 0 pass
+  NO loop passes the checks: see the reasons in the handoff (needs a decision)
+  reasons: {"own pier # m < #":761}
+  closest misses of the own pier test (leave s, R, deflection, target, worst pier s, its distance): [s215 R200 -55deg R2-30 pier s270 0.8 m] [s215 R200 -55deg R2-30 pier s270 0.8 m] [s215 R150 -55deg R2-30 pier s270 0.8 m] [s215 R100 -55deg R2-30 pier s270 0.8 m] [s215 R100 -55deg R2-30 pier s270 0.8 m]
+west-sw (user hint): 761 shapes, 0 checked, 0 pass
+  NO loop passes the checks: see the reasons in the handoff (needs a decision)
+  reasons: {"own pier # m < #":108807,"J#-S # m < #":68}
+  closest misses of the own pier test (leave s, R, deflection, target, worst pier s, its distance): [s735 R75 -134deg R2-29 pier s830 14.5 m] [s730 R75 -134deg R2-29 pier s830 14.5 m] [s729.9999582925528 R75 -134deg R2-29 pier s830 14.5 m] [s750 R75 -134deg R2-29 pier s830 14.5 m] [s745 R75 -134deg R2-29 pier s830 14.5 m]
+west-sw (hint-free, the hint gave nothing): 108875 shapes, 68 checked, 0 pass
+  NO loop passes the checks: see the reasons in the handoff (needs a decision)
