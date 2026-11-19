@@ -269,6 +269,14 @@ export class ResidentialFlat {
     if (this.plotsEnabled && this.plots.length > 0) this.applyPlots(x, z, out, nat);
   }
 
+  /** RESIDENTIAL LEVEL (2026-11-19): the biggest flat-zone weight (0..1) at (x, z). 1 = the ground is fully the flat zone ground (roads of the area are laid on it), 0 = natural ground. */
+  weightAt(x: number, z: number): number {
+    if (!this.enabled) return 0;
+    let m = 0;
+    for (let i = 0; i < this.zones.length; i++) { const w = this.zones[i].weight(x, z); if (w > m) m = w; }
+    return m;
+  }
+
   /** Plot pads (STEP 3): same water fade idea as the zones, shorter (PLOT_BANK_FADE). */
   private applyPlots(x: number, z: number, out: TerrainSample, nat: number): void {
     let fade = -1;

@@ -358,6 +358,130 @@ export class RoadNetwork {
     this.buildSegments();
   }
 
+  /** Ground that daylightReach() measures against (flat residential ground included). Set by reprofileResidential(); null = the natural sampler. */
+  private reachGround: NaturalSampler | null = null;
+  /** Per segment: extra flat terrace width (m) of the earthwork platform (residential roads). */
+  private splat = new Float32Array(0);
+
+  /**
+   * RESIDENTIAL LEVEL (2026-11-19): the C / L / R2 / R4 roads inside the flattened residential zones are laid ON the flat ground, so road level = ground level
+   * (before this they kept their natural-ground heights and ran in a trench or on a bank, up to +-8 m, beside the flat zone ground).
+   *   ys' = ys + w * (ground - ys),  w = zone weight (1 inside the zone, 0 outside) x fade near other roads / the railway x fade near a structure.
+   * `ground(x, z)` = natural ground + the flat zone shift (no road earthwork). `protect(x, z)` = 0..1 (1 = free to move, 0 = keep the old height), used for the railway corridor.
+   * Roads that are not C / L / R2 / R4 are never moved (their ends and crossings stay as they are: w fades to 0 within FADE_OTHER m of them).
+   * Runs ONCE at the end of the TerrainGenerator constructor (after the railway is planned: the railway cannot change). Returns numbers for the check script.
+   */
+  reprofileResidential(ground: NaturalSampler, zoneWeight: (x: number, z: number) => number, protect: (x: number, z: number) => number, flatWeight: (x: number, z: number) => number = () => 1, plateauMax = 0): { roads: number; pts: number; moved: number; maxShift: number } {
+    const isRes = (r: RoadSpec): boolean => !r.earth && /^(C|L|R2|R4)-/.test(r.name);
+    const OTHER_PIN = 18; // m: within this distance of a road that is NOT moved, the height is pinned
+    const SLOPE = 0.04; // the shift may grow by at most 4 % per metre away from a pinned point (the road keeps its own grade on top of it)
+    const SMOOTH = 20;
+    const SM_OFS: [number, number][] = [[0, 0], [SMOOTH, 0], [-SMOOTH, 0], [0, SMOOTH], [0, -SMOOTH]];
+    const STRUCT_IDX = 6; // points before / after a bridge or structure are pinned
+    const CELLN = 100;
+    const grid = new Map<string, number[]>();
+    const others: number[] = [];
+    for (const r of this.roads) {
+      if (isRes(r)) continue;
+      for (let i = 0; i < r.xs.length; i++) {
+        const k = `${Math.floor(r.xs[i] / CELLN)},${Math.floor(r.zs[i] / CELLN)}`;
+        let l = grid.get(k);
+        if (!l) grid.set(k, (l = []));
+        l.push(others.length / 2);
+        others.push(r.xs[i], r.zs[i]);
+      }
+    }
+    const nearOther = (x: number, z: number): number => {
+      let best = Infinity;
+      const cx = Math.floor(x / CELLN), cz = Math.floor(z / CELLN);
+      for (let a = cx - 1; a <= cx + 1; a++) for (let b = cz - 1; b <= cz + 1; b++) {
+        const l = grid.get(`${a},${b}`);
+        if (!l) continue;
+        for (const q of l) { const d = Math.hypot(others[q * 2] - x, others[q * 2 + 1] - z); if (d < best) best = d; }
+      }
+      return best;
+    };
+    let nr = 0, np = 0, moved = 0, maxShift = 0;
+    const sc = { h: 0, water: NaN, fx: 0, fz: 0 };
+    for (const r of this.roads) {
+      if (!isRes(r)) continue;
+      const n = r.xs.length;
+      const w = new Float64Array(n);
+      const pin = new Uint8Array(n);
+      for (let i = 0; i < n; i++) {
+        const zw = zoneWeight(r.xs[i], r.zs[i]);
+        const pr = protect(r.xs[i], r.zs[i]);
+        w[i] = zw * pr;
+        if (zw <= 0 || pr <= 0 || nearOther(r.xs[i], r.zs[i]) < OTHER_PIN) pin[i] = 1;
+      }
+      for (let i = 0; i < n; i++) {
+        if (r.bridgeOf[i] < 0) continue;
+        for (let k = -STRUCT_IDX; k <= STRUCT_IDX; k++) if (i + k >= 0 && i + k < n) pin[i + k] = 1;
+      }
+      // arc distance to the nearest pinned point (two passes)
+      const dist = new Float64Array(n).fill(Infinity);
+      for (let i = 0; i < n; i++) if (pin[i]) dist[i] = 0;
+      for (let i = 1; i < n; i++) dist[i] = Math.min(dist[i], dist[i - 1] + (r.cum[i] - r.cum[i - 1]));
+      for (let i = n - 2; i >= 0; i--) dist[i] = Math.min(dist[i], dist[i + 1] + (r.cum[i + 1] - r.cum[i]));
+      let any = false;
+      for (let i = 0; i < n; i++) if (!pin[i] && w[i] > 0.001) { any = true; break; }
+      if (!any) continue;
+      nr++;
+      const old = Float64Array.from(r.ys);
+      const gh = new Float64Array(n);
+      for (let i = 0; i < n; i++) {
+        if (pin[i] || w[i] <= 0.001) continue;
+        // target = the ground smoothed over +-SMOOTH m (a road on a ridge / in a hollow goes toward the mean ground: less cut and fill beside it)
+        let sum = 0;
+        for (const [ox, oz] of SM_OFS) { ground(r.xs[i] + ox, r.zs[i] + oz, sc); sum += sc.h; }
+        const tgt = sum / SM_OFS.length;
+        gh[i] = tgt;
+        const want = w[i] * (tgt - old[i]);
+        const cap = Math.min(SLOPE * dist[i], 3.5 + 4.5 * flatWeight(r.xs[i], r.zs[i])); // outside the flat zones the road moves at most 3.5 m
+        r.ys[i] = old[i] + Math.max(-cap, Math.min(cap, want));
+      }
+      // grade repair (free points only): the road keeps its old grade or the limit of its kind, whichever is bigger
+      const lim = (i: number): number => Math.max(r.maxGrade, Math.abs(old[i + 1] - old[i]) / Math.max(1e-6, r.cum[i + 1] - r.cum[i]));
+      for (let pass = 0; pass < 3; pass++) {
+        for (let i = 1; i < n; i++) {
+          if (pin[i]) continue;
+          const g = lim(i - 1) * (r.cum[i] - r.cum[i - 1]);
+          r.ys[i] = Math.max(r.ys[i - 1] - g, Math.min(r.ys[i - 1] + g, r.ys[i]));
+        }
+        for (let i = n - 2; i >= 0; i--) {
+          if (pin[i]) continue;
+          const g = lim(i) * (r.cum[i + 1] - r.cum[i]);
+          r.ys[i] = Math.max(r.ys[i + 1] - g, Math.min(r.ys[i + 1] + g, r.ys[i]));
+        }
+      }
+      if (plateauMax > 0) {
+        r.plateau = new Float32Array(n);
+        for (let i = 0; i < n; i++) { const t = Math.min(1, Math.max(0, (zoneWeight(r.xs[i], r.zs[i]) - 0.85) / 0.15)); r.plateau[i] = plateauMax * t * t * (3 - 2 * t); } // terrace only inside the area (ends within ~20 m of its edge)
+      }
+      for (let i = 0; i < n; i++) {
+        if (pin[i]) continue;
+        r.hNat[i] = r.hNat[i] + w[i] * (gh[i] - r.hNat[i]);
+        np++;
+        const d = Math.abs(r.ys[i] - old[i]);
+        if (d > 0.05) moved++;
+        if (d > maxShift) maxShift = d;
+      }
+    }
+    if (nr === 0) return { roads: 0, pts: 0, moved: 0, maxShift: 0 };
+    // from now on the cut / fill reach is measured against the ground that really is there (flat zone ground included)
+    this.reachGround = (x, z, out) => {
+      this.natural(x, z, out);
+      if (zoneWeight(x, z) > 0) ground(x, z, out);
+    };
+    this.chunkSegs.clear();
+    this.padCells.clear();
+    this.chunkPads.clear();
+    this.cells.clear();
+    this.j1Cells.clear();
+    this.buildSegments();
+    return { roads: nr, pts: np, moved, maxShift };
+  }
+
   /** Height of an existing road at the point (x, z): nearest point on its polyline, linear between the two vertices. */
   private roadYAt(r: RoadSpec, x: number, z: number): { y: number; d: number } {
     let best = Infinity;
@@ -2829,17 +2953,18 @@ export class RoadNetwork {
    */
   private daylightReach(r: RoadSpec): { reach: Float32Array; cut: Float32Array } {
     const n = r.xs.length;
-    const core = r.halfWidth + r.shoulder;
+    const core0 = r.halfWidth + r.shoulder;
     const raw = new Float32Array(n);
     const rawCut = new Float32Array(n);
     const hs: number[] = [];
     for (let i = 0; i < n; i++) {
+      const core = core0 + (r.plateau && r.bridgeOf[i] < 0 ? r.plateau[i] : 0);
       // ground heights on both sides every 4 m of run (wet ground skipped)
       hs.length = 0;
       let need = 0;
       for (const sd of [-1, 1]) {
         for (let run = 4; run <= DAY_MAX; run += 4) {
-          this.natural(r.xs[i] + r.nx[i] * (core + run) * sd, r.zs[i] + r.nz[i] * (core + run) * sd, this.scratch);
+          (this.reachGround ?? this.natural)(r.xs[i] + r.nx[i] * (core + run) * sd, r.zs[i] + r.nz[i] * (core + run) * sd, this.scratch);
           if (!Number.isNaN(this.scratch.water) && this.scratch.h < this.scratch.water + 0.3) continue;
           hs.push(run, this.scratch.h);
           need = Math.max(need, (this.scratch.h - r.ys[i]) / run);
@@ -2891,6 +3016,7 @@ export class RoadNetwork {
     this.sca = new Float32Array(total);
     this.scb = new Float32Array(total);
     this.scity = new Uint8Array(total);
+    this.splat = new Float32Array(total);
     const cityPlan = (this.cityPlan = new CityPlan(this.sites));
     const walk = Config.city.roadside.sidewalk;
 
@@ -2929,6 +3055,7 @@ export class RoadNetwork {
         const city = !r.earth && r.bridgeOf[i] < 0 && r.bridgeOf[j] < 0 && (r.tier === 4 || cityPlan.siteAt(mx, mz) >= 0);
         this.scity[s] = city ? 1 : 0;
         this.score[s] = r.halfWidth + (city ? Math.max(r.shoulder, walk) : r.shoulder);
+        this.splat[s] = r.plateau && r.bridgeOf[i] < 0 && r.bridgeOf[j] < 0 ? (r.plateau[i] + r.plateau[j]) / 2 : 0;
         this.searth[s] = r.earth ? 1 : 0;
         // STEP 5.3b: the piece that joins the embankment to a structure (one end on the deck, one on the ground) is still a daylight piece (with the ordinary embankment it would pull the ground up under the slab)
         this.sday[s] = r.daylight && !(r.bridgeOf[i] >= 0 && r.bridgeOf[i] === r.bridgeOf[j]) ? 1 : 0;
@@ -2944,7 +3071,7 @@ export class RoadNetwork {
           if (Math.min(i, j) >= bsp.i0 + endPts && Math.max(i, j) <= bsp.i1 - endPts) this.sbridge[s] = 2;
         }
 
-        const reach = this.score[s] + Math.max(this.sea[s], this.seb[s]) + 2;
+        const reach = this.score[s] + this.splat[s] + Math.max(this.sea[s], this.seb[s]) + 2;
         const x0 = Math.min(r.xs[i], r.xs[j]) - reach;
         const x1 = Math.max(r.xs[i], r.xs[j]) + reach;
         const z0 = Math.min(r.zs[i], r.zs[j]) - reach;
@@ -3075,7 +3202,7 @@ export class RoadNetwork {
       const traw = t;
       t = t < 0 ? 0 : t > 1 ? 1 : t;
       const d = Math.hypot(x - (this.sax[s] + abx * t), z - (this.saz[s] + abz * t));
-      const core = this.score[s];
+      const core = this.score[s] + this.splat[s];
       if (this.sbridge[s]) {
         // Under a bridge deck the ground is left alone (the valley / river stays) - but the ground may never touch the slab:
         // anything higher than 0.7 m below the deck surface is carved away (smoothly, over a few metres).

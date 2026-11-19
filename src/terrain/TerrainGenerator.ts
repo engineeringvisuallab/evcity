@@ -18,6 +18,9 @@ import { LibrarySite, LIBRARY_PLOT } from '../library/LibrarySite';
 import { ProtoSite, PROTO_PLOT } from '../buildings/ProtoSite';
 import { InfraSite, INFRA_PLACEMENTS } from '../engineering/InfraSites';
 import { ResidentialFlat, BANK_REACH } from './ResidentialFlat';
+import { areaWeight } from './ResidentialAreas';
+/** RESIDENTIAL LEVEL: flat terrace (m) at road level on each side of a residential road (covers the building plots). */
+const PLATEAU_M = 28;
 import { BUILDING_PLACEMENTS } from '../buildings/Placements';
 import { FILL_PLACEMENTS } from '../buildings/PlacementsFill';
 
@@ -110,6 +113,14 @@ export class TerrainGenerator {
     this.railForm = new RailFormation(this.rail);
     this.roads.addJ1Arms(); // STEP J1-e2: the J1 arms join the road network after the railway is planned (the railway cannot change)
     this.roads.addCorridorRoads(); // STEP CRR-5b: the 5 rail-corridor roads, AFTER the rail, railForm and the J1 arms (Config.roads.corridorRoads, default OFF)
+    // RESIDENTIAL LEVEL (2026-11-19): the C / L / R2 / R4 roads inside the flat residential zones are laid on the flat ground (road level = ground level). After the railway (it cannot change): the weight fades out near the rail corridor and near every other road.
+    this.roads.reprofileResidential(
+      (x, z, o) => { this.sampleGround(x, z, o); this.residentialFlat.apply(x, z, o); },
+      (x, z) => Math.max(this.residentialFlat.weightAt(x, z), areaWeight(x, z)),
+      (x, z) => (this.railForm.inCorridor(x, z, 90) ? (this.railForm.inCorridor(x, z, 60) ? (this.railForm.inCorridor(x, z, 35) ? (this.railForm.inCorridor(x, z, 15) ? 0 : 0.25) : 0.5) : 0.75) : 1),
+      (x, z) => this.residentialFlat.weightAt(x, z),
+      PLATEAU_M,
+    );
     // the mall floor = the natural ground height at the plot centre (the plot is nearly level there, +-0.4 m)
     // the mall floor = the MEDIAN natural ground over its (bent) plot
     {

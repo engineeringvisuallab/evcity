@@ -40,6 +40,8 @@ export interface RoadSpec {
   ys: Float64Array;
   /** Natural ground height under each point before the road was cut in (m). */
   hNat: Float32Array;
+  /** RESIDENTIAL LEVEL: extra flat terrace width (m) beside the road at every point (0 / undefined = none). Only the earthwork uses it. */
+  plateau?: Float32Array;
   /** Unit "left" normal at each point (x, z). */
   nx: Float32Array;
   nz: Float32Array;
