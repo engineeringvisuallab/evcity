@@ -30,6 +30,7 @@ import { WORLD_REGIONS } from '../city/WorldRegions';
 const V = Config.vegetation;
 const B = V.bamboo;
 const D = V.dense;
+const SPOTS = V.jungleSpots;
 /** The forest districts of the world map: the dense jungle (ghono bon) grows here. */
 const FOREST_REGIONS = WORLD_REGIONS.filter((r) => r.kind === 'forest');
 
@@ -111,9 +112,20 @@ export class TreePlacer {
       const d = Math.min(x - r.minX, r.maxX - x, z - r.minZ, r.maxZ - z); // > 0 inside, < 0 outside
       if (d > best) best = d;
     }
-    if (best < -D.fade * 0.9) return 0;
-    const d = best + this.denseNoise.noise(x / 110, z / 110) * D.fade * 0.45;
-    return smooth(-D.fade * 0.4, D.fade, d);
+    let out = 0;
+    if (best >= -D.fade * 0.9) {
+      const d = best + this.denseNoise.noise(x / 110, z / 110) * D.fade * 0.45;
+      out = smooth(-D.fade * 0.4, D.fade, d);
+    }
+    // extra round jungle spots (Config.vegetation.jungleSpots): the same ragged-edge maths, d = r - distance to the centre
+    for (const sp of SPOTS) {
+      const dist = Math.hypot(x - sp.x, z - sp.z);
+      if (dist > sp.r + sp.fade * 0.9) continue;
+      const d = sp.r - dist + this.denseNoise.noise(x / 110, z / 110) * sp.fade * 0.45;
+      const v = smooth(-sp.fade * 0.4, sp.fade, d);
+      if (v > out) out = v;
+    }
+    return out;
   }
 
   /** BAMBOO GROVE density 0..1 (patches of the noise field, see Config.vegetation.bamboo). */

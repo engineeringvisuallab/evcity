@@ -411,6 +411,15 @@ export const Config = {
      * (a ragged edge). Lower `understory` (and `chance`) if the frame rate drops: they are the number of trees.
      */
     dense: { fade: 260, chance: 0.75, bigChance: 0.62, understory: 0.4, understoryScale: [0.3, 0.85] as [number, number], bambooShare: 0.1, bigShare: 0.1 },
+    /**
+     * EXTRA JUNGLE SPOTS (ghono jongol outside the forest districts): round patches that use the SAME dense jungle as above (same chance, big trees, understory,
+     * tall bamboo, grass thinning). `r` = radius (m) of the full jungle, `fade` = the ragged edge fades out over this many m outside the full part (smoothstep, like the district edge).
+     * A: coast side (east-hills-south / southeast-coast). B: beside the river (west-delta). Beach, water, steep slope, roads and plots are still cut out by the tree tests.
+     */
+    jungleSpots: [
+      { id: 'A-coast', x: 4769, z: 2296, r: 500, fade: 150 },
+      { id: 'B-river', x: -2718, z: 1167, r: 500, fade: 150 },
+    ] as Array<{ id: string; x: number; z: number; r: number; fade: number }>,
     /** Tree chance (0..1 of the normal chance) inside a planned city area, by zone kind. Unlisted zones get no trees. */
     cityZoneChance: { green: 0.6, recreation: 0.7 } as Record<string, number>,
     /** Outside the plan of a city the forest grows back over this distance (m). */
