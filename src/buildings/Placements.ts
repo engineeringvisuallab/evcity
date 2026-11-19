@@ -19,7 +19,7 @@ export interface BuildingPlacement {
   seed?: number;
 }
 
-import { FILL_PLACEMENTS } from './PlacementsFill';
+import { DRAWN_FILL_PLACEMENTS } from './PlacementsResidential';
 
 export const BUILDING_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'mud-hut', x: -2300, z: -1520, yaw: 0, W: 9, D: 7, zone: 'village-west' },
@@ -97,7 +97,7 @@ const cellKey = (i: number, j: number): number => (i + 4096) * 8192 + (j + 4096)
 function getFillGrid(): Map<number, BuildingPlacement[]> {
   if (fillGrid) return fillGrid;
   const g = new Map<number, BuildingPlacement[]>();
-  for (const p of FILL_PLACEMENTS) {
+  for (const p of DRAWN_FILL_PLACEMENTS) {
     const r = radius(p);
     for (let i = Math.floor((p.x - r) / FILL_CELL); i <= Math.floor((p.x + r) / FILL_CELL); i++) {
       for (let j = Math.floor((p.z - r) / FILL_CELL); j <= Math.floor((p.z + r) / FILL_CELL); j++) {
@@ -114,7 +114,7 @@ function getFillGrid(): Map<number, BuildingPlacement[]> {
 /** Is (x, z) on a placed building's footprint (+ margin)? Cheap: used by trees / rocks / grass so nothing grows through a building. */
 export function placementContains(x: number, z: number, margin = 0): boolean {
   for (const p of BUILDING_PLACEMENTS) if (insideOf(p, x, z, margin)) return true;
-  if (FILL_PLACEMENTS.length === 0) return false;
+  if (DRAWN_FILL_PLACEMENTS.length === 0) return false;
   // a footprint reaches at most ~ 130 m from its centre and cells list every footprint that touches them (radius is already in the cells)
   const list = getFillGrid().get(cellKey(Math.floor(x / FILL_CELL), Math.floor(z / FILL_CELL)));
   if (list) for (const p of list) if (insideOf(p, x, z, margin)) return true;

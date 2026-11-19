@@ -54,6 +54,9 @@ USER: 'full terrain raster image hisebe download hok, ar 3 chaple road centerlin
 - NEW `scripts/raster-test.ts` (`npx tsx scripts/raster-test.ts /tmp/out`): new layers valid + zip built. Checked with PIL: PNG 500x500, GeoTIFF reads as float32 with tags, pgw ok. `npx tsc --noEmit` clean.
 - NOT done / not seen: the panel in a running browser (button look, freeze time at 5 m), opening the files in QGIS (only PIL was used), key-3 layer itself unchanged. `scripts/export-test.ts` has 3 FAILs (junction_pads 0, road_medians 0, real-3D roads-only M8): SAME 3 on the original zip, not from this change.
 
+## Residential buildings (2026-11-19)
+Homes along the C / L / R2 / R4 roads inside the residential (abasik) areas, made by `scripts/residential-place.ts` into `src/buildings/PlacementsResidential.ts`. Full state, rules, areas: `HANDOFF_RESIDENTIAL.md`. Code + headless check PASS, NOT seen in a running game.
+
 ## Other docs
 `VEHICLE_ENERGY_HANDOFF_BN.md` (energy/station steps), `docs/CHARGING_POINTS.md`, `docs/ROAD_SIGNS_HANDOFF_BN.md`, `CHANGES_*.md`.
 

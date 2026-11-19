@@ -13,7 +13,7 @@ import type { TerrainGenerator } from '../terrain/TerrainGenerator';
 import { FILL_MODEL_BY_ID } from './models/fillRegistry';
 import type { BuiltBuilding } from './models/BuildingKit';
 import type { BuildingPlacement } from './Placements';
-import { FILL_PLACEMENTS } from './PlacementsFill';
+import { DRAWN_FILL_PLACEMENTS } from './PlacementsResidential';
 
 export interface FillBuildingsDeps {
   root: THREE.Object3D; // world.root: children use ABSOLUTE world coordinates
@@ -97,7 +97,7 @@ export class FillBuildings {
     this.holder.name = 'fill-buildings';
     d.root.add(this.holder);
     const byChunk = new Map<string, { p: BuildingPlacement; floorY: number; minY: number; key: string }[]>();
-    for (const p of FILL_PLACEMENTS) {
+    for (const p of DRAWN_FILL_PLACEMENTS) {
       if (!FILL_MODEL_BY_ID[p.id]) continue;
       // ground range under the (rotated) footprint
       const c = Math.cos(p.yaw), s = Math.sin(p.yaw);

@@ -10,7 +10,7 @@ import { buildChunkMeshData, buildIndices } from '../terrain/TerrainMeshData';
 import { buildRoadMesh } from '../roads/RoadMesh';
 import { CHUNKS_PER_SIDE, chunkOriginX, chunkOriginZ, worldToChunkCoord } from '../world/WorldGrid';
 import { BUILDING_PLACEMENTS } from '../buildings/Placements';
-import { FILL_PLACEMENTS } from '../buildings/PlacementsFill';
+import { DRAWN_FILL_PLACEMENTS } from '../buildings/PlacementsResidential';
 import { medianHalfAt, planMedians } from '../roads/MedianPlan';
 import { footPiece, planFootpaths } from '../roads/FootpathPlan';
 
@@ -315,7 +315,7 @@ export function buildRealModel(gen: TerrainGenerator, o: RealModelOptions): Real
   if (L.buildings) {
     const wall: V = [0.8, 0.76, 0.7];
     const roof: V = [0.42, 0.42, 0.45];
-    for (const p of [...BUILDING_PLACEMENTS, ...FILL_PLACEMENTS]) {
+    for (const p of [...BUILDING_PLACEMENTS, ...DRAWN_FILL_PLACEMENTS]) {
       if (!inside(p.x, p.z)) continue;
       const c = Math.cos(p.yaw);
       const sn = Math.sin(p.yaw);

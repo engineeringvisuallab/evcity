@@ -3,7 +3,7 @@
 // Everything here is pure data: no scene, no DOM, so it also runs headless (scripts/export-test.ts).
 import type { TerrainGenerator } from '../terrain/TerrainGenerator';
 import { BUILDING_PLACEMENTS } from '../buildings/Placements';
-import { FILL_PLACEMENTS } from '../buildings/PlacementsFill';
+import { DRAWN_FILL_PLACEMENTS } from '../buildings/PlacementsResidential';
 import { FACILITIES, WORLD_ZONES, WORLD_ZONE_IDS, rasterizeWorldZones } from '../city/WorldZones';
 import { ENGINEERING_AREAS } from '../city/EngineeringZones';
 import { ROAD_STATION_SITES } from '../parking/RoadStationSites';
@@ -99,7 +99,7 @@ const junctionPads = (t: TerrainGenerator): GisLayer => {
 };
 
 /** Every placed building: the hand-placed ones (villages, landmarks) and the city fill (hundreds of houses, shops, apartment blocks). */
-const ALL_PLACEMENTS = [...BUILDING_PLACEMENTS, ...FILL_PLACEMENTS];
+const ALL_PLACEMENTS = [...BUILDING_PLACEMENTS, ...DRAWN_FILL_PLACEMENTS];
 
 const buildings = (): GisLayer => {
   const features: GisFeature[] = ALL_PLACEMENTS.map((p) => {

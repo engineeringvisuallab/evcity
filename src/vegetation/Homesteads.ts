@@ -1,5 +1,5 @@
 import { BUILDING_PLACEMENTS } from '../buildings/Placements';
-import { FILL_PLACEMENTS } from '../buildings/PlacementsFill';
+import { DRAWN_FILL_PLACEMENTS } from '../buildings/PlacementsResidential';
 import { Config } from '../core/Config';
 
 /**
@@ -32,7 +32,7 @@ function build(): Map<number, Home[]> {
       }
   };
   for (const p of BUILDING_PLACEMENTS) add(p);
-  for (const p of FILL_PLACEMENTS) add(p);
+  for (const p of DRAWN_FILL_PLACEMENTS) add(p);
   return g;
 }
 
