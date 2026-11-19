@@ -457,7 +457,7 @@ export class Engine {
       dom: this.renderer.domElement,
       container,
       catalog,
-      playerWorld: (out) => this.player.getWorldPosition(out),
+      playerWorld: (out) => this.focusWorld(out),
       onFoot: () => this.player.active && !this.player.inVehicle && !this.cameraController.isFreeFly && !this.helis.pilot && !this.boats.skipper,
     });
 
@@ -467,7 +467,7 @@ export class Engine {
       physics,
       origin: this.world.origin,
       terrain: this.world.terrain,
-      playerWorld: (out) => this.player.getWorldPosition(out),
+      playerWorld: (out) => this.focusWorld(out),
     });
 
     // --- City Library (always standing there when the game starts) ---
@@ -476,7 +476,7 @@ export class Engine {
       physics,
       origin: this.world.origin,
       terrain: this.world.terrain,
-      playerWorld: (out) => this.player.getWorldPosition(out),
+      playerWorld: (out) => this.focusWorld(out),
       onFoot: () => this.player.active && !this.player.inVehicle && !this.cameraController.isFreeFly && !this.helis.pilot && !this.boats.skipper,
     });
 
@@ -486,7 +486,7 @@ export class Engine {
       physics,
       origin: this.world.origin,
       terrain: this.world.terrain,
-      playerWorld: (out) => this.player.getWorldPosition(out),
+      playerWorld: (out) => this.focusWorld(out),
       teleport: (w) => this.player.teleportTo(w),
       lockTarget: this.renderer.domElement,
       faceSouth: () => {
@@ -502,20 +502,20 @@ export class Engine {
       physics,
       origin: this.world.origin,
       terrain: this.world.terrain,
-      playerWorld: (out) => this.player.getWorldPosition(out),
+      playerWorld: (out) => this.focusWorld(out),
     });
 
     this.placedBuildings = new PlacedBuildings({
       root: this.world.root,
       terrain: this.world.terrain,
-      playerWorld: (out) => this.player.getWorldPosition(out),
+      playerWorld: (out) => this.focusWorld(out),
     });
 
     // City fill (Step 1+2): hundreds of buildings along the streets of site 0, drawn instanced with chunk LOD
     this.fillBuildings = new FillBuildings({
       root: this.world.root,
       terrain: this.world.terrain,
-      playerWorld: (out) => this.player.getWorldPosition(out),
+      playerWorld: (out) => this.focusWorld(out),
     });
 
     // lighthouse in the sea: its lantern shines at night (stands on its own, so it is visible from far away)
@@ -528,7 +528,7 @@ export class Engine {
       physics,
       origin: this.world.origin,
       terrain: this.world.terrain,
-      playerWorld: (out) => this.player.getWorldPosition(out),
+      playerWorld: (out) => this.focusWorld(out),
     });
 
     // --- Sea airport (south coast, on filled land in the sea; the model is hidden when the player is far away) ---
@@ -537,7 +537,7 @@ export class Engine {
       physics,
       origin: this.world.origin,
       terrain: this.world.terrain,
-      playerWorld: (out) => this.player.getWorldPosition(out),
+      playerWorld: (out) => this.focusWorld(out),
       site: this.world.terrain.airportSea,
     });
 
@@ -545,7 +545,7 @@ export class Engine {
     this.airplanes = new AirplaneManager({
       root: this.world.root,
       terrain: this.world.terrain,
-      playerWorld: (out) => this.player.getWorldPosition(out),
+      playerWorld: (out) => this.focusWorld(out),
     });
 
     // --- Army camp (north-west, at the foot of the hill; hidden when the player is far away) ---
@@ -554,7 +554,7 @@ export class Engine {
       physics,
       origin: this.world.origin,
       terrain: this.world.terrain,
-      playerWorld: (out) => this.player.getWorldPosition(out),
+      playerWorld: (out) => this.focusWorld(out),
     });
 
     // --- EVC Agro Research Institute (west farmland; hidden when the player is far away) ---
@@ -567,7 +567,7 @@ export class Engine {
       input: this.input,
       dom: this.renderer.domElement,
       container,
-      playerWorld: (out) => this.player.getWorldPosition(out),
+      playerWorld: (out) => this.focusWorld(out),
       teleport: (w) => this.player.teleportTo(w),
       onFoot: () => this.player.active && !this.player.inVehicle && !this.cameraController.isFreeFly && !this.helis.pilot && !this.boats.skipper,
     });
@@ -663,7 +663,7 @@ export class Engine {
     this.people = new PeopleManager({ scene: this.scene, terrain: this.world.terrain, origin: this.world.origin, graph, vehicles: this.vehicles, player: this.player });
     this.people.setStations(this.rail, this.trains); // people walk to the stations, climb the stairs and board / leave the trains
     // --- Crop fields (table FarmFields.ts): crops, trees and props + REAL farmers (people) and machines (vehicles) at work, streamed around the player ---
-    this.farm = new FarmManager({ root: this.world.root, terrain: this.world.terrain, playerWorld: (out) => this.player.getWorldPosition(out), people: this.people, vehicles: this.vehicles });
+    this.farm = new FarmManager({ root: this.world.root, terrain: this.world.terrain, playerWorld: (out) => this.focusWorld(out), people: this.people, vehicles: this.vehicles });
     this.busStops = new BusStops({ scene: this.scene, origin: this.world.origin, terrain: this.world.terrain, graph, sites: this.world.terrain.sites });
     this.trafficSignals = new TrafficSignals(graph);
     this.trafficLights = new TrafficLightLayer(this.world.root, this.trafficSignals);
@@ -811,7 +811,7 @@ export class Engine {
       input: this.input,
       voice: this.voice,
       container,
-      playerWorld: (out) => this.player.getWorldPosition(out),
+      playerWorld: (out) => this.focusWorld(out),
       clock: () => this.airplanes.time,
       lazy: true, // sites are built when the player comes near (fast start-up)
       canStart: () => !this.vehicles.driver && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.planeRider.riding && !this.playerJet.riding && !this.mall.inside && !this.library.inside && !this.agro.inside,
@@ -1268,6 +1268,21 @@ export class Engine {
     if (this.tmpA.z < -1 || this.tmpA.z > 1) return null;
     return { x: (this.tmpA.x * 0.5 + 0.5) * this.container.clientWidth, y: (-this.tmpA.y * 0.5 + 0.5) * this.container.clientHeight };
   };
+
+  /**
+   * Distance focus for show/hide + lazy build of buildings, sites, airports, farms ... .
+   * While the player sits in a car / helicopter / boat the capsule (Player.render) stays FROZEN where he got in,
+   * so a manager that used player.getWorldPosition() thought he was still far away: far buildings stayed hidden
+   * (white box / nothing) until he stepped out. This follows the controlled vehicle instead. Safe to call during construction.
+   */
+  private focusWorld(out: THREE.Vector3): THREE.Vector3 {
+    const heli = this.helis?.pilot;
+    if (heli) return heli.getWorldPosition(out);
+    const boat = this.boats?.skipper;
+    if (boat) return boat.getWorldPosition(out);
+    const vehicle = this.vehicles?.driver;
+    return vehicle ? vehicle.getWorldPosition(out) : this.player.getWorldPosition(out);
+  }
 
   private controlledWorld(out: THREE.Vector3): THREE.Vector3 {
     const heli = this.helis?.pilot;
