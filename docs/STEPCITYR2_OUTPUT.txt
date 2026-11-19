@@ -1,0 +1,40 @@
+CITY ROAD DESIGN v1 (R4 primary + C collector). Fixed: J1, arms, ring, rail, built roads. Local L streets = next step.
+NEW STREETS: C 10.0 km, R4 6.8 km  (50 lines)
+dropped (no way to reach the network without breaking a check): F11S-LOOP2.1
+CHECKS
+PASS  no crossing of two new streets except roundabout nodes (CR4): 0 bad
+      roundabout nodes ring x radial / arc: 9
+PASS  no new street crosses an existing street: 0 
+PASS  every new street >= 45 m from an 8-lane arm axis: 0 too close 
+PASS  no new street inside 170 m of J1 centre, no branch from J1 or an arm (CR5)
+PASS  WATER check: 0 of 1748 points (10 m) on water
+      slope: 0.2 % of the points are on steep ground (> 15 %, class D)  [grading needed there, R4 step]
+PASS  min radius R4 >= 130 m, C >= 60 m (10 % slack for the 20 m sampling): 0 short 
+PASS  street under the railway: 22 places, all need >= 8 m clear under the viaduct: 0 low 
+      under rail east-1    F11-FORECOURT        at (118,322)  clear 15.4 m
+      under rail east-1    F11-RING220          at (216,340)  clear 15.5 m
+      under rail north-1   F11-FORECOURT        at (82,213)  clear 15.5 m
+      under rail north-1   F11-RING220          at (151,140)  clear 16.0 m
+      under rail north-1   F11-ARC300.1         at (205,81)  clear 15.6 m
+      under rail north-1   F11-LOOP1            at (217,63)  clear 15.6 m
+      under rail north-1   F5-LOOP1             at (264,-97)  clear 14.5 m
+      under rail south-1   F11-FORECOURT        at (19,418)  clear 15.5 m
+      under rail south-1   F11-RING220          at (35,517)  clear 15.4 m
+      under rail south-1   F11-ARC300.2         at (48,596)  clear 15.4 m
+      under rail west-nw   F11-FORECOURT        at (-95,227)  clear 16.6 m
+      under rail west-nw   F11-RING220          at (-174,166)  clear 16.2 m
+      under rail west-nw   F11-ARC300.2         at (-238,117)  clear 16.7 m
+      under rail west-nw   F11-LOOP1            at (-278,89)  clear 16.1 m
+      under rail west-nw   F8-LOOP3             at (-529,-57)  clear 17.6 m
+      under rail west-nw   F8-P1a               at (-559,-72)  clear 18.7 m
+      under rail west-nw   F8-C1.-112a          at (-549,-67)  clear 18.7 m
+      under rail west-sw   F11-FORECOURT        at (-100,366)  clear 16.0 m
+      under rail west-sw   F11-RING220          at (-183,421)  clear 15.8 m
+      under rail west-sw   F11-ARC300.2         at (-250,466)  clear 15.9 m
+      under rail west-sw   F14-LOOP1            at (-593,715)  clear 17.6 m
+      under rail west-sw   F14-P1a              at (-510,654)  clear 15.1 m
+PASS  street ends >= 60 m apart (CR4 node spacing): 0 pairs closer
+PASS  every new street reaches the existing street network: 0 cut off 
+PASS  NOT RUN: npx tsc, npm run build, game look (no src change in this step)
+
+RESULT: ALL RUN CHECKS PASS
