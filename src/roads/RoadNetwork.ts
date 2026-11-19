@@ -373,6 +373,7 @@ export class RoadNetwork {
    */
   reprofileResidential(ground: NaturalSampler, zoneWeight: (x: number, z: number) => number, protect: (x: number, z: number) => number, flatWeight: (x: number, z: number) => number = () => 1, plateauMax = 0): { roads: number; pts: number; moved: number; maxShift: number } {
     const isRes = (r: RoadSpec): boolean => !r.earth && /^(C|L|R2|R4)-/.test(r.name);
+    this.stubReport = this.trimResidentialStubs(isRes, zoneWeight); // RL3 step 2: a stub that ends under a high embankment is cut back to the toe BEFORE anything else is computed
     const OTHER_PIN = 18; // m: within this distance of a road that is NOT moved, the height is pinned
     const SLOPE = 0.04; // the shift may grow by at most 4 % per metre away from a pinned point (the road keeps its own grade on top of it)
     const SMOOTH = 20;
@@ -468,6 +469,8 @@ export class RoadNetwork {
       }
     }
     if (nr === 0) return { roads: 0, pts: 0, moved: 0, maxShift: 0 };
+    // RL3 step 1: junctions between a moved road and another road get ONE height (the branch ramps to the through road, inside its grade limit)
+    this.junctionReport = this.harmonizeResidentialJunctions(isRes, zoneWeight);
     // from now on the cut / fill reach is measured against the ground that really is there (flat zone ground included)
     this.reachGround = (x, z, out) => {
       this.natural(x, z, out);
@@ -480,6 +483,175 @@ export class RoadNetwork {
     this.j1Cells.clear();
     this.buildSegments();
     return { roads: nr, pts: np, moved, maxShift };
+  }
+
+  /** Roads cut back by the last stub pass (RL3 step 2), for scripts/res-stub-check.ts. */
+  stubReport: { road: string; end: 'start' | 'end'; other: string; dy: number; cut: number; metres: number }[] = [];
+
+  /**
+   * RL3 STEP 2 (2026-11-19): STUBS UNDER AN EMBANKMENT. R4-29 (west-homes) starts 3 m from R6-15, but R6-15 runs 13 m ABOVE the ground there (a 4 % arterial across a valley), so
+   * the road ended inside R6's fill: R6's bank and the R4-29 terrace met in a 14 m wall (user: "14 m mismatch"; it is NOT the railway: no rail within 150 m). A moved road that ends
+   * within 8 m of a road that is NOT moved and more than 1.5 m off in height cannot join it (the junction pass skips it too): the stub is cut back until its end is clear of the bank
+   * (half width + shoulder of the other road + 2.2 x height difference, from the other road's centre line). Bridges, a road under 12 points or a cut of more than 25 % are left alone.
+   * Index based data follows (bridges of this road, the junction record at the old end). Roads that are not C / L / R2 / R4 are never trimmed.
+   */
+  private trimResidentialStubs(isRes: (r: RoadSpec) => boolean, zoneWeight: (x: number, z: number) => number): { road: string; end: 'start' | 'end'; other: string; dy: number; cut: number; metres: number }[] {
+    const JD = 8, DY = 1.5, SLOPE_RUN = 2.2, MAX_FRAC = 0.25;
+    const out: { road: string; end: 'start' | 'end'; other: string; dy: number; cut: number; metres: number }[] = [];
+    const distTo = (b: RoadSpec, x: number, z: number): { d: number; y: number } => {
+      let best = Infinity, y = 0;
+      for (let k = 0; k + 1 < b.xs.length; k++) {
+        const vx = b.xs[k + 1] - b.xs[k], vz = b.zs[k + 1] - b.zs[k];
+        const l2 = vx * vx + vz * vz || 1;
+        const t = Math.max(0, Math.min(1, ((x - b.xs[k]) * vx + (z - b.zs[k]) * vz) / l2));
+        const d = Math.hypot(x - b.xs[k] - t * vx, z - b.zs[k] - t * vz);
+        if (d < best) { best = d; y = b.ys[k] + (b.ys[k + 1] - b.ys[k]) * t; }
+      }
+      return { d: best, y };
+    };
+    for (const a of this.roads) {
+      if (!isRes(a) || a.closed || a.xs.length < 12) continue;
+      for (const end of ['start', 'end'] as const) {
+        const n = a.xs.length, e = end === 'start' ? 0 : n - 1;
+        if (zoneWeight(a.xs[e], a.zs[e]) <= 0.01) continue;
+        let hit: { b: RoadSpec; dy: number } | null = null;
+        for (const b of this.roads) {
+          if (b === a || isRes(b)) continue;
+          const t = distTo(b, a.xs[e], a.zs[e]);
+          if (t.d < JD && Math.abs(a.ys[e] - t.y) > DY && (!hit || Math.abs(a.ys[e] - t.y) > Math.abs(hit.dy))) hit = { b, dy: t.y - a.ys[e] };
+        }
+        if (!hit) continue;
+        const b = hit.b, need = b.halfWidth + b.shoulder + SLOPE_RUN * Math.abs(hit.dy);
+        let k = 0;
+        const idx = (m: number): number => (end === 'start' ? m : n - 1 - m);
+        while (k < n - 8 && distTo(b, a.xs[idx(k)], a.zs[idx(k)]).d < need) k++;
+        if (k === 0 || k > MAX_FRAC * n) continue;
+        let onBridge = false;
+        for (let m = 0; m <= k; m++) if (a.bridgeOf[idx(m)] >= 0) onBridge = true;
+        if (onBridge) continue;
+        const ox = a.xs[e], oz = a.zs[e];
+        const metres = Math.abs(a.cum[idx(k)] - a.cum[e]);
+        const from = end === 'start' ? k : 0, to = end === 'start' ? n : n - k;
+        const cum0 = a.cum[from];
+        a.xs = a.xs.slice(from, to); a.zs = a.zs.slice(from, to); a.ys = a.ys.slice(from, to); a.hNat = a.hNat.slice(from, to);
+        a.nx = a.nx.slice(from, to); a.nz = a.nz.slice(from, to); a.bridgeOf = a.bridgeOf.slice(from, to);
+        if (a.plateau) a.plateau = a.plateau.slice(from, to);
+        a.cum = a.cum.slice(from, to).map((v) => v - cum0);
+        a.length = a.cum[a.cum.length - 1];
+        if (end === 'start') for (const br of this.bridges) if (br.roadId === a.id) { br.i0 -= k; br.i1 -= k; }
+        // the junction record at the old end (a T with no branch any more)
+        for (let q = this.junctions.length - 1; q >= 0; q--) if (Math.hypot(this.junctions[q].x - ox, this.junctions[q].z - oz) < JD + 2) this.junctions.splice(q, 1);
+        out.push({ road: a.name, end, other: b.name, dy: hit.dy, cut: k, metres });
+      }
+    }
+    return out;
+  }
+
+  /** Numbers of the last junction pass (RL3 step 1), for scripts/res-junction-check.ts. */
+  junctionReport: { found: number; fixed: number; worstBefore: number; worstAfter: number; list: { a: string; e: number; b: string; before: number; after: number; ramp: number }[] } = { found: 0, fixed: 0, worstBefore: 0, worstAfter: 0, list: [] };
+
+  /**
+   * RL3 STEP 1 (2026-11-19): JUNCTION HARMONY. reprofileResidential moves every C / L / R2 / R4 road on its own, so where two of them meet (a branch END on the side of a
+   * through road) the heights no longer matched (RA-N: C-4 / R2-16 against R4-11 4.2 m, C-4 / R2-74 4.1 m, RA-SW C-2 / L-6 2.1 m). A junction here = an end of a moved road
+   * within JD m of another road. The BRANCH (the road that ends there; if two roads end at each other, the shorter one) is lifted / lowered to the height of the THROUGH road at that
+   * point, the shift fades out along the branch with a smoothstep (length Ld: it adds at most ~4 % grade), then a grade repair walks away from the junction so the road
+   * keeps max(limit of its kind, its own grade). The through road is never changed here; roads that are not moved (R6, M8, F ...) are through roads by definition.
+   * Only junctions inside / at the edge of an area (zoneWeight > 0.01) are touched. Bridges stop the blend.
+   */
+  private harmonizeResidentialJunctions(isRes: (r: RoadSpec) => boolean, zoneWeight: (x: number, z: number) => number): { found: number; fixed: number; worstBefore: number; worstAfter: number; list: { a: string; e: number; b: string; before: number; after: number; ramp: number }[] } {
+    const JD = 8; // m: an end this close to another road is a junction
+    const END_IDX = 2; // touching the other road within this many points of ITS end = end-to-end
+    const TOL = 0.03; // m
+    const EXTRA = 0.04; // the blend adds at most about this much grade
+    const roads = this.roads;
+    type Job = { a: RoadSpec; e: number; b: RoadSpec; q: number; endToEnd: boolean };
+    const touch = (b: RoadSpec, x: number, z: number): { d: number; y: number; k: number } => {
+      let best = Infinity, y = 0, k0 = 0;
+      for (let k = 0; k + 1 < b.xs.length; k++) {
+        const vx = b.xs[k + 1] - b.xs[k], vz = b.zs[k + 1] - b.zs[k];
+        const l2 = vx * vx + vz * vz || 1;
+        const t = Math.max(0, Math.min(1, ((x - b.xs[k]) * vx + (z - b.zs[k]) * vz) / l2));
+        const d = Math.hypot(x - b.xs[k] - t * vx, z - b.zs[k] - t * vz);
+        if (d < best) { best = d; y = b.ys[k] + (b.ys[k + 1] - b.ys[k]) * t; k0 = t > 0.5 ? k + 1 : k; }
+      }
+      return { d: best, y, k: k0 };
+    };
+    const jobs: Job[] = [];
+    for (const a of roads) {
+      if (!isRes(a) || a.closed || a.xs.length < 4) continue;
+      for (const e of [0, a.xs.length - 1]) {
+        if (zoneWeight(a.xs[e], a.zs[e]) <= 0.01) continue;
+        // every road within JD of this end (a cluster of 2-3 ends / a T on a through road)
+        const cands: { b: RoadSpec; d: number; k: number; bEnd: boolean }[] = [];
+        for (const b of roads) {
+          if (b === a || b.xs.length < 2) continue;
+          const t = touch(b, a.xs[e], a.zs[e]);
+          if (t.d < JD) cands.push({ b, d: t.d, k: t.k, bEnd: t.k <= END_IDX || t.k >= b.xs.length - 1 - END_IDX });
+        }
+        if (cands.length === 0) continue;
+        cands.sort((p, q) => p.d - q.d);
+        // the through road: a road that is not moved (R6, M8, F ...) first, then a moved road that passes through (touched away from its end), then the LONGEST road of the cluster
+        let thr = cands.find((c) => !isRes(c.b)) ?? cands.find((c) => !c.bEnd) ?? null;
+        if (!thr) {
+          const longest = cands.reduce((m, c) => (c.b.length > m.b.length || (c.b.length === m.b.length && c.b.name < m.b.name) ? c : m));
+          if (a.length > longest.b.length || (a.length === longest.b.length && a.name < longest.b.name)) continue; // a IS the through road of this cluster
+          thr = longest;
+        }
+        // a road that is not moved and sits far off in height is a CROSSING (viaduct / cut-and-cover), not a junction: RL3 step 2, not here
+        if (!isRes(thr.b) && Math.abs(a.ys[e] - touch(thr.b, a.xs[e], a.zs[e]).y) > 1.5) continue;
+        if (thr.b.bridgeOf[thr.k] >= 0) continue;
+        jobs.push({ a, e, b: thr.b, q: thr.k, endToEnd: thr.bEnd });
+      }
+    }
+    const step = (j: Job): number => { const t = touch(j.b, j.a.xs[j.e], j.a.zs[j.e]); return j.a.ys[j.e] - t.y; };
+    const before = jobs.map(step);
+    const ramp = jobs.map(() => 0);
+    for (let round = 0; round < 3; round++) {
+      let changed = false;
+      for (let ji = 0; ji < jobs.length; ji++) {
+        const j = jobs[ji], a = j.a, n = a.xs.length, e = j.e;
+        const delta = -step(j);
+        if (Math.abs(delta) <= TOL) continue;
+        changed = true;
+        const dir = e === 0 ? 1 : -1;
+        const base = Float64Array.from(a.ys);
+        const Ld = Math.min(Math.max(30, (1.5 * Math.abs(delta)) / EXTRA), 0.5 * a.length, 220);
+        ramp[ji] = Math.max(ramp[ji], Ld);
+        for (let k = 0; k < n; k++) {
+          const i = e + dir * k;
+          if (i < 0 || i >= n) break;
+          const d = Math.abs(a.cum[i] - a.cum[e]);
+          if (d >= Ld || (k > 0 && a.bridgeOf[i] >= 0)) break;
+          const t = d / Ld;
+          a.ys[i] = base[i] + delta * (1 - t * t * (3 - 2 * t));
+        }
+        // grade repair, walking AWAY from the junction (the junction point itself stays on the through road)
+        for (let k = 1; k < n; k++) {
+          const i = e + dir * k, p = i - dir;
+          if (i < 0 || i >= n) break;
+          if (a.bridgeOf[i] >= 0) break;
+          const ds = Math.max(1e-6, Math.abs(a.cum[i] - a.cum[p]));
+          const g = Math.max(a.maxGrade, Math.abs(base[i] - base[p]) / ds) * ds;
+          const y = Math.max(a.ys[p] - g, Math.min(a.ys[p] + g, a.ys[i]));
+          const moved = Math.abs(y - a.ys[i]) > 1e-9;
+          a.ys[i] = y;
+          if (!moved && Math.abs(a.cum[i] - a.cum[e]) > Ld) break;
+        }
+      }
+      if (!changed) break;
+    }
+    const list = jobs.map((j, ji) => ({ a: j.a.name, e: j.e, b: j.b.name, before: before[ji], after: step(jobs[ji]), ramp: ramp[ji] }));
+    const abs = (v: number[]): number => v.reduce((m, x) => Math.max(m, Math.abs(x)), 0);
+    // the junction records (type T / 4way, used by signs and the traffic graph) follow the roads
+    for (const jn of this.junctions) {
+      if (zoneWeight(jn.x, jn.z) <= 0.01) continue;
+      for (const r of roads) {
+        if (!isRes(r)) continue;
+        const t = touch(r, jn.x, jn.z);
+        if (t.d < 2) { jn.y = t.y; break; }
+      }
+    }
+    return { found: jobs.length, fixed: list.filter((x) => Math.abs(x.before) > TOL).length, worstBefore: abs(before), worstAfter: abs(list.map((x) => x.after)), list };
   }
 
   /** Height of an existing road at the point (x, z): nearest point on its polyline, linear between the two vertices. */
