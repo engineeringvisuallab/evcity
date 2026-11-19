@@ -25,6 +25,7 @@ import { CLASS_R4_OPEN, CLASS_R2_OPEN, CLASS_C_ZONE, CLASS_L_ZONE } from './stan
 import { R2_NEW_LINE_DATA } from './r2/R2NewLineData';
 import { C_NEW_LINE_DATA } from './c/CNewLineData';
 import { L_NEW_LINE_DATA } from './l/LNewLineData';
+import { CORRIDOR_ROAD_DATA, type CorridorPiece } from './crr/CorridorRoadData';
 import { STRUCT, STRUCT_CARVE } from './ring/RingStructures';
 import { SCENARIOS, cutRange, nearestPoint, uvToWorld, type ScenarioSpec } from '../interchange/scenario/J6Scenario';
 
@@ -323,6 +324,167 @@ export class RoadNetwork {
     this.cells.clear();
     this.j1Cells.clear();
     this.buildSegments();
+  }
+
+  // =====================================================================================
+  // STEP CRR-5b: the 5 RAIL-CORRIDOR ROADS (4 lanes along the rail viaduct, pier row = median)
+  // =====================================================================================
+  /** What addCorridorRoads built, per piece (headless checks, scripts/crr-check.ts). Empty while the flag is off. */
+  readonly corridorReport: { name: string; roadId: number; length: number; maxGrade: number; maxCut: number; maxFill: number; minClearMargin: number | null; anchors: { road: string; dy: number; dist: number }[]; issues: string[] }[] = [];
+  private corridorAdded = false;
+
+  /**
+   * STEP CRR-5b: adds the rail-corridor roads from CORRIDOR_ROAD_DATA. TerrainGenerator calls this AFTER `rail`, `railForm` and the J1 arms exist, NOT inside addJ1Arms (that one runs before the rail long section):
+   * so the railway never sees the new asphalt (no pier moves, no new steel span, THE RAILWAY CANNOT CHANGE). Existing roads are not changed. Same finishing as addJ1Arms (clear the lookup tables, buildSegments).
+   * NO junction pad, traffic link or median mesh for the new nodes here (CRR-5c / CRR-3): the ends are free, a crossing with an existing road is only a height match.
+   */
+  addCorridorRoads(): void {
+    if (!Config.roads.corridorRoads.enabled || this.corridorAdded) return;
+    this.corridorAdded = true;
+    const before = this.roads.length;
+    for (const piece of CORRIDOR_ROAD_DATA) {
+      try {
+        this.layoutCorridorPiece(piece);
+      } catch (err) {
+        console.warn(`[corridor road ${piece.name}] skipped: ${err instanceof Error ? err.message : String(err)}`); // a wrong piece must never break the world build
+      }
+    }
+    if (this.roads.length === before) return;
+    this.chunkSegs.clear();
+    this.padCells.clear();
+    this.chunkPads.clear();
+    this.cells.clear();
+    this.j1Cells.clear();
+    this.buildSegments();
+  }
+
+  /** Height of an existing road at the point (x, z): nearest point on its polyline, linear between the two vertices. */
+  private roadYAt(r: RoadSpec, x: number, z: number): { y: number; d: number } {
+    let best = Infinity;
+    let y = 0;
+    for (let k = 0; k + 1 < r.xs.length; k++) {
+      const vx = r.xs[k + 1] - r.xs[k];
+      const vz = r.zs[k + 1] - r.zs[k];
+      const l2 = vx * vx + vz * vz || 1;
+      const t = Math.max(0, Math.min(1, ((x - r.xs[k]) * vx + (z - r.zs[k]) * vz) / l2));
+      const d = Math.hypot(x - r.xs[k] - t * vx, z - r.zs[k] - t * vz);
+      if (d < best) {
+        best = d;
+        y = r.ys[k] + (r.ys[k + 1] - r.ys[k]) * t;
+      }
+    }
+    return { y, d: best };
+  }
+
+  private layoutCorridorPiece(piece: CorridorPiece): void {
+    const C = Config.roads.corridorRoads;
+    const ds0 = KIND.highway.step;
+    // resample the fixed polyline to the highway step (even spacing, both ends kept)
+    const m = piece.pts.length;
+    const cum = [0];
+    for (let i = 1; i < m; i++) cum.push(cum[i - 1] + Math.hypot(piece.pts[i][0] - piece.pts[i - 1][0], piece.pts[i][1] - piece.pts[i - 1][1]));
+    const L = cum[m - 1];
+    const n = Math.max(2, Math.ceil(L / ds0)) + 1;
+    const pts: number[][] = [];
+    const cap: number[] = [];
+    let j = 0;
+    for (let k = 0; k < n; k++) {
+      const d = (L * k) / (n - 1);
+      while (j < m - 2 && cum[j + 1] < d) j++;
+      const t = cum[j + 1] > cum[j] ? Math.min(1, Math.max(0, (d - cum[j]) / (cum[j + 1] - cum[j]))) : 0;
+      pts.push([piece.pts[j][0] + (piece.pts[j + 1][0] - piece.pts[j][0]) * t, piece.pts[j][1] + (piece.pts[j + 1][1] - piece.pts[j][1]) * t]);
+      cap.push(piece.cap ? piece.cap[j] + (piece.cap[j + 1] - piece.cap[j]) * t : Infinity);
+    }
+    const ds = L / (n - 1);
+    // natural ground, smoothed (moving average, +-smoothHalf m) = the wanted surface; the road stays on the natural ground except where the rail clearance asks for a shallow cut
+    const g = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      this.natural(pts[i][0], pts[i][1], this.scratch);
+      g[i] = this.scratch.h;
+    }
+    const W = Math.max(1, Math.round(C.smoothHalf / ds));
+    const y = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      let s = 0;
+      let c = 0;
+      for (let k = -W; k <= W; k++) {
+        const q = i + k;
+        if (q < 0 || q >= n) continue;
+        s += g[q];
+        c++;
+      }
+      y[i] = s / c;
+    }
+    // bounds: cap = rail clearance (hi); anchors = the surface of the EXISTING road at a node (lo = hi)
+    const lo = new Float64Array(n).fill(-Infinity);
+    const hi = Float64Array.from(cap);
+    const anchors: { i: number; road: string; y: number; dist: number }[] = [];
+    for (const nd of piece.nodes) {
+      let ay: number;
+      if (nd.road === '@ground') {
+        this.natural(nd.x, nd.z, this.scratch); // joint rail part / loop: the natural ground height, the same in both pieces
+        ay = this.scratch.h;
+      } else {
+        const ex = this.roadByName(nd.road);
+        if (!ex) throw new Error(`node road ${nd.road} not found`);
+        ay = this.roadYAt(ex, nd.x, nd.z).y;
+      }
+      let bi = 0;
+      let bd = Infinity;
+      for (let i = 0; i < n; i++) {
+        const d = Math.hypot(pts[i][0] - nd.x, pts[i][1] - nd.z);
+        if (d < bd) {
+          bd = d;
+          bi = i;
+        }
+      }
+      lo[bi] = ay;
+      hi[bi] = ay;
+      anchors.push({ i: bi, road: nd.road, y: ay, dist: bd });
+    }
+    const gd = C.maxGrade * ds;
+    for (let i = 0; i < n; i++) y[i] = Math.min(hi[i], Math.max(lo[i], y[i]));
+    for (let it = 0; it < 400; it++) {
+      let moved = 0;
+      for (let i = 1; i < n; i++) {
+        const v = Math.min(y[i - 1] + gd, Math.max(y[i - 1] - gd, y[i]));
+        const w = Math.min(hi[i], Math.max(lo[i], v));
+        moved = Math.max(moved, Math.abs(w - y[i]));
+        y[i] = w;
+      }
+      for (let i = n - 2; i >= 0; i--) {
+        const v = Math.min(y[i + 1] + gd, Math.max(y[i + 1] - gd, y[i]));
+        const w = Math.min(hi[i], Math.max(lo[i], v));
+        moved = Math.max(moved, Math.abs(w - y[i]));
+        y[i] = w;
+      }
+      if (moved < 1e-4) break;
+    }
+    // section: along the rail 6.4 m median (pier row inside), 2 + 2 lanes x 3.5 m + 1.0 m shoulder, 22.4 m wide; the loop part has the normal R4 median
+    const rc = CLASS_R4_OPEN;
+    const rel = (kind: string): number => rc.elements.find((e) => e.kind === kind)?.width ?? 0;
+    const sec =
+      piece.kind === 'rail'
+        ? { halfWidth: 11.2, medianHalf: 3.2, shyMedian: 0, laneW: 3.5, lanesPerDir: 2, shyOuter: 1.0, shoulder: rel('ditch') }
+        : { halfWidth: rc.pavementEdge, medianHalf: rel('median'), shyMedian: rel('shoulder-in'), laneW: rc.laneW, lanesPerDir: rc.lanesPerDir, shyOuter: rel('shoulder-out'), shoulder: rel('ditch') };
+    this.addRoad({ tier: 1, kind: 'highway', name: piece.name, closed: false, pts, fixedY: Array.from(y), halfWidth: sec.halfWidth, shoulder: sec.shoulder, lanes: sec.lanesPerDir * 2, speedKmh: rc.speed, maxGrade: C.maxGrade, section: sec, daylight: true });
+    const road = this.roads[this.roads.length - 1];
+    // report (checked headless, scripts/crr-check.ts)
+    let maxG = 0;
+    let cut = 0;
+    let fill = 0;
+    let margin: number | null = null;
+    const issues: string[] = [];
+    for (let i = 0; i < n; i++) {
+      if (i > 0) maxG = Math.max(maxG, Math.abs(y[i] - y[i - 1]) / ds);
+      cut = Math.max(cut, g[i] - y[i]);
+      fill = Math.max(fill, y[i] - g[i]);
+      if (Number.isFinite(cap[i])) margin = margin === null ? cap[i] - y[i] : Math.min(margin, cap[i] - y[i]);
+    }
+    if (maxG > C.maxGrade + 1e-3) issues.push(`grade ${(maxG * 100).toFixed(2)} % > ${(C.maxGrade * 100).toFixed(0)} %`);
+    if (margin !== null && margin < -0.01) issues.push(`rail clearance short by ${(-margin).toFixed(2)} m`);
+    for (const a of anchors) if (Math.abs(y[a.i] - a.y) > 0.01) issues.push(`node ${a.road}: surface ${(y[a.i] - a.y).toFixed(2)} m off the existing road`);
+    this.corridorReport.push({ name: piece.name, roadId: road.id, length: L, maxGrade: maxG, maxCut: cut, maxFill: fill, minClearMargin: margin, anchors: anchors.map((a) => ({ road: a.road, dy: y[a.i] - a.y, dist: a.dist })), issues });
   }
 
   /**

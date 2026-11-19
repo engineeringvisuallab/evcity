@@ -109,6 +109,7 @@ export class TerrainGenerator {
     this.rail = new RailNetwork(this);
     this.railForm = new RailFormation(this.rail);
     this.roads.addJ1Arms(); // STEP J1-e2: the J1 arms join the road network after the railway is planned (the railway cannot change)
+    this.roads.addCorridorRoads(); // STEP CRR-5b: the 5 rail-corridor roads, AFTER the rail, railForm and the J1 arms (Config.roads.corridorRoads, default OFF)
     // the mall floor = the natural ground height at the plot centre (the plot is nearly level there, +-0.4 m)
     // the mall floor = the MEDIAN natural ground over its (bent) plot
     {

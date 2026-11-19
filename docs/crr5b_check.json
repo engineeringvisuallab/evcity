@@ -1,0 +1,318 @@
+{
+ "report": [
+  {
+   "name": "CRR-S1-a",
+   "roadId": 181,
+   "length": 379.99785374687224,
+   "maxGrade": 0.018288887980842314,
+   "maxCut": 0.2825611486135067,
+   "maxFill": 0.3411124176648812,
+   "minClearMargin": 1.775900463349167,
+   "anchors": [
+    {
+     "road": "R2-28",
+     "dy": 0,
+     "dist": 3.3975081419587028
+    },
+    {
+     "road": "@ground",
+     "dy": 0,
+     "dist": 1.4210854715202004e-14
+    }
+   ],
+   "issues": []
+  },
+  {
+   "name": "CRR-S1-loop",
+   "roadId": 182,
+   "length": 276.6192389851165,
+   "maxGrade": 0.03600507470940417,
+   "maxCut": 0.4841504405407129,
+   "maxFill": 0.49638712334618873,
+   "minClearMargin": null,
+   "anchors": [
+    {
+     "road": "@ground",
+     "dy": 0,
+     "dist": 0
+    },
+    {
+     "road": "R2-29",
+     "dy": 0,
+     "dist": 0.4808326112068772
+    }
+   ],
+   "issues": []
+  },
+  {
+   "name": "CRR-N1-a",
+   "roadId": 183,
+   "length": 340.00112678388837,
+   "maxGrade": 0.06000000000000019,
+   "maxCut": 0.1669540230458253,
+   "maxFill": 2.3968092491971404,
+   "minClearMargin": 3.585134964406059,
+   "anchors": [
+    {
+     "road": "J1-E",
+     "dy": 0,
+     "dist": 0
+    }
+   ],
+   "issues": []
+  },
+  {
+   "name": "CRR-N1-b",
+   "roadId": 184,
+   "length": 209.99258575067051,
+   "maxGrade": 0.060000000000000185,
+   "maxCut": 0.24725366532105042,
+   "maxFill": 2.3968092491971404,
+   "minClearMargin": 1.591690707791443,
+   "anchors": [
+    {
+     "road": "J1-E",
+     "dy": 0,
+     "dist": 0
+    },
+    {
+     "road": "@ground",
+     "dy": 0,
+     "dist": 0
+    }
+   ],
+   "issues": []
+  },
+  {
+   "name": "CRR-N1-loop",
+   "roadId": 185,
+   "length": 317.50636924619283,
+   "maxGrade": 0.06000000000000018,
+   "maxCut": 1.1751062879630432,
+   "maxFill": 0.2545869890487644,
+   "minClearMargin": null,
+   "anchors": [
+    {
+     "road": "@ground",
+     "dy": 0,
+     "dist": 0
+    },
+    {
+     "road": "R4-12",
+     "dy": 0,
+     "dist": 0.4964876634922307
+    }
+   ],
+   "issues": []
+  },
+  {
+   "name": "CRR-E1-a",
+   "roadId": 186,
+   "length": 80.00420389508788,
+   "maxGrade": 0.023315790951000313,
+   "maxCut": 0.185143630808561,
+   "maxFill": 0.11828674735608047,
+   "minClearMargin": 5.752486879908147,
+   "anchors": [
+    {
+     "road": "@ground",
+     "dy": 0,
+     "dist": 0
+    }
+   ],
+   "issues": []
+  },
+  {
+   "name": "CRR-E1-loop",
+   "roadId": 187,
+   "length": 194.19588308963222,
+   "maxGrade": 0.005358130357151155,
+   "maxCut": 0.1578084802182218,
+   "maxFill": 0.2592409373654192,
+   "minClearMargin": null,
+   "anchors": [
+    {
+     "road": "@ground",
+     "dy": 0,
+     "dist": 0
+    },
+    {
+     "road": "R2-28",
+     "dy": 0,
+     "dist": 0.5015974481593548
+    }
+   ],
+   "issues": []
+  },
+  {
+   "name": "CRR-WNW-a",
+   "roadId": 188,
+   "length": 350.747575123481,
+   "maxGrade": 0.05999999999999983,
+   "maxCut": 0.27805718828025405,
+   "maxFill": 0.5024165878830189,
+   "minClearMargin": 5.924038245490149,
+   "anchors": [
+    {
+     "road": "J1-S",
+     "dy": 0,
+     "dist": 0
+    }
+   ],
+   "issues": []
+  },
+  {
+   "name": "CRR-WNW-b",
+   "roadId": 189,
+   "length": 229.2567537558203,
+   "maxGrade": 0.05999999999999981,
+   "maxCut": 0.15197139988258357,
+   "maxFill": 0.5024165878830189,
+   "minClearMargin": 5.924038245490149,
+   "anchors": [
+    {
+     "road": "J1-S",
+     "dy": 0,
+     "dist": 0
+    },
+    {
+     "road": "@ground",
+     "dy": 0,
+     "dist": 0
+    }
+   ],
+   "issues": []
+  },
+  {
+   "name": "CRR-WNW-loop",
+   "roadId": 190,
+   "length": 555.2875179151272,
+   "maxGrade": 0.060000000000000164,
+   "maxCut": 0.7026923553384172,
+   "maxFill": 0.3974504589661656,
+   "minClearMargin": null,
+   "anchors": [
+    {
+     "road": "@ground",
+     "dy": 0,
+     "dist": 0
+    },
+    {
+     "road": "R2-77",
+     "dy": 0,
+     "dist": 0.3584689665787308
+    }
+   ],
+   "issues": []
+  },
+  {
+   "name": "CRR-WSW-a",
+   "roadId": 191,
+   "length": 609.9989709340022,
+   "maxGrade": 0.05701800570727872,
+   "maxCut": 0.3149034818870575,
+   "maxFill": 0.2557658760513313,
+   "minClearMargin": 2.854261533616352,
+   "anchors": [
+    {
+     "road": "R4-20",
+     "dy": 0,
+     "dist": 2.4773474752957254
+    },
+    {
+     "road": "@ground",
+     "dy": 0,
+     "dist": 0
+    }
+   ],
+   "issues": []
+  },
+  {
+   "name": "CRR-WSW-loop",
+   "roadId": 192,
+   "length": 401.11157441138744,
+   "maxGrade": 0.03726852917436767,
+   "maxCut": 0.6959235233340522,
+   "maxFill": 0.9774432580610757,
+   "minClearMargin": null,
+   "anchors": [
+    {
+     "road": "@ground",
+     "dy": 0,
+     "dist": 0
+    },
+    {
+     "road": "R4-20",
+     "dy": 0,
+     "dist": 0.4884669896728033
+    }
+   ],
+   "issues": []
+  }
+ ],
+ "ground": {
+  "CRR-S1-a": {
+   "bad": 0,
+   "tot": 147,
+   "maxD": 0.04145475235599605
+  },
+  "CRR-S1-loop": {
+   "bad": 0,
+   "tot": 108,
+   "maxD": 0.07478675841527149
+  },
+  "CRR-N1-a": {
+   "bad": 0,
+   "tot": 132,
+   "maxD": 0.1354400679658916
+  },
+  "CRR-N1-b": {
+   "bad": 0,
+   "tot": 84,
+   "maxD": 0.13307683030578943
+  },
+  "CRR-N1-loop": {
+   "bad": 2,
+   "tot": 123,
+   "maxD": 2.7768778260450944
+  },
+  "CRR-E1-a": {
+   "bad": 0,
+   "tot": 36,
+   "maxD": -0.000004082770288960091
+  },
+  "CRR-E1-loop": {
+   "bad": 0,
+   "tot": 78,
+   "maxD": 0.015411931043328053
+  },
+  "CRR-WNW-a": {
+   "bad": 0,
+   "tot": 135,
+   "maxD": 0.014905754831527673
+  },
+  "CRR-WNW-b": {
+   "bad": 0,
+   "tot": 90,
+   "maxD": 0.014906275645437006
+  },
+  "CRR-WNW-loop": {
+   "bad": 0,
+   "tot": 213,
+   "maxD": -0.1661471893403892
+  },
+  "CRR-WSW-a": {
+   "bad": 0,
+   "tot": 234,
+   "maxD": 0.017201907824915708
+  },
+  "CRR-WSW-loop": {
+   "bad": 0,
+   "tot": 156,
+   "maxD": 0.03643822917659989
+  }
+ },
+ "wet": 0,
+ "railSame": true,
+ "roadsChanged": 0
+}

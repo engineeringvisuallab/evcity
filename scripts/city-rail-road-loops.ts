@@ -122,7 +122,7 @@ for (const [id, L] of Object.entries(R1.lines)) {
     }
     if (bad) { why[bad.replace(/[0-9.]+/g, '#')] = (why[bad.replace(/[0-9.]+/g, '#')] ?? 0) + 1; continue; }
     seenT.add(key);
-    good.push({ st: c.st, R: c.R, Ls: c.Ls, deflDeg: +((c.d * 180) / Math.PI).toFixed(1), d1: +c.d1.toFixed(1), d2: +c.d2.toFixed(1), len: +c.len.toFixed(0), target: c.tr, T: [Math.round(c.tx), Math.round(c.tz)], maxGradePct: +(maxG * 100).toFixed(1), minBigRoad: +minBig.toFixed(0), minRail: Number.isFinite(minRail) ? +minRail.toFixed(0) : null, path: pts.map((p) => [Math.round(p[0]), Math.round(p[1])]) });
+    good.push({ st: c.st, R: c.R, Ls: c.Ls, deflDeg: +((c.d * 180) / Math.PI).toFixed(1), d1: +c.d1.toFixed(1), d2: +c.d2.toFixed(1), len: +c.len.toFixed(0), target: c.tr, T: [Math.round(c.tx), Math.round(c.tz)], maxGradePct: +(maxG * 100).toFixed(1), minBigRoad: +minBig.toFixed(0), minRail: Number.isFinite(minRail) ? +minRail.toFixed(0) : null, path: pts.map((p) => [Math.round(p[0]), Math.round(p[1])]), geo: { A: [c.A[0], c.A[1]], h0: c.h0, h1: c.h1, d: c.d, d1: c.d1, d2: c.d2 } }); // CRR-5b: exact geometry (the rounded path is only for the picture)
   }
   P('  reasons: ' + JSON.stringify(why));
   out.lines[id] = { end: L.end, candidates: cands.length, tried, good, hint: !!hint };

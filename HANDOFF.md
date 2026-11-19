@@ -159,4 +159,4 @@ User thought the 360 photo would turn with the mouse; the JPG is flat in a norma
 - NEXT: look at it in the game (PC + phone).
 
 ## Pointer: rail-corridor city road (CRR)
-The 4-lane road along the rail viaduct (pier row = median) is in `HANDOFF_CITY_ROAD_DESIGN.md` section 11 (CRR-1, CRR-2, CRR-1b, CRR-2b, CRR-5a done 2026-11-19, next CRR-5b (put the roads in the game, see section 11): `scripts/city-rail-road-reach.ts`, `tools/city-rail-road-plot.py`, docs/city_rail_road_reach.*). Road work uses that file and `HANDOFF_ROAD_DESIGN.md`, not this one.
+The 4-lane road along the rail viaduct (pier row = median) is in `HANDOFF_CITY_ROAD_DESIGN.md` section 11 (CRR-1, CRR-2, CRR-1b, CRR-2b, CRR-5a and CRR-5b done 2026-11-19 (5b: the roads are in the game behind Config.roads.corridorRoads, default OFF; 14 rail piers stand in the 5 loops, next CRR-2c, see section 11): `scripts/city-rail-road-reach.ts`, `scripts/crr-export-data.ts`, `scripts/crr-check.ts`, `tools/city-rail-road-plot.py`, `tools/crr5b-plot.py`, docs/city_rail_road_reach.*, docs/crr5b_roads.png). Road work uses that file and `HANDOFF_ROAD_DESIGN.md`, not this one.
