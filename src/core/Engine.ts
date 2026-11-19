@@ -77,6 +77,7 @@ import { SuprimHUD } from '../ui/SuprimHUD';
 import { SettingsMenu } from '../ui/SettingsMenu';
 import { ExportPanel } from '../export/ExportPanel';
 import { Photo360 } from '../ui/Photo360';
+import { VideoRecorder } from '../record/VideoRecorder';
 import { HudSettings } from '../ui/HudSettings';
 import type { TimeMode } from '../environment/DayNight';
 import { PhysicsWorld } from '../physics/PhysicsWorld';
@@ -188,6 +189,7 @@ export class Engine {
   private exportPanel!: ExportPanel;
   /** 360 degree still photo (equirectangular JPEG for Facebook): toolbar button + F8. */
   private photo360!: Photo360;
+  private videoRecorder!: VideoRecorder;
   /** Waves' effects: under-water look, sea floor plants, fish / jellyfish / turtles, light beams, bubbles, splashes. */
   private waterFx!: WaterFX;
   /** Rain, clouds, wet ground, sea storm, umbrellas (src/weather). */
@@ -914,6 +916,11 @@ export class Engine {
       toast: (t, ms) => this.toast.show(t, ms ?? 3000),
       lockTarget: this.renderer.domElement,
     });
+    this.videoRecorder = new VideoRecorder(container, {
+      source: () => this.renderer.domElement,
+      toast: (t, ms) => this.toast.show(t, ms ?? 3000),
+      lockTarget: this.renderer.domElement,
+    });
     this.hudSettings.onChange(() => this.applyHudOptions());
     this.applyHudOptions();
     this.minimap.setZoom(this.hudSettings.values.mapZoom);
@@ -1023,6 +1030,7 @@ export class Engine {
     }
     if (this.input.wasPressed('F3')) this.debug.toggle();
     if (this.input.wasPressed('F2')) this.perf.toggle();
+    if (this.input.wasPressed('F9')) this.videoRecorder.toggle(); // video recorder panel / stop (the toolbar 🎥 button does the same)
     if (this.input.wasPressed('F8')) this.photo360.toggle(); // 360 degree photo panel (the toolbar camera button does the same)
     if (this.input.wasPressed('KeyM')) this.setMuted(!this.voice.isMuted);
     if (this.input.wasPressed('Tab')) this.settingsMenu.toggle(); // the settings menu (the gear button does the same)
@@ -1263,6 +1271,7 @@ export class Engine {
       this.shadowTick = 0;
     }
     this.renderer.render(this.scene, this.camera);
+    this.videoRecorder.onFrame(performance.now()); // video recorder: copies this frame (no-op while not recording)
     this.perf.update(dt); // after the draw: renderer.info holds this frame's numbers
     this.input.endFrame();
   };
@@ -1818,6 +1827,7 @@ export class Engine {
     this.railDebug.dispose();
     this.roadCentre.dispose();
     this.photo360.dispose();
+    this.videoRecorder.dispose();
     this.trainPhysics.dispose();
     this.signalLayer.dispose();
     this.stationSigns.dispose();

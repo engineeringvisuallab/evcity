@@ -11,6 +11,7 @@ import { Splash } from './ui/Splash';
 import { Watermark } from './ui/Watermark';
 import { initQuality } from './core/Quality';
 import { trackAudioContexts } from './core/Lifecycle';
+import { installAudioTap } from './record/AudioTap';
 
 const container = document.getElementById('app');
 if (!container) throw new Error('#app element not found');
@@ -23,6 +24,9 @@ const splash = new Splash();
 
 // Remember every AudioContext the game creates (so they can be paused while the tab is hidden); must run before any game code.
 trackAudioContexts();
+
+// Video recorder (sound side): lets the recorder hear the game sound. Must run right after trackAudioContexts, BEFORE any game code makes an AudioContext.
+installAudioTap();
 
 // The regular weight is used by the HUD: start loading it now (500 / 700 are loaded by Engine.prepare()).
 void document.fonts.load('400 16px "Noto Sans Bengali"', 'কখগ').catch(() => undefined);

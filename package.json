@@ -24,6 +24,7 @@
     "typecheck": "tsc --noEmit",
     "test:raster": "tsx scripts/raster-test.ts",
     "test:photo360": "tsx scripts/photo360-test.ts",
+    "test:video-recorder": "tsx scripts/video-recorder-test.ts",
     "test:missions": "tsx scripts/mission-test.ts",
     "test:first-person": "tsx scripts/first-person-test.ts",
     "test:marine-fish": "tsx scripts/marine-fish-lod-test.ts",
