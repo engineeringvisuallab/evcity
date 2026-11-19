@@ -382,7 +382,7 @@ export function buildApartmentMid(seed = 0, outer = false): BuiltBuilding {
 }
 
 /** বহুতল ফ্ল্যাট (12 তলা): ground-floor shops, tall slab with glazed bands, balconies, set-back top, roof gym. */
-export function buildApartmentHigh(seed = 0): BuiltBuilding {
+export function buildApartmentHigh(seed = 0, outer = false): BuiltBuilding {
   const k = new Kit();
   const W = 26, D = 17, floors = 12, GF = 4.4;
   const body = pick(seed, [0xd8d4cc, 0xd4d9de, 0xdcd2c0]);
@@ -436,6 +436,27 @@ export function buildApartmentHigh(seed = 0): BuiltBuilding {
   k.cyl(-1, top + 0.2, 3.0, 0.07, 0.07, 8, 0x555a60, 5);
   // terrace railing on the set-back floor
   k.glass(0, t0 + 0.15, D / 2 - 0.4, W - 4, 1.0, 0.05, 0x6a9bb5);
+  if (outer) {
+    // decoration: AC units on the side walls, drain pipes, front trees + planters, lamp posts, roof dish, parked cars
+    const ra = rng(seed + 9);
+    for (const side of ['left', 'right'] as const) k.onSide(side, 0, 0, W - 1.0, D - 0.6, (len, half) => {
+      for (let f = 0; f < fl; f++) for (let c = 0; c < 4; c++) if (ra() > 0.45) {
+        const t = -len / 2 + (len * (c + 0.5)) / 5 + 1.7;
+        k.box(t, y0 + f * FLOOR_H + 1.1, half + 0.3, 0.9, 0.55, 0.35, 0xeeeeee);
+        k.box(t, y0 + f * FLOOR_H + 1.1, half + 0.5, 0.7, 0.4, 0.04, 0x3a3f45);
+      }
+    });
+    for (const sx of [-1, 1]) {
+      k.cyl(sx * 11.2, 0, -D / 2 - 0.1, 0.07, 0.07, GF + fl * FLOOR_H, 0x6a6a68, 6);
+      k.cyl(sx * 7.0, 0, D / 2 + 2.2, 0.05, 0.05, 3.6, 0x30343a, 6);
+      k.sphere(sx * 7.0, 3.75, D / 2 + 2.2, 0.17, 0xfff1b0);
+      k.tree(sx * 11.5, D / 2 + 1.8, 5.0);
+      k.box(sx * 4.0, 0, D / 2 + 1.5, 3.2, 0.45, 0.8, 0x3f7a3a);
+    }
+    for (const [x, c] of [[-9, 0xb02a2a], [-6, 0xd9d9d6], [6, 0x2f3b4a]] as const) { k.box(x, 0.2, D / 2 + 2.6, 1.8, 0.7, 4.0, c); k.box(x, 0.9, D / 2 + 2.7, 1.6, 0.55, 2.0, 0x2f4f66); }
+    k.cyl(5.0, top + 0.2, 2.5, 0.04, 0.04, 1.4, 0x555a60, 5);
+    k.sphere(5.0, top + 1.65, 2.5, 0.5, 0xdddddd, 0.25);
+  }
   return k.finish(W + 0.6, D + 3.2, top + 8);
 }
 
@@ -500,7 +521,7 @@ export function buildResidentialTower(seed = 0): BuiltBuilding {
 }
 
 /** হোস্টেল / মেস: L-shaped 4-storey hostel with an open corridor balcony, stair block, roof tanks. */
-export function buildDormitory(seed = 0): BuiltBuilding {
+export function buildDormitory(seed = 0, outer = false): BuiltBuilding {
   const k = new Kit();
   const wall = pick(seed, [0xe8d7a1, 0xd6e0c8, 0xe6d0c4]);
   const trim = pick(seed, [0x2f5f8a, 0x4f7a5a, 0x8a4a3a]);
@@ -544,11 +565,37 @@ export function buildDormitory(seed = 0): BuiltBuilding {
   k.box(0, 2.9, 8.7, 10.0, 0.9, 0.35, trim);
   // roof tanks
   for (const x of [-8, -2, 4, 10]) k.waterTank(x, 0.35 + H + 0.2, -1, 1.0);
+  if (outer) {
+    // decoration: name plate, low front wall, pots + clothes on the corridor rails, AC units, bicycles, lamp posts, trees, roof dish + clothes line
+    const rd = rng(seed + 3);
+    k.box(0, 3.1, 8.9, 6.0, 0.55, 0.06, 0xf1e6b8);
+    for (const sx of [-1, 1]) {
+      k.box(sx * 10.8, 0, 8.7, 11.5, 1.4, 0.25, 0xe6e1d4);
+      k.box(sx * 10.8, 1.4, 8.7, 11.7, 0.1, 0.35, 0xa7a49c);
+      k.cyl(sx * 6.0, 0, 9.6, 0.05, 0.05, 3.2, 0x30343a, 6);
+      k.sphere(sx * 6.0, 3.35, 9.6, 0.16, 0xfff1b0);
+      k.tree(sx * 14.5, 9.8, 4.6);
+    }
+    for (let f = 0; f < floors; f++) {
+      const y = 0.35 + f * FLOOR_H;
+      for (let i = 0; i < 8; i++) {
+        const x = -14 + i * 4 + 2;
+        if (rd() > 0.5) { k.box(x, y + 0.18, 5.5 + 1.55, 0.4, 0.28, 0.3, 0xa4552f); k.sphere(x, y + 0.75, 5.5 + 1.55, 0.3, 0x3f7a3a, 0.9); }
+        else if (rd() > 0.4) k.box(x, y + 0.5, 5.5 + 1.84, 0.6, 0.7, 0.03, [0xd94f4f, 0x3f7fbf, 0xe8c547, 0xf2f2f2, 0x6fae5a][Math.floor(rd() * 5)]!);
+      }
+      for (let i = 0; i < 5; i++) if (rd() > 0.4) k.box(-12 + i * 6, y + 1.2, -5.5 - 0.25, 0.9, 0.55, 0.35, 0xeeeeee);
+    }
+    for (const x of [-3.2, -2.6, 2.6, 3.2]) { k.box(x, 0.2, 7.2, 0.08, 0.6, 1.2, 0x30343a); k.box(x, 0.65, 7.2, 0.3, 0.05, 0.05, 0x30343a); }
+    k.cyl(-7.5, 0.35 + H + 0.2, 2.0, 0.04, 0.04, 1.3, 0x555a60, 5);
+    k.sphere(-7.5, 0.35 + H + 1.55, 2.0, 0.42, 0xdddddd, 0.25);
+    k.box(0, 0.35 + H + 1.5, 3.0, 20, 0.02, 0.02, 0x888888);
+    for (let i = 0; i < 6; i++) k.box(-8 + i * 3.2, 0.35 + H + 0.95, 3.0, 0.5, 0.6, 0.03, [0xd94f4f, 0x3f7fbf, 0xe8c547, 0xf2f2f2][i % 4]!);
+  }
   return k.finish(33, 33, 0.35 + H + 3.2);
 }
 
 /** শ্রমিক কোয়ার্টার: 2-storey long barrack, gallery on the front, outside stair, low tin shed roof, toilet block. */
-export function buildLaborQuarters(seed = 0): BuiltBuilding {
+export function buildLaborQuarters(seed = 0, outer = false): BuiltBuilding {
   const k = new Kit();
   const W = 30, D = 6.5, floors = 2;
   const wall = pick(seed, [0xb5b0a4, 0xc9b9a0, 0xa9a49a]);
@@ -582,5 +629,27 @@ export function buildLaborQuarters(seed = 0): BuiltBuilding {
   k.box(-W / 2 - 3.0, 2.6, 0, 3.6, 0.15, 3.6, 0x7d8a8f);
   k.waterTank(-W / 2 - 3.0, 2.75, 0, 0.85);
   k.box(-W / 2 - 3.0, 0, D / 2 + 0.04, 0.9, 2.0, 0.06, 0x2f5f8a);
+  if (outer) {
+    // decoration: room number plates, pots + clothes on the gallery rails, bicycles, tea stall corner, lamp, trees
+    const rl = rng(seed + 5);
+    for (let f = 0; f < floors; f++) {
+      const y = 0.3 + f * FLOOR_H;
+      for (let i = 0; i < 10; i++) {
+        const x = -W / 2 + 1.5 + i * 3.0;
+        k.box(x - 0.55, y + 2.15, D / 2 + 0.04, 0.5, 0.15, 0.03, 0xf4efe4);
+        if (rl() > 0.5) { k.box(x + 1.1, y + 0.32, D / 2 + 1.3, 0.4, 0.3, 0.35, 0xa4552f); k.sphere(x + 1.1, y + 0.85, D / 2 + 1.3, 0.3, 0x3f7a3a, 0.9); }
+        else if (rl() > 0.3) k.box(x + 1.1, y + 0.5, D / 2 + 1.62, 0.6, 0.7, 0.03, [0xd94f4f, 0x3f7fbf, 0xe8c547, 0xf2f2f2, 0x6fae5a][Math.floor(rl() * 5)]!);
+      }
+    }
+    for (const x of [-9, -8.3, 3, 3.7]) { k.box(x, 0.5, D / 2 + 1.0, 0.08, 0.6, 1.2, 0x30343a); k.box(x, 0.95, D / 2 + 1.0, 0.3, 0.05, 0.05, 0x30343a); }
+    k.box(W / 2 + 4.2, 0, -1.0, 2.4, 0.2, 2.0, 0x9b968c); // tea stall: platform, posts, awning, counter
+    for (const [px, pz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) k.box(W / 2 + 4.2 + px * 1.1, 0.2, -1.0 + pz * 0.9, 0.08, 2.0, 0.08, 0x5a3f2a);
+    k.box(W / 2 + 4.2, 2.2, -1.0, 2.8, 0.08, 2.4, 0xc0392b);
+    k.box(W / 2 + 4.2, 0.2, -1.6, 2.0, 0.9, 0.5, 0x8d6a40);
+    k.cyl(W / 2 + 4.2, 0, 3.2, 0.05, 0.05, 3.4, 0x30343a, 6);
+    k.sphere(W / 2 + 4.2, 3.55, 3.2, 0.16, 0xfff1b0);
+    k.tree(-W / 2 - 6.5, 3.0, 5.0);
+    k.tree(W / 2 + 6.5, -3.0, 4.6);
+  }
   return k.finish(W + 10, D + 4, 0.3 + H + 1.2);
 }

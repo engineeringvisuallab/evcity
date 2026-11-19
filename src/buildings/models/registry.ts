@@ -34,8 +34,8 @@ export interface BuildingModelDef {
 export const BUILDING_MODELS: BuildingModelDef[] = [
   { id: 'mud-hut', bn: 'মাটির ঘর (ছন/খড়ের চাল)', en: 'Mud hut', group: 'residential', grade: 1, floors: 1, build: buildMudHut },
   { id: 'bamboo-hut', bn: 'বাঁশের ঘর (ছনের চাল)', en: 'Bamboo-thatch hut', group: 'residential', grade: 1, floors: 1, build: buildBambooHut },
-  { id: 'house-tin', bn: 'টিনশেড বাড়ি', en: 'Tin-shed house', group: 'residential', grade: 2, floors: 1, cityId: 'house-tin', build: (s) => buildTinHouse({ walls: 'tin' }, s) },
-  { id: 'house-semi-pucca', bn: 'আধা-পাকা বাড়ি', en: 'Semi-pucca house', group: 'residential', grade: 2, floors: 1, build: (s) => buildTinHouse({ walls: 'semi' }, s) },
+  { id: 'house-tin', bn: 'টিনশেড বাড়ি', en: 'Tin-shed house', group: 'residential', grade: 2, floors: 1, cityId: 'house-tin', build: (s, o) => buildTinHouse({ walls: 'tin' }, s, o) },
+  { id: 'house-semi-pucca', bn: 'আধা-পাকা বাড়ি', en: 'Semi-pucca house', group: 'residential', grade: 2, floors: 1, build: (s, o) => buildTinHouse({ walls: 'semi' }, s, o) },
   { id: 'house-brick-2', bn: 'ইটের/পাকা বাড়ি (২ তলা)', en: 'Brick house, 2 floors', group: 'residential', grade: 3, floors: 2, cityId: 'house-brick', build: (s, o) => buildBrickHouse(2, s, o) },
   { id: 'house-brick-3', bn: 'ইটের/পাকা বাড়ি (৩ তলা)', en: 'Brick house, 3 floors', group: 'residential', grade: 3, floors: 3, cityId: 'house-brick', build: (s, o) => buildBrickHouse(3, s, o) },
   { id: 'row-house', bn: 'সারি বাড়ি (টাউনহাউস)', en: 'Row house', group: 'residential', grade: 3, floors: 3, cityId: 'row-house', build: buildRowHouse },

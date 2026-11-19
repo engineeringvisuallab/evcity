@@ -1,9 +1,9 @@
-import { Kit, pick, type BuiltBuilding } from './BuildingKit';
+import { Kit, pick, rng, type BuiltBuilding } from './BuildingKit';
 
 /** RURAL HOUSES: mud hut (মাটির ঘর), bamboo-thatch hut (ছনের ঘর), tin-shed house (টিনশেড), semi-pucca (আধা-পাকা). */
 
 /** মাটির ঘর: clay walls on an earth plinth, hip thatch roof, front veranda on bamboo posts, haystack, bamboo fence. */
-export function buildMudHut(seed = 0): BuiltBuilding {
+export function buildMudHut(seed = 0, outer = false): BuiltBuilding {
   const k = new Kit({ 0xa9794d: 'mud', 0xb08558: 'mud', 0x9c6e47: 'mud', 0x7e5a3b: 'mud', 0x8a6a4a: 'earth' });
   const clay = pick(seed, [0xa9794d, 0xb08558, 0x9c6e47]);
   const thatchA = 0xc9a24a, thatchB = 0xae8636;
@@ -39,11 +39,22 @@ export function buildMudHut(seed = 0): BuiltBuilding {
   for (let i = 0; i < 9; i++) k.cyl(-3.4 - 0.0, 0, -2.4 + i * 0.6, 0.04, 0.04, 1.2 + (i % 2) * 0.15, 0xc7b36a, 5);
   k.box(-3.4, 0.35, 0.0, 0.05, 0.05, 5.4, 0xb59f55);
   k.box(-3.4, 0.85, 0.0, 0.05, 0.05, 5.4, 0xb59f55);
+  if (outer) {
+    // decoration: tulsi pedestal with plant, earthen oven, dung cakes on the wall, white painted border (alpona), rice mat, hanging gourds
+    k.cyl(-1.4, 0, 3.2, 0.32, 0.26, 0.55, 0x9c6e47, 8);
+    k.sphere(-1.4, 0.95, 3.2, 0.3, 0x3f7a3a, 1.1);
+    k.cyl(3.4, 0, 1.4, 0.42, 0.34, 0.55, 0x9c6e47, 8);
+    k.cyl(3.4, 0.55, 1.4, 0.16, 0.12, 0.7, 0x7e5a3b, 6);
+    for (let i = 0; i < 6; i++) k.box(2.34, 0.8 + (i % 3) * 0.4, -1.2 + Math.floor(i / 3) * 0.5 - 0.2, 0.05, 0.3, 0.3, 0x6b4a2f);
+    for (let i = 0; i < 9; i++) k.box(-2.0 + i * 0.5, 0.4, 1.83, 0.22, 0.12, 0.03, 0xf4efe4);
+    k.box(2.6, 0.02, 2.9, 1.8, 0.03, 1.4, 0xd8c690);
+    for (const x of [-1.8, 1.8]) k.sphere(x, 2.2, 2.78, 0.2, 0x7aa03a, 1.3);
+  }
   return k.finish(9, 7, 4.8);
 }
 
 /** ছনের ঘর / বাঁশের ঘর: woven bamboo walls on timber stilts-plinth, steep thatch gable roof, steps. */
-export function buildBambooHut(seed = 0): BuiltBuilding {
+export function buildBambooHut(seed = 0, outer = false): BuiltBuilding {
   const k = new Kit({ 0xd9c08a: 'bamboo', 0xcdb27a: 'bamboo' });
   const wall = pick(seed, [0xd9c08a, 0xcdb27a]);
   const W = 4.4, D = 5.4;
@@ -76,6 +87,24 @@ export function buildBambooHut(seed = 0): BuiltBuilding {
   // water pot + sack of paddy
   k.cyl(-2.9, 0, 3.0, 0.32, 0.22, 0.6, 0xb0603a, 8);
   k.cyl(2.9, 0, 3.0, 0.3, 0.3, 0.7, 0xd8c690, 8);
+  if (outer) {
+    // decoration: bamboo fence with gate gap, banana plants, drying mat with chillies, hanging lantern, fishing net, small hen coop
+    for (let i = 0; i < 13; i++) {
+      const x = -3.6 + i * 0.6;
+      if (Math.abs(x) < 0.7) continue;
+      k.cyl(x, 0, 3.8, 0.04, 0.04, 1.1 + (i % 2) * 0.15, 0xc7b36a, 5);
+    }
+    k.box(-2.2, 0.55, 3.8, 2.8, 0.05, 0.05, 0xb59f55);
+    k.box(2.2, 0.55, 3.8, 2.8, 0.05, 0.05, 0xb59f55);
+    for (const [x, z] of [[-3.3, -2.4], [3.3, -2.0], [-3.2, 1.6]] as const) { k.cyl(x, 0, z, 0.08, 0.06, 1.8, 0x6b8a3a, 6); k.sphere(x, 2.0, z, 0.8, 0x5e9a3a, 0.5); }
+    k.box(-1.8, 0.02, 3.0, 1.4, 0.03, 1.0, 0xd8c690);
+    for (let i = 0; i < 5; i++) k.sphere(-2.3 + i * 0.25, 0.06, 3.0, 0.07, 0xc0392b);
+    k.cyl(0.9, 2.2, D / 2 + 0.75, 0.02, 0.02, 0.5, 0x30343a, 4);
+    k.sphere(0.9, 2.15, D / 2 + 0.75, 0.14, 0xfff1b0);
+    k.box(W / 2 + 0.06, 1.2, -1.0, 0.04, 1.3, 1.6, 0x3a5f7a);
+    k.box(3.2, 0, -0.5, 1.0, 0.5, 0.8, 0x8d6a40);
+    k.gable(3.2, 0.5, -0.5, 1.2, 1.0, 0.4, 0xb8964a);
+  }
   return k.finish(8, 8, 5.7);
 }
 
@@ -85,7 +114,7 @@ export interface TinOpts {
 }
 
 /** টিনশেড বাড়ি / আধা-পাকা বাড়ি. */
-export function buildTinHouse(o: TinOpts, seed = 0): BuiltBuilding {
+export function buildTinHouse(o: TinOpts, seed = 0, outer = false): BuiltBuilding {
   const k = new Kit();
   const semi = o.walls === 'semi';
   const wallTin = pick(seed, [0x6f9fb8, 0x7fae8a, 0xb7a58a, 0x9cb0b6]);
@@ -139,6 +168,30 @@ export function buildTinHouse(o: TinOpts, seed = 0): BuiltBuilding {
   k.box(-W / 2 - 1.4, 0.9, 1.0, 0.14, 0.6, 0.14, 0x3a4a52);
   k.box(-W / 2 - 1.4, 1.45, 1.35, 0.06, 0.06, 0.8, 0x2b343a);
   k.box(-W / 2 - 1.4, 0, 1.0, 0.9, 0.12, 0.9, 0x9b8f84);
+  if (outer) {
+    // decoration: bamboo fence with gate gap, veranda bed + lantern, banana + papaya plants, vegetable beds, clothes line, bicycle, flower pots
+    const rt = rng(seed + 11);
+    for (let i = 0; i < 15; i++) {
+      const x = -4.2 + i * 0.6;
+      if (Math.abs(x) < 0.8) continue;
+      k.cyl(x, 0, D / 2 + 1.4, 0.04, 0.04, 1.0 + (i % 2) * 0.12, 0xc7b36a, 5);
+    }
+    k.box(-2.5, 0.5, D / 2 + 1.4, 3.2, 0.05, 0.05, 0xb59f55);
+    k.box(2.5, 0.5, D / 2 + 1.4, 3.2, 0.05, 0.05, 0xb59f55);
+    k.box(-1.4, 0.45, D / 2 + 0.9, 1.9, 0.14, 0.9, 0x8d6a40);
+    for (const [lx, lz] of [[-2.2, 0.55], [-0.6, 0.55], [-2.2, 1.25], [-0.6, 1.25]] as const) k.box(lx, 0.45 - 0.3, D / 2 + lz, 0.07, 0.3, 0.07, 0x5a3f2a);
+    k.cyl(1.1, 2.1, D / 2 + 1.4, 0.02, 0.02, 0.4, 0x30343a, 4);
+    k.sphere(1.1, 2.05, D / 2 + 1.4, 0.14, 0xfff1b0);
+    for (const [x, z] of [[W / 2 + 1.2, D / 2 - 0.3], [-W / 2 - 1.6, -D / 2 + 1.0], [W / 2 + 2.2, 0.5]] as const) { k.cyl(x, 0, z, 0.09, 0.07, 1.9, 0x6b8a3a, 6); k.sphere(x, 2.1, z, 0.85, 0x5e9a3a, 0.5); }
+    for (let i = 0; i < 3; i++) { k.box(-W / 2 - 1.6, 0, -1.5 - i * 0.9, 1.4, 0.18, 0.6, 0x6b4a2f); k.sphere(-W / 2 - 1.6, 0.4, -1.5 - i * 0.9, 0.3, 0x4f9a3a, 0.7); }
+    k.cyl(-W / 2 - 2.8, 0, -3.0, 0.03, 0.03, 1.9, 0x6b4a2f, 4);
+    k.cyl(-W / 2 - 2.8, 0, 3.0, 0.03, 0.03, 1.9, 0x6b4a2f, 4);
+    k.box(-W / 2 - 2.8, 1.8, 0, 0.02, 0.02, 6.0, 0x888888);
+    for (let i = 0; i < 4; i++) k.box(-W / 2 - 2.8, 1.35, -2.2 + i * 1.4, 0.03, 0.7, 0.5, [0xd94f4f, 0x3f7fbf, 0xe8c547, 0xf2f2f2][Math.floor(rt() * 4)]!);
+    k.box(W / 2 + 3.0, 0.5, D / 2 + 0.5, 0.1, 0.6, 1.5, 0x222831);
+    k.box(W / 2 + 3.0, 0.95, D / 2 + 0.5, 0.3, 0.05, 0.5, 0x555a60);
+    for (const x of [-W / 2 + 0.5, W / 2 - 0.5]) { k.box(x, 0.45, D / 2 + 1.55, 0.4, 0.3, 0.4, 0xa4552f); k.sphere(x, 1.0, D / 2 + 1.55, 0.3, 0x3f7a3a, 0.9); }
+  }
   return k.finish(W + 5, D + 3, 4.5);
 }
 
