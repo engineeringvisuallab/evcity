@@ -966,26 +966,47 @@ const bot = (detail: number): THREE.BufferGeometry => growTree(STYLE_BOT, detail
 const shimul = (detail: number): THREE.BufferGeometry => growTree(STYLE_SHIMUL, detail);
 const debdaru = (detail: number): THREE.BufferGeometry => growTree(STYLE_DEBDARU, detail);
 
+/**
+ * REAL PINE (hill conifer, 24 m at scale 1): a long, straight, bare lower trunk (branchless for the first 30 %), then whorls of
+ * branches every ~2 m: the low ones long and drooping, the upper ones short and rising. Needle sprays sit ALONG each branch
+ * (not in a solid cone), so you see the trunk, the branch skeleton and sky through the gaps (faka faka).
+ */
 function pine(detail: number): THREE.BufferGeometry {
   const r = mulberry32(303);
   const m = new Mesh();
-  const seg = detail === 0 ? 7 : 4;
-  m.tube([V3(0, 0, 0), V3(0.05, 1.6, 0), V3(0, 4, 0.04), V3(0, 7.5, 0), V3(0, 10.6, 0)], [0.4, 0.28, 0.2, 0.12, 0.04], seg);
-  const layers = detail === 0 ? 8 : 4;
-  for (let i = 0; i < layers; i++) {
-    const f = i / (layers - 1);
-    const y = lerp(2.5, 9.4, f);
-    const rad = lerp(2.9, 0.5, Math.pow(f, 0.9));
-    const count = detail === 0 ? Math.round(5 + rad * 2.4) : 6;
-    for (let k = 0; k < count; k++) {
-      const a = (k / count) * Math.PI * 2 + r() * 0.6;
+  const H = 24;
+  const seg = detail === 0 ? 8 : 5;
+  m.tube([V3(0, 0, 0), V3(0.06, 4, 0.03), V3(0.02, 9, 0.08), V3(0, 15, 0.03), V3(0, 20, 0), V3(0, H, 0)], [0.55, 0.42, 0.3, 0.2, 0.1, 0.03], seg);
+  const whorls = detail === 0 ? 10 : 6;
+  for (let i = 0; i < whorls; i++) {
+    const f = i / (whorls - 1);
+    const y = lerp(7, H - 1.8, f);
+    const L = lerp(5.6, 0.9, Math.pow(f, 0.8));
+    const n = detail === 0 ? 6 : 4;
+    const rise = lerp(-0.12, 0.5, f);
+    const a0 = r() * Math.PI * 2;
+    for (let k = 0; k < n; k++) {
+      const a = a0 + (k / n) * Math.PI * 2 + (r() - 0.5) * 0.7;
       const out = V3(Math.cos(a), 0, Math.sin(a));
-      const n = out.clone().multiplyScalar(0.45).add(V3(0, 0.9, 0)).normalize();
-      const size = (detail === 0 ? 1.0 : 1.7) * (rad * 1.05 + 0.9);
-      const c = V3(out.x * rad * 0.55, y - rad * 0.12 + r() * 0.3, out.z * rad * 0.55);
-      m.card(c, n, out, size * 0.85, size, TILE_NEEDLE, r() * 0.5 - 0.25, n, lerp(0.62, 1.0, f) + (r() - 0.5) * 0.14, r() < 0.5);
+      const len = L * (0.75 + r() * 0.4);
+      const p0 = V3(0, y + (r() - 0.5) * 0.6, 0);
+      const p1 = p0.clone().addScaledVector(out, len * 0.5).add(V3(0, rise * len * 0.5, 0));
+      const p2 = p0.clone().addScaledVector(out, len).add(V3(0, rise * len - 0.18 * len, 0));
+      m.tube([p0, p1, p2], [0.09 * (0.5 + L / 5.6), 0.05, 0.015], 3);
+      const cards = detail === 0 ? 3 : 2;
+      for (let c = 0; c < cards; c++) {
+        const t = lerp(0.4, 1, (c + 0.5) / cards);
+        const pos = p0.clone().lerp(p1, Math.min(1, t * 2)).lerp(p2, Math.max(0, t * 2 - 1));
+        pos.y += 0.1;
+        const nrm = V3(0, 1, 0).multiplyScalar(0.8).addScaledVector(out, 0.35).normalize();
+        const sz = (detail === 0 ? 1.7 : 2.6) * (0.55 + 0.45 * (L / 5.6)) * (1.15 - 0.3 * t);
+        m.card(pos, nrm, out, sz * 0.8, sz, TILE_NEEDLE, r() * 0.4 - 0.2, nrm, lerp(0.6, 0.95, f) + (r() - 0.5) * 0.14, r() < 0.5, undefined, out);
+      }
     }
   }
+  // the leader: a small tuft on top
+  m.card(V3(0, H - 0.8, 0), V3(0, 1, 0.2), V3(0, 0, 1), 1.4, 2.2, TILE_NEEDLE, 0, V3(0, 1, 0), 1.0, false);
+  m.card(V3(0, H - 0.8, 0), V3(0.2, 1, 0), V3(1, 0, 0), 1.4, 2.2, TILE_NEEDLE, 0, V3(0, 1, 0), 1.0, true);
   return m.build();
 }
 

@@ -36,7 +36,7 @@ export const usesPalmAtlas = (kind: number): boolean => (kind >= TreeKind.coconu
  */
 export const TREE_TRUNK: Record<number, { r: number; h: number; climb: number }> = {
   [TreeKind.broadleaf]: { r: 0.42, h: 3.4, climb: 5 },
-  [TreeKind.pine]: { r: 0.35, h: 3, climb: 6 },
+  [TreeKind.pine]: { r: 0.55, h: 5, climb: 9 },
   [TreeKind.palm]: { r: 0.28, h: 5, climb: 8 },
   [TreeKind.oak]: { r: 0.55, h: 3, climb: 4 },
   [TreeKind.vase]: { r: 0.42, h: 3, climb: 3.5 },

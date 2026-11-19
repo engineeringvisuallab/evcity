@@ -391,7 +391,7 @@ export const Config = {
     /** Minimum lit colour of tree leaves in shade (r, g, b x leaf colour x daylight): lower = darker / blacker shade, 0 = off. */
     shadeFloor: [0.34, 0.44, 0.3] as [number, number, number],
     bigTreeChance: 0.45,
-    bigTreeScale: [0.55, 1.15] as [number, number],
+    bigTreeScale: [0.7, 1.3] as [number, number],
     /** HOMESTEADS (gram): coconut, date, palmyra palms and banana clumps stand around rural houses. `reach` = ring width (m) beyond the footprint, `chance` per 10 m cell next to the house (fades out to the edge of the ring). */
     homestead: { reach: 32, chance: 0.42 },
     /** POND / LAKE / RIVER BANKS: palms and banana on low land within `reach` m of water. `chance` per 10 m cell, `maxHeight` = only land lower than this (m above sea level). */
@@ -410,15 +410,15 @@ export const Config = {
      * cell, scale range, `bambooShare` of them are bamboo clumps on low land, `bigShare` = young big trees). The jungle fades out over `fade` m at the district edge
      * (a ragged edge). Lower `understory` (and `chance`) if the frame rate drops: they are the number of trees.
      */
-    dense: { fade: 260, chance: 0.75, bigChance: 0.62, understory: 0.4, understoryScale: [0.3, 0.85] as [number, number], bambooShare: 0.1, bigShare: 0.1 },
+    dense: { fade: 260, chance: 0.75, bigChance: 0.62, understory: 0.55, understoryScale: [0.3, 0.85] as [number, number], bambooShare: 0.1, bigShare: 0.1 },
     /**
      * EXTRA JUNGLE SPOTS (ghono jongol outside the forest districts): round patches that use the SAME dense jungle as above (same chance, big trees, understory,
      * tall bamboo, grass thinning). `r` = radius (m) of the full jungle, `fade` = the ragged edge fades out over this many m outside the full part (smoothstep, like the district edge).
      * A: coast side (east-hills-south / southeast-coast). B: beside the river (west-delta). Beach, water, steep slope, roads and plots are still cut out by the tree tests.
      */
     jungleSpots: [
-      { id: 'A-coast', x: 4769, z: 2296, r: 500, fade: 150 },
-      { id: 'B-river', x: -2718, z: 1167, r: 500, fade: 150 },
+      { id: 'A-coast', x: 4769, z: 2296, r: 900, fade: 250 },
+      { id: 'B-river', x: -2718, z: 1167, r: 800, fade: 250 },
     ] as Array<{ id: string; x: number; z: number; r: number; fade: number }>,
     /** Tree chance (0..1 of the normal chance) inside a planned city area, by zone kind. Unlisted zones get no trees. */
     cityZoneChance: { green: 0.6, recreation: 0.7 } as Record<string, number>,

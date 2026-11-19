@@ -281,11 +281,12 @@ export class TreePlacer {
     // The big species are given as mature trees (scale 1 = 20-30 m): a narrow range, so a banyan never becomes 60 m tall.
     const big = kind >= TreeKind.sal && kind <= TreeKind.shimul;
     const wide = kind === TreeKind.koroi || kind === TreeKind.bot;
+    const giant = 1 + 0.4 * dz; // deep jungle: the canopy giants grow up to 40 % taller (35-45 m)
     const scale = big
-      ? V.bigTreeScale[0] + (V.bigTreeScale[1] - (wide ? 0.15 : 0) - V.bigTreeScale[0]) * rScale ** 1.2
+      ? (V.bigTreeScale[0] + (V.bigTreeScale[1] - (wide ? 0.15 : 0) - V.bigTreeScale[0]) * rScale ** 1.2) * giant
       : kind === TreeKind.krishnachura ? 0.85 + 0.45 * rScale
-      : kind === TreeKind.palm ? 0.6 + 0.95 * rScale ** 1.3 : kind === TreeKind.pine ? 0.5 + 1.4 * rScale ** 1.6 : kind === TreeKind.slender ? 0.45 + 1.4 * rScale ** 1.6 : 0.35 + 1.75 * rScale ** 1.8;
-    return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: rYaw * Math.PI * 2, tint: 0.82 + rTint * 0.32 };
+      : kind === TreeKind.palm ? 0.6 + 0.95 * rScale ** 1.3 : kind === TreeKind.pine ? 0.6 + 0.9 * rScale ** 1.3 : kind === TreeKind.slender ? 0.45 + 1.4 * rScale ** 1.6 : 0.35 + 1.75 * rScale ** 1.8;
+    return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: rYaw * Math.PI * 2, tint: (0.82 + rTint * 0.32) * (1 - 0.3 * dz) };
   }
 
   /**
@@ -427,8 +428,8 @@ export class TreePlacer {
     const bambooScale = (B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * rs) * (1 + (B.jungleTall[0] + (B.jungleTall[1] - B.jungleTall[0]) * ((rs * 13.37 + 0.31) % 1) - 1) * smooth(0.1, 0.6, dz));
     const big = kind >= TreeKind.sal && kind <= TreeKind.shimul;
     const young = D.understoryScale[0] + (D.understoryScale[1] - D.understoryScale[0]) * rs ** 1.4;
-    const scale = big ? V.bigTreeScale[0] + 0.3 * rs : kind === TreeKind.bamboo ? bambooScale : kind === TreeKind.pine ? 0.5 + 0.9 * rs : young;
-    return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: ry * Math.PI * 2, tint: 0.8 + rt * 0.3 };
+    const scale = big ? V.bigTreeScale[0] + 0.3 * rs : kind === TreeKind.bamboo ? bambooScale : kind === TreeKind.pine ? 0.35 + 0.5 * rs : young;
+    return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: ry * Math.PI * 2, tint: (0.8 + rt * 0.3) * (1 - 0.3 * dz) };
   }
 
   /** Is there open water within `d` metres (4 compass points)? Used for the bank palms. */
