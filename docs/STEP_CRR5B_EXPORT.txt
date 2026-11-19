@@ -1,19 +1,19 @@
-south-1: rail part s 0..380 in 1 piece(s), loop 57 pts, end (-102.7, 888.7) vs T (-103, 889) residual 0.48 m, loop start vs rail point 0.000 m
-north-1: rail part s 0..550 in 2 piece(s), loop 65 pts, end (522.4, -251.7) vs T (522, -252) residual 0.50 m, loop start vs rail point 0.000 m
-east-1: rail part s 0..80 in 1 piece(s), loop 41 pts, end (318.5, 258.2) vs T (319, 258) residual 0.50 m, loop start vs rail point 0.000 m
-west-nw: junction J1-W (reach json) is not on the part 0..st 580: not used
-west-nw: rail part s 0..580 in 2 piece(s), loop 113 pts, end (-810.3, 348.1) vs T (-810, 348) residual 0.35 m, loop start vs rail point 0.000 m
-west-sw: rail part s 0..610 in 1 piece(s), loop 82 pts, end (-339.5, 829.8) vs T (-340, 830) residual 0.49 m, loop start vs rail point 0.000 m
+south-1: rail part s 0..405 in 1 piece(s), loop 38 pts, end (-106.7, 785.3) vs T (-107, 785) residual 0.47 m, loop start vs rail point 0.000 m
+north-1: rail part s 0..430 in 2 piece(s), loop 27 pts, end (384.0, -76.3) vs T (384, -76) residual 0.34 m, loop start vs rail point 0.000 m
+east-1: rail part s 0..135 in 1 piece(s), loop 33 pts, end (283.2, 214.9) vs T (283, 215) residual 0.22 m, loop start vs rail point 0.000 m
+west-nw: junction J1-W (reach json) is not on the part 0..st 615: not used
+west-nw: rail part s 0..615 in 2 piece(s), loop 99 pts, end (-759.0, 368.2) vs T (-759, 368) residual 0.23 m, loop start vs rail point 0.000 m
+west-sw: rail part s 0..702 in 1 piece(s), loop 69 pts, end (-339.2, 837.8) vs T (-339, 838) residual 0.28 m, loop start vs rail point 0.000 m
 WATER CHECK (sc.water > sc.h - 0.3, +-14.2 m, every 3.5 m): PASS, 0 wet pieces
-  CRR-S1-a       rail   77 pts   380 m  nodes: R2-28, @ground
-  CRR-S1-loop    loop   57 pts   277 m  nodes: @ground, R2-29
+  CRR-S1-a       rail   82 pts   405 m  nodes: R2-28, @ground
+  CRR-S1-loop    loop   38 pts   181 m  nodes: @ground, R2-29
   CRR-N1-a       rail   70 pts   340 m  nodes: J1-E
-  CRR-N1-b       rail   43 pts   210 m  nodes: J1-E, @ground
-  CRR-N1-loop    loop   65 pts   318 m  nodes: @ground, R4-12
-  CRR-E1-a       rail   17 pts    80 m  nodes: @ground
-  CRR-E1-loop    loop   41 pts   194 m  nodes: @ground, R2-28
+  CRR-N1-b       rail   19 pts    90 m  nodes: J1-E, @ground
+  CRR-N1-loop    loop   27 pts   123 m  nodes: @ground, R4-12
+  CRR-E1-a       rail   28 pts   135 m  nodes: @ground
+  CRR-E1-loop    loop   33 pts   154 m  nodes: @ground, R2-28
   CRR-WNW-a      rail   72 pts   351 m  nodes: J1-S
-  CRR-WNW-b      rail   47 pts   229 m  nodes: J1-S, @ground
-  CRR-WNW-loop   loop  113 pts   555 m  nodes: @ground, R2-77
-  CRR-WSW-a      rail  123 pts   610 m  nodes: R4-20, @ground
-  CRR-WSW-loop   loop   82 pts   401 m  nodes: @ground, R4-20
+  CRR-WNW-b      rail   54 pts   264 m  nodes: J1-S, @ground
+  CRR-WNW-loop   loop   99 pts   486 m  nodes: @ground, R2-77
+  CRR-WSW-a      rail  142 pts   702 m  nodes: R4-20, @ground
+  CRR-WSW-loop   loop   69 pts   332 m  nodes: @ground, R4-20

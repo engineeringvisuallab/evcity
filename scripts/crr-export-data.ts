@@ -95,7 +95,7 @@ for (const p of pieces) waterCheck(p.name, p.pts);
 P(`WATER CHECK (sc.water > sc.h - 0.3, +-${HALF + WET_MARGIN} m, every 3.5 m): ${wetBad === 0 ? 'PASS, 0 wet pieces' : 'FAIL, ' + wetBad + ' wet pieces'}`);
 if (wetBad) { fs.writeFileSync(dir + '/STEP_CRR5B_EXPORT.txt', log.join('\n') + '\n'); throw new Error('water check failed, data NOT written'); }
 for (const p of pieces) { let len = 0; for (let i = 1; i < p.pts.length; i++) len += Math.hypot(p.pts[i][0] - p.pts[i - 1][0], p.pts[i][1] - p.pts[i - 1][1]); P(`  ${p.name.padEnd(14)} ${p.kind.padEnd(4)} ${String(p.pts.length).padStart(4)} pts ${len.toFixed(0).padStart(5)} m  nodes: ${p.nodes.map((n) => n.road).join(', ') || '-'}`); }
-const ts = `// STEP CRR-5b: FIXED centreline data of the 5 rail-corridor roads (CRR-1b reach + CRR-2b loops), made by scripts/crr-export-data.ts. DO NOT EDIT BY HAND: change the script and run it again.
+const ts = `// STEP CRR-5b: FIXED centreline data of the 5 rail-corridor roads (CRR-1b reach + CRR-2d gap-exit connectors, pieces named loop), made by scripts/crr-export-data.ts. DO NOT EDIT BY HAND: change the script and run it again.
 // pts = [x, z] every 5 m (the rail part follows the rail centreline, the loop is the exact bend R / Ls). cap = the highest road surface height (m) that keeps ${NEED} m under the rail deck (rail pieces only).
 // nodes = where the piece touches an EXISTING road (the road surface height there is taken from that road): J1 split points, small-road crossings, T ends of the loops; road '@ground' = the joint rail part / loop (natural ground height, same in both pieces).
 export interface CorridorNode { x: number; z: number; road: string; why: string }
