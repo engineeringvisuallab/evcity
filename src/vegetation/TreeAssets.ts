@@ -1010,6 +1010,77 @@ function pine(detail: number): THREE.BufferGeometry {
   return m.build();
 }
 
+/**
+ * JUNGLE UNDERGROWTH (lata-pata): three small models for the jungle floor. They use the forest atlas and the same wind sway as the trees, and have no collider
+ * (TREE_TRUNK r 0.03), so a person or car passes through them. The leaf colour is kept dark (shade 0.7-0.95): the jungle floor is in the shade.
+ */
+/** FERN (~1.2 m at scale 1): a rosette of arching fronds, each a thin stem with leaf sprays along it. */
+function fern(detail: number): THREE.BufferGeometry {
+  const r = mulberry32(551);
+  const m = new Mesh();
+  const n = detail === 0 ? 11 : 7;
+  for (let k = 0; k < n; k++) {
+    const a = (k / n) * Math.PI * 2 + (r() - 0.5) * 0.5;
+    const out = V3(Math.cos(a), 0, Math.sin(a));
+    const len = lerp(0.8, 1.35, r());
+    const up = lerp(0.35, 1.0, r()); // steep fronds in the middle, flat ones outside
+    const p0 = V3(0, 0.05, 0);
+    const p1 = p0.clone().addScaledVector(out, len * 0.45).add(V3(0, up * len * 0.6, 0));
+    const p2 = p0.clone().addScaledVector(out, len).add(V3(0, up * len * 0.5 - 0.22 * len, 0));
+    m.tube([p0, p1, p2], [0.014, 0.009, 0.004], 3, 0.8);
+    const cards = detail === 0 ? 3 : 2;
+    for (let c = 0; c < cards; c++) {
+      const t = lerp(0.4, 1, (c + 0.5) / cards);
+      const pos = p0.clone().lerp(p1, Math.min(1, t * 2)).lerp(p2, Math.max(0, t * 2 - 1));
+      const aim = p2.clone().sub(p0).normalize();
+      const nrm = V3(0, 1, 0).multiplyScalar(0.85).addScaledVector(out, 0.3).normalize();
+      const sz = (0.75 + 0.35 * r()) * (1.1 - 0.35 * t);
+      m.card(pos, nrm, out, sz * 0.62, sz, TILE_LEAF, r() * 0.5 - 0.25, nrm, lerp(0.7, 0.98, r()), r() < 0.5, leafTint(r, 0.08), aim);
+    }
+  }
+  return m.build();
+}
+
+/** SHRUB (~1.5 m): a few thin stems and a dense, dark, leafy bush. */
+function shrub(detail: number): THREE.BufferGeometry {
+  const r = mulberry32(552);
+  const m = new Mesh();
+  const stems = detail === 0 ? 5 : 3;
+  for (let k = 0; k < stems; k++) {
+    const a = (k / stems) * Math.PI * 2 + r();
+    const out = V3(Math.cos(a), 0, Math.sin(a));
+    const hgt = lerp(0.9, 1.5, r());
+    m.tube([V3(0, 0, 0), V3(0, hgt * 0.5, 0).addScaledVector(out, 0.15), V3(0, hgt, 0).addScaledVector(out, 0.4)], [0.03, 0.02, 0.01], 3, 0.85);
+  }
+  crown(m, r, V3(0, 0.85, 0), 0.7, 0.55, 0.7, detail === 0 ? 12 : 7, 0.7, 1.1, 0.1, TILE_MASS);
+  crown(m, r, V3(0, 0.8, 0), 0.85, 0.7, 0.85, detail === 0 ? 14 : 8, 0.5, 0.8, 0.12, TILE_LEAF);
+  return m.build();
+}
+
+/** LATA (~1.8 m): a creeper-covered mound with vines arching out and hanging down to the ground, lobed leaves along them. */
+function lata(detail: number): THREE.BufferGeometry {
+  const r = mulberry32(553);
+  const m = new Mesh();
+  crown(m, r, V3(0, 0.75, 0), 1.2, 0.75, 1.2, detail === 0 ? 22 : 12, 0.8, 1.2, 0.15, TILE_MASS);
+  const vines = detail === 0 ? 7 : 4;
+  for (let k = 0; k < vines; k++) {
+    const a = (k / vines) * Math.PI * 2 + r() * 0.8;
+    const out = V3(Math.cos(a), 0, Math.sin(a));
+    const p0 = V3(0, 1.7, 0).addScaledVector(out, 0.35);
+    const p1 = V3(0, 1.45, 0).addScaledVector(out, 1.0);
+    const p2 = V3(0, 0.05, 0).addScaledVector(out, 1.35 + r() * 0.3);
+    m.tube([p0, p1, p2], [0.016, 0.011, 0.006], 3, 0.8);
+    const cards = detail === 0 ? 3 : 2;
+    for (let c = 0; c < cards; c++) {
+      const t = (c + 0.6) / (cards + 0.2);
+      const pos = p0.clone().lerp(p1, Math.min(1, t * 2)).lerp(p2, Math.max(0, t * 2 - 1));
+      const nrm = out.clone().multiplyScalar(0.9).add(V3(0, 0.25, 0)).normalize();
+      m.card(pos, nrm, V3(0, 1, 0), 0.34, 0.4, TILE_LOBED, r() * Math.PI * 2, nrm, lerp(0.75, 1.0, r()), r() < 0.5, leafTint(r, 0.18));
+    }
+  }
+  return m.build();
+}
+
 /** Geometries (shared by all chunks, never disposed per chunk) + one material with wind sway. */
 export class TreeAssets {
   /** [kind][detail] */
@@ -1036,6 +1107,9 @@ export class TreeAssets {
       [TreeKind.bot]: bot,
       [TreeKind.shimul]: shimul,
       [TreeKind.debdaru]: debdaru,
+      [TreeKind.fern]: fern,
+      [TreeKind.shrub]: shrub,
+      [TreeKind.lata]: lata,
       ...PALM_MAKERS,
     };
     for (let k = 0; k < TREE_KIND_COUNT; k++) this.geometries.push([makers[k](0), makers[k](1)]);

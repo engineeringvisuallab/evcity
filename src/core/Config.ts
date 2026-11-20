@@ -410,7 +410,13 @@ export const Config = {
      * cell, scale range, `bambooShare` of them are bamboo clumps on low land, `bigShare` = young big trees). The jungle fades out over `fade` m at the district edge
      * (a ragged edge). Lower `understory` (and `chance`) if the frame rate drops: they are the number of trees.
      */
-    dense: { fade: 260, chance: 0.75, bigChance: 0.62, understory: 0.55, understoryScale: [0.3, 0.85] as [number, number], bambooShare: 0.1, bigShare: 0.1 },
+    dense: { fade: 260, chance: 0.75, bigChance: 0.62, understory: 0.55, understoryScale: [0.3, 0.85] as [number, number], bambooShare: 0.1, bigShare: 0.1,
+      /**
+       * JUNGLE THICKET (ghono jongol, 2.5x): `layers` more spots in every jungle cell (each its own random stream, `chance` x jungle density x Quality treeMul),
+       * so the jungle holds about 2.5x as many plants as before. `undergrowth` = share of them that are lata-pata (fern / shrub / creeper mound, no colliders),
+       * the rest are young trees of `scale` (x the tree's normal size). Lower `layers` / `chance` if the frame rate drops.
+       */
+      thicket: { layers: 4, chance: 0.5, undergrowth: 0.6, scale: [0.32, 0.6] as [number, number] } },
     /**
      * EXTRA JUNGLE SPOTS (ghono jongol outside the forest districts): round patches that use the SAME dense jungle as above (same chance, big trees, understory,
      * tall bamboo, grass thinning). `r` = radius (m) of the full jungle, `fade` = the ragged edge fades out over this many m outside the full part (smoothstep, like the district edge).
@@ -553,6 +559,11 @@ export const Config = {
       maxChance: 0.35, // SPARSE: ~1 cell in 3 grows a tuft (was 0.98 / 0.9 = every cell)
       minChance: 0.15,
       forestThin: 0.3,
+      /**
+       * JUNGLE FLOOR (ghono jongol ground cover): inside the dense jungle every cell gets grass (`floor` = patch value forced up to this x jungle density, so no bald
+       * ground), tufts are `tall` x higher, `chance` = grass chance per cell, and the grass kinds are mixed (wild, tussocks, broad-leaf, seed-head). Flag 6 in the tuft data.
+       */
+      jungle: { floor: 0.9, tall: 2.2, chance: 0.9, clumpChance: 0.45 },
       /** Blades per tuft model are multiplied by this (1 = full quality; 0.6 for weak GPUs). */
       bladeDensity: 1,
       /** Wildflowers: share of tufts that carry flowers inside a flower patch / scattered in the open meadow. Patches are ~12-30 m wide. */

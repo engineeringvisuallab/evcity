@@ -432,6 +432,60 @@ export class TreePlacer {
     return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: ry * Math.PI * 2, tint: (0.8 + rt * 0.3) * (1 - 0.3 * dz) };
   }
 
+  /**
+   * JUNGLE THICKET (ghono jongol): `dense.thicket.layers` extra spots in a jungle cell, each with its own random stream (no other tree ever moves). Most are
+   * lata-pata (fern, shrub, creeper mound: no colliders), the rest young trees. Pushed straight into the chunk lists (chunk origin ox, oz). Not part of
+   * `treesInRect`: the grass rings of the canopy trees already cover the jungle floor, and 4x more trees there would only slow the grass placer.
+   */
+  private cellThicket(gi: number, gj: number, lists: number[][], cox: number, coz: number): void {
+    const T = D.thicket;
+    if (T.layers <= 0) return;
+    const { ox, oz, i, j } = this.cellOf(gi, gj);
+    const cell = V.cellSize;
+    if (this.denseAt(ox + (i + 0.5) * cell, oz + (j + 0.5) * cell) <= 0.02) return; // most cells of the world stop here
+    const s = this.sample;
+    for (let l = 0; l < T.layers; l++) {
+      const rng = mulberry32(hash2D((this.seed ^ 0x7a11c0) + l * 7919, gi, gj));
+      const roll = rng(), jx = rng(), jz = rng(), rk = rng(), rs = rng(), ry = rng(), rt = rng(), rv = rng(), ru = rng();
+      let chance = T.chance * this.mul;
+      if (roll >= chance) continue;
+      const x = ox + (i + jx) * cell;
+      const z = oz + (j + jz) * cell;
+      const dz = this.denseAt(x, z);
+      if (dz <= 0.02) continue;
+      chance *= dz;
+      if (roll >= chance) continue;
+      this.gen.sample(x, z, s);
+      const h = s.h;
+      if (h < V.seaMargin) continue;
+      if (!Number.isNaN(s.water) && h < s.water + V.waterMargin) continue;
+      const line = 1 - smooth(V.treeLineStart, V.treeLineEnd, h);
+      if (line <= 0) continue;
+      this.gen.sample(x + 2, z, this.sx);
+      this.gen.sample(x, z + 2, this.sz);
+      const slope = Math.hypot(this.sx.h - h, this.sz.h - h) / 2;
+      if (slope > this.tanMax) continue;
+      chance *= line * (1 - smooth(this.tanMax * 0.6, this.tanMax, slope)) * this.cityFactor(x, z);
+      if (roll >= chance) continue;
+      if (this.nearRoad(x, z)) continue;
+
+      let kind: number;
+      let scale: number;
+      if (ru < T.undergrowth) {
+        // lata-pata: ferns most, then bushes, then creeper mounds
+        kind = rv < 0.42 ? TreeKind.fern : rv < 0.77 ? TreeKind.shrub : TreeKind.lata;
+        scale = 0.7 + 0.8 * rs;
+      } else {
+        const pineChance = smooth(V.pineFrom, V.pineFull, h);
+        if (rk < pineChance) kind = TreeKind.pine;
+        else if (h < B.maxHeight && rv < 0.1 && slope < this.tanMax * B.slopeMax) kind = TreeKind.bamboo;
+        else kind = rv < 0.3 ? TreeKind.slender : rv < 0.58 ? TreeKind.vase : rv < 0.84 ? TreeKind.broadleaf : TreeKind.oak;
+        scale = kind === TreeKind.bamboo ? (B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * rs) * 0.8 : T.scale[0] + (T.scale[1] - T.scale[0]) * rs ** 1.3;
+      }
+      lists[kind].push(x - cox, this.footY(h, slope, kind, scale), z - coz, scale, ry * Math.PI * 2, (0.8 + rt * 0.3) * (1 - 0.3 * dz));
+    }
+  }
+
   /** Is there open water within `d` metres (4 compass points)? Used for the bank palms. */
   private waterNear(x: number, z: number, d: number): boolean {
     const s = this.sw;
@@ -459,6 +513,7 @@ export class TreePlacer {
         if (t) lists[t.kind].push(t.x - ox, t.y, t.z - oz, t.scale, t.yaw, t.tint);
         const u = this.cellTree2(gx0 + i, gz0 + j); // dense jungle: the understory tree
         if (u) lists[u.kind].push(u.x - ox, u.y, u.z - oz, u.scale, u.yaw, u.tint);
+        this.cellThicket(gx0 + i, gz0 + j, lists, ox, oz); // jungle: lata-pata and young trees
       }
     }
     // GRASS 4: street trees in the kerbed pits of the city sidewalks (Roadside.ts) join the normal trees: same instancing, LOD and colliders

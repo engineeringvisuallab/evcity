@@ -12,7 +12,7 @@ import { mulberry32 } from '../world/Seed';
 import { Q } from '../core/Quality';
 import { buildAnimal, buildFishGeometry, buildFishMaterial, variantCount, type Rig } from './AnimalModel';
 import { sm } from './AnimalRig';
-import { HABITAT, HABITATS_OF, PREDATOR_ZONES, SPECIES, type HabitatKey, type Species, type SpeciesDef } from './Species';
+import { HABITAT, HABITATS_OF, JUNGLE_HABITAT, PREDATOR_ZONES, SPECIES, type HabitatKey, type Species, type SpeciesDef } from './Species';
 
 /**
  * Wildlife of the whole world. Every species lives where it REALLY belongs, judged by what the player sees (habitatAt), not by the abstract zone map:
@@ -89,6 +89,8 @@ export class AnimalManager {
   private s4: TerrainSample;
   private mask = new Float32Array(2);
   private trees: TreePlacer;
+  /** Jungle density 0..1 at the player (refreshed with the spawn timer): in the dense jungle more animals and predators may live around the player. */
+  private jungleNear = 0;
   private fieldBuf: Field[] = [];
   private homes: { x: number; z: number; r: number }[];
   private spawnTimer = 0.2;
@@ -234,6 +236,11 @@ export class AnimalManager {
     return null;
   }
 
+  /** Population cap of a species: up to 1.8x in the dense jungle. */
+  private capOf(def: SpeciesDef): number { return Math.ceil(def.cap * (1 + 0.8 * this.jungleNear)); }
+  private maxLand(): number { return MAX_LAND + Math.round(MAX_LAND * 0.6 * this.jungleNear); }
+  private maxPredators(): number { return MAX_PREDATORS + Math.round(MAX_PREDATORS * this.jungleNear); }
+
   private count(sp: Species): number {
     let n = 0;
     for (const a of this.animals) if (a.sp === sp && a.state !== 'dead') n++;
@@ -325,11 +332,11 @@ export class AnimalManager {
       const options: { sp: Species; w: number; wx: number; wz: number; key: HabitatKey }[] = [];
       let total = 0;
       for (const key of keys) {
-        const table = HABITAT[key];
+        const table = key === 'forest' && this.trees.denseAt(cx, cz) >= 0.45 ? JUNGLE_HABITAT : HABITAT[key]; // dense jungle: richer wild table
         if (!table) continue;
         for (const k of Object.keys(table) as Species[]) {
           const def = SPECIES[k], w = table[k] ?? 0;
-          if (w <= 0 || this.count(k) >= def.cap || (onlyNew && this.count(k) > 0) || options.some((o) => o.sp === k)) continue;
+          if (w <= 0 || this.count(k) >= this.capOf(def) || (onlyNew && this.count(k) > 0) || options.some((o) => o.sp === k)) continue;
           let wx = cx, wz = cz;
           if (key === 'wetland' && wetSpot) { wx = wetSpot.x; wz = wetSpot.z; }
           else if (def.needsWater) {
@@ -367,11 +374,11 @@ export class AnimalManager {
 
   /** A hunter of that species lives near a herd: the hunting you see in the wild. */
   private trySpawnHunter(prey: Species, key: HabitatKey, cx: number, cz: number): void {
-    if (this.rnd() > 0.6 || this.predatorCount() >= MAX_PREDATORS) return;
+    if (this.rnd() > (this.jungleNear > 0.4 ? 0.85 : 0.6) || this.predatorCount() >= this.maxPredators()) return;
     const cands: Species[] = [];
     for (const k of Object.keys(PREDATOR_ZONES) as Species[]) {
       const def = SPECIES[k];
-      if (def.hunts?.includes(prey) && PREDATOR_ZONES[k]?.includes(key) && this.count(k) < def.cap) cands.push(k);
+      if (def.hunts?.includes(prey) && PREDATOR_ZONES[k]?.includes(key) && this.count(k) < this.capOf(def)) cands.push(k);
     }
     if (cands.length === 0) return;
     const sp = cands[Math.floor(this.rnd() * cands.length)];
@@ -880,10 +887,12 @@ export class AnimalManager {
       for (const a of this.animals.slice()) {
         if (this.dist(a, px, pz) > GONE || (a.state === 'dead' && a.deadT > 70)) this.remove(a);
       }
+      this.jungleNear = this.trees.denseAt(px, pz);
       const land = this.landCount();
-      this.spawnTimer = land < MAX_LAND * 0.7 ? 0.5 : 1.8;
-      if (land < MAX_LAND) this.trySpawnGroup(px, pz);
-      else if (land < MAX_LAND + 14) this.trySpawnGroup(px, pz, true); // full: still room for a species that is missing here
+      const maxLand = this.maxLand();
+      this.spawnTimer = land < maxLand * 0.7 ? 0.5 : 1.8;
+      if (land < maxLand) this.trySpawnGroup(px, pz);
+      else if (land < maxLand + 14) this.trySpawnGroup(px, pz, true); // full: still room for a species that is missing here
       if (this.count('dolphin') <= MAX_DOLPHINS - 4 && this.rnd() < 0.5) this.trySpawnPod(px, pz);
     }
 

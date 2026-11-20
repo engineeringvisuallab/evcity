@@ -187,7 +187,9 @@ export class GrassPlacer {
   patchAt(x: number, z: number): number {
     const tx = Math.floor((x + HALF) / G.tile);
     const tz = Math.floor((z + HALF) / G.tile);
-    return this.patchIn(x, z, tx, tz, this.importanceGrid(tx, tz));
+    const p = this.patchIn(x, z, tx, tz, this.importanceGrid(tx, tz));
+    const jd = this.trees.denseAt(x, z); // jungle floor: the same forced patch value the tufts and clumps use
+    return jd > 0.02 ? Math.max(p, G.jungle.floor * jd) : p;
   }
 
   /**
@@ -220,6 +222,13 @@ export class GrassPlacer {
     return near;
   }
 
+  /** JUNGLE gate of a tile: the highest jungle density at its corners and centre (0 = no jungle anywhere in the tile, so no per-cell jungle test is needed). */
+  private jungleTile(ox: number, oz: number): number {
+    const T = G.tile;
+    const d = (x: number, z: number): number => this.trees.denseAt(x, z);
+    return Math.max(d(ox, oz), d(ox + T, oz), d(ox, oz + T), d(ox + T, oz + T), d(ox + T / 2, oz + T / 2));
+  }
+
   /** Tufts and clumps of tile (tx, tz), tile-local coordinates, GRASS_STRIDE floats each. */
   place(tx: number, tz: number, stride = 1): Float32Array {
     const per = Math.round(G.tile / G.cell);
@@ -233,6 +242,8 @@ export class GrassPlacer {
     const grid = this.importanceGrid(tx, tz);
     const TB = G.treeBase;
     const near = TB.enabled ? this.treeNear(ox, oz, per) : null; // tree-base grass: the only place open-land grass grows
+    const JG = G.jungle;
+    const jTile = this.jungleTile(ox, oz); // > 0 only where the tile touches the dense jungle
 
     // stride > 1 (far LOD rings): only every stride-th cell of the global cell grid, so these tufts are exactly a subset of the full tile
     for (let j = 0; j < per; j += stride) {
@@ -250,13 +261,16 @@ export class GrassPlacer {
 
         // 1. chance from noise only (most cells stop here): never a tuft outside a patch, fewer and smaller at its rim
         const lawn = this.lawnAt(x, z);
-        const patch = near ? Math.max(near[j * per + i], lawn) : this.patchIn(x, z, tx, tz, grid);
+        const jd = jTile > 0.02 ? this.trees.denseAt(x, z) : 0; // dense jungle 0..1: the whole floor is grass (no bald ground)
+        let patch = near ? Math.max(near[j * per + i], lawn) : this.patchIn(x, z, tx, tz, grid);
+        if (jd > 0.02) patch = Math.max(patch, JG.floor * jd);
         if (patch < P.minValue) continue;
         const rim = smooth(P.minValue, P.coreAt, patch); // 0 at the rim .. 1 in the core
         const lush = Math.max(smooth(-0.35, 0.25, this.meadow.fbm(x / 45, z / 45, 2)), lawn);
         let chance = (G.minChance + (G.maxChance - G.minChance) * lush) * this.mul * P.density * rim;
         if (near && lawn < 0.5) chance = TB.chance * this.mul * rim; // inside a tree ring the grass is thick (not the sparse open-land chance)
         chance *= 1 - G.forestThin * this.trees.forestAt(x, z) * (1 - lawn);
+        if (jd > 0.02) chance = Math.max(chance, JG.chance * jd * this.mul * rim);
         chance *= 1 - lawn * (1 - G.city.density); // city lawn: `grass.city.density` x the open-meadow density (the 0.5 city thinning is gone)
         if (roll >= chance) continue;
 
@@ -276,7 +290,7 @@ export class GrassPlacer {
 
         const dry = Math.min(1, Math.max(0, smooth(G.dryFrom, G.dryTo, h) + (rDry - 0.5) * 0.2)) * (1 - lawn);
         // flag 2 = city lawn tuft (short, mown; may carry a small flower), 0 = normal tuft
-        out.push(x - ox, h - 0.03, z - oz, (0.55 + 0.95 * rScale ** 1.5) * (P.edgeScale + (1 - P.edgeScale) * rim), rYaw * Math.PI * 2, 0.85 + rTint * 0.3, dry, lawn >= 0.5 ? 2 : 0);
+        out.push(x - ox, h - 0.03, z - oz, (0.55 + 0.95 * rScale ** 1.5) * (P.edgeScale + (1 - P.edgeScale) * rim), rYaw * Math.PI * 2, 0.85 + rTint * 0.3, dry, lawn >= 0.5 ? 2 : jd > 0.3 ? 6 : 0);
 
         // DENSE single grass: extra tufts in the same cell (flag 4 = never a flower). Their random numbers come after the first seven, one fixed set of
         // five per extra, so extra k is always the same tuft and a far ring (fewer extras) is a subset of the near ring. Not on the mown city lawn.
@@ -296,7 +310,7 @@ export class GrassPlacer {
               if (k + 1 > extras && (ex * 13.7) % 1 >= extras - k) continue; // the fractional last extra
               const dx = (ex - jx) * G.cell;
               const dz = (ez - jz) * G.cell;
-              out.push(x - ox + dx, h + gx * dx + gz * dz - 0.03, z - oz + dz, (0.55 + 0.95 * es ** 1.5) * edge, ey * Math.PI * 2, 0.85 + et * 0.3, dry, 4);
+              out.push(x - ox + dx, h + gx * dx + gz * dz - 0.03, z - oz + dz, (0.55 + 0.95 * es ** 1.5) * edge, ey * Math.PI * 2, 0.85 + et * 0.3, dry, jd > 0.3 ? 6 : 4);
             }
           }
         }
@@ -393,6 +407,8 @@ export class GrassPlacer {
     const city = G.city;
     const T = G.tile;
     const spots = this.green.touches(ox, oz, ox + T, oz + T, city.edge) ? this.trees.treesInRect(ox - 3, oz - 3, ox + T + 3, oz + T + 3) : [];
+    const JG = G.jungle;
+    const jTile = this.jungleTile(ox, oz);
     for (let j = 0; j < per; j += cs) {
       for (let i = 0; i < per; i += cs) {
         const rng = mulberry32(hash2D(this.seed ^ 0x7c1a9, gx0 + i, gz0 + j));
@@ -407,7 +423,9 @@ export class GrassPlacer {
         const z = oz + (j + jz) * C.cell;
 
         // 1. clumps only inside patches (close together, overlapping), fewer and smaller at the rim
-        const patch = this.patchIn(x, z, tx, tz, grid);
+        const jd = jTile > 0.02 ? this.trees.denseAt(x, z) : 0; // jungle: grass clumps (tussocks) everywhere on the floor
+        let patch = this.patchIn(x, z, tx, tz, grid);
+        if (jd > 0.02) patch = Math.max(patch, JG.floor * jd);
         if (patch < P.minValue) continue;
         const rim = smooth(P.minValue, P.coreAt, patch);
         const lawn = this.lawnAt(x, z);
@@ -428,6 +446,7 @@ export class GrassPlacer {
         } else {
           chance = P.clumpChance * smooth(0.25, 0.85, patch) * this.mul * (1 - lawn);
           chance *= 1 - G.forestThin * this.trees.forestAt(x, z);
+          if (jd > 0.02) chance = Math.max(chance, JG.clumpChance * jd * this.mul);
           // HIGHWAY VERGE: next to the gravel shoulder of a country road the clumps are dense and tall (verge.reach m wide)
           const V2 = G.verge;
           this.gen.roads.maskAt(x, z, V2.reach / 0.6, this.vmask);

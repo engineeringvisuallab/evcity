@@ -111,6 +111,12 @@ export const HABITAT: Partial<Record<HabitatKey, Partial<Record<Species, number>
   safari: { zebra: 4, giraffe: 2.5, elephant: 1.6, rhino: 1.4, hippo: 1.2, deer: 1.2, boar: 0.6 },
 };
 
+/**
+ * DENSE JUNGLE (ghono jongol, where Config.vegetation denseAt >= 0.45): the forest table with more of everything wild. Used instead of HABITAT.forest there; the
+ * predators (tiger, leopard, wolf, fox) come with the herds they hunt, more often and more of them (AnimalManager.jungleNear).
+ */
+export const JUNGLE_HABITAT: Partial<Record<Species, number>> = { deer: 4, boar: 3.5, elephant: 2, bear: 1.4, peacock: 3, rabbit: 2.5 };
+
 /** Where a predator may live. */
 export const PREDATOR_ZONES: Partial<Record<Species, readonly HabitatKey[]>> = {
   tiger: ['forest', 'mountain', 'wetland'],

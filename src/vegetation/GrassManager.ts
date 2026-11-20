@@ -277,6 +277,10 @@ export class GrassManager {
   /** Real choice of the model; typeOf() wraps it and removes the white kinds (Config grass.whiteFlowers = false). */
   private pick(wx: number, wz: number, lod: number, h1: number, h2: number, h3: number, dry: number, flag: number): number {
     let type: number;
+    if (flag > 5.5) {
+      // JUNGLE FLOOR grass (flag 6): a rich mix of all the plain grass kinds - tall wild blades, fine grass, broad-leaf bunches, seed grass, and tussock clumps
+      return h1 < 0.3 ? GrassType.wild : h1 < 0.5 ? GrassType.lawn : h1 < 0.68 ? GrassType.clump : h1 < 0.8 ? GrassType.seed : h1 < 0.91 ? GrassType.tussock : GrassType.tussockWide;
+    }
     if (flag > 4.5) {
       // MEDIAN grass (flag 5): the game's grass kinds, and a share of the game's wild flowers (never white ones) in the near ring
       if (lod === 0 && h2 < Config.city.median.grass.flowerShare) return h3 < 0.3 ? GrassType.buttercup : h3 < 0.55 ? GrassType.lavender : h3 < 0.8 ? GrassType.poppy : GrassType.cornflower;
@@ -347,6 +351,7 @@ export class GrassManager {
       const w = ys * wide * ring.size * (lawnTuft ? G.tuft.lawnWidthScale : G.widthScale);
       dummy.scale.set(w, ys, w);
     }
+    if (flag > 5.5) dummy.scale.y *= G.jungle.tall; // jungle floor grass grows tall
     dummy.updateMatrix();
     mesh.setMatrixAt(slot, dummy.matrix);
     const dry = 0; // FIXED colour: no dry / straw / yellow grass, even on high ground

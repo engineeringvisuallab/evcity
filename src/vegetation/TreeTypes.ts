@@ -23,8 +23,12 @@ export const TreeKind = {
   debdaru: 16,
   /** Bamboo clump (bash jhar, palm atlas): one clump of ~26 arching culms, 10-14 m. Made into groves by the placement. */
   bamboo: 17,
+  /** JUNGLE UNDERGROWTH (lata-pata, forest atlas, no colliders): fern (arching fronds), shrub (dense bush), lata (creeper-covered mound with hanging vines). */
+  fern: 18,
+  shrub: 19,
+  lata: 20,
 } as const;
-export const TREE_KIND_COUNT = 18;
+export const TREE_KIND_COUNT = 21;
 
 /** Kinds drawn with the palm atlas (palms, banana, flowering krishnachura, bamboo); every other kind uses the forest-tree atlas. */
 export const usesPalmAtlas = (kind: number): boolean => (kind >= TreeKind.coconut && kind <= TreeKind.krishnachura) || kind === TreeKind.bamboo;
@@ -54,6 +58,10 @@ export const TREE_TRUNK: Record<number, { r: number; h: number; climb: number }>
   [TreeKind.debdaru]: { r: 0.22, h: 5, climb: 8 },
   /** A bamboo clump is a solid mass of culms about 2.4 m wide at the foot: one round collider, not climbable (the culms are thin and bend). */
   [TreeKind.bamboo]: { r: 1.0, h: 5, climb: 0 },
+  /** Undergrowth: r 0.03 is under `passRadius`, so a person or car walks straight through (no collider). */
+  [TreeKind.fern]: { r: 0.03, h: 1, climb: 0 },
+  [TreeKind.shrub]: { r: 0.03, h: 1, climb: 0 },
+  [TreeKind.lata]: { r: 0.03, h: 1, climb: 0 },
 };
 
 /**
