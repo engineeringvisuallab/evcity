@@ -25,6 +25,7 @@ import { CLASS_R4_OPEN, CLASS_R2_OPEN, CLASS_C_ZONE, CLASS_L_ZONE } from './stan
 import { R2_NEW_LINE_DATA } from './r2/R2NewLineData';
 import { C_NEW_LINE_DATA } from './c/CNewLineData';
 import { L_NEW_LINE_DATA } from './l/LNewLineData';
+import { CITY_SHP_LINE_DATA } from './city/CityShpLineData';
 import { CORRIDOR_ROAD_DATA, type CorridorPiece } from './crr/CorridorRoadData';
 import { STRUCT, STRUCT_CARVE } from './ring/RingStructures';
 import { SCENARIOS, cutRange, nearestPoint, uvToWorld, type ScenarioSpec } from '../interchange/scenario/J6Scenario';
@@ -307,7 +308,8 @@ export class RoadNetwork {
     const r2On = Config.roads.r2New.enabled; // STEP B7-4: the new R2 lines join at the same moment too
     const cOn = Config.roads.cNew.enabled; // STEP B7-5: the new C lines join at the same moment too
     const lOn = Config.roads.lNew.enabled; // STEP B7-6: the new L lines join at the same moment too
-    if ((!armsOn && !linkOn && !r6On && !r4On && !r2On && !cOn && !lOn) || this.j1ArmsAdded) return;
+    const shpOn = Config.roads.shpCity.enabled; // STEP CITY-SHP-2: the drawn city streets join at the same moment too
+    if ((!armsOn && !linkOn && !r6On && !r4On && !r2On && !cOn && !lOn && !shpOn) || this.j1ArmsAdded) return;
     this.j1ArmsAdded = true; // STEP RAIL-A: the railway calls this before its long section, TerrainGenerator calls it again later (no-op then)
     const before = this.roads.length;
     this.layoutJ1Arms();
@@ -1004,11 +1006,12 @@ export class RoadNetwork {
    * Same game kind as the R2 lines ('collector', tier 3). Only the roadway is laid (kerb 0.3 m, verge 1.0 m); the footpath of the ZONE section comes with the zone work (21.6), not here. Ends are free, no junction mouth (21.61).
    */
   private layoutCRoads(): void {
-    if (!Config.roads.cNew.enabled) return;
+    if (!Config.roads.cNew.enabled && !Config.roads.shpCity.enabled) return;
     const c = CLASS_C_ZONE;
     const el = (kind: string): number => c.elements.find((e) => e.kind === kind)?.width ?? 0;
     const sec = { halfWidth: c.pavementEdge, medianHalf: 0, shyMedian: 0, laneW: c.laneW, lanesPerDir: c.lanesPerDir, shyOuter: el('kerb'), shoulder: el('verge-drain') };
-    for (const d of C_NEW_LINE_DATA) {
+    // STEP CITY-SHP-2: the drawn C streets use exactly the same section / speed / grade as the C lines
+    for (const d of [...(Config.roads.cNew.enabled ? C_NEW_LINE_DATA : []), ...(Config.roads.shpCity.enabled ? CITY_SHP_LINE_DATA.filter((q) => q.cls === 'C') : [])]) {
       const m = d.pts.length;
       const cum = [0];
       for (let i = 1; i < m; i++) cum.push(cum[i - 1] + Math.hypot(d.pts[i][0] - d.pts[i - 1][0], d.pts[i][1] - d.pts[i - 1][1]));
@@ -1034,11 +1037,12 @@ export class RoadNetwork {
    * Game kind 'local' but tier 3 (like the earth tracks E-n): tier 4 would start the city local-street, footpath and junction-pad logic, which must stay off until the junction phase (21.61). Only the roadway is laid (kerb 0.2 m, verge 0.6 m); the footpath of the ZONE section comes with the zone work (21.6). Ends are free, no junction mouth.
    */
   private layoutLRoads(): void {
-    if (!Config.roads.lNew.enabled) return;
+    if (!Config.roads.lNew.enabled && !Config.roads.shpCity.enabled) return;
     const c = CLASS_L_ZONE;
     const el = (kind: string): number => c.elements.find((e) => e.kind === kind)?.width ?? 0;
     const sec = { halfWidth: c.pavementEdge, medianHalf: 0, shyMedian: 0, laneW: c.laneW, lanesPerDir: c.lanesPerDir, shyOuter: el('kerb'), shoulder: el('verge-drain') };
-    for (const d of L_NEW_LINE_DATA) {
+    // STEP CITY-SHP-2: the drawn L streets use exactly the same section / speed / grade as the L lines
+    for (const d of [...(Config.roads.lNew.enabled ? L_NEW_LINE_DATA : []), ...(Config.roads.shpCity.enabled ? CITY_SHP_LINE_DATA.filter((q) => q.cls === 'L') : [])]) {
       const m = d.pts.length;
       const cum = [0];
       for (let i = 1; i < m; i++) cum.push(cum[i - 1] + Math.hypot(d.pts[i][0] - d.pts[i - 1][0], d.pts[i][1] - d.pts[i - 1][1]));

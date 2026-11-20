@@ -90,6 +90,8 @@ export const Config = {
     cNew: { enabled: true as boolean },
     /** STEP B7-6 (21.6 build, batch L-a): the L lines L-1 .. L-4, L-7 .. L-12 (src/roads/l/LNewLineData.ts, made by scripts/centre-l-export.ts) as game roads, local street 2 lanes undivided, V30, grade <= 10 %, no footpath yet. Ends are free (no junction mouth, no structure yet, 21.61). false = none. */
     lNew: { enabled: true as boolean },
+    /** STEP CITY-SHP-2 (user order 2026-11-20): the user's drawn city streets (City_Road.shp, 17 streets after 8 joins; src/roads/city/CityShpLineData.ts, made by scripts/city-shp-fit.ts MODE=export) as game roads, 2 lanes undivided: class C (V40, grade <= 8 %) and class L (V30, grade <= 10 %), same sections as the C / L lines. Heights are PROVISIONAL (terrain-following, grade-limited; the real vertical profile is step R4). Ends are free (no junction mouth, 21.61). false = none. */
+    shpCity: { enabled: true as boolean },
     /**
      * STEP RAIL-B2: ONE place for the road / rail buffer (m). Used by scripts/road-rail-buffer-check.ts (measure only; the design code does not read it yet).
      *   railOverRoad   : rail over a road: underside of the rail deck above the road surface.

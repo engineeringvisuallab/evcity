@@ -107,6 +107,7 @@ C0 -> R0 -> C1 -> C2 -> C3 -> R1 -> C4 (Z10, Z01) -> R2 -> C4 (other zones) -> R
 | CRR-6 (hub ring) | done 2026-11-20 (headless, flag OFF by default, see section 11) | ring RR-HUB ported from the crr6 zip into this main project; 3 buildings on the ring wait for the user's decision |
 | RLU-0 (road need per district, section 12) | done 2026-11-20 (plan only, no street placed; new city streets 2-lane only) | land for roads about 35 % of buildable ground (derived) |
 | SHP-1 (section 13) | done 2026-11-20 (design only, src untouched) | the user's drawn streets City_Road.shp (25 lines) read, classed C / L, fitted with spirals + radii, water / node / crossing checks; 6 PASS, 1 FAIL (CR5: 4 ends on 8-lane roads, waits for the user), 10 WARN |
+| SHP-2 (section 13) | done 2026-11-20 (streets are IN THE GAME, Config.roads.shpCity.enabled = true) | user order 'sob gula road game a bosaw': 8 joins -> 17 streets, 4 ends pulled back from the 8-lane arms (CR5 PASS), provisional profile; scripts/city-shp-check.ts all PASS in the real network; NOT RUN: tsc, npm run build, game look (no node_modules) |
 | R0 | not started | next step (after twin C0; use the marked border, section 12) |
 | R1 | not started | |
 | R2 | not started | |
@@ -348,3 +349,20 @@ RESULT of SHP-1: 6 PASS, 1 FAIL, 10 WARN. 7508 m drawn. Water (centre + both edg
 - NOT RUN: rail clearance, vertical profile, junction mouths, tsc, npm run build, game look.
 
 NEXT (one step per session): SHP-2 nodes: join the 6 split pairs into one continuous alignment each, make nodes at the 6 crossings, fix the T angles, decide the free ends, then the CR5 ends after the user's answer. SHP-3 vertical profile + earthwork (R4 method). SHP-4 put the streets in the game as a data file behind a Config switch (default OFF, like `LNewLineData.ts`), headless check, tsc, build, then the user looks.
+
+### 13b. SHP-2: the streets are placed in the game (2026-11-20, user order "sob gula road game a bosaw")
+
+The user did not answer the CR5 question (ends on 8-lane roads); my proposal was used: the 4 ends are pulled back until they are 50 m from the 8-lane centre line (SH-2 end 25 m, SH-5 end 25 m, SH-25 30 m at both ends); they are now free ends (dead ends). Say so again if he wants them connected elsewhere.
+
+Changes (told in plain words, CR1): `src/core/Config.ts` one new switch `Config.roads.shpCity.enabled` (true; false = the streets are gone); `src/roads/RoadNetwork.ts` addJ1Arms / layoutCRoads / layoutLRoads also read the new data (same section, speed, grade as the C / L lines); NEW `src/roads/city/CityShpLineData.ts` (generated, do not edit: `MODE=export node --experimental-transform-types --import ./scripts/reg.mjs scripts/city-shp-fit.ts docs`).
+
+What was done to the drawing: 8 joins of split pairs with a G1 Bezier over the gap (SH-1+2, 6+15, 7+16, 8+11, 9+13, 12+14, 21+22, 23+24) -> 25 lines became 17 streets, 7560 m; refit straight - spiral - arc - spiral - straight; every R >= Rmin (C 41 m, L 20 m); max distance to the drawn line 14.1 m (SH-6+15, the sharp peak, R 41). PROVISIONAL heights: natural ground smoothed over +-30 m, grade <= 0.9 x class limit, level pinned to the existing road at every T (existing R2 / R4 / R6 / C / L data, 0.00 m error). The real vertical profile with vertical curves and earthwork is still step R4 (SH-3).
+
+Check: `scripts/city-shp-check.ts` (real RoadNetwork, headless): all PASS (0 wet points, grade, 2 lanes, no junction pad). `scripts/city-shp-fit.ts` export: 9 PASS, 0 FAIL, 14 WARN.
+
+FINDINGS for the user (not hidden, nothing changed for them yet):
+- The streets CROSS other roads without a junction (free ends, same as every C / L line until 21.61): SH-6+15 and SH-7+16 x CRR-WNW-ax; SH-8+11 and SH-9+13 x CRR-S1-ax; SH-12+14 x CRR-E1-ax (rail-corridor roads, 4 lanes: a 2-lane street must not cross a bigger road at grade, X2 / CR4); SH-1+2 x R2-30; SH-7+16 x SH-17; SH-20 x SH-21+22; SH-20 x SH-23+24 (3 street x street X crossings: roundabout or staggered T in 21.61). Needs a decision per crossing (node, T, bridge or cut the street).
+- 4 T angles under 70 deg (SH-1+2 start on R4-20 53, SH-4 start on R2-77 70, SH-18 start on R2-30 4, SH-20 end on L-30 62); 14 free ends (dead ends); 7 curve pairs without the 6 V / 2 V straight (S-bends drawn; reverse spirals touch).
+- SH-20 has a fill of 6.2 m against the natural ground (36 m level at its east end).
+
+NEXT: SHP-3 decisions on the crossings and T angles, then real profile (R4). The user looks in the game with the free camera (V); buildings standing on the streets are his job afterwards.
