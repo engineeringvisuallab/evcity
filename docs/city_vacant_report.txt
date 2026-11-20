@@ -1,0 +1,140 @@
+vacant plots in the map 269; placed 131; NOT placed 138; city fill / residential houses inside the placed plots (dropped by the game) 4; max ground range under a plot 3 m; plots slid away from the road 129 (max 1.3 m)
+
+V-592 road R4-12 (499, -198): old city plot (STEP 3) (after sliding 0.6 m)
+V-593 road R4-12 (627, -362): old city plot (STEP 3) (after sliding 0.6 m)
+V-594 road R4-12 (639, -378): old city plot (STEP 3) (after sliding 0.7 m)
+V-595 road R4-12 (661, -405): old city plot (STEP 3) (after sliding 2.2 m)
+V-597 road R4-20 (-408, 548): rail corridor
+V-607 road R2-18 (514, -153): old city plot (STEP 3) (after sliding 0.6 m)
+V-608 road R2-28 (-322, 700): road R4-20 reaches 2.0 m into the plot (after sliding 2.2 m)
+V-609 road R2-28 (-290, 698): old city plot (STEP 3) (after sliding 0.6 m)
+V-610 road R2-28 (-270, 697): old city plot (STEP 3) (after sliding 0.6 m)
+V-611 road R2-28 (-250, 696): old city plot (STEP 3) (after sliding 0.6 m)
+V-612 road R2-28 (-230, 695): old city plot (STEP 3) (after sliding 0.6 m)
+V-613 road R2-28 (-210, 693): old city plot (STEP 3) (after sliding 0.6 m)
+V-614 road R2-28 (-190, 692): old city plot (STEP 3) (after sliding 0.6 m)
+V-615 road R2-28 (-92, 686): old city plot (STEP 3) (after sliding 0.6 m)
+V-616 road R2-28 (-14, 682): road SH-19 reaches 7.1 m into the plot
+V-626 road R2-28 (-104, 671): building clinic (after sliding 0.6 m)
+V-627 road R2-28 (-84, 670): building clinic (after sliding 0.6 m)
+V-628 road R2-28 (-64, 669): old city plot (STEP 3) (after sliding 0.6 m)
+V-642 road R2-29 (-101, 727): old city plot (STEP 3) (after sliding 0.6 m)
+V-649 road R2-19 (636, -77): old city plot (STEP 3) (after sliding 0.6 m)
+V-650 road R2-19 (647, -95): old city plot (STEP 3) (after sliding 0.6 m)
+V-651 road R2-19 (669, -129): old city plot (STEP 3) (after sliding 0.6 m)
+V-652 road R2-19 (680, -146): old city plot (STEP 3) (after sliding 0.6 m)
+V-653 road R2-19 (695, -162): old city plot (STEP 3) (after sliding 0.6 m)
+V-654 road R2-19 (713, -174): old city plot (STEP 3) (after sliding 0.6 m)
+V-655 road CRR-S1-a (4, 402): rail corridor
+V-656 road CRR-S1-a (8, 426): rail corridor
+V-657 road CRR-S1-a (11, 446): rail corridor
+V-658 road CRR-S1-a (18, 490): rail corridor
+V-659 road CRR-S1-a (22, 513): rail corridor
+V-660 road CRR-S1-a (25, 533): rail corridor
+V-661 road CRR-S1-a (28, 557): rail corridor
+V-662 road CRR-S1-a (37, 612): rail corridor
+V-663 road CRR-S1-a (28, 391): rail corridor
+V-664 road CRR-S1-a (41, 472): rail corridor
+V-665 road CRR-S1-a (53, 549): rail corridor
+V-666 road CRR-S1-a (56, 569): rail corridor
+V-667 road CRR-N1-a (77, 237): rail corridor
+V-668 road CRR-N1-a (92, 221): rail corridor
+V-669 road CRR-N1-a (108, 203): rail corridor
+V-670 road CRR-N1-a (170, 138): rail corridor
+V-671 road CRR-N1-a (107, 167): rail corridor
+V-672 road CRR-N1-a (121, 153): rail corridor
+V-673 road CRR-N1-a (134, 138): rail corridor
+V-674 road CRR-N1-a (148, 124): rail corridor
+V-675 road CRR-N1-a (162, 109): rail corridor
+V-676 road CRR-N1-a (176, 94): rail corridor
+V-677 road CRR-E1-a (98, 305): rail corridor
+V-678 road CRR-E1-a (120, 309): rail corridor
+V-679 road CRR-E1-a (140, 313): rail corridor
+V-680 road CRR-WNW-a (-146, 172): rail corridor
+V-681 road CRR-WNW-a (-291, 66): rail corridor
+V-682 road CRR-WNW-b (-390, 8): rail corridor
+V-683 road CRR-WNW-b (-408, -2): rail corridor
+V-684 road CRR-WNW-b (-425, -11): rail corridor
+V-685 road CRR-WNW-b (-446, -23): rail corridor
+V-686 road CRR-WNW-b (-468, -35): rail corridor
+V-687 road CRR-WNW-b (-489, -47): rail corridor
+V-688 road CRR-WNW-b (-511, -60): rail corridor
+V-689 road CRR-WNW-b (-532, -72): rail corridor
+V-690 road CRR-WNW-b (-660, -86): rail corridor
+V-691 road CRR-WNW-b (-522, -36): rail corridor
+V-692 road CRR-WNW-b (-539, -46): rail corridor
+V-695 road CRR-WNW-b (-738, -56): old city plot (STEP 3)
+V-696 road CRR-WSW-a (-146, 381): rail corridor
+V-697 road CRR-WSW-a (-162, 392): rail corridor
+V-698 road CRR-WSW-a (-179, 403): rail corridor
+V-699 road CRR-WSW-a (-196, 414): rail corridor
+V-700 road CRR-WSW-a (-212, 425): rail corridor
+V-701 road CRR-WSW-a (-229, 436): rail corridor
+V-702 road CRR-WSW-a (-246, 447): rail corridor
+V-703 road CRR-WSW-a (-262, 458): rail corridor
+V-704 road CRR-WSW-a (-292, 479): rail corridor
+V-705 road CRR-WSW-a (-309, 490): rail corridor
+V-706 road CRR-WSW-a (-344, 516): rail corridor
+V-707 road CRR-WSW-a (-157, 419): rail corridor
+V-708 road CRR-WSW-a (-174, 431): rail corridor
+V-709 road CRR-WSW-a (-191, 442): rail corridor
+V-710 road CRR-WSW-a (-277, 500): rail corridor
+V-711 road CRR-WSW-a (-294, 511): rail corridor
+V-712 road CRR-WSW-a (-320, 530): rail corridor
+V-713 road SH-4 (-709, 235): building university-building (after sliding 0.5 m)
+V-714 road SH-4 (-695, 220): building university-building (after sliding 0.5 m)
+V-715 road SH-4 (-682, 205): building university-building (after sliding 0.5 m)
+V-716 road SH-4 (-668, 190): old city plot (STEP 3) (after sliding 0.5 m)
+V-717 road SH-4 (-655, 175): road SH-5 reaches 1.0 m into the plot (after sliding 1.4 m)
+V-718 road SH-4 (-631, 148): road SH-5 reaches 0.5 m into the plot (after sliding 0.6 m)
+V-719 road SH-4 (-616, 131): old city plot (STEP 3) (after sliding 0.6 m)
+V-720 road SH-4 (-560, 63): old city plot (STEP 3) (after sliding 0.5 m)
+V-721 road SH-4 (-546, 45): old city plot (STEP 3) (after sliding 0.6 m)
+V-722 road SH-4 (-721, 228): old city plot (STEP 3) (after sliding 0.5 m)
+V-723 road SH-4 (-639, 136): old city plot (STEP 3) (after sliding 0.5 m)
+V-724 road SH-4 (-626, 121): old city plot (STEP 3) (after sliding 0.5 m)
+V-725 road SH-4 (-613, 106): old city plot (STEP 3) (after sliding 0.5 m)
+V-726 road SH-5 (-616, 190): old city plot (STEP 3) (after sliding 1.4 m)
+V-727 road SH-5 (-599, 201): old city plot (STEP 3) (after sliding 1.3 m)
+V-728 road SH-5 (-563, 211): old city plot (STEP 3) (after sliding 1.3 m)
+V-729 road SH-5 (-542, 225): old city plot (STEP 3) (after sliding 1.3 m)
+V-735 road SH-6+15 (51, -18): road SH-7+16 reaches 0.7 m into the plot (after sliding 1.0 m)
+V-741 road SH-6+15 (-439, 392): old city plot (STEP 3) (after sliding 0.5 m)
+V-742 road SH-6+15 (-187, 23): building dc_office (after sliding 0.5 m)
+V-743 road SH-6+15 (-172, 4): building dc_office (after sliding 0.5 m)
+V-744 road SH-6+15 (-160, -11): building dc_office (after sliding 0.6 m)
+V-745 road SH-6+15 (-145, -30): building dc_office (after sliding 0.5 m)
+V-749 road SH-6+15 (-91, -92): building city_hall (after sliding 0.5 m)
+V-750 road SH-6+15 (-51, -108): building city_hall
+V-751 road SH-6+15 (-21, -89): building city_hall (after sliding 0.5 m)
+V-765 road SH-7+16 (-286, 363): old city plot (STEP 3) (after sliding 0.5 m)
+V-766 road SH-7+16 (-273, 346): old city plot (STEP 3) (after sliding 0.5 m)
+V-767 road SH-7+16 (-223, 283): old city plot (STEP 3) (after sliding 0.5 m)
+V-774 road SH-7+16 (-345, 415): old city plot (STEP 3) (after sliding 0.5 m)
+V-775 road SH-7+16 (-332, 400): building office-tower (after sliding 0.5 m)
+V-776 road SH-7+16 (-320, 384): building office-tower (after sliding 0.5 m)
+V-777 road SH-7+16 (-308, 368): old city plot (STEP 3) (after sliding 0.5 m)
+V-778 road SH-7+16 (-295, 352): old city plot (STEP 3) (after sliding 0.5 m)
+V-779 road SH-7+16 (-185, 212): building office-mid (after sliding 0.5 m)
+V-782 road SH-7+16 (-53, 73): road SH-17 reaches 6.3 m into the plot
+V-788 road SH-8+11 (-121, 608): old city plot (STEP 3) (after sliding 0.5 m)
+V-789 road SH-8+11 (-65, 603): old city plot (STEP 3) (after sliding 0.5 m)
+V-796 road SH-8+11 (-282, 606): old city plot (STEP 3) (after sliding 0.5 m)
+V-797 road SH-8+11 (-215, 601): building primary-school (after sliding 0.5 m)
+V-798 road SH-8+11 (-195, 599): old city plot (STEP 3) (after sliding 0.5 m)
+V-801 road SH-8+11 (-108, 592): road SH-10 reaches 6.3 m into the plot
+V-816 road SH-9+13 (-86, 462): old city plot (STEP 3) (after sliding 0.5 m)
+V-819 road SH-10 (-205, 506): old city plot (STEP 3) (after sliding 1.3 m)
+V-820 road SH-10 (-190, 518): old city plot (STEP 3) (after sliding 1.3 m)
+V-833 road SH-12+14 (75, 520): old city plot (STEP 3) (after sliding 0.5 m)
+V-834 road SH-12+14 (95, 518): building hotel-3star (after sliding 0.5 m)
+V-835 road SH-12+14 (119, 514): old city plot (STEP 3) (after sliding 0.8 m)
+V-843 road SH-19 (-31, 692): road R2-28 reaches 0.8 m into the plot (after sliding 1.0 m)
+V-844 road SH-19 (-27, 749): old city plot (STEP 3) (after sliding 0.5 m)
+V-849 road SH-20 (601, -167): old city plot (STEP 3) (after sliding 0.5 m)
+V-850 road SH-20 (636, -212): old city plot (STEP 3) (after sliding 0.6 m)
+V-851 road SH-20 (652, -231): building diagnostic (after sliding 0.6 m)
+V-852 road SH-20 (563, -141): old city plot (STEP 3) (after sliding 0.5 m)
+V-853 road SH-20 (605, -195): old city plot (STEP 3) (after sliding 0.6 m)
+V-855 road SH-23+24 (628, -322): building office-tower (after sliding 0.5 m)
+V-856 road SH-23+24 (694, -255): road SH-20 reaches 0.8 m into the plot (after sliding 0.8 m)

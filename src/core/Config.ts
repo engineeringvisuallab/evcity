@@ -124,8 +124,8 @@ export const Config = {
 
   /** STAGE 10: the city (local streets, then buildings). */
   city: {
-    /** STEP 3 (user order 2026-11-20): land plots beside the 17 city streets (src/buildings/PlacementsPlots.ts, made by tools/city-plots-plan.py): boundary wall, gate on the road side only, trees inside, and the existing building models (university, college, madrasah, mosques, schools, offices, hospital, police ...) standing in them. The old hospital is replaced by the one in its plot and the fill houses inside a plot are dropped. false = none of it. */
-    plots: { enabled: true as boolean },
+    /** STEP 3 (user order 2026-11-20): land plots beside the 17 city streets (src/buildings/PlacementsPlots.ts, made by tools/city-plots-plan.py): boundary wall, gate on the road side only, trees inside, and the existing building models (university, college, madrasah, mosques, schools, offices, hospital, police ...) standing in them. The old hospital is replaced by the one in its plot and the fill houses inside a plot are dropped. false = none of it. `vacant` (2026-11-20, user): the empty plots of the 860 plot map (src/buildings/PlacementsVacant.ts, scripts/city-vacant-build.ts): boundary wall, gate on the road side only, small and big trees inside; false = none of them. */
+    plots: { enabled: true as boolean, vacant: true as boolean },
     /**
      * ROADS STEP 1: the cross-section of every road kind, ONE source (roads/RoadSection.ts reads it, scripts/road-section-check.ts checks it).
      * Metres. A DIVIDED section (median) is built from these numbers: halfWidth = median half + median-side shy + lanes x laneW + kerb-side shy.

@@ -8,6 +8,9 @@
 import * as THREE from 'three';
 import type { TerrainGenerator } from '../terrain/TerrainGenerator';
 import { CITY_PLOTS, CITY_PLOT_BUILDINGS, type CityPlot } from './PlacementsPlots';
+import { VACANT_PLOTS, type VacantPlot } from './PlacementsVacant';
+
+type YardPlot = CityPlot | VacantPlot;
 
 export interface PlotYardsDeps {
   root: THREE.Object3D; // world.root: children use ABSOLUTE world coordinates
@@ -43,7 +46,8 @@ export class PlotYards {
   constructor(private d: PlotYardsDeps) {
     this.holder.name = 'city-plot-yards';
     d.root.add(this.holder);
-    if (CITY_PLOTS.length === 0) { console.info('[city-plots] OFF or no plots (Config.city.plots.enabled)'); return; }
+    const plots: readonly YardPlot[] = [...CITY_PLOTS, ...VACANT_PLOTS];   // VACANT_PLOTS: the empty plots of the plot map (Config.city.plots.vacant)
+    if (plots.length === 0) { console.info('[city-plots] OFF or no plots (Config.city.plots.enabled / vacant)'); return; }
 
     const wall: THREE.Matrix4[] = [];
     const gate: THREE.Matrix4[] = [];
@@ -52,7 +56,7 @@ export class PlotYards {
     const crownCol: THREE.Color[] = [];
     const bush: THREE.Matrix4[] = [];
     const bushCol: THREE.Color[] = [];
-    for (const plot of CITY_PLOTS) {
+    for (const plot of plots) {
       this.buildWallAndGates(plot, wall, gate);
       this.buildPlants(plot, trunk, crown, crownCol, bush, bushCol);
     }
@@ -73,7 +77,7 @@ export class PlotYards {
     this.addMesh(trunkGeo, trunkMat, trunk, null);
     this.addMesh(crownGeo, leafMat, crown, crownCol);
     this.addMesh(bushGeo, leafMat, bush, bushCol);
-    console.info(`[city-plots] ${CITY_PLOTS.length} plots, ${CITY_PLOT_BUILDINGS.length} buildings, ${wall.length} wall pieces, ${gate.length} gate parts, ${crown.length} trees, ${bush.length} bushes`);
+    console.info(`[city-plots] ${CITY_PLOTS.length} plots + ${VACANT_PLOTS.length} vacant plots, ${CITY_PLOT_BUILDINGS.length} buildings, ${wall.length} wall pieces, ${gate.length} gate parts, ${crown.length} trees, ${bush.length} bushes`);
   }
 
   private addMesh(geo: THREE.BufferGeometry, mat: THREE.Material, mats: THREE.Matrix4[], cols: THREE.Color[] | null): void {
@@ -102,7 +106,7 @@ export class PlotYards {
       new THREE.Vector3((ax + bx) / 2, (base + top) / 2, (az + bz) / 2), q, new THREE.Vector3(len, top - base, thick)));
   }
 
-  private buildWallAndGates(plot: CityPlot, wall: THREE.Matrix4[], gate: THREE.Matrix4[]): void {
+  private buildWallAndGates(plot: YardPlot, wall: THREE.Matrix4[], gate: THREE.Matrix4[]): void {
     const h = (x: number, z: number): number => this.d.terrain.heightAt(x, z);
     const q = plot.poly;
     // gate positions as a distance along the road-side edge (corner 0 -> corner 1)
@@ -142,7 +146,7 @@ export class PlotYards {
     }
   }
 
-  private buildPlants(plot: CityPlot, trunk: THREE.Matrix4[], crown: THREE.Matrix4[], crownCol: THREE.Color[], bush: THREE.Matrix4[], bushCol: THREE.Color[]): void {
+  private buildPlants(plot: YardPlot, trunk: THREE.Matrix4[], crown: THREE.Matrix4[], crownCol: THREE.Color[], bush: THREE.Matrix4[], bushCol: THREE.Color[]): void {
     const h = (x: number, z: number): number => this.d.terrain.heightAt(x, z);
     const q = plot.poly;
     const F = Math.hypot(q[1]![0] - q[0]![0], q[1]![1] - q[0]![1]);
@@ -170,13 +174,16 @@ export class PlotYards {
       return !onBuilding(x, z);
     };
     const r = rng(Math.round(Math.abs(plot.c[0] * 31 + plot.c[1] * 17)) + 7);
-    const park = plot.kind === 'park', empty = plot.kind === 'empty';
+    const park = plot.kind === 'park', empty = plot.kind === 'empty', vac = plot.kind === 'vacant';
     const addTree = (u: number, v: number): void => {
       const [x, z] = at(u, v);
       const g = h(x, z);
-      const th = 2.2 + r() * 1.6;
-      const cr = 1.8 + r() * 1.6;
-      trunk.push(new THREE.Matrix4().compose(new THREE.Vector3(x, g - 0.1, z), new THREE.Quaternion(), new THREE.Vector3(1, th + 0.1, 1)));
+      // vacant plot: a mix of REAL small trees (young, 2.5-4 m tall, thin trunk) and some big ones (7-10 m, thick trunk)
+      const big = vac && r() < 0.3;
+      const th = vac ? (big ? 4.5 + r() * 2 : 1.3 + r() * 1.2) : 2.2 + r() * 1.6;
+      const cr = vac ? (big ? 3.2 + r() * 1.4 : 0.9 + r() * 0.8) : 1.8 + r() * 1.6;
+      const tk = vac ? (big ? 1.7 : 0.7) : 1;
+      trunk.push(new THREE.Matrix4().compose(new THREE.Vector3(x, g - 0.1, z), new THREE.Quaternion(), new THREE.Vector3(tk, th + 0.1, tk)));
       crown.push(new THREE.Matrix4().compose(new THREE.Vector3(x, g + th + cr * 0.7, z), new THREE.Quaternion(), new THREE.Vector3(cr, cr * 1.15, cr)));
       crownCol.push(new THREE.Color().setHSL(0.27 + r() * 0.08, 0.45 + r() * 0.2, 0.22 + r() * 0.1));
     };
@@ -194,10 +201,10 @@ export class PlotYards {
       for (let v = off + 12; v <= Dp - off - 12; v += 12) { pts.push([off, v]); pts.push([F - off, v]); }
       for (const [u, v] of pts) if (ok(u, v)) addTree(u + (r() - 0.5) * 3, v + (r() - 0.5) * 3);
     };
-    ring(TREE_EDGE + 1);
+    if (!vac) ring(TREE_EDGE + 1);   // vacant plots are small (20 x 30 m): random trees only, no ring
     // random trees and bushes (lata-pata): park dense, empty reserve medium, building plot a few
-    const nTrees = Math.round(plot.ha * (park ? 55 : empty ? 38 : 14));
-    const nBush = Math.round(plot.ha * (park ? 110 : empty ? 90 : 45));
+    const nTrees = vac ? Math.max(3, Math.round(plot.ha * 90)) : Math.round(plot.ha * (park ? 55 : empty ? 38 : 14));
+    const nBush = vac ? Math.max(4, Math.round(plot.ha * 170)) : Math.round(plot.ha * (park ? 110 : empty ? 90 : 45));
     for (let i = 0, tries = 0; i < nTrees && tries < nTrees * 8; tries++) {
       const u = r() * F, v = r() * Dp;
       if (ok(u, v)) { addTree(u, v); i++; }
