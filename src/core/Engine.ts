@@ -48,7 +48,7 @@ import { StationStructures } from '../parking/StationStructures';
 import { MallManager, loadCatalog, type Catalog } from '../mall';
 import { EngineeringBoundary } from '../zones';
 import { LibraryManager } from '../library';
-import { BuildingManager, FillBuildings, PlacedBuildings, setBuildingTextureQuality } from '../buildings';
+import { BuildingManager, FillBuildings, PlacedBuildings, PlotYards, setBuildingTextureQuality } from '../buildings';
 import { BuildingPhysics } from '../buildings/BuildingPhysics';
 import { LazyInfra } from '../engineering/LazyInfra';
 import { Minimap, type MapMarker, type MapState } from '../ui/Minimap';
@@ -233,6 +233,8 @@ export class Engine {
   /** All the other building models, each at its spot (position only for now, see src/buildings/Placements.ts). */
   readonly placedBuildings: PlacedBuildings;
   readonly fillBuildings: FillBuildings;
+  /** STEP 3: walls, gates and trees of the city plots (Config.city.plots). */
+  readonly plotYards: PlotYards;
   /** SWTP (water treatment) + STP (sewage treatment) plants with their narrated tour (Y). */
   readonly infra: LazyInfra;
   private infraFreeFly = false;
@@ -522,6 +524,9 @@ export class Engine {
       terrain: this.world.terrain,
       playerWorld: (out) => this.focusWorld(out),
     });
+
+    // City plots (STEP 3): boundary wall, gate on the road side, trees and bushes inside
+    this.plotYards = new PlotYards({ root: this.world.root, terrain: this.world.terrain });
 
     this.buildingPhysics = new BuildingPhysics(physics, this.world.origin, this.world.terrain);
 
@@ -1783,6 +1788,7 @@ export class Engine {
     this.protoBuilding.dispose();
     this.placedBuildings.dispose();
     this.fillBuildings.dispose();
+    this.plotYards.dispose();
     this.airport.dispose();
     this.airportSea.dispose();
     this.airplanes.dispose();

@@ -3,6 +3,7 @@
 // 1886 buildings.
 import type { BuildingPlacement } from './Placements';
 import { FILL_PLACEMENTS } from './PlacementsFill';
+import { insideCityPlot } from './PlacementsPlots';
 
 export const RESIDENTIAL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'apartment-mid', x: 1200.2, z: 1061.8, yaw: 2.5925, W: 18, D: 13, zone: 'se-dense', seed: 954737 },
@@ -1894,4 +1895,4 @@ export const RESIDENTIAL_PLACEMENTS: readonly BuildingPlacement[] = [
 ];
 
 /** The city fill + the residential buildings: everything that FillBuildings draws and that trees / grass keep out of. TerrainGenerator still reads only FILL_PLACEMENTS (the residential buildings get NO terrain pad, a pad loop over 1886 more plots would slow every ground sample). */
-export const DRAWN_FILL_PLACEMENTS: readonly BuildingPlacement[] = [...FILL_PLACEMENTS, ...RESIDENTIAL_PLACEMENTS];
+export const DRAWN_FILL_PLACEMENTS: readonly BuildingPlacement[] = [...FILL_PLACEMENTS, ...RESIDENTIAL_PLACEMENTS].filter((p) => !insideCityPlot(p.x, p.z, 0)); // STEP 3: a house whose centre is inside a city plot is dropped (Config.city.plots; empty list when off)
