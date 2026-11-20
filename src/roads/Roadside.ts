@@ -110,7 +110,7 @@ const STREET_KIND = {
   Pd: { kind: TreeKind.datePalm, scale: [0.9, 1.25], tint: [0.9, 1.05] },
   Pc: { kind: TreeKind.coconut, scale: [0.75, 1.05], tint: [0.9, 1.05] },
 } as const;
-const MEDIAN_TREE_STEP: [number, number] = [27.5, 37.5];
+const MEDIAN_TREE_STEP: [number, number] = [70, 95]; // user 2026-11-20: fewer median trees on all roads (was 27.5..37.5 m)
 /** Median trees are small (scale of the model). */
 const MEDIAN_SMALL: [number, number] = [0.42, 0.62];
 
@@ -169,7 +169,7 @@ export function planCityTrees(roads: RoadNetwork): { pits: number[]; trees: numb
       }
     }
     // MEDIAN: the freeway arms (broad roads) have a median strip along the centre line: a debdaru or a date palm every 11..15 m
-    if (r.medianHalf > 0) {
+    if (r.medianHalf > 0 && !r.name.startsWith('CRR-')) { // user 2026-11-20: no median trees on the rail-corridor roads (the pier row is their median)
       const mplan = planMedians(roads);
       const uturns = mplan.uturns; // ROADS STEP 4: the gaps of the U-turn openings stay free of trees
       const sight = sightZoneLen(r); // ROADS STEP 5 (D7): no tree within the sight zone of an opening

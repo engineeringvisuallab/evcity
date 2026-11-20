@@ -290,3 +290,5 @@ HOW THE USER LOOKS: set Config.roads.corridorRoads.enabled = true in src/core/Co
 NEXT QUESTION FOR THE USER (ONE): the 3 buildings on the ring: keep them for now (replaced later, rule 21.56) or should the ring be changed (smaller / moved)? Then CRR-3 (junction design), CRR-4, the station.
 
 SWITCH ON (2026-11-20, user: "real road gula dekhte chassi"): Config.roads.corridorRoads.enabled set to true in src/core/Config.ts (one word, nothing else changed). The 13 CRR pieces (5 rail-corridor roads, 5 gap-exit connectors, hub ring) now appear in the game as plain asphalt ribbons. NOT RUN: game look, tsc, npm run build (user runs them). Known: no median mesh, no pads, no AI traffic, 22 buildings on the roads (CR1: none moved).
+
+MEDIAN TREES (2026-11-20, user: 'sob road er middel er tree er poriman komaw', after seeing the game): src/roads/Roadside.ts only: MEDIAN_TREE_STEP 27.5..37.5 m -> 70..95 m (about 2.5 times fewer median trees on ALL roads), and no median tree at all on the 13 CRR pieces (name starts with CRR-, the rail pier row is their median). Side (footpath) trees, hedges, lamps NOT changed. NOT RUN: tsc, npm run build, game look.
