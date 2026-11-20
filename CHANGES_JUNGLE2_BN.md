@@ -29,3 +29,8 @@ src/core/Config.ts, src/vegetation/{TreeTypes,TreeAssets,TreePlacement,GrassPlac
 ## Dhyan dao
 - Gach er niche mati ekhono brown dekhabe (terrain colour, alada step).
 - Frame rate kombe: `dense.thicket.layers` 4 -> 2, ba `grass.jungle.chance` komao.
+
+## 2026-11-20: jungle e ghas nai (user: ghas remove, shudhu gach ar lata-pata)
+- `Config.ts` grass.jungle: floor/chance/clumpChance = 0, notun `clear: 0.1` (jungle density 0.1 er upore kono tuft/clump hoy na); `GrassPlacement.ts` e duto loop (tuft + clump) e `if (jd > JG.clear) continue`.
+- `dense.thicket.undergrowth` 0.6 -> 0.8 (fern / shrub / lata beshi). Model notun add kori ni, ager 3 ta (fern, shrub, lata) i ache.
+- Mapa: jungle e ghas OLD ~630k-764k -> NOW 0 (2 ta jungle spot, r 300 m). jungle-thicket-test PASS. Game e dekha NOT RUN, npm run build NOT RUN.

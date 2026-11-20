@@ -416,7 +416,7 @@ export const Config = {
        * so the jungle holds about 2.5x as many plants as before. `undergrowth` = share of them that are lata-pata (fern / shrub / creeper mound, no colliders),
        * the rest are young trees of `scale` (x the tree's normal size). Lower `layers` / `chance` if the frame rate drops.
        */
-      thicket: { layers: 4, chance: 0.5, undergrowth: 0.6, scale: [0.32, 0.6] as [number, number] } },
+      thicket: { layers: 4, chance: 0.5, undergrowth: 0.8, scale: [0.32, 0.6] as [number, number] } },
     /**
      * EXTRA JUNGLE SPOTS (ghono jongol outside the forest districts): round patches that use the SAME dense jungle as above (same chance, big trees, understory,
      * tall bamboo, grass thinning). `r` = radius (m) of the full jungle, `fade` = the ragged edge fades out over this many m outside the full part (smoothstep, like the district edge).
@@ -563,7 +563,7 @@ export const Config = {
        * JUNGLE FLOOR (ghono jongol ground cover): inside the dense jungle every cell gets grass (`floor` = patch value forced up to this x jungle density, so no bald
        * ground), tufts are `tall` x higher, `chance` = grass chance per cell, and the grass kinds are mixed (wild, tussocks, broad-leaf, seed-head). Flag 6 in the tuft data.
        */
-      jungle: { floor: 0.9, tall: 2.2, chance: 0.9, clumpChance: 0.45 },
+      jungle: { floor: 0, tall: 2.2, chance: 0, clumpChance: 0, clear: 0.1 }, // 2026-11-20: NO grass in the dense jungle (floor / chance / clumpChance 0); `clear` = jungle density above which no tuft or clump is placed
       /** Blades per tuft model are multiplied by this (1 = full quality; 0.6 for weak GPUs). */
       bladeDensity: 1,
       /** Wildflowers: share of tufts that carry flowers inside a flower patch / scattered in the open meadow. Patches are ~12-30 m wide. */

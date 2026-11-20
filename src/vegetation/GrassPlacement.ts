@@ -261,7 +261,8 @@ export class GrassPlacer {
 
         // 1. chance from noise only (most cells stop here): never a tuft outside a patch, fewer and smaller at its rim
         const lawn = this.lawnAt(x, z);
-        const jd = jTile > 0.02 ? this.trees.denseAt(x, z) : 0; // dense jungle 0..1: the whole floor is grass (no bald ground)
+        const jd = jTile > 0.02 ? this.trees.denseAt(x, z) : 0; // dense jungle 0..1
+        if (jd > JG.clear) continue; // NO GRASS inside the jungle: only trees and lata-pata (fern / shrub / creeper) grow there
         let patch = near ? Math.max(near[j * per + i], lawn) : this.patchIn(x, z, tx, tz, grid);
         if (jd > 0.02) patch = Math.max(patch, JG.floor * jd);
         if (patch < P.minValue) continue;
@@ -423,7 +424,8 @@ export class GrassPlacer {
         const z = oz + (j + jz) * C.cell;
 
         // 1. clumps only inside patches (close together, overlapping), fewer and smaller at the rim
-        const jd = jTile > 0.02 ? this.trees.denseAt(x, z) : 0; // jungle: grass clumps (tussocks) everywhere on the floor
+        const jd = jTile > 0.02 ? this.trees.denseAt(x, z) : 0; // dense jungle 0..1
+        if (jd > JG.clear) continue; // NO grass clumps inside the jungle either
         let patch = this.patchIn(x, z, tx, tz, grid);
         if (jd > 0.02) patch = Math.max(patch, JG.floor * jd);
         if (patch < P.minValue) continue;
