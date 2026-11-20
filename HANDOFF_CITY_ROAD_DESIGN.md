@@ -288,3 +288,5 @@ FINDINGS: (a) BUILDINGS ON THE RING (scripts/building-on-road-check.ts with the 
 NOT RUN: the game itself (no browser here): how the ring and the 5 T joins look (kerbs, markings, grass island, ditch), traffic AI on a closed ring; pads / mouths / signals (CRR-3); the station design.
 HOW THE USER LOOKS: set Config.roads.corridorRoads.enabled = true in src/core/Config.ts (one word), npm run dev; the ring is at Central (0, 300). Switch back to false = the old game.
 NEXT QUESTION FOR THE USER (ONE): the 3 buildings on the ring: keep them for now (replaced later, rule 21.56) or should the ring be changed (smaller / moved)? Then CRR-3 (junction design), CRR-4, the station.
+
+SWITCH ON (2026-11-20, user: "real road gula dekhte chassi"): Config.roads.corridorRoads.enabled set to true in src/core/Config.ts (one word, nothing else changed). The 13 CRR pieces (5 rail-corridor roads, 5 gap-exit connectors, hub ring) now appear in the game as plain asphalt ribbons. NOT RUN: game look, tsc, npm run build (user runs them). Known: no median mesh, no pads, no AI traffic, 22 buildings on the roads (CR1: none moved).
