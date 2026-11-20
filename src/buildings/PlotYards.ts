@@ -43,7 +43,7 @@ export class PlotYards {
   constructor(private d: PlotYardsDeps) {
     this.holder.name = 'city-plot-yards';
     d.root.add(this.holder);
-    if (CITY_PLOTS.length === 0) return;
+    if (CITY_PLOTS.length === 0) { console.info('[city-plots] OFF or no plots (Config.city.plots.enabled)'); return; }
 
     const wall: THREE.Matrix4[] = [];
     const gate: THREE.Matrix4[] = [];
@@ -73,6 +73,7 @@ export class PlotYards {
     this.addMesh(trunkGeo, trunkMat, trunk, null);
     this.addMesh(crownGeo, leafMat, crown, crownCol);
     this.addMesh(bushGeo, leafMat, bush, bushCol);
+    console.info(`[city-plots] ${CITY_PLOTS.length} plots, ${CITY_PLOT_BUILDINGS.length} buildings, ${wall.length} wall pieces, ${gate.length} gate parts, ${crown.length} trees, ${bush.length} bushes`);
   }
 
   private addMesh(geo: THREE.BufferGeometry, mat: THREE.Material, mats: THREE.Matrix4[], cols: THREE.Color[] | null): void {
