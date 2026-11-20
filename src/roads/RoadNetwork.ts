@@ -971,12 +971,17 @@ export class RoadNetwork {
     const c = CLASS_R2_OPEN;
     const el = (kind: string): number => c.elements.find((e) => e.kind === kind)?.width ?? 0;
     const sec = { halfWidth: c.pavementEdge, medianHalf: 0, shyMedian: 0, laneW: c.laneW, lanesPerDir: c.lanesPerDir, shyOuter: el('shoulder-out'), shoulder: el('ditch') };
+    // user 2026-11-20: R2-77 is a 4-lane road: same section / kind as the R4 lines (CLASS_R4_OPEN), the data (centreline, heights) stays the R2 one
+    const c4 = CLASS_R4_OPEN;
+    const el4 = (kind: string): number => c4.elements.find((e) => e.kind === kind)?.width ?? 0;
+    const sec4 = { halfWidth: c4.pavementEdge, medianHalf: el4('median'), shyMedian: el4('shoulder-in'), laneW: c4.laneW, lanesPerDir: c4.lanesPerDir, shyOuter: el4('shoulder-out'), shoulder: el4('ditch') };
     for (const d of R2_NEW_LINE_DATA) {
+      const four = d.name === 'R2-77';
       const m = d.pts.length;
       const cum = [0];
       for (let i = 1; i < m; i++) cum.push(cum[i - 1] + Math.hypot(d.pts[i][0] - d.pts[i - 1][0], d.pts[i][1] - d.pts[i - 1][1]));
       const L = cum[m - 1];
-      const n = Math.max(2, Math.ceil(L / KIND.collector.step)) + 1;
+      const n = Math.max(2, Math.ceil(L / (four ? KIND.highway.step : KIND.collector.step))) + 1;
       const pts: number[][] = [];
       const ys: number[] = [];
       let j = 0;
@@ -987,7 +992,8 @@ export class RoadNetwork {
         pts.push([d.pts[j][0] + (d.pts[j + 1][0] - d.pts[j][0]) * t, d.pts[j][1] + (d.pts[j + 1][1] - d.pts[j][1]) * t]);
         ys.push(d.ys[j] + (d.ys[j + 1] - d.ys[j]) * t);
       }
-      this.addRoad({ tier: 3, kind: 'collector', name: d.name, closed: false, pts, fixedY: ys, halfWidth: sec.halfWidth, shoulder: sec.shoulder, lanes: sec.lanesPerDir * 2, speedKmh: c.speed, maxGrade: 0.08, section: sec, daylight: true });
+      if (four) this.addRoad({ tier: 1, kind: 'highway', name: d.name, closed: false, pts, fixedY: ys, halfWidth: sec4.halfWidth, shoulder: sec4.shoulder, lanes: sec4.lanesPerDir * 2, speedKmh: c4.speed, maxGrade: 0.08, section: sec4, daylight: true });
+      else this.addRoad({ tier: 3, kind: 'collector', name: d.name, closed: false, pts, fixedY: ys, halfWidth: sec.halfWidth, shoulder: sec.shoulder, lanes: sec.lanesPerDir * 2, speedKmh: c.speed, maxGrade: 0.08, section: sec, daylight: true });
       if (d.structs) this.bridgeArm(this.roads[this.roads.length - 1], { name: d.name, s: d.s, pts: d.pts, ys: d.ys, structs: d.structs });
     }
   }
