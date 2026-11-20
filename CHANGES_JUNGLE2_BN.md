@@ -53,3 +53,8 @@ src/core/Config.ts, src/vegetation/{TreeTypes,TreeAssets,TreePlacement,GrassPlac
 ## 2026-11-20: gach barano thakbe, kintu dure render kom (user: gach komate boli ni, solution chaichi)
 - `Config.ts` dense.farKeep: 0.3 + `TreePlacement.ts` place(): jungle er dure (LOD >= 1 chunk, high e 380 m er por) shudhu 30% canopy gach draw hoy (cell wise fixed, jhilmil kore na). Kache (LOD 0) 2x ghono-i thake.
 - Mapa (jungle centre theke 900 m): kache 10704 (same), dure 10202 -> 3199 (-69%), mot 20906 -> 13903 (-33%). Triangle ar FPS NOT MEASURED, game e dekha NOT RUN. Aro komate: farKeep 0.3 -> 0.15, ba Quality tier e lodDistances chhoto.
+
+## 2026-11-20 (sesh): jungle sotti 2 gun (user: gach to onek komaiso, ami 2 gun barate bolechilam)
+- Bhul: ager step e '2 gun' ami komano ghonotto (208/ha) theke dhorechilam. Ashol hishab ager jungle (300/ha) theke 2 gun = 600/ha.
+- `Config.ts` dense.thicket: layers 6, chance 0.88, undergrowth 0.5 (gach beshi, lata-pata adheke); dense.farKeep 0.6 (dure 60% canopy gach).
+- Mapa: jungle core 117/ha (thicket off) -> 599/ha (ager 300/ha er 2.0x). 900 m er bhetor: kache (<380 m) 7469 -> 14973 (2.0x), dure 10202 -> 6226 (dure-r LOD1 chunk e ager jeta chhilo tar 61%). Triangle ar FPS NOT MEASURED, game e dekha NOT RUN. jungle-thicket-test range 4.2-6.2.
