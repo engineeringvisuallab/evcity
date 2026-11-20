@@ -34,3 +34,7 @@ src/core/Config.ts, src/vegetation/{TreeTypes,TreeAssets,TreePlacement,GrassPlac
 - `Config.ts` grass.jungle: floor/chance/clumpChance = 0, notun `clear: 0.1` (jungle density 0.1 er upore kono tuft/clump hoy na); `GrassPlacement.ts` e duto loop (tuft + clump) e `if (jd > JG.clear) continue`.
 - `dense.thicket.undergrowth` 0.6 -> 0.8 (fern / shrub / lata beshi). Model notun add kori ni, ager 3 ta (fern, shrub, lata) i ache.
 - Mapa: jungle e ghas OLD ~630k-764k -> NOW 0 (2 ta jungle spot, r 300 m). jungle-thicket-test PASS. Game e dekha NOT RUN, npm run build NOT RUN.
+
+## 2026-11-20: jungle er baire gach boro (user: game er gach boro, jungle er gach thik ache)
+- `Config.ts` vegetation: `treeSizeOutside: 1.4` (sadharon gach, gram er gach), `treeSizeOutsideBig: 1.2` (sal, segun, koroi, bot, shimul). `TreePlacement.ts` forestTree / homeTree e scale gunon, jungle (dz = 1) e gunon nai, jungle er kinara dhire dhire milay. Bamboo, street tree, ghas bodlai ni.
+- Mapa: khola jayga gach er gor size 0.98 -> 1.36 (+38%), jungle 0.928 -> 0.931 (prai same). jungle-thicket-test PASS. Game e dekha NOT RUN.

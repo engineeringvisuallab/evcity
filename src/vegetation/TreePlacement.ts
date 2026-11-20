@@ -282,10 +282,12 @@ export class TreePlacer {
     const big = kind >= TreeKind.sal && kind <= TreeKind.shimul;
     const wide = kind === TreeKind.koroi || kind === TreeKind.bot;
     const giant = 1 + 0.4 * dz; // deep jungle: the canopy giants grow up to 40 % taller (35-45 m)
-    const scale = big
+    const scale0 = big
       ? (V.bigTreeScale[0] + (V.bigTreeScale[1] - (wide ? 0.15 : 0) - V.bigTreeScale[0]) * rScale ** 1.2) * giant
       : kind === TreeKind.krishnachura ? 0.85 + 0.45 * rScale
       : kind === TreeKind.palm ? 0.6 + 0.95 * rScale ** 1.3 : kind === TreeKind.pine ? 0.6 + 0.9 * rScale ** 1.3 : kind === TreeKind.slender ? 0.45 + 1.4 * rScale ** 1.6 : 0.35 + 1.75 * rScale ** 1.8;
+    // 2026-11-20: trees OUTSIDE the dense jungle are bigger (`treeSizeOutside`, the big species `treeSizeOutsideBig`); the jungle (dz = 1) keeps its size, the edge blends
+    const scale = scale0 * (1 + ((big ? V.treeSizeOutsideBig : V.treeSizeOutside) - 1) * (1 - dz));
     return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: rYaw * Math.PI * 2, tint: (0.82 + rTint * 0.32) * (1 - 0.3 * dz) };
   }
 
@@ -332,14 +334,14 @@ export class TreePlacer {
     else if (u < 0.82) kind = TreeKind.palmyra;
     else kind = R.rVar < 0.3 ? TreeKind.krishnachura : R.rVar < 0.6 ? TreeKind.broadleaf : R.rVar < 0.85 ? TreeKind.vase : TreeKind.oak; // shade trees (krishnachura, mango, jackfruit ...)
     const t = R.rHScale;
-    const scale =
+    const scale = (kind === TreeKind.bamboo ? 1 : V.treeSizeOutside) * (
       kind === TreeKind.bamboo ? B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * t
       : kind === TreeKind.coconut ? 0.65 + 0.5 * t
       : kind === TreeKind.banana ? 0.8 + 0.4 * t
       : kind === TreeKind.datePalm ? 0.7 + 0.5 * t
       : kind === TreeKind.palmyra ? 0.75 + 0.5 * t
       : kind === TreeKind.krishnachura ? 0.8 + 0.4 * t
-      : 0.5 + 0.7 * t ** 1.5;
+      : 0.5 + 0.7 * t ** 1.5);
     return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: R.rHYaw * Math.PI * 2, tint: 0.85 + R.rTint * 0.3 };
   }
 

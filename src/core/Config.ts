@@ -392,6 +392,9 @@ export const Config = {
     shadeFloor: [0.34, 0.44, 0.3] as [number, number, number],
     bigTreeChance: 0.45,
     bigTreeScale: [0.7, 1.3] as [number, number],
+    /** 2026-11-20: size multiplier of the trees OUTSIDE the dense jungle (forest, open land, village trees): ordinary trees x `treeSizeOutside`, the big species (sal, segun ...) x `treeSizeOutsideBig` (so they do not get taller than ~40 m). The jungle trees keep their size (1 = no change). */
+    treeSizeOutside: 1.4,
+    treeSizeOutsideBig: 1.2,
     /** HOMESTEADS (gram): coconut, date, palmyra palms and banana clumps stand around rural houses. `reach` = ring width (m) beyond the footprint, `chance` per 10 m cell next to the house (fades out to the edge of the ring). */
     homestead: { reach: 32, chance: 0.42 },
     /** POND / LAKE / RIVER BANKS: palms and banana on low land within `reach` m of water. `chance` per 10 m cell, `maxHeight` = only land lower than this (m above sea level). */
