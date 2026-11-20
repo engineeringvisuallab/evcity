@@ -820,7 +820,7 @@ export class RoadNetwork {
     const rel = (kind: string): number => rc.elements.find((e) => e.kind === kind)?.width ?? 0;
     const sec =
       piece.kind === 'rail'
-        ? { halfWidth: 11.2, medianHalf: 3.2, shyMedian: 0, laneW: 3.5, lanesPerDir: 2, shyOuter: 1.0, shoulder: rel('ditch') }
+        ? { halfWidth: 3.2 + (piece.lanesPerDir ?? 2) * 3.5 + 1.0, medianHalf: 3.2, shyMedian: 0, laneW: 3.5, lanesPerDir: piece.lanesPerDir ?? 2, shyOuter: 1.0, shoulder: rel('ditch') }
         : { halfWidth: rc.pavementEdge, medianHalf: rel('median'), shyMedian: rel('shoulder-in'), laneW: rc.laneW, lanesPerDir: rc.lanesPerDir, shyOuter: rel('shoulder-out'), shoulder: rel('ditch') };
     this.addRoad({ tier: 1, kind: 'highway', name: piece.name, closed: false, pts, fixedY: Array.from(y), halfWidth: sec.halfWidth, shoulder: sec.shoulder, lanes: sec.lanesPerDir * 2, speedKmh: rc.speed, maxGrade: C.maxGrade, section: sec, daylight: true });
     const road = this.roads[this.roads.length - 1];

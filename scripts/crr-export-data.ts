@@ -23,7 +23,7 @@ const LINES: Record<string, string> = { 'south-1': 'S1', 'north-1': 'N1', 'east-
 const log: string[] = []; const P = (m: string): void => { console.log(m); log.push(m); };
 
 const railY = (e: any, s: number): number => { const p = rail.pointAt(e, s); const t = (s - e.cum[p.i]) / (e.cum[p.i + 1] - e.cum[p.i] || 1); return e.design[p.i] + (e.design[p.i + 1] - e.design[p.i]) * t; };
-interface Piece { name: string; line: string; kind: 'rail' | 'loop' | 'ring'; pts: number[][]; cap: number[] | null; nodes: { x: number; z: number; road: string; why: string }[] }
+interface Piece { name: string; line: string; kind: 'rail' | 'loop' | 'ring'; pts: number[][]; cap: number[] | null; nodes: { x: number; z: number; road: string; why: string }[]; lanesPerDir?: number }
 const pieces: Piece[] = [];
 // HUB RING (CRR-6): centre Central, R 70 m, section 2 + 2 lanes undivided (3.5 m lanes, 1.0 m paved shoulder = half width 8.0) + 1.5 m ditch => edge 9.5 m from the ring centreline. First piece: the corridor roads take their start height from it.
 const RC = { x: 0, z: 300, R: 70, half: 8.0, edge: 9.5 };
@@ -49,8 +49,9 @@ for (const [id, tag] of Object.entries(LINES)) {
   // CRR-6: the road starts at the OUTER EDGE of the hub ring: the first s where the 2 corners + the centre of the start line keep >= 0.3 m from the ring's pavement + ditch (RC.edge)
   const gapRing = (s: number): number => { const p0 = rail.pointAt(e, s), p1 = rail.pointAt(e, s + 1), dx = p1.x - p0.x, dz = p1.z - p0.z, l = Math.hypot(dx, dz) || 1; return Math.min(...[-HALF, 0, HALF].map((o) => Math.abs(Math.hypot(p0.x - (dz / l) * o - RC.x, p0.z + (dx / l) * o - RC.z) - RC.R) - RC.edge)); };
   let s0 = r1.start; while (gapRing(s0) < 0.3 && s0 < r1.start + 60) s0 += 0.5;
-  const WS = id === 'west-sw'; // user 2026-11-20: CRR-WSW ends at R4-20 (4-lane road), no crossing, no loop
-  const st = WS ? (r1.nodes as any[]).find((n: any) => n.road === 'R4-20').s : g.st;
+  const ENDS: Record<string, [string, number]> = { 'west-sw': ['R4-20', 0], 'west-nw': ['J1-W', -22] }; // user 2026-11-20: CRR-WSW ends at R4-20 (4-lane road), CRR-WNW-b at the J1-W edge (22 m before its centre, 2 lane), no crossing, no loop
+  const WS = id in ENDS;
+  const st = WS ? (r1.nodes as any[]).find((n: any) => n.road === ENDS[id][0]).s + ENDS[id][1] : g.st;
   P(`${id}: start cut at the hub ring edge: s ${r1.start} -> ${s0.toFixed(1)} m (the 5 roads start radially, 90 deg T on the ring)`);
   // rail part: dense (1 m) centreline s0..st
   const dense: { x: number; z: number; s: number }[] = [];
@@ -82,9 +83,9 @@ for (const [id, tag] of Object.entries(LINES)) {
     if (A.road) nodes.push({ x: r2(A.x), z: r2(A.z), road: A.road, why: 'J1 junction (rule 5), road split here' });
     if (B.road) nodes.push({ x: r2(B.x), z: r2(B.z), road: B.road, why: 'J1 junction (rule 5), road split here' });
     for (const n of r1.nodes as any[]) if (!n.road.startsWith('J1-') && n.s > A.s && n.s < B.s && n.s <= st) nodes.push({ x: r2(n.x), z: r2(n.z), road: n.road, why: 'small-road node on the rail (CRR-3 later)' });
-    if (b === bounds.length - 2 && WS) nodes.push({ x: r2(B.x), z: r2(B.z), road: 'R4-20', why: 'T end: the 4-lane road R4-20 ends the corridor road here (no crossing, no loop)' });
+    if (b === bounds.length - 2 && WS) nodes.push({ x: r2(B.x), z: r2(B.z), road: ENDS[id][0], why: 'T end at the ' + ENDS[id][0] + ' carriageway (no crossing, no loop)' });
     else if (b === bounds.length - 2) nodes.push({ x: r2(B.x), z: r2(B.z), road: '@ground', why: 'joint rail part / loop: both pieces get the natural ground height here (no step)' });
-    pieces.push({ name: `CRR-${tag}-${sfx[b]}`, line: id, kind: 'rail', pts, cap, nodes });
+    pieces.push({ name: `CRR-${tag}-${sfx[b]}`, line: id, kind: 'rail', pts, cap, nodes, ...(id === 'west-nw' && b === bounds.length - 2 ? { lanesPerDir: 1 } : {}) });
   }
   if (WS) { P(`${id}: rail part s ${s0}..${st} in ${bounds.length - 1} piece(s), NO loop (ends at R4-20)`); continue; }
   // loop: exact geometry
@@ -114,7 +115,7 @@ const ts = `// STEP CRR-5b / CRR-6: FIXED centreline data of the 5 rail-corridor
 // pts = [x, z] every 5 m (the rail part follows the rail centreline, the loop is the exact bend R / Ls). cap = the highest road surface height (m) that keeps ${NEED} m under the rail deck (rail pieces only).
 // nodes = where the piece touches an EXISTING road (the road surface height there is taken from that road): J1 split points, small-road crossings, T ends of the loops; road '@ground' = the joint rail part / loop (natural ground height, same in both pieces).
 export interface CorridorNode { x: number; z: number; road: string; why: string }
-export interface CorridorPiece { name: string; line: string; kind: 'rail' | 'loop' | 'ring'; pts: number[][]; cap: number[] | null; nodes: CorridorNode[] }
+export interface CorridorPiece { name: string; line: string; kind: 'rail' | 'loop' | 'ring'; pts: number[][]; cap: number[] | null; nodes: CorridorNode[]; lanesPerDir?: number }
 export const CORRIDOR_ROAD_DATA: CorridorPiece[] = ${JSON.stringify(pieces, null, 0).replace(/\},\{"name"/g, '},\n{"name"')};
 `;
 fs.writeFileSync('src/roads/crr/CorridorRoadData.ts', ts);
