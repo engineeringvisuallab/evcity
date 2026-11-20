@@ -11,6 +11,7 @@ const HCOL: Record<string, number> = { A: 0xe000c0, C: 0x00c8e0, L: 0xffd400 }; 
 const HWIDTH: Record<string, number> = { A: 4, C: 3, L: 2.5 };
 const HPOLE: Record<string, number> = { A: 26, C: 20, L: 14 };
 const WIDTH = 6; // m
+const CRR_HEX = 0x9b30ff; // rail-corridor roads CRR-* and RR-HUB: purple (R4 red, R2 green, R6 blue, 8-lane black stay)
 const LIFT = 1.5; // m above the ground / road surface
 
 function label(text: string, hex: number, small = false): THREE.Sprite {
@@ -108,6 +109,16 @@ export class RoadCentreLayer {
       this.ribbon(r.xs, ys, r.zs, hex, r.name, WIDTH);
       const m = r.xs.length >> 1;
       this.pole(r.xs[m], ys[m], r.zs[m], hex, r.name, 40);
+    }
+    // 1b. the rail-corridor roads CRR-* and the hub ring RR-HUB (4 lanes, so section 1 skips them): purple ribbon on the real finished surface + name label (user 2026-11-20: key 3 did not show them)
+    let kc = 0;
+    for (const r of this.roads.roads as any[]) {
+      const nm = String(r.name);
+      if (!(nm.startsWith('CRR-') || nm === 'RR-HUB')) continue;
+      const ys = Array.from(r.ys as ArrayLike<number>, (v) => v + LIFT + 0.4);
+      this.ribbon(r.xs, ys, r.zs, CRR_HEX, nm, 4);
+      const m = r.xs.length >> 1;
+      this.pole(r.xs[m], ys[m], r.zs[m], CRR_HEX, nm, 30 + (kc++ % 3) * 8);
     }
     // 2. planned lines (proposals): draped on the natural ground
     CENTRE_ROADS.forEach((r, k) => {
