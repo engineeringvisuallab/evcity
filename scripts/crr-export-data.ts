@@ -49,7 +49,8 @@ for (const [id, tag] of Object.entries(LINES)) {
   // CRR-6: the road starts at the OUTER EDGE of the hub ring: the first s where the 2 corners + the centre of the start line keep >= 0.3 m from the ring's pavement + ditch (RC.edge)
   const gapRing = (s: number): number => { const p0 = rail.pointAt(e, s), p1 = rail.pointAt(e, s + 1), dx = p1.x - p0.x, dz = p1.z - p0.z, l = Math.hypot(dx, dz) || 1; return Math.min(...[-HALF, 0, HALF].map((o) => Math.abs(Math.hypot(p0.x - (dz / l) * o - RC.x, p0.z + (dx / l) * o - RC.z) - RC.R) - RC.edge)); };
   let s0 = r1.start; while (gapRing(s0) < 0.3 && s0 < r1.start + 60) s0 += 0.5;
-  const st = g.st;
+  const WS = id === 'west-sw'; // user 2026-11-20: CRR-WSW ends at R4-20 (4-lane road), no crossing, no loop
+  const st = WS ? (r1.nodes as any[]).find((n: any) => n.road === 'R4-20').s : g.st;
   P(`${id}: start cut at the hub ring edge: s ${r1.start} -> ${s0.toFixed(1)} m (the 5 roads start radially, 90 deg T on the ring)`);
   // rail part: dense (1 m) centreline s0..st
   const dense: { x: number; z: number; s: number }[] = [];
@@ -81,9 +82,11 @@ for (const [id, tag] of Object.entries(LINES)) {
     if (A.road) nodes.push({ x: r2(A.x), z: r2(A.z), road: A.road, why: 'J1 junction (rule 5), road split here' });
     if (B.road) nodes.push({ x: r2(B.x), z: r2(B.z), road: B.road, why: 'J1 junction (rule 5), road split here' });
     for (const n of r1.nodes as any[]) if (!n.road.startsWith('J1-') && n.s > A.s && n.s < B.s && n.s <= st) nodes.push({ x: r2(n.x), z: r2(n.z), road: n.road, why: 'small-road node on the rail (CRR-3 later)' });
-    if (b === bounds.length - 2) nodes.push({ x: r2(B.x), z: r2(B.z), road: '@ground', why: 'joint rail part / loop: both pieces get the natural ground height here (no step)' });
+    if (b === bounds.length - 2 && WS) nodes.push({ x: r2(B.x), z: r2(B.z), road: 'R4-20', why: 'T end: the 4-lane road R4-20 ends the corridor road here (no crossing, no loop)' });
+    else if (b === bounds.length - 2) nodes.push({ x: r2(B.x), z: r2(B.z), road: '@ground', why: 'joint rail part / loop: both pieces get the natural ground height here (no step)' });
     pieces.push({ name: `CRR-${tag}-${sfx[b]}`, line: id, kind: 'rail', pts, cap, nodes });
   }
+  if (WS) { P(`${id}: rail part s ${s0}..${st} in ${bounds.length - 1} piece(s), NO loop (ends at R4-20)`); continue; }
   // loop: exact geometry
   const q = g.geo, loop: number[][] = [[q.A[0], q.A[1]]];
   const dir0 = [Math.cos(q.h0), Math.sin(q.h0)];
