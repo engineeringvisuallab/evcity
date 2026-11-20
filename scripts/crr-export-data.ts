@@ -49,7 +49,7 @@ for (const [id, tag] of Object.entries(LINES)) {
   // CRR-6: the road starts at the OUTER EDGE of the hub ring: the first s where the 2 corners + the centre of the start line keep >= 0.3 m from the ring's pavement + ditch (RC.edge)
   const gapRing = (s: number): number => { const p0 = rail.pointAt(e, s), p1 = rail.pointAt(e, s + 1), dx = p1.x - p0.x, dz = p1.z - p0.z, l = Math.hypot(dx, dz) || 1; return Math.min(...[-HALF, 0, HALF].map((o) => Math.abs(Math.hypot(p0.x - (dz / l) * o - RC.x, p0.z + (dx / l) * o - RC.z) - RC.R) - RC.edge)); };
   let s0 = r1.start; while (gapRing(s0) < 0.3 && s0 < r1.start + 60) s0 += 0.5;
-  const ENDS: Record<string, [string, number]> = { 'west-sw': ['R4-20', 0], 'west-nw': ['J1-W', -22] }; // user 2026-11-20: CRR-WSW ends at R4-20 (4-lane road), CRR-WNW-b at the J1-W edge (22 m before its centre, 2 lane), no crossing, no loop
+  const ENDS: Record<string, [string, number]> = { 'west-sw': ['R4-20', 0], 'west-nw': ['J1-W', -22], 'north-1': ['J1-E', -23.2] }; // user 2026-11-20: CRR-WSW ends at R4-20 (4-lane road), CRR-WNW-b at the J1-W edge (22 m before its centre, 2 lane), no crossing, no loop
   const WS = id in ENDS;
   const st = WS ? (r1.nodes as any[]).find((n: any) => n.road === ENDS[id][0]).s + ENDS[id][1] : g.st;
   P(`${id}: start cut at the hub ring edge: s ${r1.start} -> ${s0.toFixed(1)} m (the 5 roads start radially, 90 deg T on the ring)`);
