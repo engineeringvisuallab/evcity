@@ -32,8 +32,10 @@ export const TreeKind = {
   leafLitter: 22,
   /** GUM (eucalyptus, Australian-style): tall, pale, crooked trunk, a few bare limbs, a thin open crown of long narrow hanging leaves (sky shows through). */
   gum: 23,
+  /** Second gum shape (more upright, taller, narrower crown) so the gums are not all the same. Keep it the LAST kind: `kind >= TreeKind.gum` means 'a gum'. */
+  gum2: 24,
 } as const;
-export const TREE_KIND_COUNT = 24;
+export const TREE_KIND_COUNT = 25;
 
 /** Kinds drawn with the palm atlas (palms, banana, flowering krishnachura, bamboo); every other kind uses the forest-tree atlas. */
 export const usesPalmAtlas = (kind: number): boolean => (kind >= TreeKind.coconut && kind <= TreeKind.krishnachura) || kind === TreeKind.bamboo;
@@ -71,6 +73,7 @@ export const TREE_TRUNK: Record<number, { r: number; h: number; climb: number }>
   [TreeKind.deadLog]: { r: 0.03, h: 0.6, climb: 0 },
   [TreeKind.leafLitter]: { r: 0.03, h: 0.1, climb: 0 },
   [TreeKind.gum]: { r: 0.55, h: 5, climb: 12 },
+  [TreeKind.gum2]: { r: 0.5, h: 5, climb: 14 },
 };
 
 /**

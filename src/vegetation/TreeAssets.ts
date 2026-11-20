@@ -46,7 +46,7 @@ function paintBark(c: CanvasRenderingContext2D, tile: number): void {
   c.beginPath();
   c.rect(x0, 0, LS, LS);
   c.clip();
-  c.fillStyle = '#5e4630';
+  c.fillStyle = '#6b5a49';
   c.fillRect(x0, 0, LS, LS);
   // vertical fibres, wrapped sideways so the tile has no seam around the trunk
   for (let i = 0; i < 900; i++) {
@@ -54,8 +54,8 @@ function paintBark(c: CanvasRenderingContext2D, tile: number): void {
     const y = r() * LS;
     const w = 2 + r() * 9;
     const len = 50 + r() * 260;
-    const l = 22 + r() * 26;
-    c.fillStyle = `hsla(${24 + r() * 10}, ${26 + r() * 14}%, ${l}%, ${0.35 + r() * 0.4})`;
+    const l = 26 + r() * 28;
+    c.fillStyle = `hsla(${26 + r() * 16}, ${14 + r() * 16}%, ${l}%, ${0.35 + r() * 0.4})`;
     for (const dx of [0, -LS, LS]) c.fillRect(x0 + x + dx, y - len / 2, w, len);
   }
   // dark cracks
@@ -83,7 +83,7 @@ function paintBark(c: CanvasRenderingContext2D, tile: number): void {
   for (let i = 0; i < 60; i++) {
     const x = r() * LS;
     const y = r() * LS;
-    c.fillStyle = `rgba(${150 + r() * 40},${135 + r() * 30},${105 + r() * 25},0.10)`;
+    c.fillStyle = `rgba(${150 + r() * 40},${135 + r() * 30},${105 + r() * 25},0.15)`;
     for (const dx of [0, -LS, LS]) {
       c.beginPath();
       c.ellipse(x0 + x + dx, y, 6 + r() * 22, 20 + r() * 50, 0, 0, Math.PI * 2);
@@ -280,9 +280,9 @@ function paintSprays(c: CanvasRenderingContext2D, tile: number, lobed: boolean, 
       if (gum) ang = terminal ? Math.PI / 2 + (r() - 0.5) * 0.5 : Math.PI / 2 + side * (0.1 + r() * 0.5);
       const look: LeafLook = {
         // gum: grey-green, a little blue-silver, long sickle-shaped leaves that hang down (curl always to one side)
-        hue: gum ? 92 + (r() - 0.5) * 22 : (lobed ? 104 : 100) + (r() - 0.5) * 20,
-        sat: gum ? 22 + r() * 12 : 46 + r() * 12,
-        light: gum ? 30 + r() * 14 + t * 6 : 24 + r() * 14 + t * 6 - (depth > 0 ? 0 : (1 - t) * 4),
+        hue: gum ? 92 + (r() - 0.5) * 22 : (lobed ? 100 : 96) + (r() - 0.5) * 28,
+        sat: gum ? 22 + r() * 12 : 50 + r() * 16,
+        light: gum ? 30 + r() * 14 + t * 6 : 32 + r() * 16 + t * 8 - (depth > 0 ? 0 : (1 - t) * 4),
         curl: gum ? 0.22 + r() * 0.3 : (r() - 0.5) * 0.22,
         serrate: lobed || gum ? 0 : 0.6 + r() * 0.5,
       };
@@ -328,9 +328,9 @@ function paintMass(c: CanvasRenderingContext2D, tile: number, seed: number): voi
   const cy = LS / 2;
   const R = LS * 0.44;
   const layers = [
-    { n: 360, h: 104, s: 48, l: 22 },
-    { n: 420, h: 98, s: 54, l: 32 },
-    { n: 380, h: 92, s: 56, l: 42 },
+    { n: 360, h: 102, s: 50, l: 30 },
+    { n: 420, h: 95, s: 58, l: 41 },
+    { n: 380, h: 88, s: 62, l: 52 },
   ];
   for (const L of layers) {
     for (let i = 0; i < L.n; i++) {
@@ -625,7 +625,7 @@ export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 function leafTint(r: () => number, warmChance: number): readonly [number, number, number] {
   if (r() < warmChance) return [1.16, 1.07, 0.64];
   const j = r();
-  return [0.9 + 0.16 * j, 1.0, 0.88 + 0.22 * (1 - j)];
+  return [0.86 + 0.24 * j, 1.0 + 0.06 * (1 - j), 0.8 + 0.3 * (1 - j)];
 }
 
 /** A clump of leaf cards filling the shell of an ellipsoid. */
@@ -968,10 +968,17 @@ const STYLE_DEBDARU: Style = {
  * cross each other, and very few small clusters of long hanging leaves at the ends - the branch skeleton and the sky show through the crown.
  */
 const STYLE_GUM: Style = {
-  seed: 8421, trunkH: 17, trunkR: 0.62, trunkBend: 0.2, primary: 6, startFrac: 0.42, spread: [0.3, 0.75], limbLen: 8.5, fork: 2,
-  kids: [3, 2], lenRatio: [0.6, 0.55], droop: 0.22, crownY: 22, rx: 8, ry: 8, cards: 4, clusterR: 1.7, card: [2.4, 3.4], warm: 0.05, leafTile: TILE_GUM,
-  barkTint: [1.75, 1.6, 1.45], farScale: 1.6,
+  seed: 8421, trunkH: 16, trunkR: 0.62, trunkBend: 0.22, primary: 7, startFrac: 0.4, spread: [0.45, 0.95], limbLen: 11, fork: 2,
+  kids: [3, 2], lenRatio: [0.62, 0.55], droop: 0.25, crownY: 21, rx: 11, ry: 8, cards: 5, clusterR: 1.8, card: [2.4, 3.4], warm: 0.05, leafTile: TILE_GUM,
+  barkTint: [1.45, 1.38, 1.28], farScale: 1.8,
 };
+/** Gum 2: taller and more upright, a narrower crown high up, a few long limbs. */
+const STYLE_GUM2: Style = {
+  seed: 1357, trunkH: 21, trunkR: 0.5, trunkBend: 0.18, primary: 6, startFrac: 0.5, spread: [0.3, 0.6], limbLen: 8.5, fork: 3,
+  kids: [3, 2], lenRatio: [0.6, 0.55], droop: 0.12, crownY: 27, rx: 7.5, ry: 9, cards: 5, clusterR: 1.6, card: [2.4, 3.4], warm: 0.05, leafTile: TILE_GUM,
+  barkTint: [1.5, 1.4, 1.3], farScale: 1.7,
+};
+const gum2 = (detail: number): THREE.BufferGeometry => growTree(STYLE_GUM2, detail);
 const gum = (detail: number): THREE.BufferGeometry => growTree(STYLE_GUM, detail);
 const sal = (detail: number): THREE.BufferGeometry => growTree(STYLE_SAL, detail);
 const segun = (detail: number): THREE.BufferGeometry => growTree(STYLE_SEGUN, detail);
@@ -1036,20 +1043,20 @@ function fern(detail: number): THREE.BufferGeometry {
   for (let k = 0; k < n; k++) {
     const a = (k / n) * Math.PI * 2 + (r() - 0.5) * 0.5;
     const out = V3(Math.cos(a), 0, Math.sin(a));
-    const len = lerp(0.8, 1.35, r());
+    const len = lerp(0.9, 1.6, r());
     const up = lerp(0.35, 1.0, r()); // steep fronds in the middle, flat ones outside
     const p0 = V3(0, 0.05, 0);
     const p1 = p0.clone().addScaledVector(out, len * 0.45).add(V3(0, up * len * 0.6, 0));
     const p2 = p0.clone().addScaledVector(out, len).add(V3(0, up * len * 0.5 - 0.22 * len, 0));
     m.tube([p0, p1, p2], [0.014, 0.009, 0.004], 3, 0.8);
-    const cards = detail === 0 ? 3 : 2;
+    const cards = detail === 0 ? 4 : 2;
     for (let c = 0; c < cards; c++) {
       const t = lerp(0.4, 1, (c + 0.5) / cards);
       const pos = p0.clone().lerp(p1, Math.min(1, t * 2)).lerp(p2, Math.max(0, t * 2 - 1));
       const aim = p2.clone().sub(p0).normalize();
       const nrm = V3(0, 1, 0).multiplyScalar(0.85).addScaledVector(out, 0.3).normalize();
-      const sz = (0.75 + 0.35 * r()) * (1.1 - 0.35 * t);
-      m.card(pos, nrm, out, sz * 0.62, sz, TILE_LEAF, r() * 0.5 - 0.25, nrm, lerp(0.7, 0.98, r()), r() < 0.5, leafTint(r, 0.08), aim);
+      const sz = (0.85 + 0.45 * r()) * (1.1 - 0.35 * t);
+      m.card(pos, nrm, out, sz * 0.62, sz, TILE_LEAF, r() * 0.5 - 0.25, nrm, lerp(0.85, 1.12, r()), r() < 0.5, leafTint(r, 0.1), aim);
     }
   }
   return m.build();
@@ -1066,8 +1073,8 @@ function shrub(detail: number): THREE.BufferGeometry {
     const hgt = lerp(0.9, 1.5, r());
     m.tube([V3(0, 0, 0), V3(0, hgt * 0.5, 0).addScaledVector(out, 0.15), V3(0, hgt, 0).addScaledVector(out, 0.4)], [0.03, 0.02, 0.01], 3, 0.85);
   }
-  crown(m, r, V3(0, 0.85, 0), 0.7, 0.55, 0.7, detail === 0 ? 12 : 7, 0.7, 1.1, 0.1, TILE_MASS);
-  crown(m, r, V3(0, 0.8, 0), 0.85, 0.7, 0.85, detail === 0 ? 14 : 8, 0.5, 0.8, 0.12, TILE_LEAF);
+  crown(m, r, V3(0, 0.85, 0), 0.7, 0.55, 0.7, detail === 0 ? 12 : 7, 0.7, 1.1, 0.16, TILE_MASS);
+  crown(m, r, V3(0, 0.8, 0), 0.95, 0.75, 0.95, detail === 0 ? 16 : 8, 0.55, 0.9, 0.2, TILE_LEAF);
   return m.build();
 }
 
@@ -1076,20 +1083,20 @@ function lata(detail: number): THREE.BufferGeometry {
   const r = mulberry32(553);
   const m = new Mesh();
   crown(m, r, V3(0, 0.75, 0), 1.2, 0.75, 1.2, detail === 0 ? 22 : 12, 0.8, 1.2, 0.15, TILE_MASS);
-  const vines = detail === 0 ? 7 : 4;
+  const vines = detail === 0 ? 9 : 4;
   for (let k = 0; k < vines; k++) {
     const a = (k / vines) * Math.PI * 2 + r() * 0.8;
     const out = V3(Math.cos(a), 0, Math.sin(a));
     const p0 = V3(0, 1.7, 0).addScaledVector(out, 0.35);
     const p1 = V3(0, 1.45, 0).addScaledVector(out, 1.0);
-    const p2 = V3(0, 0.05, 0).addScaledVector(out, 1.35 + r() * 0.3);
+    const p2 = V3(0, 0.05, 0).addScaledVector(out, 1.4 + r() * 0.45);
     m.tube([p0, p1, p2], [0.016, 0.011, 0.006], 3, 0.8);
-    const cards = detail === 0 ? 3 : 2;
+    const cards = detail === 0 ? 4 : 2;
     for (let c = 0; c < cards; c++) {
       const t = (c + 0.6) / (cards + 0.2);
       const pos = p0.clone().lerp(p1, Math.min(1, t * 2)).lerp(p2, Math.max(0, t * 2 - 1));
       const nrm = out.clone().multiplyScalar(0.9).add(V3(0, 0.25, 0)).normalize();
-      m.card(pos, nrm, V3(0, 1, 0), 0.34, 0.4, TILE_LOBED, r() * Math.PI * 2, nrm, lerp(0.75, 1.0, r()), r() < 0.5, leafTint(r, 0.18));
+      m.card(pos, nrm, V3(0, 1, 0), 0.42, 0.5, TILE_LOBED, r() * Math.PI * 2, nrm, lerp(0.85, 1.12, r()), r() < 0.5, leafTint(r, 0.22));
     }
   }
   return m.build();
@@ -1226,6 +1233,7 @@ export class TreeAssets {
       [TreeKind.deadLog]: deadLog,
       [TreeKind.leafLitter]: leafLitter,
       [TreeKind.gum]: gum,
+      [TreeKind.gum2]: gum2,
       ...PALM_MAKERS,
     };
     for (let k = 0; k < TREE_KIND_COUNT; k++) this.geometries.push([makers[k](0), makers[k](1)]);
