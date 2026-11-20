@@ -1,6 +1,8 @@
+# REDO 2026-11-20: plots are placed ONLY on land that is completely free in docs/city_nogo.json (scripts/city-nogo-map.ts). Order: move along the street, other side, another street, then shrink (not below table 4 minimum), else NOT PLACED.
 # STEP 3 city plots: places the plots beside the 17 city streets and writes src/buildings/PlacementsPlots.ts (+ docs/city_plots_proposal.json, docs/city_plots_step2.png).
 # Run from the project root: python3 tools/city-plots-plan.py   (input docs/city_plots_input.json = scripts/city-plots-dump.ts, made with the plots switch OFF)
-import json, math
+import json, math, base64, collections
+import numpy as np
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon as MP
@@ -49,22 +51,94 @@ KEEPOUT=[b for b in hand if not (b['id']=='hospital' and b['x']==220)]   # every
 def bld_poly(b,m=4):
     r=max(b['W'],b['D'])/2+m;return [(b['x']-r,b['z']-r),(b['x']+r,b['z']-r),(b['x']+r,b['z']+r),(b['x']-r,b['z']+r)]
 PLOTS=[]
-def free(poly,anchor_id=None):
+NG=json.load(open('docs/city_nogo.json'))
+MK=np.frombuffer(base64.b64decode(NG['mask']),dtype=np.uint8).reshape(NG['nz'],NG['nx'])
+HARD=1|4|8|16|32      # road, 17 streets (12 m), rail (30 m from axis), keep-out sites, water (+30 m), hand building (+4 m)
+BITN={1:'road',2:'street<12m',4:'rail<30m',8:'keep-out site',16:'water',32:'building',128:'rail<100m'}
+DIM={}
+for b in hand:DIM.setdefault(b['id'],(b['W'],b['D']))
+DIM['police_station']=(54,46)
+MINHA=[('Hospital',5.0),('University',9.0),('College',2.0),('Madrasah',0.8),('High school',1.0),('Primary school',0.4),('Police',0.3),('Mall',1.5),('Mosque',0.2),('Clinic',0.15),('Diagnostic',0.15),('Office tower',0.4),('Office mid',0.25),('Bank',0.25),('Hotel',0.25),('Park',0.3),('Empty reserve',0.3)]
+def minha(prog):
+    for k,v in MINHA:
+        if prog.startswith(k):return v
+    return 0.3
+def inflate(poly,m):
+    cx=sum(a for a,b in poly)/4;cz=sum(b for a,b in poly)/4;o=[]
+    for a,b in poly:
+        d=math.hypot(a-cx,b-cz);o.append((a+(a-cx)/d*m*1.41,b+(b-cz)/d*m*1.41))
+    return o
+def cells(poly,step=5.0):
+    q=poly;L1=math.hypot(q[1][0]-q[0][0],q[1][1]-q[0][1]);L2=math.hypot(q[3][0]-q[0][0],q[3][1]-q[0][1])
+    n1=max(2,int(L1/step)+2);n2=max(2,int(L2/step)+2);u=np.linspace(0,1,n1)[:,None];v=np.linspace(0,1,n2)[None,:]
+    X=(1-u)*((1-v)*q[0][0]+v*q[3][0])+u*((1-v)*q[1][0]+v*q[2][0]);Z=(1-u)*((1-v)*q[0][1]+v*q[3][1])+u*((1-v)*q[1][1]+v*q[2][1])
+    ii=np.floor((X-NG['x0'])/NG['cell']).astype(int);jj=np.floor((Z-NG['z0'])/NG['cell']).astype(int)
+    if ii.min()<0 or jj.min()<0 or ii.max()>=NG['nx'] or jj.max()>=NG['nz']:return None
+    return MK[jj,ii],X,Z
+def land_ok(poly,kind,prog,why=None):
+    r=cells(inflate(poly,1.5))
+    if r is None:return False
+    m,X,Z=r
+    dd,_=STREET_TREE.query(np.stack([X.ravel(),Z.ravel()],1))
+    if (dd<KEEP).any():
+        if why is not None:why['street<12m']+=1
+        return False
+    bad=m&HARD
+    if prog.startswith('Hospital'):bad=bad|(m&128)
+    if bad.any():
+        if why is not None:
+            for bit in BITN:
+                if (bad&bit).any():why[BITN[bit]]+=1
+        return False
+    return float(((m&64)>0).mean())<=(0.12 if kind=='inst' else 0.35)
+from scipy.spatial import cKDTree
+def _dense(pts,step=3.0):
+    o=[]
+    for k in range(1,len(pts)):
+        a=pts[k-1];b=pts[k];L=math.hypot(b[0]-a[0],b[1]-a[1]);n=max(1,int(L/step))
+        for t in range(n+1):o.append((a[0]+(b[0]-a[0])*t/n,a[1]+(b[1]-a[1])*t/n))
+    return o
+STREET_TREE=cKDTree(np.array([q for p in streets.values() for q in _dense(p)]))
+PLOTS=[]
+EXTRA=[]   # buildings that STAY because their plot was NOT PLACED (the old hospital)
+def free(poly,kind,prog,why=None):
+    ip=inflate(poly,3)
+    for b in EXTRA:
+        if sat(ip,bld_poly(b,4)):return False
     for q in PLOTS:
-        if sat(poly,q['poly']):return False
-    for b in KEEPOUT:
-        if anchor_id and b['id']==anchor_id:continue
-        if sat(poly,bld_poly(b)):return False
-    return street_ok(poly)
+        if sat(ip,inflate(q['poly'],3)):return False
+    return land_ok(poly,kind,prog,why)
+def resample(pts,step=6.0):
+    o=[tuple(pts[0])]
+    for k in range(1,len(pts)):
+        a=pts[k-1];b=pts[k];L=math.hypot(b[0]-a[0],b[1]-a[1]);n=max(1,int(L/step))
+        for t in range(1,n+1):o.append((a[0]+(b[0]-a[0])*t/n,a[1]+(b[1]-a[1])*t/n))
+    return o
+RS={n:resample(p) for n,p in streets.items()}
+NOTPLACED=[]
 def place(prog,kind,model,F,Dp,streets_pref,note='',skip_every=0):
-    for sn in streets_pref:
-        pts=streets[sn]
-        for side in(1,-1):
-            for i in range(2,len(pts)-2,2):
-                poly,c,g=rect(pts,i,side,F,Dp)
-                if free(poly):
-                    PLOTS.append(dict(prog=prog,kind=kind,model=model,street=sn,poly=poly,c=c,gate=g,F=F,D=Dp,ha=F*Dp/1e4,note=note));return True
-    print('NOT PLACED',prog,F,'x',Dp);return False
+    mh=minha(prog);W0,D0=(DIM.get(model.split('+')[0].split(' ')[0],(0,0)) if kind=='inst' else (0,0))
+    if model.startswith('mosque'):W0,D0=DIM['mosque']
+    others=sorted([n for n in streets if n not in streets_pref],key=lambda n:min(math.hypot(a[0]-streets[streets_pref[0]][len(streets[streets_pref[0]])//2][0],a[1]-streets[streets_pref[0]][len(streets[streets_pref[0]])//2][1]) for a in streets[n]))
+    order=list(streets_pref)+others
+    why=collections.Counter()
+    for sc in(1.0,0.85,0.7,0.55):
+        F2,D2=F*sc,Dp*sc
+        if F2*D2/1e4<mh-1e-9 and sc<1.0:break
+        if kind=='inst' and (F2<W0+8 or D2<D0+10):break
+        if prog.startswith(('Hospital','University')) and sc<1.0:break
+        for sn in order:
+            pts=RS[sn]
+            for side in(1,-1):
+                for i in range(1,len(pts)-1):
+                    poly,c,g=rect(pts,i,side,F2,D2)
+                    if free(poly,kind,prog,why if sc==1.0 and sn in streets_pref else None):
+                        PLOTS.append(dict(prog=prog,kind=kind,model=model,street=sn,poly=poly,c=c,gate=g,F=F2,D=D2,ha=F2*D2/1e4,note=note+(' (shrunk x%.2f)'%sc if sc<1 else '')+(' (moved to %s)'%sn if sn not in streets_pref else '')));return True
+    reason=', '.join('%s %d'%(k,v) for k,v in why.most_common(3)) or 'no free place'
+    print('NOT PLACED',prog,'%.0fx%.0f'%(F,Dp),'| blocked by:',reason)
+    NOTPLACED.append(dict(prog=prog,F=F,D=Dp,reason=reason))
+    if prog.startswith('Hospital'):EXTRA.extend([b for b in hand if b['id']=='hospital' and b['x']==220]);print('   -> the OLD hospital (220,-250) STAYS where it is (not dropped)')
+    return False
 # ---- anchor: existing hospital (220,-250) beside SH-25 (plot 250 x 200 = 5 ha)
 hos=[b for b in hand if b['id']=='hospital'][0]
 pts=streets['SH-25'];bi=min(range(len(pts)),key=lambda i:math.hypot(pts[i][0]-hos['x'],pts[i][1]-hos['z']))
@@ -210,7 +284,7 @@ ts.append("")
 ts.append("export const CITY_PLOTS: readonly CityPlot[] = Config.city.plots.enabled ? PLOTS_ALL : [];")
 ts.append("export const CITY_PLOT_BUILDINGS: readonly BuildingPlacement[] = Config.city.plots.enabled ? BUILDINGS_ALL : [];")
 ts.append("/** The old hand placed hospital (Placements.ts, 220 / -250) is replaced by the hospital in its plot beside SH-25. */")
-ts.append("export const CITY_PLOT_REPLACES: { id: string; x: number; z: number } | null = Config.city.plots.enabled ? { id: 'hospital', x: 220, z: -250 } : null;")
+ts.append("export const CITY_PLOT_REPLACES: { id: string; x: number; z: number } | null = "+("Config.city.plots.enabled ? { id: 'hospital', x: 220, z: -250 } : null;" if any(p['prog'].startswith('Hospital') for p in PLOTS) else "null; // the hospital plot is NOT PLACED: the old hospital stays"))
 ts.append("")
 ts.append("/** Is (x, z) inside a plot (+ margin m)? Used to drop the city-fill houses that stand inside a plot. */")
 ts.append("export function insideCityPlot(x: number, z: number, margin = 0): boolean {")

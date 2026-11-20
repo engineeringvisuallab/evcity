@@ -21,11 +21,15 @@ const X0 = -900, X1 = 1300, Z0 = -650, Z1 = 1250, CELL = 4;
 const ROAD_MARGIN = 5;     // m beyond road edge (half width + shoulder) for every game road that is not one of the 17 streets
 const STREET_KEEP = 12;    // m from the centre line of the 17 city streets (rule of the plots)
 const RAIL_EDGE = 12;      // m beyond the rail corridor (same as scripts/city-plots-full-check.ts)
+const RAIL_AXIS = 30;      // m from the rail axis (HANDOFF section 5 / ROADFIX R3), decided with the user 2026-11-20 ("you are my engineer")
+const HOSP_RAIL = 100;     // m from the rail axis, hospital only (table 4, ASSUMED); soft bit 128
 const WATER_BUF = 30;      // m from wet ground (HANDOFF_CITY_DESIGN section 5)
 const BLD_MARGIN = 4;      // m around every hand placed building
 const STEEP = 0.12;        // slope (rise / run) over 20 m, marked as soft bit
 const NX = Math.ceil((X1 - X0) / CELL), NZ = Math.ceil((Z1 - Z0) / CELL);
-const B = { ROAD: 1, STREET: 2, RAIL: 4, KEEP: 8, WATER: 16, BUILDING: 32, STEEP: 64 };
+const B = { ROAD: 1, STREET: 2, RAIL: 4, KEEP: 8, WATER: 16, BUILDING: 32, STEEP: 64, RAIL100: 128 };
+const rf: any = gen.railForm; const rr = { d: 0, h: 0 };
+const axisD = (x: number, z: number): number => { let best = 1e9; const cx = Math.floor(x / 64), cz = Math.floor(z / 64); for (let a = cx - 2; a <= cx + 2; a++) for (let b = cz - 2; b <= cz + 2; b++) { const l = rf.cells.get((a + 2048) * 8192 + (b + 2048)); if (!l) continue; for (const id of l) { rf.probe(id, x, z, rr); if (rr.d < best) best = rr.d; } } return best; };
 const m = new Uint8Array(NX * NZ);
 const HC = 100; const grid = new Map<string, { x: number; z: number; r: number; own: boolean }[]>();
 for (const r of gen.roads.roads) {
@@ -43,7 +47,7 @@ for (let j = 0; j < NZ; j++) for (let i = 0; i < NX; i++) {
   const x = X0 + (i + 0.5) * CELL, z = Z0 + (j + 0.5) * CELL; let v = 0;
   for (let a = Math.floor((x - 70) / HC); a <= Math.floor((x + 70) / HC); a++) for (let b = Math.floor((z - 70) / HC); b <= Math.floor((z + 70) / HC); b++) { const g = grid.get(`${a},${b}`); if (!g) continue; for (const p of g) if (Math.hypot(p.x - x, p.z - z) < p.r) v |= p.own ? B.STREET : B.ROAD; }
   if (gen.roads.surfaceAt(x, z) !== 0) v |= B.ROAD;
-  if (gen.railForm.inCorridor(x, z, RAIL_EDGE)) v |= B.RAIL;
+  const ad = axisD(x, z); if (gen.railForm.inCorridor(x, z, RAIL_EDGE) || ad < RAIL_AXIS) v |= B.RAIL; if (ad < HOSP_RAIL) v |= B.RAIL100;
   if (libraryKeepout(x, z) || mallKeepout(x, z) || evlabKeepout(x, z) || protoKeepout(x, z) || infraKeepout(x, z) || airportKeepout(x, z) || agroKeepout(x, z) || getEngineeringAreaAt(x, z)) v |= B.KEEP;
   for (const b of hand) { const r = Math.max(b.W, b.D) / 2 + BLD_MARGIN; if (Math.abs(b.x - x) < r && Math.abs(b.z - z) < r) { v |= B.BUILDING; break; } }
   gen.sample(x, z, sc); if (sc.water === sc.water && sc.h < sc.water + 0.3) wet[j * NX + i] = 1;
@@ -59,5 +63,5 @@ const ha = (c: number): string => (c * CELL * CELL / 1e4).toFixed(0);
 console.log('area x', X0, X1, ' z', Z0, Z1, ' cell', CELL, ' cells', NX, 'x', NZ);
 for (const [n, c] of Object.entries(cnt)) console.log(`no-go ${n.padEnd(9)} ${ha(c)} ha`);
 console.log(`FREE (no bit at all) ${ha(free)} ha of ${ha(tot)} ha`);
-writeFileSync('docs/city_nogo.json', JSON.stringify({ x0: X0, z0: Z0, cell: CELL, nx: NX, nz: NZ, bits: B, assumed: { ROAD_MARGIN, STREET_KEEP, RAIL_EDGE, WATER_BUF, BLD_MARGIN, STEEP }, mask: Buffer.from(m).toString('base64') }));
+writeFileSync('docs/city_nogo.json', JSON.stringify({ x0: X0, z0: Z0, cell: CELL, nx: NX, nz: NZ, bits: B, assumed: { RAIL_AXIS, HOSP_RAIL, ROAD_MARGIN, STREET_KEEP, RAIL_EDGE, WATER_BUF, BLD_MARGIN, STEEP }, mask: Buffer.from(m).toString('base64') }));
 console.log('written docs/city_nogo.json');

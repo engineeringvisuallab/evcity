@@ -6,7 +6,7 @@ from matplotlib.patches import Polygon as MP
 D=json.load(open('docs/city_nogo.json')); I=json.load(open('docs/city_plots_input.json'))
 m=np.frombuffer(base64.b64decode(D['mask']),dtype=np.uint8).reshape(D['nz'],D['nx'])
 img=np.ones((D['nz'],D['nx'],3))
-for bit,col in((64,(1,.93,.7)),(16,(.55,.75,1)),(8,(1,.6,.2)),(32,(.9,.5,.5)),(4,(.6,.35,.15)),(2,(.8,.8,.8)),(1,(.2,.2,.2))):
+for bit,col in((128,(.97,.88,.82)),(64,(1,.93,.7)),(16,(.55,.75,1)),(8,(1,.6,.2)),(32,(.9,.5,.5)),(4,(.6,.35,.15)),(2,(.8,.8,.8)),(1,(.2,.2,.2))):
     img[(m&bit)>0]=col
 x0,z0,c=D['x0'],D['z0'],D['cell']
 fig,ax=plt.subplots(figsize=(18,14),dpi=80)
