@@ -29,11 +29,11 @@ function inMall(x: number, z: number): boolean {
 const toWorld = (s: RoadStationSite, x: number, z: number): { x: number; z: number } => ({ x: s.x + x * Math.cos(s.yaw) + z * Math.sin(s.yaw), z: s.z - x * Math.sin(s.yaw) + z * Math.cos(s.yaw) });
 
 const fuel = ROAD_STATION_SITES.filter((s) => s.kind === 'fuel'), cps = ROAD_STATION_SITES.filter((s) => s.kind === 'charge');
-ok(fuel.length === 11 && cps.length === 11, `${fuel.length} fuel stations + ${cps.length} charge points along the main roads`);
+ok(fuel.length === 23 && cps.length === 28, `${fuel.length} fuel stations + ${cps.length} charge points along the main roads`);
 ok(new Set(ROAD_STATION_SITES.map((s) => s.id)).size === ROAD_STATION_SITES.length, 'unique ids');
-for (const r of ['F4', 'F5', 'F6', 'F7']) ok(fuel.some((s) => s.road === r) && cps.some((s) => s.road === r), `city road ${r}: has a fuel station and a charge point`);
-ok(['F1', 'F2', 'F3'].every((r) => ROAD_STATION_SITES.some((s) => s.road === r)), 'ring roads F1..F3 have sites too');
-ok(ROAD_STATION_SITES.every((s) => Math.hypot(s.x, s.z) > 1700), 'every site is outside the city (> 1.7 km from the centre)');
+for (const r of ['M8', 'J1-N', 'J1-E', 'J1-S', 'J1-W']) ok(fuel.some((s) => s.road === r) && cps.some((s) => s.road === r), `main road ${r}: has a fuel station and a charge point`);
+ok(['R6-2', 'R6-15', 'M6-1', 'R4-9', 'R4-19'].every((r) => ROAD_STATION_SITES.some((s) => s.road === r)), '6-lane and 4-lane main roads have sites too');
+ok(ROAD_STATION_SITES.every((s) => Math.hypot(s.x, s.z) > 500), 'every site is away from the city centre (> 0.5 km)');
 let nearest = 1e9;
 for (const a of ROAD_STATION_SITES) for (const b of ROAD_STATION_SITES) if (a !== b) nearest = Math.min(nearest, Math.hypot(a.x - b.x, a.z - b.z));
 ok(nearest > 60, `sites are spaced out (nearest pair ${nearest.toFixed(0)} m)`);
@@ -87,7 +87,7 @@ ok(farDiff < 1e-6, `40 m behind every site the ground is untouched (${farDiff.to
 // structures: lazy
 const root = new THREE.Group();
 const st = new StationStructures({ root, terrain: g });
-ok(st.stats.built === 0 && st.stats.sites === 22, 'nothing is built at the start (22 sites known)');
+ok(st.stats.built === 0 && st.stats.sites === ROAD_STATION_SITES.length, 'nothing is built at the start (all sites known)');
 st.update(0, 0, 0);
 ok(st.stats.built === 0, 'in the city centre no site is within build range');
 const s1 = ROAD_STATION_SITES[0];

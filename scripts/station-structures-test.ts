@@ -31,7 +31,7 @@ const toWorld = (s: RoadStationSite, x: number, z: number): { x: number; z: numb
 const partRect = (p: { x: number; z: number; w: number; d: number }): LRect => [p.x - p.w / 2, p.x + p.w / 2, p.z - p.d / 2, p.z + p.d / 2];
 
 const fuel = ROAD_STATION_SITES.filter((s) => s.kind === 'fuel'), cps = ROAD_STATION_SITES.filter((s) => s.kind === 'charge');
-ok(fuel.length === 11 && cps.length === 11 && fuel.every((s) => s.hw === 16 && s.hd === 13), '11 fuel stations (32 x 26 m) + 11 charge points');
+ok(fuel.length === 23 && cps.length === 28 && fuel.every((s) => s.hw === 16 && s.hd === 13), '23 fuel stations (32 x 26 m) + 28 charge points');
 
 // ---------------------------------------------------------------- fuel stations: structures inside the lot, lanes, paths
 function pathExists(s: RoadStationSite, infl: number, goals: [number, number][]): { all: boolean; failed: string[] } {
@@ -120,7 +120,7 @@ for (const c of [cps.find((s) => s.hw === 4)!, cps.find((s) => s.hw === 6)!]) {
 const gen = new TerrainGenerator(Config.world.seed);
 const root = new THREE.Group();
 const st = new StationStructures({ root, terrain: gen });
-ok(st.stats.sites === 22 && st.stats.built === 0, '22 sites known, nothing built at the start (lazy)');
+ok(st.stats.sites === 51 && st.stats.built === 0, '51 sites known, nothing built at the start (lazy)');
 st.update(0, 0, 0);
 ok(st.stats.built === 0, 'in the city: no site within build range');
 const s0 = fuel[0];
@@ -158,7 +158,7 @@ const physics = await PhysicsWorld.create(bus);
 const origin = new FloatingOrigin(new THREE.Group(), bus as never);
 origin.origin.set(120, 0, -300);
 const sp = new SignPhysics(physics, origin, st.solidGroups);
-ok(sp.total === 22 && st.solidGroups.every((g) => g.solids.length >= 4), `22 collider groups (${st.solidGroups.reduce((a, g) => a + g.solids.length, 0)} cuboids)`);
+ok(sp.total === 51 && st.solidGroups.every((g) => g.solids.length >= 4), `51 collider groups (${st.solidGroups.reduce((a, g) => a + g.solids.length, 0)} cuboids)`);
 const R = physics.RAPIER;
 const ray = (s: RoadStationSite, gi: number, ax: number, ay: number, az: number, bx: number, bz: number): number => {
   const g = st.solidGroups[gi];

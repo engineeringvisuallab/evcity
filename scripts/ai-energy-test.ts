@@ -80,14 +80,14 @@ ok(!canReach(r, 1500, 1), 'bus 5 %: 1.5 km site not reachable with the 3 % reser
 const fuelSites = ROAD_STATION_SITES.filter((s) => s.kind === 'fuel');
 const cps = ROAD_STATION_SITES.filter((s) => s.kind === 'charge');
 const busBays = cps.filter(isBusBay);
-ok(busBays.length === 3 && busBays.every((s) => ['cp-03', 'cp-06', 'cp-09'].includes(s.id)), `3 bus bays: ${busBays.map((s) => s.id).join(', ')}`);
+ok(busBays.length === Math.floor(cps.length / 3) && busBays.every((s) => Number(s.id.slice(3)) % 3 === 0), `every 3rd charge point is a bus bay (${busBays.length}): ${busBays.map((s) => s.id).join(', ')}`);
 for (const id of Object.keys(ENERGY) as VehicleId[]) {
   const ids = ROAD_STATION_SITES.filter((s) => siteAccepts(id, s));
   ok(ids.length > 0, `${id} (${ENERGY[id]!.kind}): ${ids.length} sites suit it`);
   if (ENERGY[id]!.kind === 'fuel') ok(ids.every((s) => s.kind === 'fuel') && ids.length === fuelSites.length, `${id}: only the ${fuelSites.length} fuel stations`);
 }
 ok(ROAD_STATION_SITES.filter((s) => siteAccepts('bus', s)).every(isBusBay), 'bus: bus bays only');
-ok(ROAD_STATION_SITES.filter((s) => siteAccepts('bus', s)).length === 3, 'bus: 3 sites');
+ok(ROAD_STATION_SITES.filter((s) => siteAccepts('bus', s)).length === busBays.length, 'bus: the bus bays only (count)');
 ok(ROAD_STATION_SITES.filter((s) => siteAccepts('evhypar', s)).length === fuelSites.length + cps.length - busBays.length, 'evhypar: stations + normal charge points (no bus bay)');
 ok(!siteAccepts('truck', fuelSites[0]), 'truck (no energy): no site');
 
