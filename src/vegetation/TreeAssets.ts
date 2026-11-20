@@ -22,7 +22,7 @@ import { makePalmAtlas, PALM_BARK_TILES, PALM_MAKERS, PALM_TILES } from './PalmA
  * atlas (PalmAssets.ts: fronds, fans, banana leaves, flowers) and their own material.
  */
 
-export const TILES = 5;
+export const TILES = 6;
 /** Pixel size of one atlas tile: 800 -> the whole atlas is 4000 x 800 (4K wide, still inside every GPU's texture limit). The painters draw in a logical 512 space scaled by K. */
 const TILE = 800;
 const LS = 512;
@@ -32,6 +32,7 @@ export const TILE_LEAF = 1;
 export const TILE_NEEDLE = 2;
 export const TILE_LOBED = 3;
 export const TILE_MASS = 4;
+export const TILE_GUM = 5;
 
 // ---------------------------------------------------------------------------------------------------------------------
 // texture atlas (canvas, painted once)
@@ -228,7 +229,7 @@ function drawLobedLeaf(c: CanvasRenderingContext2D, x: number, y: number, ang: n
  * The gaps between the leaves are transparent, so the crown shows layers, light and the branch skeleton instead of a solid green mass.
  * Leaf cards are aimed so that the tips of the sprays point away from the crown centre (see Mesh.card).
  */
-function paintSprays(c: CanvasRenderingContext2D, tile: number, lobed: boolean, seed: number): void {
+function paintSprays(c: CanvasRenderingContext2D, tile: number, lobed: boolean, seed: number, gum = false): void {
   const r = mulberry32(seed);
   c.save();
   c.scale(K, K);
@@ -239,7 +240,7 @@ function paintSprays(c: CanvasRenderingContext2D, tile: number, lobed: boolean, 
   const margin = LS * (lobed ? 0.15 : 0.1);
   interface Leaf { x: number; y: number; ang: number; len: number; look: LeafLook }
   const leaves: Leaf[] = [];
-  const baseLen = lobed ? 78 : 84;
+  const baseLen = gum ? 150 : lobed ? 78 : 84;
   // a twig: curved stem with leaves on alternate sides; side twigs grow out of the first level
   const twig = (sx: number, sy: number, ang0: number, L: number, n: number, depth: number): void => {
     const steps = 24;
@@ -275,13 +276,15 @@ function paintSprays(c: CanvasRenderingContext2D, tile: number, lobed: boolean, 
       const side = i % 2 === 0 ? 1 : -1;
       const terminal = i === n;
       const len = baseLen * (1.05 - 0.3 * t) * (0.9 + 0.2 * r()) * (depth > 0 ? 0.88 : 1) * (terminal ? 1.05 : 1);
-      const ang = terminal ? p.a + (r() - 0.5) * 0.3 : p.a + side * (0.8 + r() * 0.45);
+      let ang = terminal ? p.a + (r() - 0.5) * 0.3 : p.a + side * (0.8 + r() * 0.45);
+      if (gum) ang = terminal ? Math.PI / 2 + (r() - 0.5) * 0.5 : Math.PI / 2 + side * (0.1 + r() * 0.5);
       const look: LeafLook = {
-        hue: (lobed ? 104 : 100) + (r() - 0.5) * 20,
-        sat: 46 + r() * 12,
-        light: 24 + r() * 14 + t * 6 - (depth > 0 ? 0 : (1 - t) * 4),
-        curl: (r() - 0.5) * 0.22,
-        serrate: lobed ? 0 : 0.6 + r() * 0.5,
+        // gum: grey-green, a little blue-silver, long sickle-shaped leaves that hang down (curl always to one side)
+        hue: gum ? 92 + (r() - 0.5) * 22 : (lobed ? 104 : 100) + (r() - 0.5) * 20,
+        sat: gum ? 22 + r() * 12 : 46 + r() * 12,
+        light: gum ? 30 + r() * 14 + t * 6 : 24 + r() * 14 + t * 6 - (depth > 0 ? 0 : (1 - t) * 4),
+        curl: gum ? 0.22 + r() * 0.3 : (r() - 0.5) * 0.22,
+        serrate: lobed || gum ? 0 : 0.6 + r() * 0.5,
       };
       if (p.x > margin && p.x < LS - margin && p.y > margin && p.y < LS - margin) leaves.push({ x: p.x, y: p.y, ang, len, look });
     }
@@ -293,7 +296,7 @@ function paintSprays(c: CanvasRenderingContext2D, tile: number, lobed: boolean, 
       }
     }
   };
-  const stems = lobed ? 3 : 4;
+  const stems = gum ? 3 : lobed ? 3 : 4;
   for (let s = 0; s < stems; s++) {
     const spread = s / (stems - 1) - 0.5;
     twig(
@@ -301,13 +304,13 @@ function paintSprays(c: CanvasRenderingContext2D, tile: number, lobed: boolean, 
       LS * 0.94,
       -Math.PI / 2 + spread * 1.0 + (r() - 0.5) * 0.2,
       LS * (0.7 + r() * 0.12),
-      lobed ? 6 : 7,
+      gum ? 6 : lobed ? 6 : 7,
       0,
     );
   }
   for (const lf of leaves) {
     if (lobed) drawLobedLeaf(c, lf.x, lf.y, lf.ang, lf.len, lf.look);
-    else drawOvateLeaf(c, lf.x, lf.y, lf.ang, lf.len, lf.len * 0.27, lf.look, true);
+    else drawOvateLeaf(c, lf.x, lf.y, lf.ang, lf.len, lf.len * (gum ? 0.1 : 0.27), lf.look, !gum);
   }
   c.restore();
 }
@@ -403,6 +406,7 @@ function makeAtlas(): THREE.DataTexture | null {
   paintNeedles(c, TILE_NEEDLE);
   paintSprays(c, TILE_LOBED, true, 98765);
   paintMass(c, TILE_MASS, 4242);
+  paintSprays(c, TILE_GUM, false, 31337, true);
   return atlasTexture(c, W, TILE, TILES, 1);
 }
 
@@ -959,6 +963,16 @@ const STYLE_DEBDARU: Style = {
   seed: 1616, trunkH: 11, trunkR: 0.22, trunkBend: 0.03, primary: 16, startFrac: 0.3, spread: [0.12, 0.3], limbLen: 3.4, fork: 0,
   kids: [2, 2], lenRatio: [0.5, 0.45], droop: 0.35, crownY: 9.2, rx: 1.9, ry: 4.6, cards: 6, clusterR: 0.7, card: [0.8, 1.2], warm: 0.1,
 };
+/**
+ * Gum (eucalyptus, like the Australian street-view trees): a tall, pale, crooked trunk, bare for the first third, a few long limbs that bend and
+ * cross each other, and very few small clusters of long hanging leaves at the ends - the branch skeleton and the sky show through the crown.
+ */
+const STYLE_GUM: Style = {
+  seed: 8421, trunkH: 17, trunkR: 0.62, trunkBend: 0.2, primary: 6, startFrac: 0.42, spread: [0.3, 0.75], limbLen: 8.5, fork: 2,
+  kids: [3, 2], lenRatio: [0.6, 0.55], droop: 0.22, crownY: 22, rx: 8, ry: 8, cards: 4, clusterR: 1.7, card: [2.4, 3.4], warm: 0.05, leafTile: TILE_GUM,
+  barkTint: [1.75, 1.6, 1.45], farScale: 1.6,
+};
+const gum = (detail: number): THREE.BufferGeometry => growTree(STYLE_GUM, detail);
 const sal = (detail: number): THREE.BufferGeometry => growTree(STYLE_SAL, detail);
 const segun = (detail: number): THREE.BufferGeometry => growTree(STYLE_SEGUN, detail);
 const koroi = (detail: number): THREE.BufferGeometry => growTree(STYLE_KOROI, detail);
@@ -1211,6 +1225,7 @@ export class TreeAssets {
       [TreeKind.lata]: lata,
       [TreeKind.deadLog]: deadLog,
       [TreeKind.leafLitter]: leafLitter,
+      [TreeKind.gum]: gum,
       ...PALM_MAKERS,
     };
     for (let k = 0; k < TREE_KIND_COUNT; k++) this.geometries.push([makers[k](0), makers[k](1)]);

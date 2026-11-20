@@ -44,6 +44,8 @@ const smooth = (a: number, b: number, x: number): number => {
 
 /** Which big forest tree grows at height `h` (m)? Lowland forest: all five (koroi and banyan are wide: at most one per 3 x 3 cells); hills: sal, segun, shimul; high hills mostly sal. */
 function bigKind(h: number, u: number, gi: number, gj: number): number {
+  // GUM (eucalyptus): about 1 in 4 big trees, picked from a second hash of `u` so the other species keep their order
+  if ((u * 7.31) % 1 < 0.26) return TreeKind.gum;
   const wideOk = (((gi % 3) + 3) % 3 === 0) && (((gj % 3) + 3) % 3 === 0);
   if (h < 25) {
     if (u < 0.26) return wideOk ? TreeKind.koroi : TreeKind.segun;
@@ -281,7 +283,7 @@ export class TreePlacer {
 
     // REAL FOREST SIZES: many young / small trees, a fair number of middle-aged ones, a few old giants (skewed, not uniform).
     // The big species are given as mature trees (scale 1 = 20-30 m): a narrow range, so a banyan never becomes 60 m tall.
-    const big = kind >= TreeKind.sal && kind <= TreeKind.shimul;
+    const big = (kind >= TreeKind.sal && kind <= TreeKind.shimul) || kind === TreeKind.gum;
     const wide = kind === TreeKind.koroi || kind === TreeKind.bot;
     const giant = 1 + 0.4 * dz; // deep jungle: the canopy giants grow up to 40 % taller (35-45 m)
     const scale0 = big
@@ -430,7 +432,7 @@ export class TreePlacer {
 
     // jungle bamboo: 3-5x taller than a grove clump (random per clump), full inside the jungle
     const bambooScale = (B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * rs) * (1 + (B.jungleTall[0] + (B.jungleTall[1] - B.jungleTall[0]) * ((rs * 13.37 + 0.31) % 1) - 1) * smooth(0.1, 0.6, dz));
-    const big = kind >= TreeKind.sal && kind <= TreeKind.shimul;
+    const big = (kind >= TreeKind.sal && kind <= TreeKind.shimul) || kind === TreeKind.gum;
     const young = D.understoryScale[0] + (D.understoryScale[1] - D.understoryScale[0]) * rs ** 1.4;
     const scale = big ? V.bigTreeScale[0] + 0.3 * rs : kind === TreeKind.bamboo ? bambooScale : kind === TreeKind.pine ? 0.35 + 0.5 * rs : young;
     return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: ry * Math.PI * 2, tint: (0.8 + rt * 0.3) * (1 - 0.3 * dz) };
