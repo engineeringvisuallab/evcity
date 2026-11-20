@@ -121,7 +121,8 @@ C0 -> R0 (road twin: list the existing roads in the zones) -> C1 -> C2 -> C3 -> 
 | Step | Status | Note |
 |---|---|---|
 | Handoffs written | done 2026-11-18 | this file + `HANDOFF_CITY_ROAD_DESIGN.md`, `tools/city-zone-trace.py`, `docs/city_red_zones_user_sketch.png`, `docs/city_zones_trace.json` / `.png` (UNCALIBRATED) |
-| C0 | not started | next step |
+| LU-1 (marked-area land-use proposal, section 11) | done 2026-11-20 (numbers copied from the previous chat, scripts LOST, nothing recomputed except sums) | 1.4 ha over-fill flag, per-building areas missing |
+| C0 | not started | next step (with LU-1 border, section 11) |
 | C1 | not started | |
 | C2 | not started | |
 | C3 | not started | |
@@ -132,3 +133,35 @@ C0 -> R0 (road twin: list the existing roads in the zones) -> C1 -> C2 -> C3 -> 
 ## 10. HOW TO START IN A NEW CHAT
 
 Paste: "Read HANDOFF_CITY_DESIGN.md completely (rules first), then HANDOFF_CITY_ROAD_DESIGN.md, then the HARD RULES block at the top of HANDOFF_ROAD_DESIGN.md. Work as a city design expert. Do ONLY step C0 (calibrate the red zones, trace, list what is inside each zone). Say the plan first, no building is placed, PASS / FAIL list, then STOP. Reply in short Banglish. Changed files only in a versioned zip."
+
+## 11. LAND-USE PROPOSAL v1 FOR THE USER'S MARKED AREA (user job 2026-11-20, picture `city_landuse_plan_1.png`)
+
+USER WORDS (Banglish, keep): "only mark kora jaigai ki ki building office shop mall(asei) evlab asei, university, Madrasah, school etc ki ki hobe segula k kivabe sajano jai and sajanor jonno land kototuku lagbe and sei onujai road hobe. existing road to asei sei onujai r kothia kemon road lagbe sevabe plan daw. and cityroad design and city deisng handoff a update korte hobe." = inside the marked (blue) border only: list what goes where (office, shop, mall, EVLab (exists), university, madrasah, schools ...), how to arrange it, how much land each needs, and roads that follow it; the existing roads stay as they are and the new roads are planned to fit; both city handoffs must be updated.
+
+STATUS: PROPOSAL, positions +-100 m (printed on the picture), planning norms are ASSUMED. The numbers below were copied from the output of the PREVIOUS chat (it hit its limit). Its scripts `final.py` and `lu_final.json` lived in `/tmp` and are LOST: nothing here was recomputed in this chat except the sums marked (sum). NOT RUN: any script, tsc, build, water check (the zip has no node_modules and the chat has no network). The relation of this marked border (about 320 ha, picture axes x -1150..1400, z -1700..1000 m, x east, z south) to the old red zones Z01-Z10 of section 2 is NOT settled; step C0 must overlay both and the user says which border wins.
+
+District table (ha; gross = inside the marked border, wet = water cells, fixed = fixed objects (EVLab 12.4 in EVL, 2.8 in CORE), net = usable after roads and margins, explicit = named buildings, housing = homes, pop = people, primary / mosque / clinic = count, park = ha):
+
+| District | Use (from the picture legend) | gross | wet | fixed | net | explicit | housing | pop | primary | mosque | clinic | park |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| CORE | civic + business (Civic + Police HQ, Fire x3) | 37.5 | 0.0 | 2.8 | 22.5 | 21.4 | 1.1 | 267 | 0 | 0 | 0 | 0.1 |
+| STN | station side (Bus terminal) | 21.2 | 1.0 | 0.0 | 13.1 | 11.7 | 1.3 | 321 | 0 | 0 | 0 | 0.1 |
+| NEB | offices + mall (Mall NE) | 35.6 | 0.0 | 0.0 | 23.1 | 15.6 | 5.8 | 1448 | 1 | 1 | 1 | 0.5 |
+| HLT | health, outer east (Hospital) | 36.1 | 0.9 | 0.0 | 22.8 | 14.7 | 6.3 | 1583 | 1 | 1 | 1 | 0.5 |
+| EMX | homes + mixed | 11.5 | 0.6 | 0.0 | 7.1 | 2.2 | 4.5 | 1137 | 1 | 1 | 0 | 0.4 |
+| EVL | EVLab (fixed) + reserve | 22.3 | 0.0 | 12.4 | 6.4 | 3.0 | 3.2 | 797 | 0 | 0 | 0 | 0.3 |
+| WNR | homes | 17.0 | 0.0 | 0.0 | 11.0 | 3.4 | 5.9 | 1474 | 1 | 1 | 1 | 0.5 |
+| EDU | university side (University, College, Madrasah) | 44.8 | 1.0 | 0.0 | 28.4 | 27.8 | 0.5 | 137 | 0 | 0 | 0 | 0.0 |
+| RSW | homes | 20.2 | 0.4 | 0.0 | 12.8 | 3.8 | 7.2 | 1801 | 1 | 1 | 1 | 0.6 |
+| RS | homes | 15.4 | 1.1 | 0.0 | 9.2 | 2.6 | 5.2 | 1312 | 1 | 1 | 1 | 0.4 |
+| BAZ | south bazaar + mall (City Mall + bazaar) | 32.7 | 2.8 | 0.0 | 19.4 | 12.7 | 5.1 | 1272 | 1 | 1 | 1 | 0.4 |
+| RIV | river green + stadium (Stadium) | 26.2 | 4.1 | 0.0 | 14.3 | 12.9 | 1.3 | 335 | 0 | 0 | 0 | 0.1 |
+| TOTAL (sum) | | 320.5 | 11.9 | 15.2 | 190.1 | | 47.5 | 11,882 | 7 | 7 | 6 | |
+
+Rules used by the previous chat's script (read back from its patch and output, so partly DERIVED): people = housing ha x DENS, DENS about 250 persons/ha (derived: 1448.1 / 5.8); a district gets neighbourhood primary schools / mosques only if its housing >= 4.0 ha (primary = ceil(pop / 5000), mosque = ceil(pop / 3500)), a clinic only if housing >= 5.0 ha (1 clinic); land per unit: primary school 0.6 ha, mosque 0.4 ha, clinic 0.25 ha, park / playground 8 % of housing ha; the education zone and park reserves were reduced in that run. Programme lines printed: housing / mixed apartments (net) 12 blocks 47.5 ha; primary school (neighbourhood) 7 x = 4.2 ha; primary school 4 x = 2.4 ha; student housing 1 x = 4.0 ha; neighbourhood park / playground 12 x = 3.8 ha; mosque 7 x = 2.9 ha and mosque (neighbourhood) 7 x = 2.8 ha (two lines, unclear whether the same 7 mosques: CHECK); clinic (neighbourhood) 6 x = 1.5 ha; jame mosque 1 x = 1.0 ha. TOTAL programme + housing 191.5 ha.
+
+ROAD RULE FOR THIS BORDER (user, 2026-11-20): new streets inside the city are 2-lane only (see `HANDOFF_CITY_ROAD_DESIGN.md` section 12); plots must therefore get access from 2-lane C / R2 / L streets or from the existing roads.
+
+OPEN FLAGS: (1) 191.5 ha programme is 1.4 ha MORE than the net land 190.1 ha (sum): either the printed total counts something the districts do not, or it is a real over-fill; recheck in C2. (2) The per-building areas behind 'explicit' (university, college, madrasah, hospital, mall, stadium, civic, bus terminal, bazaar, offices) are NOT in this chat: only district sums survived. They must be listed again with area per building (table 4 norms) before plots are cut. (3) Schools above primary (secondary school, high school, college count) are not in the printed lines except College / University / Madrasah named on the picture: ask the user once whether secondary schools are wanted.
+
+NEXT STEP (proposal, user OKs): C0 + C2 together on this border: re-trace the 12 district polygons from the picture (axis ticks give the scale) into world metres, overlay the old Z01-Z10 and the game data, rebuild the explicit building list with areas, and fix the 1.4 ha mismatch. Roads follow in the road twin section 12.

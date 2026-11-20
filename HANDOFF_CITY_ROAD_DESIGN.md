@@ -59,7 +59,7 @@ About 78 ha gross. Roads take 25-30 % of the gross zone area (twin section 4): a
 
 | Class | Role in the zones | Lane | Speed km/h | Max grade | Min radius m | ROW m (ASSUMED) | Access / node rule |
 |---|---|---|---|---|---|---|---|
-| R4 | arterial spine, feeds a zone from the network | 4, divided | 60 | 6 % | 130 | 36-40 | accesses >= 200 m apart (400 m in the centre), no local street joins it |
+| R4 | arterial spine, feeds a zone from the network (EXISTING only: no NEW R4 inside the city, user decision 2026-11-20, section 12) | 4, divided | 60 | 6 % | 130 | 36-40 | accesses >= 200 m apart (400 m in the centre), no local street joins it |
 | R2 | collector / service road along arterials | 2 | 50 | 8 % | 70 | 22-24 | joins R4 / R6 by T, nodes >= 60 m |
 | C | neighbourhood collector (schools, clinics, mosque, shops) | 2 | 40 | 8 % | 60 | 18-20 | blocks 200-300 m |
 | L | local street, homes | 2 | 30 | 10 % | 30 | 12-14 | blocks 80-120 m, T offset >= 30 m, dead end <= 150 m with turning head >= 9 m radius |
@@ -105,7 +105,9 @@ C0 -> R0 -> C1 -> C2 -> C3 -> R1 -> C4 (Z10, Z01) -> R2 -> C4 (other zones) -> R
 | CRR-2 | done 2026-11-19 (numbers + picture only, section 11) | loops + T at the 5 ends; SUPERSEDED in part by decision 5 (junction instead of end at J1) |
 | CRR-1b / CRR-2b | next | re-run with decision 5, see section 11 |
 | CRR-6 (hub ring) | done 2026-11-20 (headless, flag OFF by default, see section 11) | ring RR-HUB ported from the crr6 zip into this main project; 3 buildings on the ring wait for the user's decision |
-| R0 | not started | next step (after twin C0) |
+| RLU-0 (road need per district, section 12) | done 2026-11-20 (plan only, no street placed; new city streets 2-lane only) | land for roads about 35 % of buildable ground (derived) |
+| SHP-1 (section 13) | done 2026-11-20 (design only, src untouched) | the user's drawn streets City_Road.shp (25 lines) read, classed C / L, fitted with spirals + radii, water / node / crossing checks; 6 PASS, 1 FAIL (CR5: 4 ends on 8-lane roads, waits for the user), 10 WARN |
+| R0 | not started | next step (after twin C0; use the marked border, section 12) |
 | R1 | not started | |
 | R2 | not started | |
 | R3 | not started | |
@@ -300,3 +302,49 @@ CHANGE: CRR-S1-loop and CRR-E1-loop REMOVED. CRR-S1-a now ends as a T at R2-28 (
 DATA NOTE: the CorridorRoadData.ts of the zip does NOT come from the current docs/city_rail_road_reach.json + scripts/crr-export-data.ts (a rerun changes N1-a, WNW-b and WSW-a ends), so the file was MERGED by hand: S1-a and E1-a from a script run with S1 / E1 ends at R2-28, every other piece byte-identical to the zip. The script file itself is NOT changed (a rerun would move N1-a, WNW-b, WSW-a).
 CHECK (scripts/crr-check.ts, headless): water PASS (0 wet), rail SAME (424 piers), existing roads SAME (181), S1-a grade 2.54 % margin 3.74 m, E1-a grade 1.98 % margin 5.40 m, node heights dy 0.00, piers on the centreline (gap pier edge to lane edge 1.60 m), finished ground vs road 0 samples > 0.30 m. PRE-EXISTING, not from this step: CRR-WNW-b shows grade 34.99 % and rail clearance short by 2.75 m (also in the zip, 2 issues before and after).
 NOT RUN: npm run build / tsc (no node_modules), game look, junction pad and traffic stations at the two T ends (CRR-3), the N1 link (R2-28 north end (about 225, 125) is about 54 m from CRR-N1-a: needs a pier-gap connector or a T, not built, user decides).
+
+## 12. ROAD NEED FOR THE LAND-USE PROPOSAL v1 (user job 2026-11-20, twin `HANDOFF_CITY_DESIGN.md` section 11)
+
+USER WORDS (Banglish, keep): "existing road to asei sei onujai r kothia kemon road lagbe sevabe plan daw." = the existing roads stay; plan where more roads are needed and of what kind to fit the land use. Then (2026-11-20, after the limit of the previous chat): "tumi ki road gula bosate parbe?" = can you place the roads.
+
+DECIDED (by the user, 2026-11-20): "city te only chaici. ct te only 2 lane er road hobe." = the work is ONLY inside the city (the marked border); every NEW street in the city is 2-lane only (classes R2 / C / L of section 4). NO new 4-lane (R4) and NO new 6 / 8-lane street is planned inside the city. Existing roads (8 lane, 4 lane, 2 lane in the picture) stay as they are. Reading used: 'ct' = city (ASSUMED, say so if wrong). Effect: where section 12 needs a link or a spine it is a 2-lane C or R2 street; the arterial job stays with the existing 4 / 8-lane roads, so access spacing and taps (CR5) are checked against the existing roads only; the 2-lane ROW is 12-24 m (section 4), not 36-40 m, so the road share of about 35 % may drop (recompute in R1).
+
+STATUS: PLAN ONLY. No street is placed yet. NOT RUN: water check, any script, tsc, build (no node_modules, no network in this chat). The picture `city_landuse_plan_1.png` shows only three existing classes (8 lane black, 4 lane orange, 2 lane grey) and the rail (purple dashed); it does not carry road ids, so the ids (R6 / R4 / R2 / C / L) must still come from the game data in step R0.
+
+What the picture shows today (read by eye, +-100 m): the 8-lane arms cross the area (north-west curve through WNR, west arm down the EDU / RSW edge, east arm through EMX); the 4-lane ring round the central circle at about (0, 300) with 4-lane spokes into CORE, STN, RS, BAZ; 4-lane lines north-east (through NEB toward HLT) and south (through BAZ toward RIV); grey 2-lane roads in EMX, RS, BAZ, HLT and the north-east.
+
+Land for roads (sum): gross 320.5 ha - wet 11.9 - fixed 15.2 = 293.4 ha buildable ground; net 190.1 ha; so roads, margins and buffers take about 103.3 ha = about 35 % of the buildable ground (derived, my arithmetic; the previous chat's own road share is NOT known). Section 4 ROW values (ASSUMED) give the cost per class: R4 36-40 m, R2 22-24, C 18-20, L 12-14.
+
+Street need per district (PROPOSAL, ASSUMED, lengths NOT computed, every street keeps rules CR1-CR10):
+
+| District | Reached from (existing) | New street need | Special |
+|---|---|---|---|
+| CORE | 4-lane ring and spokes | C blocks 100-150 m round Civic + Police HQ; fire stations on a C with direct exit to a spoke | 400 m access gap on arterials |
+| STN | spoke + 2-lane east | C round Bus terminal with its OWN access and bus bays; L only for the 1.3 ha homes | terminal not on the ring |
+| NEB | NE 4-lane | R2 service road along the 4-lane; C into mall + offices; L for 5.8 ha homes | mall with a service road |
+| HLT | NE 4-lane + grey 2-lane | main gate on C / R2, emergency gate on a DIFFERENT street with free exit; no local street on the hospital front | CR8: 2 gates |
+| EMX | 8-lane arm side, grey 2-lane | NO branch from the 8-lane (CR5): reach by C from the 4-lane east; L for 4.5 ha homes | check tap spacing >= 1600 m |
+| EVL | north 4-lane / EVLab fixed access | keep the EVLab access as built; C only to the reserve and 3.2 ha homes | fixed object |
+| WNR | 8-lane arm (no branch) | collector from the west 4-lane; L grid 80-120 m; school + mosque + clinic on the C | quiet side |
+| EDU | west 4-lane, west arm side | own ring road (C), 2 gates, bus stop at a gate, University / College / Madrasah on the ring | quiet, away from rail |
+| RSW | 4-lane SW spoke, 8-lane west arm | C spine, L grid; school + mosque + clinic on the C | 8-lane buffer 30-50 m |
+| RS | spoke + grey 2-lane | C spine, L grid | rail close: >= 30 m |
+| BAZ | south 4-lane + grey 2-lane | C round City Mall + bazaar with a SERVICE road for trucks; pedestrian lanes; L for 5.1 ha homes | wet 2.8 ha: check deck |
+| RIV | south 4-lane end | C to the Stadium (large car park, two exits); park loop road | wet 4.1 ha: water check first |
+
+NEXT STEP (proposal, user OKs): R0 + R1 on the marked border: (a) read the existing road ids and lines inside the border from the game data (`docs/fit_chain/centre_fixed.json`, `src/roads/r4|r2|c|l/*NewLineData.ts`); (b) re-trace the 12 districts (twin section 11, step C0); (c) per district print existing road length, new C / L length and ha of land, taps; (d) lay the C-class centrelines (straight - spiral - arc - spiral - straight, 0 crossings, nodes >= 60 m), starting with HLT and EDU. Placing the streets in the game is step R6 and needs the user's OK first.
+
+## 13. THE USER'S DRAWN STREETS (City_Road.shp, user job 2026-11-20)
+
+USER WORDS (Banglish, keep): "city road shapefile. dekho road gula game a engineering vabe bosaw mane tumi amar engineer. so road er radius, bend connection etc gula. tobe building majhe thakle problem nai. ami building pore relocation korbo." = the user drew the city streets himself (`City_Road.zip`, 25 polylines); place them in the game as REAL engineered roads (radius, bends, connections); a building standing on a street is NOT a problem, he moves buildings afterwards.
+
+READING USED: the shapefile has no .prj and no attributes (SOURCE / ROAD_ID / CLASS / FLAG are all empty). Its coordinates are the game's GIS export grid (src/export/RasterExport.ts): x = Easting - 5000, z = 5000 - Northing. ASSUMED, but the overlay with the real road network fits (the streets lie between the 8-lane arms south of J1, in the red zones). Classes: only 2-lane (decision of section 12): C V40 (a street of 300 m or more, or one that meets an existing road) and L V30. PROPOSAL, the user may change. Rule used: nothing new where a street already exists (reuse, none found within 12 m).
+
+FILES (all new, no src file changed): `tools/city-shp-import.py` (pure python, shp -> `docs/city_shp_raw.json`), `scripts/city-shp-fit.ts` (reuses buildOpenAlignment / sampleAlignment / Checks.minRadius / spiralLength / TerrainGenerator / `docs/fit_chain/centre_fixed.json`), `tools/city-shp-plot.py`, `docs/city_shp_fit.json`, `docs/city_shp_fit.png`, `docs/STEP_CITY_SHP1_OUTPUT.txt`, `City_Road/City_Road.*` (the input). Run: `python3 tools/city-shp-import.py City_Road/City_Road.shp`, then `node --experimental-transform-types --import ./scripts/reg.mjs scripts/city-shp-fit.ts docs`, then `python3 tools/city-shp-plot.py`.
+
+RESULT of SHP-1: 6 PASS, 1 FAIL, 10 WARN. 7508 m drawn. Water (centre + both edges, every 5 m): 0 wet. Every R >= Rmin (C 41 m, L 20 m); the sharpest drawn corner (SH-15, near (-60, -95)) had to be opened to R 41 m and sits 14.0 m from the drawn line (limit 15). Largest drawn-to-fitted distance of the others 7.1 m.
+- FAIL (CR5, waits for the user): 4 street ends touch an 8-lane road: SH-2 start and SH-5 end on J1-S, SH-25 start on J1-E, SH-25 end on J1-N (22-25 m from the arm centre line).
+- WARN: 6 pairs of ends 12-35 m apart that continue each other (SH-1/2, SH-6/15, SH-7/16, SH-8/11, SH-9/13, SH-12/14: probably ONE street each, split in the drawing); 6 street x street crossings of the drawing that need a node (SH-4 x 5, SH-15 x 16, 15 x 17, 16 x 17, 20 x 21, 20 x 24); 5 T junctions under 70 deg (SH-1 start 53, SH-1 end 68, SH-4 start 70, SH-18 start 4, SH-20 end 62); 10 free ends (dead ends or missing links); 2 bend pairs under the 6 V rule (SH-6, SH-25); natural slope over the class limit on SH-2, SH-21, SH-24, SH-25 (profile and cut-fill is step R4).
+- NOT RUN: rail clearance, vertical profile, junction mouths, tsc, npm run build, game look.
+
+NEXT (one step per session): SHP-2 nodes: join the 6 split pairs into one continuous alignment each, make nodes at the 6 crossings, fix the T angles, decide the free ends, then the CR5 ends after the user's answer. SHP-3 vertical profile + earthwork (R4 method). SHP-4 put the streets in the game as a data file behind a Config switch (default OFF, like `LNewLineData.ts`), headless check, tsc, build, then the user looks.

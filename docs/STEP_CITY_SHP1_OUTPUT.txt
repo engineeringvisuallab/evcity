@@ -1,0 +1,136 @@
+STEP CITY-SHP-1 engineering fit of City_Road.shp (25 drawn street lines), design only, src untouched
+Frame: x east, z south, x = Easting - 5000, z = 5000 - Northing (GIS grid of the game, ASSUMED: the file has no .prj). Classes: C V40 / L V30, 2 lanes only (user decision 2026-11-20).
+
+A. FIT (R = radius of the real curve, spirals included; dev = distance of the fitted road from the drawn line)
+id     cls  V  drawn m  fit m  bends  minR  Rmin  clamp  devMax  devMean  wet(c/edge)  natural slope max  >limit
+SH-1   C   40     331    329     2     96    41     0     4.4     0.6     0/0        4.7 %          0 samples
+SH-2   C   40     309    306     1    126    41     0     3.5     0.9     0/0       21.9 %          2 samples
+SH-3   C   40     155    154     1    972    41     0     1.2     0.4     0/0        2.9 %          0 samples
+SH-4   C   40     478    478     0      -    41     0     0.0     0.0     0/0        5.5 %          0 samples
+SH-5   L   30     167    167     0      -    20     0     0.0     0.0     0/0        2.3 %          0 samples
+SH-6   C   40     411    411     2    615    41     0     1.7     0.3     0/0        1.8 %          0 samples
+SH-7   C   40     400    400     0      -    41     0     0.0     0.0     0/0        1.7 %          0 samples
+SH-8   C   40     374    374     0      -    41     0     0.0     0.0     0/0        2.5 %          0 samples
+SH-9   L   30     176    175     1    293    20     0     2.5     0.9     0/0        1.8 %          0 samples
+SH-10  L   30     183    181     1     99    20     0     4.3     1.4     0/0        2.0 %          0 samples
+SH-11  C   40     380    378     1    109    41     0     5.3     1.0     0/0        2.0 %          0 samples
+SH-12  L   30     284    278     1     65    20     0     6.7     1.0     0/0        1.7 %          0 samples
+SH-13  L   30     170    165     1     71    20     0     7.1     1.5     0/0        2.2 %          0 samples
+SH-14  L   30     179    178     1    161    20     0     3.2     0.9     0/0        1.8 %          0 samples
+SH-15  C   40     600    578     1     41    41     1    14.0     0.8     0/0        1.9 %          0 samples
+SH-16  L   30     278    278     0      -    20     0     0.0     0.0     0/0        2.4 %          0 samples
+SH-17  C   40     312    312     0      -    41     0     0.0     0.0     0/0        2.3 %          0 samples
+SH-18  C   40     213    213     0      -    41     0     0.0     0.0     0/0        2.7 %          0 samples
+SH-19  C   40     379    379     0      -    41     0     0.0     0.0     0/0        6.4 %          0 samples
+SH-20  C   40     784    783     1    564    41     0     6.5     2.1     0/0        6.8 %          0 samples
+SH-21  C   40     115    115     0      -    41     0     0.0     0.0     0/0        8.3 %          1 samples
+SH-22  C   40     107    107     0      -    41     0     0.0     0.0     0/0        2.3 %          0 samples
+SH-23  C   40      94     94     0      -    41     0     0.0     0.0     0/0        2.9 %          0 samples
+SH-24  C   40     110    110     0      -    41     0     0.0     0.0     0/0        9.8 %          5 samples
+SH-25  C   40     517    515     2    154    41     0     4.3     0.8     0/0       23.8 %          3 samples
+
+B. NODES (ends of the drawn lines: free / T / L / branch)
+SH-1   start (-392, 1194)  T on existing      R4-20    snap 11.5 m, angle to target 53 deg
+SH-1   end   (-473, 878)  T on existing      R2-30    snap 4.5 m, angle to target 68 deg
+SH-2   start (-601, 603)  BRANCH ON 8-LANE   J1-S     snap 25.1 m, angle to target 87 deg
+SH-2   end   (-481, 868)  T on existing      R2-30    snap 4.5 m, angle to target 77 deg
+SH-3   start (-360, 696)  T on existing      R4-20    snap 14.5 m, angle to target 88 deg
+SH-3   end   (-513, 718)  T on drawn         SH-2     snap 0.0 m, angle to target 88 deg
+SH-4   start (-808, 337)  T on existing      R2-77    snap 11.5 m, angle to target 70 deg
+SH-4   end   (-498, -27)  free               -        
+SH-5   start (-651, 160)  T on drawn         SH-4     snap 0.0 m, angle to target 82 deg
+SH-5   end   (-512, 252)  BRANCH ON 8-LANE   J1-S     snap 25.1 m, angle to target 86 deg
+SH-6   start (-264, 114)  end-to-end         SH-15    snap 27.9 m, angle to target 2 deg
+SH-6   end   (-466, 470)  T on existing      R4-20    snap 14.5 m, angle to target 89 deg
+SH-7   start (-161, 192)  end-to-end         SH-16    snap 31.0 m, angle to target 2 deg
+SH-7   end   (-407, 507)  T on existing      R4-20    snap 14.4 m, angle to target 87 deg
+SH-8   start (-339, 618)  T on existing      R4-20    snap 14.4 m, angle to target 80 deg
+SH-8   end   (34, 588)  end-to-end         SH-11    snap 32.8 m, angle to target 2 deg
+SH-9   start (16, 476)  end-to-end         SH-13    snap 35.0 m, angle to target 17 deg
+SH-9   end   (-145, 411)  free               -        
+SH-10  start (-237, 472)  free               -        
+SH-10  end   (-113, 600)  T on drawn         SH-8     snap 0.0 m, angle to target 80 deg
+SH-11  start (268, 362)  free               -        
+SH-11  end   (62, 605)  end-to-end         SH-8     snap 32.8 m, angle to target 2 deg
+SH-12  start (50, 531)  free               -        
+SH-12  end   (197, 349)  end-to-end         SH-14    snap 25.2 m, angle to target 1 deg
+SH-13  start (33, 446)  end-to-end         SH-9     snap 35.0 m, angle to target 17 deg
+SH-13  end   (132, 337)  free               -        
+SH-14  start (148, 161)  free               -        
+SH-14  end   (202, 325)  end-to-end         SH-12    snap 25.2 m, angle to target 0 deg
+SH-15  start (191, 78)  free               -        
+SH-15  end   (-239, 100)  end-to-end         SH-6     snap 27.9 m, angle to target 2 deg
+SH-16  start (-132, 183)  end-to-end         SH-7     snap 31.0 m, angle to target 2 deg
+SH-16  end   (42, -34)  T on drawn         SH-15    snap 0.0 m, angle to target 88 deg
+SH-17  start (-153, -8)  T on drawn         SH-15    snap 0.0 m, angle to target 89 deg
+SH-17  end   (95, 181)  free               -        
+SH-18  start (-324, 873)  T on existing      R2-30    snap 6.5 m, angle to target 4 deg
+SH-18  end   (-111, 865)  T on existing      R2-29    snap 7.5 m, angle to target 90 deg
+SH-19  start (-25, 682)  T on existing      R2-28    snap 7.5 m, angle to target 89 deg
+SH-19  end   (6, 1060)  free               -        
+SH-20  start (553, -116)  T on existing      R2-18    snap 7.4 m, angle to target 85 deg
+SH-20  end   (1220, -463)  T on existing      L-30     snap 2.7 m, angle to target 62 deg
+SH-21  start (901, -514)  T on existing      R4-12    snap 11.5 m, angle to target 88 deg
+SH-21  end   (947, -408)  end-to-end         SH-22    snap 0.0 m, angle to target 1 deg
+SH-22  start (947, -408)  end-to-end         SH-21    snap 0.0 m, angle to target 1 deg
+SH-22  end   (987, -310)  T on existing      R2-19    snap 4.4 m, angle to target 74 deg
+SH-23  start (683, -282)  T on drawn         SH-20    snap 0.0 m, angle to target 88 deg
+SH-23  end   (613, -345)  T on existing      R4-12    snap 14.5 m, angle to target 86 deg
+SH-24  start (683, -282)  T on drawn         SH-20    snap 0.0 m, angle to target 75 deg
+SH-24  end   (748, -193)  T on existing      R2-19    snap 7.5 m, angle to target 82 deg
+SH-25  start (228, -67)  BRANCH ON 8-LANE   J1-E     snap 25.1 m, angle to target 63 deg
+SH-25  end   (156, -558)  BRANCH ON 8-LANE   J1-N     snap 22.1 m, angle to target 78 deg
+
+C. CHECKS
+   PASS  25 drawn lines read, 110 points, 7508 m drawn (R9: nothing but this file read)
+   PASS  CR7 water first: wet samples on the centre line + both edges = 0 + 0 (every 5 m)
+   PASS  curves do not overlap (straight between two curves >= 0 after the R shrink)
+   PASS  every R >= Rmin of its class speed
+   PASS  every fitted road stays within 15 m of the drawn line (max 14.0 m)
+   FAIL  CR5 no street ends on an 8-lane road
+        branch: SH-2 start on J1-S, 25.1 m
+        branch: SH-5 end on J1-S, 25.1 m
+        branch: SH-25 start on J1-E, 25.1 m
+        branch: SH-25 end on J1-N, 22.1 m
+   PASS  distance to J1 (-87,-277): nearest street point 183 m (SH-15); CR5 asks 600 m from the plaza edge for a TAP only, no street ends there
+   WARN  CR4 crossings in the drawing: street x street 6, street x existing road 0 (each needs a node or a decision)
+        SH-4 x SH-5 at (-649, 157)
+        SH-15 x SH-16 at (40, -36)
+        SH-15 x SH-17 at (-156, -5)
+        SH-16 x SH-17 at (-44, 73)
+        SH-20 x SH-21 at (951, -412)
+        SH-20 x SH-24 at (688, -277)
+   WARN  CR4 nodes closer than 60 m: 6
+        SH-1 end / SH-2 end: 12 m
+        SH-6 start / SH-15 end: 28 m
+        SH-7 start / SH-16 start: 31 m
+        SH-8 end / SH-11 end: 33 m
+        SH-9 start / SH-13 start: 35 m
+        SH-12 end / SH-14 end: 25 m
+   WARN  T junctions with an angle under 70 deg (angle between the two centre lines): 5 of 24
+        SH-1 start on R4-20: 53 deg
+        SH-1 end on R2-30: 68 deg
+        SH-4 start on R2-77: 70 deg
+        SH-18 start on R2-30: 4 deg
+        SH-20 end on L-30: 62 deg
+   WARN  free ends (dead end, or a connection that is missing): 10
+        SH-4 end at (-498, -27)
+        SH-9 end at (-145, 411)
+        SH-10 start at (-237, 472)
+        SH-11 start at (268, 362)
+        SH-12 start at (50, 531)
+        SH-13 end at (132, 337)
+        SH-14 start at (148, 161)
+        SH-15 start at (191, 78)
+        SH-17 end at (95, 181)
+        SH-19 end at (6, 1060)
+   WARN  6 V / 2 V straight rule: SH-6: bend 1-2: straight 7 m < 6 V = 240 m
+   WARN  6 V / 2 V straight rule: SH-25: bend 1-2: straight 80 m < 6 V = 240 m
+   WARN  natural slope over the class limit (8 %) on SH-2: 2 x 5 m, max 21.9 % (finished profile / cut-fill is step R4, not here)
+   WARN  natural slope over the class limit (8 %) on SH-21: 1 x 5 m, max 8.3 % (finished profile / cut-fill is step R4, not here)
+   WARN  natural slope over the class limit (8 %) on SH-24: 5 x 5 m, max 9.8 % (finished profile / cut-fill is step R4, not here)
+   WARN  natural slope over the class limit (8 %) on SH-25: 3 x 5 m, max 23.8 % (finished profile / cut-fill is step R4, not here)
+
+D. NOT RUN (said honestly): rail clearance (no rail data read here), buildings (user: they are relocated later), vertical profile / cut-fill (step R4), junction mouths / kerb radii (21.61), tsc, npm run build, game look.
+
+RESULT: 6 PASS, 1 FAIL, 10 WARN (WARN = a finding for the user, not a script error)
