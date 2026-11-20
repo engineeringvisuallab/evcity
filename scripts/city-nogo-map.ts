@@ -17,7 +17,7 @@ const sc: any = {};
 const inp = JSON.parse(readFileSync('docs/city_plots_input.json', 'utf8'));
 const names = new Set<string>(inp.streets.map((s: any) => s.name));
 // ASSUMED numbers (the user may change them)
-const X0 = -900, X1 = 1300, Z0 = -650, Z1 = 1250, CELL = 4;
+const X0 = -1500, X1 = 1500, Z0 = -1500, Z1 = 1500, CELL = 4;
 const ROAD_MARGIN = 5;     // m beyond road edge (half width + shoulder) for every game road that is not one of the 17 streets
 const STREET_KEEP = 12;    // m from the centre line of the 17 city streets (rule of the plots)
 const RAIL_EDGE = 12;      // m beyond the rail corridor (same as scripts/city-plots-full-check.ts)
