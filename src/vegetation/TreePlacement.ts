@@ -226,6 +226,8 @@ export class TreePlacer {
 
   /** Foot height of a tree: the ground minus the sink, and on a slope a bit more for thick trunks (slope = rise / run). */
   private footY(h: number, slope: number, kind: number, scale: number): number {
+    if (kind === TreeKind.leafLitter) return h + 0.02; // lies on the ground, never sunk like a trunk
+    if (kind === TreeKind.deadLog) return h - 0.05 - Math.min(0.5, slope * 2 * scale); // a fallen tree: a little in the ground, more on a slope (it lies across, so the low side must not float)
     return h - V.sink - Math.min(1.4, slope * TREE_TRUNK[kind].r * scale);
   }
 
@@ -488,6 +490,77 @@ export class TreePlacer {
     }
   }
 
+  /**
+   * JUNGLE DEADWOOD (sukno gach, sukno pata): a fallen dead tree (`dense.deadwood.logChance`) with leaf patches heaped along it, and loose dry-leaf patches. Own random
+   * streams (no other tree ever moves), pushed straight into the chunk lists like the thicket. Same ground tests as the thicket (water, tree line, slope, roads, city);
+   * a log wants gentler ground (half the slope limit). No colliders.
+   */
+  private cellDeadwood(gi: number, gj: number, lists: number[][], cox: number, coz: number): void {
+    const W = D.deadwood;
+    const { ox, oz, i, j } = this.cellOf(gi, gj);
+    const cell = V.cellSize;
+    if (this.denseAt(ox + (i + 0.5) * cell, oz + (j + 0.5) * cell) <= 0.02) return;
+    const s = this.sample;
+    /** Ground test of one spot: the dense-jungle density there and the slope, or null when nothing may lie there. */
+    const spot = (x: number, z: number, slopeFrac: number): { h: number; slope: number; dz: number } | null => {
+      const dz = this.denseAt(x, z);
+      if (dz <= 0.02) return null;
+      this.gen.sample(x, z, s);
+      const h = s.h;
+      if (h < V.seaMargin) return null;
+      if (!Number.isNaN(s.water) && h < s.water + V.waterMargin) return null;
+      if (1 - smooth(V.treeLineStart, V.treeLineEnd, h) <= 0) return null;
+      this.gen.sample(x + 2, z, this.sx);
+      this.gen.sample(x, z + 2, this.sz);
+      const slope = Math.hypot(this.sx.h - h, this.sz.h - h) / 2;
+      if (slope > this.tanMax * slopeFrac) return null;
+      if (this.cityFactor(x, z) < 0.999) return null;
+      if (this.nearRoad(x, z)) return null;
+      return { h, slope, dz };
+    };
+    const litter = (x: number, z: number, rs: number, ry: number, rt: number, dz: number, h: number, slope: number): void => {
+      const lx = x - cox, lz = z - coz, S = Config.world.chunkSize;
+      if (lx < 0 || lz < 0 || lx >= S || lz >= S) return; // a patch heaped beside a log must stay in this chunk (the neighbour chunk makes its own)
+      const sc = W.litterScale[0] + (W.litterScale[1] - W.litterScale[0]) * rs;
+      lists[TreeKind.leafLitter].push(x - cox, this.footY(h, slope, TreeKind.leafLitter, sc), z - coz, sc, ry * Math.PI * 2, (0.85 + rt * 0.3) * (1 - 0.2 * dz));
+    };
+    // fallen dead tree
+    {
+      const rng = mulberry32(hash2D(this.seed ^ 0xdead10, gi, gj));
+      const roll = rng(), jx = rng(), jz = rng(), rs = rng(), ry = rng(), rt = rng();
+      const x = ox + (i + jx) * cell;
+      const z = oz + (j + jz) * cell;
+      if (roll < W.logChance * this.mul) {
+        const g = spot(x, z, 0.5);
+        if (g && roll < W.logChance * this.mul * g.dz) {
+          const sc = W.logScale[0] + (W.logScale[1] - W.logScale[0]) * rs;
+          const yaw = ry * Math.PI * 2;
+          lists[TreeKind.deadLog].push(x - cox, this.footY(g.h, g.slope, TreeKind.deadLog, sc), z - coz, sc, yaw, 0.85 + rt * 0.3);
+          // dry leaves heaped along the fallen tree (the log lies along its local +x, turned by yaw)
+          for (let k = 0; k < W.aroundLog; k++) {
+            const t = (rng() - 0.5) * 6.4 * sc;
+            const off = (rng() - 0.5) * 2.6 * sc;
+            const px = x + Math.cos(yaw) * t + Math.sin(yaw) * off;
+            const pz = z - Math.sin(yaw) * t + Math.cos(yaw) * off;
+            const gg = spot(px, pz, 0.6);
+            if (gg) litter(px, pz, rng(), rng(), rng(), gg.dz, gg.h, gg.slope);
+          }
+        }
+      }
+    }
+    // loose dry-leaf patches
+    for (let l = 0; l < W.litterLayers; l++) {
+      const rng = mulberry32(hash2D((this.seed ^ 0xdead20) + l * 6151, gi, gj));
+      const roll = rng(), jx = rng(), jz = rng(), rs = rng(), ry = rng(), rt = rng();
+      if (roll >= W.litterChance * this.mul) continue;
+      const x = ox + (i + jx) * cell;
+      const z = oz + (j + jz) * cell;
+      const g = spot(x, z, 0.8);
+      if (!g || roll >= W.litterChance * this.mul * g.dz) continue;
+      litter(x, z, rs, ry, rt, g.dz, g.h, g.slope);
+    }
+  }
+
   /** Is there open water within `d` metres (4 compass points)? Used for the bank palms. */
   private waterNear(x: number, z: number, d: number): boolean {
     const s = this.sw;
@@ -518,6 +591,7 @@ export class TreePlacer {
         const u = lod === 0 ? this.cellTree2(gx0 + i, gz0 + j) : null; // dense jungle: the understory tree (near chunks only)
         if (u) lists[u.kind].push(u.x - ox, u.y, u.z - oz, u.scale, u.yaw, u.tint);
         if (lod === 0) this.cellThicket(gx0 + i, gz0 + j, lists, ox, oz); // jungle: lata-pata and young trees (near chunks only)
+        if (lod === 0) this.cellDeadwood(gx0 + i, gz0 + j, lists, ox, oz); // jungle: fallen dead trees and dry leaves (near chunks only)
       }
     }
     // GRASS 4: street trees in the kerbed pits of the city sidewalks (Roadside.ts) join the normal trees: same instancing, LOD and colliders

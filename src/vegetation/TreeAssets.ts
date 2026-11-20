@@ -1081,6 +1081,105 @@ function lata(detail: number): THREE.BufferGeometry {
   return m.build();
 }
 
+/**
+ * JUNGLE FLOOR DEADWOOD. Two models lying on the ground of the dense jungle (placed by TreePlacement.cellDeadwood), no colliders (TREE_TRUNK r 0.03).
+ * Both stand on the ground (their y = 0 is the ground; TreePlacement.footY does NOT sink them like a trunk).
+ */
+/** Dry, silvery-grey weathered bark: the bark tile times a pale tint (a vertex colour above 1 lightens it). */
+const DEAD_BARK: readonly [number, number, number] = [1.45, 1.36, 1.25];
+
+/** DEAD LOG (sukno gach): an old dry tree that fell long ago, ~7 m long and ~0.9 m thick at the root end (scale 1): a bent grey trunk, a broken tip, bare root stubs at one end and dry broken branch stumps (some forked) pointing up and sideways. */
+function deadLog(detail: number): THREE.BufferGeometry {
+  const r = mulberry32(561);
+  const m = new Mesh();
+  const seg = detail === 0 ? 8 : 5;
+  const L = 7.0;
+  const N = 7;
+  const pts: THREE.Vector3[] = [];
+  const rad: number[] = [];
+  const at = (t: number) => ({ x: -L / 2 + L * t, y: 0, z: Math.sin(t * 2.6) * 0.22 });
+  for (let i = 0; i < N; i++) {
+    const t = i / (N - 1);
+    const rr = lerp(0.46, 0.2, t) * (1 + (r() - 0.5) * 0.08) * (1 + 0.55 * Math.max(0, 1 - t * 14)); // root flare at the foot
+    const p = at(t);
+    pts.push(V3(p.x, rr * 0.82 + 0.02 * Math.sin(t * 9), p.z));
+    rad.push(rr);
+  }
+  m.tube(pts, rad, seg, 0.95, TILE_BARK, DEAD_BARK);
+  // root stubs: dry thick roots sticking out of the foot (the root plate), up and sideways
+  const roots = detail === 0 ? 6 : 4;
+  for (let k = 0; k < roots; k++) {
+    const a = (k / roots) * Math.PI * 2 + r() * 0.6;
+    const out = V3(-0.7, 0.55 + r() * 0.9, 0).addScaledVector(V3(0, 0, Math.cos(a)), 0.9).addScaledVector(V3(0, Math.sin(a), 0), 0.5);
+    const base = pts[0].clone().add(V3(0.45, 0, 0));
+    const tip = base.clone().add(out.multiplyScalar(0.5 + r() * 0.6));
+    tip.y = Math.max(tip.y, 0.1);
+    const mid = base.clone().lerp(tip, 0.5).add(V3(0, 0.12, 0));
+    m.tube([base, mid, tip], [0.19, 0.12, 0.05], 4, 0.92, TILE_BARK, DEAD_BARK);
+  }
+  // dry branch stumps along the top and the sides: broken short limbs, some with a fork
+  const stumps = detail === 0 ? 7 : 4;
+  for (let k = 0; k < stumps; k++) {
+    const t = 0.12 + 0.8 * ((k + r() * 0.7) / stumps);
+    const i = Math.min(N - 2, Math.floor(t * (N - 1)));
+    const f = t * (N - 1) - i;
+    const c = pts[i].clone().lerp(pts[i + 1], f);
+    const rr = lerp(rad[i], rad[i + 1], f);
+    const side = r() * Math.PI * 2;
+    const dir = V3(0.35 + r() * 0.5, 0.8 + r() * 0.8, 0).addScaledVector(V3(0, 0, Math.cos(side)), 0.7).addScaledVector(V3(0, Math.sin(side) * 0.3, 0), 1).normalize();
+    const len = lerp(0.5, 1.5, r()) * (1.1 - t * 0.6);
+    const b0 = c.clone().addScaledVector(dir, rr * 0.6);
+    const b1 = b0.clone().addScaledVector(dir, len * 0.55).add(V3(0, 0.08, 0));
+    const b2 = b1.clone().addScaledVector(dir, len * 0.45).add(V3(0, -0.04, 0));
+    const br = Math.max(0.045, rr * 0.28);
+    m.tube([b0, b1, b2], [br, br * 0.7, br * 0.3], 4, 0.94, TILE_BARK, DEAD_BARK);
+    if (detail === 0 && r() < 0.6) {
+      const fd = dir.clone().add(V3((r() - 0.5) * 1.1, 0.25, (r() - 0.5) * 1.1)).normalize();
+      m.tube([b1, b1.clone().addScaledVector(fd, len * 0.35), b1.clone().addScaledVector(fd, len * 0.6).add(V3(0, -0.05, 0))], [br * 0.6, br * 0.4, br * 0.12], 3, 0.94, TILE_BARK, DEAD_BARK);
+    }
+  }
+  // the broken tip: a jagged splinter
+  const tipP = pts[N - 1];
+  m.tube([tipP.clone(), tipP.clone().add(V3(0.5, 0.1, 0.04)), tipP.clone().add(V3(0.95, 0.28, 0.1))], [rad[N - 1] * 0.9, rad[N - 1] * 0.5, 0.02], 4, 0.9, TILE_BARK, DEAD_BARK);
+  return m.build();
+}
+
+/** Dry leaf colours (multiplied with the green leaf paint): brown, tan, rust, straw yellow. */
+const DRY_LEAF: ReadonlyArray<readonly [number, number, number]> = [
+  [2.0, 0.78, 0.8],
+  [2.3, 1.05, 0.9],
+  [2.6, 0.62, 0.5],
+  [2.0, 1.25, 0.7],
+];
+
+/** DRY LEAVES (sukno pata): a patch ~2.6 m wide of fallen dry leaves lying flat on the ground (cards painted with leaf sprays, brown / tan / rust / straw), a few little dry twigs on top. */
+function leafLitter(detail: number): THREE.BufferGeometry {
+  const r = mulberry32(562);
+  const m = new Mesh();
+  const n = detail === 0 ? 38 : 16;
+  for (let k = 0; k < n; k++) {
+    const a = r() * Math.PI * 2;
+    const d = Math.sqrt(r()) * 1.3; // even spread over the disc, thinner at the edge by the card size below
+    const tilt = V3((r() - 0.5) * 0.16, 1, (r() - 0.5) * 0.16).normalize();
+    const edge = 1 - 0.45 * (d / 1.3);
+    const sz = lerp(0.4, 0.72, r()) * edge * (detail === 0 ? 1 : 1.5);
+    const tint = DRY_LEAF[Math.floor(r() * DRY_LEAF.length)];
+    const y = 0.03 + (k / n) * 0.07; // every card at its own height, so no two cards fight for the same pixels
+    m.card(V3(Math.cos(a) * d, y, Math.sin(a) * d), tilt, V3(0, 0, 1), sz, sz * lerp(0.9, 1.25, r()), r() < 0.5 ? TILE_LEAF : TILE_LOBED, r() * Math.PI * 2, tilt, lerp(0.62, 0.95, r()), r() < 0.5, tint);
+  }
+  const twigs = detail === 0 ? 4 : 2;
+  for (let k = 0; k < twigs; k++) {
+    const a = r() * Math.PI * 2;
+    const d = r() * 0.9;
+    const dir = r() * Math.PI;
+    const len = lerp(0.4, 0.95, r());
+    const c = V3(Math.cos(a) * d, 0.11, Math.sin(a) * d);
+    const e = V3(Math.cos(dir) * len * 0.5, 0.015, Math.sin(dir) * len * 0.5);
+    m.tube([c.clone().sub(e), c.clone(), c.clone().add(e).add(V3(0, 0.02, 0))], [0.014, 0.011, 0.005], 3, 0.85, TILE_BARK, DEAD_BARK);
+  }
+  return m.build();
+}
+
 /** Geometries (shared by all chunks, never disposed per chunk) + one material with wind sway. */
 export class TreeAssets {
   /** [kind][detail] */
@@ -1110,6 +1209,8 @@ export class TreeAssets {
       [TreeKind.fern]: fern,
       [TreeKind.shrub]: shrub,
       [TreeKind.lata]: lata,
+      [TreeKind.deadLog]: deadLog,
+      [TreeKind.leafLitter]: leafLitter,
       ...PALM_MAKERS,
     };
     for (let k = 0; k < TREE_KIND_COUNT; k++) this.geometries.push([makers[k](0), makers[k](1)]);

@@ -57,6 +57,13 @@ USER: 'full terrain raster image hisebe download hok, ar 3 chaple road centerlin
 ## Residential buildings (2026-11-19)
 Homes along the C / L / R2 / R4 roads inside the residential (abasik) areas, made by `scripts/residential-place.ts` into `src/buildings/PlacementsResidential.ts`. Full state, rules, areas: `HANDOFF_RESIDENTIAL.md`. Code + headless check PASS, NOT seen in a running game.
 
+## Jungle deadwood + x1.5 (2026-11-20) - code + headless tests PASS, NOT seen in a running game
+USER: jangle e sukno porha gach + sukno pata, jangle x1.5 ghono. Full: `CHANGES_DEADWOOD_BN.md`. New TreeKind 21 deadLog, 22 leafLitter (TreeTypes/TreeAssets), `TreePlacement.cellDeadwood`, `dense.thicket.layers` 10, `dense.deadwood` config.
+
+## Road / Rail clash (2026-11-20) - ANALYSIS ONLY, nothing moved yet
+USER: 'Road and Rail theke sob dhoroner object relocation koro' (agro / jomi / engineering site road-rail er upor poreche) + 'engineering site gular boundary replace koro SWTP er boundary diye'.
+`npx tsx scripts/road-rail-clash-report.ts` prints it. Plant pads ON a road strip (negative = metres inside): stp M8 -22, grid R6-4 -16, mech R6-8 -17, chem R6-2 -16, vehicle R6-3 -16, agro pad R4-5 -13; auto touches rail east-2 (0). Areas (EngineeringZones rectangles) crossed by roads / rail: campus R6-7, mech-works R6-8, vehicle R6-3, automation rail east-2, steel M8, textile R2-74, chemical R6-2, aerospace M8, grid R6-4, tech-park rail north-1, fire-safety R6-12. Plant x/z live ONLY in `InfraSites.ts` (agro: `AgroSite.ts` AGRO_POS); buildings / local roads around them were made with `infraKeepout`, so a move needs a check there.
+
 ## Other docs
 `VEHICLE_ENERGY_HANDOFF_BN.md` (energy/station steps), `docs/CHARGING_POINTS.md`, `docs/ROAD_SIGNS_HANDOFF_BN.md`, `CHANGES_*.md`.
 

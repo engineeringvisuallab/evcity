@@ -27,8 +27,11 @@ export const TreeKind = {
   fern: 18,
   shrub: 19,
   lata: 20,
+  /** JUNGLE FLOOR DEADWOOD: an old dry dead tree lying on the ground (deadLog, ~7 m long at scale 1) and a patch of dry fallen leaves (leafLitter, ~2.6 m wide). No colliders (a car drives over, a person walks over). */
+  deadLog: 21,
+  leafLitter: 22,
 } as const;
-export const TREE_KIND_COUNT = 21;
+export const TREE_KIND_COUNT = 23;
 
 /** Kinds drawn with the palm atlas (palms, banana, flowering krishnachura, bamboo); every other kind uses the forest-tree atlas. */
 export const usesPalmAtlas = (kind: number): boolean => (kind >= TreeKind.coconut && kind <= TreeKind.krishnachura) || kind === TreeKind.bamboo;
@@ -62,6 +65,9 @@ export const TREE_TRUNK: Record<number, { r: number; h: number; climb: number }>
   [TreeKind.fern]: { r: 0.03, h: 1, climb: 0 },
   [TreeKind.shrub]: { r: 0.03, h: 1, climb: 0 },
   [TreeKind.lata]: { r: 0.03, h: 1, climb: 0 },
+  /** Deadwood on the ground: lies flat, so no collider (r under passRadius) and nothing to climb. */
+  [TreeKind.deadLog]: { r: 0.03, h: 0.6, climb: 0 },
+  [TreeKind.leafLitter]: { r: 0.03, h: 0.1, climb: 0 },
 };
 
 /**

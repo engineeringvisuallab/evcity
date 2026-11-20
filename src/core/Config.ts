@@ -419,7 +419,13 @@ export const Config = {
        * so the jungle holds about 2.5x as many plants as before. `undergrowth` = share of them that are lata-pata (fern / shrub / creeper mound, no colliders),
        * the rest are young trees of `scale` (x the tree's normal size). Lower `layers` / `chance` if the frame rate drops.
        */
-      thicket: { layers: 6, chance: 0.88, undergrowth: 0.5, scale: [0.32, 0.6] as [number, number] } },
+      thicket: { layers: 10, chance: 0.88, undergrowth: 0.5, scale: [0.32, 0.6] as [number, number] },
+      /**
+       * JUNGLE DEADWOOD (sukno gach + sukno pata): old dry trees lying on the ground and patches of dry fallen leaves. Per 10 m jungle cell (x jungle density x Quality treeMul):
+       * `logChance` = a fallen dead tree (`logScale` = size range, 1 = 7 m long), `litterLayers` x `litterChance` = loose leaf patches (`litterScale`), and `aroundLog` leaf patches
+       * are heaped along every fallen tree. No colliders. Lower `litterChance` / `aroundLog` if the frame rate drops (every patch is ~40 small cards).
+       */
+      deadwood: { logChance: 0.08, logScale: [0.75, 1.3] as [number, number], litterLayers: 2, litterChance: 0.25, litterScale: [0.7, 1.5] as [number, number], aroundLog: 3 } },
     /**
      * EXTRA JUNGLE SPOTS (ghono jongol outside the forest districts): round patches that use the SAME dense jungle as above (same chance, big trees, understory,
      * tall bamboo, grass thinning). `r` = radius (m) of the full jungle, `fade` = the ragged edge fades out over this many m outside the full part (smoothstep, like the district edge).

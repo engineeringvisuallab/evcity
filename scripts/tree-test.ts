@@ -4,7 +4,7 @@ import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
 import { Config } from '../src/core/Config';
 import { CityPlan } from '../src/city/CityPlan';
 import { TreePlacer } from '../src/vegetation/TreePlacement';
-import { TREE_KIND_COUNT, TREE_STRIDE } from '../src/vegetation/TreeTypes';
+import { TREE_KIND_COUNT, TREE_STRIDE, TreeKind } from '../src/vegetation/TreeTypes';
 import { chunkOriginX, chunkOriginZ, CHUNKS_PER_SIDE } from '../src/world/WorldGrid';
 import { planCityTrees } from '../src/roads/Roadside';
 
@@ -58,7 +58,10 @@ for (let cz = -margin; cz < N + margin; cz++) {
         gen.sample(x, z, s);
         const isMedian = hasKey(medianKeys, x, z);
         // the foot stands `sink` below the ground, and up to 1.4 m lower on a slope (thick trunks); median trees stand on the road deck
-        if (!isMedian && (y > s.h - V.sink + 0.01 || y < s.h - V.sink - 1.41)) fail(`tree height mismatch at ${x.toFixed(0)},${z.toFixed(0)} kind ${k}`);
+        if (k === TreeKind.deadLog || k === TreeKind.leafLitter) {
+          // deadwood lies ON the ground (not sunk like a trunk): leaves 2 cm above it, a log 5 cm in (plus up to 0.5 m on a slope)
+          if (y > s.h + 0.03 || y < s.h - 0.6) fail(`deadwood height mismatch at ${x.toFixed(0)},${z.toFixed(0)} kind ${k}`);
+        } else if (!isMedian && (y > s.h - V.sink + 0.01 || y < s.h - V.sink - 1.41)) fail(`tree height mismatch at ${x.toFixed(0)},${z.toFixed(0)} kind ${k}`);
         if (!isMedian && s.h < V.seaMargin) fail(`tree on the beach / in the sea at ${x.toFixed(0)},${z.toFixed(0)} h=${s.h.toFixed(2)}`);
         if (!Number.isNaN(s.water) && s.h < s.water + V.waterMargin) fail(`tree in water at ${x.toFixed(0)},${z.toFixed(0)} kind ${k} h=${s.h.toFixed(2)} water=${s.water.toFixed(2)}`);
         if (s.h > V.treeLineEnd) fail(`tree above the tree line at ${x.toFixed(0)},${z.toFixed(0)} h=${s.h.toFixed(0)}`);
