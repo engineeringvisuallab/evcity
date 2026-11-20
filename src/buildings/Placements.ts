@@ -27,7 +27,7 @@ const HAND_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'bamboo-hut', x: -2260, z: -1560, yaw: 0, W: 8, D: 8, zone: 'village-west' },
   { id: 'house-tin', x: -2180, z: -1400, yaw: 0, W: 11, D: 12, zone: 'village-west' },
   { id: 'house-semi-pucca', x: -2160, z: -1460, yaw: 0, W: 11, D: 12, zone: 'village-west' },
-  { id: 'house-brick-2', x: -630, z: 780, yaw: 0, W: 13, D: 16, zone: 'sw-homes' }, // moved from (-640, 760) off the road / railway (22 m)
+  { id: 'house-brick-2', x: -618, z: 780, yaw: 0, W: 13, D: 16, zone: 'sw-homes' }, // moved from (-630, 780) off the road / railway (12 m)
   { id: 'house-brick-3', x: 960, z: 100, yaw: 0, W: 13, D: 16, zone: 'east-homes' },
   { id: 'row-house', x: 920, z: 80, yaw: -1.5708, W: 21, D: 10, zone: 'east-homes' },
   { id: 'villa', x: 690, z: 760, yaw: 3.1416, W: 24, D: 28, zone: 'se-dense' },
@@ -40,16 +40,16 @@ const HAND_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'baganbari', x: 850, z: 480, yaw: -1.5708, W: 52, D: 52, zone: 'central-lake' }, // moved from (820, 440) off the road / railway (50 m)
   { id: 'shop-row', x: 23.2, z: 201.9, yaw: 1.5708, W: 26, D: 11, zone: 'metro-core' },
   { id: 'pharmacy', x: -23.1, z: 139.4, yaw: 1.5708, W: 9, D: 11, zone: 'metro-core' },
-  { id: 'restaurant', x: -200, z: 220, yaw: -3.1416, W: 24, D: 26, zone: 'metro-core' },
+  { id: 'restaurant', x: -132, z: 268, yaw: -3.1416, W: 24, D: 26, zone: 'metro-core' }, // moved from (-200, 220) off the road / railway (83.2 m)
   { id: 'petrol-pump', x: 800, z: -540, yaw: 1.5708, W: 30, D: 24, zone: 'ne-business' },
-  { id: 'bank', x: 40, z: 140, yaw: 0, W: 26, D: 24, zone: 'metro-core' },
+  { id: 'bank', x: 20, z: 160, yaw: 0, W: 26, D: 24, zone: 'metro-core' }, // moved from (40, 140) off the road / railway (28.3 m)
   { id: 'supermarket', x: -180, z: 960, yaw: 3.1416, W: 33, D: 36, zone: 'south-bazaar' },
   { id: 'mall', x: -60, z: 960, yaw: 3.1416, W: 61, D: 60, zone: 'south-bazaar' }, // moved from (-80, 960) off the road / railway (20 m)
   { id: 'cinema', x: 120, z: -280, yaw: -1.5708, W: 27, D: 35, zone: 'metro-core' },
   { id: 'office-mid', x: -220, z: 180, yaw: -3.1416, W: 27, D: 26, zone: 'metro-core' }, // moved from (-200, 160) off the road / railway (28 m)
   { id: 'office-tower', x: -240, z: 25, yaw: 3.1416, W: 45, D: 45, zone: 'metro-core' }, // moved from (-280, 80) off the road / railway (68 m)
   { id: 'hotel-3star', x: -260.3, z: 940.4, yaw: 3.1416, W: 39, D: 32, zone: 'south-bazaar' },
-  { id: 'hotel-5star', x: -10, z: 320, yaw: -1.5708, W: 80, D: 70, zone: 'metro-core' }, // moved from (-100, 320) off the road / railway (90 m)
+  { id: 'hotel-5star', x: -2, z: 300, yaw: -1.5708, W: 80, D: 70, zone: 'metro-core' }, // moved from (-10, 320) off the road / railway (21.5 m)
   { id: 'primary-school', x: 940, z: 20, yaw: -1.5708, W: 40, D: 36, zone: 'east-homes' },
   { id: 'high-school', x: -1465, z: -2400, yaw: 1.5708, W: 56, D: 60, zone: 'nw-campus' }, // moved from (-1500, -2380) off the road / railway (40 m)
   { id: 'college', x: -1440, z: -2620, yaw: -1.5708, W: 70, D: 46, zone: 'nw-campus' },
@@ -72,11 +72,11 @@ const HAND_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'hill_farm', x: -1220, z: -1780, yaw: 1.5708, W: 104, D: 112, zone: 'center-hills' },
   { id: 'union_parishad', x: 2945, z: -980, yaw: 0, W: 44, D: 40, zone: 'village-east' }, // moved from (2980, -980) off the road / railway (35 m)
   { id: 'upazila_complex', x: -2430, z: -860, yaw: 3.1416, W: 90, D: 70, zone: 'west-farms' }, // moved from (-2500, -860) off the road / railway (70 m)
-  { id: 'fire_station', x: -180, z: 80, yaw: 3.1416, W: 54, D: 46, zone: 'metro-core' },
+  { id: 'fire_station', x: -64, z: 180, yaw: 3.1416, W: 54, D: 46, zone: 'metro-core' }, // moved from (-180, 80) off the road / railway (153.2 m)
   { id: 'post_office', x: 300, z: -65, yaw: -1.5708, W: 38, D: 34, zone: 'metro-core' }, // moved from (280, 0) off the road / railway (68 m)
-  { id: 'district_court', x: 200, z: 510, yaw: -3.1416, W: 80, D: 66, zone: 'metro-core' }, // moved from (160, 300) off the road / railway (214 m)
-  { id: 'dc_office', x: -175, z: -10, yaw: -1.5708, W: 96, D: 76, zone: 'metro-core' }, // moved from (-100, 180) off the road / railway (204 m)
-  { id: 'city_hall', x: -55, z: -55, yaw: 0, W: 100, D: 84, zone: 'metro-core' }, // moved from (200, 120) off the road / railway (309 m)
+  { id: 'district_court', x: 148, z: 742, yaw: -3.1416, W: 80, D: 66, zone: 'metro-core' }, // moved from (200, 510) off the road / railway (237.8 m)
+  { id: 'dc_office', x: -211, z: -50, yaw: -1.5708, W: 96, D: 76, zone: 'metro-core' }, // moved from (-175, -10) off the road / railway (53.8 m)
+  { id: 'city_hall', x: -55, z: -151, yaw: 0, W: 100, D: 84, zone: 'metro-core' }, // moved from (-55, -55) off the road / railway (96 m)
 ];
 
 /** The hand placed buildings + (STEP 3, Config.city.plots) the buildings that stand in the city plots; the old hospital that the plot hospital replaces is dropped. */
