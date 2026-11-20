@@ -29,7 +29,7 @@ function inMall(x: number, z: number): boolean {
 const toWorld = (s: RoadStationSite, x: number, z: number): { x: number; z: number } => ({ x: s.x + x * Math.cos(s.yaw) + z * Math.sin(s.yaw), z: s.z - x * Math.sin(s.yaw) + z * Math.cos(s.yaw) });
 
 const fuel = ROAD_STATION_SITES.filter((s) => s.kind === 'fuel'), cps = ROAD_STATION_SITES.filter((s) => s.kind === 'charge');
-ok(fuel.length === 23 && cps.length === 28, `${fuel.length} fuel stations + ${cps.length} charge points along the main roads`);
+ok(fuel.length === 44 && cps.length === 50, `${fuel.length} fuel stations + ${cps.length} charge points along the main roads`);
 ok(new Set(ROAD_STATION_SITES.map((s) => s.id)).size === ROAD_STATION_SITES.length, 'unique ids');
 for (const r of ['M8', 'J1-N', 'J1-E', 'J1-S', 'J1-W']) ok(fuel.some((s) => s.road === r) && cps.some((s) => s.road === r), `main road ${r}: has a fuel station and a charge point`);
 ok(['R6-2', 'R6-15', 'M6-1', 'R4-9', 'R4-19'].every((r) => ROAD_STATION_SITES.some((s) => s.road === r)), '6-lane and 4-lane main roads have sites too');

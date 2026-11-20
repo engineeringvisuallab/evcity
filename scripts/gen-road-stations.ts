@@ -98,8 +98,8 @@ const log: string[] = [];
 const byName = (n: string) => roads.find((r) => r.name === n);
 
 /** Puts one site of `kind` on road r at index i (side `pref` first, then the other side). Returns true when a valid spot was found. */
-function put(r: ReturnType<typeof hwy>, i: number, kind: 'fuel' | 'cp', pref: 1 | -1): boolean {
-  for (const side of [pref, -pref] as const) {
+function put(r: ReturnType<typeof hwy>, i: number, kind: 'fuel' | 'cp', pref: 1 | -1, only = false): boolean {
+  for (const side of (only ? [pref] : [pref, -pref]) as (1 | -1)[]) {
     const bus = kind === 'cp' && (nCp + 1) % 3 === 0;
     const d = kind === 'fuel' ? DIMS.fuel : bus ? DIMS.cpbus : DIMS.cp;
     const c = frame(r, i, side, d.hw, d.hd);
@@ -119,34 +119,38 @@ function put(r: ReturnType<typeof hwy>, i: number, kind: 'fuel' | 'cp', pref: 1 
 
 /** A fuel station + a charge point on road `name`, as near the distance `t` (m from the road start) as possible (search +-`reach` m, both ways). */
 let flip: 1 | -1 = 1;
-function pair(name: string, t: number, reach = 1200, only?: 'fuel' | 'cp'): void {
+function pair(name: string, t: number, reach = 2200, only?: 'fuel' | 'cp'): void {
   const r = byName(name);
   if (!r) { log.push(`${name}: ROAD NOT FOUND`); return; }
   flip = flip === 1 ? -1 : 1;
-  for (const kind of (only ? [only] : ['fuel', 'cp']) as ('fuel' | 'cp')[]) {
-    const pref: 1 | -1 = kind === 'fuel' ? flip : (flip === 1 ? -1 : 1);
-    let done = false;
-    for (let off = 0; off <= reach && !done; off += 40) {
-      for (const sg of off === 0 ? [1] : [1, -1]) {
-        const tt = t + sg * off;
-        if (tt < 150 || tt > r.length - 150) continue;
-        const i = r.cum.findIndex((v) => v >= tt);
-        if (i >= 0 && put(r, i, kind, pref)) { done = true; break; }
+  // BOTH sides of the road: a fuel station and a charge point on each side (the 2nd side is found near the 1st, a bit along the road if needed)
+  for (const side of [flip, -flip] as const) {
+    for (const kind of (only ? [only] : ['fuel', 'cp']) as ('fuel' | 'cp')[]) {
+      let done = false;
+      for (let off = 0; off <= reach && !done; off += 40) {
+        for (const sg of off === 0 ? [1] : [1, -1]) {
+          const tt = t + sg * off;
+          if (tt < 150 || tt > r.length - 150) continue;
+          const i = r.cum.findIndex((v) => v >= tt);
+          if (i >= 0 && put(r, i, kind, side, true)) { done = true; break; }
+        }
       }
+      if (!done) log.push(`${name}@${Math.round(t)} ${kind} side ${side}: NO SITE`);
     }
-    if (!done) log.push(`${name}@${Math.round(t)} ${kind}: NO SITE`);
   }
 }
 
 // 1) the 8-lane RING ROAD M8: a pair about every 3 km
 {
   const m8 = byName('M8')!;
-  for (let t = 1500; t < m8.length - 500; t += 3000) pair('M8', t, 1400);
+  for (let t = 1500; t < m8.length - 500; t += 3000) pair('M8', t, 2000);
 }
 // 2) the four 8-lane roads out of J1, the 6-lane and the 4-lane main roads: a pair in the middle of each
 for (const n of ['J1-N', 'J1-E', 'J1-S', 'J1-W']) pair(n, byName(n)!.length * 0.5);
 for (const n of ['R6-2', 'R6-15', 'R6-10', 'R6-11', 'M6-1']) pair(n, byName(n)!.length * 0.5);
 for (const n of ['R4-9', 'R4-19', 'R4-12', 'R4-6']) pair(n, byName(n)!.length * 0.5, 1500);
+// make-up pairs where one side of a road above found no dry / straight site (M8 fuel, R6-2 charge, R6-15 fuel, R4-9 fuel)
+for (const n of ['R6-3', 'R6-9', 'R4-1', 'R4-8']) pair(n, byName(n)!.length * 0.5, 1000);
 
 // 3) the residential areas (HANDOFF_RESIDENTIAL.md section 2): 1 charge point in each, + 1 fuel station in the 4 big ones
 const AREAS: { id: string; x: number; z: number; r: number; fuel: boolean }[] = [
