@@ -816,11 +816,12 @@ export class RoadNetwork {
       if (moved < 1e-4) break;
     }
     // section: along the rail 6.4 m median (pier row inside), 2 + 2 lanes x 3.5 m + 1.0 m shoulder, 22.4 m wide; the loop part has the normal R4 median
+    // user 2026-11-20: the median under the rail = the pier column width (RAIL_DESIGN.pierSize 3.2 m, half 1.6): 4 lane 2 + 2 = 19.2 m wide, 2 lane 1 + 1 = 12.2 m wide
     const rc = CLASS_R4_OPEN;
     const rel = (kind: string): number => rc.elements.find((e) => e.kind === kind)?.width ?? 0;
     const sec =
       piece.kind === 'rail'
-        ? { halfWidth: 3.2 + (piece.lanesPerDir ?? 2) * 3.5 + 1.0, medianHalf: 3.2, shyMedian: 0, laneW: 3.5, lanesPerDir: piece.lanesPerDir ?? 2, shyOuter: 1.0, shoulder: rel('ditch') }
+        ? { halfWidth: 1.6 + (piece.lanesPerDir ?? 2) * 3.5 + 1.0, medianHalf: 1.6, shyMedian: 0, laneW: 3.5, lanesPerDir: piece.lanesPerDir ?? 2, shyOuter: 1.0, shoulder: rel('ditch') }
         : { halfWidth: rc.pavementEdge, medianHalf: rel('median'), shyMedian: rel('shoulder-in'), laneW: rc.laneW, lanesPerDir: rc.lanesPerDir, shyOuter: rel('shoulder-out'), shoulder: rel('ditch') };
     this.addRoad({ tier: 1, kind: 'highway', name: piece.name, closed: false, pts, fixedY: Array.from(y), halfWidth: sec.halfWidth, shoulder: sec.shoulder, lanes: sec.lanesPerDir * 2, speedKmh: rc.speed, maxGrade: C.maxGrade, section: sec, daylight: true });
     const road = this.roads[this.roads.length - 1];
