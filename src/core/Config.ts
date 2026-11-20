@@ -393,8 +393,8 @@ export const Config = {
     bigTreeChance: 0.45,
     bigTreeScale: [0.7, 1.3] as [number, number],
     /** 2026-11-20: size multiplier of the trees OUTSIDE the dense jungle (forest, open land, village trees): ordinary trees x `treeSizeOutside`, the big species (sal, segun ...) x `treeSizeOutsideBig` (so they do not get taller than ~40 m). The jungle trees keep their size (1 = no change). */
-    treeSizeOutside: 1.4,
-    treeSizeOutsideBig: 1.2,
+    treeSizeOutside: 1.8,
+    treeSizeOutsideBig: 1.3,
     /** HOMESTEADS (gram): coconut, date, palmyra palms and banana clumps stand around rural houses. `reach` = ring width (m) beyond the footprint, `chance` per 10 m cell next to the house (fades out to the edge of the ring). */
     homestead: { reach: 32, chance: 0.42 },
     /** POND / LAKE / RIVER BANKS: palms and banana on low land within `reach` m of water. `chance` per 10 m cell, `maxHeight` = only land lower than this (m above sea level). */
@@ -413,13 +413,13 @@ export const Config = {
      * cell, scale range, `bambooShare` of them are bamboo clumps on low land, `bigShare` = young big trees). The jungle fades out over `fade` m at the district edge
      * (a ragged edge). Lower `understory` (and `chance`) if the frame rate drops: they are the number of trees.
      */
-    dense: { fade: 260, chance: 0.75, bigChance: 0.62, understory: 0.55, understoryScale: [0.3, 0.85] as [number, number], bambooShare: 0.1, bigShare: 0.1,
+    dense: { farKeep: 0.3, fade: 260, chance: 0.75, bigChance: 0.62, understory: 0.55, understoryScale: [0.3, 0.85] as [number, number], bambooShare: 0.1, bigShare: 0.1,
       /**
        * JUNGLE THICKET (ghono jongol, 2.5x): `layers` more spots in every jungle cell (each its own random stream, `chance` x jungle density x Quality treeMul),
        * so the jungle holds about 2.5x as many plants as before. `undergrowth` = share of them that are lata-pata (fern / shrub / creeper mound, no colliders),
        * the rest are young trees of `scale` (x the tree's normal size). Lower `layers` / `chance` if the frame rate drops.
        */
-      thicket: { layers: 4, chance: 0.5, undergrowth: 0.8, scale: [0.32, 0.6] as [number, number] } },
+      thicket: { layers: 4, chance: 0.85, undergrowth: 0.65, scale: [0.32, 0.6] as [number, number] } },
     /**
      * EXTRA JUNGLE SPOTS (ghono jongol outside the forest districts): round patches that use the SAME dense jungle as above (same chance, big trees, understory,
      * tall bamboo, grass thinning). `r` = radius (m) of the full jungle, `fade` = the ragged edge fades out over this many m outside the full part (smoothstep, like the district edge).

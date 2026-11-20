@@ -64,7 +64,7 @@ ctx.onmessage = (e: MessageEvent<ChunkRequest | GrassRequest>) => {
   const m = buildChunkMeshData(gen, req.cx, req.cz, req.vertsPerSide, req.skirtDepth, req.lod);
 
   const withPlants = req.lod <= maxLod;
-  const trees = withPlants ? treePlacer!.place(req.cx, req.cz) : null;
+  const trees = withPlants ? treePlacer!.place(req.cx, req.cz, req.lod) : null;
   const rocks = withPlants ? rockPlacer!.place(req.cx, req.cz) : null;
 
   const result: ChunkResult = {

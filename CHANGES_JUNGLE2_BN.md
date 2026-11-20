@@ -38,3 +38,18 @@ src/core/Config.ts, src/vegetation/{TreeTypes,TreeAssets,TreePlacement,GrassPlac
 ## 2026-11-20: jungle er baire gach boro (user: game er gach boro, jungle er gach thik ache)
 - `Config.ts` vegetation: `treeSizeOutside: 1.4` (sadharon gach, gram er gach), `treeSizeOutsideBig: 1.2` (sal, segun, koroi, bot, shimul). `TreePlacement.ts` forestTree / homeTree e scale gunon, jungle (dz = 1) e gunon nai, jungle er kinara dhire dhire milay. Bamboo, street tree, ghas bodlai ni.
 - Mapa: khola jayga gach er gor size 0.98 -> 1.36 (+38%), jungle 0.928 -> 0.931 (prai same). jungle-thicket-test PASS. Game e dekha NOT RUN.
+
+## 2026-11-20: jungle e game bhari (user: triangle 1 koti+, normal 30 lakh, fan ghurche)
+- `Config.ts` dense.thicket.layers 4 -> 2 (jungle er kache ghono gach 2.57x theke ~1.8x).
+- `TreePlacement.ts` place(cx, cz, lod) + `chunk.worker.ts`: jungle er understory ar thicket (lata-pata, chhoto gach) shudhu kache (LOD 0, ~380 m er bhetor) toiri hoy; dure (LOD 1) canopy gach-i dekha jay, tai oigulo bad.
+- Mapa (jungle centre theke 900 m): gach/lata-pata sonkhya OLD 51549 -> NEW 15382 (-70%); kache (<380 m) 7469 -> 5180. Triangle NOT MEASURED (three nai), game e FPS NOT RUN.
+- `scripts/jungle-thicket-test.ts` range 2.0-3.2 -> 1.5-3.2 (ekhon ~1.8x).
+
+## 2026-11-20: gach aro boro, jungle 2 gun ghono (user)
+- `Config.ts`: treeSizeOutside 1.4 -> 1.8, treeSizeOutsideBig 1.2 -> 1.3 (jungle er gach same). dense.thicket: layers 2 -> 4, chance 0.5 -> 0.85, undergrowth 0.8 -> 0.65 (gach beshi, lata-pata kom).
+- Mapa: jungle gach+lata-pata 208/ha -> 428/ha (2.06x); 380 m er bhetor 5180 -> 10704, 900 m er bhetor 15382 -> 20906. Triangle ar FPS NOT MEASURED, game e dekha NOT RUN. Triangle abar barbe (aager perf fix er 70% komano onekta ferot jabe): jodi bhari lage `thicket.chance` ba `layers` komao.
+- Notun gach er model: ekhono add kori ni.
+
+## 2026-11-20: gach barano thakbe, kintu dure render kom (user: gach komate boli ni, solution chaichi)
+- `Config.ts` dense.farKeep: 0.3 + `TreePlacement.ts` place(): jungle er dure (LOD >= 1 chunk, high e 380 m er por) shudhu 30% canopy gach draw hoy (cell wise fixed, jhilmil kore na). Kache (LOD 0) 2x ghono-i thake.
+- Mapa (jungle centre theke 900 m): kache 10704 (same), dure 10202 -> 3199 (-69%), mot 20906 -> 13903 (-33%). Triangle ar FPS NOT MEASURED, game e dekha NOT RUN. Aro komate: farKeep 0.3 -> 0.15, ba Quality tier e lodDistances chhoto.

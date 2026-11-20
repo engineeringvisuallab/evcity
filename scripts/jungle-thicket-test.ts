@@ -44,7 +44,7 @@ const on = count();
 const area = Math.PI * R * R / 10000;
 const ratio = on.n / Math.max(1, off.n);
 console.log(`A-coast core (r ${R} m, ${area.toFixed(0)} ha): thicket off ${off.n} (${(off.n / area).toFixed(0)}/ha) -> on ${on.n} (${(on.n / area).toFixed(0)}/ha) = x${ratio.toFixed(2)} | lata-pata ${on.under} (${((on.under / on.n) * 100).toFixed(0)}%) | ${on.ms.toFixed(0)} ms`);
-if (ratio < 2.0 || ratio > 3.2) { ok = false; console.log('FAIL: density should be about 2.5x'); }
+if (ratio < 3.0 || ratio > 4.4) { ok = false; console.log("FAIL: density should be about 3.7x (thicket layers 4, chance 0.85, 2026-11-20)"); }
 if (on.under <= 0) { ok = false; console.log('FAIL: no lata-pata'); }
 for (const k of [TreeKind.fern, TreeKind.shrub, TreeKind.lata]) if (TREE_TRUNK[k].r >= Config.vegetation.passRadius) { ok = false; console.log('FAIL: undergrowth kind', k, 'would get a collider'); }
 console.log(ok ? 'PASS jungle thicket' : 'FAIL');

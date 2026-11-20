@@ -498,8 +498,8 @@ export class TreePlacer {
     return false;
   }
 
-  /** All trees of chunk (cx, cz), chunk-local coordinates. */
-  place(cx: number, cz: number): TreeChunkData {
+  /** All trees of chunk (cx, cz), chunk-local coordinates. `lod` = the terrain LOD of the chunk: the jungle understory and thicket (lata-pata, young trees, hidden under the canopy from far away) are made only for LOD 0 (the near chunks). */
+  place(cx: number, cz: number, lod = 0): TreeChunkData {
     const S = Config.world.chunkSize;
     const cell = V.cellSize;
     const perSide = Math.round(S / cell);
@@ -511,11 +511,13 @@ export class TreePlacer {
     for (let k = 0; k < TREE_KIND_COUNT; k++) lists.push([]);
     for (let j = 0; j < perSide; j++) {
       for (let i = 0; i < perSide; i++) {
-        const t = this.cellTree(gx0 + i, gz0 + j);
+        let t = this.cellTree(gx0 + i, gz0 + j);
+        // FAR jungle (chunks of LOD >= 1, beyond the near distance): only `dense.farKeep` of the canopy trees are drawn (a fixed random share per cell, so it never flickers)
+        if (t && lod > 0 && this.denseAt(t.x, t.z) > 0.3 && mulberry32(hash2D(this.seed ^ 0xfa47, gx0 + i, gz0 + j))() >= D.farKeep) t = null;
         if (t) lists[t.kind].push(t.x - ox, t.y, t.z - oz, t.scale, t.yaw, t.tint);
-        const u = this.cellTree2(gx0 + i, gz0 + j); // dense jungle: the understory tree
+        const u = lod === 0 ? this.cellTree2(gx0 + i, gz0 + j) : null; // dense jungle: the understory tree (near chunks only)
         if (u) lists[u.kind].push(u.x - ox, u.y, u.z - oz, u.scale, u.yaw, u.tint);
-        this.cellThicket(gx0 + i, gz0 + j, lists, ox, oz); // jungle: lata-pata and young trees
+        if (lod === 0) this.cellThicket(gx0 + i, gz0 + j, lists, ox, oz); // jungle: lata-pata and young trees (near chunks only)
       }
     }
     // GRASS 4: street trees in the kerbed pits of the city sidewalks (Roadside.ts) join the normal trees: same instancing, LOD and colliders
