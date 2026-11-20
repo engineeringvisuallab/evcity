@@ -8,6 +8,7 @@ import { hash2D, mulberry32 } from '../world/Seed';
 import { placementContains } from '../buildings/Placements';
 import { farmCovers } from '../farm/FarmFields';
 import { streetTreesInChunk } from '../roads/Roadside';
+import { plotTreesInChunk } from './PlotTrees';
 import { evlabParkTreesInChunk } from '../evlab/EVLabParkTrees';
 import { evlabHillTreesInChunk } from '../evlab/EVLabHill';
 import { TREE_KIND_COUNT, TREE_TRUNK, TreeKind, type TreeChunkData } from './TreeTypes';
@@ -44,8 +45,6 @@ const smooth = (a: number, b: number, x: number): number => {
 
 /** Which big forest tree grows at height `h` (m)? Lowland forest: all five (koroi and banyan are wide: at most one per 3 x 3 cells); hills: sal, segun, shimul; high hills mostly sal. */
 function bigKind(h: number, u: number, gi: number, gj: number): number {
-  // GUM (eucalyptus): about about 2 in 5 big trees, picked from a second hash of `u` so the other species keep their order
-  if ((u * 7.31) % 1 < 0.42) return (u * 13.7) % 1 < 0.5 ? TreeKind.gum : TreeKind.gum2;
   const wideOk = (((gi % 3) + 3) % 3 === 0) && (((gj % 3) + 3) % 3 === 0);
   if (h < 25) {
     if (u < 0.26) return wideOk ? TreeKind.koroi : TreeKind.segun;
@@ -283,7 +282,7 @@ export class TreePlacer {
 
     // REAL FOREST SIZES: many young / small trees, a fair number of middle-aged ones, a few old giants (skewed, not uniform).
     // The big species are given as mature trees (scale 1 = 20-30 m): a narrow range, so a banyan never becomes 60 m tall.
-    const big = (kind >= TreeKind.sal && kind <= TreeKind.shimul) || kind >= TreeKind.gum;
+    const big = kind >= TreeKind.sal && kind <= TreeKind.shimul;
     const wide = kind === TreeKind.koroi || kind === TreeKind.bot;
     const giant = 1 + 0.4 * dz; // deep jungle: the canopy giants grow up to 40 % taller (35-45 m)
     const scale0 = big
@@ -292,7 +291,7 @@ export class TreePlacer {
       : kind === TreeKind.palm ? 0.6 + 0.95 * rScale ** 1.3 : kind === TreeKind.pine ? 0.6 + 0.9 * rScale ** 1.3 : kind === TreeKind.slender ? 0.45 + 1.4 * rScale ** 1.6 : 0.35 + 1.75 * rScale ** 1.8;
     // 2026-11-20: trees OUTSIDE the dense jungle are bigger (`treeSizeOutside`, the big species `treeSizeOutsideBig`); the jungle (dz = 1) keeps its size, the edge blends
     const scale = scale0 * (1 + ((big ? V.treeSizeOutsideBig : V.treeSizeOutside) - 1) * (1 - dz));
-    return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: rYaw * Math.PI * 2, tint: (0.86 + rTint * 0.3) * (1 - 0.12 * dz) };
+    return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: rYaw * Math.PI * 2, tint: (0.82 + rTint * 0.32) * (1 - 0.3 * dz) };
   }
 
   /**
@@ -432,10 +431,10 @@ export class TreePlacer {
 
     // jungle bamboo: 3-5x taller than a grove clump (random per clump), full inside the jungle
     const bambooScale = (B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * rs) * (1 + (B.jungleTall[0] + (B.jungleTall[1] - B.jungleTall[0]) * ((rs * 13.37 + 0.31) % 1) - 1) * smooth(0.1, 0.6, dz));
-    const big = (kind >= TreeKind.sal && kind <= TreeKind.shimul) || kind >= TreeKind.gum;
+    const big = kind >= TreeKind.sal && kind <= TreeKind.shimul;
     const young = D.understoryScale[0] + (D.understoryScale[1] - D.understoryScale[0]) * rs ** 1.4;
     const scale = big ? V.bigTreeScale[0] + 0.3 * rs : kind === TreeKind.bamboo ? bambooScale : kind === TreeKind.pine ? 0.35 + 0.5 * rs : young;
-    return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: ry * Math.PI * 2, tint: (0.84 + rt * 0.3) * (1 - 0.12 * dz) };
+    return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: ry * Math.PI * 2, tint: (0.8 + rt * 0.3) * (1 - 0.3 * dz) };
   }
 
   /**
@@ -488,7 +487,7 @@ export class TreePlacer {
         else kind = rv < 0.3 ? TreeKind.slender : rv < 0.58 ? TreeKind.vase : rv < 0.84 ? TreeKind.broadleaf : TreeKind.oak;
         scale = kind === TreeKind.bamboo ? (B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * rs) * 0.8 : T.scale[0] + (T.scale[1] - T.scale[0]) * rs ** 1.3;
       }
-      lists[kind].push(x - cox, this.footY(h, slope, kind, scale), z - coz, scale, ry * Math.PI * 2, (0.86 + rt * 0.3) * (1 - 0.12 * dz));
+      lists[kind].push(x - cox, this.footY(h, slope, kind, scale), z - coz, scale, ry * Math.PI * 2, (0.8 + rt * 0.3) * (1 - 0.3 * dz));
     }
   }
 
@@ -601,6 +600,11 @@ export class TreePlacer {
       this.gen.sample(x, z, this.sample);
       return this.sample.h;
     })) lists[e.kind].push(...e.v);
+    // CITY PLOTS: a few garden trees inside the plots (game tree kinds only, PlotTrees.ts)
+    for (const t of plotTreesInChunk(ox, oz, S)) {
+      this.gen.sample(t.x, t.z, this.sample);
+      lists[t.kind].push(t.x - ox, this.footY(this.sample.h, 0, t.kind, t.scale), t.z - oz, t.scale, t.yaw, 0.95 + 0.1 * ((t.yaw * 7) % 1));
+    }
     // EVLab campus: the park trees (palms, avenue trees, lawn trees) around the tower and the lake
     for (const e of evlabParkTreesInChunk(this.gen.evlab.floorY, ox, oz)) lists[e.kind].push(...e.v);
     // EVLab campus, Step RT4: big palms on the gentle parts of the hill behind the plot (slope and top; the real ground decides, steep ground stays with the forest)

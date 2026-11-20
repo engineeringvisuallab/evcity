@@ -15,11 +15,11 @@ export const FILL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'slim-tower-20', x: 366.9, z: -269.8, yaw: -1.5679, W: 20, D: 21, zone: 's0-cbd', seed: 873335 },
   { id: 'cinema', x: 416.1, z: -284.2, yaw: 1.5737, W: 27, D: 35, zone: 's0-cbd', seed: 929788 },
   { id: 'hotel-boutique', x: 133.5, z: -254.9, yaw: 0.0029, W: 17, D: 18, zone: 's0-cbd', seed: 688015 },
-  { id: 'office-slim-12', x: 314.5, z: -203.5, yaw: -3.1387, W: 21, D: 20, zone: 's0-cbd', seed: 94007 },
+  { id: 'office-slim-12', x: 320.5, z: -203.5, yaw: -3.1387, W: 21, D: 20, zone: 's0-cbd', seed: 94007 }, // PLOTS: moved from (314.5, -203.5) into free plot land
   { id: 'office-slim-12', x: 340.8, z: -203.8, yaw: -3.1387, W: 21, D: 20, zone: 's0-cbd', seed: 187916 },
   { id: 'slim-tower-30', x: 391.1, z: -257.6, yaw: 0.0029, W: 21, D: 22, zone: 's0-cbd', seed: 301806 },
   { id: 'office-slim-12', x: 366.3, z: -203.8, yaw: -3.1387, W: 21, D: 20, zone: 's0-cbd', seed: 581856 },
-  { id: 'apartment-mid', x: 144.6, z: 195.4, yaw: -3.1387, W: 18, D: 13, zone: 's0-flats', seed: 779706 },
+  { id: 'apartment-mid', x: 146.6, z: 195.4, yaw: -3.1387, W: 18, D: 13, zone: 's0-flats', seed: 779706 }, // PLOTS: moved from (144.6, 195.4) into free plot land
   { id: 'shop-house-3', x: 182, z: 175.9, yaw: -3.1387, W: 13, D: 12, zone: 's0-flats', seed: 881599 },
   { id: 'apartment-mid', x: 198.1, z: 192.4, yaw: -3.1387, W: 18, D: 13, zone: 's0-flats', seed: 645688 },
   { id: 'apt-slim-9', x: 216.7, z: 193.2, yaw: -3.1387, W: 15, D: 14, zone: 's0-flats', seed: 110994 },
@@ -49,9 +49,9 @@ export const FILL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'apartment-mid', x: 218, z: 244.2, yaw: -3.1387, W: 18, D: 13, zone: 's0-flats', seed: 459784 },
   { id: 'apt-slim-9', x: 238.5, z: 263.5, yaw: -3.1387, W: 15, D: 14, zone: 's0-flats', seed: 834882 },
   { id: 'apartment-high', x: 264.7, z: 265.5, yaw: -3.1387, W: 27, D: 20, zone: 's0-flats', seed: 711738 },
-  { id: 'restaurant', x: 171.4, z: 371.5, yaw: -3.1387, W: 24, D: 26, zone: 's0-bazaar', seed: 595945 },
-  { id: 'shop-house-3', x: 242.8, z: 372.8, yaw: -3.1387, W: 13, D: 12, zone: 's0-bazaar', seed: 857689 },
-  { id: 'shop-house-3', x: 226.6, z: 373.7, yaw: -3.1387, W: 13, D: 12, zone: 's0-bazaar', seed: 491919 },
+  { id: 'restaurant', x: 171.4, z: 373.5, yaw: -3.1387, W: 24, D: 26, zone: 's0-bazaar', seed: 595945 }, // PLOTS: moved from (171.4, 371.5) into free plot land
+  { id: 'shop-house-3', x: 242.8, z: 378.8, yaw: -3.1387, W: 13, D: 12, zone: 's0-bazaar', seed: 857689 }, // PLOTS: moved from (242.8, 372.8) into free plot land
+  { id: 'shop-house-3', x: 226.6, z: 375.7, yaw: -3.1387, W: 13, D: 12, zone: 's0-bazaar', seed: 491919 }, // PLOTS: moved from (226.6, 373.7) into free plot land
   { id: 'pharmacy', x: 204.2, z: 433.6, yaw: -1.5679, W: 9, D: 11, zone: 's0-bazaar', seed: 109073 },
   { id: 'pharmacy', x: 145.4, z: 439.5, yaw: -1.5679, W: 9, D: 11, zone: 's0-bazaar', seed: 984084 },
   { id: 'bank-compact', x: 145.3, z: 372.9, yaw: 1.5737, W: 16, D: 18, zone: 's0-bazaar', seed: 928656 },
@@ -69,14 +69,14 @@ export const FILL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'shop-row', x: 210.2, z: 452.3, yaw: -3.1387, W: 26, D: 11, zone: 's0-bazaar', seed: 699111 },
   { id: 'pharmacy', x: 288.3, z: 417.2, yaw: 0.0029, W: 9, D: 11, zone: 's0-bazaar', seed: 753857 },
   { id: 'shop-row', x: -309.1, z: 117, yaw: 0.003, W: 26, D: 11, zone: 's0-homes', seed: 652563 },
-  { id: 'townhouse-3', x: -313.1, z: 101.7, yaw: 0.0029, W: 10, D: 12, zone: 's0-homes', seed: 657624 },
+  { id: 'townhouse-3', x: -319.1, z: 103.7, yaw: 0.0029, W: 10, D: 12, zone: 's0-homes', seed: 657624 }, // PLOTS: moved from (-313.1, 101.7) into free plot land
   { id: 'shop-row', x: -320.1, z: 145, yaw: -3.1386, W: 26, D: 11, zone: 's0-homes', seed: 834476 },
   { id: 'house-brick-3', x: -277.9, z: 165.5, yaw: -3.1387, W: 13, D: 16, zone: 's0-homes', seed: 742095 },
   { id: 'apt-slim-9', x: -258.9, z: 152.5, yaw: -3.1387, W: 15, D: 14, zone: 's0-homes', seed: 82235 },
   { id: 'apartment-mid', x: -329.4, z: 163.3, yaw: -1.5679, W: 18, D: 13, zone: 's0-homes', seed: 906376 },
   { id: 'shop-house-4', x: -347, z: 159.3, yaw: 1.5737, W: 11, D: 11, zone: 's0-homes', seed: 150767 },
   { id: 'shop-house-4', x: -347.5, z: 181.6, yaw: 1.5737, W: 11, D: 11, zone: 's0-homes', seed: 731800 },
-  { id: 'townhouse-3', x: -194.7, z: 114.6, yaw: 0.0029, W: 10, D: 12, zone: 's0-homes', seed: 955601 },
+  { id: 'townhouse-3', x: -192.7, z: 108.6, yaw: 0.0029, W: 10, D: 12, zone: 's0-homes', seed: 955601 }, // PLOTS: moved from (-194.7, 114.6) into free plot land
   { id: 'house-brick-3', x: -167.7, z: 115.7, yaw: 0.0029, W: 13, D: 16, zone: 's0-homes', seed: 266866 },
   { id: 'house-brick-2', x: -148.7, z: 115.6, yaw: 0.0029, W: 13, D: 16, zone: 's0-homes', seed: 363774 },
   { id: 'apartment-mid', x: -259.4, z: 172.3, yaw: 1.5737, W: 18, D: 13, zone: 's0-homes', seed: 886795 },
@@ -86,7 +86,7 @@ export const FILL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'shop-house-3', x: -293.6, z: 211.5, yaw: -3.1387, W: 13, D: 12, zone: 's0-homes', seed: 467370 },
   { id: 'shop-row', x: -264.9, z: 211.2, yaw: -3.1387, W: 26, D: 11, zone: 's0-homes', seed: 714421 },
   { id: 'house-brick-3', x: -309.8, z: 233.5, yaw: -1.5679, W: 13, D: 16, zone: 's0-homes', seed: 618908 },
-  { id: 'house-brick-2', x: -153.4, z: 220.7, yaw: -3.1387, W: 13, D: 16, zone: 's0-homes', seed: 580980 },
+  { id: 'house-brick-2', x: -155.4, z: 224.7, yaw: -3.1387, W: 13, D: 16, zone: 's0-homes', seed: 580980 }, // PLOTS: moved from (-153.4, 220.7) into free plot land
   { id: 'shop-house-3', x: -223.3, z: 210.1, yaw: -1.5679, W: 13, D: 12, zone: 's0-homes', seed: 51798 },
   { id: 'shop-house-3', x: -221.6, z: 235.3, yaw: -1.5679, W: 13, D: 12, zone: 's0-homes', seed: 388069 },
   { id: 'apt-slim-9', x: -260.7, z: 233.1, yaw: 1.5737, W: 15, D: 14, zone: 's0-homes', seed: 621418 },
@@ -124,7 +124,7 @@ export const FILL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'pharmacy', x: -297.3, z: 426, yaw: -1.5599, W: 9, D: 11, zone: 's0-hospital', seed: 163799 },
   { id: 'pharmacy', x: -298.1, z: 445.2, yaw: -1.5591, W: 9, D: 11, zone: 's0-hospital', seed: 276098 },
   { id: 'townhouse-3', x: -418.6, z: 480.6, yaw: -3.1387, W: 10, D: 12, zone: 's0-suburb', seed: 536481 },
-  { id: 'house-brick-2', x: -338.5, z: 487.9, yaw: -3.1387, W: 13, D: 16, zone: 's0-suburb', seed: 990825 },
+  { id: 'house-brick-2', x: -340.5, z: 487.9, yaw: -3.1387, W: 13, D: 16, zone: 's0-suburb', seed: 990825 }, // PLOTS: moved from (-338.5, 487.9) into free plot land
   { id: 'bank-compact', x: 61.2, z: -388.3, yaw: -1.5679, W: 16, D: 18, zone: 's0-arm-n', seed: 739466 },
   { id: 'shop-row', x: 56.9, z: -363.2, yaw: -1.5679, W: 26, D: 11, zone: 's0-arm-n', seed: 765343 },
   { id: 'petrol-pump', x: 14.8, z: -385.2, yaw: 1.5737, W: 30, D: 24, zone: 's0-arm-n', seed: 837389 },
@@ -135,21 +135,21 @@ export const FILL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'shop-house-3', x: -435, z: 60.3, yaw: -3.1294, W: 13, D: 12, zone: 's0-arm-w', seed: 666416 },
   { id: 'shop-house-3', x: -410.5, z: 60.5, yaw: -3.1294, W: 13, D: 12, zone: 's0-arm-w', seed: 665123 },
   { id: 'shop-house-3', x: -390.9, z: 60, yaw: -3.1387, W: 13, D: 12, zone: 's0-arm-w', seed: 137122 },
-  { id: 'bank', x: -246.8, z: 63.3, yaw: -3.1387, W: 26, D: 24, zone: 's0-arm-w', seed: 306505 },
+  { id: 'bank', x: -246.8, z: 59.3, yaw: -3.1387, W: 26, D: 24, zone: 's0-arm-w', seed: 306505 }, // PLOTS: moved from (-246.8, 63.3) into free plot land
   { id: 'bank-compact', x: 378, z: -18.1, yaw: -3.1387, W: 16, D: 18, zone: 's0-arm-e', seed: 810387 },
   { id: 'office-mid', x: 430.1, z: -12.5, yaw: -1.5679, W: 27, D: 26, zone: 's0-arm-e', seed: 670944 },
   { id: 'bank', x: 431.2, z: 19.4, yaw: -1.5679, W: 26, D: 24, zone: 's0-arm-e', seed: 100988 },
   { id: 'shop-row', x: 384.3, z: 10.8, yaw: 1.5737, W: 26, D: 11, zone: 's0-arm-e', seed: 27907 },
   { id: 'shop-house-3', x: 185.1, z: 49.6, yaw: -3.1387, W: 13, D: 12, zone: 's0-arm-e', seed: 691502 },
   { id: 'shop-row', x: 262.2, z: 61.5, yaw: -3.1387, W: 26, D: 11, zone: 's0-arm-e', seed: 38495 },
-  { id: 'shop-house-3', x: 288.1, z: 58.8, yaw: -3.1387, W: 13, D: 12, zone: 's0-arm-e', seed: 463511 },
-  { id: 'house-brick-3', x: 104.3, z: -596.1, yaw: -1.5679, W: 13, D: 16, zone: 's0-suburb', seed: 345790 },
+  { id: 'shop-house-3', x: 284.1, z: 62.8, yaw: -3.1387, W: 13, D: 12, zone: 's0-arm-e', seed: 463511 }, // PLOTS: moved from (288.1, 58.8) into free plot land
+  { id: 'house-brick-3', x: 102.3, z: -600.1, yaw: -1.5679, W: 13, D: 16, zone: 's0-suburb', seed: 345790 }, // PLOTS: moved from (104.3, -596.1) into free plot land
   { id: 'shop-house-3', x: 296.6, z: -565.3, yaw: -1.5692, W: 13, D: 12, zone: 's0-suburb', seed: 569462 },
   { id: 'shop-house-4', x: 292.9, z: -538.9, yaw: -1.5718, W: 11, D: 11, zone: 's0-suburb', seed: 541198 },
-  { id: 'townhouse-3', x: -349.4, z: -542.4, yaw: 0.0029, W: 10, D: 12, zone: 's0-suburb', seed: 773933 },
+  { id: 'townhouse-3', x: -305.4, z: -476.4, yaw: 0.0029, W: 10, D: 12, zone: 's0-suburb', seed: 773933 }, // PLOTS: moved from (-349.4, -542.4) into free plot land
   { id: 'shop-house-4', x: 315.1, z: -539.7, yaw: 0.0007, W: 11, D: 11, zone: 's0-suburb', seed: 78741 },
   { id: 'house-brick-3', x: 288.6, z: -495.9, yaw: -3.1411, W: 13, D: 16, zone: 's0-suburb', seed: 869057 },
-  { id: 'shop-house-3', x: 314.4, z: -498.1, yaw: -3.1409, W: 13, D: 12, zone: 's0-suburb', seed: 680941 },
+  { id: 'shop-house-3', x: 312.4, z: -502.1, yaw: -3.1409, W: 13, D: 12, zone: 's0-suburb', seed: 680941 }, // PLOTS: moved from (314.4, -498.1) into free plot land
   { id: 'house-tin', x: 534.9, z: -384.4, yaw: 0.0029, W: 11, D: 12, zone: 's0-suburb', seed: 48461 },
   { id: 'townhouse-3', x: 566.7, z: -380.2, yaw: 0.0029, W: 10, D: 12, zone: 's0-suburb', seed: 600175 },
   { id: 'shop-house-3', x: 514.7, z: -339.1, yaw: -3.1387, W: 13, D: 12, zone: 's0-suburb', seed: 976245 },
@@ -176,7 +176,7 @@ export const FILL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'house-brick-2', x: 471.6, z: 33.9, yaw: 1.5737, W: 13, D: 16, zone: 's0-suburb', seed: 425416 },
   { id: 'shop-house-4', x: 475.4, z: 63, yaw: 1.5737, W: 11, D: 11, zone: 's0-suburb', seed: 566624 },
   { id: 'house-brick-3', x: -522.9, z: 39.8, yaw: -3.1387, W: 13, D: 16, zone: 's0-suburb', seed: 174274 },
-  { id: 'primary-school', x: -544.7, z: 74.3, yaw: -3.1387, W: 40, D: 36, zone: 's0-suburb', seed: 717402 },
+  { id: 'primary-school', x: -538.7, z: 78.3, yaw: -3.1387, W: 40, D: 36, zone: 's0-suburb', seed: 717402 }, // PLOTS: moved from (-544.7, 74.3) into free plot land
   { id: 'house-tin', x: -543, z: -3.4, yaw: -1.5679, W: 11, D: 12, zone: 's0-suburb', seed: 229106 },
   { id: 'shop-house-3', x: -626, z: 55.6, yaw: 1.5737, W: 13, D: 12, zone: 's0-suburb', seed: 83712 },
   { id: 'shop-house-4', x: -625.5, z: 80.2, yaw: 1.5737, W: 11, D: 11, zone: 's0-suburb', seed: 668573 },
@@ -185,7 +185,7 @@ export const FILL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'house-brick-3', x: -662.5, z: 94.9, yaw: 0.0029, W: 13, D: 16, zone: 's0-suburb', seed: 867702 },
   { id: 'shop-row', x: -629.5, z: 102.6, yaw: 0.0029, W: 26, D: 11, zone: 's0-suburb', seed: 721821 },
   { id: 'house-brick-2', x: -694.8, z: 143.4, yaw: -3.1387, W: 13, D: 16, zone: 's0-suburb', seed: 279279 },
-  { id: 'mosque', x: -487.7, z: 37.6, yaw: -3.1387, W: 48, D: 52, zone: 's0-suburb', seed: 905018 },
+  { id: 'mosque', x: -489.7, z: 37.6, yaw: -3.1387, W: 48, D: 52, zone: 's0-suburb', seed: 905018 }, // PLOTS: moved from (-487.7, 37.6) into free plot land
   { id: 'house-brick-3', x: -689.2, z: 167.9, yaw: -1.5679, W: 13, D: 16, zone: 's0-suburb', seed: 394910 },
   { id: 'townhouse-3', x: -733.4, z: 134.8, yaw: 1.5737, W: 10, D: 12, zone: 's0-suburb', seed: 755947 },
   { id: 'shop-house-3', x: -737.9, z: 163.3, yaw: 1.5737, W: 13, D: 12, zone: 's0-suburb', seed: 264859 },
@@ -199,12 +199,12 @@ export const FILL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'house-brick-2', x: -517.3, z: 179.2, yaw: 1.5734, W: 13, D: 16, zone: 's0-suburb', seed: 661418 },
   { id: 'shop-house-4', x: 474.7, z: 219.8, yaw: 1.5524, W: 11, D: 11, zone: 's0-suburb', seed: 600547 },
   { id: 'shop-row', x: 473.3, z: 254.6, yaw: 1.5737, W: 26, D: 11, zone: 's0-suburb', seed: 590379 },
-  { id: 'townhouse-3', x: 474.1, z: 293.2, yaw: 1.5737, W: 10, D: 12, zone: 's0-suburb', seed: 169705 },
+  { id: 'townhouse-3', x: 474.1, z: 289.2, yaw: 1.5737, W: 10, D: 12, zone: 's0-suburb', seed: 169705 }, // PLOTS: moved from (474.1, 293.2) into free plot land
   { id: 'shop-row', x: -749.3, z: 311.5, yaw: -3.1387, W: 26, D: 11, zone: 's0-suburb', seed: 430336 },
   { id: 'house-brick-3', x: -662.2, z: 224.9, yaw: -3.1387, W: 13, D: 16, zone: 's0-suburb', seed: 70001 },
   { id: 'shop-house-4', x: -635.5, z: 221.5, yaw: -3.1387, W: 11, D: 11, zone: 's0-suburb', seed: 511646 },
   { id: 'shop-row', x: -576.5, z: 183.3, yaw: 0.003, W: 26, D: 11, zone: 's0-suburb', seed: 940360 },
-  { id: 'shop-row', x: -581.9, z: 355.1, yaw: -3.1387, W: 26, D: 11, zone: 's0-suburb', seed: 921998 },
+  { id: 'shop-row', x: -581.9, z: 353.1, yaw: -3.1387, W: 26, D: 11, zone: 's0-suburb', seed: 921998 }, // PLOTS: moved from (-581.9, 355.1) into free plot land
   { id: 'townhouse-3', x: -563.7, z: 238.6, yaw: -3.1385, W: 10, D: 12, zone: 's0-suburb', seed: 356650 },
   { id: 'house-brick-2', x: -529.5, z: 253.6, yaw: -3.1393, W: 13, D: 16, zone: 's0-suburb', seed: 51569 },
   { id: 'villa', x: -576.5, z: 243.9, yaw: -1.5679, W: 24, D: 28, zone: 's0-suburb', seed: 521403 },
@@ -216,22 +216,22 @@ export const FILL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'house-brick-3', x: -631.1, z: 363, yaw: 1.5737, W: 13, D: 16, zone: 's0-suburb', seed: 448273 },
   { id: 'shop-house-3', x: -470.5, z: 329.3, yaw: -1.5709, W: 13, D: 12, zone: 's0-suburb', seed: 280085 },
   { id: 'house-brick-3', x: -470.7, z: 354.4, yaw: -1.5754, W: 13, D: 16, zone: 's0-suburb', seed: 50595 },
-  { id: 'house-brick-2', x: -587.9, z: 387.6, yaw: -3.1387, W: 13, D: 16, zone: 's0-suburb', seed: 634637 },
+  { id: 'house-brick-2', x: -591.9, z: 387.6, yaw: -3.1387, W: 13, D: 16, zone: 's0-suburb', seed: 634637 }, // PLOTS: moved from (-587.9, 387.6) into free plot land
   { id: 'shop-house-3', x: -627.5, z: 384.2, yaw: 1.5737, W: 13, D: 12, zone: 's0-suburb', seed: 876325 },
   { id: 'house-brick-2', x: -612.9, z: 416.1, yaw: 1.5737, W: 13, D: 16, zone: 's0-suburb', seed: 123618 },
-  { id: 'house-brick-3', x: -517.2, z: 421.6, yaw: 1.5753, W: 13, D: 16, zone: 's0-suburb', seed: 632218 },
+  { id: 'house-brick-3', x: -515.2, z: 421.6, yaw: 1.5753, W: 13, D: 16, zone: 's0-suburb', seed: 632218 }, // PLOTS: moved from (-517.2, 421.6) into free plot land
   { id: 'shop-row', x: -474.2, z: 529.1, yaw: -1.5687, W: 26, D: 11, zone: 's0-suburb', seed: 32396 },
   { id: 'townhouse-3', x: -516.3, z: 501.4, yaw: 1.5739, W: 10, D: 12, zone: 's0-suburb', seed: 540027 },
   { id: 'shop-row', x: 257.6, z: 540.6, yaw: 1.5737, W: 26, D: 11, zone: 's0-suburb', seed: 829301 },
   { id: 'villa', x: 246.6, z: 577.2, yaw: 1.5737, W: 24, D: 28, zone: 's0-suburb', seed: 241320 },
   { id: 'shop-house-3', x: 406.7, z: 535, yaw: -1.5679, W: 13, D: 12, zone: 's0-suburb', seed: 493659 },
-  { id: 'shop-house-4', x: 404.8, z: 589.4, yaw: -1.5679, W: 11, D: 11, zone: 's0-suburb', seed: 127672 },
+  { id: 'shop-house-4', x: 388.8, z: 577.4, yaw: -1.5679, W: 11, D: 11, zone: 's0-suburb', seed: 127672 }, // PLOTS: moved from (404.8, 589.4) into free plot land
   { id: 'townhouse-3', x: 365.5, z: 539.1, yaw: 1.5737, W: 10, D: 12, zone: 's0-suburb', seed: 394394 },
   { id: 'house-brick-3', x: 364.3, z: 565.6, yaw: 1.5737, W: 13, D: 16, zone: 's0-suburb', seed: 80542 },
   { id: 'townhouse-3', x: 329.3, z: 580, yaw: 0.0029, W: 10, D: 12, zone: 's0-suburb', seed: 932613 },
   { id: 'shop-house-3', x: 312.1, z: 624.4, yaw: -3.1387, W: 13, D: 12, zone: 's0-suburb', seed: 498115 },
   { id: 'house-brick-3', x: 341.2, z: 623.5, yaw: -3.1387, W: 13, D: 16, zone: 's0-suburb', seed: 611216 },
-  { id: 'shop-row', x: 381.2, z: 618, yaw: -3.1387, W: 26, D: 11, zone: 's0-suburb', seed: 644259 },
+  { id: 'shop-row', x: 361.2, z: 610, yaw: -3.1387, W: 26, D: 11, zone: 's0-suburb', seed: 644259 }, // PLOTS: moved from (381.2, 618) into free plot land
   { id: 'shop-house-3', x: -151.7, z: 661, yaw: 0.0029, W: 13, D: 12, zone: 's0-suburb', seed: 690073 },
   { id: 'shop-house-3', x: -114.5, z: 661.7, yaw: 0.0029, W: 13, D: 12, zone: 's0-suburb', seed: 361713 },
   { id: 'shop-house-3', x: -86.6, z: 660.4, yaw: 0.0029, W: 13, D: 12, zone: 's0-suburb', seed: 764211 },
@@ -266,19 +266,19 @@ export const FILL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'house-tin', x: 621.5, z: 490.2, yaw: 2.2859, W: 11, D: 12, zone: 's0-green', seed: 871719 },
   { id: 'house-brick-3', x: -77.2, z: 729.2, yaw: 1.5238, W: 13, D: 16, zone: 's0-suburb', seed: 75901 },
   { id: 'shop-house-4', x: 273.2, z: -479.3, yaw: -2.1445, W: 11, D: 11, zone: 's0-suburb', seed: 840646 },
-  { id: 'shop-house-3', x: -89.1, z: 270.4, yaw: -3.0554, W: 13, D: 12, zone: 's0-arm-s', seed: 707606 },
+  { id: 'shop-house-3', x: -91.1, z: 270.4, yaw: -3.0554, W: 13, D: 12, zone: 's0-arm-s', seed: 707606 }, // PLOTS: moved from (-89.1, 270.4) into free plot land
   { id: 'shop-house-3', x: -108.1, z: 269.9, yaw: -3.0554, W: 13, D: 12, zone: 's0-homes', seed: 361730 },
   { id: 'house-tin', x: 585.2, z: -392.3, yaw: 1.3832, W: 11, D: 12, zone: 's0-suburb', seed: 562674 },
-  { id: 'house-brick-3', x: 591.1, z: -421.5, yaw: 1.3832, W: 13, D: 16, zone: 's0-suburb', seed: 240551 },
-  { id: 'townhouse-3', x: 599, z: -461.8, yaw: 1.3832, W: 10, D: 12, zone: 's0-suburb', seed: 336396 },
-  { id: 'house-tin', x: 642.3, z: -443.8, yaw: -1.7584, W: 11, D: 12, zone: 's0-green', seed: 761102 },
+  { id: 'house-brick-3', x: 591.1, z: -419.5, yaw: 1.3832, W: 13, D: 16, zone: 's0-suburb', seed: 240551 }, // PLOTS: moved from (591.1, -421.5) into free plot land
+  { id: 'townhouse-3', x: 585, z: -461.8, yaw: 1.3832, W: 10, D: 12, zone: 's0-suburb', seed: 336396 }, // PLOTS: moved from (599, -461.8) into free plot land
+  { id: 'house-tin', x: 640.3, z: -443.8, yaw: -1.7584, W: 11, D: 12, zone: 's0-green', seed: 761102 }, // PLOTS: moved from (642.3, -443.8) into free plot land
   { id: 'shop-house-4', x: 293.5, z: 505, yaw: -1.2134, W: 11, D: 11, zone: 's0-suburb', seed: 48610 },
   { id: 'mixed-use-6', x: 440.1, z: -62.9, yaw: 0.0122, W: 19, D: 16, zone: 's0-arm-e', seed: 317596 },
   { id: 'shop-house-3', x: 457.9, z: -21.7, yaw: -3.1294, W: 13, D: 12, zone: 's0-arm-e', seed: 350164 },
   { id: 'house-tin', x: -269.1, z: 753.9, yaw: -1.5534, W: 11, D: 12, zone: 's0-green', seed: 667576 },
   { id: 'house-tin', x: -273.2, z: 722.5, yaw: -1.5534, W: 11, D: 12, zone: 's0-green', seed: 292853 },
-  { id: 'shop-row', x: 115.4, z: -647.7, yaw: -0.4913, W: 26, D: 11, zone: 's0-suburb', seed: 937822 },
-  { id: 'townhouse-3', x: 477.8, z: 103.3, yaw: 0.6369, W: 10, D: 12, zone: 's0-suburb', seed: 303428 },
+  { id: 'shop-row', x: 117.4, z: -645.7, yaw: -0.4913, W: 26, D: 11, zone: 's0-suburb', seed: 937822 }, // PLOTS: moved from (115.4, -647.7) into free plot land
+  { id: 'townhouse-3', x: 471.8, z: 97.3, yaw: 0.6369, W: 10, D: 12, zone: 's0-suburb', seed: 303428 }, // PLOTS: moved from (477.8, 103.3) into free plot land
   { id: 'hotel-boutique', x: 180.2, z: -464.3, yaw: 0.2251, W: 17, D: 18, zone: 's0-cbd', seed: 612333 },
   { id: 'shop-row', x: -744.8, z: 110.5, yaw: 2.1663, W: 26, D: 11, zone: 's0-suburb', seed: 727137 },
   { id: 'house-brick-2', x: -711.5, z: 78.6, yaw: -0.9752, W: 13, D: 16, zone: 's0-suburb', seed: 353330 },
@@ -298,7 +298,7 @@ export const FILL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'apt-slim-14', x: 444.4, z: 256.9, yaw: -2.4923, W: 16, D: 15, zone: 's0-flats', seed: 975209 },
   { id: 'house-brick-2', x: 369.9, z: 520.8, yaw: 1.6862, W: 13, D: 16, zone: 's0-suburb', seed: 715556 },
   { id: 'shop-house-4', x: -307, z: 289.5, yaw: 0.1294, W: 11, D: 11, zone: 's0-homes', seed: 234368 },
-  { id: 'shop-row', x: 443.1, z: -473.1, yaw: 0.0652, W: 26, D: 11, zone: 's0-suburb', seed: 323752 },
+  { id: 'shop-row', x: 437.1, z: -457.1, yaw: 0.0652, W: 26, D: 11, zone: 's0-suburb', seed: 323752 }, // PLOTS: moved from (443.1, -473.1) into free plot land
   { id: 'mixed-use-6', x: -43.7, z: 143.8, yaw: 0.1575, W: 19, D: 16, zone: 's0-arm-s', seed: 987017 },
   { id: 'shop-house-3', x: 447.4, z: 380.7, yaw: 3.1395, W: 13, D: 12, zone: 's0-bazaar', seed: 157334 },
   { id: 'house-tin', x: -753.6, z: 328.2, yaw: -1.53, W: 11, D: 12, zone: 's0-green', seed: 978423 },
@@ -306,7 +306,7 @@ export const FILL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'apt-slim-9', x: 465.3, z: 277.7, yaw: 1.5424, W: 15, D: 14, zone: 's0-flats', seed: 591088 },
   { id: 'house-brick-3', x: 614.7, z: -151, yaw: -0.3312, W: 13, D: 16, zone: 's0-suburb', seed: 489377 },
   { id: 'shop-house-4', x: 135.6, z: 408.4, yaw: 0.2565, W: 11, D: 11, zone: 's0-bazaar', seed: 479545 },
-  { id: 'bank-compact', x: 88.5, z: 345.7, yaw: 1.454, W: 16, D: 18, zone: 's0-bazaar', seed: 380545 },
+  { id: 'bank-compact', x: 88.5, z: 353.7, yaw: 1.454, W: 16, D: 18, zone: 's0-bazaar', seed: 380545 }, // PLOTS: moved from (88.5, 345.7) into free plot land
   { id: 'shop-house-4', x: 221.9, z: 277.8, yaw: 3.0932, W: 11, D: 11, zone: 's0-flats', seed: 805653 },
   { id: 'apt-slim-14', x: 369.6, z: 238.3, yaw: -1.551, W: 16, D: 15, zone: 's0-flats', seed: 160755 },
   { id: 'shop-house-3', x: 209.9, z: 400, yaw: 1.6228, W: 13, D: 12, zone: 's0-bazaar', seed: 216259 },
@@ -318,7 +318,7 @@ export const FILL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'shop-house-4', x: 458.2, z: 15.2, yaw: 1.6059, W: 11, D: 11, zone: 's0-arm-e', seed: 745434 },
   { id: 'apartment-mid', x: 397.7, z: 222.2, yaw: 1.5978, W: 18, D: 13, zone: 's0-flats', seed: 313722 },
   { id: 'mixed-use-6', x: 456.9, z: 55.7, yaw: 1.5359, W: 19, D: 16, zone: 's0-arm-e', seed: 571988 },
-  { id: 'shop-row', x: 437, z: 467.8, yaw: -1.8115, W: 26, D: 11, zone: 's0-bazaar', seed: 282250 },
+  { id: 'shop-row', x: 435, z: 467.8, yaw: -1.8115, W: 26, D: 11, zone: 's0-bazaar', seed: 282250 }, // PLOTS: moved from (437, 467.8) into free plot land
   { id: 'apt-slim-14', x: 330.9, z: 136, yaw: -0.048, W: 16, D: 15, zone: 's0-flats', seed: 569488 },
   { id: 'shop-house-3', x: 365.5, z: 413.4, yaw: 1.5003, W: 13, D: 12, zone: 's0-bazaar', seed: 633896 },
   { id: 'shop-row', x: -499.6, z: 561.5, yaw: 2.9903, W: 26, D: 11, zone: 's0-suburb', seed: 845536 },
@@ -326,11 +326,11 @@ export const FILL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'shop-house-3', x: 714.8, z: -274.1, yaw: -1.6326, W: 13, D: 12, zone: 's0-suburb', seed: 773817 },
   { id: 'house-brick-2', x: 258.4, z: 664.5, yaw: -2.5141, W: 13, D: 16, zone: 's0-suburb', seed: 139772 },
   { id: 'house-tin', x: 649, z: -357.1, yaw: 2.1674, W: 11, D: 12, zone: 's0-suburb', seed: 308812 },
-  { id: 'apt-slim-14', x: 183, z: 306.8, yaw: 0.0262, W: 16, D: 15, zone: 's0-flats', seed: 532433 },
+  { id: 'apt-slim-14', x: 183, z: 298.8, yaw: 0.0262, W: 16, D: 15, zone: 's0-flats', seed: 532433 }, // PLOTS: moved from (183, 306.8) into free plot land
   { id: 'hotel-boutique', x: 163.3, z: -392, yaw: -3.1008, W: 17, D: 18, zone: 's0-cbd', seed: 626764 },
   { id: 'house-brick-2', x: 275.6, z: 653.7, yaw: -2.4553, W: 13, D: 16, zone: 's0-suburb', seed: 248956 },
   { id: 'townhouse-3', x: 648.2, z: -119.1, yaw: -1.6331, W: 10, D: 12, zone: 's0-suburb', seed: 862204 },
-  { id: 'shop-house-4', x: 571.8, z: -426.6, yaw: 1.4311, W: 11, D: 11, zone: 's0-suburb', seed: 139710 },
+  { id: 'shop-house-4', x: 571.8, z: -420.6, yaw: 1.4311, W: 11, D: 11, zone: 's0-suburb', seed: 139710 }, // PLOTS: moved from (571.8, -426.6) into free plot land
   { id: 'apt-slim-14', x: 287.7, z: 130.7, yaw: 0.0035, W: 16, D: 15, zone: 's0-flats', seed: 450121 },
   { id: 'apt-slim-14', x: 298.3, z: 289.7, yaw: 3.1084, W: 16, D: 15, zone: 's0-flats', seed: 820313 },
   { id: 'shop-row', x: -253.7, z: 713.1, yaw: -1.5447, W: 26, D: 11, zone: 's0-suburb', seed: 964367 },
@@ -339,14 +339,14 @@ export const FILL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'shop-row', x: -253.7, z: 635.1, yaw: -1.5556, W: 26, D: 11, zone: 's0-suburb', seed: 987266 },
   { id: 'office-slim-12', x: 428.6, z: -184, yaw: -3.0801, W: 21, D: 20, zone: 's0-cbd', seed: 745824 },
   { id: 'shop-house-4', x: 9.9, z: -461.1, yaw: 1.2273, W: 11, D: 11, zone: 's0-arm-n', seed: 944538 },
-  { id: 'apt-slim-9', x: 376.7, z: 316.9, yaw: 0.6416, W: 15, D: 14, zone: 's0-flats', seed: 38394 },
+  { id: 'apt-slim-9', x: 376.7, z: 314.9, yaw: 0.6416, W: 15, D: 14, zone: 's0-flats', seed: 38394 }, // PLOTS: moved from (376.7, 316.9) into free plot land
   { id: 'apt-slim-9', x: 233.9, z: 308, yaw: -0.0285, W: 15, D: 14, zone: 's0-flats', seed: 9153 },
   { id: 'house-brick-3', x: -652.7, z: 71.1, yaw: 1.5413, W: 13, D: 16, zone: 's0-suburb', seed: 824349 },
   { id: 'apt-slim-9', x: 391.4, z: 264.9, yaw: 2.0061, W: 15, D: 14, zone: 's0-flats', seed: 981048 },
   { id: 'apt-slim-14', x: 353.4, z: 126.5, yaw: -0.0183, W: 16, D: 15, zone: 's0-flats', seed: 280630 },
-  { id: 'apt-slim-14', x: 447.1, z: 301.8, yaw: 1.5437, W: 16, D: 15, zone: 's0-flats', seed: 607705 },
+  { id: 'apt-slim-14', x: 447.1, z: 295.8, yaw: 1.5437, W: 16, D: 15, zone: 's0-flats', seed: 607705 }, // PLOTS: moved from (447.1, 301.8) into free plot land
   { id: 'shop-house-3', x: -542.5, z: 520.8, yaw: 1.5576, W: 13, D: 12, zone: 's0-suburb', seed: 127896 },
-  { id: 'shop-house-4', x: 112.4, z: 348.8, yaw: 1.5564, W: 11, D: 11, zone: 's0-bazaar', seed: 360100 },
+  { id: 'shop-house-4', x: 112.4, z: 354.8, yaw: 1.5564, W: 11, D: 11, zone: 's0-bazaar', seed: 360100 }, // PLOTS: moved from (112.4, 348.8) into free plot land
   { id: 'apt-slim-9', x: 275.2, z: 295.6, yaw: 3.1204, W: 15, D: 14, zone: 's0-flats', seed: 158849 },
   { id: 'shop-house-4', x: -49.6, z: 455.5, yaw: 2.9464, W: 11, D: 11, zone: 's0-arm-s', seed: 387197 },
   { id: 'shop-house-3', x: 99.4, z: 398.5, yaw: 0.2779, W: 13, D: 12, zone: 's0-arm-s', seed: 80851 },
@@ -356,8 +356,8 @@ export const FILL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'apt-slim-9', x: 308.3, z: 118.7, yaw: 0.0548, W: 15, D: 14, zone: 's0-flats', seed: 404892 },
   { id: 'shop-house-4', x: 355.2, z: 306.6, yaw: -0.5608, W: 11, D: 11, zone: 's0-flats', seed: 843720 },
   { id: 'townhouse-3', x: -750.6, z: -22.2, yaw: -0.1226, W: 10, D: 12, zone: 's0-suburb', seed: 749593 },
-  { id: 'slim-tower-30', x: 307.8, z: -166.6, yaw: 3.1302, W: 21, D: 22, zone: 's0-cbd', seed: 374851 },
-  { id: 'house-tin', x: -554, z: 500.7, yaw: -3.1275, W: 11, D: 12, zone: 's0-suburb', seed: 208155 },
+  { id: 'slim-tower-30', x: 311.8, z: -160.6, yaw: 3.1302, W: 21, D: 22, zone: 's0-cbd', seed: 374851 }, // PLOTS: moved from (307.8, -166.6) into free plot land
+  { id: 'house-tin', x: -548, z: 500.7, yaw: -3.1275, W: 11, D: 12, zone: 's0-suburb', seed: 208155 }, // PLOTS: moved from (-554, 500.7) into free plot land
   { id: 'office-slim-12', x: 357, z: -170.7, yaw: 3.1166, W: 21, D: 20, zone: 's0-cbd', seed: 554827 },
   { id: 'shop-house-4', x: -104.1, z: 118.2, yaw: -1.3438, W: 11, D: 11, zone: 's0-arm-s', seed: 504664 },
   { id: 'apartment-mid', x: 330, z: 114.5, yaw: -0.0161, W: 18, D: 13, zone: 's0-flats', seed: 559534 },
@@ -382,12 +382,12 @@ export const FILL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'house-tin', x: 273, z: 711.2, yaw: -2.4898, W: 11, D: 12, zone: 's0-green', seed: 534241 },
   { id: 'shop-house-3', x: -691.2, z: -29, yaw: -0.8084, W: 13, D: 12, zone: 's0-suburb', seed: 762858 },
   { id: 'house-tin', x: 247.6, z: 737, yaw: -2.4941, W: 11, D: 12, zone: 's0-green', seed: 246402 },
-  { id: 'townhouse-3', x: -209.4, z: 473.4, yaw: -1.7946, W: 10, D: 12, zone: 's0-suburb', seed: 869658 },
-  { id: 'shop-house-3', x: 10.8, z: -215.8, yaw: 1.6954, W: 13, D: 12, zone: 's0-arm-n', seed: 1776 },
-  { id: 'house-brick-3', x: -718.3, z: -91.4, yaw: -0.3589, W: 13, D: 16, zone: 's0-suburb', seed: 945423 },
+  { id: 'townhouse-3', x: -205.4, z: 475.4, yaw: -1.7946, W: 10, D: 12, zone: 's0-suburb', seed: 869658 }, // PLOTS: moved from (-209.4, 473.4) into free plot land
+  { id: 'shop-house-3', x: -7.2, z: -195.8, yaw: 1.6954, W: 13, D: 12, zone: 's0-arm-n', seed: 1776 }, // PLOTS: moved from (10.8, -215.8) into free plot land
+  { id: 'house-brick-3', x: -714.3, z: -89.4, yaw: -0.3589, W: 13, D: 16, zone: 's0-suburb', seed: 945423 }, // PLOTS: moved from (-718.3, -91.4) into free plot land
   { id: 'townhouse-3', x: 697.7, z: -196.2, yaw: 2.8451, W: 10, D: 12, zone: 's0-suburb', seed: 593191 },
   { id: 'shop-house-3', x: -663.1, z: -51.4, yaw: 0.5446, W: 13, D: 12, zone: 's0-suburb', seed: 631770 },
   { id: 'shop-house-4', x: -697.5, z: -46, yaw: -0.5698, W: 11, D: 11, zone: 's0-suburb', seed: 155111 },
   { id: 'shop-house-3', x: -186.3, z: 488.7, yaw: -1.1842, W: 13, D: 12, zone: 's0-suburb', seed: 740357 },
-  { id: 'townhouse-3', x: -586.5, z: -55.7, yaw: 0.0236, W: 10, D: 12, zone: 's0-suburb', seed: 507522 },
+  { id: 'townhouse-3', x: -590.5, z: -53.7, yaw: 0.0236, W: 10, D: 12, zone: 's0-suburb', seed: 507522 }, // PLOTS: moved from (-586.5, -55.7) into free plot land
 ];

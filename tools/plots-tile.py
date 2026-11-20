@@ -148,8 +148,8 @@ bld = []; out_b = []; split_b = []
 for kind in ('hand', 'fill'):
     for n_, b in enumerate(INP[kind]):
         if np.hypot(b['x'], b['z']) > R: continue
-        w, dp = b['W'], b['D']
-        if abs(abs(b.get('yaw', 0)) % 3.1416 - 1.5708) < .1: w, dp = dp, w
+        w, dp = max(b['W'] - 8, 4), max(b['D'] - 8, 4)      # the body of the building (the rest of W x D is yard)
+        if abs(abs(b.get('yaw') or 0) % 3.1416 - 1.5708) < .1: w, dp = dp, w
         i, j = cell(b['x'], b['z']); pid = int(lab[j, i]); nm = b.get('id', kind) + '#' + str(n_) if kind == 'fill' else b['id']
         if pid < 0:
             jj, ii = nj[j, i], ni[j, i]; out_b.append({'id': nm, 'kind': kind, 'x': b['x'], 'z': b['z'], 'to_x': round(X0 + (ii + .5) * S, 1), 'to_z': round(Z0 + (jj + .5) * S, 1), 'dist': round(float(dist[j, i] * S), 1)}); continue
@@ -157,6 +157,35 @@ for kind in ('hand', 'fill'):
         if (cps - {-1}) != {pid}: split_b.append(nm)
         bld.append([nm, pid])
 print('buildings centre in a plot:', len(bld), ' centre NOT in a plot:', len(out_b), [o_['id'] for o_ in out_b[:12]], ' footprint crosses a plot border:', len(split_b))
+# ---- TREES inside plots: only a FEW, always the game's own tree kinds (no new models). Garden trees stand >= 4 m from the plot border, >= 3 m from every building body, >= 11 m from each other.
+#      budget per plot = clear ground / 1200 m2 (max 12), so small or crowded plots get none.
+blk = np.zeros((H, W), np.uint8)
+for kind in ('hand', 'fill'):
+    for b in INP[kind]:
+        if np.hypot(b['x'], b['z']) > R + 40: continue
+        w, dp = max(b['W'] - 8, 4) + 6, max(b['D'] - 8, 4) + 6; y = b.get('yaw') or 0; c_, s_ = np.cos(y), np.sin(y)
+        pts = np.array([[(b['x'] + u * c_ + v * s_ - X0) / S, (b['z'] - u * s_ + v * c_ - Z0) / S] for u, v in ((-w / 2, -dp / 2), (w / 2, -dp / 2), (w / 2, dp / 2), (-w / 2, dp / 2))])
+        cv2.fillPoly(blk, [np.round(pts * 16).astype(np.int32)], 1, shift=4)
+de = distance_transform_edt(lab >= 0) * S
+KINDS = [(15, .75, 1.05, 3), (0, .8, 1.1, 3), (4, .8, 1.1, 2), (3, .75, 1.0, 1), (11, .75, 1.05, 2), (5, .85, 1.1, 1)]   # (TreeKind, scale min, scale max, weight): krishnachura, broadleaf, vase, oak, coconut, slender
+KP = np.array([k[3] for k in KINDS], float); KP /= KP.sum()
+rng2 = np.random.default_rng(11); trees = []
+for c in range(nc):
+    if bad[c] or c >= len(plots) and False: continue
+    sel = order[starts[c]:ends[c]]; ci, cj = fi[sel], fj[sel]
+    ok = (de[cj, ci] >= 4) & (blk[cj, ci] == 0)
+    n_t = min(12, int(ok.sum() * S * S / 1200))
+    if n_t <= 0: continue
+    cand = np.nonzero(ok)[0]; rng2.shuffle(cand); mine = []
+    for q_ in cand:
+        x_, z_ = gx[ci[q_]], gz[cj[q_]]
+        if all((x_ - a_) ** 2 + (z_ - b_) ** 2 >= 121 for a_, b_ in mine): mine.append((x_, z_))
+        if len(mine) >= n_t: break
+    for x_, z_ in mine:
+        kd = KINDS[rng2.choice(len(KINDS), p=KP)]
+        trees.append([round(float(x_), 1), round(float(z_), 1), kd[0], round(float(rng2.uniform(kd[1], kd[2])), 2), round(float(rng2.uniform(0, 6.2832)), 2)])
+print('garden trees (existing game kinds):', len(trees), ' per plot max', 12)
+json.dump(trees, open('docs/city_plot_trees.json', 'w'), separators=(',', ':'))
 json.dump({'plot_w': PLOT_W, 'radius': R, 'plots': plots, 'buildings': bld, 'outside': out_b, 'cross_border': split_b}, open('docs/city_plots_tiled.json', 'w'), separators=(',', ':'))
 # ---- pictures
 import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
