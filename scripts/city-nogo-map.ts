@@ -63,5 +63,5 @@ const ha = (c: number): string => (c * CELL * CELL / 1e4).toFixed(0);
 console.log('area x', X0, X1, ' z', Z0, Z1, ' cell', CELL, ' cells', NX, 'x', NZ);
 for (const [n, c] of Object.entries(cnt)) console.log(`no-go ${n.padEnd(9)} ${ha(c)} ha`);
 console.log(`FREE (no bit at all) ${ha(free)} ha of ${ha(tot)} ha`);
-writeFileSync('docs/city_nogo.json', JSON.stringify({ x0: X0, z0: Z0, cell: CELL, nx: NX, nz: NZ, bits: B, assumed: { RAIL_AXIS, HOSP_RAIL, ROAD_MARGIN, STREET_KEEP, RAIL_EDGE, WATER_BUF, BLD_MARGIN, STEEP }, mask: Buffer.from(m).toString('base64') }));
+writeFileSync('docs/city_nogo.json', JSON.stringify({ x0: X0, z0: Z0, cell: CELL, nx: NX, nz: NZ, bits: B, assumed: { RAIL_AXIS, HOSP_RAIL, ROAD_MARGIN, STREET_KEEP, RAIL_EDGE, WATER_BUF, BLD_MARGIN, STEEP }, mask: Buffer.from(m).toString('base64'), wet: Buffer.from(wet).toString('base64') }));
 console.log('written docs/city_nogo.json');

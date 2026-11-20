@@ -53,12 +53,17 @@ def bld_poly(b,m=4):
 PLOTS=[]
 NG=json.load(open('docs/city_nogo.json'))
 MK=np.frombuffer(base64.b64decode(NG['mask']),dtype=np.uint8).reshape(NG['nz'],NG['nx'])
+from scipy.ndimage import binary_dilation
+WET=np.frombuffer(base64.b64decode(NG['wet']),dtype=np.uint8).reshape(NG['nz'],NG['nx'])>0
+WETD=binary_dilation(WET,iterations=3)   # 3 cells x 4 m = 12 m around wet ground
 HARD=1|4|8|16|32      # road, 17 streets (12 m), rail (30 m from axis), keep-out sites, water (+30 m), hand building (+4 m)
 BITN={1:'road',2:'street<12m',4:'rail<30m',8:'keep-out site',16:'water',32:'building',128:'rail<100m'}
 DIM={}
 for b in hand:DIM.setdefault(b['id'],(b['W'],b['D']))
 DIM['police_station']=(54,46)
-MINHA=[('Hospital',5.0),('University',9.0),('College',2.0),('Madrasah',0.8),('High school',1.0),('Primary school',0.4),('Police',0.3),('Mall',1.5),('Mosque',0.2),('Clinic',0.15),('Diagnostic',0.15),('Office tower',0.4),('Office mid',0.25),('Bank',0.25),('Hotel',0.25),('Park',0.3),('Empty reserve',0.3)]
+# RELAXED 2026-11-20 (user: "kisu rule change and kisu area komiye bosatw") for the 4 plots that were NOT PLACED: hospital min 3.0 ha (was 5), university 2.2 ha compact campus (was 9), high school 0.7 ha (was 1.0), mall 0.7 ha (was 1.5); street keep 9 m (was 12), water only wet + 10 m (was 30 m), hospital rail >= 30 m (was 100 m). Rail 30 m from the axis stays.
+RELAXED=('Hospital','University','Mall')
+MINHA=[('Hospital',3.0),('University',2.2),('College',2.0),('Madrasah',0.8),('High school',0.7),('Primary school',0.4),('Police',0.3),('Mall',0.7),('Mosque',0.2),('Clinic',0.15),('Diagnostic',0.15),('Office tower',0.4),('Office mid',0.25),('Bank',0.25),('Hotel',0.25),('Park',0.3),('Empty reserve',0.3)]
 def minha(prog):
     for k,v in MINHA:
         if prog.startswith(k):return v
@@ -80,11 +85,15 @@ def land_ok(poly,kind,prog,why=None):
     if r is None:return False
     m,X,Z=r
     dd,_=STREET_TREE.query(np.stack([X.ravel(),Z.ravel()],1))
-    if (dd<KEEP).any():
+    rel=prog.startswith(RELAXED)
+    if (dd<(9.0 if rel else KEEP)).any():
         if why is not None:why['street<12m']+=1
         return False
-    bad=m&HARD
-    if prog.startswith('Hospital'):bad=bad|(m&128)
+    bad=m&(HARD&~16 if rel else HARD)
+    if rel:
+        if (WETD[(np.floor((Z-NG['z0'])/NG['cell'])).astype(int),(np.floor((X-NG['x0'])/NG['cell'])).astype(int)]).any():
+            if why is not None:why['water<10m']+=1
+            return False
     if bad.any():
         if why is not None:
             for bit in BITN:
@@ -122,18 +131,17 @@ def place(prog,kind,model,F,Dp,streets_pref,note='',skip_every=0):
     others=sorted([n for n in streets if n not in streets_pref],key=lambda n:min(math.hypot(a[0]-streets[streets_pref[0]][len(streets[streets_pref[0]])//2][0],a[1]-streets[streets_pref[0]][len(streets[streets_pref[0]])//2][1]) for a in streets[n]))
     order=list(streets_pref)+others
     why=collections.Counter()
-    for sc in(1.0,0.85,0.7,0.55):
+    for sc in((1.0,0.92,0.85,0.78,0.7,0.6,0.5,0.45) if prog.startswith(RELAXED) else (1.0,0.85,0.7,0.55)):
         F2,D2=F*sc,Dp*sc
         if F2*D2/1e4<mh-1e-9 and sc<1.0:break
         if kind=='inst' and (F2<W0+8 or D2<D0+10):break
-        if prog.startswith(('Hospital','University')) and sc<1.0:break
         for sn in order:
             pts=RS[sn]
             for side in(1,-1):
                 for i in range(1,len(pts)-1):
                     poly,c,g=rect(pts,i,side,F2,D2)
                     if free(poly,kind,prog,why if sc==1.0 and sn in streets_pref else None):
-                        PLOTS.append(dict(prog=prog,kind=kind,model=model,street=sn,poly=poly,c=c,gate=g,F=F2,D=D2,ha=F2*D2/1e4,note=note+(' (shrunk x%.2f)'%sc if sc<1 else '')+(' (moved to %s)'%sn if sn not in streets_pref else '')));return True
+                        PLOTS.append(dict(prog=prog,kind=kind,model=model,street=sn,poly=poly,c=c,gate=g,F=F2,D=D2,ha=F2*D2/1e4,sc=sc,note=note+(' (shrunk x%.2f)'%sc if sc<1 else '')+(' (moved to %s)'%sn if sn not in streets_pref else '')));return True
     reason=', '.join('%s %d'%(k,v) for k,v in why.most_common(3)) or 'no free place'
     print('NOT PLACED',prog,'%.0fx%.0f'%(F,Dp),'| blocked by:',reason)
     NOTPLACED.append(dict(prog=prog,F=F,D=Dp,reason=reason))
@@ -234,7 +242,7 @@ def layout(pl):
     m=pl['model'];kind=pl['kind']
     if kind!='inst':return []
     if m.startswith('university-building'):
-        return [('university-building',0,12+27),('engineering-lab',-85,130),('dormitory',95,150)]
+        F,Dd2=pl['F'],pl['D'];return [('university-building',0,8+27),('engineering-lab',-F*0.25,Dd2*0.62),('dormitory',F*0.28,Dd2*0.70)]
     if m.startswith('mosque'):
         W,Dd=DIM['mosque'];return [('mosque',0,max(6,(pl['D']-Dd)/2*0.5)+Dd/2)]
     W,Dd=DIM[m];s=min(10,max(4,(pl['D']-Dd)/2))
