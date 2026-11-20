@@ -1,4 +1,4 @@
-// PROTOTYPE boundary fence around every engineering area (EngineeringZones.ts): a plain panel fence with coloured posts, following the ground,
+// Boundary FENCING around every engineering area (EngineeringZones.ts), same look as the SWTP fence (thin see-through mesh, steel top rail, slim steel posts, tall coloured corner posts), following the ground,
 // closed all round (no gates). It only stops where a public road crosses it. The layout (which pieces exist) is src/city/EngineeringFence.ts.
 //  - panels + posts are InstancedMesh (2 draw calls per area), an area's fence is hidden when the player is far away
 //  - Rapier colliders (fixed body, absolute world coordinates, like the EVLab fence) so the player, cars and boats cannot go through
@@ -21,8 +21,8 @@ export interface EngineeringBoundaryDeps {
 /** Prototype settings. `solid` = the fence stops the player / vehicles (set false for a look-only fence). */
 export const ENGINEERING_BOUNDARY = {
   solid: true,
-  panelHeight: 2.5,
-  postHeight: 3,
+  panelHeight: 2.2,
+  postHeight: 2.6,
   cornerHeight: 9,
   colliderHeight: 4,
   /** An area's fence is drawn within this distance (m) of the area. */
@@ -46,10 +46,12 @@ export class EngineeringBoundary {
     const T = d.terrain;
     const hash = new RoadHash(T.roads.roads);
     const box = new THREE.BoxGeometry(1, 1, 1);
-    const panelMat = new THREE.MeshLambertMaterial({ color: 0x9aa1a8 });
-    const postMat = new THREE.MeshLambertMaterial({ color: 0xffffff }); // the colour of each post comes from its instance colour
+    // SWTP-style fencing: a thin see-through mesh panel, a steel top rail and slim steel posts (only the corner posts carry the group colour)
+    const panelMat = new THREE.MeshLambertMaterial({ color: 0x9aa3a8, transparent: true, opacity: 0.28, depthWrite: false, side: THREE.DoubleSide });
+    const steelMat = new THREE.MeshLambertMaterial({ color: 0x6b7480 });
+    const cornerMat = new THREE.MeshLambertMaterial({ color: 0xffffff }); // the colour of each corner post comes from its instance colour
     this.geos.push(box);
-    this.mats.push(panelMat, postMat);
+    this.mats.push(panelMat, steelMat, cornerMat);
 
     // ground height the fence stands on: the surface of the water where the area reaches into a lake or the sea
     const s = T.makeSample();
@@ -70,7 +72,9 @@ export class EngineeringBoundary {
       group.name = `EngineeringBoundary:${area.id}`;
       const n = layout.visual.length;
       const panels = new THREE.InstancedMesh(box, panelMat, n);
-      const posts = new THREE.InstancedMesh(box, postMat, n + layout.corners.length);
+      const rails = new THREE.InstancedMesh(box, steelMat, n);
+      const posts = new THREE.InstancedMesh(box, steelMat, n);
+      const corners = new THREE.InstancedMesh(box, cornerMat, layout.corners.length);
       col.set(ENGINEERING_GROUP_COLOR[area.group]);
       layout.visual.forEach((pc, i) => {
         const len = Math.hypot(pc.bx - pc.ax, pc.bz - pc.az);
@@ -79,22 +83,23 @@ export class EngineeringBoundary {
         const yaw = -Math.atan2(pc.bz - pc.az, pc.bx - pc.ax);
         q.setFromAxisAngle(up, yaw);
         const ph = hi + ENGINEERING_BOUNDARY.panelHeight - lo;
-        m.compose(pos.set((pc.ax + pc.bx) / 2, lo + ph / 2, (pc.az + pc.bz) / 2), q, sc.set(len + 0.05, ph, 0.3));
+        m.compose(pos.set((pc.ax + pc.bx) / 2, lo + ph / 2, (pc.az + pc.bz) / 2), q, sc.set(len + 0.05, ph, 0.05));
         panels.setMatrixAt(i, m);
+        m.compose(pos.set((pc.ax + pc.bx) / 2, hi + ENGINEERING_BOUNDARY.panelHeight, (pc.az + pc.bz) / 2), q, sc.set(len + 0.05, 0.08, 0.08));
+        rails.setMatrixAt(i, m);
         const kh = hi + ENGINEERING_BOUNDARY.postHeight - (ga - 0.5);
-        m.compose(pos.set(pc.ax, ga - 0.5 + kh / 2, pc.az), q.identity(), sc.set(0.45, kh, 0.45));
+        m.compose(pos.set(pc.ax, ga - 0.5 + kh / 2, pc.az), q.identity(), sc.set(0.12, kh, 0.12));
         posts.setMatrixAt(i, m);
-        posts.setColorAt(i, col);
       });
       // tall corner posts in the colour of the area's group (easy to see from far away)
       layout.corners.forEach((c, k) => {
         const g = surface(c.x, c.z);
         const h = ENGINEERING_BOUNDARY.cornerHeight + 0.5;
-        m.compose(pos.set(c.x, g - 0.5 + h / 2, c.z), q.identity(), sc.set(1.2, h, 1.2));
-        posts.setMatrixAt(n + k, m);
-        posts.setColorAt(n + k, col);
+        m.compose(pos.set(c.x, g - 0.5 + h / 2, c.z), q.identity(), sc.set(0.5, h, 0.5));
+        corners.setMatrixAt(k, m);
+        corners.setColorAt(k, col);
       });
-      for (const im of [panels, posts]) {
+      for (const im of [panels, rails, posts, corners]) {
         im.instanceMatrix.needsUpdate = true;
         if (im.instanceColor) im.instanceColor.needsUpdate = true;
         im.frustumCulled = false;
