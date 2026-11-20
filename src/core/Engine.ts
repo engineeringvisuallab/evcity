@@ -68,6 +68,7 @@ import { VoiceManager } from '../audio/VoiceManager';
 import { Environment, LighthouseLight, StreetLights } from '../environment';
 import { RingStructureLayer } from '../roads/ring/RingStructureLayer';
 import { RoadCentreLayer } from '../roads/debug/RoadCentreLayer';
+import { PlotLayer } from '../roads/debug/PlotLayer';
 import { StackInterchangeLayer } from '../interchange/m8/StackInterchangeLayer';
 import { GroundJ1Layer } from '../roads/junction/GroundJ1Layer';
 import { RingStructurePhysics } from '../roads/ring/RingStructurePhysics';
@@ -158,6 +159,7 @@ export class Engine {
   /** STEP 5.3c: ring structures (S1 cable-stayed, the rest plain girders until their designs come). */
   private ringStructures: RingStructureLayer;
   private roadCentre: RoadCentreLayer;
+  private plotLayer: PlotLayer;
   private stackJ1: StackInterchangeLayer;
   private groundJ1: GroundJ1Layer;
   /** STEP 5.3c-6: colliders of the ring structures (bodies only near the player). */
@@ -390,6 +392,7 @@ export class Engine {
     this.rail = this.world.terrain.rail;
     this.railDebug = new RailDebug(this.rail);
     this.roadCentre = new RoadCentreLayer(this.world.root, roads, (x, z) => this.world.terrain.heightAt(x, z));
+    this.plotLayer = new PlotLayer(this.world.root, (x, z) => this.world.terrain.heightAt(x, z));
     this.railPhysics = new RailPhysics(physics, this.world.origin, this.rail, (x, z) => this.world.terrain.heightAt(x, z));
     this.portPhysics = new PortPhysics(physics, this.world.origin);
     this.world.root.add(this.railDebug.group);
@@ -1042,6 +1045,7 @@ export class Engine {
     if (this.input.wasPressed('Digit1')) this.world.terrainMaterials.setWireframe(!this.world.terrainMaterials.isWireframe);
     if (this.input.wasPressed('Digit2')) this.world.terrainMaterials.setLodColors(!this.world.terrainMaterials.isLodColors);
     if (this.input.wasPressed('Digit4')) this.railDebug.toggle();
+    if (this.input.wasPressed('Digit5')) this.plotLayer.toggle(); // city plots (green = plot, grey = tiny leftover)
     if (this.input.wasPressed('Digit3')) this.roadCentre.toggle(); // Road Central Line debug layer (planned centrelines, not roads)
     // \ : time mode: day-night cycle -> always night -> always day (the settings menu has buttons for the same)
     if (this.input.wasPressed('Backslash')) {
@@ -1832,6 +1836,7 @@ export class Engine {
     this.portPhysics.dispose();
     this.railDebug.dispose();
     this.roadCentre.dispose();
+    this.plotLayer.dispose();
     this.photo360.dispose();
     this.videoRecorder.dispose();
     this.trainPhysics.dispose();
