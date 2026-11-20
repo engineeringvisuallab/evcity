@@ -1,3 +1,5 @@
+// STEP CRR-6 (hub ring, user: 'railway er center cross ta te road aktu ghure ghure jabe', circle 8 of his sketch 2): adds the closed ring RR-HUB (centre Central station (0, 300), R 70 m = exactly where the 5 corridor roads started)
+//   as the FIRST piece (kind 'ring'), and the 5 roads now start at the ring's outer edge (T, height pinned to the ring). Everything else of the data is unchanged.
 // STEP CRR-5b (headless, writes src/roads/crr/CorridorRoadData.ts): the FIXED centreline data of the 5 rail-corridor roads for the game.
 // Run: npx tsx scripts/crr-export-data.ts docs      (needs docs/city_rail_road_reach.json (crr1b) + docs/city_rail_road_loops.json (crr1b, with `geo`) )
 // Order of work (user rule: the WATER CHECK runs first): 1) water check of every point +-(11.2 + 3) m with the full ground sampler (sc.water > sc.h - 0.3), 2) split at the J1 crossings,
@@ -21,8 +23,13 @@ const LINES: Record<string, string> = { 'south-1': 'S1', 'north-1': 'N1', 'east-
 const log: string[] = []; const P = (m: string): void => { console.log(m); log.push(m); };
 
 const railY = (e: any, s: number): number => { const p = rail.pointAt(e, s); const t = (s - e.cum[p.i]) / (e.cum[p.i + 1] - e.cum[p.i] || 1); return e.design[p.i] + (e.design[p.i + 1] - e.design[p.i]) * t; };
-interface Piece { name: string; line: string; kind: 'rail' | 'loop'; pts: number[][]; cap: number[] | null; nodes: { x: number; z: number; road: string; why: string }[] }
+interface Piece { name: string; line: string; kind: 'rail' | 'loop' | 'ring'; pts: number[][]; cap: number[] | null; nodes: { x: number; z: number; road: string; why: string }[] }
 const pieces: Piece[] = [];
+// HUB RING (CRR-6): centre Central, R 70 m, section 2 + 2 lanes undivided (3.5 m lanes, 1.0 m paved shoulder = half width 8.0) + 1.5 m ditch => edge 9.5 m from the ring centreline. First piece: the corridor roads take their start height from it.
+const RC = { x: 0, z: 300, R: 70, half: 8.0, edge: 9.5 };
+{ const n = Math.round((2 * Math.PI * RC.R) / STEP), ring: number[][] = [];
+  for (let k = 0; k < n; k++) ring.push([Math.round((RC.x + RC.R * Math.cos((2 * Math.PI * k) / n)) * 100) / 100, Math.round((RC.z + RC.R * Math.sin((2 * Math.PI * k) / n)) * 100) / 100]);
+  pieces.push({ name: 'RR-HUB', line: 'hub', kind: 'ring', pts: ring, cap: null, nodes: [] }); }
 let wetBad = 0;
 const waterCheck = (name: string, pts: number[][]): void => {
   for (let i = 0; i < pts.length; i++) {
@@ -39,7 +46,11 @@ const r2 = (v: number): number => Math.round(v * 100) / 100;
 for (const [id, tag] of Object.entries(LINES)) {
   const e = rail.edges.find((q: any) => q.id === id)!;
   const r1 = R1.lines[id], g = L2.lines[id].good[0];
-  const s0 = r1.start, st = g.st;
+  // CRR-6: the road starts at the OUTER EDGE of the hub ring: the first s where the 2 corners + the centre of the start line keep >= 0.3 m from the ring's pavement + ditch (RC.edge)
+  const gapRing = (s: number): number => { const p0 = rail.pointAt(e, s), p1 = rail.pointAt(e, s + 1), dx = p1.x - p0.x, dz = p1.z - p0.z, l = Math.hypot(dx, dz) || 1; return Math.min(...[-HALF, 0, HALF].map((o) => Math.abs(Math.hypot(p0.x - (dz / l) * o - RC.x, p0.z + (dx / l) * o - RC.z) - RC.R) - RC.edge)); };
+  let s0 = r1.start; while (gapRing(s0) < 0.3 && s0 < r1.start + 60) s0 += 0.5;
+  const st = g.st;
+  P(`${id}: start cut at the hub ring edge: s ${r1.start} -> ${s0.toFixed(1)} m (the 5 roads start radially, 90 deg T on the ring)`);
   // rail part: dense (1 m) centreline s0..st
   const dense: { x: number; z: number; s: number }[] = [];
   for (let s = s0; s <= st + 1e-9; s += 1) { const p = rail.pointAt(e, s); dense.push({ x: p.x, z: p.z, s }); }
@@ -66,6 +77,7 @@ for (const [id, tag] of Object.entries(LINES)) {
     pts.push([r2(B.x), r2(B.z)]);
     const cap: number[] = pts.map((_, i) => { const s = i === 0 ? A.s : i === pts.length - 1 ? B.s : Math.ceil((A.s + 1e-6) / STEP) * STEP + (i - 1) * STEP; return r2(railY(e, s) - D.ballast - D.deckThick - NEED); });
     const nodes: Piece['nodes'] = [];
+    if (b === 0) nodes.push({ x: r2(A.x), z: r2(A.z), road: 'RR-HUB', why: 'T start at the hub ring edge (CRR-6): road height = ring height here' });
     if (A.road) nodes.push({ x: r2(A.x), z: r2(A.z), road: A.road, why: 'J1 junction (rule 5), road split here' });
     if (B.road) nodes.push({ x: r2(B.x), z: r2(B.z), road: B.road, why: 'J1 junction (rule 5), road split here' });
     for (const n of r1.nodes as any[]) if (!n.road.startsWith('J1-') && n.s > A.s && n.s < B.s && n.s <= st) nodes.push({ x: r2(n.x), z: r2(n.z), road: n.road, why: 'small-road node on the rail (CRR-3 later)' });
@@ -95,11 +107,11 @@ for (const p of pieces) waterCheck(p.name, p.pts);
 P(`WATER CHECK (sc.water > sc.h - 0.3, +-${HALF + WET_MARGIN} m, every 3.5 m): ${wetBad === 0 ? 'PASS, 0 wet pieces' : 'FAIL, ' + wetBad + ' wet pieces'}`);
 if (wetBad) { fs.writeFileSync(dir + '/STEP_CRR5B_EXPORT.txt', log.join('\n') + '\n'); throw new Error('water check failed, data NOT written'); }
 for (const p of pieces) { let len = 0; for (let i = 1; i < p.pts.length; i++) len += Math.hypot(p.pts[i][0] - p.pts[i - 1][0], p.pts[i][1] - p.pts[i - 1][1]); P(`  ${p.name.padEnd(14)} ${p.kind.padEnd(4)} ${String(p.pts.length).padStart(4)} pts ${len.toFixed(0).padStart(5)} m  nodes: ${p.nodes.map((n) => n.road).join(', ') || '-'}`); }
-const ts = `// STEP CRR-5b: FIXED centreline data of the 5 rail-corridor roads (CRR-1b reach + CRR-2d gap-exit connectors, pieces named loop), made by scripts/crr-export-data.ts. DO NOT EDIT BY HAND: change the script and run it again.
+const ts = `// STEP CRR-5b / CRR-6: FIXED centreline data of the 5 rail-corridor roads (CRR-1b reach + CRR-2d gap-exit connectors, pieces named loop) + the hub ring RR-HUB (kind ring, first piece), made by scripts/crr-export-data.ts. DO NOT EDIT BY HAND: change the script and run it again.
 // pts = [x, z] every 5 m (the rail part follows the rail centreline, the loop is the exact bend R / Ls). cap = the highest road surface height (m) that keeps ${NEED} m under the rail deck (rail pieces only).
 // nodes = where the piece touches an EXISTING road (the road surface height there is taken from that road): J1 split points, small-road crossings, T ends of the loops; road '@ground' = the joint rail part / loop (natural ground height, same in both pieces).
 export interface CorridorNode { x: number; z: number; road: string; why: string }
-export interface CorridorPiece { name: string; line: string; kind: 'rail' | 'loop'; pts: number[][]; cap: number[] | null; nodes: CorridorNode[] }
+export interface CorridorPiece { name: string; line: string; kind: 'rail' | 'loop' | 'ring'; pts: number[][]; cap: number[] | null; nodes: CorridorNode[] }
 export const CORRIDOR_ROAD_DATA: CorridorPiece[] = ${JSON.stringify(pieces, null, 0).replace(/\},\{"name"/g, '},\n{"name"')};
 `;
 fs.writeFileSync('src/roads/crr/CorridorRoadData.ts', ts);

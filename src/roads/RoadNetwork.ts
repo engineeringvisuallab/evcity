@@ -658,21 +658,80 @@ export class RoadNetwork {
   private roadYAt(r: RoadSpec, x: number, z: number): { y: number; d: number } {
     let best = Infinity;
     let y = 0;
-    for (let k = 0; k + 1 < r.xs.length; k++) {
-      const vx = r.xs[k + 1] - r.xs[k];
-      const vz = r.zs[k + 1] - r.zs[k];
+    const nSeg = r.closed ? r.xs.length : r.xs.length - 1; // CRR-6: a closed road (the hub ring) also has the segment from its last point back to its first
+    for (let k = 0; k < nSeg; k++) {
+      const k2 = (k + 1) % r.xs.length;
+      const vx = r.xs[k2] - r.xs[k];
+      const vz = r.zs[k2] - r.zs[k];
       const l2 = vx * vx + vz * vz || 1;
       const t = Math.max(0, Math.min(1, ((x - r.xs[k]) * vx + (z - r.zs[k]) * vz) / l2));
       const d = Math.hypot(x - r.xs[k] - t * vx, z - r.zs[k] - t * vz);
       if (d < best) {
         best = d;
-        y = r.ys[k] + (r.ys[k + 1] - r.ys[k]) * t;
+        y = r.ys[k] + (r.ys[k2] - r.ys[k]) * t;
       }
     }
     return { y, d: best };
   }
 
+  /**
+   * STEP CRR-6 (hub ring RR-HUB, circle 8 of the user's sketch 2): the closed 4-lane two-way ring round the Central station where the 5 rail-corridor roads meet (each of them starts at the ring edge, T, pinned to the ring height).
+   * Section: 2 + 2 lanes of 3.5 m undivided + 1.0 m paved shoulder (half width 8.0) + the ditch, V40. Height = natural ground smoothed round the closed ring (+-smoothHalf m), grade limit as the other pieces, no node
+   * (the corridor roads take THEIR height from this ring). Same switch as the other pieces (Config.roads.corridorRoads.enabled). Nothing existing is changed.
+   */
+  private layoutCorridorRing(piece: CorridorPiece): void {
+    const C = Config.roads.corridorRoads;
+    const m = piece.pts.length;
+    const cum = [0];
+    for (let i = 1; i <= m; i++) cum.push(cum[i - 1] + Math.hypot(piece.pts[i % m][0] - piece.pts[i - 1][0], piece.pts[i % m][1] - piece.pts[i - 1][1]));
+    const L = cum[m];
+    const n = Math.max(8, Math.ceil(L / KIND.highway.step)); // closed: the first point is not repeated at the end
+    const pts: number[][] = [];
+    let j = 0;
+    for (let k = 0; k < n; k++) {
+      const d = (L * k) / n;
+      while (j < m - 1 && cum[j + 1] < d) j++;
+      const t = cum[j + 1] > cum[j] ? Math.min(1, Math.max(0, (d - cum[j]) / (cum[j + 1] - cum[j]))) : 0;
+      const a = piece.pts[j];
+      const b = piece.pts[(j + 1) % m];
+      pts.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+    }
+    const ds = L / n;
+    const g = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      this.natural(pts[i][0], pts[i][1], this.scratch);
+      g[i] = this.scratch.h;
+    }
+    const W = Math.max(1, Math.min(Math.floor((n - 1) / 2), Math.round(C.smoothHalf / ds)));
+    const y = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      let s = 0;
+      for (let k = -W; k <= W; k++) s += g[(i + k + n) % n];
+      y[i] = s / (2 * W + 1);
+    }
+    const rc = CLASS_R4_OPEN;
+    const ditch = rc.elements.find((e) => e.kind === 'ditch')?.width ?? 0;
+    const sec = { halfWidth: 8.0, medianHalf: 0, shyMedian: 0, laneW: 3.5, lanesPerDir: 2, shyOuter: 1.0, shoulder: ditch };
+    this.addRoad({ tier: 1, kind: 'highway', name: piece.name, closed: true, pts, fixedY: Array.from(y), halfWidth: sec.halfWidth, shoulder: sec.shoulder, lanes: sec.lanesPerDir * 2, speedKmh: 40, maxGrade: C.maxGrade, section: sec, daylight: true });
+    const road = this.roads[this.roads.length - 1];
+    let maxG = 0;
+    let cut = 0;
+    let fill = 0;
+    for (let i = 0; i < n; i++) {
+      maxG = Math.max(maxG, Math.abs(y[(i + 1) % n] - y[i]) / ds);
+      cut = Math.max(cut, g[i] - y[i]);
+      fill = Math.max(fill, y[i] - g[i]);
+    }
+    const issues: string[] = [];
+    if (maxG > C.maxGrade + 1e-3) issues.push(`grade ${(maxG * 100).toFixed(2)} % > ${(C.maxGrade * 100).toFixed(0)} %`);
+    this.corridorReport.push({ name: piece.name, roadId: road.id, length: L, maxGrade: maxG, maxCut: cut, maxFill: fill, minClearMargin: null, anchors: [], issues });
+  }
+
   private layoutCorridorPiece(piece: CorridorPiece): void {
+    if (piece.kind === 'ring') {
+      this.layoutCorridorRing(piece);
+      return;
+    }
     const C = Config.roads.corridorRoads;
     const ds0 = KIND.highway.step;
     // resample the fixed polyline to the highway step (even spacing, both ends kept)

@@ -1,19 +1,25 @@
-south-1: rail part s 0..405 in 1 piece(s), loop 38 pts, end (-106.7, 785.3) vs T (-107, 785) residual 0.47 m, loop start vs rail point 0.000 m
-north-1: rail part s 0..430 in 2 piece(s), loop 27 pts, end (384.0, -76.3) vs T (384, -76) residual 0.34 m, loop start vs rail point 0.000 m
-east-1: rail part s 0..135 in 1 piece(s), loop 33 pts, end (283.2, 214.9) vs T (283, 215) residual 0.22 m, loop start vs rail point 0.000 m
+south-1: start cut at the hub ring edge: s 0 -> 10.0 m (the 5 roads start radially, 90 deg T on the ring)
+south-1: rail part s 10..405 in 1 piece(s), loop 38 pts, end (-106.7, 785.3) vs T (-107, 785) residual 0.47 m, loop start vs rail point 0.000 m
+north-1: start cut at the hub ring edge: s 0 -> 10.0 m (the 5 roads start radially, 90 deg T on the ring)
+north-1: rail part s 10..430 in 2 piece(s), loop 27 pts, end (384.0, -76.3) vs T (384, -76) residual 0.34 m, loop start vs rail point 0.000 m
+east-1: start cut at the hub ring edge: s 0 -> 10.0 m (the 5 roads start radially, 90 deg T on the ring)
+east-1: rail part s 10..135 in 1 piece(s), loop 33 pts, end (283.2, 214.9) vs T (283, 215) residual 0.22 m, loop start vs rail point 0.000 m
+west-nw: start cut at the hub ring edge: s 0 -> 10.0 m (the 5 roads start radially, 90 deg T on the ring)
 west-nw: junction J1-W (reach json) is not on the part 0..st 615: not used
-west-nw: rail part s 0..615 in 2 piece(s), loop 99 pts, end (-759.0, 368.2) vs T (-759, 368) residual 0.23 m, loop start vs rail point 0.000 m
-west-sw: rail part s 0..702 in 1 piece(s), loop 69 pts, end (-339.2, 837.8) vs T (-339, 838) residual 0.28 m, loop start vs rail point 0.000 m
+west-nw: rail part s 10..615 in 2 piece(s), loop 99 pts, end (-759.0, 368.2) vs T (-759, 368) residual 0.23 m, loop start vs rail point 0.000 m
+west-sw: start cut at the hub ring edge: s 0 -> 10.0 m (the 5 roads start radially, 90 deg T on the ring)
+west-sw: rail part s 10..702 in 1 piece(s), loop 69 pts, end (-339.2, 837.8) vs T (-339, 838) residual 0.28 m, loop start vs rail point 0.000 m
 WATER CHECK (sc.water > sc.h - 0.3, +-14.2 m, every 3.5 m): PASS, 0 wet pieces
-  CRR-S1-a       rail   82 pts   405 m  nodes: R2-28, @ground
+  RR-HUB         ring   88 pts   435 m  nodes: -
+  CRR-S1-a       rail   80 pts   395 m  nodes: RR-HUB, R2-28, @ground
   CRR-S1-loop    loop   38 pts   181 m  nodes: @ground, R2-29
-  CRR-N1-a       rail   70 pts   340 m  nodes: J1-E
+  CRR-N1-a       rail   68 pts   330 m  nodes: RR-HUB, J1-E
   CRR-N1-b       rail   19 pts    90 m  nodes: J1-E, @ground
   CRR-N1-loop    loop   27 pts   123 m  nodes: @ground, R4-12
-  CRR-E1-a       rail   28 pts   135 m  nodes: @ground
+  CRR-E1-a       rail   26 pts   125 m  nodes: RR-HUB, @ground
   CRR-E1-loop    loop   33 pts   154 m  nodes: @ground, R2-28
-  CRR-WNW-a      rail   72 pts   351 m  nodes: J1-S
+  CRR-WNW-a      rail   70 pts   341 m  nodes: RR-HUB, J1-S
   CRR-WNW-b      rail   54 pts   264 m  nodes: J1-S, @ground
   CRR-WNW-loop   loop   99 pts   486 m  nodes: @ground, R2-77
-  CRR-WSW-a      rail  142 pts   702 m  nodes: R4-20, @ground
+  CRR-WSW-a      rail  140 pts   692 m  nodes: RR-HUB, R4-20, @ground
   CRR-WSW-loop   loop   69 pts   332 m  nodes: @ground, R4-20

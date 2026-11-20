@@ -1,42 +1,47 @@
-CRR-5b check: flag OFF roads 181, flag ON roads 193 (added 12)
+CRR-5b check: flag OFF roads 181, flag ON roads 194 (added 13)
 1 WATER (sc.water > sc.h, finished ground, 7 offsets per point): PASS, 0 wet samples
 2 RAIL unchanged: piers OFF 424 ON 424, rail signature (piers + design heights + segments) OFF ca9633570594 ON ca9633570594: SAME
-3 EXISTING roads unchanged (name + centreline + heights hash of the first 181): SAME
+  road changed: R4-20:669c6b349ac0 -> R4-20:b8660d7b683b
+  road changed: R2-77:feefb5365eb3 -> R2-77:a078505389e9
+3 EXISTING roads unchanged (name + centreline + heights hash of the first 181): 2 DIFFERENT (FAIL)
 4 PER PIECE (road surface heights from the natural ground, smoothed +-45 m, grade limit 6 %):
-  CRR-S1-a      len  405 m  max grade 2.61 %  max cut 0.28 m  max fill 0.34 m  rail clearance margin 0.96 m  nodes: R2-28 dy 0.00 off 2.5 m; @ground dy 0.00 off 0.0 m
+  RR-HUB        len  440 m  max grade 0.82 %  max cut 0.22 m  max fill 0.18 m  rail clearance margin -  nodes: -
+  CRR-S1-a      len  395 m  max grade 2.61 %  max cut 0.28 m  max fill 0.34 m  rail clearance margin 0.96 m  nodes: RR-HUB dy 0.00 off 0.0 m; R2-28 dy 0.00 off 1.9 m; @ground dy 0.00 off 0.0 m
   CRR-S1-loop   len  181 m  max grade 3.16 %  max cut 0.15 m  max fill 0.14 m  rail clearance margin -  nodes: @ground dy 0.00 off 0.0 m; R2-29 dy 0.00 off 0.5 m
-  CRR-N1-a      len  340 m  max grade 6.00 %  max cut 0.17 m  max fill 2.40 m  rail clearance margin 3.59 m  nodes: J1-E dy 0.00 off 0.0 m
+  CRR-N1-a      len  330 m  max grade 6.00 %  max cut 0.17 m  max fill 2.40 m  rail clearance margin 3.59 m  nodes: RR-HUB dy 0.00 off 0.0 m; J1-E dy 0.00 off 0.0 m
   CRR-N1-b      len   90 m  max grade 6.00 %  max cut 0.17 m  max fill 2.40 m  rail clearance margin 3.59 m  nodes: J1-E dy 0.00 off 0.0 m; @ground dy 0.00 off 0.0 m
   CRR-N1-loop   len  123 m  max grade 6.00 %  max cut 0.08 m  max fill 2.31 m  rail clearance margin -  nodes: @ground dy 0.00 off 0.0 m; R4-12 dy 0.00 off 0.3 m
-  CRR-E1-a      len  135 m  max grade 0.50 %  max cut 0.24 m  max fill 0.17 m  rail clearance margin 5.79 m  nodes: @ground dy 0.00 off 0.0 m
+  CRR-E1-a      len  125 m  max grade 1.99 %  max cut 0.24 m  max fill 0.17 m  rail clearance margin 5.76 m  nodes: RR-HUB dy 0.00 off 0.0 m; @ground dy 0.00 off 0.0 m
   CRR-E1-loop   len  154 m  max grade 2.84 %  max cut 0.11 m  max fill 0.23 m  rail clearance margin -  nodes: @ground dy 0.00 off 0.0 m; R2-28 dy 0.00 off 0.2 m
-  CRR-WNW-a     len  351 m  max grade 6.00 %  max cut 0.28 m  max fill 0.50 m  rail clearance margin 5.92 m  nodes: J1-S dy 0.00 off 0.0 m
+  CRR-WNW-a     len  341 m  max grade 6.00 %  max cut 0.28 m  max fill 0.50 m  rail clearance margin 5.92 m  nodes: RR-HUB dy 0.00 off 0.0 m; J1-S dy 0.00 off 0.0 m
   CRR-WNW-b     len  264 m  max grade 6.00 %  max cut 0.18 m  max fill 0.50 m  rail clearance margin 5.92 m  nodes: J1-S dy 0.00 off 0.0 m; @ground dy 0.00 off 0.0 m
   CRR-WNW-loop  len  486 m  max grade 6.00 %  max cut 0.56 m  max fill 0.29 m  rail clearance margin -  nodes: @ground dy 0.00 off 0.0 m; R2-77 dy 0.00 off 0.2 m
-  CRR-WSW-a     len  702 m  max grade 6.00 %  max cut 0.29 m  max fill 1.64 m  rail clearance margin 2.86 m  nodes: R4-20 dy 0.00 off 0.2 m; @ground dy 0.00 off 0.0 m
+  CRR-WSW-a     len  692 m  max grade 6.00 %  max cut 0.30 m  max fill 1.64 m  rail clearance margin 2.86 m  nodes: RR-HUB dy 0.00 off 0.0 m; R4-20 dy 0.00 off 1.1 m; @ground dy 0.00 off 0.0 m
   CRR-WSW-loop  len  332 m  max grade 6.00 %  max cut 0.59 m  max fill 0.62 m  rail clearance margin -  nodes: @ground dy 0.00 off 0.0 m; R4-20 dy 0.00 off 0.3 m
   issues total 0
 5 FINISHED GROUND (roads.apply then railForm.apply) vs the road surface (centreline and +-5 m): count of 8 m points where |ground - road y| > 0.30 m:
-  CRR-S1-a        0 of 156 samples differ > 0.30 m, worst -0.02 m at (73, 769) o -5
+  RR-HUB          0 of 165 samples differ > 0.30 m, worst -0.00 m at (43, 245) o -5
+  CRR-S1-a        0 of 153 samples differ > 0.30 m, worst -0.02 m at (73, 769) o -5
   CRR-S1-loop     0 of  72 samples differ > 0.30 m, worst -0.13 m at (73, 769) o -5
-  CRR-N1-a        0 of 132 samples differ > 0.30 m, worst 0.14 m at (249, -19) o -5
+  CRR-N1-a        0 of 129 samples differ > 0.30 m, worst 0.14 m at (249, -19) o -5
   CRR-N1-b        0 of  39 samples differ > 0.30 m, worst 0.23 m at (251, -26) o 5
   CRR-N1-loop     0 of  51 samples differ > 0.30 m, worst -0.16 m at (266, -107) o -5
-  CRR-E1-a        0 of  54 samples differ > 0.30 m, worst -0.14 m at (202, 337) o 5
+  CRR-E1-a        0 of  51 samples differ > 0.30 m, worst -0.14 m at (202, 337) o 5
   CRR-E1-loop     0 of  63 samples differ > 0.30 m, worst -0.03 m at (202, 337) o 5
-  CRR-WNW-a       0 of 135 samples differ > 0.30 m, worst 0.01 m at (-339, 52) o -5
+  CRR-WNW-a       0 of 132 samples differ > 0.30 m, worst 0.01 m at (-339, 52) o -5
   CRR-WNW-b       0 of 105 samples differ > 0.30 m, worst -0.13 m at (-569, -79) o 5
   CRR-WNW-loop    2 of 186 samples differ > 0.30 m, worst -0.40 m at (-759, 368) o 5
-  CRR-WSW-a       0 of 267 samples differ > 0.30 m, worst -0.30 m at (-632, 743) o 5
+  CRR-WSW-a       0 of 264 samples differ > 0.30 m, worst -0.30 m at (-632, 743) o 5
   CRR-WSW-loop    1 of 129 samples differ > 0.30 m, worst -0.30 m at (-632, 743) o 5
 5b samples with |ground - road y| > 0.30 m, with the distance to the nearest rail centreline (any rail edge):
   CRR-WNW-loop point 61 (-764, 366) offset -5: ground +0.39 m vs road, rail centreline 382 m away
   CRR-WNW-loop point 61 (-754, 370) offset 5: ground -0.40 m vs road, rail centreline 374 m away
   CRR-WSW-loop point 0 (-628, 740) offset 5: ground -0.30 m vs road, rail centreline 2 m away
 6 PIERS of the own rail line vs the road (pier half 1.6 m, median half 3.2 m: pier centre must be inside the median, gap pier edge to lane edge >= 1.6 m):
+  RR-HUB        piers beside the piece (not beyond its ends):   0  max offset of a pier centre from the road centreline 0.00 m  -> gap pier edge to lane edge 1.60 m 
   CRR-S1-a      piers beside the piece (not beyond its ends):  11  max offset of a pier centre from the road centreline 0.00 m  -> gap pier edge to lane edge 1.60 m 
   CRR-S1-loop   piers beside the piece (not beyond its ends):   1  max offset of a pier centre from the road centreline 15.00 m  -> gap pier edge to lane edge -13.40 m (loop: no pier row, normal median)
-  CRR-N1-a      piers beside the piece (not beyond its ends):   9  max offset of a pier centre from the road centreline 0.07 m  -> gap pier edge to lane edge 1.53 m 
+  CRR-N1-a      piers beside the piece (not beyond its ends):   9  max offset of a pier centre from the road centreline 0.10 m  -> gap pier edge to lane edge 1.50 m 
   CRR-N1-b      piers beside the piece (not beyond its ends):   2  max offset of a pier centre from the road centreline 0.00 m  -> gap pier edge to lane edge 1.60 m 
   CRR-N1-loop   piers beside the piece (not beyond its ends):   0  max offset of a pier centre from the road centreline 0.00 m  -> gap pier edge to lane edge 1.60 m (loop: no pier row, normal median)
   CRR-E1-a      piers beside the piece (not beyond its ends):   4  max offset of a pier centre from the road centreline 0.00 m  -> gap pier edge to lane edge 1.60 m 
@@ -58,4 +63,14 @@ CRR-5b check: flag OFF roads 181, flag ON roads 193 (added 12)
 6c CRR-WNW-loop  nearest own pier s630 15.00 m from the connector centreline (need >= 14.7): PASS
 6c CRR-WSW-loop  nearest own pier s730 28.01 m from the connector centreline (need >= 14.7): PASS
 6c own piers vs connectors: PASS
+8 HUB RING RR-HUB: centre (0.0, 300.0), mean radius 70.0 m, 55 points, closed true, length 440 m, 4 lanes undivided (half width 8 m + ditch 1.5 m)
+8a rail piers vs ring centreline (need >= 12.7 m): nearest 25.64 m, central:south-1~north-1 s104 (32, 270), piers too close 0: PASS
+8b rail deck underside over the ring (rail points within 15.3 m of the ring centreline: 80; need >= 7 m): smallest clearance 12.92 m at east-1 s0 (69, 313): PASS
+8c CRR-S1-a      start line (2 corners + centre) clear of the ring pavement + ditch: 0.63 m (need >= 0.30): PASS   height at the start 18.30 m, ring 18.30 m
+8c CRR-N1-a      start line (2 corners + centre) clear of the ring pavement + ditch: 0.57 m (need >= 0.30): PASS   height at the start 18.30 m, ring 18.30 m
+8c CRR-E1-a      start line (2 corners + centre) clear of the ring pavement + ditch: 0.65 m (need >= 0.30): PASS   height at the start 18.43 m, ring 18.43 m
+8c CRR-WNW-a     start line (2 corners + centre) clear of the ring pavement + ditch: 0.61 m (need >= 0.30): PASS   height at the start 17.82 m, ring 17.82 m
+8c CRR-WSW-a     start line (2 corners + centre) clear of the ring pavement + ditch: 0.63 m (need >= 0.30): PASS   height at the start 18.23 m, ring 18.23 m
+8d ring vs every other existing road (centreline distance - ring edge 9.5 m - road half width - shoulder, need >= 0.30 m): smallest gap 195.5 m (R2-28), roads closer than 0.30 m: 0: PASS
+8 HUB RING: ALL PASS (headless)
 7 PIERS of OTHER rail lines / edges within 25 m of a new road centreline: 0
