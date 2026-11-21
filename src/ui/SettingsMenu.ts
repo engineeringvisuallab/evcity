@@ -80,7 +80,7 @@ const MODE_NOTE: Record<TimeMode, string> = {
   day: 'এখন সবসময় দিন। ঘড়ি থেমে আছে। আবার “দিন-রাত চলবে” চাপলে আগের সময় থেকে চলবে।',
 };
 
-const ZOOMS = ['কাছে', 'মাঝারি', 'পুরো ম্যাপ'];
+const ZOOMS = ['কাছে', '১০০০ মি', 'মাঝারি', 'পুরো ম্যাপ'];
 
 interface Toggle {
   key: keyof Pick<HudOptions, 'crosshair' | 'gold' | 'weapon' | 'areaAlways' | 'roadNumbers'>;
@@ -560,6 +560,7 @@ export class SettingsMenu {
       const { sec } = this.section('🗺️ মিনিম্যাপ জুম (U)');
       const grid = document.createElement('div');
       grid.className = 'evs-zoom';
+      grid.style.gridTemplateColumns = 'repeat(4,1fr)';
       ZOOMS.forEach((label, i) => {
         const b = document.createElement('button');
         b.type = 'button';

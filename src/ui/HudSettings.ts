@@ -68,7 +68,7 @@ export class HudSettings {
         if (typeof o.rainQuality === 'number' && o.rainQuality >= 0 && o.rainQuality <= 3) this.values.rainQuality = Math.round(o.rainQuality);
         if (typeof o.rainUmbrella === 'boolean') this.values.rainUmbrella = o.rainUmbrella;
         if (isCountryCode(o.clockCountry)) this.values.clockCountry = o.clockCountry;
-        if (typeof o.mapZoom === 'number' && o.mapZoom >= 0 && o.mapZoom <= 2) this.values.mapZoom = Math.round(o.mapZoom);
+        if (typeof o.mapZoom === 'number' && o.mapZoom >= 0 && o.mapZoom <= 3) this.values.mapZoom = Math.round(o.mapZoom);
       }
     } catch {
       /* broken / blocked storage: defaults */

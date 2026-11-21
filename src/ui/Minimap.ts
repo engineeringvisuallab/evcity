@@ -73,7 +73,7 @@ export function formatClock(hours: number): { time: string; period: string } {
 const MAP_CLUTTER = false;
 
 const BASE_SIZE = 1024;
-const ZOOM_SPANS = [600, 6000, 10600]; // metres across: close (300 m each side of you) / medium / whole world
+const ZOOM_SPANS = [600, 1000, 6000, 10600]; // metres across: close (300 m each side of you) / 1000 m (500 m each side) / medium / whole world
 
 /**
  * The site map: always on screen (top-right), north is up, centred on you.
@@ -404,7 +404,7 @@ export class Minimap {
         }
       }
       // real roads as sharp vector lines (the baked picture is ~10 m per pixel: too blurry when zoomed in)
-      if (this.zoom < 2) this.drawRoads(c, X, Z, ppm, cx, cz, span);
+      if (this.zoom < 3) this.drawRoads(c, X, Z, ppm, cx, cz, span);
       // railway network (Stage 11B): dark line + white dashes, station areas as rings
       {
         const line = (): void => {
@@ -455,7 +455,7 @@ export class Minimap {
     }
 
     // bus stops: blue square with a white bus window (only on the close / medium maps)
-    if (MAP_CLUTTER && s.stops && this.zoom < 2) {
+    if (MAP_CLUTTER && s.stops && this.zoom < 3) {
       const d = this.dpr;
       const r = (this.zoom === 0 ? 4.6 : 3.4) * d;
       for (const b of s.stops) {
@@ -523,7 +523,7 @@ export class Minimap {
     }
 
     // FUEL STATIONS (orange-red square, white pump) and CHARGING POINTS (green square, white lightning bolt): close and medium maps
-    if (s.stations && this.zoom < 2) {
+    if (s.stations && this.zoom < 3) {
       const d = this.dpr;
       const r = (this.zoom === 0 ? 5.8 : 4.6) * d;
       const badge = (bx: number, bz: number, color: string, glyph: 'pump' | 'bolt'): void => {

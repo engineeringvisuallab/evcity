@@ -1179,7 +1179,7 @@ export class Engine {
     this.world.update(dt, this.time.elapsed, this.camera, this.cameraController.isFreeFly);
     this.birds.update(dt, this.time.elapsed, this.world.playerWorld);
     this.animals.update(dt, this.time.elapsed, this.world.playerWorld);
-    if (this.input.wasPressed('KeyU')) this.setMapZoom((this.minimap.zoomLevel + 1) % 3); // (N = the vehicle menu)
+    if (this.input.wasPressed('KeyU')) this.setMapZoom((this.minimap.zoomLevel + 1) % 4); // (N = the vehicle menu)
     if (this.input.wasPressed('Backslash')) this.missions.toggle(); // \ opens the mission list (the Missions button does the same)
     {
       const ms = this.mapState(); // `me` = what you control (on foot, car, helicopter, boat): missions use the same position as the map
