@@ -65,3 +65,11 @@ tsc PASS, shadow-quality-test PASS. Ager FAIL gulo (deadwood-model-test, grass-c
 
 - PalmAssets.ts STYLE_KRISHNA `bloom` 12 -> 7 (near) ; TreeAssets.ts far LOD phul card 14 -> 14 x 0.6
 - Aro kom/beshi: `bloom` number. tsc PASS. Game e RUN HOY NI.
+
+---
+# Step 2e — sheher-er (city lawn) ghas boro ar ghono
+
+Karon: screenshot-er jaygay sheher-er "mown lawn" chhilo: ghas 12 cm (lawnMaxHeight 0.2 x city.height 0.6), ar prati cell e prai ekta tuft, tai shudhu kichu choto doga dekhto, mone hoto matir niche. Ground-er niche jay ni (placement height = terrain height - 0.03, triangle thik).
+- Config grass.city `height` 0.6 -> 1.5 (ghas ~30 cm), notun `dense: 3` (prati cell e 3x tuft, shudhu kache-r LOD e)
+- GrassPlacement.ts: lawn tuft base matir 0.03 niche chhilo, ekhon 0.005; extra tuft-o lawn flag 2 (ager flag 4 = alada rong/size)
+- Aro boro/chhoto: `height`. Aro ghono/kom: `dense` (triangle barbe: 3x lawn tuft). tsc PASS, grass test FAIL gulo ager moto-i (city 4, clump 5). Game e RUN HOY NI.

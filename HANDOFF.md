@@ -197,3 +197,4 @@ Small broadleaf trees (< 10 m) are thinned to 25 % (`Config.vegetation.smallTree
 - Step 2b (2026-11-21): jungle grass shorter (tall 0.85), flowers taller (tallFlower 2.0), lighter JUNGLE_GREEN, lata-pata share 0.65. tsc PASS, not seen in game.
 - Step 2c (2026-11-21): brighter sun (DayNight lightI 2.3 / 4.2, hemiI lower), bigger shadows (SHADOW_SPECS low 2048/210, medium 4096/300, high 4096/450), tree shadows at medium+high. tsc + daynight + shadow tests PASS, not seen in game.
 - Step 2d (2026-11-21): krishnachura red bloom cards at 60% (PalmAssets bloom 7, TreeAssets far x0.6). tsc PASS.
+- Step 2e (2026-11-21): city lawn grass taller (grass.city.height 1.5 = ~30 cm) and 3x denser near (grass.city.dense 3), tuft base 0.005 under ground. tsc PASS, not seen in game.

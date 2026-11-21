@@ -609,7 +609,7 @@ export const Config = {
        *   flowerShare  share of lawn tufts that carry a small flower (daisy, clover, buttercup)
        *   edge         metres over which the lawn blends into the normal patchy meadow outside the city
        */
-      city: { density: 1, height: 0.6, clumpChance: 0, clumpScale: 0.8, baseChance: 0, baseScale: 1.3, baseReach: 1.6, fenceReach: 1.4, flowerShare: 0.02, edge: 40 },
+      city: { density: 1, height: 1.5, dense: 3, clumpChance: 0, clumpScale: 0.8, baseChance: 0, baseScale: 1.3, baseReach: 1.6, fenceReach: 1.4, flowerShare: 0.02, edge: 40 },
       /**
        * HIGHWAY VERGE outside cities: beyond the gravel shoulder the road side is a grass patch (patch value forced up, like the road-side boost) with
        * tall clumps; `reach` = width (m) of the strip next to the shoulder, `clumpChance` per clump cell inside it, `tall` = clump height multiplier.
