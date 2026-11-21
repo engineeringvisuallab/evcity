@@ -49,7 +49,7 @@ const HAND_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'office-mid', x: -222, z: 182, yaw: -3.1416, W: 27, D: 26, zone: 'metro-core' }, // moved from (-200, 160) off the road / railway (28 m)
   { id: 'office-tower', x: -240, z: 25, yaw: -2.2211, W: 45, D: 45, zone: 'metro-core' }, // moved from (-280, 80) off the road / railway (68 m); 2026-11-21: turned to face the J1 8-lane road
   { id: 'hotel-3star', x: -260.3, z: 940.4, yaw: 3.1416, W: 39, D: 32, zone: 'south-bazaar' },
-  { id: 'hotel-5star', x: -2, z: 300, yaw: -1.5708, W: 80, D: 70, zone: 'metro-core' }, // moved from (-10, 320) off the road / railway (21.5 m)
+  { id: 'hotel-5star', x: -22, z: 537, yaw: 3.1416, W: 80, D: 70, zone: 'metro-core' }, // 2026-11-21 (user): moved from (-2, 300) = the rail centre (RR-HUB ring); wanted near (-46, 437) but SH-9+13 crosses there, so the nearest clear spot (>= 15 m from every street); front faces north to SH-9+13; plot PL-10 (bank) + vacant V-803/804/805/817 dropped (SHP_DROP_*)
   { id: 'primary-school', x: 940, z: 20, yaw: -1.5708, W: 40, D: 36, zone: 'east-homes' },
   { id: 'high-school', x: -1465, z: -2400, yaw: 1.5708, W: 56, D: 60, zone: 'nw-campus' }, // moved from (-1500, -2380) off the road / railway (40 m)
   { id: 'college', x: -1440, z: -2628, yaw: -1.5708, W: 70, D: 46, zone: 'nw-campus' }, // PLOTS: moved from (-1440, -2620) into free plot land

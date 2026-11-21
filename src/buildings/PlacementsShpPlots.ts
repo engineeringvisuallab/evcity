@@ -55,9 +55,9 @@ const SHP_BUILDINGS_ALL: readonly BuildingPlacement[] = [
 export const SHP_PLOTS: readonly CityPlot[] = ON ? SHP_PLOTS_ALL : [];
 export const SHP_PLOT_BUILDINGS: readonly BuildingPlacement[] = ON ? SHP_BUILDINGS_ALL : [];
 /** Old city plot rows (PlacementsPlots.ts) that stood in the same land: dropped (their buildings too, by seed). */
-export const SHP_DROP_PLOT_IDS: readonly string[] = ON ? ["PL-06", "PL-07"] : [];
-export const SHP_DROP_PLOT_BUILDING_SEEDS: readonly number[] = ON ? [1005, 1006] : [];
+export const SHP_DROP_PLOT_IDS: readonly string[] = ON ? ["PL-06", "PL-07", "PL-10"] : []; // 2026-11-21 (user): PL-10 (bank) dropped: the moved 5-star hotel stands there
+export const SHP_DROP_PLOT_BUILDING_SEEDS: readonly number[] = ON ? [1005, 1006, 1009] : [];
 /** Vacant plots (PlacementsVacant.ts) that stood in the same land: dropped. */
-export const SHP_DROP_VACANT_IDS: readonly string[] = ON ? ["V-730", "V-772", "V-773"] : [];
+export const SHP_DROP_VACANT_IDS: readonly string[] = ON ? ["V-730", "V-772", "V-773", "V-752", "V-753", "V-755", "V-756", "V-757", "V-758", "V-761", "V-803", "V-804", "V-805", "V-817"] : []; // 2026-11-21 (user): vacant plots under the moved city hall, shop-house-3, pump station, apartment-mid (V-752/753/755-758/761) and the moved 5-star hotel (V-803/804/805/817) dropped
 /** Hand placed buildings (Placements.ts) that stood in the same land: replaced by the new plot building. */
 export const SHP_REPLACES: readonly { id: string; x: number; z: number }[] = ON ? [{"id": "office-mid", "x": -222.0, "z": 182.0}] : [];
