@@ -1,3 +1,7 @@
+# plots-tile.py : PLOT TILING P3 (equal-area plots, 2026-11-21).
+#   Normal plots all have (nearly) the SAME area = TARGET (default 1000 m2 = 15 katha, range ~670-1340 m2). Shape may vary with the road curve, area does not.
+#   A building that needs more land (office, school, mall, hotel ... = W x D bigger than BIG_MIN) gets ONE big plot of its own size: like 2/3/5/10 normal plots joined.
+# (older text of P2 follows)
 # plots-tile.py : PLOT TILING P2. Cuts ALL free land inside the 1500 m circle into contiguous plots (no gaps between plots, no free land without a plot).
 #   1. free land = docs/city_nogo.json without road / street / rail / keep-out / water / steep.  (hand buildings are free land: they go INSIDE a plot)
 #   2. every free cell belongs to its NEAREST road side  -> the line where two roads meet in the middle is the long middle line of the sketch
@@ -9,12 +13,14 @@ import numpy as np, cv2
 from scipy.spatial import cKDTree
 from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import connected_components
-PLOT_W = float(sys.argv[1]) if len(sys.argv) > 1 else 30.0     # plot width along the road (m)
-MIN_AREA = 400.0                                                # smaller pieces are merged into a neighbour (m2)
+TARGET = float(sys.argv[1]) if len(sys.argv) > 1 else 1000.0   # standard plot area (m2): 1000 m2 = ~15 katha (a house plot is 10-20 katha = 670-1340 m2)
+BIG_MIN = 1300.0                                                # a building whose land (W x D) is bigger than this gets ONE big plot of its own size (= several normal plots joined)
+MIN_AREA = 600.0                                                # smaller pieces are merged into a neighbour (m2)
 MIN_INR = 7.0                                                   # a plot must fit a circle of this radius (m) = no thin strips, a building can stand on it
 MIN_FILL = 0.45                                                 # plot area / its smallest rectangle: lower = bad (odd) shape
 S = 2.0                                                         # raster cell (m)
 R = 1500.0                                                      # the city circle
+SIMPL = 3.0                                                     # border simplify tolerance (m): straight plot borders like a surveyed parcel
 BUF = 120.0                                                     # plots also cover every building area: land within BUF m of any building (houses, flats, villages)
 N = json.load(open('docs/city_nogo.json')); RD = json.load(open('docs/city_roads_cl.json')); INP = json.load(open('docs/city_plots_input.json'))
 nx, nz, X0, Z0, C = N['nx'], N['nz'], N['x0'], N['z0'], N['cell']
@@ -56,23 +62,54 @@ fj, fi = np.nonzero(free)
 q = np.c_[gx[fi], gz[fj]]
 d, ix = tree.query(q)
 side = ((q[:, 0] - P[ix, 0]) * T[ix, 1] - (q[:, 1] - P[ix, 1]) * T[ix, 0] > 0).astype(np.int64)
-key = RID[ix].astype(np.int64) * 2000000 + side * 1000000 + np.floor(SS[ix] / PLOT_W).astype(np.int64)
-# ---- a free block that touches only ONE road and is small (the roundabout middle) is ONE plot, not pie slices
 nf, fl = cv2.connectedComponents(free.astype(np.uint8), connectivity=4); fl = fl[fj, fi]
-o = np.argsort(fl, kind='stable'); fs = fl[o]; a0 = np.searchsorted(fs, np.arange(nf)); a1 = np.searchsorted(fs, np.arange(nf), 'right')
-n_isl = 0
-for c in range(1, nf):
-    sel = o[a0[c]:a1[c]]
-    if 400 / (S * S) <= len(sel) <= 30000 / (S * S) and len(np.unique(RID[ix[sel]])) == 1:
-        key[sel] = 9000000000 + c; n_isl += 1
-print('one-road islands made one plot each:', n_isl)
+key = np.zeros(len(fj), np.int64)      # filled below: equal-area cutting
 # ---- connected pieces of the same key
 idx = -np.ones((H, W), np.int64); idx[fj, fi] = np.arange(len(fj))
-# ---- a building is never cut by a plot border: all free cells under it (+2 m round it) get ONE key (the most common one under it)
+# ---- 1. BIG plots: a building whose land (W x D) is bigger than BIG_MIN gets one plot that is its own rectangle (+2 m). Bigger need = bigger plot (like 2/3/5/10 plots joined).
+BIGK = 8000000000
+bigid = np.zeros((H, W), np.int32)
+nbig = 0; big_names = []
+bigs = sorted([b for b in INP['hand'] if X0 < b['x'] < X0 + nx * C and Z0 < b['z'] < Z0 + nz * C and b['W'] * b['D'] > BIG_MIN], key=lambda b: -b['W'] * b['D'])
+for b in bigs:
+    y = b.get('yaw') or 0; c_, s_ = np.cos(y), np.sin(y); w_, d_ = b['W'] + 4, b['D'] + 4
+    pts = np.array([[(b['x'] + u * c_ + v * s_ - X0) / S, (b['z'] - u * s_ + v * c_ - Z0) / S] for u, v in ((-w_ / 2, -d_ / 2), (w_ / 2, -d_ / 2), (w_ / 2, d_ / 2), (-w_ / 2, d_ / 2))])
+    tmp = np.zeros((H, W), np.uint8); cv2.fillPoly(tmp, [np.round(pts * 16).astype(np.int32)], 1, shift=4)
+    nbig += 1; bigid[(tmp > 0) & (bigid == 0)] = nbig; big_names.append(b['id'])
+bg = bigid[fj, fi]
+key[bg > 0] = BIGK + bg[bg > 0].astype(np.int64)
+print('big plots (one per building that needs more than', int(BIG_MIN), 'm2):', nbig)
+# ---- 2. every other free cell: group = (free block, nearest road, side); the group is cut into n = area / TARGET parts of EQUAL area
+#         (cut = straight line square to the long direction of the piece, again and again: strips along the road, compact blocks in deep land)
+rest = np.nonzero(bg == 0)[0]
+gkey = (fl[rest].astype(np.int64) * 1000 + RID[ix[rest]]) * 2 + side[rest]
+ug, ginv = np.unique(gkey, return_inverse=True)
+gord = np.argsort(ginv, kind='stable'); gs = ginv[gord]; g0 = np.searchsorted(gs, np.arange(len(ug))); g1 = np.searchsorted(gs, np.arange(len(ug)), 'right')
+nextk = 1
+cx_ = gx[fi]; cz_ = gz[fj]
+for gi in range(len(ug)):
+    stack = []
+    sel0 = rest[gord[g0[gi]:g1[gi]]]
+    n0 = max(1, int(round(len(sel0) * S * S / TARGET)))
+    stack.append((sel0, n0))
+    while stack:
+        sel, n = stack.pop()
+        if n <= 1 or len(sel) < 2:
+            key[sel] = nextk; nextk += 1; continue
+        ss_, tt_ = SS[ix[sel]], d[sel]                                  # road frame: s = along the road, t = distance from the road
+        # cut square to the LONGER side of the piece (in road metres): across the road first (plot dividers), then parallel to the road (deep land)
+        ps = float(ss_.max() - ss_.min()); pt = float(tt_.max() - tt_.min())
+        pr = ss_ if ps >= pt else tt_; od = np.argsort(pr, kind='stable')
+        n1 = n // 2; cut = int(round(len(sel) * n1 / n))
+        stack.append((sel[od[:cut]], n1)); stack.append((sel[od[cut:]], n - n1))
+print('equal-area pieces cut:', nextk - 1)
+# ---- 3. a normal building is never cut by a plot border: all free cells under it (+2 m round it) join the plot that holds most of it
+idx = -np.ones((H, W), np.int64); idx[fj, fi] = np.arange(len(fj))
 n_keep = 0
 for kind in ('hand', 'fill'):
     for b in INP[kind]:
         if not (X0 < b['x'] < X0 + nx * C and Z0 < b['z'] < Z0 + nz * C): continue
+        if kind == 'hand' and b['W'] * b['D'] > BIG_MIN: continue
         w, dp = b['W'], b['D']
         if kind == 'hand':
             if abs(abs(b.get('yaw', 0)) % 3.1416 - 1.5708) < .1: w, dp = dp, w
@@ -80,6 +117,8 @@ for kind in ('hand', 'fill'):
         i0 = max(int((b['x'] - w / 2 - 2 - X0) / S), 0); i1 = min(int((b['x'] + w / 2 + 2 - X0) / S) + 1, W)
         j0 = max(int((b['z'] - dp / 2 - 2 - Z0) / S), 0); j1 = min(int((b['z'] + dp / 2 + 2 - Z0) / S) + 1, H)
         win = idx[j0:j1, i0:i1]; ids = win[win >= 0]
+        if len(ids) == 0: continue
+        ids = ids[key[ids] < BIGK]
         if len(ids) == 0: continue
         ks, cn = np.unique(key[ids], return_counts=True); key[ids] = ks[np.argmax(cn)]; n_keep += 1
 print('buildings kept whole inside one plot:', n_keep)
@@ -96,16 +135,17 @@ nc, comp = connected_components(G, directed=False)
 print('first cut pieces', nc)
 # ---- merge small pieces into the neighbour with the longest shared border (prefer the same road + side)
 road_of = np.zeros(nc, np.int64); np.maximum.at(road_of, comp, RID[ix] * 2 + side)
+isbig = np.zeros(nc, bool); isbig[comp[key >= BIGK]] = True
 def bad_plots(comp, nc):
     """plots that are too small, too thin or odd shaped"""
-    area = np.bincount(comp, minlength=nc) * S * S; bad = area < MIN_AREA
+    area = np.bincount(comp, minlength=nc) * S * S; bad = (area < MIN_AREA) & ~isbig
     order = np.argsort(comp, kind='stable'); cs = comp[order]; st = np.searchsorted(cs, np.arange(nc)); en = np.searchsorted(cs, np.arange(nc), 'right')
     for c in np.nonzero(~bad)[0]:
         sel = order[st[c]:en[c]]; ci, cj = fi[sel], fj[sel]
         m = np.zeros((cj.max() - cj.min() + 3, ci.max() - ci.min() + 3), np.uint8); m[cj - cj.min() + 1, ci - ci.min() + 1] = 1
         inr = cv2.distanceTransform(m, cv2.DIST_L2, 3).max() * S - S / 2
         pts = np.c_[ci, cj].astype(np.float32); (_, (rw, rh), _) = cv2.minAreaRect(pts); fill = len(sel) / max(1.0, (rw + 1) * (rh + 1))
-        if inr < MIN_INR or fill < MIN_FILL: bad[c] = True
+        if (inr < MIN_INR or fill < MIN_FILL) and not isbig[c]: bad[c] = True
     return bad, area
 for it in range(12):
     bad, area = bad_plots(comp, nc)
@@ -116,7 +156,7 @@ for it in range(12):
     best = {}; taken = set()
     for (a, b), c in sorted(pair.items(), key=lambda kv: area[kv[0][0]]):     # smallest first
         if not bad[a]: continue
-        sc = c * (3 if road_of[a] == road_of[b] else 1) * (2 if not bad[b] else 1)
+        sc = c * (3 if road_of[a] == road_of[b] else 1) * (2 if not bad[b] else 1) * (0.15 if isbig[b] else 1)
         if a not in best or sc > best[a][0]: best[a] = (sc, b)
     # a bad plot that is the target of another bad plot is not moved in the same pass (no chains)
     tg = {b for (_, b) in best.values()}
@@ -129,6 +169,7 @@ for it in range(12):
     if (mp == np.arange(nc)).all(): print('merge pass', it, 'nothing more to merge'); break
     comp = mp[comp]; _, comp = np.unique(comp, return_inverse=True); nc = comp.max() + 1
     road_of = np.zeros(nc, np.int64); np.maximum.at(road_of, comp, RID[ix] * 2 + side)
+    isbig = np.zeros(nc, bool); isbig[comp[key >= BIGK]] = True
     print('merge pass', it, 'bad', int(bad.sum()), 'plots now', nc)
 bad, area = bad_plots(comp, nc); print('still bad (no neighbour, small islands):', int(bad.sum()), ' area of them m2', int(area[bad].sum()))
 # ---- polygons
@@ -142,14 +183,14 @@ for c in range(nc):
     m4 = cv2.resize(m, None, fx=4, fy=4, interpolation=cv2.INTER_NEAREST)       # 0.5 m pixels: borders of neighbours touch
     cnt, _ = cv2.findContours(m4, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     if not cnt: continue
-    cc = max(cnt, key=cv2.contourArea); ap = cv2.approxPolyDP(cc, 1.5 / (S / 4), True)[:, 0, :]
+    cc = max(cnt, key=cv2.contourArea); ap = cv2.approxPolyDP(cc, SIMPL / (S / 4), True)[:, 0, :]
     poly = [[round(X0 + (x0 + (px + .5) / 4) * S, 1), round(Z0 + (z0 + (pz + .5) / 4) * S, 1)] for px, pz in ap]
     if len(poly) < 3:   # tiny island: keep it as a plot with its own small outline
         ap = cv2.convexHull(cc)[:, 0, :]; poly = [[round(X0 + (x0 + (px + .5) / 4) * S, 1), round(Z0 + (z0 + (pz + .5) / 4) * S, 1)] for px, pz in ap]
         if len(poly) < 3: continue
     q0 = np.c_[gx[ci], gz[cj]]; dd = d[sel]; g = int(np.argmin(dd)); r = RID[ix[sel[g]]]
     vx, vz = P[ix[sel[g]], 0] - q0[g, 0], P[ix[sel[g]], 1] - q0[g, 1]; L = float(np.hypot(vx, vz)) or 1.0
-    plots.append({'id': len(plots), 'road': RD[r]['name'], 'side': int(side[sel[g]]), 'area': round(len(sel) * S * S), 'tiny': bool(bad[c]), 'poly': poly,
+    plots.append({'id': len(plots), 'road': RD[r]['name'], 'side': int(side[sel[g]]), 'area': round(len(sel) * S * S), 'tiny': bool(bad[c]), 'big': bool(isbig[c]), 'poly': poly,
                   'gate': [round(float(q0[g, 0]), 1), round(float(q0[g, 1]), 1)], 'face': [round(vx / L, 3), round(vz / L, 3)]})
 print('plots', len(plots), ' area m2 min/median/max', min(p['area'] for p in plots), int(np.median([p['area'] for p in plots])), max(p['area'] for p in plots))
 # ---- buildings: which plot is each hand / fill building in?  (centre cell, and all 4 corners in the SAME plot)
@@ -198,7 +239,7 @@ for c in range(nc):
         trees.append([round(float(x_), 1), round(float(z_), 1), kd[0], round(float(rng2.uniform(kd[1], kd[2])), 2), round(float(rng2.uniform(0, 6.2832)), 2)])
 print('garden trees (existing game kinds):', len(trees), ' per plot max', 12)
 json.dump(trees, open('docs/city_plot_trees.json', 'w'), separators=(',', ':'))
-json.dump({'plot_w': PLOT_W, 'radius': R, 'plots': plots, 'buildings': bld, 'outside': out_b, 'cross_border': split_b}, open('docs/city_plots_tiled.json', 'w'), separators=(',', ':'))
+json.dump({'plot_w': 0, 'target_area': TARGET, 'big_buildings': big_names, 'radius': R, 'plots': plots, 'buildings': bld, 'outside': out_b, 'cross_border': split_b}, open('docs/city_plots_tiled.json', 'w'), separators=(',', ':'))
 # ---- pictures
 import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection

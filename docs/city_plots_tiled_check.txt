@@ -1,5 +1,5 @@
-plots 2923
-GAP (free land eroded 3 m, no plot): 436 m2
-OVERLAP (ground in 2+ plots): 0 m2
-NOGO (plot ground deep inside road/rail/keep-out/water/steep): 668 m2
+plots 5799
+GAP (free land eroded 3 m, no plot): 2492 m2
+OVERLAP (ground in 2+ plots): 753 m2
+NOGO (plot ground deep inside road/rail/keep-out/water/steep): 420 m2
 see numbers (borders are simplified by 1.5 m, so a few m2 along edges is normal)
