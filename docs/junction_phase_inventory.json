@@ -1,0 +1,867 @@
+{
+ "constants": {
+  "MERGE_GAP_m": 600.0,
+  "SPACING_MOTORWAY_m": 1600
+ },
+ "tierA": [
+  {
+   "id": "J1",
+   "what": "J1 centre, 4 arms x 8 lanes, ground open star",
+   "status": "BUILT (J1-g4)",
+   "work": "none now (AI / signal check only)"
+  },
+  {
+   "id": "RT-N",
+   "what": "ring x J1-N, 3-leg, ground, proposed CGT",
+   "status": "not built (AI stand-in tLink)",
+   "work": "HANDOFF_RING_T_JUNCTIONS T0..Tx"
+  },
+  {
+   "id": "RT-E",
+   "what": "ring x J1-E, 3-leg, ground, proposed CFI",
+   "status": "not built",
+   "work": "same"
+  },
+  {
+   "id": "RT-W",
+   "what": "ring x J1-W, 3-leg, ground, proposed MUT",
+   "status": "not built",
+   "work": "same"
+  },
+  {
+   "id": "RT-S",
+   "what": "ring x J1-S x island link M6-1, 4-leg (D17-1), grade-separated",
+   "status": "not built (M6-1 and its bridge are built)",
+   "work": "type chosen in 17.4c / 9.2"
+  }
+ ],
+ "taps": [
+  {
+   "id": "T01",
+   "on": "J1-E",
+   "x": 305,
+   "z": 24,
+   "ends": [
+    [
+     "R4-12S",
+     89
+    ]
+   ],
+   "cls": "R4",
+   "minorLevel": [
+    22.66
+   ],
+   "group": [
+    "T01"
+   ]
+  },
+  {
+   "id": "T02",
+   "on": "J1-E",
+   "x": 860,
+   "z": 389,
+   "ends": [
+    [
+     "R4-13E",
+     82
+    ]
+   ],
+   "cls": "R4",
+   "minorLevel": [
+    32.12
+   ],
+   "group": [
+    "T02"
+   ]
+  },
+  {
+   "id": "T03",
+   "on": "J1-E",
+   "x": 1398,
+   "z": 735,
+   "ends": [
+    [
+     "R6-14E",
+     83
+    ]
+   ],
+   "cls": "R6",
+   "minorLevel": [
+    36.32
+   ],
+   "group": [
+    "T03"
+   ]
+  },
+  {
+   "id": "T04",
+   "on": "J1-N",
+   "x": 398,
+   "z": -1272,
+   "ends": [
+    [
+     "R4-9S",
+     80
+    ]
+   ],
+   "cls": "R4",
+   "minorLevel": [
+    44.47
+   ],
+   "group": [
+    "T04"
+   ]
+  },
+  {
+   "id": "T05",
+   "on": "J1-N",
+   "x": 869,
+   "z": -2040,
+   "ends": [
+    [
+     "R4-11S",
+     88
+    ]
+   ],
+   "cls": "R4",
+   "minorLevel": [
+    38.56
+   ],
+   "group": [
+    "T05",
+    "T06",
+    "T07"
+   ]
+  },
+  {
+   "id": "T06",
+   "on": "J1-N",
+   "x": 1331,
+   "z": -2189,
+   "ends": [
+    [
+     "R4-26E",
+     89
+    ]
+   ],
+   "cls": "R4",
+   "minorLevel": [
+    33.09
+   ],
+   "group": [
+    "T05",
+    "T06",
+    "T07"
+   ]
+  },
+  {
+   "id": "T07",
+   "on": "J1-N",
+   "x": 1564,
+   "z": -2298,
+   "ends": [
+    [
+     "R4-10E",
+     88
+    ]
+   ],
+   "cls": "R4",
+   "minorLevel": [
+    35.3
+   ],
+   "group": [
+    "T05",
+    "T06",
+    "T07"
+   ]
+  },
+  {
+   "id": "T08",
+   "on": "J1-S",
+   "x": -568,
+   "z": 440,
+   "ends": [
+    [
+     "R4-20S",
+     86
+    ]
+   ],
+   "cls": "R4",
+   "minorLevel": [
+    21.98
+   ],
+   "group": [
+    "T08"
+   ]
+  },
+  {
+   "id": "T09",
+   "on": "J1-W",
+   "x": -2140,
+   "z": 227,
+   "ends": [
+    [
+     "R4-29E",
+     89
+    ]
+   ],
+   "cls": "R4",
+   "minorLevel": [
+    25.2
+   ],
+   "group": [
+    "T09"
+   ]
+  },
+  {
+   "id": "T10",
+   "on": "J1-W",
+   "x": -1073,
+   "z": 140,
+   "ends": [
+    [
+     "R6-15S",
+     61
+    ]
+   ],
+   "cls": "R6",
+   "minorLevel": [
+    34.42
+   ],
+   "group": [
+    "T10"
+   ]
+  },
+  {
+   "id": "T11",
+   "on": "M8",
+   "x": -2619,
+   "z": -1099,
+   "ends": [
+    [
+     "R6-15E",
+     61
+    ]
+   ],
+   "cls": "R6",
+   "minorLevel": [
+    33.49
+   ],
+   "ringStation": 5614,
+   "mainLevel": 33.4,
+   "mainGrade": 3.78,
+   "group": [
+    "T11",
+    "T12"
+   ]
+  },
+  {
+   "id": "T12",
+   "on": "M8",
+   "x": -2606,
+   "z": -830,
+   "ends": [
+    [
+     "R4-5S",
+     90
+    ]
+   ],
+   "cls": "R4",
+   "minorLevel": [
+    24.24
+   ],
+   "ringStation": 5344,
+   "mainLevel": 24.13,
+   "mainGrade": 3.54,
+   "group": [
+    "T11",
+    "T12"
+   ]
+  },
+  {
+   "id": "T13",
+   "on": "M8",
+   "x": -2523,
+   "z": 936,
+   "ends": [
+    [
+     "R4-6S",
+     87
+    ]
+   ],
+   "cls": "R4",
+   "minorLevel": [
+    20.07
+   ],
+   "ringStation": 3575,
+   "mainLevel": 20.23,
+   "mainGrade": -3.2,
+   "group": [
+    "T13"
+   ]
+  },
+  {
+   "id": "T14",
+   "on": "M8",
+   "x": -2007,
+   "z": 2220,
+   "ends": [
+    [
+     "R4-8S",
+     87
+    ]
+   ],
+   "cls": "R4",
+   "minorLevel": [
+    33.6
+   ],
+   "ringStation": 2090,
+   "mainLevel": 33.58,
+   "mainGrade": -1.05,
+   "group": [
+    "T14"
+   ]
+  },
+  {
+   "id": "T15",
+   "on": "M8",
+   "x": -1547,
+   "z": -2463,
+   "ends": [
+    [
+     "R4-9E",
+     84
+    ],
+    [
+     "R6-9E",
+     85
+    ]
+   ],
+   "cls": "R6",
+   "minorLevel": [
+    28.42,
+    28.42
+   ],
+   "ringStation": 7589,
+   "mainLevel": 28.39,
+   "mainGrade": 1.6,
+   "group": [
+    "T15"
+   ]
+  },
+  {
+   "id": "T16",
+   "on": "M8",
+   "x": 68,
+   "z": 2046,
+   "ends": [
+    [
+     "R4-20E",
+     87
+    ]
+   ],
+   "cls": "R4",
+   "minorLevel": [
+    24.46
+   ],
+   "ringStation": 19228,
+   "mainLevel": 24.46,
+   "mainGrade": -0.62,
+   "group": [
+    "T16",
+    "T18"
+   ]
+  },
+  {
+   "id": "T17",
+   "on": "M8",
+   "x": 271,
+   "z": -3762,
+   "ends": [
+    [
+     "R4-27S",
+     83
+    ]
+   ],
+   "cls": "R4",
+   "minorLevel": [
+    23.54
+   ],
+   "ringStation": 9869,
+   "mainLevel": 23.59,
+   "mainGrade": 1.6,
+   "group": [
+    "T17"
+   ]
+  },
+  {
+   "id": "T18",
+   "on": "M8",
+   "x": 530,
+   "z": 1874,
+   "ends": [
+    [
+     "R4-14E",
+     64
+    ]
+   ],
+   "cls": "R4",
+   "minorLevel": [
+    38.33
+   ],
+   "ringStation": 18733,
+   "mainLevel": 38.48,
+   "mainGrade": -4.0,
+   "group": [
+    "T16",
+    "T18"
+   ]
+  },
+  {
+   "id": "T19",
+   "on": "M8",
+   "x": 1440,
+   "z": -3414,
+   "ends": [
+    [
+     "R4-23E",
+     57
+    ]
+   ],
+   "cls": "R4",
+   "minorLevel": [
+    32.75
+   ],
+   "ringStation": 11169,
+   "mainLevel": 32.74,
+   "mainGrade": -0.25,
+   "group": [
+    "T19",
+    "T20"
+   ]
+  },
+  {
+   "id": "T20",
+   "on": "M8",
+   "x": 1627,
+   "z": -3229,
+   "ends": [
+    [
+     "R4-10S",
+     86
+    ]
+   ],
+   "cls": "R4",
+   "minorLevel": [
+    35.94
+   ],
+   "ringStation": 11429,
+   "mainLevel": 35.93,
+   "mainGrade": 1.6,
+   "group": [
+    "T19",
+    "T20"
+   ]
+  },
+  {
+   "id": "T21",
+   "on": "M8",
+   "x": 2536,
+   "z": -2297,
+   "ends": [
+    [
+     "R4-24S",
+     86
+    ]
+   ],
+   "cls": "R4",
+   "minorLevel": [
+    70.5
+   ],
+   "ringStation": 12734,
+   "mainLevel": 34.54,
+   "mainGrade": 1.05,
+   "group": [
+    "T21"
+   ]
+  },
+  {
+   "id": "T22",
+   "on": "M8",
+   "x": 2776,
+   "z": -1645,
+   "ends": [
+    [
+     "R6-11E",
+     83
+    ]
+   ],
+   "cls": "R6",
+   "minorLevel": [
+    28.1
+   ],
+   "ringStation": 13428,
+   "mainLevel": 28.1,
+   "mainGrade": -1.35,
+   "group": [
+    "T22"
+   ]
+  }
+ ],
+ "tapGroups": [
+  {
+   "taps": [
+    "T01"
+   ],
+   "on": "J1-E",
+   "r6": false,
+   "angleMin": 89,
+   "pairGap": 0,
+   "proposal": "R4 tap: compact trumpet / half diamond (one loop or two slips, minor road crosses over or under)"
+  },
+  {
+   "taps": [
+    "T02"
+   ],
+   "on": "J1-E",
+   "r6": false,
+   "angleMin": 82,
+   "pairGap": 0,
+   "proposal": "R4 tap: compact trumpet / half diamond (one loop or two slips, minor road crosses over or under)"
+  },
+  {
+   "taps": [
+    "T03"
+   ],
+   "on": "J1-E",
+   "r6": true,
+   "angleMin": 83,
+   "pairGap": 0,
+   "proposal": "R6 tap: trumpet (3-leg) or half directional; R6 passes over or under the 8-lane road"
+  },
+  {
+   "taps": [
+    "T04"
+   ],
+   "on": "J1-N",
+   "r6": false,
+   "angleMin": 80,
+   "pairGap": 0,
+   "proposal": "R4 tap: compact trumpet / half diamond (one loop or two slips, minor road crosses over or under)"
+  },
+  {
+   "taps": [
+    "T05",
+    "T06",
+    "T07"
+   ],
+   "on": "J1-N",
+   "r6": false,
+   "angleMin": 88,
+   "pairGap": 257,
+   "proposal": "ONE merged interchange with a collector-distributor road (CHAIN of 3 taps, total length 743 m: check whether one C-D road or two interchanges) (two exits would be < 600 m apart, weave 3.8)"
+  },
+  {
+   "taps": [
+    "T08"
+   ],
+   "on": "J1-S",
+   "r6": false,
+   "angleMin": 86,
+   "pairGap": 0,
+   "proposal": "R4 tap: compact trumpet / half diamond (one loop or two slips, minor road crosses over or under)"
+  },
+  {
+   "taps": [
+    "T09"
+   ],
+   "on": "J1-W",
+   "r6": false,
+   "angleMin": 89,
+   "pairGap": 0,
+   "proposal": "R4 tap: compact trumpet / half diamond (one loop or two slips, minor road crosses over or under)"
+  },
+  {
+   "taps": [
+    "T10"
+   ],
+   "on": "J1-W",
+   "r6": true,
+   "angleMin": 61,
+   "pairGap": 0,
+   "proposal": "R6 tap: trumpet (3-leg) or half directional; R6 passes over or under the 8-lane road"
+  },
+  {
+   "taps": [
+    "T11",
+    "T12"
+   ],
+   "on": "M8",
+   "r6": true,
+   "angleMin": 61,
+   "pairGap": 269,
+   "proposal": "ONE merged interchange with a collector-distributor road (two exits would be < 600 m apart, weave 3.8)"
+  },
+  {
+   "taps": [
+    "T13"
+   ],
+   "on": "M8",
+   "r6": false,
+   "angleMin": 87,
+   "pairGap": 0,
+   "proposal": "R4 tap: compact trumpet / half diamond (one loop or two slips, minor road crosses over or under)"
+  },
+  {
+   "taps": [
+    "T14"
+   ],
+   "on": "M8",
+   "r6": false,
+   "angleMin": 87,
+   "pairGap": 0,
+   "proposal": "R4 tap: compact trumpet / half diamond (one loop or two slips, minor road crosses over or under)"
+  },
+  {
+   "taps": [
+    "T15"
+   ],
+   "on": "M8",
+   "r6": true,
+   "angleMin": 84,
+   "pairGap": 0,
+   "proposal": "R6 tap: trumpet (3-leg) or half directional; R6 passes over or under the 8-lane road"
+  },
+  {
+   "taps": [
+    "T16",
+    "T18"
+   ],
+   "on": "M8",
+   "r6": false,
+   "angleMin": 64,
+   "pairGap": 493,
+   "proposal": "ONE merged interchange with a collector-distributor road (two exits would be < 600 m apart, weave 3.8)"
+  },
+  {
+   "taps": [
+    "T17"
+   ],
+   "on": "M8",
+   "r6": false,
+   "angleMin": 83,
+   "pairGap": 0,
+   "proposal": "R4 tap: compact trumpet / half diamond (one loop or two slips, minor road crosses over or under)"
+  },
+  {
+   "taps": [
+    "T19",
+    "T20"
+   ],
+   "on": "M8",
+   "r6": false,
+   "angleMin": 57,
+   "pairGap": 263,
+   "proposal": "ONE merged interchange with a collector-distributor road (two exits would be < 600 m apart, weave 3.8)"
+  },
+  {
+   "taps": [
+    "T21"
+   ],
+   "on": "M8",
+   "r6": false,
+   "angleMin": 86,
+   "pairGap": 0,
+   "proposal": "R4 tap: compact trumpet / half diamond (one loop or two slips, minor road crosses over or under)"
+  },
+  {
+   "taps": [
+    "T22"
+   ],
+   "on": "M8",
+   "r6": true,
+   "angleMin": 83,
+   "pairGap": 0,
+   "proposal": "R6 tap: trumpet (3-leg) or half directional; R6 passes over or under the 8-lane road"
+  }
+ ],
+ "tierC": [
+  {
+   "id": "N002",
+   "cls": "R4xR4xR6",
+   "legs": [
+    "R6-10",
+    "R4-1",
+    "R4-2"
+   ],
+   "angle": 85,
+   "type": "T signalised, turn pockets (A x A)",
+   "interchange": "CONDITIONAL (R6 arm: decide after the demand step)"
+  },
+  {
+   "id": "N004",
+   "cls": "R4xR6",
+   "legs": [
+    "R6-12",
+    "R4-9"
+   ],
+   "angle": 87,
+   "type": "T signalised, turn pockets (A x A)",
+   "interchange": "CONDITIONAL (R6 arm: decide after the demand step)"
+  },
+  {
+   "id": "N008",
+   "cls": "R4xR6",
+   "legs": [
+    "R4-3",
+    "R6-10"
+   ],
+   "angle": 81,
+   "type": "T signalised, turn pockets (A x A)",
+   "interchange": "CONDITIONAL (R6 arm: decide after the demand step)"
+  },
+  {
+   "id": "N009",
+   "cls": "R4xR6",
+   "legs": [
+    "R4-4",
+    "R6-9"
+   ],
+   "angle": 83,
+   "type": "T signalised, turn pockets (A x A)",
+   "interchange": "CONDITIONAL (R6 arm: decide after the demand step)"
+  },
+  {
+   "id": "N011",
+   "cls": "R4xR4",
+   "legs": [
+    "R4-7",
+    "R4-6"
+   ],
+   "angle": 65,
+   "type": "T signalised, turn pockets (A x A)",
+   "interchange": "no (R4 x R4, signalised T at grade)"
+  },
+  {
+   "id": "N013",
+   "cls": "R4xR4",
+   "legs": [
+    "R4-8",
+    "R4-7"
+   ],
+   "angle": 78,
+   "type": "T signalised, turn pockets (A x A)",
+   "interchange": "no (R4 x R4, signalised T at grade)"
+  },
+  {
+   "id": "N016",
+   "cls": "R4xR4",
+   "legs": [
+    "R4-15",
+    "R4-19"
+   ],
+   "angle": 90,
+   "type": "T signalised, turn pockets (A x A)",
+   "interchange": "no (R4 x R4, signalised T at grade)"
+  },
+  {
+   "id": "N018",
+   "cls": "R4xR4",
+   "legs": [
+    "R4-16",
+    "R4-19"
+   ],
+   "angle": 77,
+   "type": "T signalised, turn pockets (A x A)",
+   "interchange": "no (R4 x R4, signalised T at grade)"
+  },
+  {
+   "id": "N019",
+   "cls": "R4xR4xR4",
+   "legs": [
+    "R4-17",
+    "R4-18",
+    "R4-19"
+   ],
+   "angle": 87,
+   "type": "T signalised, turn pockets (A x A)",
+   "interchange": "no (R4 x R4, signalised T at grade)"
+  },
+  {
+   "id": "N021",
+   "cls": "R4xR4",
+   "legs": [
+    "R4-22",
+    "R4-21"
+   ],
+   "angle": 76,
+   "type": "T signalised, turn pockets (A x A)",
+   "interchange": "no (R4 x R4, signalised T at grade)"
+  },
+  {
+   "id": "N024",
+   "cls": "R4xR6",
+   "legs": [
+    "R4-25",
+    "R6-11"
+   ],
+   "angle": 88,
+   "type": "T signalised, turn pockets (A x A)",
+   "interchange": "CONDITIONAL (R6 arm: decide after the demand step)"
+  },
+  {
+   "id": "N028",
+   "cls": "R4xR4",
+   "legs": [
+    "R4-28",
+    "R4-27"
+   ],
+   "angle": 51,
+   "type": "T signalised, turn pockets (A x A)",
+   "interchange": "no (R4 x R4, signalised T at grade)"
+  },
+  {
+   "id": "N030",
+   "cls": "R4xR6",
+   "legs": [
+    "R4-29",
+    "R6-15"
+   ],
+   "angle": 79,
+   "type": "GRADE-SEPARATED",
+   "interchange": "YES (ground forces it, 21.7-1: at grade it would need 230 m at 6 % / 99 m at 8 %)"
+  },
+  {
+   "id": "N074",
+   "cls": "R2xR4",
+   "legs": [
+    "R2-54",
+    "R4-21"
+   ],
+   "angle": 67,
+   "type": "GRADE-SEPARATED",
+   "interchange": "YES (ground forces it, 21.7-1: at grade it would need 230 m at 6 % / 99 m at 8 %)"
+  }
+ ],
+ "tierD": {
+  "CONTINUATION (no junction)": 9,
+  "T priority": 42,
+  "T priority + left pocket on the arterial": 25,
+  "ROUNDABOUT 2-lane (50-70 m)": 13,
+  "ROUNDABOUT 1-lane (30-45 m)": 24
+ },
+ "nodes": 132,
+ "continuations": 14,
+ "arterialNodesNearTap": [
+  [
+   "N004",
+   "T04",
+   241
+  ],
+  [
+   "N028",
+   "T17",
+   233
+  ]
+ ]
+}

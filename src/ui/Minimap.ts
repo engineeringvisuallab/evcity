@@ -71,7 +71,7 @@ export function formatClock(hours: number): { time: string; period: string } {
 const MAP_CLUTTER = false;
 
 const BASE_SIZE = 1024;
-const ZOOM_SPANS = [2400, 6000, 10600]; // metres across: close / medium / whole world
+const ZOOM_SPANS = [600, 6000, 10600]; // metres across: close (300 m each side of you) / medium / whole world
 
 /**
  * The site map: always on screen (top-right), north is up, centred on you.
@@ -82,7 +82,7 @@ export class Minimap {
   private canvas = document.createElement('canvas');
   private ctx: CanvasRenderingContext2D;
   private base: HTMLCanvasElement | null = null;
-  private zoom = 1;
+  private zoom = 0;
   private px = 220;
   private dpr = Math.min(window.devicePixelRatio || 1, 2);
   private worker: Worker;

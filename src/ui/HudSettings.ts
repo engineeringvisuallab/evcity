@@ -38,7 +38,7 @@ export const HUD_DEFAULTS: Readonly<HudOptions> = {
   weapon: false,
   areaAlways: false,
   muted: false,
-  mapZoom: 1,
+  mapZoom: 0,
   waterQuality: 1,
   infiniteOxygen: false,
   rainMode: 1,

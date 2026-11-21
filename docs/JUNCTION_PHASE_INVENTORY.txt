@@ -1,0 +1,71 @@
+STEP 24.1 JUNCTION PHASE INVENTORY (read only, tools/junction-phase-inventory.py)
+nodes in docs/centre_junction.json: 132; continuations (no junction): 14; real junction nodes: 118
+
+TIER A  8-lane x 8-lane (5): J1, RT-N, RT-E, RT-W, RT-S
+   J1    J1 centre, 4 arms x 8 lanes, ground open star | BUILT (J1-g4) | none now (AI / signal check only)
+   RT-N  ring x J1-N, 3-leg, ground, proposed CGT | not built (AI stand-in tLink) | HANDOFF_RING_T_JUNCTIONS T0..Tx
+   RT-E  ring x J1-E, 3-leg, ground, proposed CFI | not built | same
+   RT-W  ring x J1-W, 3-leg, ground, proposed MUT | not built | same
+   RT-S  ring x J1-S x island link M6-1, 4-leg (D17-1), grade-separated | not built (M6-1 and its bridge are built) | type chosen in 17.4c / 9.2
+
+TIER B  taps on an 8-lane road: 22 taps, 5 with an R6 end, 17 R4 only
+   T01 on J1-E  R4 [('R4-12S', 89)] (305,24)
+   T02 on J1-E  R4 [('R4-13E', 82)] (860,389)
+   T03 on J1-E  R6 [('R6-14E', 83)] (1398,735)
+   T04 on J1-N  R4 [('R4-9S', 80)] (398,-1272)
+   T05 on J1-N  R4 [('R4-11S', 88)] (869,-2040)
+   T06 on J1-N  R4 [('R4-26E', 89)] (1331,-2189)
+   T07 on J1-N  R4 [('R4-10E', 88)] (1564,-2298)
+   T08 on J1-S  R4 [('R4-20S', 86)] (-568,440)
+   T09 on J1-W  R4 [('R4-29E', 89)] (-2140,227)
+   T10 on J1-W  R6 [('R6-15S', 61)] (-1073,140)
+   T11 on M8    R6 [('R6-15E', 61)] (-2619,-1099) ring st 5614 level 33.4 grade 3.78 % minor end [33.49]
+   T12 on M8    R4 [('R4-5S', 90)] (-2606,-830) ring st 5344 level 24.13 grade 3.54 % minor end [24.24]
+   T13 on M8    R4 [('R4-6S', 87)] (-2523,936) ring st 3575 level 20.23 grade -3.2 % minor end [20.07]
+   T14 on M8    R4 [('R4-8S', 87)] (-2007,2220) ring st 2090 level 33.58 grade -1.05 % minor end [33.6]
+   T15 on M8    R6 [('R4-9E', 84), ('R6-9E', 85)] (-1547,-2463) ring st 7589 level 28.39 grade 1.6 % minor end [28.42, 28.42]
+   T16 on M8    R4 [('R4-20E', 87)] (68,2046) ring st 19228 level 24.46 grade -0.62 % minor end [24.46]
+   T17 on M8    R4 [('R4-27S', 83)] (271,-3762) ring st 9869 level 23.59 grade 1.6 % minor end [23.54]
+   T18 on M8    R4 [('R4-14E', 64)] (530,1874) ring st 18733 level 38.48 grade -4.0 % minor end [38.33]
+   T19 on M8    R4 [('R4-23E', 57)] (1440,-3414) ring st 11169 level 32.74 grade -0.25 % minor end [32.75]
+   T20 on M8    R4 [('R4-10S', 86)] (1627,-3229) ring st 11429 level 35.93 grade 1.6 % minor end [35.94]
+   T21 on M8    R4 [('R4-24S', 86)] (2536,-2297) ring st 12734 level 34.54 grade 1.05 % minor end [70.5]
+   T22 on M8    R6 [('R6-11E', 83)] (2776,-1645) ring st 13428 level 28.1 grade -1.35 % minor end [28.1]
+   MERGE GROUPS (same 8-lane road, closer than 600 m): 17 interchanges for 22 taps
+   T01            on J1-E  gap 0 m, min angle 89 | R4 tap: compact trumpet / half diamond (one loop or two slips, minor road crosses over or under)
+   T02            on J1-E  gap 0 m, min angle 82 | R4 tap: compact trumpet / half diamond (one loop or two slips, minor road crosses over or under)
+   T03            on J1-E  gap 0 m, min angle 83 | R6 tap: trumpet (3-leg) or half directional; R6 passes over or under the 8-lane road
+   T04            on J1-N  gap 0 m, min angle 80 | R4 tap: compact trumpet / half diamond (one loop or two slips, minor road crosses over or under)
+   T05+T06+T07    on J1-N  gap 257 m, min angle 88 | ONE merged interchange with a collector-distributor road (CHAIN of 3 taps, total length 743 m: check whether one C-D road or two interchanges) (two exits would be < 600 m apart, weave 3.8)
+   T08            on J1-S  gap 0 m, min angle 86 | R4 tap: compact trumpet / half diamond (one loop or two slips, minor road crosses over or under)
+   T09            on J1-W  gap 0 m, min angle 89 | R4 tap: compact trumpet / half diamond (one loop or two slips, minor road crosses over or under)
+   T10            on J1-W  gap 0 m, min angle 61 | R6 tap: trumpet (3-leg) or half directional; R6 passes over or under the 8-lane road
+   T11+T12        on M8    gap 269 m, min angle 61 | ONE merged interchange with a collector-distributor road (two exits would be < 600 m apart, weave 3.8)
+   T13            on M8    gap 0 m, min angle 87 | R4 tap: compact trumpet / half diamond (one loop or two slips, minor road crosses over or under)
+   T14            on M8    gap 0 m, min angle 87 | R4 tap: compact trumpet / half diamond (one loop or two slips, minor road crosses over or under)
+   T15            on M8    gap 0 m, min angle 84 | R6 tap: trumpet (3-leg) or half directional; R6 passes over or under the 8-lane road
+   T16+T18        on M8    gap 493 m, min angle 64 | ONE merged interchange with a collector-distributor road (two exits would be < 600 m apart, weave 3.8)
+   T17            on M8    gap 0 m, min angle 83 | R4 tap: compact trumpet / half diamond (one loop or two slips, minor road crosses over or under)
+   T19+T20        on M8    gap 263 m, min angle 57 | ONE merged interchange with a collector-distributor road (two exits would be < 600 m apart, weave 3.8)
+   T21            on M8    gap 0 m, min angle 86 | R4 tap: compact trumpet / half diamond (one loop or two slips, minor road crosses over or under)
+   T22            on M8    gap 0 m, min angle 83 | R6 tap: trumpet (3-leg) or half directional; R6 passes over or under the 8-lane road
+
+TIER C  arterial x arterial nodes (+ N074): 14 real junctions (continuations left out)
+   N002 R4xR4xR6 ['R6-10', 'R4-1', 'R4-2'] angle 85 | T signalised, turn pockets (A x A) | interchange: CONDITIONAL (R6 arm: decide after the demand step)
+   N004 R4xR6 ['R6-12', 'R4-9'] angle 87 | T signalised, turn pockets (A x A) | interchange: CONDITIONAL (R6 arm: decide after the demand step)
+   N008 R4xR6 ['R4-3', 'R6-10'] angle 81 | T signalised, turn pockets (A x A) | interchange: CONDITIONAL (R6 arm: decide after the demand step)
+   N009 R4xR6 ['R4-4', 'R6-9'] angle 83 | T signalised, turn pockets (A x A) | interchange: CONDITIONAL (R6 arm: decide after the demand step)
+   N011 R4xR4 ['R4-7', 'R4-6'] angle 65 | T signalised, turn pockets (A x A) | interchange: no (R4 x R4, signalised T at grade)
+   N013 R4xR4 ['R4-8', 'R4-7'] angle 78 | T signalised, turn pockets (A x A) | interchange: no (R4 x R4, signalised T at grade)
+   N016 R4xR4 ['R4-15', 'R4-19'] angle 90 | T signalised, turn pockets (A x A) | interchange: no (R4 x R4, signalised T at grade)
+   N018 R4xR4 ['R4-16', 'R4-19'] angle 77 | T signalised, turn pockets (A x A) | interchange: no (R4 x R4, signalised T at grade)
+   N019 R4xR4xR4 ['R4-17', 'R4-18', 'R4-19'] angle 87 | T signalised, turn pockets (A x A) | interchange: no (R4 x R4, signalised T at grade)
+   N021 R4xR4 ['R4-22', 'R4-21'] angle 76 | T signalised, turn pockets (A x A) | interchange: no (R4 x R4, signalised T at grade)
+   N024 R4xR6 ['R4-25', 'R6-11'] angle 88 | T signalised, turn pockets (A x A) | interchange: CONDITIONAL (R6 arm: decide after the demand step)
+   N028 R4xR4 ['R4-28', 'R4-27'] angle 51 | T signalised, turn pockets (A x A) | interchange: no (R4 x R4, signalised T at grade)
+   N030 R4xR6 ['R4-29', 'R6-15'] angle 79 | GRADE-SEPARATED | interchange: YES (ground forces it, 21.7-1: at grade it would need 230 m at 6 % / 99 m at 8 %)
+   N074 R2xR4 ['R2-54', 'R4-21'] angle 67 | GRADE-SEPARATED | interchange: YES (ground forces it, 21.7-1: at grade it would need 230 m at 6 % / 99 m at 8 %)
+
+TIER D  R2 / C / L at grade: CONTINUATION (no junction): 9, T priority: 42, T priority + left pocket on the arterial: 25, ROUNDABOUT 2-lane (50-70 m): 13, ROUNDABOUT 1-lane (30-45 m): 24
+
+arterial node within 400 m of a tap (spacing, look at them together): [('N004', 'T04', 241), ('N028', 'T17', 233)]
