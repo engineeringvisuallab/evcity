@@ -39,3 +39,13 @@ TreePlacement.ts (SMALL_H height 9.4.. -> 15..), TreeTypes.ts (TREE_TRUNK climb 
 
 ## Check
 tsc PASS, shadow-quality-test PASS. Ager FAIL gulo (deadwood-model-test, grass-city/clump/rock, jungle-thicket) original zip-eo same FAIL. Game e RUN HOY NI.
+
+---
+# Step 2b — jongol ghas halka, chhoto, phul-er sathe mil
+
+- Ghas chhoto: Config grass.jungle `tall` 2.2 -> 0.85 (tussock clump `tallClump` 0.7)
+- Phul ghas-er cheye ektu uchu: `tallFlower` 2.0 (phul ~0.8 m, ghas ~0.5 m)
+- Ghas-er rong halka: GrassManager `JUNGLE_GREEN` (0.17, 0.43, 0.10) + proti tuft e halka holud-sobuj mishel (`pick * 0.7`)
+- Shudhu ghas na: lata-pata (fern / shrub / lata) 50% -> 65% (Config dense.thicket.undergrowth)
+- Check: tsc PASS. Game e RUN HOY NI.
+- Aro halka: JUNGLE_GREEN barao. Ghas aro chhoto: `tall` komao. Phul aro uchu: `tallFlower` barao.

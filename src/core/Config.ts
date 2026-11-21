@@ -427,7 +427,7 @@ export const Config = {
        * so the jungle holds about 2.5x as many plants as before. `undergrowth` = share of them that are lata-pata (fern / shrub / creeper mound, no colliders),
        * the rest are young trees of `scale` (x the tree's normal size). Lower `layers` / `chance` if the frame rate drops.
        */
-      thicket: { layers: 3, chance: 0.88, undergrowth: 0.5, scale: [0.85, 1.3] as [number, number] },
+      thicket: { layers: 3, chance: 0.88, undergrowth: 0.65, scale: [0.85, 1.3] as [number, number] },
       /**
        * JUNGLE DEADWOOD (sukno gach + sukno pata): old dry trees lying on the ground and patches of dry fallen leaves. Per 10 m jungle cell (x jungle density x Quality treeMul):
        * `logChance` = a fallen dead tree (`logScale` = size range, 1 = 7 m long), `litterLayers` x `litterChance` = loose leaf patches (`litterScale`), and `aroundLog` leaf patches
@@ -584,7 +584,7 @@ export const Config = {
        * JUNGLE FLOOR (ghono jongol ground cover): inside the dense jungle every cell gets grass (`floor` = patch value forced up to this x jungle density, so no bald
        * ground), tufts are `tall` x higher, `chance` = grass chance per cell, and the grass kinds are mixed (wild, tussocks, broad-leaf, seed-head). Flag 6 in the tuft data.
        */
-      jungle: { floor: 0.9, tall: 2.2, chance: 0.35, clumpChance: 0.1, clear: 2 }, // 2026-11-21: grass is back in the jungle (clear 2 = never skipped) // 2026-11-20: NO grass in the dense jungle (floor / chance / clumpChance 0); `clear` = jungle density above which no tuft or clump is placed
+      jungle: { floor: 0.9, tall: 0.85, tallFlower: 2.0, tallClump: 0.7, chance: 0.35, clumpChance: 0.1, clear: 2 }, // 2026-11-21: grass is back in the jungle (clear 2 = never skipped) // 2026-11-20: NO grass in the dense jungle (floor / chance / clumpChance 0); `clear` = jungle density above which no tuft or clump is placed
       /** Blades per tuft model are multiplied by this (1 = full quality; 0.6 for weak GPUs). */
       bladeDensity: 1,
       /** Wildflowers: share of tufts that carry flowers inside a flower patch / scattered in the open meadow. Patches are ~12-30 m wide. */

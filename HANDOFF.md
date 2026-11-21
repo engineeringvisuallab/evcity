@@ -194,3 +194,4 @@ Small broadleaf trees (< 10 m) are thinned to 25 % (`Config.vegetation.smallTree
 
 ## Real trees Step 2 (2026-11-21)
 - Jungle floor: more dry leaves (x2.7), more flowers, grass back in jungle (Config grass.jungle). Tree shadows only at shadow level high (setTreeShadows in Engine apply); low class starts at shadow low. See CHANGES_REAL_TREES_BN.md. tsc + shadow test PASS, not seen in game.
+- Step 2b (2026-11-21): jungle grass shorter (tall 0.85), flowers taller (tallFlower 2.0), lighter JUNGLE_GREEN, lata-pata share 0.65. tsc PASS, not seen in game.

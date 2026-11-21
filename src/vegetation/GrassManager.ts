@@ -72,6 +72,8 @@ const dummy = new THREE.Object3D();
 const color = new THREE.Color();
 const GREEN: [number, number, number] = [0.098, 0.308, 0.07]; // 40% less dark; FIXED dark green durba (smooth, always the same colour)
 const DRY: [number, number, number] = [0.46, 0.42, 0.2];
+/** Jungle floor grass: fresher and lighter than the meadow green (the old one looked black-green under the trees). */
+const JUNGLE_GREEN: [number, number, number] = [0.17, 0.43, 0.1];
 const YELLOW: [number, number, number] = [0.24, 0.34, 0.09];
 const STRAW: [number, number, number] = [0.62, 0.55, 0.27];
 /** City lawn: a fresher, slightly brighter green than the wild meadow. */
@@ -352,7 +354,11 @@ export class GrassManager {
       const w = ys * wide * ring.size * (lawnTuft ? G.tuft.lawnWidthScale : G.widthScale);
       dummy.scale.set(w, ys, w);
     }
-    if (flag > 5.5) dummy.scale.y *= G.jungle.tall; // jungle floor grass grows tall
+    if (flag > 5.5) {
+      // JUNGLE FLOOR (2026-11-21): short grass, flowers standing a little above it, clumps lower than before
+      const isFl = type >= GrassType.daisy && type <= GrassType.clover;
+      dummy.scale.y *= isFl ? G.jungle.tallFlower : type >= GrassType.tussock ? G.jungle.tallClump : G.jungle.tall;
+    }
     dummy.updateMatrix();
     mesh.setMatrixAt(slot, dummy.matrix);
     const dry = 0; // FIXED colour: no dry / straw / yellow grass, even on high ground
@@ -363,9 +369,9 @@ export class GrassManager {
     const hc = Math.sin(data[o] * 39.3468 + data[o + 2] * 17.1313 + 5.7) * 43758.5453;
     const pick = hc - Math.floor(hc);
     const straw = 0;
-    const u = 0;
-    void pick;
-    const base: [number, number, number] = cityLawn ? LAWN : GREEN;
+    const jungleFloor = flag > 5.5;
+    const u = jungleFloor ? pick * 0.7 : 0; // jungle floor: lighter green, every tuft a little more or less yellow-green
+    const base: [number, number, number] = cityLawn ? LAWN : jungleFloor ? JUNGLE_GREEN : GREEN;
     color.setRGB(
       (base[0] + (YELLOW[0] - base[0]) * u + (STRAW[0] - base[0]) * straw + (DRY[0] - base[0]) * dry) * t,
       (base[1] + (YELLOW[1] - base[1]) * u + (STRAW[1] - base[1]) * straw + (DRY[1] - base[1]) * dry) * t,
