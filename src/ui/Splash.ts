@@ -45,8 +45,17 @@ const CSS = `
 @keyframes evs-iconglow{0%,100%{filter:drop-shadow(0 0 4px rgba(16,245,212,.35))}50%{filter:drop-shadow(0 0 22px rgba(16,245,212,.9))}}
 @keyframes evs-text{0%{opacity:0;clip-path:inset(0 100% 0 29%);transform:translateX(-24px)}25%{opacity:1}100%{opacity:1;clip-path:inset(0 0 0 29%);transform:translateX(0)}}
 @keyframes evs-sweep{to{left:120%}}
+.evs-sky{position:absolute;left:0;right:0;bottom:0;height:30vh;display:flex;align-items:flex-end;justify-content:center;gap:1vw;pointer-events:none;opacity:.6;
+  -webkit-mask-image:linear-gradient(to top,#000 40%,transparent 100%);mask-image:linear-gradient(to top,#000 40%,transparent 100%);}
+.evs-sky i{display:block;width:3.2vw;height:var(--h);transform-origin:50% 100%;transform:scaleY(0);border-top:2px solid rgba(16,245,212,.7);
+  background:repeating-linear-gradient(0deg,rgba(16,245,212,.16) 0 3px,transparent 3px 11px),linear-gradient(#0f3a4b,#0a1c28);
+  animation:evs-rise 5.2s ease-in-out var(--d) infinite;}
+.evs-tips{position:relative;margin-top:16px;height:20px;width:min(86vw,560px);text-align:center;}
+.evs-tips span{position:absolute;left:0;right:0;top:0;color:rgba(200,230,240,.8);font-size:13px;opacity:0;animation:evs-tip 20s linear infinite;animation-delay:calc(var(--i) * 4s + 2s);}
+@keyframes evs-rise{0%{transform:scaleY(0)}35%,72%{transform:scaleY(1)}100%{transform:scaleY(0)}}
+@keyframes evs-tip{0%{opacity:0;transform:translateY(6px)}3%,17%{opacity:1;transform:none}20%,100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){
-  .evs-grid,.evs-glow,.evs-iconwrap,.evs-text,.evs-shine::after{animation-duration:.01s!important;animation-delay:0s!important;animation-iteration-count:1!important}
+  .evs-sky i,.evs-tips span,.evs-grid,.evs-glow,.evs-iconwrap,.evs-text,.evs-shine::after{animation-duration:.01s!important;animation-delay:0s!important;animation-iteration-count:1!important}
 }
 `;
 
@@ -73,13 +82,15 @@ export class Splash {
     this.root.innerHTML = `
       <div class="evs-grid"></div>
       <div class="evs-glow"></div>
+      <div class="evs-sky"><i style="--h:14vh;--d:0.0s"></i><i style="--h:22vh;--d:0.37s"></i><i style="--h:17vh;--d:0.74s"></i><i style="--h:30vh;--d:1.11s"></i><i style="--h:20vh;--d:1.48s"></i><i style="--h:26vh;--d:1.85s"></i><i style="--h:13vh;--d:2.22s"></i><i style="--h:34vh;--d:2.59s"></i><i style="--h:19vh;--d:2.96s"></i><i style="--h:28vh;--d:3.33s"></i><i style="--h:16vh;--d:3.7s"></i><i style="--h:24vh;--d:4.07s"></i><i style="--h:12vh;--d:0.04s"></i><i style="--h:21vh;--d:0.41s"></i></div>
       <div class="evs-logo">
         <div class="evs-iconwrap"><div class="evs-layer evs-icon"></div></div>
         <div class="evs-layer evs-text"></div>
         <div class="evs-shine"></div>
       </div>
       <div class="evs-bar"><div class="evs-fill"></div></div>
-      <div class="evs-label">লোড হচ্ছে…</div>`;
+      <div class="evs-label">লোড হচ্ছে…</div>
+      <div class="evs-tips"><span style="--i:0">N চাপলে যেকোনো গাড়ি তোমার কাছে চলে আসবে</span><span style="--i:1">Y চাপলে গাইডেড ভয়েস ট্যুর শুরু হয়</span><span style="--i:2">0 চাপে X ও Z লিখে সরাসরি সেখানে যাওয়া যায়</span><span style="--i:3">Tab চাপলে সেটিংস মেনু খোলে</span><span style="--i:4">F2 চাপলে FPS ও ড্র-কল দেখা যায়</span></div>`;
     parent.appendChild(this.root);
     this.fill = this.root.querySelector('.evs-fill') as HTMLDivElement;
     this.label = this.root.querySelector('.evs-label') as HTMLDivElement;
