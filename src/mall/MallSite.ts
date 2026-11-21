@@ -175,6 +175,6 @@ export class MallSite {
  * so the local street network - and the railway planned around it - is exactly the same as before the mall was reshaped.
  */
 export function mallKeepout(x: number, z: number): boolean {
-  if (x >= -4 && x <= 235 && z >= -205 && z <= 6) return true; // the old mall zone stays closed (street network + rail unchanged)
+  if (x >= 43 && x <= 235 && z >= -205 && z <= 6) return true; // the old mall zone stays closed (street network + rail unchanged); 2026-11-21: west edge -4 -> 43 so the city hall can stand at (-26, -147) (user: shrink the boundary)
   return distToPlot(x, z, STREET_KEEPOUT) <= STREET_KEEPOUT; // the new plot (a long diagonal strip: a polygon test, not its bounding box) + 30 m
 }

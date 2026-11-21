@@ -383,7 +383,7 @@ export const FILL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'shop-house-3', x: -691.2, z: -29, yaw: -0.8084, W: 13, D: 12, zone: 's0-suburb', seed: 762858 },
   { id: 'house-tin', x: 247.6, z: 737, yaw: -2.4941, W: 11, D: 12, zone: 's0-green', seed: 246402 },
   { id: 'townhouse-3', x: -205.4, z: 475.4, yaw: -1.7946, W: 10, D: 12, zone: 's0-suburb', seed: 869658 }, // PLOTS: moved from (-209.4, 473.4) into free plot land
-  { id: 'shop-house-3', x: -7.2, z: -195.8, yaw: 1.6954, W: 13, D: 12, zone: 's0-arm-n', seed: 1776 }, // PLOTS: moved from (10.8, -215.8) into free plot land
+  { id: 'shop-house-3', x: 13.8, z: -93.8, yaw: 1.6954, W: 13, D: 12, zone: 's0-arm-n', seed: 1776 }, // moved from (-7.2, -195.8): the city hall now stands there (2026-11-21)
   { id: 'house-brick-3', x: -714.3, z: -89.4, yaw: -0.3589, W: 13, D: 16, zone: 's0-suburb', seed: 945423 }, // PLOTS: moved from (-718.3, -91.4) into free plot land
   { id: 'townhouse-3', x: 697.7, z: -196.2, yaw: 2.8451, W: 10, D: 12, zone: 's0-suburb', seed: 593191 },
   { id: 'shop-house-3', x: -663.1, z: -51.4, yaw: 0.5446, W: 13, D: 12, zone: 's0-suburb', seed: 631770 },
