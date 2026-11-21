@@ -73,3 +73,16 @@ Karon: screenshot-er jaygay sheher-er "mown lawn" chhilo: ghas 12 cm (lawnMaxHei
 - Config grass.city `height` 0.6 -> 1.5 (ghas ~30 cm), notun `dense: 3` (prati cell e 3x tuft, shudhu kache-r LOD e)
 - GrassPlacement.ts: lawn tuft base matir 0.03 niche chhilo, ekhon 0.005; extra tuft-o lawn flag 2 (ager flag 4 = alada rong/size)
 - Aro boro/chhoto: `height`. Aro ghono/kom: `dense` (triangle barbe: 3x lawn tuft). tsc PASS, grass test FAIL gulo ager moto-i (city 4, clump 5). Game e RUN HOY NI.
+
+---
+# Step 2f — ghas chikon, real rong, phul ghas-er soman uchu ar bivinno
+
+CORRECTION (2e): lawn-e "extra tuft" idea bhul chhilo (extra tuft road-er upor ba ground height thik na hoye jachchhilo). Ota ferot niyechi. Ekhon: city lawn e `grass.city.dense` = 1.8 gun beshi cell e tuft (cell-e max 1 tuft, tai road / height thik thake). Lawn tuft-er gora 0.5 cm niche (test-o update).
+
+1. CHIKON GHAS: near LOD-e proti blade 3 -> 5 triangle (7 vertex), 3 dhap-e dhire dhire soru (GrassAssets `blade`, `SMOOTH_BLADES`). Dur-er ring ager moto 3 triangle. Blade ektu soru: look.bladeWidth 1.35 -> 1.1. Off korte: Config grass.look.smoothBlades = false.
+2. REAL RONG: sob ghas ek rong na. Proti tuft nijer rong pay (position theke fix): fresh green, holud-sobuj, olive, neel-sobuj, gaDho sobuj, lime, kichu sona-sukno/khor (GrassManager GRASS_PALETTE; sheher-er lawn LAWN_PALETTE, jongol JUNGLE_PALETTE) + proti tuft e halka beshi/kom ujjol.
+3. PHUL: ghas-er soman uchu (tuft.flowerMaxHeight 0.4 -> 0.95; jongol tallFlower 0.85; phul-er tuft-er vitor-er ghas-o uchu: FLOWER_BASE_STYLE 0.25..0.75). 6 ta alada phul, proti ta soman beshi: marigold (komola), buttercup (holud), lavender (beguni), poppy (lal), cornflower (neel/beguni), cosmos (golapi/magenta). Shada daisy/clover ager moto bad, tader jaygay marigold ar cosmos.
+4. Jongol ghas kom: chance 0.35 -> 0.2, clumpChance 0.1 -> 0.06 (triangle bachate).
+
+Check: tsc PASS. grass-rock-test ager moto-i 1 FAIL (original-eo), grass-city 4 / clump 5 original-er moto. Game e RUN HOY NI.
+Dhyan: ghas-er triangle beshi (5-triangle blade + sheher-e beshi tuft). FPS komle: look.smoothBlades false, city.dense 1.

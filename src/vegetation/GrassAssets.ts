@@ -101,11 +101,28 @@ function blade(b: Builder, o: BladeOpts): void {
     const out = o.lean * t * t + o.droop * t * t * t;
     return [o.cx + o.dx * out, o.h * t - o.droop * 0.35 * t * t * t, o.cz + o.dz * out];
   };
-  const P0 = at(0), P1 = at(0.55), P3 = at(1);
   const bw = o.w * Config.vegetation.grass.look.bladeWidth;
-  const w0 = bw, w1 = bw * 0.62;
   const c = (k: number): RGB => [k * o.tint[0], k * o.tint[1], k * o.tint[2]];
   const nl = bladeNormal(-tx, -tz, 0.38), nr = bladeNormal(tx, tz, 0.38), nm = bladeNormal(0, 0, 0);
+  if (SMOOTH_BLADES) {
+    // SMOOTH blade (2026-11-21, near rings): 5 triangles / 7 vertices, three width steps (root -> 0.35 -> 0.7 -> tip), so the blade bends and narrows gradually instead of one sharp kink
+    const ts = [0, 0.35, 0.7], ws = [bw, bw * 0.86, bw * 0.55];
+    const ids: [number, number][] = ts.map((t, i) => {
+      const P = at(t);
+      const k = o.root + (o.tip - o.root) * t;
+      return [b.shared([P[0] - tx * ws[i], P[1], P[2] - tz * ws[i]], nl, c(k), 0), b.shared([P[0] + tx * ws[i], P[1], P[2] + tz * ws[i]], nr, c(k), 0)];
+    });
+    const T = b.shared(at(1), nm, c(o.tip), 0);
+    for (let i = 0; i < 2; i++) {
+      const [l0, r0] = ids[i], [l1, r1] = ids[i + 1];
+      b.face(l0, r0, r1);
+      b.face(l0, r1, l1);
+    }
+    b.face(ids[2][0], ids[2][1], T);
+    return;
+  }
+  const P0 = at(0), P1 = at(0.55), P3 = at(1);
+  const w0 = bw, w1 = bw * 0.62;
   const kMid = o.root + (o.tip - o.root) * 0.55;
   const L0 = b.shared([P0[0] - tx * w0, P0[1], P0[2] - tz * w0], nl, c(o.root), 0);
   const R0 = b.shared([P0[0] + tx * w0, P0[1], P0[2] + tz * w0], nr, c(o.root), 0);
@@ -116,6 +133,9 @@ function blade(b: Builder, o: BladeOpts): void {
   b.face(L0, R1, L1);
   b.face(L1, R1, T);
 }
+
+/** Set by make(): the near LOD ring (density >= 1) gets the smooth 5-triangle blade, the far rings keep the cheap 3-triangle one. */
+let SMOOTH_BLADES = false;
 
 interface GrassStyle {
   blades: number;
@@ -142,7 +162,7 @@ const STYLES: Record<number, GrassStyle> = {
   [GrassType.clump]: { blades: 9, hMin: 0.22, hMax: 0.6, hPow: 1.2, wMin: 0.032, wMax: 0.05, rMin: 0.02, rMax: 0.16, lean: [0.1, 0.32], droop: [0.06, 0.2], straw: 0.06, yellow: 0.2 },
   [GrassType.seed]: { blades: 11, hMin: 0.45, hMax: 1.35, hPow: 1.3, wMin: 0.01, wMax: 0.017, rMin: 0.03, rMax: 0.22, lean: [0.04, 0.22], droop: [0.04, 0.16], straw: 0.45, yellow: 0.4 },
 };
-const FLOWER_BASE_STYLE: GrassStyle = { blades: 9, hMin: 0.14, hMax: 0.5, hPow: 1.4, wMin: 0.013, wMax: 0.022, rMin: 0.03, rMax: 0.2, lean: [0.05, 0.22], droop: [0.03, 0.14], straw: 0.05, yellow: 0.25 };
+const FLOWER_BASE_STYLE: GrassStyle = { blades: 9, hMin: 0.25, hMax: 0.75, hPow: 1.4, wMin: 0.013, wMax: 0.022, rMin: 0.03, rMax: 0.2, lean: [0.05, 0.22], droop: [0.03, 0.14], straw: 0.05, yellow: 0.25 };
 
 function grassBlades(b: Builder, r: RNG, s: GrassStyle, density = 1, fixed = 0): void {
   const count = fixed > 0 ? fixed : Math.max(4, Math.round(s.blades * Config.vegetation.grass.bladeDensity * density));
@@ -331,13 +351,15 @@ type FlowerFn = (b: Builder, r: RNG, x: number, z: number) => void;
 const headAxis = (r: RNG, dir: THREE.Vector3, up: number, jitter: number): THREE.Vector3 =>
   dir.clone().lerp(UP, up).add(new THREE.Vector3((r() - 0.5) * jitter, 0, (r() - 0.5) * jitter)).normalize();
 
+/** (was the white daisy) MARIGOLD: orange, many petals, 2026-11-21 */
 const daisy: FlowerFn = (b, r, x, z) => {
-  const { top, dir } = stem(b, x, z, 0.3 + r() * 0.35, (r() - 0.5) * 0.22, (r() - 0.5) * 0.22, 0.004);
-  const axis = headAxis(r, dir, 0.25, 0.5);
-  petalDisc(b, r, top, axis, 12, 0.007, 0.036 + r() * 0.01, 0.0095, -0.006, [1, 0.97, 0.82], [1, 1, 1], r() * 6.28);
-  eye(b, top, axis, 0.0125, 0.006, [1, 0.78, 0.08], [0.95, 0.62, 0.04]);
+  const { top, dir } = stem(b, x, z, 0.3 + r() * 0.4, (r() - 0.5) * 0.22, (r() - 0.5) * 0.22, 0.0045);
+  const axis = headAxis(r, dir, 0.3, 0.4);
+  const deep = r() < 0.5;
+  petalDisc(b, r, top, axis, 14, 0.006, 0.03 + r() * 0.008, 0.013, 0.004, deep ? [0.78, 0.28, 0.02] : [0.9, 0.5, 0.03], deep ? [0.98, 0.5, 0.05] : [1, 0.74, 0.1], r() * 6.28);
+  eye(b, top, axis, 0.012, 0.006, [0.55, 0.22, 0.03], [0.7, 0.3, 0.04]);
   const a = r() * 6.28;
-  leaf(b, x, z, Math.cos(a), Math.sin(a), 0.09, 0.02);
+  leaf(b, x, z, Math.cos(a), Math.sin(a), 0.1, 0.02);
 };
 
 const buttercup: FlowerFn = (b, r, x, z) => {
@@ -396,41 +418,15 @@ const cornflower: FlowerFn = (b, r, x, z) => {
   leaf(b, x, z, Math.cos(a), Math.sin(a), 0.1, 0.012);
 };
 
+/** (was the white clover) COSMOS: pink / magenta, 8 broad petals, 2026-11-21 */
 const clover: FlowerFn = (b, r, x, z) => {
-  const { top } = stem(b, x, z, 0.1 + r() * 0.12, (r() - 0.5) * 0.1, (r() - 0.5) * 0.1, 0.0035);
-  // white / pink pom-pom: a rounded cap of small petals
-  const col: RGB = r() < 0.7 ? [0.97, 0.96, 0.92] : [0.95, 0.72, 0.8];
-  const dark: RGB = [col[0] * 0.8, col[1] * 0.8, col[2] * 0.8];
-  const R = 0.017 * HEAD;
-  const n = UP.clone();
-  const topP = [top.x, top.y + R, top.z], bot = [top.x, top.y - R * 0.6, top.z];
-  const ring: number[][] = [];
-  for (let i = 0; i < 7; i++) {
-    const a = (i / 7) * Math.PI * 2 + r() * 0.3;
-    ring.push([top.x + Math.cos(a) * R * 1.1, top.y + R * 0.1, top.z + Math.sin(a) * R * 1.1]);
-  }
-  for (let i = 0; i < 7; i++) {
-    const p = ring[i], q = ring[(i + 1) % 7];
-    b.tri(topP, p, q, n, col, dark, dark, 1);
-    b.tri(bot, q, p, n, dark, dark, dark, 1);
-  }
-  // trefoil leaves on short stalks around the base: three round leaflets each
-  const leaves = 3 + Math.floor(r() * 3);
-  for (let i = 0; i < leaves; i++) {
-    const a = r() * Math.PI * 2;
-    const dist = 0.03 + r() * 0.08;
-    const cx = x + Math.cos(a) * dist, cz = z + Math.sin(a) * dist, cy = 0.06 + r() * 0.05;
-    for (let k = 0; k < 3; k++) {
-      const la = a + (k / 3) * Math.PI * 2 + r() * 0.3;
-      const lxp = cx + Math.cos(la) * 0.018, lzp = cz + Math.sin(la) * 0.018;
-      const ls = 0.017;
-      const c0: RGB = [0.13, 0.32, 0.09], c1: RGB = [0.26, 0.5, 0.17];
-      const A = [lxp - ls, cy, lzp], B = [lxp + ls, cy, lzp], C = [lxp, cy + 0.003, lzp + ls * 1.7], D = [lxp, cy + 0.002, lzp - ls * 1.7];
-      b.tri(A, C, B, n, c0, c1, c0, 1);
-      b.tri(A, B, D, n, c0, c0, c1, 1);
-    }
-    stem(b, cx, cz, cy, 0.001, 0, 0.003);
-  }
+  const { top, dir } = stem(b, x, z, 0.34 + r() * 0.4, (r() - 0.5) * 0.2, (r() - 0.5) * 0.2, 0.0035);
+  const axis = headAxis(r, dir, 0.3, 0.4);
+  const magenta = r() < 0.45;
+  petalDisc(b, r, top, axis, 8, 0.006, 0.036 + r() * 0.008, 0.02, 0.004, magenta ? [0.7, 0.1, 0.4] : [0.85, 0.38, 0.6], magenta ? [0.95, 0.35, 0.65] : [1, 0.7, 0.82], r() * 6.28);
+  eye(b, top, axis, 0.009, 0.005, [0.95, 0.75, 0.1], [0.8, 0.55, 0.05], 7);
+  const a = r() * 6.28;
+  leaf(b, x, z, Math.cos(a), Math.sin(a), 0.11, 0.012);
 };
 
 const FLOWERS: Record<number, { fn: FlowerFn; stems: [number, number]; spread: number }> = {
@@ -469,6 +465,7 @@ function seedHeads(b: Builder, r: RNG): void {
 
 /** `density` < 1 = a cheaper model for the far LOD rings (fewer blades, no seed heads). */
 function make(type: number, density = 1): THREE.BufferGeometry {
+  SMOOTH_BLADES = density >= 1 && Config.vegetation.grass.look.smoothBlades;
   const r = mulberry32(4242 + type * 7919);
   const b = new Builder();
   const style = STYLES[type];

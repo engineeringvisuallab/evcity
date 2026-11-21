@@ -198,3 +198,4 @@ Small broadleaf trees (< 10 m) are thinned to 25 % (`Config.vegetation.smallTree
 - Step 2c (2026-11-21): brighter sun (DayNight lightI 2.3 / 4.2, hemiI lower), bigger shadows (SHADOW_SPECS low 2048/210, medium 4096/300, high 4096/450), tree shadows at medium+high. tsc + daynight + shadow tests PASS, not seen in game.
 - Step 2d (2026-11-21): krishnachura red bloom cards at 60% (PalmAssets bloom 7, TreeAssets far x0.6). tsc PASS.
 - Step 2e (2026-11-21): city lawn grass taller (grass.city.height 1.5 = ~30 cm) and 3x denser near (grass.city.dense 3), tuft base 0.005 under ground. tsc PASS, not seen in game.
+- Step 2f (2026-11-21): smooth 5-tri grass blades near LOD (grass.look.smoothBlades), per-tuft colour palettes (GrassManager), flowers as tall as grass + 6 coloured kinds (daisy slot = marigold, clover slot = cosmos), city lawn chance x grass.city.dense 1.8 (the 2e extra-tuft idea was reverted), jungle grass chance 0.2. tsc PASS, not seen in game.

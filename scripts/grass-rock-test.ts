@@ -106,7 +106,7 @@ const mask = new Float32Array(2);
         if (lx < 0 || lx >= G.tile || lz < 0 || lz >= G.tile) fail('outside its tile');
         const x = ox + lx, z = oz + lz;
         gen.sample(x, z, s);
-        if (Math.abs(s.h - 0.03 - ly) > 0.01) fail('height mismatch');
+        if (Math.abs(s.h - 0.03 - ly) > 0.01 && Math.abs(s.h - 0.005 - ly) > 0.01) fail('height mismatch'); // 0.005 = city lawn tuft (2026-11-21)
         if (!Number.isNaN(s.water) && s.h < s.water + 0.3) fail(`in water at ${x.toFixed(0)},${z.toFixed(0)}`);
         if (s.h < 3.5) fail(`on the beach at ${x.toFixed(0)},${z.toFixed(0)} h=${s.h.toFixed(2)}`);
         gen.roads.maskAt(x, z, 1, mask);

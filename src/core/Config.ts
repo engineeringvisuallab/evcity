@@ -519,7 +519,7 @@ export const Config = {
         maxHeight: 0.95, // taller, lusher grass (was 0.64)
         min: 0.2,
         /** Wildflowers keep 2x the old height (0.4 m). Mown city lawn keeps its old size (0.2 m, then x `city.height`) and its old width scale. */
-        flowerMaxHeight: 0.4,
+        flowerMaxHeight: 0.95, // 2026-11-21: flowers as tall as the grass (was 0.4)
         lawnMaxHeight: 0.2,
         lawnWidthScale: 2.2,
       },
@@ -584,7 +584,7 @@ export const Config = {
        * JUNGLE FLOOR (ghono jongol ground cover): inside the dense jungle every cell gets grass (`floor` = patch value forced up to this x jungle density, so no bald
        * ground), tufts are `tall` x higher, `chance` = grass chance per cell, and the grass kinds are mixed (wild, tussocks, broad-leaf, seed-head). Flag 6 in the tuft data.
        */
-      jungle: { floor: 0.9, tall: 0.85, tallFlower: 2.0, tallClump: 0.7, chance: 0.35, clumpChance: 0.1, clear: 2 }, // 2026-11-21: grass is back in the jungle (clear 2 = never skipped) // 2026-11-20: NO grass in the dense jungle (floor / chance / clumpChance 0); `clear` = jungle density above which no tuft or clump is placed
+      jungle: { floor: 0.9, tall: 0.85, tallFlower: 0.85, tallClump: 0.7, chance: 0.2, clumpChance: 0.06, clear: 2 }, // 2026-11-21: grass is back in the jungle (clear 2 = never skipped) // 2026-11-20: NO grass in the dense jungle (floor / chance / clumpChance 0); `clear` = jungle density above which no tuft or clump is placed
       /** Blades per tuft model are multiplied by this (1 = full quality; 0.6 for weak GPUs). */
       bladeDensity: 1,
       /** Wildflowers: share of tufts that carry flowers inside a flower patch / scattered in the open meadow. Patches are ~12-30 m wide. */
@@ -609,7 +609,7 @@ export const Config = {
        *   flowerShare  share of lawn tufts that carry a small flower (daisy, clover, buttercup)
        *   edge         metres over which the lawn blends into the normal patchy meadow outside the city
        */
-      city: { density: 1, height: 1.5, dense: 3, clumpChance: 0, clumpScale: 0.8, baseChance: 0, baseScale: 1.3, baseReach: 1.6, fenceReach: 1.4, flowerShare: 0.02, edge: 40 },
+      city: { density: 1, height: 1.5, dense: 1.8, clumpChance: 0, clumpScale: 0.8, baseChance: 0, baseScale: 1.3, baseReach: 1.6, fenceReach: 1.4, flowerShare: 0.02, edge: 40 },
       /**
        * HIGHWAY VERGE outside cities: beyond the gravel shoulder the road side is a grass patch (patch value forced up, like the road-side boost) with
        * tall clumps; `reach` = width (m) of the strip next to the shoulder, `clumpChance` per clump cell inside it, `tall` = clump height multiplier.
@@ -619,7 +619,7 @@ export const Config = {
        * COLOUR: every tuft is fresh green, yellow-green or straw (`strawShare` of the tufts lean to straw outside the city, `yellowShare` to yellow-green).
        * `rootDark` = brightness of the blade at the root (0..1, 1 = no darkening), `wind` = global wind sway multiplier (0 = still air; the sway grows with blade height, so short lawn moves little anyway).
        */
-      look: { bladeWidth: 1.35, strawShare: 0, yellowShare: 0, rootDark: 0.6, wind: 0 }, // bladeWidth was 0.28, now x3 wider
+      look: { smoothBlades: true, bladeWidth: 1.1, strawShare: 0, yellowShare: 0, rootDark: 0.6, wind: 0 }, // bladeWidth was 0.28, now x3 wider
       /**
        * SINGLE GRASS: every tuft model has only `blades[0]..blades[1]` blades (3-5 leaves per grass), so the ground can be covered with very many
        * of them cheaply (`cell` 0.2 m). Used for the four grass kinds; flowers keep their own base. enabled false = the old many-blade tufts.

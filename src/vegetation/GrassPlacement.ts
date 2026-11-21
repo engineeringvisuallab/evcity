@@ -273,6 +273,7 @@ export class GrassPlacer {
         chance *= 1 - G.forestThin * this.trees.forestAt(x, z) * (1 - lawn);
         if (jd > 0.02) chance = Math.max(chance, JG.chance * jd * this.mul * rim);
         chance *= 1 - lawn * (1 - G.city.density); // city lawn: `grass.city.density` x the open-meadow density (the 0.5 city thinning is gone)
+        if (lawn >= 0.5) chance = Math.min(1, chance * G.city.dense); // 2026-11-21: city lawn = `city.dense` x more cells with a tuft (one tuft per cell at most, so roads / heights stay exact)
         if (roll >= chance) continue;
 
         // 2. terrain tests
@@ -295,9 +296,8 @@ export class GrassPlacer {
 
         // DENSE single grass: extra tufts in the same cell (flag 4 = never a flower). Their random numbers come after the first seven, one fixed set of
         // five per extra, so extra k is always the same tuft and a far ring (fewer extras) is a subset of the near ring. Not on the mown city lawn.
-        {
-          // CITY LAWN (2026-11-21): the mown lawn also gets `city.dense` x the tufts (it was one sparse tuft per cell = a few specks that looked buried)
-          const total = stride === 1 ? (lawn >= 0.5 ? G.city.dense : this.dense) : 1; // far rings: no extras (they are not drawn there anyway)
+        if (lawn < 0.5) {
+          const total = stride === 1 ? this.dense : 1; // far rings: no extras (they are not drawn there anyway)
           const extras = total - 1; // may be fractional (7.5 -> 6.5 extras: the last one only in some cells)
           if (extras > 0) {
             const gx = this.sx.h - h; // ground slope per metre, so an extra tuft off the cell centre still sits on the ground
@@ -312,7 +312,7 @@ export class GrassPlacer {
               if (k + 1 > extras && (ex * 13.7) % 1 >= extras - k) continue; // the fractional last extra
               const dx = (ex - jx) * G.cell;
               const dz = (ez - jz) * G.cell;
-              out.push(x - ox + dx, h + gx * dx + gz * dz - (lawn >= 0.5 ? 0.005 : 0.03), z - oz + dz, (0.55 + 0.95 * es ** 1.5) * edge, ey * Math.PI * 2, 0.85 + et * 0.3, dry, lawn >= 0.5 ? 2 : jd > 0.3 ? 6 : 4);
+              out.push(x - ox + dx, h + gx * dx + gz * dz - 0.03, z - oz + dz, (0.55 + 0.95 * es ** 1.5) * edge, ey * Math.PI * 2, 0.85 + et * 0.3, dry, jd > 0.3 ? 6 : 4);
             }
           }
         }

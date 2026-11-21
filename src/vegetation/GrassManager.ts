@@ -68,16 +68,38 @@ function grassLod(d: number, current?: number): number {
 
 /** Type index offset of the extra (dense) tufts: they get their own InstancedMesh per model, with the short-fade material. */
 const EXTRA = GRASS_TYPE_COUNT;
+/** One of the six coloured wild flowers (marigold, buttercup, lavender, poppy, cornflower, cosmos) from a hash 0..1: every kind equally often. */
+const FLOWER_KINDS = [GrassType.daisy, GrassType.buttercup, GrassType.lavender, GrassType.poppy, GrassType.cornflower, GrassType.clover];
+const flowerOf = (h: number): number => FLOWER_KINDS[Math.min(5, Math.floor(h * 6))];
 const dummy = new THREE.Object3D();
 const color = new THREE.Color();
-const GREEN: [number, number, number] = [0.098, 0.308, 0.07]; // 40% less dark; FIXED dark green durba (smooth, always the same colour)
-const DRY: [number, number, number] = [0.46, 0.42, 0.2];
-/** Jungle floor grass: fresher and lighter than the meadow green (the old one looked black-green under the trees). */
-const JUNGLE_GREEN: [number, number, number] = [0.17, 0.43, 0.1];
-const YELLOW: [number, number, number] = [0.24, 0.34, 0.09];
-const STRAW: [number, number, number] = [0.62, 0.55, 0.27];
+type Pal = ReadonlyArray<readonly [number, number, number, number]>; // r, g, b, share
+const GRASS_PALETTE: Pal = [
+  [0.12, 0.36, 0.08, 0.26], // fresh green
+  [0.24, 0.42, 0.09, 0.18], // yellow-green
+  [0.2, 0.3, 0.08, 0.14], // olive
+  [0.07, 0.3, 0.14, 0.12], // blue-green
+  [0.07, 0.24, 0.06, 0.1], // deep green
+  [0.3, 0.46, 0.12, 0.1], // light lime
+  [0.46, 0.4, 0.15, 0.06], // golden-dry
+  [0.36, 0.32, 0.13, 0.04], // straw
+];
+const LAWN_PALETTE: Pal = [
+  [0.12, 0.36, 0.08, 0.34],
+  [0.22, 0.42, 0.1, 0.26],
+  [0.09, 0.3, 0.1, 0.18],
+  [0.3, 0.46, 0.12, 0.14],
+  [0.18, 0.32, 0.08, 0.08],
+];
+const JUNGLE_PALETTE: Pal = [
+  [0.17, 0.43, 0.1, 0.3],
+  [0.26, 0.46, 0.1, 0.22],
+  [0.22, 0.36, 0.09, 0.16],
+  [0.1, 0.36, 0.16, 0.14],
+  [0.32, 0.48, 0.13, 0.12],
+  [0.4, 0.38, 0.14, 0.06],
+];
 /** City lawn: a fresher, slightly brighter green than the wild meadow. */
-const LAWN: [number, number, number] = [0.112, 0.336, 0.077];
 
 /** Smooth 2D value noise in 0..1 (integer-lattice hash, smoothstep blend): decides where the flower patches are. Deterministic, no state. */
 function vnoise(x: number, z: number): number {
@@ -271,7 +293,6 @@ export class GrassManager {
     // NO WHITE GRASS: daisy (white petals), clover (white pom-pom) and the pale seed-head grass become plain green grass (keeping the EXTRA offset)
     const extra = type0 >= EXTRA ? EXTRA : 0;
     const base = type0 - extra;
-    if (base === GrassType.daisy || base === GrassType.clover) return GrassType.lawn + extra;
     if (base === GrassType.seed) return GrassType.wild + extra;
     return type0;
   }
@@ -281,12 +302,12 @@ export class GrassManager {
     let type: number;
     if (flag > 5.5) {
       // JUNGLE FLOOR grass (flag 6): a few wild flowers (never white), in small patches (~14 m) and only a few elsewhere; the rest is a rich mix of all the plain grass kinds
-      if (lod === 0 && h2 < (vnoise(wx / 14 + 7, wz / 14 - 3) > 0.62 ? 0.26 : 0.05)) return h3 < 0.3 ? GrassType.buttercup : h3 < 0.55 ? GrassType.lavender : h3 < 0.8 ? GrassType.poppy : GrassType.cornflower;
+      if (lod === 0 && h2 < (vnoise(wx / 14 + 7, wz / 14 - 3) > 0.62 ? 0.26 : 0.05)) return flowerOf(h3);
       return h1 < 0.3 ? GrassType.wild : h1 < 0.5 ? GrassType.lawn : h1 < 0.68 ? GrassType.clump : h1 < 0.8 ? GrassType.seed : h1 < 0.91 ? GrassType.tussock : GrassType.tussockWide;
     }
     if (flag > 4.5) {
       // MEDIAN grass (flag 5): the game's grass kinds, and a share of the game's wild flowers (never white ones) in the near ring
-      if (lod === 0 && h2 < Config.city.median.grass.flowerShare) return h3 < 0.3 ? GrassType.buttercup : h3 < 0.55 ? GrassType.lavender : h3 < 0.8 ? GrassType.poppy : GrassType.cornflower;
+      if (lod === 0 && h2 < Config.city.median.grass.flowerShare) return flowerOf(h3);
       return h1 < 0.25 ? GrassType.wild : h1 < 0.88 ? GrassType.lawn : GrassType.clump;
     }
     if (flag > 3.5) {
@@ -301,7 +322,7 @@ export class GrassManager {
     }
     if (flag > 1.5) {
       // CITY LAWN tuft (flag 2): short fine lawn, a few broad-leaf tufts, and small white / pink flowers (daisy, clover, buttercup) in the near ring
-      if (lod === 0 && h2 < G.city.flowerShare) return h3 < 0.5 ? GrassType.daisy : h3 < 0.8 ? GrassType.clover : GrassType.buttercup;
+      if (lod === 0 && h2 < G.city.flowerShare) return flowerOf(h3);
       return h1 < 0.82 ? GrassType.lawn : h1 < 0.94 ? GrassType.clump : GrassType.wild;
     }
     // flower patches (value noise, ~25 m) with one dominant species per patch (another noise, ~60 m); never on dry high ground
@@ -361,23 +382,29 @@ export class GrassManager {
     }
     dummy.updateMatrix();
     mesh.setMatrixAt(slot, dummy.matrix);
-    const dry = 0; // FIXED colour: no dry / straw / yellow grass, even on high ground
     const t = 1; // FIXED brightness: every tuft has the same dark green
     // COLOUR VARIATION: every tuft is fresh green, yellow-green or straw (shares: Config grass.look). A hash of the tuft's position picks the class;
     // brighter tufts lean yellow-green like sun-lit, drier grass. The city lawn has no straw.
     const cityLawn = flag > 1.5 && flag < 3.5;
     const hc = Math.sin(data[o] * 39.3468 + data[o + 2] * 17.1313 + 5.7) * 43758.5453;
     const pick = hc - Math.floor(hc);
-    const straw = 0;
     const jungleFloor = flag > 5.5;
-    const u = jungleFloor ? pick * 0.7 : 0; // jungle floor: lighter green, every tuft a little more or less yellow-green
-    const base: [number, number, number] = cityLawn ? LAWN : jungleFloor ? JUNGLE_GREEN : GREEN;
-    color.setRGB(
-      (base[0] + (YELLOW[0] - base[0]) * u + (STRAW[0] - base[0]) * straw + (DRY[0] - base[0]) * dry) * t,
-      (base[1] + (YELLOW[1] - base[1]) * u + (STRAW[1] - base[1]) * straw + (DRY[1] - base[1]) * dry) * t,
-      (base[2] + (YELLOW[2] - base[2]) * u + (STRAW[2] - base[2]) * straw + (DRY[2] - base[2]) * dry) * t,
-      THREE.SRGBColorSpace,
-    );
+    // REAL GRASS COLOURS (2026-11-21): every tuft picks its own colour from a palette (position hash, never changes): fresh green, yellow-green, olive,
+    // blue-green, deep green, light lime, a few golden-dry. The city lawn stays in the green family, the shady jungle floor is lighter.
+    const pal = cityLawn ? LAWN_PALETTE : jungleFloor ? JUNGLE_PALETTE : GRASS_PALETTE;
+    let acc = 0;
+    let ci = pal.length - 1;
+    for (let q = 0; q < pal.length; q++) {
+      acc += pal[q][3];
+      if (pick < acc) {
+        ci = q;
+        break;
+      }
+    }
+    const hb = Math.sin(data[o] * 7.7 + data[o + 2] * 3.1 + 1.3) * 43758.5453;
+    const bright = 0.88 + 0.24 * (hb - Math.floor(hb));
+    const pc = pal[ci];
+    color.setRGB(pc[0] * bright * t, pc[1] * bright * t, pc[2] * bright * t, THREE.SRGBColorSpace);
     mesh.setColorAt(slot, color);
   }
 
