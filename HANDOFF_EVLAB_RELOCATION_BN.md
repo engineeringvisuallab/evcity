@@ -223,3 +223,6 @@ Notun garden (paharer pashe, shudhu narikel / palm / khejur): HANDOFF_EVLAB_ROTA
 
 ### 15 Nov (RT4)
 Pahar-er slope / upor-er palm: HANDOFF_EVLAB_ROTATE_BN.md Done log RT4.
+
+## Step R-J1 (2026-11-21, user: "evlab k J1 er dike x-98 z-363 point a lake er edge thakbe")
+EVLabSite.ts PLOT_CENTRE (-140, -620) -> (-110, -521.6), yaw same (-52.5 deg). Lake SW rounded corner (centre local (-75, 75), r 75) nearest point to (-98, -363) = world (-98, -363) after the move. NOT checked (no node_modules in that chat): J1 box / W arm / N arm clash, gate roads (W_GATE_START_LOCAL ...), parking strip, terrain cut/fill, rail. Next: npm ci, tsc, EVLab tests + building-on-road-check, then fix the gate roads and clashes.
