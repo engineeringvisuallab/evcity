@@ -1,3 +1,6 @@
+# plots-tile.py : PLOT TILING P4 (mixed plot sizes 500 / 700 / 1000 m2 in rows along the road, access roads as their own parcels, 2026-11-21).
+#   Rows: plots of depth DEP m along the road; deep land gets back-to-back rows with an ACCESS ROAD (RW m wide, its own parcel, 'road': true) between the pairs of rows.
+# (older text of P3 follows)
 # plots-tile.py : PLOT TILING P3 (equal-area plots, 2026-11-21).
 #   Normal plots all have (nearly) the SAME area = TARGET (default 1000 m2 = 15 katha, range ~670-1340 m2). Shape may vary with the road curve, area does not.
 #   A building that needs more land (office, school, mall, hotel ... = W x D bigger than BIG_MIN) gets ONE big plot of its own size: like 2/3/5/10 normal plots joined.
@@ -13,10 +16,13 @@ import numpy as np, cv2
 from scipy.spatial import cKDTree
 from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import connected_components
-TARGET = float(sys.argv[1]) if len(sys.argv) > 1 else 1000.0   # standard plot area (m2): 1000 m2 = ~15 katha (a house plot is 10-20 katha = 670-1340 m2)
+from scipy.ndimage import minimum_filter1d
+SIZES = [float(v) for v in sys.argv[1].split(',')] if len(sys.argv) > 1 else [500.0, 700.0, 1000.0]   # plot sizes (m2) mixed along every row: 500 / 700 / 1000 m2
+DEP = 36.0                                                      # plot depth (m) from the road edge; a plot of 500 m2 is ~14 m wide, 1000 m2 ~28 m wide
+RW = 8.0                                                        # width (m) of an ACCESS ROAD that is added where the land is too deep for one or two rows of plots (its own parcel)
 BIG_MIN = 1300.0                                                # a building whose land (W x D) is bigger than this gets ONE big plot of its own size (= several normal plots joined)
-MIN_AREA = 600.0                                                # smaller pieces are merged into a neighbour (m2)
-MIN_INR = 7.0                                                   # a plot must fit a circle of this radius (m) = no thin strips, a building can stand on it
+MIN_AREA = 350.0                                                # smaller pieces are merged into a neighbour (m2)
+MIN_INR = 5.0                                                   # a plot must fit a circle of this radius (m) = no thin strips, a building can stand on it
 MIN_FILL = 0.45                                                 # plot area / its smallest rectangle: lower = bad (odd) shape
 S = 2.0                                                         # raster cell (m)
 R = 1500.0                                                      # the city circle
@@ -79,30 +85,68 @@ for b in bigs:
 bg = bigid[fj, fi]
 key[bg > 0] = BIGK + bg[bg > 0].astype(np.int64)
 print('big plots (one per building that needs more than', int(BIG_MIN), 'm2):', nbig)
-# ---- 2. every other free cell: group = (free block, nearest road, side); the group is cut into n = area / TARGET parts of EQUAL area
-#         (cut = straight line square to the long direction of the piece, again and again: strips along the road, compact blocks in deep land)
+# ---- 2. every other free cell: group = (free block, nearest road, side). In the ROAD FRAME (s along the road, t from the road edge) the group is cut into
+#         ROWS of depth DEP: plots (sizes mixed 500 / 700 / 1000 m2, cut square to the road) and, if the land is deeper, an ACCESS ROAD between two back-to-back rows.
+ROADK = 9000000000
+def win_of(b, kind):
+    w, dp = b['W'], b['D']
+    if kind == 'hand':
+        if abs(abs(b.get('yaw', 0)) % 3.1416 - 1.5708) < .1: w, dp = dp, w
+    else: w = dp = max(w, dp)
+    return (max(int((b['x'] - w / 2 - 2 - X0) / S), 0), min(int((b['x'] + w / 2 + 2 - X0) / S) + 1, W), max(int((b['z'] - dp / 2 - 2 - Z0) / S), 0), min(int((b['z'] + dp / 2 + 2 - Z0) / S) + 1, H))
+bwin = np.zeros((H, W), bool)       # land under a normal building (+2 m): never becomes an access road
+for kind in ('hand', 'fill'):
+    for b in INP[kind]:
+        if not (X0 < b['x'] < X0 + nx * C and Z0 < b['z'] < Z0 + nz * C): continue
+        if kind == 'hand' and b['W'] * b['D'] > BIG_MIN: continue
+        i0, i1, j0, j1 = win_of(b, kind); bwin[j0:j1, i0:i1] = True
+bw = bwin[fj, fi]
 rest = np.nonzero(bg == 0)[0]
 gkey = (fl[rest].astype(np.int64) * 1000 + RID[ix[rest]]) * 2 + side[rest]
 ug, ginv = np.unique(gkey, return_inverse=True)
 gord = np.argsort(ginv, kind='stable'); gs = ginv[gord]; g0 = np.searchsorted(gs, np.arange(len(ug))); g1 = np.searchsorted(gs, np.arange(len(ug)), 'right')
-nextk = 1
-cx_ = gx[fi]; cz_ = gz[fj]
+SSa = SS[ix]
+rngp = np.random.default_rng(5)
+nextk = 1; nroad = 0; AC = S * S
 for gi in range(len(ug)):
-    stack = []
-    sel0 = rest[gord[g0[gi]:g1[gi]]]
-    n0 = max(1, int(round(len(sel0) * S * S / TARGET)))
-    stack.append((sel0, n0))
-    while stack:
-        sel, n = stack.pop()
-        if n <= 1 or len(sel) < 2:
-            key[sel] = nextk; nextk += 1; continue
-        ss_, tt_ = SS[ix[sel]], d[sel]                                  # road frame: s = along the road, t = distance from the road
-        # cut square to the LONGER side of the piece (in road metres): across the road first (plot dividers), then parallel to the road (deep land)
-        ps = float(ss_.max() - ss_.min()); pt = float(tt_.max() - tt_.min())
-        pr = ss_ if ps >= pt else tt_; od = np.argsort(pr, kind='stable')
-        n1 = n // 2; cut = int(round(len(sel) * n1 / n))
-        stack.append((sel[od[:cut]], n1)); stack.append((sel[od[cut:]], n - n1))
-print('equal-area pieces cut:', nextk - 1)
+    sel = rest[gord[g0[gi]:g1[gi]]]
+    s_ = SSa[sel]; t_ = d[sel]
+    bi = np.floor((s_ - s_.min()) / 4).astype(np.int64); nb_ = int(bi.max()) + 1
+    tm = np.full(nb_, np.inf); np.minimum.at(tm, bi, t_)
+    okb = np.isfinite(tm)
+    if okb.sum() < nb_: tm = np.interp(np.arange(nb_), np.nonzero(okb)[0], tm[okb])
+    tm = minimum_filter1d(tm, 5, mode='nearest')
+    tt = t_ - tm[bi]                                   # distance from the road edge of the free land
+    Tm = float(tt.max())
+    segs = [['P', 0.0, DEP]]; pos = DEP
+    while True:
+        rem = Tm - pos
+        if rem >= 2 * DEP + RW:
+            segs += [['P', pos, pos + DEP], ['R', pos + DEP, pos + DEP + RW], ['P', pos + DEP + RW, pos + 2 * DEP + RW]]; pos += 2 * DEP + RW
+        elif rem >= 1.7 * DEP + RW:
+            segs += [['P', pos, pos + DEP], ['R', pos + DEP, pos + DEP + RW], ['P', pos + DEP + RW, 1e9]]; break
+        else:
+            segs[-1][2] = 1e9; break                   # the rest of the depth goes into the last row (a deeper plot)
+    segs[-1][2] = 1e9
+    sid = np.full(len(sel), -1, np.int64)
+    for k_, (kd, t0, t1) in enumerate(segs): sid[(tt >= t0) & (tt < t1)] = k_
+    for k_ in range(len(segs)):                        # land under a building is never road: it joins the row before the road
+        if segs[k_][0] == 'R': sid[(sid == k_) & bw[sel]] = k_ - 1
+    for k_, (kd, t0, t1) in enumerate(segs):
+        m = sid == k_
+        if not m.any(): continue
+        cs_ = sel[m]
+        if kd == 'R':
+            key[cs_] = ROADK + nroad; nroad += 1; continue
+        o_ = np.lexsort((tt[m], s_[m])); cs_ = cs_[o_]
+        total = len(cs_) * AC; sizes = rngp.choice(SIZES, size=int(total / min(SIZES)) + 3)
+        acc = 0.0; cuts = []
+        for sz in sizes:
+            if total - (acc + sz) < MIN_AREA: break
+            acc += sz; cuts.append(int(round(acc / AC)))
+        lab_ = np.searchsorted(np.array(cuts, np.int64), np.arange(len(cs_)), 'right') if cuts else np.zeros(len(cs_), np.int64)
+        key[cs_] = nextk + lab_; nextk += len(cuts) + 1
+print('row plots cut:', nextk - 1, ' access road strips:', nroad)
 # ---- 3. a normal building is never cut by a plot border: all free cells under it (+2 m round it) join the plot that holds most of it
 idx = -np.ones((H, W), np.int64); idx[fj, fi] = np.arange(len(fj))
 n_keep = 0
@@ -110,12 +154,7 @@ for kind in ('hand', 'fill'):
     for b in INP[kind]:
         if not (X0 < b['x'] < X0 + nx * C and Z0 < b['z'] < Z0 + nz * C): continue
         if kind == 'hand' and b['W'] * b['D'] > BIG_MIN: continue
-        w, dp = b['W'], b['D']
-        if kind == 'hand':
-            if abs(abs(b.get('yaw', 0)) % 3.1416 - 1.5708) < .1: w, dp = dp, w
-        else: w = dp = max(w, dp)          # fill buildings: direction not known, so a square that holds the building in any direction
-        i0 = max(int((b['x'] - w / 2 - 2 - X0) / S), 0); i1 = min(int((b['x'] + w / 2 + 2 - X0) / S) + 1, W)
-        j0 = max(int((b['z'] - dp / 2 - 2 - Z0) / S), 0); j1 = min(int((b['z'] + dp / 2 + 2 - Z0) / S) + 1, H)
+        i0, i1, j0, j1 = win_of(b, kind)
         win = idx[j0:j1, i0:i1]; ids = win[win >= 0]
         if len(ids) == 0: continue
         ids = ids[key[ids] < BIGK]
@@ -135,12 +174,12 @@ nc, comp = connected_components(G, directed=False)
 print('first cut pieces', nc)
 # ---- merge small pieces into the neighbour with the longest shared border (prefer the same road + side)
 road_of = np.zeros(nc, np.int64); np.maximum.at(road_of, comp, RID[ix] * 2 + side)
-isbig = np.zeros(nc, bool); isbig[comp[key >= BIGK]] = True
+isbig = np.zeros(nc, bool); isbig[comp[(key >= BIGK) & (key < ROADK)]] = True; isroad = np.zeros(nc, bool); isroad[comp[key >= ROADK]] = True
 def bad_plots(comp, nc):
     """plots that are too small, too thin or odd shaped"""
-    area = np.bincount(comp, minlength=nc) * S * S; bad = (area < MIN_AREA) & ~isbig
+    area = np.bincount(comp, minlength=nc) * S * S; bad = (area < MIN_AREA) & ~isbig & ~isroad
     order = np.argsort(comp, kind='stable'); cs = comp[order]; st = np.searchsorted(cs, np.arange(nc)); en = np.searchsorted(cs, np.arange(nc), 'right')
-    for c in np.nonzero(~bad)[0]:
+    for c in np.nonzero(~bad & ~isroad)[0]:
         sel = order[st[c]:en[c]]; ci, cj = fi[sel], fj[sel]
         m = np.zeros((cj.max() - cj.min() + 3, ci.max() - ci.min() + 3), np.uint8); m[cj - cj.min() + 1, ci - ci.min() + 1] = 1
         inr = cv2.distanceTransform(m, cv2.DIST_L2, 3).max() * S - S / 2
@@ -155,7 +194,7 @@ for it in range(12):
     for a, b in zip(np.r_[ca, cb], np.r_[cb, ca]): pair[(a, b)] += 1
     best = {}; taken = set()
     for (a, b), c in sorted(pair.items(), key=lambda kv: area[kv[0][0]]):     # smallest first
-        if not bad[a]: continue
+        if not bad[a] or isroad[b]: continue
         sc = c * (3 if road_of[a] == road_of[b] else 1) * (2 if not bad[b] else 1) * (0.15 if isbig[b] else 1)
         if a not in best or sc > best[a][0]: best[a] = (sc, b)
     # a bad plot that is the target of another bad plot is not moved in the same pass (no chains)
@@ -169,10 +208,14 @@ for it in range(12):
     if (mp == np.arange(nc)).all(): print('merge pass', it, 'nothing more to merge'); break
     comp = mp[comp]; _, comp = np.unique(comp, return_inverse=True); nc = comp.max() + 1
     road_of = np.zeros(nc, np.int64); np.maximum.at(road_of, comp, RID[ix] * 2 + side)
-    isbig = np.zeros(nc, bool); isbig[comp[key >= BIGK]] = True
+    isbig = np.zeros(nc, bool); isbig[comp[(key >= BIGK) & (key < ROADK)]] = True; isroad = np.zeros(nc, bool); isroad[comp[key >= ROADK]] = True
     print('merge pass', it, 'bad', int(bad.sum()), 'plots now', nc)
 bad, area = bad_plots(comp, nc); print('still bad (no neighbour, small islands):', int(bad.sum()), ' area of them m2', int(area[bad].sum()))
 # ---- polygons
+acc_idx = np.nonzero(key >= ROADK)[0]
+if len(acc_idx):
+    tacc = cKDTree(np.c_[gx[fi[acc_idx]], gz[fj[acc_idx]]]); dacc, iacc = tacc.query(np.c_[gx[fi], gz[fj]])
+else: tacc = None; dacc = np.full(len(fj), 1e9); iacc = np.zeros(len(fj), np.int64)
 order = np.argsort(comp, kind='stable'); cs = comp[order]; starts = np.searchsorted(cs, np.arange(nc)); ends = np.searchsorted(cs, np.arange(nc), 'right')
 plots = []; lab = -np.ones((H, W), np.int32)
 for c in range(nc):
@@ -188,11 +231,17 @@ for c in range(nc):
     if len(poly) < 3:   # tiny island: keep it as a plot with its own small outline
         ap = cv2.convexHull(cc)[:, 0, :]; poly = [[round(X0 + (x0 + (px + .5) / 4) * S, 1), round(Z0 + (z0 + (pz + .5) / 4) * S, 1)] for px, pz in ap]
         if len(poly) < 3: continue
-    q0 = np.c_[gx[ci], gz[cj]]; dd = d[sel]; g = int(np.argmin(dd)); r = RID[ix[sel[g]]]
-    vx, vz = P[ix[sel[g]], 0] - q0[g, 0], P[ix[sel[g]], 1] - q0[g, 1]; L = float(np.hypot(vx, vz)) or 1.0
-    plots.append({'id': len(plots), 'road': RD[r]['name'], 'side': int(side[sel[g]]), 'area': round(len(sel) * S * S), 'tiny': bool(bad[c]), 'big': bool(isbig[c]), 'poly': poly,
+    if isroad[c]:      # access road parcel (its own parcel, not a plot)
+        plots.append({'id': len(plots), 'road': 'access road', 'access': True, 'side': 0, 'area': round(len(sel) * S * S), 'tiny': False, 'big': False, 'poly': poly, 'gate': [0, 0], 'face': [0, 0]}); continue
+    q0 = np.c_[gx[ci], gz[cj]]; dd = d[sel]; da = dacc[sel]; g = int(np.argmin(np.minimum(dd, da))); r = RID[ix[sel[g]]]
+    if da[g] < dd[g]: vx, vz = tacc.data[iacc[sel[g]]][0] - q0[g, 0], tacc.data[iacc[sel[g]]][1] - q0[g, 1]     # this plot faces an access road
+    else: vx, vz = P[ix[sel[g]], 0] - q0[g, 0], P[ix[sel[g]], 1] - q0[g, 1]
+    L = float(np.hypot(vx, vz)) or 1.0
+    plots.append({'id': len(plots), 'road': RD[r]['name'], 'access': False, 'side': int(side[sel[g]]), 'area': round(len(sel) * S * S), 'tiny': bool(bad[c]), 'big': bool(isbig[c]), 'poly': poly,
                   'gate': [round(float(q0[g, 0]), 1), round(float(q0[g, 1]), 1)], 'face': [round(vx / L, 3), round(vz / L, 3)]})
-print('plots', len(plots), ' area m2 min/median/max', min(p['area'] for p in plots), int(np.median([p['area'] for p in plots])), max(p['area'] for p in plots))
+pa = np.array([p['area'] for p in plots if not p['access'] and not p['big'] and not p['tiny']])
+print('plots', sum(1 for p in plots if not p['access']), ' access road parcels', sum(1 for p in plots if p['access']), ' road area ha', round(sum(p['area'] for p in plots if p['access']) / 1e4, 1))
+print('normal plot area m2 pct 5/25/50/75/95', np.percentile(pa, [5, 25, 50, 75, 95]).round().tolist())
 # ---- buildings: which plot is each hand / fill building in?  (centre cell, and all 4 corners in the SAME plot)
 from scipy.ndimage import distance_transform_edt
 dist, (ni, nj) = distance_transform_edt(lab < 0, return_indices=True)
@@ -224,7 +273,7 @@ KINDS = [(15, .75, 1.05, 3), (0, .8, 1.1, 3), (4, .8, 1.1, 2), (3, .75, 1.0, 1),
 KP = np.array([k[3] for k in KINDS], float); KP /= KP.sum()
 rng2 = np.random.default_rng(11); trees = []
 for c in range(nc):
-    if bad[c] or c >= len(plots) and False: continue
+    if bad[c] or isroad[c]: continue
     sel = order[starts[c]:ends[c]]; ci, cj = fi[sel], fj[sel]
     ok = (de[cj, ci] >= 4) & (blk[cj, ci] == 0)
     n_t = min(12, int(ok.sum() * S * S / 1200))
@@ -239,7 +288,7 @@ for c in range(nc):
         trees.append([round(float(x_), 1), round(float(z_), 1), kd[0], round(float(rng2.uniform(kd[1], kd[2])), 2), round(float(rng2.uniform(0, 6.2832)), 2)])
 print('garden trees (existing game kinds):', len(trees), ' per plot max', 12)
 json.dump(trees, open('docs/city_plot_trees.json', 'w'), separators=(',', ':'))
-json.dump({'plot_w': 0, 'target_area': TARGET, 'big_buildings': big_names, 'radius': R, 'plots': plots, 'buildings': bld, 'outside': out_b, 'cross_border': split_b}, open('docs/city_plots_tiled.json', 'w'), separators=(',', ':'))
+json.dump({'plot_w': 0, 'sizes': SIZES, 'depth': DEP, 'access_road_width': RW, 'big_buildings': big_names, 'radius': R, 'plots': plots, 'buildings': bld, 'outside': out_b, 'cross_border': split_b}, open('docs/city_plots_tiled.json', 'w'), separators=(',', ':'))
 # ---- pictures
 import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection
@@ -249,7 +298,7 @@ def draw(fn, xl, zl, size, title):
     img = np.ones((nz, nx, 3)); 
     for bit, col in ((64, (1, .93, .7)), (16, (.55, .75, 1)), (8, (1, .6, .2)), (4, (.6, .35, .15)), (2, (.8, .8, .8)), (1, (.2, .2, .2))): img[(M & bit) > 0] = col
     ax.imshow(img, extent=(X0, X0 + nx * C, Z0 + nz * C, Z0), origin='upper')
-    pc = PolyCollection([p['poly'] for p in plots], facecolors=[tuple(rng.uniform(.55, .95, 3)) for _ in plots], edgecolors='k', linewidths=.35); ax.add_collection(pc)
+    pc = PolyCollection([p['poly'] for p in plots], facecolors=[(.2, .45, .95) if p.get('access') else tuple(rng.uniform(.55, .95, 3)) for p in plots], edgecolors='k', linewidths=.35); ax.add_collection(pc)
     ax.set_xlim(*xl); ax.set_ylim(zl[1], zl[0]); ax.set_aspect('equal'); ax.set_title(title); fig.savefig(fn, bbox_inches='tight'); plt.close(fig)
 draw('docs/city_plots_tiled.png', (X0, X0 + nx * C), (Z0, Z0 + nz * C), (17, 19), f'TILED PLOTS {len(plots)}  (every colour patch = one plot, black line = plot border)')
 draw('docs/city_plots_tiled_zoom.png', (-500, 400), (-250, 500), (18, 15), 'ZOOM: tiled plots (city centre)')

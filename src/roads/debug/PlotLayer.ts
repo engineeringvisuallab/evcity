@@ -1,5 +1,5 @@
 // PLOTS viewer: key 5 shows / hides the border lines of every city plot (docs/city_plots_tiled.json -> PlotData.ts).
-// Green line = plot you can build on, grey line = tiny leftover piece. Lines are drawn 0.8 m above the ground. NOT a game object: no physics, no AI.
+// Green line = plot you can build on, grey line = tiny leftover piece, blue line = access road parcel (land for a new road, not a plot). Lines are drawn 0.8 m above the ground. NOT a game object: no physics, no AI.
 // Built on the first key press, so a game that never uses it pays nothing. fog: false (like RoadCentreLayer) so far plots are visible too.
 import * as THREE from 'three';
 import { PLOTS } from './PlotData';
@@ -32,8 +32,9 @@ export class PlotLayer {
     this.built = true;
     const good: number[] = [];
     const tiny: number[] = [];
+    const road: number[] = [];
     for (const row of PLOTS) {
-      const out = row[0] ? tiny : good;
+      const out = row[0] === 2 ? road : row[0] ? tiny : good;
       const n = (row.length - 2) >> 1;
       for (let i = 0; i < n; i++) {
         const j = (i + 1) % n;
@@ -48,6 +49,7 @@ export class PlotLayer {
     }
     this.add(good, 0x14c85a);
     this.add(tiny, 0x9a9a9a);
+    this.add(road, 0x2a8cff);
   }
 
   private add(pos: number[], hex: number): void {
