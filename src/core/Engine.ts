@@ -799,7 +799,7 @@ export class Engine {
 
     // --- the always-on site map (top-right) ---
     this.cityPlan = new CityPlan(this.world.terrain.sites);
-    this.minimap = new Minimap(container, this.world.seed.value, this.world.terrain.sites, this.cityPlan, this.rail);
+    this.minimap = new Minimap(container, this.world.seed.value, this.world.terrain.sites, this.cityPlan, this.rail, this.world.terrain.roads);
     this.missions = new MissionManager({ parent: container, lockTarget: this.renderer.domElement, chipTop: () => this.minimap.infoBottom, toast: (t, ms) => this.toast.show(t, ms ?? 3400),
       stage: { enter: () => this.evlab.enterStage(), end: () => this.evlab.endPresentation(), mood: (m) => this.evlab.setMood(m) } });
     this.missionMarkers = new MissionMarkers(this.world.root, (x, z) => this.world.terrain.heightAt(x, z));

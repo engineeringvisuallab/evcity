@@ -4,6 +4,8 @@ import { ZONE_COLOR, type CityPlan } from '../city/CityPlan';
 import { AIRPORT, AIRPORT_SEA, SEAPORT, WORLD_ZONE_COLOR, rasterizeWorldZones } from '../city/WorldZones';
 import { ENGINEERING_AREAS, ENGINEERING_GROUP_COLOR } from '../city/EngineeringZones';
 import type { RailNetwork } from '../rail';
+import type { RoadNetwork } from '../roads/RoadNetwork';
+import { J1_S_END } from '../roads/junction/GroundJ1Terrain';
 import { bn, bnDigits, bnSigned } from '../i18n';
 import type { MinimapRequest, MinimapResult } from '../workers/minimap.worker';
 import { UI_FONT } from './theme';
@@ -103,6 +105,7 @@ export class Minimap {
     private sites: CitySite[],
     private plan: CityPlan,
     private rail: RailNetwork,
+    private roads: RoadNetwork,
   ) {
     this.zoneLayer = Minimap.makeZoneLayer();
     const c = this.canvas;
@@ -197,6 +200,106 @@ export class Minimap {
     this.canvas.style.width = `${this.px}px`;
     this.canvas.style.height = `${this.px}px`;
     this.layoutInfo();
+  }
+
+  /** Bounding box of every road (computed once): [minX, minZ, maxX, maxZ]. */
+  private roadBox: Float64Array | null = null;
+
+  private boxes(): Float64Array {
+    if (this.roadBox) return this.roadBox;
+    const list = this.roads.roads;
+    const b = new Float64Array(list.length * 4);
+    for (let i = 0; i < list.length; i++) {
+      const r = list[i];
+      let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
+      for (let k = 0; k < r.xs.length; k++) {
+        if (r.xs[k] < x0) x0 = r.xs[k];
+        if (r.xs[k] > x1) x1 = r.xs[k];
+        if (r.zs[k] < z0) z0 = r.zs[k];
+        if (r.zs[k] > z1) z1 = r.zs[k];
+      }
+      b[i * 4] = x0; b[i * 4 + 1] = z0; b[i * 4 + 2] = x1; b[i * 4 + 3] = z1;
+    }
+    return (this.roadBox = b);
+  }
+
+  /**
+   * The real roads (ring, J1 and its arms, R6 / R4 / R2, city streets) as vector lines in the true width,
+   * drawn on top of the zone colours. Dark outline first, coloured core on top. Close and medium zoom only.
+   */
+  private drawRoads(c: CanvasRenderingContext2D, X: (x: number) => number, Z: (z: number) => number, ppm: number, cx: number, cz: number, span: number): void {
+    const S = this.canvas.width;
+    const reach = span * 0.5 * 1.45 + 40; // half the view diagonal + a margin
+    const vx0 = cx - reach, vx1 = cx + reach, vz0 = cz - reach, vz1 = cz + reach;
+    const minPx = 2.2 * this.dpr; // thin roads never get thinner than this
+    const rim = 1.3 * this.dpr;
+    const list = this.roads.roads;
+    const box = this.boxes();
+    c.save();
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+    const trace = (r: (typeof list)[number], bridgeOnly: boolean): void => {
+      const n = r.xs.length;
+      const gap = 1.5 * this.dpr; // skip points closer than this on screen
+      let lx = 0, lz = 0, open = false, first = true;
+      c.beginPath();
+      for (let i = 0; i < n; i++) {
+        const onB = r.bridgeOf[i] >= 0;
+        const x = X(r.xs[i]), z = Z(r.zs[i]);
+        if (bridgeOnly && !(onB && (i + 1 < n && r.bridgeOf[i + 1] >= 0))) { open = false; first = true; continue; }
+        if (x < -40 || z < -40 || x > S + 40 || z > S + 40) {
+          // off screen: keep the line to the first outside point so it leaves the map straight, then break
+          if (open) { c.lineTo(x, z); open = false; }
+          first = true;
+          continue;
+        }
+        if (first) { c.moveTo(x, z); lx = x; lz = z; open = true; first = false; continue; }
+        if (i < n - 1 && Math.abs(x - lx) + Math.abs(z - lz) < gap) continue;
+        c.lineTo(x, z); lx = x; lz = z;
+      }
+      c.stroke();
+    };
+    for (const pass of [0, 1]) {
+      for (const tier of [4, 3, 2, 1] as const) {
+        for (let i = 0; i < list.length; i++) {
+          const r = list[i];
+          if (r.tier !== tier || r.earth) continue;
+          if (box[i * 4 + 2] < vx0 || box[i * 4] > vx1 || box[i * 4 + 3] < vz0 || box[i * 4 + 1] > vz1) continue;
+          const wPx = Math.max(minPx, 2 * r.halfWidth * ppm);
+          if (pass === 0) {
+            c.strokeStyle = 'rgb(45,32,22)';
+            c.lineWidth = wPx + rim * 2;
+            trace(r, false);
+          } else {
+            c.strokeStyle = tier === 1 ? '#ffb347' : tier === 2 ? '#fff3c4' : '#ffffff';
+            c.lineWidth = wPx;
+            trace(r, false);
+            if (r.bridgeOf.some((v) => v >= 0)) {
+              c.strokeStyle = '#eb5fcd';
+              trace(r, true);
+            }
+          }
+        }
+      }
+      // the ground-level J1 (pad + 4 lane zones) is not in the road list: the 4 arms as straight bands from its centre
+      const j1 = this.roads.j1;
+      if (j1) {
+        const arms = ['N', 'E', 'S', 'W'] as const;
+        c.lineCap = 'butt';
+        c.strokeStyle = pass === 0 ? 'rgb(45,32,22)' : '#ffb347';
+        c.lineWidth = Math.max(minPx, 2 * 23.4 * ppm) + (pass === 0 ? rim * 2 : 0);
+        for (const arm of arms) {
+          const [x0, z0] = j1.axisPoint(arm, 0);
+          const [x1, z1] = j1.axisPoint(arm, J1_S_END);
+          c.beginPath();
+          c.moveTo(X(x0), Z(z0));
+          c.lineTo(X(x1), Z(z1));
+          c.stroke();
+        }
+        c.lineCap = 'round';
+      }
+    }
+    c.restore();
   }
 
   update(dt: number, s: MapState): void {
@@ -300,6 +403,8 @@ export class Minimap {
           c.stroke();
         }
       }
+      // real roads as sharp vector lines (the baked picture is ~10 m per pixel: too blurry when zoomed in)
+      if (this.zoom < 2) this.drawRoads(c, X, Z, ppm, cx, cz, span);
       // railway network (Stage 11B): dark line + white dashes, station areas as rings
       {
         const line = (): void => {
