@@ -1,0 +1,98 @@
+=== TYPICAL 8-LANE (M8, J1 arms): 8 lane, half width 22.1 m, median 6 m, shoulder 0.6 m ===
+GEOMETRY  piers at x = -24.7, 0, +24.7 (hammerhead, column 1 x 1.6 m, cap 1.4 x 3.6 x 0.9 m, pile cap 2.6 x 5.4 x 1.2 m on 4 bored piles D 0.8 m)
+          2 equal spans of 24.7 m, 2 Warren trusses 2.8 m apart, 10 panels of 2.47 m per span, truss + board 2.5 m high, walkway 2.5 m clear
+          under the floor 5.7 m above the road surface, walking surface 6.4 m, board top 8.9 m; board A on the +Z side (face looks +Z), board B on the -Z side (face looks -Z)
+CHORDS    CHS 219.1 x 10.0 (A = 66 cm2), lever arm 2.28 m; dead weight of the 2 spans about 67 t (floor, trusses, boards)
+LOADS     dead 13.2 kN/m, live 12.5 kN/m (5 kPa x 2.5 m); wind 72 m/s: q 3.18 kPa, 14.2 kN/m, total 703 kN, moment per pier 1782 kNm
+PIERS     median pier vertical 1142 kN with footing; wind case pile force 34 .. 508 kN; column 4.6 MPa
+STAIR left  rise 6.40 m, 43 risers of 149 mm, flights 11+11+11+10, tower 4.2 x 5.2 m
+STAIR right rise 6.40 m, 43 risers of 149 mm, flights 11+11+11+10, tower 4.2 x 5.2 m
+PASS C1 clearance: under the floor 5.7 m (needs 5.5 m + 0.2 m resurfacing)
+PASS C2 walkway: clear width 2.5 m (needs >= 2.0 m)
+PASS C3 parapet: parapet / truss side 2.5 m high (needs >= 1.5 m)
+PASS C4 median pier fits: median 6 m, needs column 1 + 2 x (barrier 0.6 + gap 0.3) = 2.8 m; pile cap 2.6 m
+PASS C5 outer pier offset: pier face 2.1 m from the kerb (needs barrier 0.6 + 0.3 m)
+PASS C6 span / depth: span 24.7 m / truss 2.5 m = 9.9 (6..14)
+PASS C7 chord tension: CHS 219.1 x 10.0: 216 MPa <= 307 MPa = 95 % of 323 (ULS incl. wind, bottom chord)
+PASS C8 chord buckling: top chord 127 MPa <= 289 MPa = 95 % of 304 (slenderness 33, panel 2.47 m)
+PASS C9 walking frequency: first vertical frequency 5.3 Hz >= 3 Hz (simply supported span, safe side)
+PASS C10 deflection: live-load deflection 10.6 mm <= L/500 = 49 mm
+PASS C11 pile uplift: wind case: pile force 34 .. 508 kN (all in compression, 4 piles D 0.8 m at +-2 m)
+PASS C12 column stress: column 4.6 MPa <= 18 MPa (0.45 x C40, compression side)
+PASS C13 stair left riser: riser 149 mm, going 300 mm, 2R+G = 598 mm (550..700)
+PASS C14 stair left flights: rise 6.40 m = 43 risers in 4 flights (11 + 11 + 11 + 10), tower 4.2 x 5.2 m
+PASS C15 stair left headroom: headroom under the upper flight 2.97 m >= 2.2 m
+PASS C16 stair left feet window: ground at the foot 0.00 m from the road surface (window -3..3 m)
+PASS C13 stair right riser: riser 149 mm, going 300 mm, 2R+G = 598 mm (550..700)
+PASS C14 stair right flights: rise 6.40 m = 43 risers in 4 flights (11 + 11 + 11 + 10), tower 4.2 x 5.2 m
+PASS C15 stair right headroom: headroom under the upper flight 2.97 m >= 2.2 m
+PASS C16 stair right feet window: ground at the foot 0.00 m from the road surface (window -3..3 m)
+
+=== TYPICAL 6-LANE (R6, M6-1): 6 lane, half width 16 m, median 4 m, shoulder 0.6 m ===
+GEOMETRY  piers at x = -18.6, 0, +18.6 (hammerhead, column 1 x 1.6 m, cap 1.4 x 3.6 x 0.9 m, pile cap 2.6 x 5.4 x 1.2 m on 4 bored piles D 0.8 m)
+          2 equal spans of 18.6 m, 2 Warren trusses 2.8 m apart, 7 panels of 2.66 m per span, truss + board 2.5 m high, walkway 2.5 m clear
+          under the floor 5.7 m above the road surface, walking surface 6.4 m, board top 8.9 m; board A on the +Z side (face looks +Z), board B on the -Z side (face looks -Z)
+CHORDS    CHS 168.3 x 8.0 (A = 40 cm2), lever arm 2.33 m; dead weight of the 2 spans about 46 t (floor, trusses, boards)
+LOADS     dead 12.0 kN/m, live 12.5 kN/m (5 kPa x 2.5 m); wind 72 m/s: q 3.18 kPa, 14.2 kN/m, total 530 kN, moment per pier 1342 kNm
+PIERS     median pier vertical 1013 kN with footing; wind case pile force 60 .. 421 kN; column 3.5 MPa
+STAIR left  rise 6.40 m, 43 risers of 149 mm, flights 11+11+11+10, tower 4.2 x 5.2 m
+STAIR right rise 6.40 m, 43 risers of 149 mm, flights 11+11+11+10, tower 4.2 x 5.2 m
+PASS C1 clearance: under the floor 5.7 m (needs 5.5 m + 0.2 m resurfacing)
+PASS C2 walkway: clear width 2.5 m (needs >= 2.0 m)
+PASS C3 parapet: parapet / truss side 2.5 m high (needs >= 1.5 m)
+PASS C4 median pier fits: median 4 m, needs column 1 + 2 x (barrier 0.6 + gap 0.3) = 2.8 m; pile cap 2.6 m
+PASS C5 outer pier offset: pier face 2.1 m from the kerb (needs barrier 0.6 + 0.3 m)
+PASS C6 span / depth: span 18.6 m / truss 2.5 m = 7.4 (6..14)
+PASS C7 chord tension: CHS 168.3 x 8.0: 193 MPa <= 307 MPa = 95 % of 323 (ULS incl. wind, bottom chord)
+PASS C8 chord buckling: top chord 112 MPa <= 271 MPa = 95 % of 286 (slenderness 47, panel 2.66 m)
+PASS C9 walking frequency: first vertical frequency 7.9 Hz >= 3 Hz (simply supported span, safe side)
+PASS C10 deflection: live-load deflection 5.3 mm <= L/500 = 37 mm
+PASS C11 pile uplift: wind case: pile force 60 .. 421 kN (all in compression, 4 piles D 0.8 m at +-2 m)
+PASS C12 column stress: column 3.5 MPa <= 18 MPa (0.45 x C40, compression side)
+PASS C13 stair left riser: riser 149 mm, going 300 mm, 2R+G = 598 mm (550..700)
+PASS C14 stair left flights: rise 6.40 m = 43 risers in 4 flights (11 + 11 + 11 + 10), tower 4.2 x 5.2 m
+PASS C15 stair left headroom: headroom under the upper flight 2.97 m >= 2.2 m
+PASS C16 stair left feet window: ground at the foot 0.00 m from the road surface (window -3..3 m)
+PASS C13 stair right riser: riser 149 mm, going 300 mm, 2R+G = 598 mm (550..700)
+PASS C14 stair right flights: rise 6.40 m = 43 risers in 4 flights (11 + 11 + 11 + 10), tower 4.2 x 5.2 m
+PASS C15 stair right headroom: headroom under the upper flight 2.97 m >= 2.2 m
+PASS C16 stair right feet window: ground at the foot 0.00 m from the road surface (window -3..3 m)
+
+=== STAIR TABLE (ground at the foot relative to the road surface -> flights) ===
+foot -7 m: rise 13.4 m, 90 risers in 8 flight(s), tower 4.2 x 5.5 m   <- outside the window -3..3
+foot -5 m: rise 11.4 m, 76 risers in 7 flight(s), tower 4.2 x 5.2 m   <- outside the window -3..3
+foot -3 m: rise 9.4 m, 63 risers in 6 flight(s), tower 4.2 x 5.2 m
+foot -2 m: rise 8.4 m, 56 risers in 5 flight(s), tower 4.2 x 5.5 m
+foot -1 m: rise 7.4 m, 50 risers in 5 flight(s), tower 4.2 x 4.9 m
+foot +0 m: rise 6.4 m, 43 risers in 4 flight(s), tower 4.2 x 5.2 m
+foot +1 m: rise 5.4 m, 36 risers in 3 flight(s), tower 4.2 x 5.5 m
+foot +2 m: rise 4.4 m, 30 risers in 3 flight(s), tower 4.2 x 4.9 m
+foot +3 m: rise 3.4 m, 23 risers in 2 flight(s), tower 4.2 x 5.5 m
+foot +4 m: rise 2.4 m, 16 risers in 2 flight(s), tower 4.2 x 4.3 m   <- outside the window -3..3
+foot +6 m: rise 0.4 m, 3 risers in 1 flight(s), tower 2.0 x 2.8 m   <- outside the window -3..3
+
+=== REAL SITES: the 6 / 8-lane gantries of RoadSignData.ts (the ones the overbridge replaces) ===
+PASS sign-1 M8 (8 lane) s 1888: feet -0.67 / -0.66 m, stairs 12+12+12+12 | 12+12+12+12 risers, chord 219x10.0
+PASS sign-2 M8 (8 lane) s 4823: feet 1.99 / 1.99 m, stairs 10+10+10 | 10+10+10 risers, chord 219x10.0
+PASS sign-3 M8 (8 lane) s 7439: feet 0.00 / 0.00 m, stairs 11+11+11+10 | 11+11+11+10 risers, chord 219x10.0
+FAIL sign-4 M8 (8 lane) s 11558: feet 4.33 / 4.33 m, stairs 7+7 | 7+7 risers, chord 219x10.0   C16 stair left feet window, C16 stair right feet window
+PASS sign-5 M8 (8 lane) s 13814: feet -0.67 / -0.67 m, stairs 12+12+12+12 | 12+12+12+12 risers, chord 219x10.0
+PASS sign-6 M8 (8 lane) s 17685: feet -0.67 / -0.67 m, stairs 12+12+12+12 | 12+12+12+12 risers, chord 219x10.0
+PASS sign-7 J1-E (8 lane) s 1269: feet -0.67 / -0.67 m, stairs 12+12+12+12 | 12+12+12+12 risers, chord 219x10.0
+PASS sign-8 J1-W (8 lane) s 951: feet -0.67 / -0.67 m, stairs 12+12+12+12 | 12+12+12+12 risers, chord 219x10.0
+PASS sign-9 J1-S (8 lane) s 1503: feet -0.67 / -0.67 m, stairs 12+12+12+12 | 12+12+12+12 risers, chord 219x10.0
+FAIL sign-10 R6-15 (6 lane) s 1478: feet -0.67 / 3.39 m, stairs 12+12+12+12 | 11+10 risers, chord 168x8.0   C16 stair right feet window
+PASS sign-11 R6-10 (6 lane) s 1238: feet 0.68 / 0.19 m, stairs 10+10+10+9 | 11+11+10+10 risers, chord 168x8.0
+PASS sign-12 M6-1 (6 lane) s 231: feet 2.28 / 2.28 m, stairs 10+9+9 | 10+9+9 risers, chord 168x8.0
+PASS sign-13 R6-11 (6 lane) s 574: feet 1.54 / 1.54 m, stairs 11+11+11 | 11+11+11 risers, chord 168x8.0
+FAIL sign-14 R6-3 (6 lane) s 831: feet 3.77 / 3.77 m, stairs 9+9 | 9+9 risers, chord 168x8.0   C16 stair left feet window, C16 stair right feet window
+PASS sign-15 R6-5 (6 lane) s 470: feet -0.67 / -0.67 m, stairs 12+12+12+12 | 12+12+12+12 risers, chord 168x8.0
+PASS sign-16 R6-6B (6 lane) s 461: feet 0.83 / -0.67 m, stairs 10+10+9+9 | 12+12+12+12 risers, chord 168x8.0
+PASS sign-17 R6-9 (6 lane) s 557: feet 0.00 / 0.00 m, stairs 11+11+11+10 | 11+11+11+10 risers, chord 168x8.0
+PASS sign-18 R6-4 (6 lane) s 136: feet 0.17 / 0.17 m, stairs 11+11+10+10 | 11+11+10+10 risers, chord 168x8.0
+PASS sign-19 R6-6A (6 lane) s 246: feet -0.67 / -0.67 m, stairs 12+12+12+12 | 12+12+12+12 risers, chord 168x8.0
+PASS sign-20 R6-13 (6 lane) s 223: feet 0.00 / 0.00 m, stairs 11+11+11+10 | 11+11+11+10 risers, chord 168x8.0
+PASS sign-21 R6-14 (6 lane) s 183: feet -0.67 / -0.67 m, stairs 12+12+12+12 | 12+12+12+12 risers, chord 168x8.0
+18 of 21 real sites pass every check as they are; to move or fix: 3
+
+SUMMARY: 40 PASS, 0 FAIL in the two typical sheets; real sites 18 / 21.
