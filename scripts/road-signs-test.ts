@@ -2,7 +2,7 @@
 import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
 import { Config } from '../src/core/Config';
 import { ROAD_SIGN_SPOTS } from '../src/signs/RoadSignData';
-import { BOARD_H, BOARD_TOP, GANTRY, POST_TOP, gantryLayout, panelsPerCarriageway } from '../src/signs/RoadSignSpec';
+import { BOARD_H, BOARD_TOP, GANTRY, POST_TOP, gantryLayout, sectionsForLanes } from '../src/signs/RoadSignSpec';
 import { ROADSIDE_ALL } from '../src/buildings/PlacementsRoadside';
 import { gantrySolids } from '../src/signs/SignSolids';
 
@@ -21,9 +21,9 @@ for (const s of ROAD_SIGN_SPOTS) {
   ok(bd < 0.3, `${tag}: origin on the centreline (${bd.toFixed(2)} m)`);
   ok(Math.abs(r.ys[bi] - s.y) < 0.02, `${tag}: origin height = road surface`);
   ok(s.edge >= r.halfWidth + r.shoulder + 1.5, `${tag}: posts ${s.edge} m from the centreline, outside kerb + shoulder (${(r.halfWidth + r.shoulder).toFixed(1)} m)`);
-  const lay = gantryLayout(r.halfWidth, r.medianHalf, r.shoulder, r.lanes);
-  ok(s.panels.length === panelsPerCarriageway(r.lanes) && s.panels.length === lay.panels.length, `${tag}: ${r.lanes} lanes -> ${s.panels.length} panels per carriageway (${s.panels.length * 2} on the gantry)`);
-  ok(s.panels.every((p, k) => p.x - p.w / 2 >= r.medianHalf - 1e-6 && p.x + p.w / 2 <= r.halfWidth + 1e-6 && p.w <= GANTRY.boardMaxW && p.w > 1.5 && (k === 0 || p.x - p.w / 2 >= s.panels[k - 1].x + s.panels[k - 1].w / 2 + 0.2)), `${tag}: panels (${s.panels.map((p) => p.w).join(', ')} m wide) inside the carriageway, not overlapping`);
+  const lay = gantryLayout(r.halfWidth, r.shoulder, r.lanes);
+  ok(s.sections === sectionsForLanes(r.lanes) && s.sections === lay.sections && s.sections >= 2 && s.sections <= 4, `${tag}: ${r.lanes} lanes -> ONE board with ${s.sections} coloured sections`);
+  ok(Math.abs(s.boardW - lay.boardW) < 1e-6 && s.boardW <= 2 * s.edge - 2 * GANTRY.postR && s.boardW >= 2 * (r.halfWidth) - 1, `${tag}: board ${s.boardW} m wide, from post to post, covers the whole road (${(2 * r.halfWidth).toFixed(1)} m)`);
   // frame: +X (driver's right) is opposite to the road's left normal
   const rx = Math.cos(s.yaw), rz = -Math.sin(s.yaw);
   ok(rx * r.nx[bi] + rz * r.nz[bi] < -0.95, `${tag}: +X is the driver's right (left normal of the road is -X)`);

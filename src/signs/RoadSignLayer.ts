@@ -1,5 +1,5 @@
-// ROAD SIGN BOARDS - Step 2: the 3D overhead gantries (HANDOFF_ROAD_DESIGN.md section 23). Per gantry: two round steel pipe posts with concrete bases (one each side of the road), a truss beam
-// across, and over EACH carriageway 1 or 2 narrow boards (panels, split by the road width). Every board has a face on BOTH sides (front = the traffic it faces, back = the other way). Step 2: the faces are EMPTY (no destinations, empty maxim strip); the lettering comes later.
+// ROAD SIGN BOARDS - Step 3 (one long board): the 3D overhead gantries (HANDOFF_ROAD_DESIGN.md section 23). Per gantry: two round steel pipe posts with concrete bases (one each side of the road), a truss beam
+// across, and ONE long board across the whole road between the posts, divided into 2 / 3 / 4 coloured sections by the road width. The board has a face on BOTH sides (front = traffic of growing s, back = the other way). Step 2: the faces are EMPTY (no destinations, empty maxim strip); the lettering comes later.
 // All steel of all gantries is ONE merged mesh (1 draw call). The faces are small plane meshes: plain green from afar, the lettering (a canvas texture, RoadSignPaint) is drawn only
 // within SIGN_FIELD.paint * Q.signRadiusMul of the camera, at most Q.signPaintPerFrame per frame, and thrown away again beyond SIGN_FIELD.unpaint.
 // Positions are ABSOLUTE world coordinates (the root is moved by the floating origin). The solid parts (posts + bases) are in `solidGroups` for SignPhysics.
@@ -8,7 +8,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { Q } from '../core/Quality';
 import { Config } from '../core/Config';
 import { BOARD_H, BOARD_TOP, EMPTY_BOARD, GANTRY, POST_TOP, SIGN_FIELD, type BoardContent } from './RoadSignSpec';
-import { paintBoard, paintSize, SIGN_COLORS } from './RoadSignPaint';
+import { paintBoard, paintSections, paintSize, SIGN_COLORS } from './RoadSignPaint';
 import { ROAD_SIGN_SPOTS, type RoadSignSpot } from './RoadSignData';
 import { gantrySolids, solidsRadius, type SignSolidGroup } from './SignSolids';
 
@@ -17,6 +17,7 @@ interface Face {
   cx: number;
   cz: number;
   w: number;
+  sections: number;
   content: BoardContent;
   painted: THREE.MeshBasicMaterial | null;
 }
@@ -26,8 +27,8 @@ export class RoadSignLayer {
   private faces: Face[] = [];
   private steel: THREE.Mesh | null = null;
   private plain = new THREE.MeshBasicMaterial({ color: SIGN_COLORS.green, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
-  /** Blank board face (green + empty strip), one texture per panel width, shared by all empty faces. */
-  private blanks = new Map<number, THREE.MeshBasicMaterial>();
+  /** Blank board face (green + empty strip), one texture per (width, sections), shared by all empty faces. */
+  private blanks = new Map<string, THREE.MeshBasicMaterial>();
   private steelMat = new THREE.MeshStandardMaterial({ color: '#b4bcc0', roughness: 0.55, metalness: 0.45 });
   /** The solid parts for SignPhysics (filled while the gantries are built, before the first update). */
   readonly solidGroups: SignSolidGroup[] = [];
@@ -85,38 +86,31 @@ export class RoadSignLayer {
       const dir = i % 2 === 0 ? 1 : -1;
       box(-s.edge + (i + 0.5) * dx, (yl + yh) / 2, 0, Math.hypot(dx, hh), 0.07, 0.07, Math.atan2(hh * dir, dx));
     }
-    // the boards: A over the carriageway of growing s (left of the centreline), B over the other one; 1 or 2 panels each. Both hang in front of the beam, A towards +Z, B towards -Z.
-    for (const side of [-1, 1] as const) {
-      for (const pn of s.panels) {
-        const bx = side * pn.x;
-        const zc = -side * GANTRY.boardFront; // A (side -1) -> +front, B (side +1) -> -front
-        box(bx, GANTRY.clearance + BOARD_H / 2, zc, pn.w + 0.12, BOARD_H + 0.12, GANTRY.boardDepth);
-        for (const hx of [-0.4, 0.4]) box(bx + hx * pn.w, BOARD_TOP - 0.05, zc / 2, 0.12, 0.2, Math.abs(zc));
-        // front face looks away from the beam (towards the traffic it serves), back face the other way: every board has a face on BOTH sides
-        for (const f of [1, -1] as const) {
-          const face = -side * f; // +1 = looks to +Z
-          const zf = zc + face * (GANTRY.boardDepth / 2 + 0.012);
-          const geo = new THREE.PlaneGeometry(pn.w, BOARD_H);
-          const local = new THREE.Matrix4().makeTranslation(bx, GANTRY.clearance + BOARD_H / 2, zf);
-          if (face < 0) local.multiply(new THREE.Matrix4().makeRotationY(Math.PI));
-          geo.applyMatrix4(tmp.copy(spot).multiply(local));
-          const mesh = new THREE.Mesh(geo, this.blank(pn.w));
-          mesh.name = 'road-sign-face';
-          geo.computeBoundingSphere();
-          this.group.add(mesh);
-          const wx = s.x + bx * Math.cos(s.yaw) + zf * Math.sin(s.yaw);
-          const wz = s.z - bx * Math.sin(s.yaw) + zf * Math.cos(s.yaw);
-          this.faces.push({ mesh, cx: wx, cz: wz, w: pn.w, content: EMPTY_BOARD, painted: null });
-        }
-      }
+    // the ONE long board between the posts, in the plane of the beam under the lower chord, hung on short rods; a face on each side (front +Z, back -Z)
+    const by = GANTRY.clearance + BOARD_H / 2;
+    box(0, by, 0, s.boardW + 0.12, BOARD_H + 0.12, GANTRY.boardDepth);
+    const nh = Math.max(2, Math.ceil(s.boardW / 4));
+    for (let i = 0; i <= nh; i++) box(-s.boardW / 2 + 0.3 + ((s.boardW - 0.6) * i) / nh, BOARD_TOP + GANTRY.chordLow / 2, 0, 0.1, GANTRY.chordLow + 0.1, 0.1);
+    for (const face of [1, -1] as const) {
+      const zf = face * (GANTRY.boardDepth / 2 + 0.012);
+      const geo = new THREE.PlaneGeometry(s.boardW, BOARD_H);
+      const local = new THREE.Matrix4().makeTranslation(0, by, zf);
+      if (face < 0) local.multiply(new THREE.Matrix4().makeRotationY(Math.PI));
+      geo.applyMatrix4(tmp.copy(spot).multiply(local));
+      const mesh = new THREE.Mesh(geo, this.blank(s.boardW, s.sections));
+      mesh.name = 'road-sign-face';
+      geo.computeBoundingSphere();
+      this.group.add(mesh);
+      this.faces.push({ mesh, cx: s.x, cz: s.z, w: s.boardW, sections: s.sections, content: EMPTY_BOARD, painted: null });
     }
     const solids = gantrySolids(s.edge, [s.feetL, s.feetR], POST_TOP, GANTRY.postR + 0.1, GANTRY.postBelow, GANTRY.baseSize, GANTRY.baseHeight, 0);
     this.solidGroups.push({ x: s.x, y: s.y, z: s.z, yaw: s.yaw, radius: solidsRadius(solids), solids });
   }
 
   /** The shared blank face for a panel width (plain green when there is no canvas, e.g. a headless run). */
-  private blank(w: number): THREE.MeshBasicMaterial {
-    let m = this.blanks.get(w);
+  private blank(w: number, sections: number): THREE.MeshBasicMaterial {
+    const key = w + '|' + sections;
+    let m = this.blanks.get(key);
     if (m) return m;
     if (typeof document === 'undefined') return this.plain;
     const { W, H } = paintSize(w);
@@ -125,13 +119,13 @@ export class RoadSignLayer {
     c.height = H;
     const g = c.getContext('2d');
     if (!g) return this.plain;
-    paintBoard(g, W, H, EMPTY_BOARD);
+    paintSections(g, W, H, sections);
     const t = new THREE.CanvasTexture(c);
     t.colorSpace = THREE.SRGBColorSpace;
     t.anisotropy = Q.maxAniso;
     t.needsUpdate = true;
     m = new THREE.MeshBasicMaterial({ map: t, transparent: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
-    this.blanks.set(w, m);
+    this.blanks.set(key, m);
     return m;
   }
 
@@ -157,7 +151,7 @@ export class RoadSignLayer {
     f.painted.map?.dispose();
     f.painted.dispose();
     f.painted = null;
-    f.mesh.material = this.blank(f.w);
+    f.mesh.material = this.blank(f.w, f.sections);
   }
 
   /** Camera position in absolute world metres. */

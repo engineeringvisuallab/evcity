@@ -1,6 +1,6 @@
 // ROAD SIGN BOARDS - Step 1: draws the face of ONE board on a 2D canvas (green destination part + dark maxim strip). No three.js: it only needs a CanvasRenderingContext2D,
 // so the same code runs in the game (RoadSignLayer makes a CanvasTexture of it) and in a plain browser page for a preview.
-import { BOARD_H, GANTRY, bnDigits, kmText, type BoardContent, type SignArrow } from './RoadSignSpec';
+import { BOARD_H, GANTRY, SECTION_COLORS, bnDigits, kmText, type BoardContent, type SignArrow } from './RoadSignSpec';
 
 export const SIGN_COLORS = {
   green: '#0b6b3b',
@@ -15,7 +15,7 @@ const LATIN_FONT = '"Segoe UI", Arial, Helvetica, sans-serif';
 
 /** Texture size for a board of width `w` m: about 150 px per metre, the height follows the board shape. */
 export function paintSize(w: number): { W: number; H: number } {
-  const W = Math.round((w * 150) / 8) * 8;
+  const W = Math.round((Math.min(150, 2048 / w) * w) / 8) * 8; // 150 px per metre, but never wider than 2048 px (the long board of a wide road)
   return { W, H: Math.round((W * BOARD_H) / w / 8) * 8 };
 }
 
@@ -111,4 +111,21 @@ export function paintBoard(g: CanvasRenderingContext2D, W: number, H: number, c:
   g.fillText(c.maximBn, W / 2, sy + sh * 0.3);
   fitText(g, c.maximEn, W * 0.9, sh * 0.36, LATIN_FONT, '500');
   g.fillText(c.maximEn, W / 2, sy + sh * 0.72);
+}
+
+/** The EMPTY long board: white rim, `n` coloured sections side by side (white lines between them), and the empty dark maxim strip along the whole bottom. */
+export function paintSections(g: CanvasRenderingContext2D, W: number, H: number, n: number): void {
+  const mainH = Math.round((H * GANTRY.mainH) / BOARD_H);
+  const pad = Math.round(H * 0.035);
+  g.fillStyle = SIGN_COLORS.white;
+  roundRect(g, 0, 0, W, H, pad * 1.6);
+  g.fill();
+  const x0 = pad, x1 = W - pad, sw = (x1 - x0) / n;
+  for (let k = 0; k < n; k++) {
+    g.fillStyle = SECTION_COLORS[k % SECTION_COLORS.length];
+    g.fillRect(x0 + k * sw + (k > 0 ? pad * 0.5 : 0), pad, sw - (k > 0 ? pad * 0.5 : 0) - (k < n - 1 ? pad * 0.5 : 0), mainH - pad);
+  }
+  g.fillStyle = SIGN_COLORS.strip;
+  roundRect(g, pad, mainH + pad * 0.4, W - 2 * pad, H - mainH - pad * 1.4, pad);
+  g.fill();
 }
