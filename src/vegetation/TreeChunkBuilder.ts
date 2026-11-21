@@ -6,6 +6,15 @@ import { ROCK_KIND_COUNT, TREE_KIND_COUNT, TREE_STRIDE, TreeKind, treeWidth, typ
 
 /** Broadleaf kinds that get the full range of real leaf colours (not pine, palms, banana, bamboo, krishnachura with its red flowers, undergrowth). */
 const FULL_COLOUR_KINDS = new Set<number>([TreeKind.broadleaf, TreeKind.oak, TreeKind.vase, TreeKind.slender, TreeKind.sal, TreeKind.segun, TreeKind.koroi, TreeKind.bot, TreeKind.shimul, TreeKind.debdaru, TreeKind.gum, TreeKind.gum2]);
+/** Colours of a fallen dry leaf (multiply the green leaf texture): brown, tan, rust, straw, dull olive-brown, dark red-brown. */
+const DRY_LEAF_COLOURS: ReadonlyArray<readonly [number, number, number]> = [
+  [2.0, 0.78, 0.8],
+  [2.3, 1.05, 0.9],
+  [2.6, 0.62, 0.5],
+  [2.0, 1.25, 0.7],
+  [1.5, 0.95, 0.65],
+  [1.9, 0.6, 0.55],
+];
 /** Leaf colour families: [cumulative chance, r, g, b multipliers of the green leaf texture]. */
 const LEAF_FAMILIES: ReadonlyArray<readonly [number, number, number, number]> = [
   [0.34, 0.92, 1.0, 0.9], // normal green
@@ -96,6 +105,11 @@ export class TreeChunkBuilder {
           const u = Math.min(1, Math.max(0, (t - 0.82) / 0.32));
           mesh.setColorAt(i, color.setRGB(t * (0.9 + 0.2 * u) * D[0], t * (1.03 - 0.05 * u) * D[1], t * (0.96 - 0.1 * u) * D[2]));
         }
+      } else if (treeKind === TreeKind.leafLitter) {
+        // every fallen leaf its own dry colour (from its position)
+        const hh = Math.sin(data[o] * 12.9898 + data[o + 2] * 78.233) * 43758.5453;
+        const f = DRY_LEAF_COLOURS[Math.floor((hh - Math.floor(hh)) * DRY_LEAF_COLOURS.length)];
+        mesh.setColorAt(i, color.setRGB(t * f[0], t * f[1], t * f[2]));
       } else mesh.setColorAt(i, color.setRGB(t * tr, t * tg, t * tb));
     }
     mesh.instanceMatrix.needsUpdate = true;

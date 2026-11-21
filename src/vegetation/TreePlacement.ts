@@ -479,9 +479,8 @@ export class TreePlacer {
       let kind: number;
       let scale: number;
       if (ru < T.undergrowth) {
-        // lata-pata: ferns most, then bushes, then creeper mounds
-        kind = rv < 0.42 ? TreeKind.fern : rv < 0.77 ? TreeKind.shrub : TreeKind.lata;
-        scale = 0.7 + 0.8 * rs;
+        // lata-pata (fern, shrub, lata) are REMOVED: nothing is placed here any more (the kinds stay in the enum so the numbering does not change)
+        continue;
       } else {
         const pineChance = smooth(V.pineFrom, V.pineFull, h);
         if (rk < pineChance) kind = TreeKind.pine;

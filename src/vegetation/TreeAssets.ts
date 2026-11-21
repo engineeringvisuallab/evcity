@@ -23,17 +23,20 @@ import { makePalmAtlas, PALM_BARK_TILES, PALM_MAKERS, PALM_TILES } from './PalmA
  * atlas (PalmAssets.ts: fronds, fans, banana leaves, flowers) and their own material.
  */
 
-export const TILES = 6;
+export const TILES = 7;
 /** Pixel size of one atlas tile: 800 -> the whole atlas is 4000 x 800 (4K wide, still inside every GPU's texture limit). The painters draw in a logical 512 space scaled by K. */
-const TILE = 800;
+const TILE = 584; // 7 tiles x 584 = 4088 px: the whole atlas stays under 4096 (the limit of many phones; 6 tiles of 800 would be 4800)
 const LS = 512;
 const K = TILE / LS;
+/** Branches x3 in total (3 levels of 1.44x) and leaves /2 for every old tree (not the gums). Lower BRANCH_LEVEL_MUL if the frame rate drops; leaves per tree = cards x 0.4 / (BRANCH_LEVEL_MUL^3 x 2) per twig tip (see leafCluster). */
+const BRANCH_LEVEL_MUL = 1.44;
 export const TILE_BARK = 0;
 export const TILE_LEAF = 1;
 export const TILE_NEEDLE = 2;
 export const TILE_LOBED = 3;
 export const TILE_MASS = 4;
 export const TILE_GUM = 5;
+export const TILE_SINGLE = 6; // ONE dry leaf (the fallen leaves on the ground are single leaves)
 
 // ---------------------------------------------------------------------------------------------------------------------
 // texture atlas (canvas, painted once)
@@ -393,6 +396,19 @@ function paintNeedles(c: CanvasRenderingContext2D, tile: number): void {
   c.restore();
 }
 
+/** One single leaf, big, in the middle of its tile (for the fallen leaves on the ground). Painted green; the instance colour turns it brown / tan / rust. */
+function paintSingleLeaf(c: CanvasRenderingContext2D, tile: number): void {
+  c.save();
+  c.scale(K, K);
+  c.translate(tile * LS, 0);
+  c.beginPath();
+  c.rect(0, 0, LS, LS);
+  c.clip();
+  const look: LeafLook = { hue: 98, sat: 42, light: 40, curl: 0.1, serrate: 0.25 };
+  drawOvateLeaf(c, LS * 0.2, LS * 0.5, -0.12, LS * 0.62, LS * 0.2, look, true);
+  c.restore();
+}
+
 /** The atlas as a DataTexture (rgb of the transparent pixels is filled in, so mip levels have no dark fringes). Null without a DOM (tests). */
 function makeAtlas(): THREE.DataTexture | null {
   if (typeof document === 'undefined') return null;
@@ -408,6 +424,7 @@ function makeAtlas(): THREE.DataTexture | null {
   paintSprays(c, TILE_LOBED, true, 98765);
   paintMass(c, TILE_MASS, 4242);
   paintSprays(c, TILE_GUM, false, 31337, true);
+  paintSingleLeaf(c, TILE_SINGLE);
   return atlasTexture(c, W, TILE, TILES, 1);
 }
 
@@ -763,7 +780,9 @@ function limb(g: Grow, start: THREE.Vector3, dir: THREE.Vector3, len: number, r0
   if (level < maxLevel) {
     // MORE BRANCHES, FEWER LEAVES: every broadleaf tree (not the gums, already airy) gets 2 more main limbs and 25% more side limbs, so the branch skeleton shows
     const airy = s.leafTile === TILE_GUM;
-    const count = level === 0 ? s.primary + (airy ? 0 : 2) : Math.max(1, Math.round(s.kids[level - 1] * (airy ? 1 : 1.25) * (0.75 + r() * 0.5)));
+    // dal-pala: 3x as many branches in total (+200%) = 1.44x at each of the 3 branching levels (1.44^3 = 3); the 2 extra main limbs and +25% side limbs of before stay
+    const bm = airy ? 1 : BRANCH_LEVEL_MUL;
+    const count = level === 0 ? Math.round((s.primary + (airy ? 0 : 2)) * bm) : Math.max(1, Math.round(s.kids[level - 1] * (airy ? 1 : 1.25) * bm * (0.75 + r() * 0.5)));
     const t0 = level === 0 ? s.startFrac : 0.3;
     let az = r() * Math.PI * 2;
     for (let k = 0; k < count; k++) {
@@ -803,7 +822,12 @@ function limb(g: Grow, start: THREE.Vector3, dir: THREE.Vector3, len: number, r0
  */
 function leafCluster(g: Grow, c: THREE.Vector3, cc: THREE.Vector3): void {
   const { m, r, s } = g;
-  const n = s.leafTile === TILE_GUM ? s.cards : Math.max(2, Math.round(s.cards * 0.4)); // 60% fewer leaf cards per cluster (the extra limbs give back some clusters)
+  // LEAVES: half as many leaf cards on the whole tree as before although there are 3x as many twig tips now -> on average only (cards x 0.4 / 6) cards per tip (often 0, often 1)
+  let n = s.cards;
+  if (s.leafTile !== TILE_GUM) {
+    const want = (s.cards * 0.4) / (BRANCH_LEVEL_MUL ** 3 * 2);
+    n = Math.floor(want) + (r() < want - Math.floor(want) ? 1 : 0);
+  }
   const tile = s.leafTile ?? (s.lobed ? TILE_LOBED : TILE_LEAF);
   for (let i = 0; i < n; i++) {
     const d = unit(g.r);
@@ -881,7 +905,7 @@ export function growTree(s: Style, detail: number): THREE.BufferGeometry {
     const seg = 5;
     m.tube([V3(0, 0, 0), V3(0.1, s.trunkH * 0.35, 0.04), V3(0, s.trunkH * 0.7, -0.05), V3(0, s.trunkH, 0)], [s.trunkR, s.trunkR * 0.7, s.trunkR * 0.55, s.trunkR * 0.4], seg, 1, s.barkTile ?? TILE_BARK, s.barkTint);
     const k = s.farScale ?? 1;
-    crown(m, r, cc, s.rx * 0.95, s.ry * 0.95, s.rx * 0.95, Math.round((s.leafTile === TILE_GUM ? 20 : 12) * k * k), 2.6 * k, 3.8 * k, s.warm, s.leafTile ?? TILE_MASS);
+    crown(m, r, cc, s.rx * 0.95, s.ry * 0.95, s.rx * 0.95, Math.round((s.leafTile === TILE_GUM ? 20 : 6) * k * k), 2.6 * k, 3.8 * k, s.warm, s.leafTile ?? TILE_MASS);
     if (s.bloomTile !== undefined) {
       // far flowers: cards on the upper half of the crown
       for (let i = 0; i < Math.round(14 * k * k); i++) {
@@ -1169,38 +1193,14 @@ function deadLog(detail: number): THREE.BufferGeometry {
 }
 
 /** Dry leaf colours (multiplied with the green leaf paint): brown, tan, rust, straw yellow. */
-const DRY_LEAF: ReadonlyArray<readonly [number, number, number]> = [
-  [2.0, 0.78, 0.8],
-  [2.3, 1.05, 0.9],
-  [2.6, 0.62, 0.5],
-  [2.0, 1.25, 0.7],
-];
 
-/** DRY LEAVES (sukno pata): a patch ~2.6 m wide of fallen dry leaves lying flat on the ground (cards painted with leaf sprays, brown / tan / rust / straw), a few little dry twigs on top. */
+/** DRY LEAF (sukno pata): ONE single leaf lying flat on the ground (one card, 2 triangles). The colour (brown / tan / rust / straw) comes from the instance colour (TreeChunkBuilder), so every leaf is different; the ground is covered by many of these, loosely scattered. */
 function leafLitter(detail: number): THREE.BufferGeometry {
   const r = mulberry32(562);
   const m = new Mesh();
-  const n = detail === 0 ? 46 : 18;
-  for (let k = 0; k < n; k++) {
-    const a = r() * Math.PI * 2;
-    const d = Math.sqrt(r()) * 1.3; // even spread over the disc, thinner at the edge by the card size below
-    const tilt = V3((r() - 0.5) * 0.16, 1, (r() - 0.5) * 0.16).normalize();
-    const edge = 1 - 0.45 * (d / 1.3);
-    const sz = lerp(0.5, 0.9, r()) * edge * (detail === 0 ? 1 : 1.5);
-    const tint = DRY_LEAF[Math.floor(r() * DRY_LEAF.length)];
-    const y = 0.03 + (k / n) * 0.07; // every card at its own height, so no two cards fight for the same pixels
-    m.card(V3(Math.cos(a) * d, y, Math.sin(a) * d), tilt, V3(0, 0, 1), sz, sz * lerp(0.9, 1.25, r()), r() < 0.5 ? TILE_LEAF : TILE_LOBED, r() * Math.PI * 2, tilt, lerp(0.8, 1.12, r()), r() < 0.5, tint);
-  }
-  const twigs = detail === 0 ? 4 : 2;
-  for (let k = 0; k < twigs; k++) {
-    const a = r() * Math.PI * 2;
-    const d = r() * 0.9;
-    const dir = r() * Math.PI;
-    const len = lerp(0.4, 0.95, r());
-    const c = V3(Math.cos(a) * d, 0.11, Math.sin(a) * d);
-    const e = V3(Math.cos(dir) * len * 0.5, 0.015, Math.sin(dir) * len * 0.5);
-    m.tube([c.clone().sub(e), c.clone(), c.clone().add(e).add(V3(0, 0.02, 0))], [0.014, 0.011, 0.005], 3, 0.85, TILE_BARK, DEAD_BARK);
-  }
+  const tilt = V3((r() - 0.5) * 0.3, 1, (r() - 0.5) * 0.3).normalize();
+  const sz = (detail === 0 ? 0.36 : 0.5);
+  m.card(V3(0, 0.035, 0), tilt, V3(0, 0, 1), sz, sz * 1.05, TILE_SINGLE, 0, tilt, 1, false, [1, 1, 1]);
   return m.build();
 }
 

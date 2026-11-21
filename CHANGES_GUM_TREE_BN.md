@@ -66,3 +66,18 @@ TreeTypes.ts, TreeAssets.ts, TreePlacement.ts, TreePreview.ts
 
 ## File (v5 e notun): WindGust.ts (notun), TreeAssets.ts, GrassAssets.ts, Config.ts
 ## Game NOT RUN.
+
+---
+# v6 — puraton gach: pata -50%, dal-pala +200%; lata-pata remove; matir pata single
+
+## Ki holo
+1. PURATON GACH (broadleaf, oak, vase, slender, Sal, Segun, Koroi, Bot, Shimul, Debdaru, acacia; GUM bade): pata ager theke 50% kom, dal-pala 3 gun (+200%).
+   - Dal: 3 level-e prottek-te 1.44x (1.44^3 = 3). TreeAssets `BRANCH_LEVEL_MUL`.
+   - Pata: prottek dal-er dogay gor-e (cards x 0.4 / 6) ta pata (kothao 0, kothao 1). Dur-er gach-e o 12 -> 6.
+   - Pine, palm (Narikel/Khejur/Tal), banana, bamboo, Krishnachura-te hat dii ni.
+2. LATA-PATA FULL REMOVE: fern, shrub, lata ar kothao boshe na (TreePlacement `cellThicket`). Young tree/bamboo age moto. Kind-gula enum-e ache (number na bodlate).
+3. MATIR PATA = SINGLE PATA: ager 46-card patch bondho. Ekhon prottek ta = 1 ta pata (1 card, 2 triangle), notun TILE_SINGLE (ek-ta pata-r chobi). Prottek pata-r nijer sukno rong (brown, tan, rust, straw, olive-brown, lal-brown) position theke. Choto-choto, ilomelo choRano: litterLayers 16, litterChance 0.7, litterScale 0.8-1.4, aroundLog 10 (Config deadwood).
+4. ATLAS: tile 800 -> 584 px. Karon: gum tile (ami) + notun single-leaf tile mile 7 tile, 7 x 800 = 5600 px; kichu phone-e 4096-er beshi texture cholbe na. 7 x 584 = 4088 (< 4096). Pata-r chobi ektu kom sharp.
+
+## File (v6 e notun): TreeAssets.ts, TreePlacement.ts, Config.ts, TreeChunkBuilder.ts
+## Game NOT RUN. Dal beshi/kom: BRANCH_LEVEL_MUL. Pata kom/beshi: leafCluster `want`. Sukno pata beshi/kom: Config deadwood.
