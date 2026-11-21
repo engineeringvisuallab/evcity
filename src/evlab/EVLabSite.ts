@@ -25,7 +25,7 @@ export const EVLAB_YAW = (-52.5 * Math.PI) / 180;
 const COS = Math.cos(EVLAB_YAW), SIN = Math.sin(EVLAB_YAW);
 
 /** Centre of the plot in the WORLD (Step R0b / R0c: scripts/evlab-rot-search.ts WEDGE=NW PW=360 PD=300 YAW=37.5, cut ~0.69 Mm3, relief 78 m). */
-const PLOT_CENTRE = { x: -110, z: -521.6 }; // 2026-11-21 (user): moved +30 / +98.4 (was -140, -620) towards J1: the lake's J1-side (south-west) corner arc now touches world (-98, -363)
+const PLOT_CENTRE = { x: -140, z: -620 }; // 2026-11-21: the move to (-110, -521.6) (lake corner at world (-98, -363)) is UNDONE: it put the plot's west edge on the J1-W arm axis and crashed the game start (walk path length < 0), see HANDOFF_EVLAB_RELOCATION_BN.md Step R-J1
 /** Local z of the plot centre: the building stands 30 m north of it (the same 30 m as in the old 300 x 240 plot, so the R1-R4 numbers still fit). */
 const PLOT_CENTRE_LZ = 30;
 
