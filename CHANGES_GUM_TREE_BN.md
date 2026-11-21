@@ -100,3 +100,21 @@ TreeTypes.ts, TreeAssets.ts, TreePlacement.ts, TreePreview.ts
 - Game NOT RUN (shudhu geometry node e chalay side-view dekhechi, `tsc --noEmit` 0 error). Screenshot dekhe bolo.
 - Aro gaDho chao: `leafDark` kombao (0.82 -> 0.75) ba LEAF_FAMILIES-er prothom duto-r chance barao. Aro holud-sobuj chao: LEAF_FAMILIES lime/olive chance barao.
 - Bot aro chhoraye chao: STYLE_BOT `limbLen` (13) ar `rx`. Aro uchu chao: `spread` kombao (1.0 -> 0.8) ba `horiz` kombao.
+
+---
+# v7b — triangle komano (look na bodle)
+
+## Karon (measure kore)
+Sadharon gach (round/oak/vase/slender, kache) proti gach ~8.5-11k triangle, tar 93% DAL-PALA (bark tube), pata shudhu ~740. Sobcheye beshi level-3 shoru dal: 416 ta x 18 tri = 7.5k (bark-er 74%). Karon v6-er dal-pala 3x (`BRANCH_LEVEL_MUL`). Bot gach-er bhag proy 0 (49 chunk e 5 ta), tai bot-er change triangle-er karon na.
+Ghono jongol / pahar-e sob gach-er 80%+ triangle ei 4 ta kind (round, vase, slender, oak), pine ~11%.
+
+## Ki holo
+- level-3 twig: 4 point -> 3 point (start, majh, dogha), 3 side. Gach-er shape (dal-pala, rng stream) ek-i thake, shudhu shoru dal-er tube kom triangle.
+- level-2 dal: 4 side -> 3 side (`SEG` = [9,5,3,3]).
+- Fol (near LOD triangle/gach): round 10.9k -> 7.9k (-27%), oak 11.2k -> 8.1k, vase 8.5k -> 6.2k, slender 8.5k -> 6.3k, sal 9.0k -> 6.7k, segun 10.6k -> 7.7k, koroi, shimul, debdaru ~-27%, gum -15%, bot 13.2k -> 11.1k (notun spread + 22 card shoho, ager cheyeo kom). Pine na bodlano.
+- Far LOD (42 tri) bodlay ni.
+
+## Aro komate chaile (look badle)
+- `BRANCH_LEVEL_MUL` 1.44 -> 1.3 (dal-pala 3x -> 2.2x): ~-20% aro.
+- Kache-r (LOD0) chunk er range Config-e kombao: beshirbhag triangle LOD0 chunk-e.
+- Majh-LOD (detail 2, level-3 twig bad) alada geometry + TreeChunkBuilder e distance split: boro kaaj, amake bolo.

@@ -733,7 +733,7 @@ interface Grow {
   hang: THREE.Vector3[];
 }
 
-const SEG = [9, 5, 4, 3];
+const SEG = [9, 5, 3, 3]; // radial sides per branch level (near LOD); the thin level 2 / 3 twigs are 3-sided (was 4 for level 2)
 
 /** Point (and direction) at fraction t along a polyline. */
 function along(pts: THREE.Vector3[], t: number): { p: THREE.Vector3; d: THREE.Vector3; i: number } {
@@ -765,7 +765,10 @@ function limb(g: Grow, start: THREE.Vector3, dir: THREE.Vector3, len: number, r0
     pts.push(p.clone());
     radii.push(r0 * (level === 0 ? 1 - 0.62 * (i / (n - 1)) : 1 - 0.8 * (i / (n - 1))));
   }
-  m.tube(pts, radii, Math.max(3, g.detail === 0 ? SEG[level] : 4), 0.82 + 0.18 * Math.min(1, level / 2), s.barkTile ?? TILE_BARK, s.barkTint);
+  // TRIANGLES: the thinnest twigs (level 3, ~75 % of all bark triangles after the 3x dal-pala) are drawn with 3 points instead of 4 (start, middle, tip):
+  // same curve to the eye (they are a few cm thick), a third fewer triangles. The growth above still uses all points, so the tree shape is unchanged.
+  if (level >= 3 && g.detail === 0 && n === 4) m.tube([pts[0], along(pts, 0.5).p, pts[3]], [radii[0], (radii[1] + radii[2]) * 0.5, radii[3]], 3, 0.82 + 0.18 * Math.min(1, level / 2), s.barkTile ?? TILE_BARK, s.barkTint);
+  else m.tube(pts, radii, Math.max(3, g.detail === 0 ? SEG[level] : 4), 0.82 + 0.18 * Math.min(1, level / 2), s.barkTile ?? TILE_BARK, s.barkTint);
   if (level >= 1 && s.aerial) g.hang.push(along(pts, 0.55).p, pts[n - 1].clone());
 
   if (level === 0 && g.detail === 0) {

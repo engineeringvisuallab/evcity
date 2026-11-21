@@ -185,3 +185,4 @@ USER: "game a highquality game video recorder add koro, social media te publish 
 
 ## Tree colour + banyan (2026-11-21)
 Leaves were too light / yellow-green; now mostly deep green with some variety (`LEAF_FAMILIES` in `TreeChunkBuilder.ts`, atlas hue/light in `TreeAssets.ts`, `Config.vegetation.leafDark`). Bot (banyan) crown was a tight tangled dome; now long near-horizontal limbs (`Style.horiz`, `STYLE_BOT`). See `CHANGES_GUM_TREE_BN.md` v7. Game not run in the sandbox: check in the game and tune.
+Triangles: ~93 % of a normal tree's near-LOD triangles are branch tubes (3x dal-pala); level-3 twigs now 3-point, level-2 3-sided (-27 % per tree, same shape). See `CHANGES_GUM_TREE_BN.md` v7b. Bot is almost never the cost.
