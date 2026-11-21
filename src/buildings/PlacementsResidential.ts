@@ -4,6 +4,8 @@
 import type { BuildingPlacement } from './Placements';
 import { FILL_PLACEMENTS } from './PlacementsFill';
 import { insideAnyPlot } from './CityPlotsAll'; // city plot + vacant plot + the plots drawn in Plot.shp
+import { ROADSIDE_ALL, insideRoadsideCity } from './PlacementsRoadside'; // city roadside rows (scripts/city-roadside-build.ts)
+import { Config } from '../core/Config';
 
 export const RESIDENTIAL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'apartment-mid', x: 1200.2, z: 1061.8, yaw: 2.5925, W: 18, D: 13, zone: 'se-dense', seed: 954737 },
@@ -1895,4 +1897,7 @@ export const RESIDENTIAL_PLACEMENTS: readonly BuildingPlacement[] = [
 ];
 
 /** The city fill + the residential buildings: everything that FillBuildings draws and that trees / grass keep out of. TerrainGenerator still reads only FILL_PLACEMENTS (the residential buildings get NO terrain pad, a pad loop over 1886 more plots would slow every ground sample). */
-export const DRAWN_FILL_PLACEMENTS: readonly BuildingPlacement[] = [...FILL_PLACEMENTS, ...RESIDENTIAL_PLACEMENTS].filter((p) => !insideAnyPlot(p.x, p.z, 0)); // STEP 3: a house whose centre is inside a city plot is dropped (Config.city.plots; empty list when off)
+export const DRAWN_FILL_PLACEMENTS: readonly BuildingPlacement[] = [
+  ...[...FILL_PLACEMENTS, ...RESIDENTIAL_PLACEMENTS].filter((p) => !insideAnyPlot(p.x, p.z, 0) && !(Config.city.roadsideBuildings && insideRoadsideCity(p.x, p.z))), // ROADSIDE (2026-11-21): the scattered fill inside the city area circle is dropped ...
+  ...(Config.city.roadsideBuildings ? ROADSIDE_ALL : []), // ... and replaced by the tidy rows beside the roads (PlacementsRoadside.ts)
+]; // STEP 3: a house whose centre is inside a city plot is dropped (Config.city.plots; empty list when off)
