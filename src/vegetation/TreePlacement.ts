@@ -188,6 +188,23 @@ export class TreePlacer {
     return m[1] > 0.01;
   }
 
+  /** Road ground only (road + kerb + junction pad, J1 pad / lane zones, with the tree clearance around it). Plot garden trees use it: they are fixed data and know nothing of roads. */
+  private onRoadGround(x: number, z: number): boolean {
+    const r = this.gen.roads;
+    const m = this.mask;
+    const c = V.roadClear;
+    r.maskAt(x, z, 1, m);
+    if (m[1] > 0.01) return true;
+    r.maskAt(x + c, z, 1, m);
+    if (m[1] > 0.01) return true;
+    r.maskAt(x - c, z, 1, m);
+    if (m[1] > 0.01) return true;
+    r.maskAt(x, z + c, 1, m);
+    if (m[1] > 0.01) return true;
+    r.maskAt(x, z - c, 1, m);
+    return m[1] > 0.01;
+  }
+
   /** The random numbers of the cell being built (one stream per cell; older values first, so no tree position ever moves when a draw is added at the end). */
   private rr = { roll: 0, jx: 0, jz: 0, rScale: 0, rYaw: 0, rTint: 0, rKind: 0, rVar: 0, rBig: 0, rHome: 0, rHx: 0, rHz: 0, rHKind: 0, rHScale: 0, rHYaw: 0 };
   private sw: TerrainSample;
@@ -664,6 +681,7 @@ export class TreePlacer {
     })) lists[e.kind].push(...e.v);
     // CITY PLOTS: a few garden trees inside the plots (game tree kinds only, PlotTrees.ts)
     for (const t of plotTreesInChunk(ox, oz, S)) {
+      if (this.onRoadGround(t.x, t.z)) continue; // a garden tree never stands on a road or on the J1 junction
       this.gen.sample(t.x, t.z, this.sample);
       lists[t.kind].push(t.x - ox, this.footY(this.sample.h, 0, t.kind, t.scale), t.z - oz, t.scale, t.yaw, 0.95 + 0.1 * ((t.yaw * 7) % 1));
     }
