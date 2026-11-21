@@ -688,7 +688,7 @@ export class Engine {
     this.people = new PeopleManager({ scene: this.scene, terrain: this.world.terrain, origin: this.world.origin, graph, vehicles: this.vehicles, player: this.player });
     this.people.setStations(this.rail, this.trains); // people walk to the stations, climb the stairs and board / leave the trains
     // --- Crop fields (table FarmFields.ts): crops, trees and props + REAL farmers (people) and machines (vehicles) at work, streamed around the player ---
-    this.farm = new FarmManager({ root: this.world.root, terrain: this.world.terrain, playerWorld: (out) => this.focusWorld(out), people: this.people, vehicles: this.vehicles });
+    this.farm = new FarmManager({ root: this.world.root, terrain: this.world.terrain, playerWorld: (out) => this.focusWorld(out), people: this.people, vehicles: this.vehicles, container, isMuted: () => this.voice?.isMuted ?? false });
     this.busStops = new BusStops({ scene: this.scene, origin: this.world.origin, terrain: this.world.terrain, graph, sites: this.world.terrain.sites });
     this.trafficSignals = new TrafficSignals(graph);
     this.trafficLights = new TrafficLightLayer(this.world.root, this.trafficSignals);

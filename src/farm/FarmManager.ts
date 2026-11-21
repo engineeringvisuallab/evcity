@@ -14,6 +14,7 @@ import type { VehicleManager } from '../vehicles/VehicleManager';
 import { FARM_FIELDS, FARM_INDEX } from './FarmFields';
 import type { Field } from './FarmPlan';
 import { HeightGrid, buildGround, buildPlants, disposeField, windUniform } from './FarmRenderer';
+import { FarmVoice } from './FarmVoice';
 
 export interface FarmDeps {
   root: THREE.Object3D;
@@ -23,6 +24,10 @@ export interface FarmDeps {
   /** With these two the fields get REAL farmers and machines (FarmCrew); without them only the props. */
   people?: PeopleManager;
   vehicles?: VehicleManager;
+  /** HTML parent for the English talk subtitles; without it there is no farm voice. */
+  container?: HTMLElement;
+  /** The M key (mute): the talk then shows its text only. */
+  isMuted?: () => boolean;
 }
 
 const GROUND_R = 1300;
@@ -50,10 +55,15 @@ export class FarmManager {
   private t = 0;
   private disabled = false;
   readonly crew: FarmCrew | null;
+  /** English talk of the crop you stand in (text in the game + browser voice). */
+  readonly voice: FarmVoice | null;
+  private talkField: Field | null = null;
+  private curField = -1;
 
   constructor(private readonly deps: FarmDeps) {
     this.group.name = 'EVFarm';
     deps.root.add(this.group);
+    this.voice = deps.container ? new FarmVoice(deps.container, deps.isMuted) : null;
     this.crew = deps.people && deps.vehicles ? new FarmCrew({ people: deps.people, vehicles: deps.vehicles, terrain: deps.terrain }) : null;
   }
 
@@ -86,6 +96,7 @@ export class FarmManager {
     this.deps.playerWorld(this.p);
     const px = this.p.x, pz = this.p.z;
     this.crew?.update(dt, px, pz);
+    this.updateTalk(px, pz);
     for (const c of this.cand) c.d = Math.hypot(c.f.cx - px, c.f.cz - pz);
     this.cand.sort((a, b) => a.d - b.d);
     let gb = 0, pb = 0, ab = 0;
@@ -110,6 +121,18 @@ export class FarmManager {
       }
       if (lv.actors && d <= ACTOR_R) lv.actors.tick(this.t);
     }
+  }
+
+  /** Walking into a field whose crop has a talk starts it; walking away (150 m) stops it. */
+  private updateTalk(px: number, pz: number): void {
+    const v = this.voice;
+    if (!v) return;
+    if (v.busy && this.talkField && Math.hypot(px - this.talkField.cx, pz - this.talkField.cz) > 150) { v.stop(); this.talkField = null; }
+    const f = FARM_INDEX.covers(px, pz, 0) ? FARM_INDEX.at(px, pz) : undefined;
+    if (!f || !v.has(f.crop)) { this.curField = -1; return; }
+    if (f.id === this.curField) return;
+    this.curField = f.id;
+    if (v.play(f.crop)) this.talkField = f;
   }
 
   private create(f: Field): Live {
@@ -149,6 +172,7 @@ export class FarmManager {
 
   dispose(): void {
     this.crew?.dispose();
+    this.voice?.dispose();
     for (const id of [...this.live.keys()]) this.remove(id);
     this.deps.root.remove(this.group);
   }
