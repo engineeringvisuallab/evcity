@@ -7,24 +7,25 @@ import { terrainGround } from '../src/farm/FarmGround';
 import { FieldIndex, planFarms, fieldContains, type PlanStats } from '../src/farm/FarmPlan';
 import { Act, CROPS, STAGE_BN, cropById } from '../src/farm/CropDefs';
 import { FARM_FIELDS } from '../src/farm/FarmFields';
+import { FARM_AREAS } from '../src/farm/FarmAreas';
 
 const t0 = Date.now();
 const g = new TerrainGenerator(Config.world.seed);
 const ground = terrainGround(g);
 const stats: PlanStats = { cells: 0, fields: 0, rejected: {} };
-const fields = planFarms(ground, Config.world.seed, stats);
+const fields = planFarms(ground, Config.world.seed, stats, FARM_AREAS);
 console.log(`planned ${fields.length} fields from ${stats.cells} candidate cells in ${((Date.now() - t0) / 1000).toFixed(1)} s`);
 console.log('rejected:', JSON.stringify(stats.rejected));
 
 let bad = 0;
 const fail = (s: string) => { console.log('FAIL', s); bad++; };
-if (fields.length < 150) fail('too few fields');
+if (fields.length < 40) fail('too few fields');
 
 // the committed table (src/farm/FarmFields.ts) is the current plan
 if (FARM_FIELDS.length !== fields.length || FARM_FIELDS.some((f, i) => f.crop !== fields[i].crop || f.stage !== fields[i].stage || f.act !== fields[i].act || Math.abs(f.cx - fields[i].cx) > 0.1)) fail('FarmFields.ts is out of date: run npm run gen:farm');
 
 // determinism
-const again = planFarms(ground, Config.world.seed);
+const again = planFarms(ground, Config.world.seed, undefined, FARM_AREAS);
 if (again.length !== fields.length || again.some((f, i) => f.crop !== fields[i].crop || f.stage !== fields[i].stage || f.cx !== fields[i].cx)) fail('plan is not deterministic');
 
 // per-field checks: corners and centre dry + unblocked, no overlap with a neighbour

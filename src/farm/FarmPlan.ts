@@ -92,8 +92,15 @@ function chooseActivity(c: CropDef, stage: number, r: () => number): number {
 
 export interface PlanStats { cells: number; fields: number; rejected: Record<string, number> }
 
-/** Plan every field of the world. Deterministic for a given world seed + ground. */
-export function planFarms(ground: FarmGround, worldSeed: number, stats?: PlanStats): Field[] {
+export interface PlanArea { id: string; cx: number; cz: number; r: number }
+
+/**
+ * Plan every field of the world. Deterministic for a given world seed + ground.
+ * With `areas` (FarmAreas.ts) fields are made ONLY inside those circles: every cell is tried (no random gaps), the land there counts as
+ * farmland whatever the world zone says, steep cells become terraced hill orchards, and a field never gets the same crop as a neighbour,
+ * so different field types stand side by side.
+ */
+export function planFarms(ground: FarmGround, worldSeed: number, stats?: PlanStats, areas?: readonly PlanArea[]): Field[] {
   const fields: Field[] = [];
   const p: Probe = { h: 0, wet: false, blocked: false };
   const hs = new Float32Array(N * N);
@@ -109,17 +116,24 @@ export function planFarms(ground: FarmGround, worldSeed: number, stats?: PlanSta
   };
   const i0 = Math.floor(-HALF / FARM_CELL), i1 = Math.ceil(HALF / FARM_CELL);
   let nextId = 0;
+  const cropAt = new Map<number, string>(); // area mode: the crop of every placed cell, to keep neighbours different
+  const cellKey = (i: number, j: number): number => (i + 512) * 1024 + (j + 512);
 
   for (let j = i0; j < i1; j++) {
     for (let i = i0; i < i1; i++) {
       const x = (i + 0.5) * FARM_CELL, z = (j + 0.5) * FARM_CELL;
-      const zn = ground.zone(x, z);
+      let ar: PlanArea | undefined;
+      if (areas) {
+        for (const a of areas) if (Math.hypot(x - a.cx, z - a.cz) <= a.r - 30) { ar = a; break; }
+        if (!ar) continue;
+      }
+      const zn = ar ? { id: `agri-${ar.id}`, kind: 'farmland' } : ground.zone(x, z);
       if (!KIND_OK.has(zn.kind)) continue;
       if (stats) stats.cells++;
       const r = mulberry32(hash2D((worldSeed ^ 0x0fa12a) >>> 0, i, j));
       const hillZone = zn.kind === 'forest' || zn.kind === 'mountain';
       // gaps: some cells stay wild (grass, trees)
-      if (r() < (zn.kind === 'farmland' ? 0.08 : zn.kind === 'village' ? 0.45 : 0.72)) { reject('gap'); continue; }
+      if (r() < (ar ? 0.02 : zn.kind === 'farmland' ? 0.08 : zn.kind === 'village' ? 0.45 : 0.72)) { reject('gap'); continue; }
 
       // two tries: full size, then a smaller field squeezed between rivers / roads
       let placed = false;
@@ -157,10 +171,10 @@ export function planFarms(ground: FarmGround, worldSeed: number, stats?: PlanSta
         let env: Env;
         let kind: FieldKind = 'plot';
         let level = false;
-        if (hillZone) {
+        if (hillZone || (ar && (relief > 9 || (relief >= 3 && slope <= 0.3 && r() < 0.16)))) {
           if (relief < 1.5 || relief > 18 || slope > 0.32) { reject('slope'); continue shrinkLoop; }
           env = 'hill'; kind = 'hill';
-        } else if (zn.kind === 'village') {
+        } else if (zn.kind === 'village' || (ar && relief <= 8 && r() < 0.14)) {
           if (relief > 8) { reject('relief'); continue shrinkLoop; }
           env = 'homestead'; kind = 'garden';
         } else {
@@ -187,7 +201,13 @@ export function planFarms(ground: FarmGround, worldSeed: number, stats?: PlanSta
         if (list.length === 0) { reject('nocrop'); continue shrinkLoop; }
         const pr = mulberry32(hash2D((worldSeed ^ 0x5eed) >>> 0, Math.floor(i / 4) + (hillZone ? 5000 : 0), Math.floor(j / 4)));
         const patchCrop = pick(pr, list);
-        const crop = r() < 0.65 ? patchCrop : pick(r, list);
+        let crop = r() < 0.65 ? patchCrop : pick(r, list);
+        if (ar) {
+          // a different crop from the neighbours (west, north, north-west, north-east) -> varied fields side by side
+          const nb = new Set([cropAt.get(cellKey(i - 1, j)), cropAt.get(cellKey(i, j - 1)), cropAt.get(cellKey(i - 1, j - 1)), cropAt.get(cellKey(i + 1, j - 1))]);
+          const free = list.filter((c) => !nb.has(c.id));
+          if (free.length > 0) crop = pick(r, free);
+        }
 
         // stage: patches share a "season" bias so a whole block is green or golden together
         const stageW = crop.weights.slice();
@@ -208,10 +228,25 @@ export function planFarms(ground: FarmGround, worldSeed: number, stats?: PlanSta
           env, crop: crop.id, stage, progress: partial ? 0.2 + r() * 0.6 : 1, act, seed: (r() * 4294967296) >>> 0,
         });
         placed = true;
+        cropAt.set(cellKey(i, j), crop.id);
         break shrinkLoop;
         }
       }
       void placed;
+    }
+  }
+  // area mode: every crop of the game should grow somewhere - give each missing crop to a field of the right kind (taken from the most common crop)
+  if (areas) {
+    for (const c of CROPS) {
+      if (fields.some((f) => f.crop === c.id)) continue;
+      const count = new Map<string, number>();
+      for (const f of fields) count.set(f.crop, (count.get(f.crop) ?? 0) + 1);
+      const fit = fields.filter((f) => c.env.includes(f.env) && (isPerennial(c) ? f.kind !== 'plot' : f.kind === 'plot') && (count.get(f.crop) ?? 0) > 2);
+      if (fit.length === 0) continue;
+      fit.sort((a, b) => (count.get(b.crop) ?? 0) - (count.get(a.crop) ?? 0));
+      const f = fit[0];
+      f.crop = c.id;
+      f.act = chooseActivity(c, f.stage, mulberry32(hash2D(worldSeed >>> 0, f.id, 7)));
     }
   }
   if (stats) stats.fields = fields.length;
