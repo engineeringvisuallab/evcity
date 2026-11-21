@@ -279,7 +279,7 @@ export class GrassManager {
     let type: number;
     if (flag > 5.5) {
       // JUNGLE FLOOR grass (flag 6): a few wild flowers (never white), in small patches (~14 m) and only a few elsewhere; the rest is a rich mix of all the plain grass kinds
-      if (lod === 0 && h2 < (vnoise(wx / 14 + 7, wz / 14 - 3) > 0.62 ? 0.09 : 0.008)) return h3 < 0.3 ? GrassType.buttercup : h3 < 0.55 ? GrassType.lavender : h3 < 0.8 ? GrassType.poppy : GrassType.cornflower;
+      if (lod === 0 && h2 < (vnoise(wx / 14 + 7, wz / 14 - 3) > 0.62 ? 0.26 : 0.05)) return h3 < 0.3 ? GrassType.buttercup : h3 < 0.55 ? GrassType.lavender : h3 < 0.8 ? GrassType.poppy : GrassType.cornflower;
       return h1 < 0.3 ? GrassType.wild : h1 < 0.5 ? GrassType.lawn : h1 < 0.68 ? GrassType.clump : h1 < 0.8 ? GrassType.seed : h1 < 0.91 ? GrassType.tussock : GrassType.tussockWide;
     }
     if (flag > 4.5) {

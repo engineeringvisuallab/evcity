@@ -42,7 +42,7 @@ export const SHADOW_NAMES_BN: Readonly<Record<ShadowLevel, string>> = { off: 'рж
 
 /** Auto mode: where it starts and the highest level it may try, per device class. */
 export const TIER_SHADOW: Readonly<Record<QualityTier, { start: ShadowLevel; max: ShadowLevel }>> = {
-  low: { start: 'off', max: 'low' },
+  low: { start: 'low', max: 'low' }, // weak device: light shadow by default (auto still drops it to off when too slow); the player can raise it in the settings
   medium: { start: 'medium', max: 'high' },
   high: { start: 'high', max: 'high' },
 };

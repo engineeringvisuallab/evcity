@@ -18,6 +18,7 @@ import { HelicopterBombs } from '../combat/HelicopterBombs';
 import { Explosions } from '../combat/Explosions';
 import { TankCannon } from '../combat/TankCannon';
 import { TreeDestruction } from '../vegetation/TreeDestruction';
+import { setTreeShadows } from '../vegetation/TreeChunkBuilder';
 import { BusStops } from '../traffic/BusStops';
 import { BirdManager } from '../birds';
 import { AnimalManager } from '../animals';
@@ -364,7 +365,10 @@ export class Engine {
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.environment = new Environment(this.scene); // sky, sun + shadows, fog
     this.shadows = new ShadowManager({
-      apply: (level, spec) => this.environment.applyShadow(level, spec),
+      apply: (level, spec) => {
+        this.environment.applyShadow(level, spec);
+        setTreeShadows(this.scene, level === 'high'); // full (tree) shadows only at the high level
+      },
       notify: (text) => this.toast?.show(text, 4200),
     });
     if (currentChoice() === 'auto') {

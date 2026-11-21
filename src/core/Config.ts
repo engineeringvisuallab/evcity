@@ -367,7 +367,7 @@ export const Config = {
     /** Chunks up to this LOD get trees (0 = nearest only). LOD 0 uses the detailed models, higher LODs the simple ones. */
     maxLod: 1,
     /** Trees and rocks cast shadows into the shadow map. false = no tree shadows (the shadow pass draws every tree a second time: the biggest tree cost, makes the PC hot). */
-    treeShadows: false,
+    treeShadows: false, // runtime: ShadowManager switches it on at shadow level 'high' only (setTreeShadows)
     /** Placement grid (m). One tree at most per cell, jittered inside it. 500 / cellSize must be a whole number. */
     cellSize: 10,
     /** Chance (0..1) of a tree per cell: in the middle of a forest / in open land. */
@@ -435,7 +435,7 @@ export const Config = {
        */
       deadwood: { logChance: 0.13, logScale: [0.75, 1.3] as [number, number],
       /** 2026-11-21: fallen leaves lie in HEAPS: `litterLayers` heap spots per cell x `litterChance`, a heap = `clusterLeaves` leaves within `clusterRadius` m; `loneChance` = chance of one lone leaf per cell. */
-      litterLayers: 2, litterChance: 0.5, clusterLeaves: [6, 16] as [number, number], clusterRadius: [0.7, 1.7] as [number, number], loneChance: 0.15, litterScale: [0.8, 1.4] as [number, number], aroundLog: 10 } },
+      litterLayers: 3, litterChance: 0.7, clusterLeaves: [8, 20] as [number, number], clusterRadius: [0.8, 2.0] as [number, number], loneChance: 0.45, litterScale: [0.8, 1.4] as [number, number], aroundLog: 10 } },
     /**
      * EXTRA JUNGLE SPOTS (ghono jongol outside the forest districts): round patches that use the SAME dense jungle as above (same chance, big trees, understory,
      * tall bamboo, grass thinning). `r` = radius (m) of the full jungle, `fade` = the ragged edge fades out over this many m outside the full part (smoothstep, like the district edge).
@@ -584,7 +584,7 @@ export const Config = {
        * JUNGLE FLOOR (ghono jongol ground cover): inside the dense jungle every cell gets grass (`floor` = patch value forced up to this x jungle density, so no bald
        * ground), tufts are `tall` x higher, `chance` = grass chance per cell, and the grass kinds are mixed (wild, tussocks, broad-leaf, seed-head). Flag 6 in the tuft data.
        */
-      jungle: { floor: 0, tall: 2.2, chance: 0, clumpChance: 0, clear: 0.1 }, // 2026-11-20: NO grass in the dense jungle (floor / chance / clumpChance 0); `clear` = jungle density above which no tuft or clump is placed
+      jungle: { floor: 0.9, tall: 2.2, chance: 0.35, clumpChance: 0.1, clear: 2 }, // 2026-11-21: grass is back in the jungle (clear 2 = never skipped) // 2026-11-20: NO grass in the dense jungle (floor / chance / clumpChance 0); `clear` = jungle density above which no tuft or clump is placed
       /** Blades per tuft model are multiplied by this (1 = full quality; 0.6 for weak GPUs). */
       bladeDensity: 1,
       /** Wildflowers: share of tufts that carry flowers inside a flower patch / scattered in the open meadow. Patches are ~12-30 m wide. */

@@ -118,7 +118,10 @@ export class TreeChunkBuilder {
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     mesh.computeBoundingSphere();
-    mesh.castShadow = lod === 0 && Config.vegetation.treeShadows; // tree shadows off by default (Config vegetation.treeShadows)
+    // Tree shadows follow the sun-shadow level (ShadowManager: only 'high' casts them, see setTreeShadows). Undergrowth, logs and leaf litter never cast.
+    const casts = lod === 0 && treeKind >= 0 && (treeKind < TreeKind.fern || treeKind >= TreeKind.gum);
+    mesh.userData.treeShadow = casts;
+    mesh.castShadow = casts && Config.vegetation.treeShadows;
     mesh.receiveShadow = lod === 0;
     mesh.matrixAutoUpdate = false;
     mesh.updateMatrix();
@@ -137,4 +140,12 @@ export class TreeChunkBuilder {
   dispose(group: THREE.Group): void {
     for (const c of group.children) (c as THREE.InstancedMesh).dispose();
   }
+}
+
+/** Switch the sun shadow of every tree already in the scene (new chunks read Config.vegetation.treeShadows themselves). */
+export function setTreeShadows(root: THREE.Object3D, on: boolean): void {
+  Config.vegetation.treeShadows = on;
+  root.traverse((o) => {
+    if (o.userData.treeShadow) o.castShadow = on;
+  });
 }
