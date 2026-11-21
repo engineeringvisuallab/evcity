@@ -810,7 +810,7 @@ export class Engine {
     this.race = new RaceSystem({ parent: container, root: this.world.root, graph, toast: (t, ms) => this.toast.show(t, ms ?? 3400), begin: (c) => this.beginRace(c), go: () => { for (const v of this.raceCars) if (v.ai) v.ai.hold = false; }, clear: () => this.clearRacers() });
     // the parked fleet (see EVLAB_SLOTS): the helicopter stands on its pad in the EVLAB parking lot
     {
-      const h = this.fleetSlot(0, 34, 0);
+      const h = this.fleetSlot(30, 0, 0); // the helicopter stands a bit apart, at the far end of the row
       this.helis.spawn(new THREE.Vector3(h.x, this.world.terrain.heightAt(h.x, h.z) + 1.5, h.z), h.yaw);
     }
     // --- boats: one on the nearest deep water to the spawn point (sea / lake / river), one on the biggest lake ---
@@ -864,16 +864,16 @@ export class Engine {
       terrain: this.world.terrain, people: this.people, vehicles: this.vehicles, explosions: this.explosions,
     });
     // a war tank is parked next to the helicopter (F to get in; left mouse button fires the cannon)
-    const tk = this.fleetSlot(-8, 34, 0);
+    const tk = this.fleetSlot(14.5, 0, 0);
     this.vehicles.setTankHome(tk.x, tk.z, tk.yaw);
     // one parked, driverless copy of every road vehicle waits in the EVLAB PARKING lot (F to get in): the small ones nose-in to the road
     // (row A), the bus along the road behind them (row B)
-    // 2026-11-21: the fleet stands at X -308 Z -67, noses to the J1-S 8-lane road (row A: 6 small vehicles side by side, row B: the bus along the road)
+    // 2026-11-21: the fleet stands at X -308 Z -67, noses to the J1-S 8-lane road (ONE row, all nose to the road: 6 small vehicles, bus, tank; the helicopter a bit apart at the end). Rows behind it ran into the mall glass wall (mall is only ~20 m away).
     const park = (spec: typeof SEDAN, lat: number, back: number, turn: number) => ({ spec, ...this.fleetSlot(lat, back, turn) });
     this.vehicles.setParked([
-      park(RICKSHAW, -10, 0, 0), park(AUTO, -6, 0, 0),
-      park(SEDAN, -2, 0, 0), park(JEEP, 2, 0, 0), park(HYPERCAR, 6, 0, 0), park(EVHYPAR, 10, 0, 0),
-      park(BUS, 0, 18, Math.PI / 2),
+      park(RICKSHAW, -20, 0, 0), park(AUTO, -15.5, 0, 0),
+      park(SEDAN, -11, 0, 0), park(JEEP, -6.5, 0, 0), park(HYPERCAR, -2, 0, 0), park(EVHYPAR, 2.5, 0, 0),
+      park(BUS, 8, 0, 0),
     ]);
     this.tour = new TourManager({ container, infra: this.infra });
     bus.on('camera:locked', ({ locked }) => this.hud.setLocked(locked));
