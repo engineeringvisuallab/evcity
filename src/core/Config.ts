@@ -399,6 +399,8 @@ export const Config = {
     /** 2026-11-20: size multiplier of the trees OUTSIDE the dense jungle (forest, open land, village trees): ordinary trees x `treeSizeOutside`, the big species (sal, segun ...) x `treeSizeOutsideBig` (so they do not get taller than ~40 m). The jungle trees keep their size (1 = no change). */
     treeSizeOutside: 1.8,
     treeSizeOutsideBig: 1.3,
+    /** 2026-11-21: SMALL TREES (broadleaf, oak, vase, slender lower than `maxHeight` m): only `keep` (0..1) of them are placed (a fixed share per spot, so none ever flickers or moves). 1 = all (as before), 0.25 = a quarter. Taller trees, palms, bamboo, city trees are not touched. */
+    smallTrees: { maxHeight: 10, keep: 0.25 },
     /** HOMESTEADS (gram): coconut, date, palmyra palms and banana clumps stand around rural houses. `reach` = ring width (m) beyond the footprint, `chance` per 10 m cell next to the house (fades out to the edge of the ring). */
     homestead: { reach: 32, chance: 0.42 },
     /** POND / LAKE / RIVER BANKS: palms and banana on low land within `reach` m of water. `chance` per 10 m cell, `maxHeight` = only land lower than this (m above sea level). */

@@ -132,3 +132,16 @@ Ghono jongol / pahar-e sob gach-er 80%+ triangle ei 4 ta kind (round, vase, slen
 - Aro ghono pata: STYLE_BOT `cards` (9) ba `card` size. Aro faka/kom triangle: `cards` kombao.
 - Aro dal: `primary` (6) ba `kids` [2,2] barao.
 ## Game NOT RUN; geometry node-e chalay side-view dekhechi, tsc 0 error.
+
+---
+# v7d — choto gach er shonkha 25%
+
+## Ki holo
+- Choto gach (broadleaf, oak, vase, slender; uchchota < 10 m) er shonkha 25% kora hoyeche (75% bad). Boro gach, pine, palm, bamboo, shohor-er gach (street/plot) bodlay ni.
+- Kon gach thakbe ta position theke fix (hash), tai ghurle/LOD bodlale bodlay na, pop kore na. Kache o dur-er chunk, collider, ghas-er clump shob ek-i gach dhore (`cellTree`/`cellTree2` e filter, `treesInRect` o same).
+- Jungle-er thicket-er young tree (`cellThicket`) o ei filter-e pore.
+- Config: `vegetation.smallTrees: { maxHeight: 10, keep: 0.25 }`. `keep` 1 = ager moto shob. `maxHeight` barale aro boro gach "choto" dhora hobe.
+- Measure (X 4273 Z 2360 er kache, 49 chunk): broadleaf-family gach 28,554 -> 7,996 (-72%; shob choto na, kichu boro thake). Pine/sal/segun ek-i.
+- File: TreePlacement.ts (thinSmall/dropSmall), Config.ts.
+## Dhyan dao
+- Game NOT RUN. Jongol faka lagle `keep` 0.25 -> 0.4. "25% kome" (mane 75% thakbe) chaile `keep: 0.75`.

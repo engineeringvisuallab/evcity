@@ -224,7 +224,7 @@ export class TreePlacer {
     R.rHKind = rng();
     R.rHScale = rng();
     R.rHYaw = rng();
-    return this.bambooTree(gi, gj, ox, oz, i, j) ?? this.forestTree(gi, gj, ox, oz, i, j) ?? this.homeTree(ox, oz, i, j);
+    return this.thinSmall(this.bambooTree(gi, gj, ox, oz, i, j) ?? this.forestTree(gi, gj, ox, oz, i, j) ?? this.homeTree(ox, oz, i, j));
   }
 
   /** Foot height of a tree: the ground minus the sink, and on a slope a bit more for thick trunks (slope = rise / run). */
@@ -391,7 +391,28 @@ export class TreePlacer {
    * tree (so the two trunks never overlap), is mostly young (small shade trees, some bamboo thickets on low land, a few young big trees), and so the forest
    * has layers: giants, middle trees, young trees. Own random stream: no other tree moves.
    */
+  /** Understory tree of a jungle cell (small trees are thinned, see `thinSmall`). */
   private cellTree2(gi: number, gj: number): PlacedTree | null {
+    return this.thinSmall(this.cellTree2Raw(gi, gj));
+  }
+
+  /** Height (m) of a broadleaf-family tree at scale 1 (crown top): round, oak, vase, slender. Other kinds are never thinned. */
+  private static readonly SMALL_H: Record<number, number> = { [TreeKind.broadleaf]: 9.4, [TreeKind.oak]: 8.3, [TreeKind.vase]: 10.6, [TreeKind.slender]: 10.6 };
+
+  /** True when this would-be tree is a SMALL broadleaf tree that the `smallTrees.keep` share drops. The choice only depends on the position (stable). */
+  private dropSmall(kind: number, scale: number, x: number, z: number): boolean {
+    const S = V.smallTrees;
+    if (S.keep >= 1) return false;
+    const h1 = TreePlacer.SMALL_H[kind];
+    if (h1 === undefined || h1 * scale >= S.maxHeight) return false;
+    return mulberry32(hash2D(this.seed ^ 0x5a11, Math.round(x * 4), Math.round(z * 4)))() >= S.keep;
+  }
+
+  private thinSmall<T extends { kind: number; x: number; z: number; scale: number }>(t: T | null): T | null {
+    return t && this.dropSmall(t.kind, t.scale, t.x, t.z) ? null : t;
+  }
+
+  private cellTree2Raw(gi: number, gj: number): PlacedTree | null {
     const { ox, oz, i, j } = this.cellOf(gi, gj);
     const cell = V.cellSize;
     const r0 = mulberry32(hash2D(this.seed ^ 0x5eed7, gi, gj)); // the canopy tree's stream: roll, jx, jz
@@ -488,6 +509,7 @@ export class TreePlacer {
         else kind = rv < 0.3 ? TreeKind.slender : rv < 0.58 ? TreeKind.vase : rv < 0.84 ? TreeKind.broadleaf : TreeKind.oak;
         scale = kind === TreeKind.bamboo ? (B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * rs) * 0.8 : T.scale[0] + (T.scale[1] - T.scale[0]) * rs ** 1.3;
       }
+      if (this.dropSmall(kind, scale, x, z)) continue; // small trees: only `smallTrees.keep` of them
       lists[kind].push(x - cox, this.footY(h, slope, kind, scale), z - coz, scale, ry * Math.PI * 2, (0.86 + rt * 0.3) * (1 - 0.12 * dz));
     }
   }
