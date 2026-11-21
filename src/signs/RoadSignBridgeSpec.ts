@@ -34,11 +34,11 @@ export const BR = {
   capZ: 3.6,
   capDepth: 0.9,
   pileCapX: 2.6,
-  pileCapZ: 5.4,
+  pileCapZ: 7.4,
   pileCapH: 1.2,
   pileD: 0.8,
   pileX: 0.9,
-  pileZ: 2.0,
+  pileZ: 3.0,
   /** Concrete safety barrier in front of every pier: width, height, and the clear gap kept beside it. */
   barrierW: 0.6,
   barrierH: 0.81,
@@ -281,7 +281,7 @@ export function bridgeDesign(inp: BridgeInput): BridgeDesign {
   add('C4 median pier fits', medW >= medNeed && medW >= BR.pileCapX + 0.4, `median ${medW} m, needs column ${BR.colX} + 2 x (barrier ${BR.barrierW} + gap ${BR.barrierGap}) = ${medNeed.toFixed(1)} m; pile cap ${BR.pileCapX} m`);
   const faceGap = inp.shoulder + inp.postGap - BR.colX / 2;
   add('C5 outer pier offset', faceGap >= BR.barrierW + BR.barrierGap, `pier face ${faceGap.toFixed(1)} m from the kerb (needs barrier ${BR.barrierW} + ${BR.barrierGap} m)`);
-  add('C6 span / depth', L / BR.trussH >= 6 && L / BR.trussH <= 14, `span ${L.toFixed(1)} m / truss ${BR.trussH} m = ${(L / BR.trussH).toFixed(1)} (6..14)`);
+  add('C6 span / depth', L / BR.trussH >= 4 && L / BR.trussH <= 14, `span ${L.toFixed(1)} m / truss ${BR.trussH} m = ${(L / BR.trussH).toFixed(1)} (4..14; below 6 the truss is deeper than needed, the board height sets it)`);
   add('C7 chord tension', P.stressTension <= BR.util * P.allowTension, `CHS ${(chosen.D * 1000).toFixed(1)} x ${(chosen.t * 1000).toFixed(1)}: ${P.stressTension.toFixed(0)} MPa <= ${(BR.util * P.allowTension).toFixed(0)} MPa = 95 % of ${P.allowTension.toFixed(0)} (ULS incl. wind, bottom chord)`);
   add('C8 chord buckling', P.stressCompress <= BR.util * P.allowCompress, `top chord ${P.stressCompress.toFixed(0)} MPa <= ${(BR.util * P.allowCompress).toFixed(0)} MPa = 95 % of ${P.allowCompress.toFixed(0)} (slenderness ${P.slenderness.toFixed(0)}, panel ${panel.toFixed(2)} m)`);
   add('C9 walking frequency', P.freq >= BR.fMin, `first vertical frequency ${P.freq.toFixed(1)} Hz >= ${BR.fMin} Hz (simply supported span, safe side)`);

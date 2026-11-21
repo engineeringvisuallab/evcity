@@ -13,8 +13,8 @@
 export const GANTRY = {
   /** Lower edge of the boards above the road surface (a truck is 4.5 m high; 5.5 m is the usual motorway clearance). */
   clearance: 5.5,
-  /** The big green part of a board (destinations) and the maxim strip under it. */
-  mainH: 2.0,
+  /** The big green part of a board (destinations) and the maxim strip under it. mainH 2.0 -> 3.2 on 2026-11-21 (user: the boards must be 1 - 1.5 m higher): the whole board is 3.7 m high. */
+  mainH: 3.2,
   stripH: 0.5,
   /** Thickness of the board (the steel box between its two faces); it hangs in the plane of the beam, under the lower chord. */
   boardDepth: 0.18,

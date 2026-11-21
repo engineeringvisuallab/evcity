@@ -10,7 +10,9 @@ import { Config } from '../core/Config';
 import { BOARD_H, BOARD_TOP, EMPTY_BOARD, GANTRY, POST_TOP, SIGN_FIELD, type BoardContent } from './RoadSignSpec';
 import { paintBoard, paintSections, paintSize, SIGN_COLORS } from './RoadSignPaint';
 import { ROAD_SIGN_SPOTS, type RoadSignSpot } from './RoadSignData';
-import { gantrySolids, solidsRadius, type SignSolidGroup } from './SignSolids';
+import { gantrySolids, solidsRadius, type SignSolid, type SignSolidGroup } from './SignSolids';
+import { bridgeParts, BRIDGE_ZB } from './RoadSignBridgeGeo';
+import { bridgeDesign } from './RoadSignBridgeSpec';
 
 interface Face {
   mesh: THREE.Mesh;
@@ -66,6 +68,10 @@ export class RoadSignLayer {
       if (alongX) m.multiply(new THREE.Matrix4().makeRotationZ(Math.PI / 2));
       add(new THREE.CylinderGeometry(r, r, len, 14, 1), m);
     };
+    if (s.sections >= 3) {
+      this.buildBridge(s, add);
+      return;
+    }
     const feet = [s.feetL, s.feetR];
     // posts (round steel pipes) with concrete bases: same numbers as gantrySolids
     for (let k = 0; k < 2; k++) {
@@ -104,6 +110,39 @@ export class RoadSignLayer {
       this.faces.push({ mesh, cx: s.x, cz: s.z, w: s.boardW, sections: s.sections, content: EMPTY_BOARD, painted: null });
     }
     const solids = gantrySolids(s.edge, [s.feetL, s.feetR], POST_TOP, GANTRY.postR + 0.1, GANTRY.postBelow, GANTRY.baseSize, GANTRY.baseHeight, 0);
+    this.solidGroups.push({ x: s.x, y: s.y, z: s.z, yaw: s.yaw, radius: solidsRadius(solids), solids });
+  }
+
+  /** STEP 4-3: a 6 / 8-lane road gets a walkable steel OVERBRIDGE instead of the gantry: two trusses, hammerhead piers, stair towers, and one board on each side (A on +Z, B on -Z). */
+  private buildBridge(s: RoadSignSpot, add: (geo: THREE.BufferGeometry, local: THREE.Matrix4) => void): void {
+    const lanes = s.sections >= 4 ? 8 : 6;
+    const d = bridgeDesign({ lanes, halfWidth: s.edge - 0.6 - GANTRY.postGap, medianHalf: lanes === 8 ? 3 : 2, shoulder: 0.6, postGap: GANTRY.postGap, feetL: s.feetL, feetR: s.feetR });
+    const parts = bridgeParts({ edge: s.edge, boardW: s.boardW, chordD: d.chord.D, panels: d.panels, feetL: s.feetL, feetR: s.feetR });
+    const solids: SignSolid[] = [];
+    for (const p of parts) {
+      if (p.solid && p.rx === 0 && p.rz === 0 && p.t === 'b') solids.push({ k: 0, cx: p.cx, cy: p.cy, cz: p.cz, hx: p.a / 2, hy: p.b / 2, hz: p.c / 2 });
+      if (!p.vis) continue;
+      const m = new THREE.Matrix4().makeTranslation(p.cx, p.cy, p.cz);
+      if (p.rz) m.multiply(new THREE.Matrix4().makeRotationZ(p.rz));
+      if (p.rx) m.multiply(new THREE.Matrix4().makeRotationX(p.rx));
+      if (p.t === 'b') add(new THREE.BoxGeometry(p.a, p.b, p.c), m);
+      else add(new THREE.CylinderGeometry(p.a, p.a, p.b, 12, 1), m.multiply(new THREE.Matrix4().makeRotationZ(Math.PI / 2)));
+    }
+    // the faces: board A looks +Z (on the +Z side), board B looks -Z; only the OUTER face is lettered, the inner side is plain steel
+    const spot = new THREE.Matrix4().makeRotationY(s.yaw).setPosition(s.x, s.y, s.z);
+    const tmp = new THREE.Matrix4();
+    const by = d.deckTop + BOARD_H / 2;
+    for (const sz of [1, -1] as const) {
+      const geo = new THREE.PlaneGeometry(s.boardW, BOARD_H);
+      const local = new THREE.Matrix4().makeTranslation(0, by, sz * (BRIDGE_ZB + GANTRY.boardDepth / 2 + 0.012));
+      if (sz < 0) local.multiply(new THREE.Matrix4().makeRotationY(Math.PI));
+      geo.applyMatrix4(tmp.copy(spot).multiply(local));
+      const mesh = new THREE.Mesh(geo, this.blank(s.boardW, s.sections));
+      mesh.name = 'road-sign-face';
+      geo.computeBoundingSphere();
+      this.group.add(mesh);
+      this.faces.push({ mesh, cx: s.x, cz: s.z, w: s.boardW, sections: s.sections, content: EMPTY_BOARD, painted: null });
+    }
     this.solidGroups.push({ x: s.x, y: s.y, z: s.z, yaw: s.yaw, radius: solidsRadius(solids), solids });
   }
 
