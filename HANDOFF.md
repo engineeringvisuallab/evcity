@@ -182,3 +182,6 @@ RL3 step 2 (2026-11-19): west-homes 14 m was R4-29 ending inside the R6-15 bank 
 
 ## Video recorder (2026-11-19)
 USER: "game a highquality game video recorder add koro, social media te publish korar jonno, baire theke sound add kora jabe". Done in code: `src/record/VideoRecorder.ts` (panel, toolbar 🎥, key F9, canvas crop + MediaRecorder + audio mix), `AudioTap.ts`, `VideoRecorderMeta.ts`, `Engine.ts` (`videoRecorder.onFrame()` right after `renderer.render`), `main.ts` (`installAudioTap()` after `trackAudioContexts()`), `scripts/video-recorder-test.ts` (PASS). Details: `CHANGES_VIDEO_RECORDER_BN.md`. Open: browser check, full-project tsc.
+
+## Tree colour + banyan (2026-11-21)
+Leaves were too light / yellow-green; now mostly deep green with some variety (`LEAF_FAMILIES` in `TreeChunkBuilder.ts`, atlas hue/light in `TreeAssets.ts`, `Config.vegetation.leafDark`). Bot (banyan) crown was a tight tangled dome; now long near-horizontal limbs (`Style.horiz`, `STYLE_BOT`). See `CHANGES_GUM_TREE_BN.md` v7. Game not run in the sandbox: check in the game and tune.

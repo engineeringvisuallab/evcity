@@ -17,14 +17,13 @@ const DRY_LEAF_COLOURS: ReadonlyArray<readonly [number, number, number]> = [
 ];
 /** Leaf colour families: [cumulative chance, r, g, b multipliers of the green leaf texture]. */
 const LEAF_FAMILIES: ReadonlyArray<readonly [number, number, number, number]> = [
-  [0.34, 0.92, 1.0, 0.9], // normal green
-  [0.52, 1.2, 1.08, 0.62], // yellow-green
-  [0.64, 0.8, 0.98, 1.0], // deep blue-green
-  [0.75, 1.08, 0.97, 0.72], // olive
-  [0.84, 1.1, 1.15, 0.7], // fresh lime
-  [0.91, 1.55, 1.2, 0.55], // golden yellow
-  [0.96, 1.8, 0.95, 0.5], // rust orange
-  [1.0, 1.55, 0.85, 0.6], // red bronze
+  [0.36, 0.84, 1.0, 0.86], // deep green
+  [0.58, 0.76, 0.96, 0.92], // dark blue-green
+  [0.74, 0.92, 1.0, 0.8], // medium green
+  [0.86, 1.0, 1.04, 0.7], // olive green
+  [0.93, 1.12, 1.1, 0.66], // fresh lime (few)
+  [0.97, 1.4, 1.05, 0.55], // golden (rare)
+  [1.0, 1.5, 0.9, 0.6], // rust (rare)
 ];
 
 const dummy = new THREE.Object3D();

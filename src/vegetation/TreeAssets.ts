@@ -284,9 +284,9 @@ function paintSprays(c: CanvasRenderingContext2D, tile: number, lobed: boolean, 
       if (gum) ang = terminal ? Math.PI / 2 + (r() - 0.5) * 0.5 : Math.PI / 2 + side * (0.1 + r() * 0.5);
       const look: LeafLook = {
         // gum: grey-green, a little blue-silver, long sickle-shaped leaves that hang down (curl always to one side)
-        hue: gum ? 92 + (r() - 0.5) * 22 : (lobed ? 100 : 96) + (r() - 0.5) * 28,
+        hue: gum ? 92 + (r() - 0.5) * 22 : (lobed ? 110 : 106) + (r() - 0.5) * 24,
         sat: gum ? 22 + r() * 12 : 50 + r() * 16,
-        light: gum ? 30 + r() * 14 + t * 6 : 32 + r() * 16 + t * 8 - (depth > 0 ? 0 : (1 - t) * 4),
+        light: gum ? 30 + r() * 14 + t * 6 : 27 + r() * 15 + t * 7 - (depth > 0 ? 0 : (1 - t) * 4),
         curl: gum ? 0.22 + r() * 0.3 : (r() - 0.5) * 0.22,
         serrate: lobed || gum ? 0 : 0.6 + r() * 0.5,
       };
@@ -332,9 +332,9 @@ function paintMass(c: CanvasRenderingContext2D, tile: number, seed: number): voi
   const cy = LS / 2;
   const R = LS * 0.44;
   const layers = [
-    { n: 360, h: 102, s: 50, l: 30 },
-    { n: 420, h: 95, s: 58, l: 41 },
-    { n: 380, h: 88, s: 62, l: 52 },
+    { n: 360, h: 112, s: 50, l: 26 },
+    { n: 420, h: 105, s: 58, l: 36 },
+    { n: 380, h: 98, s: 62, l: 46 },
   ];
   for (const L of layers) {
     for (let i = 0; i < L.n; i++) {
@@ -641,9 +641,9 @@ export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 /** Leaf-to-leaf colour variation: most cards are a slightly cooler or warmer green, `warmChance` of them are yellow-green (young / sunlit leaves). */
 function leafTint(r: () => number, warmChance: number): readonly [number, number, number] {
-  if (r() < warmChance) return [1.16, 1.07, 0.64];
+  if (r() < warmChance * 0.6) return [1.08, 1.04, 0.74]; // fewer, softer yellow-green cards (deeper green trees)
   const j = r();
-  return [0.86 + 0.24 * j, 1.0 + 0.06 * (1 - j), 0.8 + 0.3 * (1 - j)];
+  return [0.8 + 0.2 * j, 0.98 + 0.06 * (1 - j), 0.8 + 0.3 * (1 - j)];
 }
 
 /** A clump of leaf cards filling the shell of an ellipsoid. */
@@ -717,6 +717,8 @@ export interface Style {
   buttress?: number;
   /** Banyan: thin hanging roots, and thick pillar roots that carry the big limbs down to the ground. */
   aerial?: { hang: number; pillars: number };
+  /** Banyan-style spreading crown: 0..1, how strongly the limbs are kept horizontal and straight (long flat limbs instead of a tangled dome). */
+  horiz?: number;
   /** Far-LOD crown: card count and card size multiplier (big trees need more / bigger cards). */
   farScale?: number;
 }
@@ -752,10 +754,12 @@ function limb(g: Grow, start: THREE.Vector3, dir: THREE.Vector3, len: number, r0
   const step = len / (n - 1);
   for (let i = 1; i < n; i++) {
     // wobble + tropism: the trunk and main limbs seek the light, the outer limbs sag under their own weight
-    const wob = level === 0 ? s.trunkBend : 0.28 + level * 0.06;
+    const hz = level >= 1 ? s.horiz ?? 0 : 0; // spreading crown (bot): straighter limbs that stay near-horizontal
+    const wob = (level === 0 ? s.trunkBend : 0.28 + level * 0.06) * (1 - 0.6 * hz);
     d.x += (r() - 0.5) * wob;
     d.z += (r() - 0.5) * wob;
     d.y += (r() - 0.5) * wob * 0.5 + (level === 0 ? 0.04 : level === 1 ? 0.05 - s.droop * 0.05 : -s.droop * 0.1);
+    if (hz > 0) d.y = Math.max(-0.08, Math.min(d.y + 0.05 * hz, 0.5)) * (1 - 0.3 * hz); // never dives into the ground, rises gently
     d.normalize();
     p.addScaledVector(d, step);
     pts.push(p.clone());
@@ -976,9 +980,9 @@ const STYLE_KOROI: Style = {
 };
 /** Bot (banyan): short, very thick trunk with buttresses, limbs spreading wide, hanging roots and pillar roots. */
 const STYLE_BOT: Style = {
-  seed: 9009, trunkH: 4.2, trunkR: 1.4, trunkBend: 0.12, primary: 8, startFrac: 0.4, spread: [1.05, 1.4], limbLen: 11, fork: 2,
-  kids: [3, 3], lenRatio: [0.6, 0.55], droop: 0.12, crownY: 11, rx: 14, ry: 4.4, cards: 12, clusterR: 2.1, card: [1.7, 2.6], warm: 0.08, flat: 0.6,
-  buttress: 7, aerial: { hang: 18, pillars: 3 }, farScale: 2.8,
+  seed: 9009, trunkH: 4.2, trunkR: 1.4, trunkBend: 0.12, primary: 8, startFrac: 0.3, spread: [1.0, 1.3], limbLen: 13, fork: 2,
+  kids: [3, 3], lenRatio: [0.68, 0.6], droop: 0.06, crownY: 10, rx: 19, ry: 5, cards: 22, clusterR: 2.4, card: [1.8, 2.8], warm: 0.08, flat: 0.55, horiz: 0.6,
+  buttress: 7, aerial: { hang: 28, pillars: 5 }, farScale: 3.2,
 };
 /** Shimul (silk cotton): very tall straight trunk with big buttresses, branches in flat tiers. */
 const STYLE_SHIMUL: Style = {

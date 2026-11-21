@@ -81,3 +81,22 @@ TreeTypes.ts, TreeAssets.ts, TreePlacement.ts, TreePreview.ts
 
 ## File (v6 e notun): TreeAssets.ts, TreePlacement.ts, Config.ts, TreeChunkBuilder.ts
 ## Game NOT RUN. Dal beshi/kom: BRANCH_LEVEL_MUL. Pata kom/beshi: leafCluster `want`. Sukno pata beshi/kom: Config deadwood.
+
+---
+# v7 — gaDho sobuj pata + bot gach er dal chhoraye deya
+
+## Ki holo
+1. PATA GaDho SOBUJ: ager gach gulo beshi light/holud-sobuj chilo. Ekhon beshirbhag gach gaDho sobuj / neel-sobuj / medium sobuj, kichu olive, shamanno lime, khub kom sonali/morcha. Prottek gach-er nijer rong ager moto position theke fix.
+   - `TreeChunkBuilder.LEAF_FAMILIES`: notun chance (gaDho sobuj 36%, neel-sobuj 22%, medium 16%, olive 12%, lime 7%, sonali 4%, morcha 3%). Ager: normal 34%, holud-sobuj 18%, lime 9%, sonali 7%, morcha+lal 9%.
+   - `TreeAssets` atlas: pata hue +10 (96 -> 106, lobed 100 -> 110), light -5, far mass tile (paintMass) hue +10 / light -4. `leafTint`: holud card er chance 40% kom ar kom holud.
+   - `Config.vegetation.leafDark` [0.88,0.95,0.86] -> [0.82,0.93,0.82].
+2. BOT GACH SHONGKUCHITO CHILO -> PROSARITO: age dal gulo uchu-nichu jottopakano dome (~34 m choura, 19 m uchu). Ekhon lomba, shoja, proay horizontal dal, chapta mukut (~45 m choura, 16 m uchu), pillar root (3 -> 5) ar jhulonto shiker (18 -> 28) beshi. Leaf card 12 -> 22 (dal beshi chhoraye geche, pata pashapashi na thake).
+   - `Style.horiz` (notun option, shudhu bot-e use): dal shoja rakhe, mati-te dhoke na.
+   - STYLE_BOT: startFrac 0.3, spread [1.0,1.3], limbLen 13, lenRatio [0.68,0.6], crownY 10, rx 19, ry 5, clusterR 2.4, horiz 0.6, fork 2.
+   - Triangle: bot gach prati ~13.2k -> ~14.5k (bot kom thake, FPS e proay farak na).
+
+## File: TreeAssets.ts, TreeChunkBuilder.ts, Config.ts
+## Dhyan dao
+- Game NOT RUN (shudhu geometry node e chalay side-view dekhechi, `tsc --noEmit` 0 error). Screenshot dekhe bolo.
+- Aro gaDho chao: `leafDark` kombao (0.82 -> 0.75) ba LEAF_FAMILIES-er prothom duto-r chance barao. Aro holud-sobuj chao: LEAF_FAMILIES lime/olive chance barao.
+- Bot aro chhoraye chao: STYLE_BOT `limbLen` (13) ar `rx`. Aro uchu chao: `spread` kombao (1.0 -> 0.8) ba `horiz` kombao.
