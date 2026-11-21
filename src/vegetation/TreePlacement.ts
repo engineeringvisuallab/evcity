@@ -45,6 +45,8 @@ const smooth = (a: number, b: number, x: number): number => {
 
 /** Which big forest tree grows at height `h` (m)? Lowland forest: all five (koroi and banyan are wide: at most one per 3 x 3 cells); hills: sal, segun, shimul; high hills mostly sal. */
 function bigKind(h: number, u: number, gi: number, gj: number): number {
+  // GUM (eucalyptus): about about 2 in 5 big trees, picked from a second hash of `u` so the other species keep their order
+  if ((u * 7.31) % 1 < 0.42) return (u * 13.7) % 1 < 0.5 ? TreeKind.gum : TreeKind.gum2;
   const wideOk = (((gi % 3) + 3) % 3 === 0) && (((gj % 3) + 3) % 3 === 0);
   if (h < 25) {
     if (u < 0.26) return wideOk ? TreeKind.koroi : TreeKind.segun;
@@ -282,7 +284,7 @@ export class TreePlacer {
 
     // REAL FOREST SIZES: many young / small trees, a fair number of middle-aged ones, a few old giants (skewed, not uniform).
     // The big species are given as mature trees (scale 1 = 20-30 m): a narrow range, so a banyan never becomes 60 m tall.
-    const big = kind >= TreeKind.sal && kind <= TreeKind.shimul;
+    const big = (kind >= TreeKind.sal && kind <= TreeKind.shimul) || kind >= TreeKind.gum;
     const wide = kind === TreeKind.koroi || kind === TreeKind.bot;
     const giant = 1 + 0.4 * dz; // deep jungle: the canopy giants grow up to 40 % taller (35-45 m)
     const scale0 = big
@@ -291,7 +293,7 @@ export class TreePlacer {
       : kind === TreeKind.palm ? 0.6 + 0.95 * rScale ** 1.3 : kind === TreeKind.pine ? 0.6 + 0.9 * rScale ** 1.3 : kind === TreeKind.slender ? 0.45 + 1.4 * rScale ** 1.6 : 0.35 + 1.75 * rScale ** 1.8;
     // 2026-11-20: trees OUTSIDE the dense jungle are bigger (`treeSizeOutside`, the big species `treeSizeOutsideBig`); the jungle (dz = 1) keeps its size, the edge blends
     const scale = scale0 * (1 + ((big ? V.treeSizeOutsideBig : V.treeSizeOutside) - 1) * (1 - dz));
-    return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: rYaw * Math.PI * 2, tint: (0.82 + rTint * 0.32) * (1 - 0.3 * dz) };
+    return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: rYaw * Math.PI * 2, tint: (0.86 + rTint * 0.3) * (1 - 0.12 * dz) };
   }
 
   /**
@@ -431,10 +433,10 @@ export class TreePlacer {
 
     // jungle bamboo: 3-5x taller than a grove clump (random per clump), full inside the jungle
     const bambooScale = (B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * rs) * (1 + (B.jungleTall[0] + (B.jungleTall[1] - B.jungleTall[0]) * ((rs * 13.37 + 0.31) % 1) - 1) * smooth(0.1, 0.6, dz));
-    const big = kind >= TreeKind.sal && kind <= TreeKind.shimul;
+    const big = (kind >= TreeKind.sal && kind <= TreeKind.shimul) || kind >= TreeKind.gum;
     const young = D.understoryScale[0] + (D.understoryScale[1] - D.understoryScale[0]) * rs ** 1.4;
     const scale = big ? V.bigTreeScale[0] + 0.3 * rs : kind === TreeKind.bamboo ? bambooScale : kind === TreeKind.pine ? 0.35 + 0.5 * rs : young;
-    return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: ry * Math.PI * 2, tint: (0.8 + rt * 0.3) * (1 - 0.3 * dz) };
+    return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: ry * Math.PI * 2, tint: (0.84 + rt * 0.3) * (1 - 0.12 * dz) };
   }
 
   /**
@@ -487,7 +489,7 @@ export class TreePlacer {
         else kind = rv < 0.3 ? TreeKind.slender : rv < 0.58 ? TreeKind.vase : rv < 0.84 ? TreeKind.broadleaf : TreeKind.oak;
         scale = kind === TreeKind.bamboo ? (B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * rs) * 0.8 : T.scale[0] + (T.scale[1] - T.scale[0]) * rs ** 1.3;
       }
-      lists[kind].push(x - cox, this.footY(h, slope, kind, scale), z - coz, scale, ry * Math.PI * 2, (0.8 + rt * 0.3) * (1 - 0.3 * dz));
+      lists[kind].push(x - cox, this.footY(h, slope, kind, scale), z - coz, scale, ry * Math.PI * 2, (0.86 + rt * 0.3) * (1 - 0.12 * dz));
     }
   }
 
@@ -500,11 +502,22 @@ export class TreePlacer {
     const W = D.deadwood;
     const { ox, oz, i, j } = this.cellOf(gi, gj);
     const cell = V.cellSize;
-    if (this.denseAt(ox + (i + 0.5) * cell, oz + (j + 0.5) * cell) <= 0.02) return;
+    const wood = (x: number, z: number): number => Math.max(this.denseAt(x, z), this.forestBase(x, z) * 0.6); // dense jungle full, ordinary forest less
+    if (wood(ox + (i + 0.5) * cell, oz + (j + 0.5) * cell) <= 0.02) return;
     const s = this.sample;
+    /** Ground height at the middle and both ends of a log lying at (x, z) along `yaw`: null when the ground is too uneven (the log would sink at one end or float), else the highest point. */
+    const logGround = (x: number, z: number, yaw: number, sc: number): number | null => {
+      let hMax = -1e9, hMin = 1e9;
+      for (const q of [-1, -0.5, 0, 0.5, 1]) {
+        this.gen.sample(x + Math.cos(yaw) * 3.4 * sc * q, z - Math.sin(yaw) * 3.4 * sc * q, this.sx);
+        hMax = Math.max(hMax, this.sx.h);
+        hMin = Math.min(hMin, this.sx.h);
+      }
+      return hMax - hMin > 0.45 * sc ? null : hMax;
+    };
     /** Ground test of one spot: the dense-jungle density there and the slope, or null when nothing may lie there. */
     const spot = (x: number, z: number, slopeFrac: number): { h: number; slope: number; dz: number } | null => {
-      const dz = this.denseAt(x, z);
+      const dz = wood(x, z);
       if (dz <= 0.02) return null;
       this.gen.sample(x, z, s);
       const h = s.h;
@@ -533,10 +546,12 @@ export class TreePlacer {
       const z = oz + (j + jz) * cell;
       if (roll < W.logChance * this.mul) {
         const g = spot(x, z, 0.5);
-        if (g && roll < W.logChance * this.mul * g.dz) {
-          const sc = W.logScale[0] + (W.logScale[1] - W.logScale[0]) * rs;
+        const sc0 = W.logScale[0] + (W.logScale[1] - W.logScale[0]) * rs;
+        const hLog = g ? logGround(x, z, ry * Math.PI * 2, sc0) : null;
+        if (g && hLog !== null && roll < W.logChance * this.mul * g.dz) {
+          const sc = sc0;
           const yaw = ry * Math.PI * 2;
-          lists[TreeKind.deadLog].push(x - cox, this.footY(g.h, g.slope, TreeKind.deadLog, sc), z - coz, sc, yaw, 0.85 + rt * 0.3);
+          lists[TreeKind.deadLog].push(x - cox, hLog - 0.08, z - coz, sc, yaw, 0.85 + rt * 0.3);
           // dry leaves heaped along the fallen tree (the log lies along its local +x, turned by yaw)
           for (let k = 0; k < W.aroundLog; k++) {
             const t = (rng() - 0.5) * 6.4 * sc;

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { windGust } from './WindGust';
 import { Config } from '../core/Config';
 import { mulberry32 } from '../world/Seed';
 import { GRASS_TYPE_COUNT, GrassType } from './TreeTypes';
@@ -503,7 +504,9 @@ export class GrassAssets {
   /** Same shader for the extra (dense) tufts, but with its own, much shorter fade distance (Config grass.denseFade). */
   readonly extraMaterial: THREE.MeshLambertMaterial;
   private time = { value: 0 };
-  private wind = { value: Config.vegetation.grass.look.wind };
+  /** Shader wind = the quality setting (windBase) times the world wind gust (0 in calm air), written in update(). */
+  private wind = { value: 0 };
+  private windBase = Config.vegetation.grass.look.wind;
   private fade = { value: new THREE.Vector2(Config.vegetation.grass.fadeStart, Config.vegetation.grass.fadeEnd) };
   private extraFade = { value: new THREE.Vector2(Config.vegetation.grass.denseFade[0], Config.vegetation.grass.denseFade[1]) };
 
@@ -575,11 +578,12 @@ export class GrassAssets {
 
   update(time: number): void {
     this.time.value = time;
+    this.wind.value = this.windBase * windGust.uniform.value;
   }
 
   /** Wind strength multiplier (quality presets / settings): 0 = still air, 1 = full sway. */
   setWind(w: number): void {
-    this.wind.value = w;
+    this.windBase = w;
   }
 
   dispose(): void {

@@ -429,7 +429,7 @@ export const Config = {
        * `logChance` = a fallen dead tree (`logScale` = size range, 1 = 7 m long), `litterLayers` x `litterChance` = loose leaf patches (`litterScale`), and `aroundLog` leaf patches
        * are heaped along every fallen tree. No colliders. Lower `litterChance` / `aroundLog` if the frame rate drops (every patch is ~40 small cards).
        */
-      deadwood: { logChance: 0.08, logScale: [0.75, 1.3] as [number, number], litterLayers: 2, litterChance: 0.25, litterScale: [0.7, 1.5] as [number, number], aroundLog: 3 } },
+      deadwood: { logChance: 0.13, logScale: [0.75, 1.3] as [number, number], litterLayers: 3, litterChance: 0.5, litterScale: [1.0, 2.0] as [number, number], aroundLog: 5 } },
     /**
      * EXTRA JUNGLE SPOTS (ghono jongol outside the forest districts): round patches that use the SAME dense jungle as above (same chance, big trees, understory,
      * tall bamboo, grass thinning). `r` = radius (m) of the full jungle, `fade` = the ragged edge fades out over this many m outside the full part (smoothstep, like the district edge).
@@ -445,6 +445,8 @@ export const Config = {
     cityFadeOut: 150,
     /** Wind sway (m of sway per metre of tree height). */
     windStrength: 0.02,
+    /** Wind gusts (seconds): no wind most of the time; a gust blows for lenMin..lenMax s (smooth rise / fall), then calm for calmMin..calmMax s (about 1 minute of wind per 10 minutes). First gust comes firstMin..firstMax s after the start. */
+    gust: { firstMin: 20, firstMax: 240, lenMin: 45, lenMax: 80, calmMin: 360, calmMax: 780, rise: 10, fall: 14 },
     /** Trunks are sunk this far (m) into the ground so coarse LOD terrain never leaves them floating. */
     sink: 0.35,
     /** Trunk colliders (Rapier cylinders): created for trees within `collideRadius` (m) of the player, removed beyond `collideKeep`. */

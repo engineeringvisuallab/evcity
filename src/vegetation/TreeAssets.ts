@@ -3,6 +3,7 @@ import { Config } from '../core/Config';
 import { Q } from '../core/Quality';
 import { mulberry32 } from '../world/Seed';
 import { TREE_KIND_COUNT, TreeKind, usesPalmAtlas } from './TreeTypes';
+import { windGust } from './WindGust';
 import { makePalmAtlas, PALM_BARK_TILES, PALM_MAKERS, PALM_TILES } from './PalmAssets';
 
 /**
@@ -760,7 +761,9 @@ function limb(g: Grow, start: THREE.Vector3, dir: THREE.Vector3, len: number, r0
   }
 
   if (level < maxLevel) {
-    const count = level === 0 ? s.primary : Math.max(1, Math.round(s.kids[level - 1] * (0.75 + r() * 0.5)));
+    // MORE BRANCHES, FEWER LEAVES: every broadleaf tree (not the gums, already airy) gets 2 more main limbs and 25% more side limbs, so the branch skeleton shows
+    const airy = s.leafTile === TILE_GUM;
+    const count = level === 0 ? s.primary + (airy ? 0 : 2) : Math.max(1, Math.round(s.kids[level - 1] * (airy ? 1 : 1.25) * (0.75 + r() * 0.5)));
     const t0 = level === 0 ? s.startFrac : 0.3;
     let az = r() * Math.PI * 2;
     for (let k = 0; k < count; k++) {
@@ -800,7 +803,7 @@ function limb(g: Grow, start: THREE.Vector3, dir: THREE.Vector3, len: number, r0
  */
 function leafCluster(g: Grow, c: THREE.Vector3, cc: THREE.Vector3): void {
   const { m, r, s } = g;
-  const n = s.cards;
+  const n = s.leafTile === TILE_GUM ? s.cards : Math.max(2, Math.round(s.cards * 0.4)); // 60% fewer leaf cards per cluster (the extra limbs give back some clusters)
   const tile = s.leafTile ?? (s.lobed ? TILE_LOBED : TILE_LEAF);
   for (let i = 0; i < n; i++) {
     const d = unit(g.r);
@@ -878,7 +881,7 @@ export function growTree(s: Style, detail: number): THREE.BufferGeometry {
     const seg = 5;
     m.tube([V3(0, 0, 0), V3(0.1, s.trunkH * 0.35, 0.04), V3(0, s.trunkH * 0.7, -0.05), V3(0, s.trunkH, 0)], [s.trunkR, s.trunkR * 0.7, s.trunkR * 0.55, s.trunkR * 0.4], seg, 1, s.barkTile ?? TILE_BARK, s.barkTint);
     const k = s.farScale ?? 1;
-    crown(m, r, cc, s.rx * 0.95, s.ry * 0.95, s.rx * 0.95, Math.round(20 * k * k), 2.6 * k, 3.8 * k, s.warm, s.leafTile ?? TILE_MASS);
+    crown(m, r, cc, s.rx * 0.95, s.ry * 0.95, s.rx * 0.95, Math.round((s.leafTile === TILE_GUM ? 20 : 12) * k * k), 2.6 * k, 3.8 * k, s.warm, s.leafTile ?? TILE_MASS);
     if (s.bloomTile !== undefined) {
       // far flowers: cards on the upper half of the crown
       for (let i = 0; i < Math.round(14 * k * k); i++) {
@@ -1177,16 +1180,16 @@ const DRY_LEAF: ReadonlyArray<readonly [number, number, number]> = [
 function leafLitter(detail: number): THREE.BufferGeometry {
   const r = mulberry32(562);
   const m = new Mesh();
-  const n = detail === 0 ? 38 : 16;
+  const n = detail === 0 ? 46 : 18;
   for (let k = 0; k < n; k++) {
     const a = r() * Math.PI * 2;
     const d = Math.sqrt(r()) * 1.3; // even spread over the disc, thinner at the edge by the card size below
     const tilt = V3((r() - 0.5) * 0.16, 1, (r() - 0.5) * 0.16).normalize();
     const edge = 1 - 0.45 * (d / 1.3);
-    const sz = lerp(0.4, 0.72, r()) * edge * (detail === 0 ? 1 : 1.5);
+    const sz = lerp(0.5, 0.9, r()) * edge * (detail === 0 ? 1 : 1.5);
     const tint = DRY_LEAF[Math.floor(r() * DRY_LEAF.length)];
     const y = 0.03 + (k / n) * 0.07; // every card at its own height, so no two cards fight for the same pixels
-    m.card(V3(Math.cos(a) * d, y, Math.sin(a) * d), tilt, V3(0, 0, 1), sz, sz * lerp(0.9, 1.25, r()), r() < 0.5 ? TILE_LEAF : TILE_LOBED, r() * Math.PI * 2, tilt, lerp(0.62, 0.95, r()), r() < 0.5, tint);
+    m.card(V3(Math.cos(a) * d, y, Math.sin(a) * d), tilt, V3(0, 0, 1), sz, sz * lerp(0.9, 1.25, r()), r() < 0.5 ? TILE_LEAF : TILE_LOBED, r() * Math.PI * 2, tilt, lerp(0.8, 1.12, r()), r() < 0.5, tint);
   }
   const twigs = detail === 0 ? 4 : 2;
   for (let k = 0; k < twigs; k++) {
@@ -1264,8 +1267,9 @@ export class TreeAssets {
     const leafEdge = ((barkTiles - 0.015) / tiles).toFixed(5);
     m.onBeforeCompile = (shader) => {
       shader.uniforms.uTreeTime = this.time;
+      shader.uniforms.uTreeWind = windGust.uniform; // 0 = calm (nothing moves), 1 = full gust
       shader.vertexShader = shader.vertexShader
-        .replace('#include <common>', '#include <common>\nuniform float uTreeTime;')
+        .replace('#include <common>', '#include <common>\nuniform float uTreeTime;\nuniform float uTreeWind;')
         .replace(
           '#include <begin_vertex>',
           `#include <begin_vertex>
@@ -1274,7 +1278,8 @@ export class TreeAssets {
           #else
             float ph = 0.0;
           #endif
-          float bend = max(position.y, 0.0) * ${wind.toFixed(4)};
+          // trunk and limbs hardly move (only a faint lean in a gust); the LEAVES do the moving
+          float bend = max(position.y, 0.0) * ${wind.toFixed(4)} * uTreeWind * 0.12;
           float gust = 1.0 + 0.5 * sin(uTreeTime * 0.37 + ph * 1.7);
           transformed.x += sin(uTreeTime * 1.4 + ph) * bend * gust;
           transformed.z += cos(uTreeTime * 1.1 + ph * 1.3) * bend * 0.7;
@@ -1286,7 +1291,11 @@ export class TreeAssets {
           float isLeaf = step(${leafEdge}, uv.x);
           float lp = position.x * 12.9898 + position.y * 78.233 + position.z * 37.719;
           float fl = sin(uTreeTime * 3.3 + lp) * 0.6 + sin(uTreeTime * 5.1 + lp * 1.7) * 0.4;
-          transformed += normal * fl * 0.04 * isLeaf * min(1.0, position.y * 0.15) * (0.5 + 0.5 * gust);`,
+          float lift = isLeaf * min(1.0, position.y * 0.15) * uTreeWind;
+          transformed += normal * fl * 0.11 * lift * (0.5 + 0.5 * gust);
+          // in a gust each leaf is also pushed sideways and back (leaf only, own phase), so the foliage rustles while the tree stands still
+          transformed.x += sin(uTreeTime * 2.3 + lp * 0.7) * 0.12 * lift * gust;
+          transformed.z += cos(uTreeTime * 1.9 + lp * 0.9) * 0.09 * lift * gust;`,
         );
       // sunlight through the leaves + a soft sheen: added to the lit colour just before it is written
       const light = `
@@ -1326,6 +1335,7 @@ export class TreeAssets {
 
   update(time: number): void {
     this.time.value = time;
+    windGust.update(time); // the one world wind (calm most of the time, a gust now and then); grass reads the same value
   }
 
   dispose(): void {
