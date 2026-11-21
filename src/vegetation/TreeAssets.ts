@@ -717,6 +717,8 @@ export interface Style {
   buttress?: number;
   /** Banyan: thin hanging roots, and thick pillar roots that carry the big limbs down to the ground. */
   aerial?: { hang: number; pillars: number };
+  /** SIMPLE tree (like the gums): few limbs (no dal-pala multiplier, no extra limbs) and a fixed number of big leaf cards per twig tip, so a tree costs ~3k triangles instead of ~10k. */
+  simple?: boolean;
   /** Banyan-style spreading crown: 0..1, how strongly the limbs are kept horizontal and straight (long flat limbs instead of a tangled dome). */
   horiz?: number;
   /** Far-LOD crown: card count and card size multiplier (big trees need more / bigger cards). */
@@ -786,7 +788,7 @@ function limb(g: Grow, start: THREE.Vector3, dir: THREE.Vector3, len: number, r0
 
   if (level < maxLevel) {
     // MORE BRANCHES, FEWER LEAVES: every broadleaf tree (not the gums, already airy) gets 2 more main limbs and 25% more side limbs, so the branch skeleton shows
-    const airy = s.leafTile === TILE_GUM;
+    const airy = s.leafTile === TILE_GUM || !!s.simple;
     // dal-pala: 3x as many branches in total (+200%) = 1.44x at each of the 3 branching levels (1.44^3 = 3); the 2 extra main limbs and +25% side limbs of before stay
     const bm = airy ? 1 : BRANCH_LEVEL_MUL;
     const count = level === 0 ? Math.round((s.primary + (airy ? 0 : 2)) * bm) : Math.max(1, Math.round(s.kids[level - 1] * (airy ? 1 : 1.25) * bm * (0.75 + r() * 0.5)));
@@ -831,7 +833,7 @@ function leafCluster(g: Grow, c: THREE.Vector3, cc: THREE.Vector3): void {
   const { m, r, s } = g;
   // LEAVES: half as many leaf cards on the whole tree as before although there are 3x as many twig tips now -> on average only (cards x 0.4 / 6) cards per tip (often 0, often 1)
   let n = s.cards;
-  if (s.leafTile !== TILE_GUM) {
+  if (s.leafTile !== TILE_GUM && !s.simple) {
     const want = (s.cards * 0.4) / (BRANCH_LEVEL_MUL ** 3 * 2);
     n = Math.floor(want) + (r() < want - Math.floor(want) ? 1 : 0);
   }
@@ -983,9 +985,9 @@ const STYLE_KOROI: Style = {
 };
 /** Bot (banyan): short, very thick trunk with buttresses, limbs spreading wide, hanging roots and pillar roots. */
 const STYLE_BOT: Style = {
-  seed: 9009, trunkH: 4.2, trunkR: 1.4, trunkBend: 0.12, primary: 8, startFrac: 0.3, spread: [1.0, 1.3], limbLen: 13, fork: 2,
-  kids: [3, 3], lenRatio: [0.68, 0.6], droop: 0.06, crownY: 10, rx: 19, ry: 5, cards: 22, clusterR: 2.4, card: [1.8, 2.8], warm: 0.08, flat: 0.55, horiz: 0.6,
-  buttress: 7, aerial: { hang: 28, pillars: 5 }, farScale: 3.2,
+  seed: 9009, trunkH: 4.2, trunkR: 1.4, trunkBend: 0.12, primary: 6, startFrac: 0.3, spread: [1.0, 1.3], limbLen: 13, fork: 1,
+  kids: [2, 2], lenRatio: [0.7, 0.6], droop: 0.06, crownY: 10, rx: 19, ry: 5, cards: 9, clusterR: 2.8, card: [2.4, 3.6], warm: 0.08, flat: 0.55, horiz: 0.6, simple: true,
+  buttress: 6, aerial: { hang: 14, pillars: 4 }, farScale: 3.2,
 };
 /** Shimul (silk cotton): very tall straight trunk with big buttresses, branches in flat tiers. */
 const STYLE_SHIMUL: Style = {

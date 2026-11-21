@@ -118,3 +118,17 @@ Ghono jongol / pahar-e sob gach-er 80%+ triangle ei 4 ta kind (round, vase, slen
 - `BRANCH_LEVEL_MUL` 1.44 -> 1.3 (dal-pala 3x -> 2.2x): ~-20% aro.
 - Kache-r (LOD0) chunk er range Config-e kombao: beshirbhag triangle LOD0 chunk-e.
 - Majh-LOD (detail 2, level-3 twig bad) alada geometry + TreeChunkBuilder e distance split: boro kaaj, amake bolo.
+
+---
+# v7c — bot SIMPLE tree (gum-er moto): kom dal, boro pata, ~2.5k triangle
+
+## Ki holo
+- Bot gach ekhon gum-er moto "simple" tree: dal-pala 3x multiplier nai, extra dal nai, prottek dal-er dogay fixed 9 ta boro pata card (2.4-3.6 m). Chhoraye thaka banyan shape thake (lomba proay horizontal dal, chapta mukut ~35-40 m choura, ~15 m uchu), 6 ta buttress, 4 ta pillar root, 14 ta jhulonto shiker.
+- Triangle (near LOD) proti bot: 13.2k (shuru) -> 11.1k (v7b) -> ~2.5k (ekhon, ~-80%). Far LOD ager moto (152).
+- Notun `Style.simple` option (TreeAssets): `limb` o `leafCluster` e gum-er (airy) moto kaj kore, kintu normal leaf tile. Je kono gach-ke ei option diye simple kora jay (age gum-er jonno `leafTile === TILE_GUM` chilo).
+- STYLE_BOT: primary 6, kids [2,2], fork 1, cards 9, clusterR 2.8, card [2.4,3.6], buttress 6, aerial {hang 14, pillars 4}, simple true.
+
+## Tune
+- Aro ghono pata: STYLE_BOT `cards` (9) ba `card` size. Aro faka/kom triangle: `cards` kombao.
+- Aro dal: `primary` (6) ba `kids` [2,2] barao.
+## Game NOT RUN; geometry node-e chalay side-view dekhechi, tsc 0 error.
