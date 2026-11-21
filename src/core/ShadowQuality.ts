@@ -33,9 +33,9 @@ export interface ShadowSpec {
 /** "high" is the original look of the game. */
 export const SHADOW_SPECS: Readonly<Record<ShadowLevel, ShadowSpec>> = {
   off: { size: 0, extent: 0, interval: 0, radius: 0 },
-  low: { size: 1024, extent: 170, interval: 2, radius: 1.5 },
-  medium: { size: 2048, extent: 260, interval: 1, radius: 2 },
-  high: { size: 4096, extent: 350, interval: 1, radius: 2.5 },
+  low: { size: 2048, extent: 210, interval: 2, radius: 1.5 }, // 2026-11-21: all levels stronger / bigger (was 1024/170, 2048/260, 4096/350)
+  medium: { size: 4096, extent: 300, interval: 1, radius: 2 },
+  high: { size: 4096, extent: 450, interval: 1, radius: 2.5 },
 };
 
 export const SHADOW_NAMES_BN: Readonly<Record<ShadowLevel, string>> = { off: 'বন্ধ', low: 'নিচু', medium: 'মাঝারি', high: 'উঁচু' };

@@ -367,7 +367,7 @@ export class Engine {
     this.shadows = new ShadowManager({
       apply: (level, spec) => {
         this.environment.applyShadow(level, spec);
-        setTreeShadows(this.scene, level === 'high'); // full (tree) shadows only at the high level
+        setTreeShadows(this.scene, level === 'high' || level === 'medium'); // tree shadows at medium and high
       },
       notify: (text) => this.toast?.show(text, 4200),
     });

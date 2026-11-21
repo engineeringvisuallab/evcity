@@ -367,7 +367,7 @@ export const Config = {
     /** Chunks up to this LOD get trees (0 = nearest only). LOD 0 uses the detailed models, higher LODs the simple ones. */
     maxLod: 1,
     /** Trees and rocks cast shadows into the shadow map. false = no tree shadows (the shadow pass draws every tree a second time: the biggest tree cost, makes the PC hot). */
-    treeShadows: false, // runtime: ShadowManager switches it on at shadow level 'high' only (setTreeShadows)
+    treeShadows: false, // runtime: ShadowManager switches it on at shadow level medium and high (setTreeShadows)
     /** Placement grid (m). One tree at most per cell, jittered inside it. 500 / cellSize must be a whole number. */
     cellSize: 10,
     /** Chance (0..1) of a tree per cell: in the middle of a forest / in open land. */

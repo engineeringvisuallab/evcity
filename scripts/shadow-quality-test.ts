@@ -33,7 +33,7 @@ function run(m: ShadowManager, fps: number, seconds: number, target = 60): void 
 check(make('low', 'auto').m.level === 'low', 'low class starts with the low shadow');
 check(make('medium', 'auto').m.level === 'medium', 'medium class starts at medium');
 check(make('high', 'auto').m.level === 'high', 'high class starts at high');
-check(SHADOW_SPECS.high.size === 4096 && SHADOW_SPECS.high.extent === 350 && SHADOW_SPECS.high.interval === 1, 'high = the original shadow numbers');
+check(SHADOW_SPECS.high.size === 4096 && SHADOW_SPECS.high.extent === 450 && SHADOW_SPECS.high.interval === 1, 'high = 4096 map, 450 m box (2026-11-21, was 350)');
 
 // 2. a fixed choice never changes
 {

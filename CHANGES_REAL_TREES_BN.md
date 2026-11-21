@@ -49,3 +49,13 @@ tsc PASS, shadow-quality-test PASS. Ager FAIL gulo (deadwood-model-test, grass-c
 - Shudhu ghas na: lata-pata (fern / shrub / lata) 50% -> 65% (Config dense.thicket.undergrowth)
 - Check: tsc PASS. Game e RUN HOY NI.
 - Aro halka: JUNGLE_GREEN barao. Ghas aro chhoto: `tall` komao. Phul aro uchu: `tallFlower` barao.
+
+---
+# Step 2c — shadow aro beshi + sunlight aro bright
+
+- Sunlight: DayNight.ts din-er sun `lightI` 1.7 -> 2.3 ar 3.0 -> 4.2; ambient `hemiI` 0.98 -> 0.9 ar 1.15 -> 0.95 (sun beshi, ambient ektu kom = shadow ar contrast beshi dekha jay)
+- Shadow spec (ShadowQuality.ts): low 2048 / 210 m (ager 1024 / 170), medium 4096 / 300 m (ager 2048 / 260), high 4096 / 450 m (ager 350)
+- Gache-r shadow ekhon medium ar high duto-tei (ager shudhu high)
+- Low preset default shadow "low" thakbe, kintu low ekhon ager cheye boro
+- Check: tsc PASS, daynight-test PASS, shadow-quality-test PASS (high er expectation 350 -> 450). Game e RUN HOY NI.
+- Aro bright: DayNight `lightI` barao. Beshi hot/dhimi hole: ShadowQuality SHADOW_SPECS komao.

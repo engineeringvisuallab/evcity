@@ -104,8 +104,8 @@ const STOPS: readonly Stop[] = [
   { y: -0.3, horizon: 0x0b1428, zenith: 0x02050f, sun: 0xff5a1f, light: 0xff6a30, lightI: 0, hemiSky: 0x1d2d5c, hemiGround: 0x0c0f1a, hemiI: 0.5, glow: 0.1 },
   { y: -0.1, horizon: 0x33305a, zenith: 0x0a1736, sun: 0xff5a1f, light: 0xff6a30, lightI: 0, hemiSky: 0x2a3566, hemiGround: 0x141420, hemiI: 0.62, glow: 0.5 },
   { y: 0.0, horizon: 0xff8a4a, zenith: 0x2b3f78, sun: 0xff7a30, light: 0xff7a40, lightI: 0, hemiSky: 0x6c6a9a, hemiGround: 0x3b3040, hemiI: 0.78, glow: 0.75 },
-  { y: 0.12, horizon: 0xf5b680, zenith: 0x4572b4, sun: 0xffb060, light: 0xffb070, lightI: 1.7, hemiSky: 0x9fb4e0, hemiGround: 0x5b4f40, hemiI: 0.98, glow: 0.4 },
-  { y: 0.4, horizon: 0xbcd4ea, zenith: 0x3d78c4, sun: 0xffd999, light: 0xfff0d8, lightI: 3.0, hemiSky: 0xbcd6ff, hemiGround: 0x6b5d45, hemiI: 1.15, glow: 0.18 },
+  { y: 0.12, horizon: 0xf5b680, zenith: 0x4572b4, sun: 0xffb060, light: 0xffb070, lightI: 2.3, hemiSky: 0x9fb4e0, hemiGround: 0x5b4f40, hemiI: 0.9, glow: 0.4 },
+  { y: 0.4, horizon: 0xbcd4ea, zenith: 0x3d78c4, sun: 0xffd999, light: 0xfff0d8, lightI: 4.2, hemiSky: 0xbcd6ff, hemiGround: 0x6b5d45, hemiI: 0.95, glow: 0.18 },
 ];
 const MOON_COLOR = 0x9db4ff;
 const MOON_INTENSITY = 0.55;
