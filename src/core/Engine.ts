@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { bootMark } from './BootTimer';
 import { Q, DynamicResolution, SlowDeviceWatch, currentChoice } from './Quality';
 import { ShadowManager, SHADOW_NAMES_BN } from './ShadowQuality';
 import { CameraController } from '../camera/CameraController';
@@ -352,7 +353,10 @@ export class Engine {
 
   static async create(container: HTMLElement, prep: EnginePrep = Engine.prepare()): Promise<Engine> {
     const [physics, , , catalog] = await prep.ready;
-    return new Engine(container, prep.bus, physics, catalog);
+    bootMark('physics + fonts + catalog ready');
+    const engine = new Engine(container, prep.bus, physics, catalog);
+    bootMark('Engine constructor done');
+    return engine;
   }
 
   private constructor(
@@ -361,6 +365,7 @@ export class Engine {
     readonly physics: PhysicsWorld,
     catalog: Catalog,
   ) {
+    bootMark('constructor start (renderer next)');
     // --- rendering ---
     this.renderer = new THREE.WebGLRenderer({ antialias: Q.antialias, powerPreference: Q.powerPreference });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.maxDpr));
@@ -388,11 +393,13 @@ export class Engine {
     this.camera.position.set(c.startPosition.x, c.startPosition.y, c.startPosition.z);
     this.scene.add(this.camera);
 
+    bootMark('rendering');
     // --- systems ---
     this.input = new InputManager(this.renderer.domElement, bus);
     this.cameraController = new CameraController(this.camera, this.input);
     this.world = new WorldManager(this.scene, bus, physics, this.environment.skyUniforms);
 
+    bootMark('systems');
     // --- roads & bridges (STAGE 6): the road network lives in TerrainGenerator; here are the bridge visuals/colliders and the debug overlay ---
     const roads = this.world.terrain.roads;
     this.streetLights = new StreetLights(this.world.root, roads);
@@ -414,6 +421,7 @@ export class Engine {
     this.stationSigns = new StationSignLayer(this.world.root, this.rail, (x, z) => this.world.terrain.heightAt(x, z)); // English + Bangla lettering on the station boards
     this.trainBoard = new StationBoard(this.trains.fleet, this.rail);
 
+    bootMark('roads & bridges');
     // --- player (third-person) ---
     // START POINT = the apron (entry road) between the two start-side lots, across the F4 road from the City Mall's west door: the player stands there, the camera
     // behind him, and looks over the road at the mall entrance. (ux, uz) = the view direction (towards the door). The parked start fleet
@@ -459,6 +467,7 @@ export class Engine {
     // START VIEW: the camera stands behind the player on the apron and looks over F4 at the mall's west door
     this.orbit.yaw = Math.atan2(-this.startPoint.ux, -this.startPoint.uz);
 
+    bootMark('player');
     // --- parking lots (asphalt, bay lines; no signboards) ---
     this.parking = new ParkingLots({ root: this.world.root, terrain: this.world.terrain });
     // STEP 2: light structures at the small stations and the charge points (pump / charger posts, little roofs, Bangla + English signs)
@@ -470,6 +479,7 @@ export class Engine {
     this.roadSignPhysics = new SignPhysics(physics, this.world.origin, this.roadSigns.solidGroups);
     this.ringStructurePhysics = new RingStructurePhysics(physics, this.world.origin, [...this.ringStructures.solids, ...this.stackJ1.solids]);
 
+    bootMark('parking lots');
     // --- City Mall (always standing there when the game starts) ---
     this.mall = new MallManager({
       root: this.world.root,
@@ -485,6 +495,7 @@ export class Engine {
       onFoot: () => this.player.active && !this.player.inVehicle && !this.cameraController.isFreeFly && !this.helis.pilot && !this.boats.skipper,
     });
 
+    bootMark('City Mall');
     // --- engineering areas: prototype boundary fence (closed all round; open only where a public road crosses) ---
     this.engBoundary = new EngineeringBoundary({
       root: this.world.root,
@@ -494,6 +505,7 @@ export class Engine {
       playerWorld: (out) => this.focusWorld(out),
     });
 
+    bootMark('engineering areas');
     // --- City Library (always standing there when the game starts) ---
     this.library = new LibraryManager({
       root: this.world.root,
@@ -504,6 +516,7 @@ export class Engine {
       onFoot: () => this.player.active && !this.player.inVehicle && !this.cameraController.isFreeFly && !this.helis.pilot && !this.boats.skipper,
     });
 
+    bootMark('City Library');
     // --- EVLab Tower (always standing there when the game starts) ---
     this.evlab = new EVLabManager({
       root: this.world.root,
@@ -519,6 +532,7 @@ export class Engine {
       },
     });
 
+    bootMark('EVLab Tower');
     // --- Prototype building: police station (always standing there when the game starts) ---
     setBuildingTextureQuality(this.renderer);
     this.protoBuilding = new BuildingManager({
@@ -551,6 +565,7 @@ export class Engine {
     const lh = this.placedBuildings.anchorOf('lighthouse');
     if (lh) this.lighthouseLight = new LighthouseLight(this.world.root, lh.x, lh.floorY, lh.z);
 
+    bootMark('Prototype building');
     // --- Airport (north-east; the model is hidden when the player is far away) ---
     this.airport = new AirportManager({
       root: this.world.root,
@@ -560,6 +575,7 @@ export class Engine {
       playerWorld: (out) => this.focusWorld(out),
     });
 
+    bootMark('Airport');
     // --- Sea airport (south coast, on filled land in the sea; the model is hidden when the player is far away) ---
     this.airportSea = new AirportManager({
       root: this.world.root,
@@ -570,6 +586,7 @@ export class Engine {
       site: this.world.terrain.airportSea,
     });
 
+    bootMark('Sea airport');
     // --- Aircraft: shuttle airliner (old airport <-> sea airport), flights from / to abroad, military fighters ---
     this.airplanes = new AirplaneManager({
       root: this.world.root,
@@ -577,6 +594,7 @@ export class Engine {
       playerWorld: (out) => this.focusWorld(out),
     });
 
+    bootMark('Aircraft');
     // --- Army camp (north-west, at the foot of the hill; hidden when the player is far away) ---
     this.army = new ArmyManager({
       root: this.world.root,
@@ -586,6 +604,7 @@ export class Engine {
       playerWorld: (out) => this.focusWorld(out),
     });
 
+    bootMark('Army camp');
     // --- EVC Agro Research Institute (west farmland; hidden when the player is far away) ---
     this.agro = new AgroManager({
       root: this.world.root,
@@ -666,6 +685,7 @@ export class Engine {
     });
     this.hud.setLocked(this.input.gameplayActive);
 
+    bootMark('EVC Agro Research Institute');
     // --- vehicles: none are placed by hand any more. Every vehicle is created by TrafficManager WITH a driver. ---
     this.vehicles = new VehicleManager({
       vehicle: { physics, terrain: this.world.terrain, origin: this.world.origin, scene: this.scene, bus },
@@ -687,10 +707,12 @@ export class Engine {
       },
     });
 
+    bootMark('vehicles');
     // --- people + traffic (STAGE 9) ---
     const graph = new RoadGraph(roads);
     this.people = new PeopleManager({ scene: this.scene, terrain: this.world.terrain, origin: this.world.origin, graph, vehicles: this.vehicles, player: this.player });
     this.people.setStations(this.rail, this.trains); // people walk to the stations, climb the stairs and board / leave the trains
+    bootMark('people + traffic');
     // --- Crop fields (table FarmFields.ts): crops, trees and props + REAL farmers (people) and machines (vehicles) at work, streamed around the player ---
     this.farm = new FarmManager({ root: this.world.root, terrain: this.world.terrain, playerWorld: (out) => this.focusWorld(out), people: this.people, vehicles: this.vehicles, container, isMuted: () => this.voice?.isMuted ?? false });
     this.busStops = new BusStops({ scene: this.scene, origin: this.world.origin, terrain: this.world.terrain, graph, sites: this.world.terrain.sites });
@@ -700,6 +722,7 @@ export class Engine {
     this.traffic = new TrafficManager({ graph, plan: new CityPlan(this.world.terrain.sites), vehicles: this.vehicles, people: this.people, player: this.player, terrainPhysics: this.world.terrainPhysics, stops: this.busStops, signals: this.trafficSignals });
     this.vehicles.setPeople(this.people);
     this.people.onRetake = (p, car) => this.traffic.resume(car, p); // the owner of a stolen car got it back: he drives off again
+    bootMark('Crop fields');
     // --- Gold economy: accidents (vehicle crash / run over people) are fined, killing a criminal is rewarded ---
     this.economy = new Economy(container);
     // cargo truck job + safe-driving bonus (Jobs.ts): any fine restarts the safe-driving round
@@ -720,6 +743,7 @@ export class Engine {
     this.people.onCriminalKilled = () => this.economy.criminalKilled(this.combat.wanted.stars); // the bounty grows with the wanted stars
     this.mapStops = this.busStops.stops.filter((b) => b.dir === 1);
 
+    bootMark('Gold economy');
     // --- guns (left mouse = shoot, right mouse = aim, Q = next weapon) ---
     this.combat = new CombatSystem({
       scene: this.scene,
@@ -757,6 +781,7 @@ export class Engine {
     this.vehicles.setFx(this.explosions);
     bus.on('origin:shift', ({ dx, dz }) => this.combat.shift(dx, dz));
 
+    bootMark('guns');
     // --- helicopter (parked next to the spawn point; F to get in, H to start the engine) ---
     this.helis = new HelicopterManager({
       heli: { physics, terrain: this.world.terrain, origin: this.world.origin, scene: this.scene, bus },
@@ -770,6 +795,7 @@ export class Engine {
       project: this.project,
     });
 
+    bootMark('helicopter');
     // --- N menu: every vehicle (incl. the tank and the helicopter), brought next to the player ---
     this.vehicleMenu = new VehicleMenu(
       container,
@@ -784,6 +810,7 @@ export class Engine {
       () => !!this.vehicles.driver?.spec.amphibious, // N = flight mode while driving the Suprim
     );
 
+    bootMark('N menu');
     // --- 0 key: type X and Z, the player (on foot only) is taken there. Made AFTER the N menu: while that menu is open it keeps the 0 key ---
     this.gotoPanel = new GotoPanel(
       container,
@@ -813,6 +840,7 @@ export class Engine {
       const h = this.fleetSlot(30, 0, 0); // the helicopter stands a bit apart, at the far end of the row
       this.helis.spawn(new THREE.Vector3(h.x, this.world.terrain.heightAt(h.x, h.z) + 1.5, h.z), h.yaw);
     }
+    bootMark('0 key');
     // --- boats: one on the nearest deep water to the spawn point (sea / lake / river), one on the biggest lake ---
     this.boats = new BoatManager({
       boat: { physics, terrain: this.world.terrain, origin: this.world.origin, scene: this.scene, bus },
@@ -830,6 +858,7 @@ export class Engine {
     this.birds = new BirdManager(this.world.root, this.world.terrain, this.world.seed.value);
     this.animals = new AnimalManager(this.world.root, this.world.terrain, this.world.seed.value);
     this.voice = new VoiceManager(new Subtitles(container));
+    bootMark('boats');
     // --- SWTP + STP engineering plants (walls / tanks are solid; Y = narrated camera tour) ---
     const infraSites = this.world.terrain.infra;
     this.infra = new LazyInfra({
@@ -878,6 +907,7 @@ export class Engine {
     this.tour = new TourManager({ container, infra: this.infra });
     bus.on('camera:locked', ({ locked }) => this.hud.setLocked(locked));
 
+    bootMark('SWTP + STP engineering plants');
     // --- settings menu: everything that used to clutter the screen can be switched on here ---
     this.waterFx = new WaterFX({
       root: this.world.root,
@@ -962,6 +992,7 @@ export class Engine {
         if (this.started && !this.ctxGuard.isLost) this.loop.start();
       },
     );
+    bootMark('settings menu + loop setup');
     this.applyRenderScale(); // the preset's pixel-ratio cap and pixel budget
   }
 
@@ -983,6 +1014,7 @@ export class Engine {
     this.scene.add(group);
     try {
       await this.renderer.compileAsync(this.scene, this.camera);
+      bootMark('shader warm-up (compileAsync)');
     } catch (e) {
       console.warn('[EVCity] shader warm-up skipped:', e);
     } finally {

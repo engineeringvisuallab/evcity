@@ -12,6 +12,7 @@ import { Watermark } from './ui/Watermark';
 import { initQuality } from './core/Quality';
 import { trackAudioContexts } from './core/Lifecycle';
 import { installAudioTap } from './record/AudioTap';
+import { bootMark, bootReport } from './core/BootTimer';
 
 const container = document.getElementById('app');
 if (!container) throw new Error('#app element not found');
@@ -52,6 +53,7 @@ Promise.all([prepared, splash.introDone])
     splash.setStage(0.82, 'মানচিত্র লোড হচ্ছে…');
     engine.start();
     await engine.firstChunksReady(); // the terrain around the player is in before the splash fades (max 12 s)
+    bootMark('first terrain chunks in'); bootReport();
     new Watermark();
     try { sessionStorage.removeItem('evcity-stale-reload'); } catch { /* ignore */ }
     void splash.finish();
