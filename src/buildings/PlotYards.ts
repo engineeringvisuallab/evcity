@@ -7,8 +7,9 @@
 // Switch: Config.city.plots.enabled (CITY_PLOTS is empty when it is false, then nothing is built).
 import * as THREE from 'three';
 import type { TerrainGenerator } from '../terrain/TerrainGenerator';
-import { CITY_PLOTS, CITY_PLOT_BUILDINGS, type CityPlot } from './PlacementsPlots';
-import { VACANT_PLOTS, type VacantPlot } from './PlacementsVacant';
+import type { CityPlot } from './PlacementsPlots';
+import type { VacantPlot } from './PlacementsVacant';
+import { ALL_CITY_PLOTS, ALL_VACANT_PLOTS, ALL_PLOT_BUILDINGS } from './CityPlotsAll'; // city plots + vacant plots + the plots drawn in Plot.shp (PlacementsShpPlots.ts), merged
 
 type YardPlot = CityPlot | VacantPlot;
 
@@ -46,7 +47,7 @@ export class PlotYards {
   constructor(private d: PlotYardsDeps) {
     this.holder.name = 'city-plot-yards';
     d.root.add(this.holder);
-    const plots: readonly YardPlot[] = [...CITY_PLOTS, ...VACANT_PLOTS];   // VACANT_PLOTS: the empty plots of the plot map (Config.city.plots.vacant)
+    const plots: readonly YardPlot[] = [...ALL_CITY_PLOTS, ...ALL_VACANT_PLOTS];   // ALL_VACANT_PLOTS: the empty plots of the plot map (Config.city.plots.vacant)
     if (plots.length === 0) { console.info('[city-plots] OFF or no plots (Config.city.plots.enabled / vacant)'); return; }
 
     const wall: THREE.Matrix4[] = [];
@@ -77,7 +78,7 @@ export class PlotYards {
     this.addMesh(trunkGeo, trunkMat, trunk, null);
     this.addMesh(crownGeo, leafMat, crown, crownCol);
     this.addMesh(bushGeo, leafMat, bush, bushCol);
-    console.info(`[city-plots] ${CITY_PLOTS.length} plots + ${VACANT_PLOTS.length} vacant plots, ${CITY_PLOT_BUILDINGS.length} buildings, ${wall.length} wall pieces, ${gate.length} gate parts, ${crown.length} trees, ${bush.length} bushes`);
+    console.info(`[city-plots] ${ALL_CITY_PLOTS.length} plots + ${ALL_VACANT_PLOTS.length} vacant plots, ${ALL_PLOT_BUILDINGS.length} buildings, ${wall.length} wall pieces, ${gate.length} gate parts, ${crown.length} trees, ${bush.length} bushes`);
   }
 
   private addMesh(geo: THREE.BufferGeometry, mat: THREE.Material, mats: THREE.Matrix4[], cols: THREE.Color[] | null): void {
@@ -152,12 +153,26 @@ export class PlotYards {
     const F = Math.hypot(q[1]![0] - q[0]![0], q[1]![1] - q[0]![1]);
     const Dp = Math.hypot(q[3]![0] - q[0]![0], q[3]![1] - q[0]![1]);
     const tx = (q[1]![0] - q[0]![0]) / F, tz = (q[1]![1] - q[0]![1]) / F;
-    const nx = (q[3]![0] - q[0]![0]) / Dp, nz = (q[3]![1] - q[0]![1]) / Dp;
-    const at = (u: number, v: number): [number, number] => [q[0]![0] + tx * u + nx * v, q[0]![1] + tz * u + nz * v];
+    // (u, v) -> world: bilinear over the 4 corners (for a rectangle the same as q0 + t u + n v; a drawn plot can be a 4-corner shape that is not a rectangle)
+    const bil = q[2]![0] - q[1]![0] - q[3]![0] + q[0]![0], bilz = q[2]![1] - q[1]![1] - q[3]![1] + q[0]![1];
+    const at = (u: number, v: number): [number, number] => {
+      const s = u / F, w = v / Dp;
+      return [q[0]![0] + (q[1]![0] - q[0]![0]) * s + (q[3]![0] - q[0]![0]) * w + bil * s * w, q[0]![1] + (q[1]![1] - q[0]![1]) * s + (q[3]![1] - q[0]![1]) * w + bilz * s * w];
+    };
+    // trees keep TREE_EDGE from every side (needed when the plot is not a rectangle; for a rectangle it is the same as the u / v test)
+    const wind = ((q[1]![0] - q[0]![0]) * (q[2]![1] - q[0]![1]) - (q[1]![1] - q[0]![1]) * (q[2]![0] - q[0]![0])) >= 0 ? 1 : -1;
+    const awayFromWall = (x: number, z: number): boolean => {
+      for (let i = 0; i < 4; i++) {
+        const a = q[i]!, b = q[(i + 1) % 4]!;
+        const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        if (wind * ((b[0] - a[0]) * (z - a[1]) - (b[1] - a[1]) * (x - a[0])) / len < TREE_EDGE - 1e-6) return false;
+      }
+      return true;
+    };
     // gate positions in plot coordinates (u along the road, v = 0 on the road side)
     const gu = plot.gates.map((g) => (g[0] - q[0]![0]) * tx + (g[1] - q[0]![1]) * tz);
     // buildings of this plot (footprints)
-    const bs = CITY_PLOT_BUILDINGS.filter((b) => Math.hypot(b.x - plot.c[0], b.z - plot.c[1]) < F + Dp);
+    const bs = ALL_PLOT_BUILDINGS.filter((b) => Math.hypot(b.x - plot.c[0], b.z - plot.c[1]) < F + Dp);
     const onBuilding = (x: number, z: number): boolean => {
       for (const b of bs) {
         const dx = x - b.x, dz = z - b.z, c = Math.cos(b.yaw), s = Math.sin(b.yaw);
@@ -171,7 +186,7 @@ export class PlotYards {
       if (u < TREE_EDGE || u > F - TREE_EDGE || v < TREE_EDGE || v > Dp - TREE_EDGE) return false;
       if (onPath(u, v)) return false;
       const [x, z] = at(u, v);
-      return !onBuilding(x, z);
+      return awayFromWall(x, z) && !onBuilding(x, z);
     };
     const r = rng(Math.round(Math.abs(plot.c[0] * 31 + plot.c[1] * 17)) + 7);
     const park = plot.kind === 'park', empty = plot.kind === 'empty', vac = plot.kind === 'vacant';

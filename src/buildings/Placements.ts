@@ -20,7 +20,7 @@ export interface BuildingPlacement {
 }
 
 import { DRAWN_FILL_PLACEMENTS } from './PlacementsResidential';
-import { CITY_PLOT_BUILDINGS, CITY_PLOT_REPLACES } from './PlacementsPlots';
+import { ALL_PLOT_BUILDINGS, PLOT_HAND_REPLACES } from './CityPlotsAll'; // city plot buildings + the plots drawn in Plot.shp (PlacementsShpPlots.ts)
 
 const HAND_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'mud-hut', x: -2300, z: -1520, yaw: 0, W: 9, D: 7, zone: 'village-west' },
@@ -80,9 +80,9 @@ const HAND_PLACEMENTS: readonly BuildingPlacement[] = [
 ];
 
 /** The hand placed buildings + (STEP 3, Config.city.plots) the buildings that stand in the city plots; the old hospital that the plot hospital replaces is dropped. */
-export const BUILDING_PLACEMENTS: readonly BuildingPlacement[] = CITY_PLOT_BUILDINGS.length === 0
+export const BUILDING_PLACEMENTS: readonly BuildingPlacement[] = ALL_PLOT_BUILDINGS.length === 0
   ? HAND_PLACEMENTS
-  : [...HAND_PLACEMENTS.filter((p) => !(CITY_PLOT_REPLACES && p.id === CITY_PLOT_REPLACES.id && p.x === CITY_PLOT_REPLACES.x && p.z === CITY_PLOT_REPLACES.z)), ...CITY_PLOT_BUILDINGS];
+  : [...HAND_PLACEMENTS.filter((p) => !PLOT_HAND_REPLACES.some((r) => p.id === r.id && p.x === r.x && p.z === r.z)), ...ALL_PLOT_BUILDINGS];
 
 /** Keep-out radius around a footprint centre (half diagonal). */
 const radius = (p: BuildingPlacement): number => Math.hypot(p.W, p.D) / 2;
