@@ -929,21 +929,22 @@ export function growTree(s: Style, detail: number): THREE.BufferGeometry {
   return m.build();
 }
 
+// REAL-LOOK (v6): tall bare trunk, few limbs high up, a few hanging-leaf clusters (gum leaf tile, `simple`): sky and branches show through
 const STYLE_ROUND: Style = {
-  seed: 101, trunkH: 3.8, trunkR: 0.5, trunkBend: 0.1, primary: 7, startFrac: 0.5, spread: [0.7, 1.05], limbLen: 3.6, fork: 2,
-  kids: [3, 3], lenRatio: [0.55, 0.5], droop: 0.3, crownY: 6.4, rx: 3.9, ry: 3.0, cards: 8, clusterR: 1.0, card: [1.0, 1.55], warm: 0.2,
+  seed: 101, trunkH: 9, trunkR: 0.42, trunkBend: 0.16, primary: 5, startFrac: 0.55, spread: [0.5, 0.95], limbLen: 6.5, fork: 2,
+  kids: [3, 2], lenRatio: [0.6, 0.55], droop: 0.22, crownY: 13.5, rx: 6, ry: 5, cards: 3, clusterR: 1.5, card: [1.9, 2.8], warm: 0.05, leafTile: TILE_GUM, simple: true, farScale: 1.4,
 };
 const STYLE_OAK: Style = {
-  seed: 5150, trunkH: 2.7, trunkR: 0.66, trunkBend: 0.18, primary: 6, startFrac: 0.5, spread: [0.95, 1.25], limbLen: 4.4, fork: 2,
-  kids: [3, 3], lenRatio: [0.55, 0.5], droop: 0.25, crownY: 5.6, rx: 5.2, ry: 2.7, cards: 7, clusterR: 1.05, card: [1.0, 1.5], warm: 0.15, lobed: true,
+  seed: 5150, trunkH: 8, trunkR: 0.5, trunkBend: 0.2, primary: 5, startFrac: 0.5, spread: [0.7, 1.1], limbLen: 7.5, fork: 2,
+  kids: [3, 2], lenRatio: [0.6, 0.55], droop: 0.2, crownY: 12.5, rx: 7.5, ry: 4.5, cards: 3, clusterR: 1.5, card: [1.9, 2.8], warm: 0.05, leafTile: TILE_GUM, simple: true, farScale: 1.5,
 };
 const STYLE_VASE: Style = {
-  seed: 7777, trunkH: 2.4, trunkR: 0.5, trunkBend: 0.1, primary: 4, startFrac: 0.7, spread: [0.35, 0.6], limbLen: 5.2, fork: 3,
-  kids: [3, 3], lenRatio: [0.5, 0.5], droop: 0.0, crownY: 6.8, rx: 3.3, ry: 3.8, cards: 8, clusterR: 0.95, card: [0.95, 1.45], warm: 0.18,
+  seed: 7777, trunkH: 9.5, trunkR: 0.4, trunkBend: 0.14, primary: 4, startFrac: 0.65, spread: [0.3, 0.55], limbLen: 7, fork: 3,
+  kids: [3, 2], lenRatio: [0.6, 0.55], droop: 0.1, crownY: 14.5, rx: 5, ry: 6, cards: 3, clusterR: 1.4, card: [1.9, 2.8], warm: 0.05, leafTile: TILE_GUM, simple: true, farScale: 1.4,
 };
 const STYLE_SLENDER: Style = {
-  seed: 31415, trunkH: 5.2, trunkR: 0.3, trunkBend: 0.1, primary: 8, startFrac: 0.35, spread: [0.45, 0.85], limbLen: 2.4, fork: 1,
-  kids: [3, 2], lenRatio: [0.55, 0.5], droop: 0.15, crownY: 7.4, rx: 2.5, ry: 3.2, cards: 8, clusterR: 0.85, card: [0.85, 1.35], warm: 0.3,
+  seed: 31415, trunkH: 10.5, trunkR: 0.26, trunkBend: 0.12, primary: 5, startFrac: 0.5, spread: [0.4, 0.75], limbLen: 5, fork: 1,
+  kids: [3, 2], lenRatio: [0.6, 0.55], droop: 0.15, crownY: 15, rx: 4, ry: 5.5, cards: 3, clusterR: 1.3, card: [1.8, 2.6], warm: 0.05, leafTile: TILE_GUM, simple: true, farScale: 1.3,
 };
 /** The savanna tree: tall slender trunk, wide flat layered crown. */
 const STYLE_ACACIA: Style = {

@@ -399,7 +399,7 @@ export class TreePlacer {
   }
 
   /** Height (m) of a broadleaf-family tree at scale 1 (crown top): round, oak, vase, slender. Other kinds are never thinned. */
-  private static readonly SMALL_H: Record<number, number> = { [TreeKind.broadleaf]: 9.4, [TreeKind.oak]: 8.3, [TreeKind.vase]: 10.6, [TreeKind.slender]: 10.6 };
+  private static readonly SMALL_H: Record<number, number> = { [TreeKind.broadleaf]: 15, [TreeKind.oak]: 14, [TreeKind.vase]: 16, [TreeKind.slender]: 16.5 };
 
   /** True when this would-be tree is a SMALL broadleaf tree that the `smallTrees.keep` share drops. The choice only depends on the position (stable). */
   private dropSmall(kind: number, scale: number, x: number, z: number): boolean {

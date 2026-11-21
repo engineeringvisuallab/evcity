@@ -188,3 +188,6 @@ Leaves were too light / yellow-green; now mostly deep green with some variety (`
 Triangles: ~93 % of a normal tree's near-LOD triangles are branch tubes (3x dal-pala); level-3 twigs now 3-point, level-2 3-sided (-27 % per tree, same shape). See `CHANGES_GUM_TREE_BN.md` v7b. Bot is almost never the cost.
 Bot (banyan) is now a SIMPLE tree (`Style.simple`, like the gums): few limbs, big leaf cards, ~2.5k near-LOD triangles (was 13k). See `CHANGES_GUM_TREE_BN.md` v7c. `simple` can be used for any other kind to make it cheap.
 Small broadleaf trees (< 10 m) are thinned to 25 % (`Config.vegetation.smallTrees`, `TreePlacement.thinSmall`), position-hash so stable. See `CHANGES_GUM_TREE_BN.md` v7d.
+
+## Real trees Step 1 (2026-11-21)
+- broadleaf/oak/vase/slender reshaped (tall bare trunk, few limbs, hanging gum leaves, simple:true); ~4x fewer triangles. See CHANGES_REAL_TREES_BN.md. tsc PASS, not seen in game yet. Next: user feedback, then other kinds if needed.

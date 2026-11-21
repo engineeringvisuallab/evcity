@@ -46,12 +46,12 @@ export const usesPalmAtlas = (kind: number): boolean => (kind >= TreeKind.coconu
  * One table for the trunk colliders (TreePhysics), the slope sink of the placement (TreePlacement) and climbing (Player).
  */
 export const TREE_TRUNK: Record<number, { r: number; h: number; climb: number }> = {
-  [TreeKind.broadleaf]: { r: 0.42, h: 3.4, climb: 5 },
+  [TreeKind.broadleaf]: { r: 0.42, h: 3.4, climb: 8 },
   [TreeKind.pine]: { r: 0.55, h: 5, climb: 9 },
   [TreeKind.palm]: { r: 0.28, h: 5, climb: 8 },
-  [TreeKind.oak]: { r: 0.55, h: 3, climb: 4 },
-  [TreeKind.vase]: { r: 0.42, h: 3, climb: 3.5 },
-  [TreeKind.slender]: { r: 0.28, h: 4, climb: 6 },
+  [TreeKind.oak]: { r: 0.5, h: 3, climb: 7 },
+  [TreeKind.vase]: { r: 0.4, h: 3, climb: 8 },
+  [TreeKind.slender]: { r: 0.26, h: 4, climb: 8 },
   [TreeKind.sal]: { r: 0.5, h: 5, climb: 12 },
   [TreeKind.segun]: { r: 0.45, h: 5, climb: 10 },
   [TreeKind.koroi]: { r: 0.7, h: 4, climb: 7 },
