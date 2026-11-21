@@ -74,6 +74,7 @@ import { StackInterchangeLayer } from '../interchange/m8/StackInterchangeLayer';
 import { GroundJ1Layer } from '../roads/junction/GroundJ1Layer';
 import { RingStructurePhysics } from '../roads/ring/RingStructurePhysics';
 import { SignPhysics } from '../signs/SignPhysics';
+import { RoadSignLayer } from '../signs/RoadSignLayer';
 import { Toast } from '../ui/Toast';
 import { SuprimHUD } from '../ui/SuprimHUD';
 import { SettingsMenu } from '../ui/SettingsMenu';
@@ -167,6 +168,8 @@ export class Engine {
   private ringStructurePhysics: RingStructurePhysics;
   /** STEP 3: colliders of the fuel stations / charge points (same class as the road signs' physics: bodies only near the player). */
   private stationPhysics: SignPhysics;
+  private roadSigns: RoadSignLayer;
+  private roadSignPhysics: SignPhysics;
   /** Solid colliders of all buildings (hand placed + city fill), bodies only near the player. */
   private buildingPhysics: BuildingPhysics;
   /** Convex road mirrors at the junctions (2 draw calls for the whole map). */
@@ -458,6 +461,9 @@ export class Engine {
     this.stationStructures = new StationStructures({ root: this.world.root, terrain: this.world.terrain });
     // STEP 3: pumps, columns, kiosk, pylon, charger posts and cabinets are solid (cuboids), only near the player, floating-origin local coordinates
     this.stationPhysics = new SignPhysics(physics, this.world.origin, this.stationStructures.solidGroups);
+    // ROAD SIGN BOARDS: overhead gantries with Bangla + English boards (both faces); posts and bases are solid
+    this.roadSigns = new RoadSignLayer(this.world.root);
+    this.roadSignPhysics = new SignPhysics(physics, this.world.origin, this.roadSigns.solidGroups);
     this.ringStructurePhysics = new RingStructurePhysics(physics, this.world.origin, [...this.ringStructures.solids, ...this.stackJ1.solids]);
 
     // --- City Mall (always standing there when the game starts) ---
@@ -1226,6 +1232,7 @@ export class Engine {
       this.streetLights.update(lamp, fov, px);
       this.j1Masts.update(lamp);
       this.stationPhysics.update(dt, this.world.playerWorld.x, this.world.playerWorld.z);
+      this.roadSignPhysics.update(dt, this.world.playerWorld.x, this.world.playerWorld.z);
       this.ringStructurePhysics.update(dt, this.world.playerWorld.x, this.world.playerWorld.z);
       this.buildingPhysics.update(dt, this.world.playerWorld.x, this.world.playerWorld.z);
       this.stationStructures.update(this.world.playerWorld.x, this.world.playerWorld.z, lamp); // builds the near sites, frees the far ones; canopy lights, kiosk windows, price displays and signs follow the day / night
@@ -1326,6 +1333,7 @@ export class Engine {
     this.trainAnnouncer.setPlayer(px, pz);
     this.signalLayer.update(px, pz);
     this.stationSigns.update(this.camera.position.x + this.world.origin.origin.x, this.camera.position.z + this.world.origin.origin.z);
+    this.roadSigns.update(this.camera.position.x + this.world.origin.origin.x, this.camera.position.z + this.world.origin.origin.z);
     const board = this.trainBoard.update(px, pz);
     this.hud.setTrainBoard(board ? formatBoard(board) : null);
   }
@@ -1817,6 +1825,7 @@ export class Engine {
     this.stackJ1.dispose();
     this.groundJ1.dispose();
     this.stationPhysics.dispose();
+    this.roadSignPhysics.dispose();
     this.ringStructurePhysics.dispose();
     this.buildingPhysics.dispose();
     this.lighthouseLight?.dispose();
@@ -1846,6 +1855,7 @@ export class Engine {
     this.trainPhysics.dispose();
     this.signalLayer.dispose();
     this.stationSigns.dispose();
+    this.roadSigns.dispose();
     this.trains.dispose();
     this.trainLayer.dispose();
     this.world.dispose();

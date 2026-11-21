@@ -67,6 +67,8 @@ export const Config = {
     activeTier: 0 as 0 | 1 | 2 | 3 | 4, // 0 = NO roads at all (roads removed; set 1-4 again when the new road design is ready)
     /** ROADS STEP 5.1: the new 8-lane ring road (M8, roads/ring/RingRoad.ts). Works with activeTier 0. `step` = distance between centreline points (m). enabled = false: no ring. */
     ring: { enabled: true as boolean, step: 8 },
+    /** ROAD SIGN BOARDS (HANDOFF_ROAD_DESIGN.md section 23): overhead sign gantries (src/signs/RoadSignLayer.ts, data src/signs/RoadSignData.ts made by scripts/gen-road-signs.ts). enabled = false: none. */
+    signs: { enabled: true as boolean },
     /** ROADS STEP 9.2: interchange J1 (stack, 4 level, src/interchange/m8). OFF until the outward M8 roads fix its place (6.3); x, z = world position of the crossing, y = height of road A, yaw = turn of road A. Terrain is not carved under it yet. */
     interchangeJ1: { enabled: false as boolean, x: 0, z: 0, y: 0, yaw: 0 },
     /** STEP J1-e1: the GROUND-LEVEL J1 (src/roads/junction): x, z = centre, yawDeg = turn of the N axis, y, a, b = pad plane (J1-g3 fit over the open star, docs/j1g3_pad.json; old J1-c1 fit is docs/j1c1.json), rCore = half size of the flat square (= J1_SA 100 m), emb = skirt (m, 30: arm fill up to 5.2 m needs a skirt of at least 24 m for slope 1:3). enabled = false: no J1, no terrain change. */
