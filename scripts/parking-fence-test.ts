@@ -23,7 +23,7 @@ const origin = new FloatingOrigin(root, bus as any);
 const lots = new ParkingLots({ root, terrain: gen });
 let tris = 0, finite = true;
 root.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh && m.geometry.getIndex()) { tris += m.geometry.getIndex()!.count / 3; const a = m.geometry.getAttribute('position'); for (let i = 0; i < a.array.length; i++) if (!Number.isFinite(a.array[i])) finite = false; } });
-ok(finite && tris > 500, `parking lots: ${tris} triangles, all vertices finite`);
+ok(finite && tris > 100, `parking lots: ${tris} triangles, all vertices finite`);
 
 lots.dispose();
 ok(true, 'dispose runs clean');

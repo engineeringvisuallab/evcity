@@ -12,7 +12,7 @@ import { uturnZoneHas } from './UTurns';
 import { medianLampNearFn, sightZoneLen } from './Planting';
 
 export { padIndex };
-import { EVLAB_LOT, MALL_LOT, SIDE_LOT, lotToWorld, parkingContains, type LotRect } from '../parking/ParkingSite';
+import { lotToWorld, parkingContains, type LotRect } from '../parking/ParkingSite';
 import { TreeKind } from '../vegetation/TreeTypes';
 
 /**
@@ -247,7 +247,7 @@ function sA0(gen: TerrainGenerator): ReturnType<TerrainGenerator['makeSample']> 
 }
 
 /** The parking lots whose outer edge gets a hedge: [lot, which long edge (n0 or n1) faces open ground]. */
-const HEDGE_LOTS: [LotRect, 'n0' | 'n1'][] = [[MALL_LOT, 'n1'], [EVLAB_LOT, 'n1'], [SIDE_LOT, 'n0']];
+const HEDGE_LOTS: [LotRect, 'n0' | 'n1'][] = []; // 2026-11-21: the old F4 lots are removed, so no hedges along them (was [[MALL_LOT, 'n1'], [EVLAB_LOT, 'n1'], [SIDE_LOT, 'n0']])
 
 export interface RoadsideStats {
   pits: number; hedges: number; shrubs: number; posts: number; beams: number; railMetres: number;

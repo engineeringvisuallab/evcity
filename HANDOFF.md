@@ -206,3 +206,10 @@ USER: rotate city_hall / dc_office / office-tower to face the 8-lane road; city_
 - `src/core/Engine.ts`: start = mallToWorld(east door lx + 25, 0) facing the east door (ASSUMED: screenshot 4 HUD was hidden, so exact coordinate not known). Parked fleet: FLEET_POS (-308, -67), FLEET_YAW 0.9193 (nose to J1-S), `fleetSlot()`; ONE row (lat -20..14.5 m, all nose to the road): 6 small vehicles, bus, tank; heli at lat 30 (a bit apart). Nothing stands behind the row any more because 18+ m back is inside the mall glass wall (screenshot). Old lot-based slots removed. The old parking lots in ParkingSite (F4) are still drawn at the old place (not touched).
 - Checks: `tsc --noEmit` PASS; `building-on-road-check` 0 flagged; `start-test` updated (start 15-45 m from east door). NOT seen in a running game.
 - NEXT: look at it in the game; if the start point differs from screenshot 4, send its X/Y/Z.
+
+## Old parking lots removed + new fleet parking place (2026-11-21)
+USER (screenshot, X marks + circle): remove the old lots beside F4 (mall lot, side drive, EVLAB lot with the H pad) and make a parking place for the fleet.
+- `ParkingSite.ts`: `OLD_LOTS = false` -> `PARKING_LOTS = []` (no drawing, no tree/grass keep-out there) and `buildParkingGeometry()` returns empty. MALL_LOT / EVLAB_LOT / SIDE_LOT constants stay (Jobs.ts depot markers still use them). New `FLEET_PARK` (-308, -67, yaw 0.9193) + `fleetToWorld(lat, back)`.
+- `ParkingLots.ts`: `DrapedBuilder` takes a frame function; new asphalt pad (lat -25..39, back -8..8), kerb on the road side, 6 bays (4.5 m), bus + tank boxes, H ring at lat 30. Ground there is flat (~18.4 m, mall pad).
+- `Engine.ts` uses `FLEET_PARK`; `Roadside.ts` HEDGE_LOTS = [] (no hedges along the removed lots). Fuel / charge stations and the Main Station lot are NOT touched.
+- Checks: tsc PASS; parking-fence-test PASS (threshold 500 -> 100 triangles). NOT seen in a running game. Open: Jobs.ts depot markers at the old lot places.

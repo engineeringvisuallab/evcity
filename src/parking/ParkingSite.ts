@@ -40,7 +40,17 @@ export const FRONT_ROW: LotRect = { id: 'front', s0: 2, s1: 70, n0: -16.3, n1: -
 export const SIDE_LOT: LotRect = { id: 'side', s0: 104, s1: 150, n0: -37, n1: -14.5 };
 export const SIDE_DRIVE: LotRect = { id: 'sidedrive', s0: 108, s1: 116, n0: -14.5, n1: -9.8 };
 
-export const PARKING_LOTS: ReadonlyArray<LotRect> = [MALL_LOT, APRON, EVLAB_LOT, FRONT_ROW, SIDE_LOT, SIDE_DRIVE];
+/** 2026-11-21: the old lots beside F4 (mall lot, apron, EVLAB lot with the H pad, front row, side lot) are REMOVED (user). Set true to bring them back. */
+const OLD_LOTS = false as boolean;
+export const PARKING_LOTS: ReadonlyArray<LotRect> = OLD_LOTS ? [MALL_LOT, APRON, EVLAB_LOT, FRONT_ROW, SIDE_LOT, SIDE_DRIVE] : [];
+
+/** The new parking place of the start fleet (user: X -308 Z -67): origin of the row, yaw of the vehicle noses (towards the J1-S 8-lane road). Row: lat -20 .. 14.5 m, heli pad at lat 30. */
+export const FLEET_PARK = { x: -308, z: -67, yaw: 0.9193 };
+/** Fleet frame (lat = across the row, back = away from the road) -> world. */
+export function fleetToWorld(lat: number, back: number): { x: number; z: number } {
+  const fx = Math.sin(FLEET_PARK.yaw), fz = Math.cos(FLEET_PARK.yaw);
+  return { x: FLEET_PARK.x - fx * back + fz * lat, z: FLEET_PARK.z - fz * back - fx * lat };
+}
 
 /**
  * A rectangle in the lot frame (used by the MAIN STATION lot). STEP 4: the small fuel stations and the charge points are no longer lots beside F4: they stand along the
@@ -123,6 +133,7 @@ export interface ParkingGeometry {
 
 export function buildParkingGeometry(): ParkingGeometry {
   const g: ParkingGeometry = { asphalt: [], kerb: [], paint: [], lines: [], rings: [] };
+  if (!OLD_LOTS) return g;
   const W = 0.12; // painted line width
   const rect = (l: LotRect): Rect4 => [l.s0, l.s1, l.n0, l.n1];
   const bar = (s0: number, s1: number, n: number): void => void g.paint.push([s0, s1, n - W / 2, n + W / 2, 4]); // a line along s at n

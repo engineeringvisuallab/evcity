@@ -43,7 +43,7 @@ import { RidePrompt } from '../ui/RidePrompt';
 import { bn } from '../i18n';
 import { MALL_DOORS, mallToWorld } from '../mall/MallSite';
 import { ParkingLots } from '../parking/ParkingLots';
-import { MAIN_STATION_LOT, lotToWorld } from '../parking/ParkingSite';
+import { FLEET_PARK, MAIN_STATION_LOT, lotToWorld } from '../parking/ParkingSite';
 import { ROAD_STATION_SITES } from '../parking/RoadStationSites';
 import { StationStructures } from '../parking/StationStructures';
 import { MallManager, loadCatalog, type Catalog } from '../mall';
@@ -124,8 +124,8 @@ function mapSize(kind: string): { len?: number; wide?: number } {
 /** The same vehicle can be called from the N menu only once per minute. */
 const SUMMON_COOLDOWN_MS = 60_000;
 /** Where the player's parked start fleet stands (user, 2026-11-21: X -308 Z -67) and the yaw of its nose: towards the J1-S 8-lane road. */
-const FLEET_POS = { x: -308, z: -67 };
-const FLEET_YAW = 0.9193;
+const FLEET_POS = FLEET_PARK;
+const FLEET_YAW = FLEET_PARK.yaw;
 
 /** What Engine.prepare() has started (see there). */
 export interface EnginePrep {
