@@ -14,7 +14,8 @@ MIN_AREA = 400.0                                                # smaller pieces
 MIN_INR = 7.0                                                   # a plot must fit a circle of this radius (m) = no thin strips, a building can stand on it
 MIN_FILL = 0.45                                                 # plot area / its smallest rectangle: lower = bad (odd) shape
 S = 2.0                                                         # raster cell (m)
-R = 1500.0
+R = 1500.0                                                      # the city circle
+BUF = 120.0                                                     # plots also cover every building area: land within BUF m of any building (houses, flats, villages)
 N = json.load(open('docs/city_nogo.json')); RD = json.load(open('docs/city_roads_cl.json')); INP = json.load(open('docs/city_plots_input.json'))
 nx, nz, X0, Z0, C = N['nx'], N['nz'], N['x0'], N['z0'], N['cell']
 M = np.frombuffer(base64.b64decode(N['mask']), dtype=np.uint8).reshape(nz, nx)
@@ -23,8 +24,19 @@ k = int(C / S); up = lambda a: np.kron(a, np.ones((k, k), a.dtype))
 HARD = 1 | 2 | 4 | 8 | 16 | 64          # road, street, rail, keep-out, water, steep   (32 = hand building, 128 = soft: both are plot land)
 W = nx * k; H = nz * k
 gx = X0 + (np.arange(W) + .5) * S; gz = Z0 + (np.arange(H) + .5) * S
-XX, ZZ = np.meshgrid(gx, gz)
-free = (up(M & HARD) == 0) & ~up(WET) & (np.hypot(XX, ZZ) <= R)
+# ---- plot area = the city circle + every place where buildings stand (all hand / fill / residential buildings, BUF m round each, small gaps closed)
+area = np.hypot(gx[None, :], gz[:, None]) <= R
+bm = np.zeros((H, W), np.uint8)
+for kind in ('hand', 'fill'):
+    for b in INP[kind]:
+        i_, j_ = int((b['x'] - X0) / S), int((b['z'] - Z0) / S)
+        if 0 <= i_ < W and 0 <= j_ < H: bm[j_, i_] = 1
+kk = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * int(BUF / S) + 1,) * 2)
+bm = cv2.dilate(bm, kk); bm = cv2.morphologyEx(bm, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * int(60 / S) + 1,) * 2))
+area |= bm > 0; del bm
+cv2.imwrite('docs/city_plots_area.png', area.astype(np.uint8) * 255)
+print('plot area ha', int(area.sum() * S * S / 1e4))
+free = (up(M & HARD) == 0) & ~up(WET) & area
 print('free cells', int(free.sum()), 'ha', round(free.sum() * S * S / 1e4))
 # ---- road points (every 2 m) with arc length s and tangent
 P = []; T = []; RID = []; SS = []
@@ -60,7 +72,7 @@ idx = -np.ones((H, W), np.int64); idx[fj, fi] = np.arange(len(fj))
 n_keep = 0
 for kind in ('hand', 'fill'):
     for b in INP[kind]:
-        if np.hypot(b['x'], b['z']) > R + 40: continue
+        if not (X0 < b['x'] < X0 + nx * C and Z0 < b['z'] < Z0 + nz * C): continue
         w, dp = b['W'], b['D']
         if kind == 'hand':
             if abs(abs(b.get('yaw', 0)) % 3.1416 - 1.5708) < .1: w, dp = dp, w
@@ -147,7 +159,7 @@ def cell(x, z): return int((x - X0) / S), int((z - Z0) / S)
 bld = []; out_b = []; split_b = []
 for kind in ('hand', 'fill'):
     for n_, b in enumerate(INP[kind]):
-        if np.hypot(b['x'], b['z']) > R: continue
+        if not (X0 < b['x'] < X0 + nx * C and Z0 < b['z'] < Z0 + nz * C): continue
         w, dp = max(b['W'] - 8, 4), max(b['D'] - 8, 4)      # the body of the building (the rest of W x D is yard)
         if abs(abs(b.get('yaw') or 0) % 3.1416 - 1.5708) < .1: w, dp = dp, w
         i, j = cell(b['x'], b['z']); pid = int(lab[j, i]); nm = b.get('id', kind) + '#' + str(n_) if kind == 'fill' else b['id']
@@ -162,7 +174,7 @@ print('buildings centre in a plot:', len(bld), ' centre NOT in a plot:', len(out
 blk = np.zeros((H, W), np.uint8)
 for kind in ('hand', 'fill'):
     for b in INP[kind]:
-        if np.hypot(b['x'], b['z']) > R + 40: continue
+        if not (X0 < b['x'] < X0 + nx * C and Z0 < b['z'] < Z0 + nz * C): continue
         w, dp = max(b['W'] - 8, 4) + 6, max(b['D'] - 8, 4) + 6; y = b.get('yaw') or 0; c_, s_ = np.cos(y), np.sin(y)
         pts = np.array([[(b['x'] + u * c_ + v * s_ - X0) / S, (b['z'] - u * s_ + v * c_ - Z0) / S] for u, v in ((-w / 2, -dp / 2), (w / 2, -dp / 2), (w / 2, dp / 2), (-w / 2, dp / 2))])
         cv2.fillPoly(blk, [np.round(pts * 16).astype(np.int32)], 1, shift=4)
@@ -198,5 +210,6 @@ def draw(fn, xl, zl, size, title):
     ax.imshow(img, extent=(X0, X0 + nx * C, Z0 + nz * C, Z0), origin='upper')
     pc = PolyCollection([p['poly'] for p in plots], facecolors=[tuple(rng.uniform(.55, .95, 3)) for _ in plots], edgecolors='k', linewidths=.35); ax.add_collection(pc)
     ax.set_xlim(*xl); ax.set_ylim(zl[1], zl[0]); ax.set_aspect('equal'); ax.set_title(title); fig.savefig(fn, bbox_inches='tight'); plt.close(fig)
-draw('docs/city_plots_tiled.png', (-1500, 1500), (-1500, 1500), (16, 16), f'TILED PLOTS {len(plots)}  (every colour patch = one plot, black line = plot border)')
-draw('docs/city_plots_tiled_zoom.png', (-500, 400), (-250, 500), (18, 15), 'ZOOM: tiled plots')
+draw('docs/city_plots_tiled.png', (X0, X0 + nx * C), (Z0, Z0 + nz * C), (17, 19), f'TILED PLOTS {len(plots)}  (every colour patch = one plot, black line = plot border)')
+draw('docs/city_plots_tiled_zoom.png', (-500, 400), (-250, 500), (18, 15), 'ZOOM: tiled plots (city centre)')
+draw('docs/city_plots_tiled_zoom2.png', (-3700, -3000), (1100, 1800), (16, 16), 'ZOOM 2: a residential area (south-west)')

@@ -17,7 +17,7 @@ const sc: any = {};
 const inp = JSON.parse(readFileSync('docs/city_plots_input.json', 'utf8'));
 const names = new Set<string>(inp.streets.map((s: any) => s.name));
 // ASSUMED numbers (the user may change them)
-const X0 = -1500, X1 = 1500, Z0 = -1500, Z1 = 1500, CELL = 4;
+const X0 = -3800, X1 = 3000, Z0 = -3000, Z1 = 4600, CELL = 4;
 const ROAD_MARGIN = 5;     // m beyond road edge (half width + shoulder) for every game road that is not one of the 17 streets
 const STREET_KEEP = 12;    // m from the centre line of the 17 city streets (rule of the plots)
 const RAIL_EDGE = 12;      // m beyond the rail corridor (same as scripts/city-plots-full-check.ts)
@@ -25,7 +25,7 @@ const RAIL_AXIS = 30;      // m from the rail axis (HANDOFF section 5 / ROADFIX 
 const HOSP_RAIL = 100;     // m from the rail axis, hospital only (table 4, ASSUMED); soft bit 128
 const WATER_BUF = 30;      // m from wet ground (HANDOFF_CITY_DESIGN section 5)
 const BLD_MARGIN = 4;      // m around every hand placed building
-const STEEP = 0.12;        // slope (rise / run) over 20 m, marked as soft bit
+const STEEP = 0.25;      // slope (rise / run) over 20 m, marked as soft bit (0.25 = 14 degrees: only VERY steep land gets no plot; the game gives buildings a flat plinth on a slope)
 const NX = Math.ceil((X1 - X0) / CELL), NZ = Math.ceil((Z1 - Z0) / CELL);
 const B = { ROAD: 1, STREET: 2, RAIL: 4, KEEP: 8, WATER: 16, BUILDING: 32, STEEP: 64, RAIL100: 128 };
 const rf: any = gen.railForm; const rr = { d: 0, h: 0 };

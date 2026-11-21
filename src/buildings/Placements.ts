@@ -24,7 +24,7 @@ import { CITY_PLOT_BUILDINGS, CITY_PLOT_REPLACES } from './PlacementsPlots';
 
 const HAND_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'mud-hut', x: -2300, z: -1520, yaw: 0, W: 9, D: 7, zone: 'village-west' },
-  { id: 'bamboo-hut', x: -2260, z: -1560, yaw: 0, W: 8, D: 8, zone: 'village-west' },
+  { id: 'bamboo-hut', x: -2264, z: -1564, yaw: 0, W: 8, D: 8, zone: 'village-west' }, // PLOTS: moved from (-2260, -1560) into free plot land
   { id: 'house-tin', x: -2180, z: -1400, yaw: 0, W: 11, D: 12, zone: 'village-west' },
   { id: 'house-semi-pucca', x: -2160, z: -1460, yaw: 0, W: 11, D: 12, zone: 'village-west' },
   { id: 'house-brick-2', x: -618, z: 780, yaw: 0, W: 13, D: 16, zone: 'sw-homes' }, // moved from (-630, 780) off the road / railway (12 m)
@@ -36,7 +36,7 @@ const HAND_PLACEMENTS: readonly BuildingPlacement[] = [
   // 'tower-residential' (28 floors, 45 x 45 m) stood at x 20, z -260, right on top of the Main Station Pump Station (pad centre 36.5, -253.4): removed. The model stays in the registry; add a row here to place it somewhere else.
   { id: 'dormitory', x: -1875, z: -940, yaw: 0, W: 33, D: 33, zone: 'nw-university' }, // moved from (-1860, -940) off the road / railway (15 m)
   { id: 'labor-quarters', x: -1010, z: 30, yaw: 0, W: 40, D: 11, zone: 'west-homes' },
-  { id: 'village-bazaar', x: 2920, z: -900, yaw: -1.5708, W: 64, D: 48, zone: 'village-east' },
+  { id: 'village-bazaar', x: 2910, z: -900, yaw: -1.5708, W: 64, D: 48, zone: 'village-east' }, // PLOTS: moved from (2920, -900) into free plot land
   { id: 'baganbari', x: 850, z: 480, yaw: -1.5708, W: 52, D: 52, zone: 'central-lake' }, // moved from (820, 440) off the road / railway (50 m)
   { id: 'shop-row', x: 23.2, z: 201.9, yaw: 1.5708, W: 26, D: 11, zone: 'metro-core' },
   { id: 'pharmacy', x: -23.1, z: 139.4, yaw: 1.5708, W: 9, D: 11, zone: 'metro-core' },
@@ -52,8 +52,8 @@ const HAND_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'hotel-5star', x: -2, z: 300, yaw: -1.5708, W: 80, D: 70, zone: 'metro-core' }, // moved from (-10, 320) off the road / railway (21.5 m)
   { id: 'primary-school', x: 940, z: 20, yaw: -1.5708, W: 40, D: 36, zone: 'east-homes' },
   { id: 'high-school', x: -1465, z: -2400, yaw: 1.5708, W: 56, D: 60, zone: 'nw-campus' }, // moved from (-1500, -2380) off the road / railway (40 m)
-  { id: 'college', x: -1440, z: -2620, yaw: -1.5708, W: 70, D: 46, zone: 'nw-campus' },
-  { id: 'university-building', x: -1260, z: -2500, yaw: 0, W: 70, D: 54, zone: 'nw-campus' },
+  { id: 'college', x: -1440, z: -2628, yaw: -1.5708, W: 70, D: 46, zone: 'nw-campus' }, // PLOTS: moved from (-1440, -2620) into free plot land
+  { id: 'university-building', x: -1252, z: -2488, yaw: 0, W: 70, D: 54, zone: 'nw-campus' }, // PLOTS: moved from (-1260, -2500) into free plot land
   { id: 'engineering-lab', x: -1340, z: -2700, yaw: -1.5708, W: 64, D: 50, zone: 'nw-campus' },
   { id: 'hospital', x: 220, z: -250, yaw: 3.1416, W: 80, D: 62, zone: 'metro-core' }, // moved from (300, -160) off the road / railway (120 m)
   { id: 'clinic', x: -720, z: 640, yaw: 3.1416, W: 22, D: 25, zone: 'sw-homes' },
@@ -62,16 +62,16 @@ const HAND_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'temple', x: -1000, z: 340, yaw: 1.5708, W: 40, D: 44, zone: 'west-homes' },
   { id: 'church', x: -540, z: 822, yaw: 3.1416, W: 36, D: 52, zone: 'sw-homes' }, // PLOTS: moved from (-540, 820) into free plot land
   { id: 'eidgah', x: -960, z: 180, yaw: 1.5708, W: 72, D: 54, zone: 'west-homes' },
-  { id: 'overwater_villas', x: -580, z: 4140, yaw: 0, W: 76, D: 80, zone: 'island-beach' },
-  { id: 'cliff_mansion', x: 900, z: 2800, yaw: 0, W: 64, D: 70, zone: 'south-beach' },
-  { id: 'marina', x: -740, z: 4540, yaw: 0, W: 84, D: 80, zone: 'island-beach' },
-  { id: 'beach_resort', x: -660, z: 4400, yaw: 0, W: 100, D: 110, zone: 'island-beach' },
+  { id: 'overwater_villas', x: -596, z: 4138, yaw: 0, W: 76, D: 80, zone: 'island-beach' }, // PLOTS: moved from (-580, 4140) into free plot land
+  { id: 'cliff_mansion', x: 932, z: 2868, yaw: 0, W: 64, D: 70, zone: 'south-beach' }, // PLOTS: moved from (900, 2800) into free plot land
+  { id: 'marina', x: -744, z: 4530, yaw: 0, W: 84, D: 80, zone: 'island-beach' }, // PLOTS: moved from (-740, 4540) into free plot land
+  { id: 'beach_resort', x: -672, z: 4400, yaw: 0, W: 100, D: 110, zone: 'island-beach' }, // PLOTS: moved from (-660, 4400) into free plot land
   { id: 'tropical_villa', x: -2220, z: 4080, yaw: 0, W: 56, D: 56, zone: 'island-beach' },
   { id: 'lighthouse', x: -2140, z: 4160, yaw: 0, W: 56, D: 56, zone: 'island-beach' },
-  { id: 'village_farm', x: 1910, z: -1290, yaw: -1.5708, W: 124, D: 108, zone: 'east-farms' }, // moved from (1900, -1320) off the road / railway (32 m)
+  { id: 'village_farm', x: 1910, z: -1288, yaw: -1.5708, W: 124, D: 108, zone: 'east-farms' }, // moved from (1900, -1320) off the road / railway (32 m)
   { id: 'hill_farm', x: -1220, z: -1780, yaw: 1.5708, W: 104, D: 112, zone: 'center-hills' },
-  { id: 'union_parishad', x: 2945, z: -980, yaw: 0, W: 44, D: 40, zone: 'village-east' }, // moved from (2980, -980) off the road / railway (35 m)
-  { id: 'upazila_complex', x: -2430, z: -860, yaw: 3.1416, W: 90, D: 70, zone: 'west-farms' }, // moved from (-2500, -860) off the road / railway (70 m)
+  { id: 'union_parishad', x: 2909, z: -980, yaw: 0, W: 44, D: 40, zone: 'village-east' }, // moved from (2980, -980) off the road / railway (35 m)
+  { id: 'upazila_complex', x: -2416, z: -866, yaw: 3.1416, W: 90, D: 70, zone: 'west-farms' }, // moved from (-2500, -860) off the road / railway (70 m)
   { id: 'fire_station', x: -64, z: 176, yaw: 3.1416, W: 54, D: 46, zone: 'metro-core' }, // moved from (-180, 80) off the road / railway (153.2 m)
   { id: 'post_office', x: 306, z: -65, yaw: -1.5708, W: 38, D: 34, zone: 'metro-core' }, // moved from (280, 0) off the road / railway (68 m)
   { id: 'district_court', x: 148, z: 742, yaw: -3.1416, W: 80, D: 66, zone: 'metro-core' }, // moved from (200, 510) off the road / railway (237.8 m)
