@@ -41,9 +41,9 @@ import { FarmManager } from '../farm/FarmManager';
 import { SignalLayer, StationBoard, TrainAnnouncer, TrainContacts, TrainLayer, TrainManager, TrainPhysics, TrainRider, formatBoard, playerObb, vehicleObb, type TrainEntity } from '../trains';
 import { RidePrompt } from '../ui/RidePrompt';
 import { bn } from '../i18n';
-import { MALL_DOORS } from '../mall/MallSite';
+import { MALL_DOORS, mallToWorld } from '../mall/MallSite';
 import { ParkingLots } from '../parking/ParkingLots';
-import { EVLAB_SLOTS, MAIN_STATION_LOT, START_LOT_POS, lotToWorld, lotYaw } from '../parking/ParkingSite';
+import { MAIN_STATION_LOT, lotToWorld } from '../parking/ParkingSite';
 import { ROAD_STATION_SITES } from '../parking/RoadStationSites';
 import { StationStructures } from '../parking/StationStructures';
 import { MallManager, loadCatalog, type Catalog } from '../mall';
@@ -123,6 +123,9 @@ function mapSize(kind: string): { len?: number; wide?: number } {
  */
 /** The same vehicle can be called from the N menu only once per minute. */
 const SUMMON_COOLDOWN_MS = 60_000;
+/** Where the player's parked start fleet stands (user, 2026-11-21: X -308 Z -67) and the yaw of its nose: towards the J1-S 8-lane road. */
+const FLEET_POS = { x: -308, z: -67 };
+const FLEET_YAW = 0.9193;
 
 /** What Engine.prepare() has started (see there). */
 export interface EnginePrep {
@@ -416,8 +419,9 @@ export class Engine {
     // behind him, and looks over the road at the mall entrance. (ux, uz) = the view direction (towards the door). The parked start fleet
     // waits in the big EVLAB lot beside it (see below).
     {
-      const door = MALL_DOORS.filter((dr) => dr.side === -1)[0] ?? MALL_DOORS[0];
-      const p = lotToWorld(START_LOT_POS.s, START_LOT_POS.n);
+      // 2026-11-21: the mall moved west of J1, so the player now starts on the plaza 25 m outside the mall's EAST door (J1 side), looking at the entrance
+      const door = MALL_DOORS.filter((dr) => dr.side === 1)[0] ?? MALL_DOORS[0];
+      const p = mallToWorld(door.lx + 25, 0);
       const len = Math.hypot(door.x - p.x, door.z - p.z) || 1;
       this.startPoint = { x: p.x, z: p.z, ux: (door.x - p.x) / len, uz: (door.z - p.z) / len };
     }
@@ -806,7 +810,7 @@ export class Engine {
     this.race = new RaceSystem({ parent: container, root: this.world.root, graph, toast: (t, ms) => this.toast.show(t, ms ?? 3400), begin: (c) => this.beginRace(c), go: () => { for (const v of this.raceCars) if (v.ai) v.ai.hold = false; }, clear: () => this.clearRacers() });
     // the parked fleet (see EVLAB_SLOTS): the helicopter stands on its pad in the EVLAB parking lot
     {
-      const h = this.slot(EVLAB_SLOTS.heli.s, EVLAB_SLOTS.heli.n, 0, -1);
+      const h = this.fleetSlot(0, 34, 0);
       this.helis.spawn(new THREE.Vector3(h.x, this.world.terrain.heightAt(h.x, h.z) + 1.5, h.z), h.yaw);
     }
     // --- boats: one on the nearest deep water to the spawn point (sea / lake / river), one on the biggest lake ---
@@ -860,16 +864,16 @@ export class Engine {
       terrain: this.world.terrain, people: this.people, vehicles: this.vehicles, explosions: this.explosions,
     });
     // a war tank is parked next to the helicopter (F to get in; left mouse button fires the cannon)
-    const tk = this.slot(EVLAB_SLOTS.tank.s, EVLAB_SLOTS.tank.n, 0, -1);
+    const tk = this.fleetSlot(-8, 34, 0);
     this.vehicles.setTankHome(tk.x, tk.z, tk.yaw);
     // one parked, driverless copy of every road vehicle waits in the EVLAB PARKING lot (F to get in): the small ones nose-in to the road
     // (row A), the bus along the road behind them (row B)
-    const S = EVLAB_SLOTS;
-    const park = (spec: typeof SEDAN, sl: { s: number; n: number }, ds: number, dn: number) => ({ spec, ...this.slot(sl.s, sl.n, ds, dn) });
+    // 2026-11-21: the fleet stands at X -308 Z -67, noses to the J1-S 8-lane road (row A: 6 small vehicles side by side, row B: the bus along the road)
+    const park = (spec: typeof SEDAN, lat: number, back: number, turn: number) => ({ spec, ...this.fleetSlot(lat, back, turn) });
     this.vehicles.setParked([
-      park(RICKSHAW, S.rickshaw, 0, -1), park(AUTO, S.auto, 0, -1),
-      park(SEDAN, S.sedan, 0, -1), park(JEEP, S.jeep, 0, -1), park(HYPERCAR, S.hypercar, 0, -1), park(EVHYPAR, S.evhypar, 0, -1),
-      park(BUS, S.bus, 1, 0),
+      park(RICKSHAW, -10, 0, 0), park(AUTO, -6, 0, 0),
+      park(SEDAN, -2, 0, 0), park(JEEP, 2, 0, 0), park(HYPERCAR, 6, 0, 0), park(EVHYPAR, 10, 0, 0),
+      park(BUS, 0, 18, Math.PI / 2),
     ]);
     this.tour = new TourManager({ container, infra: this.infra });
     bus.on('camera:locked', ({ locked }) => this.hud.setLocked(locked));
@@ -1685,10 +1689,10 @@ export class Engine {
     this.evlab?.setClockCountry(v.clockCountry);
   }
 
-  /** A spot on the parking lots (lot coordinates s, n) with the yaw of a vehicle whose nose points along lot direction (ds, dn). */
-  private slot(s: number, n: number, ds: number, dn: number): { x: number; z: number; yaw: number } {
-    const p = lotToWorld(s, n);
-    return { x: p.x, z: p.z, yaw: lotYaw(ds, dn) };
+  /** Parked start fleet: origin FLEET_POS, nose (yaw FLEET_YAW) to the road; lat = metres to the right of the nose, back = metres away from the road, turn = extra yaw. */
+  private fleetSlot(lat: number, back: number, turn: number): { x: number; z: number; yaw: number } {
+    const fx = Math.sin(FLEET_YAW), fz = Math.cos(FLEET_YAW);
+    return { x: FLEET_POS.x - fx * back + fz * lat, z: FLEET_POS.z - fz * back - fx * lat, yaw: FLEET_YAW + turn };
   }
 
   private spawnBoats(): void {

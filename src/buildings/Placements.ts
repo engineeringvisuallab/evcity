@@ -47,7 +47,7 @@ const HAND_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'mall', x: -60, z: 960, yaw: 3.1416, W: 61, D: 60, zone: 'south-bazaar' }, // moved from (-80, 960) off the road / railway (20 m)
   { id: 'cinema', x: 122, z: -278, yaw: -1.5708, W: 27, D: 35, zone: 'metro-core' }, // PLOTS: moved from (120, -280) into free plot land
   { id: 'office-mid', x: -222, z: 182, yaw: -3.1416, W: 27, D: 26, zone: 'metro-core' }, // moved from (-200, 160) off the road / railway (28 m)
-  { id: 'office-tower', x: -240, z: 25, yaw: 3.1416, W: 45, D: 45, zone: 'metro-core' }, // moved from (-280, 80) off the road / railway (68 m)
+  { id: 'office-tower', x: -240, z: 25, yaw: -2.2211, W: 45, D: 45, zone: 'metro-core' }, // moved from (-280, 80) off the road / railway (68 m); 2026-11-21: turned to face the J1 8-lane road
   { id: 'hotel-3star', x: -260.3, z: 940.4, yaw: 3.1416, W: 39, D: 32, zone: 'south-bazaar' },
   { id: 'hotel-5star', x: -2, z: 300, yaw: -1.5708, W: 80, D: 70, zone: 'metro-core' }, // moved from (-10, 320) off the road / railway (21.5 m)
   { id: 'primary-school', x: 940, z: 20, yaw: -1.5708, W: 40, D: 36, zone: 'east-homes' },
@@ -75,8 +75,8 @@ const HAND_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'fire_station', x: -64, z: 176, yaw: 3.1416, W: 54, D: 46, zone: 'metro-core' }, // moved from (-180, 80) off the road / railway (153.2 m)
   { id: 'post_office', x: 306, z: -65, yaw: -1.5708, W: 38, D: 34, zone: 'metro-core' }, // moved from (280, 0) off the road / railway (68 m)
   { id: 'district_court', x: 148, z: 742, yaw: -3.1416, W: 80, D: 66, zone: 'metro-core' }, // moved from (200, 510) off the road / railway (237.8 m)
-  { id: 'dc_office', x: -211, z: -50, yaw: -1.5708, W: 96, D: 76, zone: 'metro-core' }, // moved from (-175, -10) off the road / railway (53.8 m)
-  { id: 'city_hall', x: -55, z: -151, yaw: 0, W: 100, D: 84, zone: 'metro-core' }, // moved from (-55, -55) off the road / railway (96 m)
+  { id: 'dc_office', x: -151, z: 75, yaw: -2.2633, W: 96, D: 76, zone: 'metro-core' }, // moved from (-175, -10) off the road / railway (53.8 m); 2026-11-21: from (-211, -50), turned to face the J1-S 8-lane arm; moved to (-151, 75) because a 96 x 76 block facing the road no longer fits at the old spot (road / mall / parking clash)
+  { id: 'city_hall', x: -65, z: -171, yaw: 2.501, W: 100, D: 84, zone: 'metro-core' }, // moved from (-55, -55) off the road / railway (96 m); 2026-11-21: 20 m south + 10 m west of (-55, -151) (user: a bit west), turned to face the J1 E arm
 ];
 
 /** The hand placed buildings + (STEP 3, Config.city.plots) the buildings that stand in the city plots; the old hospital that the plot hospital replaces is dropped. */

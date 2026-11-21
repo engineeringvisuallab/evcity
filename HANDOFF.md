@@ -199,3 +199,10 @@ Small broadleaf trees (< 10 m) are thinned to 25 % (`Config.vegetation.smallTree
 - Step 2d (2026-11-21): krishnachura red bloom cards at 60% (PalmAssets bloom 7, TreeAssets far x0.6). tsc PASS.
 - Step 2e (2026-11-21): city lawn grass taller (grass.city.height 1.5 = ~30 cm) and 3x denser near (grass.city.dense 3), tuft base 0.005 under ground. tsc PASS, not seen in game.
 - Step 2f (2026-11-21): smooth 5-tri grass blades near LOD (grass.look.smoothBlades), per-tuft colour palettes (GrassManager), flowers as tall as grass + 6 coloured kinds (daisy slot = marigold, clover slot = cosmos), city lawn chance x grass.city.dense 1.8 (the 2e extra-tuft idea was reverted), jungle grass chance 0.2. tsc PASS, not seen in game.
+
+## Buildings facing the road + new start + parking (2026-11-21)
+USER: rotate city_hall / dc_office / office-tower to face the 8-lane road; city_hall a bit west; game start = near the City Mall entrance looking at it; parked fleet at X -308 Z -67 nose to the road.
+- `src/buildings/Placements.ts`: office-tower (-240, 25) yaw -2.2211 (faces J1-S arm); dc_office (-211, -50) -> (-151, 75) yaw -2.2633 (a 96 x 76 block facing the road no longer fits at the old spot); city_hall (-55, -151) -> (-65, -171) yaw 2.501 (10 m west, 20 m south, faces J1 E arm). Front = +Z, yaw = atan2(dx, dz) to the road.
+- `src/core/Engine.ts`: start = mallToWorld(east door lx + 25, 0) facing the east door (ASSUMED: screenshot 4 HUD was hidden, so exact coordinate not known). Parked fleet: FLEET_POS (-308, -67), FLEET_YAW 0.9193 (nose to J1-S), `fleetSlot()`; 6 small vehicles in a row, bus behind, tank + heli further back. Old lot-based slots removed. The old parking lots in ParkingSite (F4) are still drawn at the old place (not touched).
+- Checks: `tsc --noEmit` PASS; `building-on-road-check` 0 flagged; `start-test` updated (start 15-45 m from east door). NOT seen in a running game.
+- NEXT: look at it in the game; if the start point differs from screenshot 4, send its X/Y/Z.

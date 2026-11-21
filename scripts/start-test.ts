@@ -3,7 +3,7 @@
 // Run: npx tsx scripts/start-test.ts
 import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
 import { Config } from '../src/core/Config';
-import { MALL_DOORS, MALL_POLY } from '../src/mall/MallSite';
+import { MALL_DOORS, MALL_POLY, mallToWorld } from '../src/mall/MallSite';
 import { EVLAB_FENCE, insideFence, localToWorld } from '../src/evlab/EVLabSite';
 import { EVLAB_LOT, EVLAB_SLOTS, MALL_LOT, PARKING_LOTS, START_LOT_POS, lotToWorld, parkingContains } from '../src/parking/ParkingSite';
 import { TreePlacer } from '../src/vegetation/TreePlacement';
@@ -16,11 +16,11 @@ const inPoly = (P: ReadonlyArray<readonly [number, number]>, x: number, z: numbe
 const polyDist = (P: ReadonlyArray<readonly [number, number]>, x: number, z: number) => { let d = 1e9; for (let a = 0, b = P.length - 1; a < P.length; b = a++) d = Math.min(d, dseg(x, z, P[a][0], P[a][1], P[b][0], P[b][1])); return d; };
 
 // ---- start + slots
-const door = MALL_DOORS.filter((d) => d.side === -1)[0];
-const start = lotToWorld(START_LOT_POS.s, START_LOT_POS.n);
+const door = MALL_DOORS.filter((d) => d.side === 1)[0]; // 2026-11-21: start = plaza 25 m outside the EAST door
+const start = mallToWorld(door.lx + 25, 0);
 const dist = Math.hypot(door.x - start.x, door.z - start.z);
 console.log('west door', door.x.toFixed(1), door.z.toFixed(1), 'start', start.x.toFixed(1), start.z.toFixed(1), 'distance to door', dist.toFixed(1), 'm');
-ok(dist > 15 && dist < 45, 'the player stands 15-45 m from the door, across the road');
+ok(dist > 15 && dist < 45, 'the player stands 15-45 m from the east door');
 ok(roadEdge(start.x, start.z) > 3, `start is off the road (${roadEdge(start.x, start.z).toFixed(1)} m from the F4 edge)`);
 const slots: [string, { s: number; n: number }][] = [['player', START_LOT_POS], ...Object.entries(EVLAB_SLOTS)];
 const s = g.makeSample();
