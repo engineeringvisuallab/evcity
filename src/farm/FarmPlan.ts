@@ -49,6 +49,9 @@ const N = 13; // probe grid (13 x 13 -> ~6 m spacing)
 const HALF = 4900;
 const KIND_OK = new Set(['farmland', 'village', 'forest', 'mountain']);
 
+/** Tried in this order: centre first, then slid towards the 4 sides / 4 corners of the cell (fractions of the free room inside the cell). */
+const SLIDES: readonly (readonly [number, number])[] = [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, 1], [-1, 1], [1, -1], [-0.5, 0], [0.5, 0], [0, -0.5], [0, 0.5]];
+
 const pick = <T>(r: () => number, a: readonly T[]): T => a[Math.min(a.length - 1, Math.floor(r() * a.length))];
 const weighted = (r: () => number, w: readonly number[]): number => {
   let t = 0;
@@ -95,6 +98,15 @@ export function planFarms(ground: FarmGround, worldSeed: number, stats?: PlanSta
   const p: Probe = { h: 0, wet: false, blocked: false };
   const hs = new Float32Array(N * N);
   const reject = (why: string) => { if (stats) stats.rejected[why] = (stats.rejected[why] ?? 0) + 1; };
+  const denseBlocked = (px: number, pz: number, w: number, d: number, c: number, s: number): boolean => {
+    for (let lx = -w / 2 - 3; lx <= w / 2 + 3; lx += 2) {
+      for (let lz = -d / 2 - 3; lz <= d / 2 + 3; lz += 2) {
+        ground.probe(px + lx * c + lz * s, pz - lx * s + lz * c, p);
+        if (p.blocked) return true;
+      }
+    }
+    return false;
+  };
   const i0 = Math.floor(-HALF / FARM_CELL), i1 = Math.ceil(HALF / FARM_CELL);
   let nextId = 0;
 
@@ -111,15 +123,21 @@ export function planFarms(ground: FarmGround, worldSeed: number, stats?: PlanSta
 
       // two tries: full size, then a smaller field squeezed between rivers / roads
       let placed = false;
-      for (const shrink of [1, 0.62]) {
+      shrinkLoop: for (const shrink of [1, 0.62]) {
         const w = (56 + r() * 20) * shrink, d = (56 + r() * 20) * shrink;
         const yaw = (r() - 0.5) * 0.5;
         const c = Math.cos(yaw), s = Math.sin(yaw);
+        // RELOCATION: if the field does not fit in the middle of its cell (road / pad / water close by), slide it inside the cell (the
+        // turned rectangle must stay inside the 96 m cell so neighbours never overlap) and try again before shrinking.
+        const mx = Math.max(0, FARM_CELL / 2 - 2 - (Math.abs(w * c) + Math.abs(d * s)) / 2);
+        const mz = Math.max(0, FARM_CELL / 2 - 2 - (Math.abs(w * s) + Math.abs(d * c)) / 2);
+        for (const [ox, oz] of SLIDES) {
+        const fx = x + ox * mx, fz = z + oz * mz;
         let bad = 0, wetN = 0, hmin = 1e9, hmax = -1e9, sumSlope = 0;
         for (let b = 0; b < N; b++) {
           for (let a = 0; a < N; a++) {
             const lx = (a / (N - 1) - 0.5) * w, lz = (b / (N - 1) - 0.5) * d;
-            ground.probe(x + lx * c + lz * s, z - lx * s + lz * c, p);
+            ground.probe(fx + lx * c + lz * s, fz - lx * s + lz * c, p);
             hs[b * N + a] = p.h;
             if (p.blocked) bad++;
             if (p.wet) wetN++;
@@ -128,6 +146,8 @@ export function planFarms(ground: FarmGround, worldSeed: number, stats?: PlanSta
         }
         if (bad > 0) { reject('blocked'); continue; }
         if (wetN > 0) { reject('water'); continue; }
+        // dense check (2 m grid + 3 m margin): a narrow road / footpath / kerb can slip between the 6 m probes above
+        if (denseBlocked(fx, fz, w, d, c, s)) { reject('blocked'); continue; }
         const sx = w / (N - 1), sz = d / (N - 1);
         for (let b = 0; b < N - 1; b++) for (let a = 0; a < N - 1; a++) sumSlope += Math.hypot((hs[b * N + a + 1] - hs[b * N + a]) / sx, (hs[(b + 1) * N + a] - hs[b * N + a]) / sz);
         const slope = Math.atan(sumSlope / ((N - 1) * (N - 1)));
@@ -138,19 +158,19 @@ export function planFarms(ground: FarmGround, worldSeed: number, stats?: PlanSta
         let kind: FieldKind = 'plot';
         let level = false;
         if (hillZone) {
-          if (relief < 1.5 || relief > 18 || slope > 0.32) { reject('slope'); continue; }
+          if (relief < 1.5 || relief > 18 || slope > 0.32) { reject('slope'); continue shrinkLoop; }
           env = 'hill'; kind = 'hill';
         } else if (zn.kind === 'village') {
-          if (relief > 8) { reject('relief'); continue; }
+          if (relief > 8) { reject('relief'); continue shrinkLoop; }
           env = 'homestead'; kind = 'garden';
         } else {
-          if (relief > 9) { reject('relief'); continue; }
+          if (relief > 9) { reject('relief'); continue shrinkLoop; }
           // near water -> paddy; mild noise decides the rest. Paddy / lowland fields are levelled into bench terraces (relief <= 6 m).
           let near = false;
           for (let k = 0; k < 8 && !near; k++) {
             const ang = (k / 8) * Math.PI * 2;
             for (const dist of [70, 130, 220]) {
-              ground.probe(x + Math.cos(ang) * dist, z + Math.sin(ang) * dist, p);
+              ground.probe(fx + Math.cos(ang) * dist, fz + Math.sin(ang) * dist, p);
               if (p.wet) { near = true; break; }
             }
           }
@@ -164,7 +184,7 @@ export function planFarms(ground: FarmGround, worldSeed: number, stats?: PlanSta
         let list = cropsFor(env);
         if (kind === 'garden' && env === 'upland') list = list.filter((c) => isPerennial(c));
         if (kind === 'plot' && env !== 'hill') list = list.filter((c) => !isPerennial(c));
-        if (list.length === 0) { reject('nocrop'); continue; }
+        if (list.length === 0) { reject('nocrop'); continue shrinkLoop; }
         const pr = mulberry32(hash2D((worldSeed ^ 0x5eed) >>> 0, Math.floor(i / 4) + (hillZone ? 5000 : 0), Math.floor(j / 4)));
         const patchCrop = pick(pr, list);
         const crop = r() < 0.65 ? patchCrop : pick(r, list);
@@ -184,11 +204,12 @@ export function planFarms(ground: FarmGround, worldSeed: number, stats?: PlanSta
         const medianH = sorted[sorted.length >> 1];
         const partial = stage === Stage.prepared || stage === Stage.harvesting;
         fields.push({
-          id: nextId++, zone: zn.id, kind, cx: x, cz: z, y: level ? medianH : hs[(N >> 1) * N + (N >> 1)], yaw, w, d, relief, level,
+          id: nextId++, zone: zn.id, kind, cx: fx, cz: fz, y: level ? medianH : hs[(N >> 1) * N + (N >> 1)], yaw, w, d, relief, level,
           env, crop: crop.id, stage, progress: partial ? 0.2 + r() * 0.6 : 1, act, seed: (r() * 4294967296) >>> 0,
         });
         placed = true;
-        break;
+        break shrinkLoop;
+        }
       }
       void placed;
     }
