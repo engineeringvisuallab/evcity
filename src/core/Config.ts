@@ -410,28 +410,32 @@ export const Config = {
      * covered with bamboo clumps: `chance` per 10 m cell in the heart of a grove. Only land lower than `maxHeight` m, gentle slopes (`slopeMax` = share of the
      * normal slope limit). Scale range of a clump (1 = grown, ~12 m). `homestead` / `bankShare` = the share of bamboo among the homestead / bank trees.
      */
-    bamboo: { scale: 300, from: 0.14, full: 0.4, chance: 0.62, maxHeight: 60, slopeMax: 0.55, clumpScale: [0.7, 1.15] as [number, number], homestead: 0.14, bankShare: 0.2,
+    bamboo: { scale: 300, from: 0.3, full: 0.62, chance: 0.4, maxHeight: 60, slopeMax: 0.55, clumpScale: [1.1, 1.7] as [number, number], homestead: 0.1, bankShare: 0.15,
+      /** 2026-11-21: share of bamboo among the young trees of the jungle thicket (was 0.1 = bamboo clumps everywhere, and small). */
+      thicketShare: 0.015,
       /** BAMBOO IN THE DENSE JUNGLE: a clump there is `jungleTall[0]..[1]` times taller (random per clump), fading in with the jungle density (0 outside, full inside); 1 = no change. Its width grows much slower (see `treeWidth`). */
-      jungleTall: [3, 5] as [number, number] },
+      jungleTall: [2, 3.4] as [number, number] },
     /**
      * DENSE FOREST (ghono bon): the forest districts of the world map (WorldRegions kind 'forest') are covered with a jungle: nearly every 10 m cell has a
      * canopy tree (`chance`, `bigChance` = share of the five big forest trees), and a second, younger tree grows in the shade of it (`understory` chance per
      * cell, scale range, `bambooShare` of them are bamboo clumps on low land, `bigShare` = young big trees). The jungle fades out over `fade` m at the district edge
      * (a ragged edge). Lower `understory` (and `chance`) if the frame rate drops: they are the number of trees.
      */
-    dense: { farKeep: 0.6, fade: 260, chance: 0.75, bigChance: 0.62, understory: 0.55, understoryScale: [0.3, 0.85] as [number, number], bambooShare: 0.1, bigShare: 0.1,
+    dense: { farKeep: 0.6, fade: 260, chance: 0.75, bigChance: 0.62, understory: 0.55, understoryScale: [0.8, 1.2] as [number, number], bambooShare: 0.04, bigShare: 0.1,
       /**
        * JUNGLE THICKET (ghono jongol, 2.5x): `layers` more spots in every jungle cell (each its own random stream, `chance` x jungle density x Quality treeMul),
        * so the jungle holds about 2.5x as many plants as before. `undergrowth` = share of them that are lata-pata (fern / shrub / creeper mound, no colliders),
        * the rest are young trees of `scale` (x the tree's normal size). Lower `layers` / `chance` if the frame rate drops.
        */
-      thicket: { layers: 10, chance: 0.88, undergrowth: 0.5, scale: [0.32, 0.6] as [number, number] },
+      thicket: { layers: 3, chance: 0.88, undergrowth: 0.5, scale: [0.85, 1.3] as [number, number] },
       /**
        * JUNGLE DEADWOOD (sukno gach + sukno pata): old dry trees lying on the ground and patches of dry fallen leaves. Per 10 m jungle cell (x jungle density x Quality treeMul):
        * `logChance` = a fallen dead tree (`logScale` = size range, 1 = 7 m long), `litterLayers` x `litterChance` = loose leaf patches (`litterScale`), and `aroundLog` leaf patches
        * are heaped along every fallen tree. No colliders. Lower `litterChance` / `aroundLog` if the frame rate drops (every patch is ~40 small cards).
        */
-      deadwood: { logChance: 0.13, logScale: [0.75, 1.3] as [number, number], litterLayers: 16, litterChance: 0.7, litterScale: [0.8, 1.4] as [number, number], aroundLog: 10 } },
+      deadwood: { logChance: 0.13, logScale: [0.75, 1.3] as [number, number],
+      /** 2026-11-21: fallen leaves lie in HEAPS: `litterLayers` heap spots per cell x `litterChance`, a heap = `clusterLeaves` leaves within `clusterRadius` m; `loneChance` = chance of one lone leaf per cell. */
+      litterLayers: 2, litterChance: 0.5, clusterLeaves: [6, 16] as [number, number], clusterRadius: [0.7, 1.7] as [number, number], loneChance: 0.15, litterScale: [0.8, 1.4] as [number, number], aroundLog: 10 } },
     /**
      * EXTRA JUNGLE SPOTS (ghono jongol outside the forest districts): round patches that use the SAME dense jungle as above (same chance, big trees, understory,
      * tall bamboo, grass thinning). `r` = radius (m) of the full jungle, `fade` = the ragged edge fades out over this many m outside the full part (smoothstep, like the district edge).

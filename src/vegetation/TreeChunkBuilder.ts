@@ -6,7 +6,7 @@ import { ROCK_KIND_COUNT, TREE_KIND_COUNT, TREE_STRIDE, TreeKind, treeWidth, typ
 
 /** Broadleaf kinds that get the full range of real leaf colours (not pine, palms, banana, bamboo, krishnachura with its red flowers, undergrowth). */
 const FULL_COLOUR_KINDS = new Set<number>([TreeKind.broadleaf, TreeKind.oak, TreeKind.vase, TreeKind.slender, TreeKind.sal, TreeKind.segun, TreeKind.koroi, TreeKind.bot, TreeKind.shimul, TreeKind.debdaru, TreeKind.gum, TreeKind.gum2]);
-/** Colours of a fallen dry leaf (multiply the green leaf texture): brown, tan, rust, straw, dull olive-brown, dark red-brown. */
+/** Colours of a fallen leaf (multiply the green leaf texture): nearly all DRY (brown, tan, rust, straw, dull olive-brown, dark red-brown), only the last one is a fresh green leaf (1 in 10). */
 const DRY_LEAF_COLOURS: ReadonlyArray<readonly [number, number, number]> = [
   [2.0, 0.78, 0.8],
   [2.3, 1.05, 0.9],
@@ -14,6 +14,10 @@ const DRY_LEAF_COLOURS: ReadonlyArray<readonly [number, number, number]> = [
   [2.0, 1.25, 0.7],
   [1.5, 0.95, 0.65],
   [1.9, 0.6, 0.55],
+  [2.4, 0.9, 0.7],
+  [2.2, 0.7, 0.6],
+  [1.7, 0.8, 0.6],
+  [0.95, 1.05, 0.8], // fresh green (the only one)
 ];
 /** Leaf colour families: [cumulative chance, r, g, b multipliers of the green leaf texture]. */
 const LEAF_FAMILIES: ReadonlyArray<readonly [number, number, number, number]> = [
@@ -88,7 +92,12 @@ export class TreeChunkBuilder {
       dummy.updateMatrix();
       mesh.setMatrixAt(i, dummy.matrix);
       const t = data[o + 5];
-      if (hue) {
+      if (treeKind === TreeKind.leafLitter) {
+        // every fallen leaf its own colour (from its position): nearly all dry. This branch must stay BEFORE `hue` (hue is true for every tree kind: after it the leaves were green)
+        const hh = Math.sin(data[o] * 12.9898 + data[o + 2] * 78.233) * 43758.5453;
+        const f = DRY_LEAF_COLOURS[Math.floor((hh - Math.floor(hh)) * DRY_LEAF_COLOURS.length)];
+        mesh.setColorAt(i, color.setRGB(t * f[0], t * f[1], t * f[2]));
+      } else if (hue) {
         const D = Config.vegetation.leafDark;
         if (treeKind >= 0 && FULL_COLOUR_KINDS.has(treeKind)) {
           // like cars of one model in many paint colours: same tree shape, but each tree its own REAL leaf colour (most green, some yellow-green, olive,
@@ -104,11 +113,6 @@ export class TreeChunkBuilder {
           const u = Math.min(1, Math.max(0, (t - 0.82) / 0.32));
           mesh.setColorAt(i, color.setRGB(t * (0.9 + 0.2 * u) * D[0], t * (1.03 - 0.05 * u) * D[1], t * (0.96 - 0.1 * u) * D[2]));
         }
-      } else if (treeKind === TreeKind.leafLitter) {
-        // every fallen leaf its own dry colour (from its position)
-        const hh = Math.sin(data[o] * 12.9898 + data[o + 2] * 78.233) * 43758.5453;
-        const f = DRY_LEAF_COLOURS[Math.floor((hh - Math.floor(hh)) * DRY_LEAF_COLOURS.length)];
-        mesh.setColorAt(i, color.setRGB(t * f[0], t * f[1], t * f[2]));
       } else mesh.setColorAt(i, color.setRGB(t * tr, t * tg, t * tb));
     }
     mesh.instanceMatrix.needsUpdate = true;

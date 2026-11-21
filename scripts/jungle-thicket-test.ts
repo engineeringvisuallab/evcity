@@ -51,13 +51,13 @@ const area = Math.PI * R * R / 10000;
 const ratio = on.n / Math.max(1, off.n);
 const step = on.n / Math.max(1, before.n);
 console.log(`A-coast core (r ${R} m, ${area.toFixed(0)} ha): thicket off ${off.n} (${(off.n / area).toFixed(0)}/ha) -> layers 6 ${before.n} (${(before.n / area).toFixed(0)}/ha) -> layers ${layers} ${on.n} (${(on.n / area).toFixed(0)}/ha) = x${ratio.toFixed(2)} of off, x${step.toFixed(2)} of layers 6 | lata-pata ${on.under} (${((on.under / on.n) * 100).toFixed(0)}%) | ${on.ms.toFixed(0)} ms`);
-if (step < 1.4 || step > 1.65) { ok = false; console.log('FAIL: the jungle should be about 1.5x denser than with thicket layers 6'); }
+if (ratio < 1.5) { ok = false; console.log('FAIL: the thicket should make the jungle at least 1.5x denser than thicket off (2026-11-21: layers 10 -> 3 on purpose, the trees are bigger now; `step` is only printed)'); }
 if (on.under <= 0) { ok = false; console.log('FAIL: no lata-pata'); }
 for (const k of [TreeKind.fern, TreeKind.shrub, TreeKind.lata, TreeKind.deadLog, TreeKind.leafLitter]) if (TREE_TRUNK[k].r >= Config.vegetation.passRadius) { ok = false; console.log('FAIL: kind', k, 'would get a collider'); }
 console.log(`deadwood in the core: ${on.logs} fallen dead trees (${(on.logs / area).toFixed(1)}/ha), ${on.litter} dry-leaf patches (${(on.litter / area).toFixed(1)}/ha)`);
 if (on.logs < area * 0.5) { ok = false; console.log('FAIL: too few fallen dead trees'); }
 if (on.litter < area * 2) { ok = false; console.log('FAIL: too few dry-leaf patches'); }
-dw.logChance = 0; dw.litterChance = 0;
+dw.logChance = 0; dw.litterChance = 0; dw.loneChance = 0;
 const none = count();
 Object.assign(dw, savedDw);
 if (none.logs !== 0 || none.litter !== 0) { ok = false; console.log('FAIL: deadwood does not switch off'); }

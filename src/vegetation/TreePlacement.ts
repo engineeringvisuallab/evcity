@@ -289,8 +289,9 @@ export class TreePlacer {
     const giant = 1 + 0.4 * dz; // deep jungle: the canopy giants grow up to 40 % taller (35-45 m)
     const scale0 = big
       ? (V.bigTreeScale[0] + (V.bigTreeScale[1] - (wide ? 0.15 : 0) - V.bigTreeScale[0]) * rScale ** 1.2) * giant
-      : kind === TreeKind.krishnachura ? 0.85 + 0.45 * rScale
-      : kind === TreeKind.palm ? 0.6 + 0.95 * rScale ** 1.3 : kind === TreeKind.pine ? 0.6 + 0.9 * rScale ** 1.3 : kind === TreeKind.slender ? 0.45 + 1.4 * rScale ** 1.6 : 0.35 + 1.75 * rScale ** 1.8;
+      : kind === TreeKind.krishnachura ? 1.0 + 0.45 * rScale
+      // 2026-11-21: NO SMALL TREES: the smallest of every kind was ~0.35-0.6 (4-6 m); now the floor is 0.8-1.1 (palm 1.1) and the top end stays about the same
+      : kind === TreeKind.palm ? 1.1 + 0.85 * rScale ** 1.3 : kind === TreeKind.pine ? 0.95 + 0.8 * rScale ** 1.3 : kind === TreeKind.slender ? 0.9 + 1.2 * rScale ** 1.4 : 0.85 + 1.4 * rScale ** 1.6;
     // 2026-11-20: trees OUTSIDE the dense jungle are bigger (`treeSizeOutside`, the big species `treeSizeOutsideBig`); the jungle (dz = 1) keeps its size, the edge blends
     const scale = scale0 * (1 + ((big ? V.treeSizeOutsideBig : V.treeSizeOutside) - 1) * (1 - dz));
     return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: rYaw * Math.PI * 2, tint: (0.86 + rTint * 0.3) * (1 - 0.12 * dz) };
@@ -341,12 +342,13 @@ export class TreePlacer {
     const t = R.rHScale;
     const scale = (kind === TreeKind.bamboo ? 1 : V.treeSizeOutside) * (
       kind === TreeKind.bamboo ? B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * t
-      : kind === TreeKind.coconut ? 0.65 + 0.5 * t
-      : kind === TreeKind.banana ? 0.8 + 0.4 * t
-      : kind === TreeKind.datePalm ? 0.7 + 0.5 * t
-      : kind === TreeKind.palmyra ? 0.75 + 0.5 * t
-      : kind === TreeKind.krishnachura ? 0.8 + 0.4 * t
-      : 0.5 + 0.7 * t ** 1.5);
+      // 2026-11-21: bigger village trees (coconut / date / palmyra from 1.1 instead of 0.65-0.75, shade trees from 0.9 instead of 0.5)
+      : kind === TreeKind.coconut ? 1.1 + 0.5 * t
+      : kind === TreeKind.banana ? 0.95 + 0.4 * t
+      : kind === TreeKind.datePalm ? 1.1 + 0.5 * t
+      : kind === TreeKind.palmyra ? 1.1 + 0.5 * t
+      : kind === TreeKind.krishnachura ? 1.0 + 0.4 * t
+      : 0.9 + 0.7 * t ** 1.5);
     return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: R.rHYaw * Math.PI * 2, tint: 0.85 + R.rTint * 0.3 };
   }
 
@@ -505,9 +507,9 @@ export class TreePlacer {
       } else {
         const pineChance = smooth(V.pineFrom, V.pineFull, h);
         if (rk < pineChance) kind = TreeKind.pine;
-        else if (h < B.maxHeight && rv < 0.1 && slope < this.tanMax * B.slopeMax) kind = TreeKind.bamboo;
+        else if (h < B.maxHeight && rv < B.thicketShare && slope < this.tanMax * B.slopeMax) kind = TreeKind.bamboo;
         else kind = rv < 0.3 ? TreeKind.slender : rv < 0.58 ? TreeKind.vase : rv < 0.84 ? TreeKind.broadleaf : TreeKind.oak;
-        scale = kind === TreeKind.bamboo ? (B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * rs) * 0.8 : T.scale[0] + (T.scale[1] - T.scale[0]) * rs ** 1.3;
+        scale = kind === TreeKind.bamboo ? (B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * rs) * (1 + (B.jungleTall[0] + (B.jungleTall[1] - B.jungleTall[0]) * ((rs * 13.37 + 0.31) % 1) - 1) * smooth(0.1, 0.6, dz)) : T.scale[0] + (T.scale[1] - T.scale[0]) * rs ** 1.3;
       }
       if (this.dropSmall(kind, scale, x, z)) continue; // small trees: only `smallTrees.keep` of them
       lists[kind].push(x - cox, this.footY(h, slope, kind, scale), z - coz, scale, ry * Math.PI * 2, (0.86 + rt * 0.3) * (1 - 0.12 * dz));
@@ -585,16 +587,40 @@ export class TreePlacer {
         }
       }
     }
-    // loose dry-leaf patches
+    // 2026-11-21: fallen leaves lie TOGETHER: `litterLayers` heaps per cell (each its own random stream), a heap = `clusterLeaves` leaves thrown around its middle
+    // (dense in the centre, thinning out to `clusterRadius` m, each leaf a little higher than the one below so they never flicker), plus a few lone leaves.
     for (let l = 0; l < W.litterLayers; l++) {
       const rng = mulberry32(hash2D((this.seed ^ 0xdead20) + l * 6151, gi, gj));
-      const roll = rng(), jx = rng(), jz = rng(), rs = rng(), ry = rng(), rt = rng();
+      const roll = rng(), jx = rng(), jz = rng();
       if (roll >= W.litterChance * this.mul) continue;
       const x = ox + (i + jx) * cell;
       const z = oz + (j + jz) * cell;
       const g = spot(x, z, 0.8);
       if (!g || roll >= W.litterChance * this.mul * g.dz) continue;
-      litter(x, z, rs, ry, rt, g.dz, g.h, g.slope);
+      const n = Math.round(W.clusterLeaves[0] + (W.clusterLeaves[1] - W.clusterLeaves[0]) * rng());
+      const rad = W.clusterRadius[0] + (W.clusterRadius[1] - W.clusterRadius[0]) * rng();
+      for (let k = 0; k < n; k++) {
+        const a = rng() * Math.PI * 2;
+        const d = rad * Math.pow(rng(), 0.8);
+        const px = x + Math.cos(a) * d, pz = z + Math.sin(a) * d;
+        const rs = rng(), ry = rng(), rt = rng();
+        this.gen.sample(px, pz, s);
+        const hh = s.h;
+        if (hh < V.seaMargin || (!Number.isNaN(s.water) && hh < s.water + V.waterMargin)) continue;
+        if (Math.abs(hh - g.h) > 0.6) continue; // the heap stays on one piece of ground
+        litter(px, pz, rs, ry, rt, g.dz, hh + k * 0.004, g.slope);
+      }
+    }
+    // lone leaves (a few, far from each other)
+    {
+      const rng = mulberry32(hash2D(this.seed ^ 0xdead30, gi, gj));
+      const roll = rng(), jx = rng(), jz = rng(), rs = rng(), ry = rng(), rt = rng();
+      if (roll < W.loneChance * this.mul) {
+        const x = ox + (i + jx) * cell;
+        const z = oz + (j + jz) * cell;
+        const g = spot(x, z, 0.8);
+        if (g && roll < W.loneChance * this.mul * g.dz) litter(x, z, rs, ry, rt, g.dz, g.h, g.slope);
+      }
     }
   }
 

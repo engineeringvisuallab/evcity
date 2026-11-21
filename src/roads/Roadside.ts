@@ -106,9 +106,10 @@ const STREET_THEMES = ['DDPDDPDD', 'PDPDPDPD', 'DDDPDDDP', 'PPDPPDPD'];
 /** Street tree kinds: size range (scale of the model, 1 = full grown), tint range. Palm atlas kinds keep the natural colour. */
 const STREET_KIND = {
   D: { kind: TreeKind.debdaru, scale: [0.82, 1.25], tint: [0.82, 0.98] },
-  K: { kind: TreeKind.krishnachura, scale: [0.75, 1.05], tint: [0.9, 1.05] },
-  Pd: { kind: TreeKind.datePalm, scale: [0.9, 1.25], tint: [0.9, 1.05] },
-  Pc: { kind: TreeKind.coconut, scale: [0.75, 1.05], tint: [0.9, 1.05] },
+  // 2026-11-21: bigger street trees (user: no small coconut / palm / tree): coconut 0.75-1.05 -> 1.15-1.55, date palm 0.9-1.25 -> 1.1-1.5, krishnachura 0.75-1.05 -> 0.95-1.3
+  K: { kind: TreeKind.krishnachura, scale: [0.95, 1.3], tint: [0.9, 1.05] },
+  Pd: { kind: TreeKind.datePalm, scale: [1.1, 1.5], tint: [0.9, 1.05] },
+  Pc: { kind: TreeKind.coconut, scale: [1.15, 1.55], tint: [0.9, 1.05] },
 } as const;
 const MEDIAN_TREE_STEP: [number, number] = [70, 95]; // user 2026-11-20: fewer median trees on all roads (was 27.5..37.5 m)
 /** Median trees are small (scale of the model). */
