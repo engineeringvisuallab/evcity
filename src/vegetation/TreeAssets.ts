@@ -917,7 +917,7 @@ export function growTree(s: Style, detail: number): THREE.BufferGeometry {
     crown(m, r, cc, s.rx * 0.95, s.ry * 0.95, s.rx * 0.95, Math.round((s.leafTile === TILE_GUM ? 20 : 6) * k * k), 2.6 * k, 3.8 * k, s.warm, s.leafTile ?? TILE_MASS);
     if (s.bloomTile !== undefined) {
       // far flowers: cards on the upper half of the crown
-      for (let i = 0; i < Math.round(14 * k * k); i++) {
+      for (let i = 0; i < Math.round(14 * 0.6 * k * k); i++) { // far flowers at 60% (2026-11-21)
         const d = unit(r);
         d.y = Math.abs(d.y) * 0.8 + 0.2;
         const p = V3(cc.x + d.x * s.rx * 0.9, cc.y + d.y * s.ry * 0.9, cc.z + d.z * s.rx * 0.9);

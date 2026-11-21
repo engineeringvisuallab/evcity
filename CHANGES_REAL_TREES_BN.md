@@ -59,3 +59,9 @@ tsc PASS, shadow-quality-test PASS. Ager FAIL gulo (deadwood-model-test, grass-c
 - Low preset default shadow "low" thakbe, kintu low ekhon ager cheye boro
 - Check: tsc PASS, daynight-test PASS, shadow-quality-test PASS (high er expectation 350 -> 450). Game e RUN HOY NI.
 - Aro bright: DayNight `lightI` barao. Beshi hot/dhimi hole: ShadowQuality SHADOW_SPECS komao.
+
+---
+# Step 2d — krishnachura-r lal phul 60%
+
+- PalmAssets.ts STYLE_KRISHNA `bloom` 12 -> 7 (near) ; TreeAssets.ts far LOD phul card 14 -> 14 x 0.6
+- Aro kom/beshi: `bloom` number. tsc PASS. Game e RUN HOY NI.
