@@ -3,7 +3,7 @@
 // npx tsx scripts/proto-building-test.ts
 import { Config } from '../src/core/Config';
 import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
-import { PROTO_PLOT, PROTO_POS, PROTO_PATH, PROTO_SIZE, protoKeepout } from '../src/buildings/ProtoSite';
+import { PROTO_PLOT, PROTO_POS, PROTO_PATH, PROTO_HALF, PROTO_SIZE, protoKeepout, protoToWorld } from '../src/buildings/ProtoSite';
 import { libraryKeepout } from '../src/library/LibrarySite';
 import { mallKeepout } from '../src/mall/MallSite';
 import { evlabKeepout } from '../src/evlab/EVLabSite';
@@ -58,7 +58,7 @@ for (let x = P.x0 - 12; x <= P.x1 + 12; x += 4) for (let z = P.z0 - 12; z <= P.z
 ok(rail === 0, 'clear of the railway corridor');
 ok(!libraryKeepout(S.x, S.z) && !mallKeepout(S.x, S.z) && !evlabKeepout(S.x, S.z), 'does not overlap the library / mall / EVLab plots');
 ok(Math.hypot(PROTO_POS.x, PROTO_POS.z) < 120, `close to the spawn crossing (${Math.hypot(PROTO_POS.x, PROTO_POS.z).toFixed(0)} m)`);
-ok(S.contains(S.x, S.z) && S.contains(P.x0 + 1, P.z0 + 1) && !S.contains(P.x1 + 40, P.z1 + 40), 'contains(): plot yes, far away no (trees / rocks / grass keep out)');
+ok(S.contains(S.x, S.z) && (() => { const q = protoToWorld(-PROTO_HALF.x + 1, -PROTO_HALF.z + 1); return S.contains(q.x, q.z); })() && !S.contains(P.x1 + 40, P.z1 + 40), 'contains(): plot yes, far away no (trees / rocks / grass keep out)');
 ok(protoKeepout(S.x, S.z) && !protoKeepout(S.x + 300, S.z), 'local streets keep out of the plot');
 const zone = getWorldZoneAt(S.x, S.z) as any;
 console.log('zone:', zone?.id ?? zone?.zone?.id ?? JSON.stringify(zone).slice(0, 60));

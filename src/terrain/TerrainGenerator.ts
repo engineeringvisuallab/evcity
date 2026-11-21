@@ -15,7 +15,7 @@ import { MallSite, MALL_PLOT } from '../mall/MallSite';
 import { StationPads } from '../parking/StationPads';
 import { EVLabSite } from '../evlab/EVLabSite';
 import { LibrarySite, LIBRARY_PLOT } from '../library/LibrarySite';
-import { ProtoSite, PROTO_PLOT } from '../buildings/ProtoSite';
+import { ProtoSite, PROTO_HALF, protoToWorld } from '../buildings/ProtoSite';
 import { InfraSite, INFRA_PLACEMENTS } from '../engineering/InfraSites';
 import { ResidentialFlat, BANK_REACH } from './ResidentialFlat';
 import { areaWeight } from './ResidentialAreas';
@@ -159,7 +159,8 @@ export class TerrainGenerator {
     {
       const ph: number[] = [];
       for (let i = 0; i <= 8; i++) for (let j = 0; j <= 8; j++) {
-        this.sampleGround(PROTO_PLOT.x0 + ((PROTO_PLOT.x1 - PROTO_PLOT.x0) * i) / 8, PROTO_PLOT.z0 + ((PROTO_PLOT.z1 - PROTO_PLOT.z0) * j) / 8, this.scratch);
+        const pw = protoToWorld(((i - 4) / 4) * PROTO_HALF.x, ((j - 4) / 4) * PROTO_HALF.z); // the turned plot (8 x 8 grid over it)
+        this.sampleGround(pw.x, pw.z, this.scratch);
         ph.push(this.scratch.h);
       }
       ph.sort((a, b) => a - b);

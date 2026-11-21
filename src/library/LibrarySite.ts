@@ -14,16 +14,16 @@ export const LIBRARY_SIZE = { W: 40, D: 32 };
  * door faces the road, and a footpath joins the forecourt to the road edge. Everything inside is level: no trees, rocks, grass or local streets.
  * World metres (x = east, z = south). The viaduct is ~50 m away to the east, the F5 road ~35 m to the west.
  */
-export const LIBRARY_PLOT = { x0: 34, x1: 98, z0: 22, z1: 86 };
+export const LIBRARY_PLOT = { x0: 28, x1: 92, z0: -406, z1: -342 }; // 2026-11-21 (user): moved from x 34..98, z 22..86 to the new spot centred on (60, -372); the door still faces north (towards J1-N)
 
 /**
  * Centre of the hall (local origin = hall centre on the floor). The door is on the hall's local +z wall.
  * yaw = PI turns the door to the NORTH, towards the F7 road and the spawn crossing.
  */
-export const LIBRARY_POS = { x: 66, z: 56, yaw: Math.PI };
+export const LIBRARY_POS = { x: 60, z: -372, yaw: Math.PI };
 
 /** Footpath from the forecourt to the road edge (a strip in front of the door): centre x, half width, and the z of its road end. */
-export const LIBRARY_PATH = { x: 66, halfWidth: 5, z0: 9.5 };
+export const LIBRARY_PATH = { x: 60, halfWidth: 5, z0: -418.5 }; // same 12.5 m footpath in front of the door as before (the nearest road, J1-N, is ~135 m further north)
 
 /** Soft blend (m) from the level plot back to natural terrain, and the zone local streets keep out of. */
 const BLEND = 10;

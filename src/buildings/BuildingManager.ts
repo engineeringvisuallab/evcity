@@ -12,7 +12,7 @@ import type { FloatingOrigin } from '../world/FloatingOrigin';
 import type { TerrainGenerator } from '../terrain/TerrainGenerator';
 import { BUILDING_MODEL_BY_ID } from './models/registry';
 import type { BuiltBuilding } from './models/BuildingKit';
-import { PROTO_MODEL_ID, PROTO_PATH, PROTO_PLOT, PROTO_SIZE } from './ProtoSite';
+import { PROTO_HALF, PROTO_MODEL_ID, PROTO_PATH, PROTO_SIZE } from './ProtoSite';
 
 export interface BuildingDeps {
   root: THREE.Object3D; // world.root: children use ABSOLUTE world coordinates
@@ -63,18 +63,20 @@ export class BuildingManager {
     this.group.rotation.y = site.yaw;
     d.root.add(this.group);
 
-    // paved apron: the whole level plot (the compound stands on it), then the footpath north to the road
-    const P = PROTO_PLOT;
+    // paved apron: the whole level plot (the compound stands on it), then the footpath to the road. Both are turned with the building (yaw), laid flat.
     const mat = (color: number) =>
       new THREE.MeshStandardMaterial({ color, roughness: 0.95, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
-    this.apron = new THREE.Mesh(new THREE.PlaneGeometry(P.x1 - P.x0, P.z1 - P.z0), mat(0xb9b5ab));
-    this.apron.rotation.x = -Math.PI / 2;
-    this.apron.position.set((P.x0 + P.x1) / 2, site.floorY - 0.015, (P.z0 + P.z1) / 2);
+    this.apron = new THREE.Mesh(new THREE.PlaneGeometry(PROTO_HALF.x * 2, PROTO_HALF.z * 2), mat(0xb9b5ab));
+    this.apron.rotation.order = 'YXZ';
+    this.apron.rotation.set(-Math.PI / 2, site.yaw, 0);
+    this.apron.position.set(site.x, site.floorY - 0.015, site.z);
     d.root.add(this.apron);
-    const plen = P.z0 + 1 - PROTO_PATH.z0;
+    const plen = PROTO_PATH.len;
+    const pmid = PROTO_HALF.z - 1 + plen / 2; // local +z of the path centre
     this.path = new THREE.Mesh(new THREE.PlaneGeometry(PROTO_PATH.halfWidth * 2, plen), mat(0xa8a49a));
-    this.path.rotation.x = -Math.PI / 2;
-    this.path.position.set(PROTO_PATH.x, site.floorY - 0.01, PROTO_PATH.z0 + plen / 2);
+    this.path.rotation.order = 'YXZ';
+    this.path.rotation.set(-Math.PI / 2, site.yaw, 0);
+    this.path.position.set(site.x + pmid * Math.sin(site.yaw), site.floorY - 0.01, site.z + pmid * Math.cos(site.yaw));
     d.root.add(this.path);
 
     this.body = this.createColliders();

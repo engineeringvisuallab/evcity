@@ -32,6 +32,6 @@ for (let x = MALL_PLOT.x0; x <= MALL_PLOT.x1; x += 3) for (let z = MALL_PLOT.z0;
 ok(mx - mn < 0.07, `the pad is flat under the whole plot (${cnt} samples, range ${(mx - mn).toFixed(3)} m)`);
 ok(roadHits === 0, `no road surface (no J1 arm) on the plot (${roadHits} hits)`);
 ok(MALL_BUILDING.every(([x, z]) => inP(MALL_POLY, x, z)) && inP(MALL_BUILDING, MALL_POS.x, MALL_POS.z), 'the building outline + block centre lie inside the plot');
-ok(mallKeepout(MALL_POS.x, MALL_POS.z) && mallKeepout(100, -100) && !mallKeepout(-87, -277) && !mallKeepout(300, 300), 'keepout: new plot closed, OLD mall zone still closed, J1 centre + far away open');
+ok(mallKeepout(MALL_POS.x, MALL_POS.z) && !mallKeepout(100, -100) && !mallKeepout(-87, -277) && !mallKeepout(300, 300), 'keepout: new plot closed, OLD mall zone now open (2026-11-21, user), J1 centre + far away open');
 console.log(fails ? `${fails} FAILED` : 'ALL OK');
 process.exit(fails ? 1 : 0);

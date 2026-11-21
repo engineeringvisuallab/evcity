@@ -125,7 +125,7 @@ export const FILL_PLACEMENTS: readonly BuildingPlacement[] = [
   { id: 'pharmacy', x: -298.1, z: 445.2, yaw: -1.5591, W: 9, D: 11, zone: 's0-hospital', seed: 276098 },
   { id: 'townhouse-3', x: -418.6, z: 480.6, yaw: -3.1387, W: 10, D: 12, zone: 's0-suburb', seed: 536481 },
   { id: 'house-brick-2', x: -340.5, z: 487.9, yaw: -3.1387, W: 13, D: 16, zone: 's0-suburb', seed: 990825 }, // PLOTS: moved from (-338.5, 487.9) into free plot land
-  { id: 'bank-compact', x: 61.2, z: -388.3, yaw: -1.5679, W: 16, D: 18, zone: 's0-arm-n', seed: 739466 },
+  { id: 'bank-compact', x: 107.2, z: -477.3, yaw: -1.5679, W: 16, D: 18, zone: 's0-arm-n', seed: 739466 }, // moved from (61.2, -388.3): the City Library now stands there (2026-11-21)
   { id: 'shop-row', x: 56.9, z: -363.2, yaw: -1.5679, W: 26, D: 11, zone: 's0-arm-n', seed: 765343 },
   { id: 'petrol-pump', x: 14.8, z: -385.2, yaw: 1.5737, W: 30, D: 24, zone: 's0-arm-n', seed: 837389 },
   { id: 'bank', x: 15.8, z: -351.3, yaw: 1.5737, W: 26, D: 24, zone: 's0-arm-n', seed: 992511 },
