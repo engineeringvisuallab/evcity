@@ -5,6 +5,8 @@ import sys, json, math
 _L = open('tools/rte-m3.py').read().split('\n')
 _c = [k for k, l in enumerate(_L) if l.startswith("Q('RE-4 RAMP M3")][0]
 exec('\n'.join(_L[:_c]))
+# D9 (engineer, 2026-11-22): M4 over M3 needs 5.5 m clear + the real girder depth of the M4 ring span (composite box L / 33 = 3.02 m, RE-8 D8a) = 8.52 m deck-to-surface; 8.6 m used (0.08 m margin, ASSUMED). The earlier 6.9 m (CLR + DECK) was too low for a 100 m girder.
+STEP_UP = 8.6
 LOG5 = []
 def Q(s=''): LOG5.append(s); print(s)
 NEED_M3 = make_need(M3['P'], M3['f'])

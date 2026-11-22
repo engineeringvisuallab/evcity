@@ -7,10 +7,10 @@ M3: structure s 8.0 .. 348.5 (340.5 m), 6 piers, 7 spans, longest 99.7 m (span l
    spans (m): 40.0, 40.0, 39.9, 99.7, 35.9, 41.6, 43.4
    piers (s / u / v / deck level / column height): 48 (-125, -28) 33.2 h10.8; 88 (-85, -28) 35.1 h13.8; 128 (-45, -28) 37.1 h11.7; 228 (30, 29) 38.0 h9.6; 264 (35, 64) 36.2 h7.4; 305 (35, 106) 34.2 h7.0
    abutments: s 8.0 deck 31.31 ground 28.16; s 348.5 deck 32.00 ground 27.31
-M4: structure s 0.0 .. 532.7 (532.7 m), 11 piers, 12 spans, longest 99.7 m (span limit used 100 m), tallest pier 18.1 m (clear height 15.1 m), girder depth 1.64 .. 3.02 m, deck 9.7 -> 6.1 m
+M4: structure s 0.0 .. 532.7 (532.7 m), 11 piers, 12 spans, longest 99.7 m (span limit used 100 m), tallest pier 19.8 m (clear height 16.8 m), girder depth 1.64 .. 3.02 m, deck 9.7 -> 6.1 m
    spans (m): 41.8, 41.8, 41.8, 41.8, 39.8, 39.9, 99.7, 37.9, 36.0, 38.0, 38.0, 36.0
-   piers (s / u / v / deck level / column height): 42 (-35, 233) 37.1 h11.3; 84 (-35, 191) 38.7 h13.7; 125 (-35, 150) 40.3 h13.8; 167 (-35, 108) 41.9 h14.4; 207 (-35, 68) 43.5 h17.0; 247 (-30, 29) 45.0 h18.1; 347 (45, -28) 44.4 h16.6; 384 (83, -28) 43.3 h16.3; 421 (119, -28) 42.1 h13.7; 459 (157, -28) 41.0 h9.6; 497 (195, -28) 39.8 h7.2
-   abutments: s 0.0 deck 35.55 ground 29.46; s 532.7 deck 38.68 ground 35.65
+   piers (s / u / v / deck level / column height): 42 (-35, 233) 37.4 h11.6; 84 (-35, 191) 39.3 h14.3; 125 (-35, 150) 41.2 h14.7; 167 (-35, 108) 43.1 h15.5; 207 (-35, 68) 44.8 h18.4; 247 (-30, 29) 46.6 h19.8; 347 (45, -28) 46.0 h18.1; 384 (83, -28) 44.7 h17.7; 421 (119, -28) 43.4 h15.0; 459 (157, -28) 42.1 h10.7; 497 (195, -28) 40.7 h8.2
+   abutments: s 0.0 deck 35.55 ground 29.46; s 532.7 deck 39.48 ground 35.65
 
 ARM VIADUCT WIDENING (D1): kind per wedge
   out_viaduct1: d 160..271, viaduct window 160..271 (approach slabs d 160..176 and 255..271), width 12.90 -> 6.42 m from the paved edge (net of the existing deck edge 12.60 -> 6.12 m), kind: own wedge on columns, 1 column(s) at d 214, 2 spans of 38.0 m, box depth 1.73 m, column clear height 2.3 m
@@ -26,11 +26,10 @@ ASSUMED  S1b the ring-crossing spans (no pier position between the ring edges: t
 PASS  S2 every ramp pier column face is >= 3.0 m from the barrier strip of every road / slip / other ramp below  tightest 3.03 m (M3 pier s 128 to ring)
 PASS  S3 M3 over A2S slip: underside above the road surface >= 5.5 m (5.5 + real girder depth)  5.52 m clear at s 258 (deck-to-surface 7.15 m, girder 1.63 m there)
 PASS  S3 M3 over ring: underside above the road surface >= 5.5 m (5.5 + real girder depth)  5.55 m clear at s 134 (deck-to-surface 8.57 m, girder 3.02 m there)
-FAIL  S3 M4 over M3 deck: underside above the road surface >= 5.5 m (5.5 + real girder depth)  3.89 m clear at s 295 (deck-to-surface 6.91 m, girder 3.02 m there)
-PASS  S3 M4 over S2A slip: underside above the road surface >= 5.5 m (5.5 + real girder depth)  12.48 m clear at s 217 (deck-to-surface 14.29 m, girder 1.81 m there)
-PASS  S3 M4 over ring: underside above the road surface >= 5.5 m (5.5 + real girder depth)  13.22 m clear at s 335 (deck-to-surface 16.24 m, girder 3.02 m there)
-   -> M4 over M3 deck: short by 1.61 m at s 295. Profiles are RE-4 / RE-5 outputs and are NOT changed in RE-8 (only RE-8 was ordered). FIX (proposal D8c, NOT applied): raise the upper deck by about 1.66 m there, i.e. a re-run of the ramp solve; M4 has grade budget (max 3.82 % of 5 %, RE-5), ring / S2A clearances only grow, M3 stays as it is.
-PASS  S4 every column <= 25 m tall (ASSUMED limit)  tallest 18.1 m
+PASS  S3 M4 over M3 deck: underside above the road surface >= 5.5 m (5.5 + real girder depth)  5.59 m clear at s 295 (deck-to-surface 8.61 m, girder 3.02 m there)
+PASS  S3 M4 over S2A slip: underside above the road surface >= 5.5 m (5.5 + real girder depth)  13.93 m clear at s 217 (deck-to-surface 15.74 m, girder 1.81 m there)
+PASS  S3 M4 over ring: underside above the road surface >= 5.5 m (5.5 + real girder depth)  14.85 m clear at s 335 (deck-to-surface 17.87 m, girder 3.02 m there)
+PASS  S4 every column <= 25 m tall (ASSUMED limit)  tallest 19.8 m
 PASS  S5 piers of different structures >= 6 m apart in plan (ASSUMED)  closest 58.4 m (M3 s/d 128 / M4 s/d 247)
 PASS  S6 out_viaduct1: own wedge on columns, every span <= 48 m (VI.spanLong)  2 spans of 38.0 m, 1 column(s)
 PASS  S6b out_viaduct1: retaining wall under the approach-slab wedge <= 12 m (ASSUMED limit, as RE-7 T3)  4.2 m
