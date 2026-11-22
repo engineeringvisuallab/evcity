@@ -408,6 +408,36 @@ export class RoadNetwork {
     this.buildSegments();
   }
 
+  /**
+   * LEVEL CLEARANCE (user 2026-11-22, saw-tooth / cliff between a ramp tail and the main road). A ramp that runs beside another road at a different LEVEL needs room for its embankment (fill 1:3)
+   * or cut (1:2): measured on the M4L tail the ramp was 2 m beside the ring and up to 6.6 m above it, so its fill face fell onto the ring pavement (219 of 759 pavement samples off the road level)
+   * and the terrain lattice drew it as a saw-tooth. Rule: the RIBBON inner edge must stay >= slope * (|level difference| - free) from the paved edge of the other road; points that are too close are moved
+   * outward (away from the other road), the displacement is smoothed (Lipschitz `lat` m per m, so the plan stays a gentle curve) and is 0 at the two ends of the ramp (the bridge end is fixed).
+   * Where the levels agree (the merge zone) nothing moves.
+   */
+  private levelClearance(pts: number[][], ys: number[], hw: number, shoulder: number): number[][] {
+    const C = Config.roads.autoMerge;
+    if (!C.enabled || pts.length < 4) return pts;
+    const n = pts.length, rib = hw + shoulder, need = new Array<number>(n).fill(0), dir: number[][] = pts.map(() => [0, 0]);
+    for (let i = 0; i < n; i++) {
+      let best = Infinity, req = 0, nx = 0, nz = 0;
+      for (const r of this.roads) {
+        if (r.kind === 'ramp' || r.earth) continue;
+        const f = this.footOn(r, pts[i][0], pts[i][1]), gr = f.d - r.halfWidth - rib;
+        if (gr > 30 || gr >= best) continue;
+        const dy = ys[i] - f.y, ex = Math.max(0, Math.abs(dy) - C.levelFree);
+        best = gr; req = Math.max(0, ex * (dy > 0 ? C.fillSlope : C.cutSlope) - gr);
+        const l = Math.hypot(pts[i][0] - f.cx, pts[i][1] - f.cz) || 1; nx = (pts[i][0] - f.cx) / l; nz = (pts[i][1] - f.cz) / l;
+      }
+      need[i] = req; dir[i] = [nx, nz];
+    }
+    if (need.every((v) => v < 0.01)) return pts;
+    const STEP = 4, L = C.lateralGrade * STEP, out = new Array<number>(n);
+    for (let i = 0; i < n; i++) { let m = 0; for (let j = 0; j < n; j++) m = Math.max(m, need[j] - L * Math.abs(i - j)); out[i] = Math.min(m, L * Math.min(i, n - 1 - i) * 1.0 + 1e-9); }   // upper envelope with slope L, zero at both ends
+    for (let pass = 0; pass < 3; pass++) for (let i = 1; i < n - 1; i++) out[i] = Math.max(out[i], (out[i - 1] + out[i] + out[i + 1]) / 3 - 1e-9);   // light smoothing that never lowers a value below its own
+    return pts.map((p, i) => (out[i] > 0.005 ? [p[0] + dir[i][0] * out[i], p[1] + dir[i][1] * out[i]] : p));
+  }
+
   /** Nearest point of a road's centre line (closed roads include the wrap segment): foot, level, distance, tangent. */
   private footOn(r: RoadSpec, x: number, z: number): { cx: number; cz: number; y: number; d: number; tx: number; tz: number } {
     let best = Infinity, cx = 0, cz = 0, y = 0, tx = 1, tz = 0;
@@ -479,6 +509,7 @@ export class RoadNetwork {
       for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
       if (pts.length < 3 || L < 20) return;
       // AUTO MERGE (user 2026-11-22: 'road to road connection: auto joint, smooth, and it merges'): a ramp end that arrives beside another road, roughly parallel, narrows to a point on that road's paved edge
+      if (merge) pts = this.levelClearance(pts, ys, hw, KIND.ramp.shoulder);
       const am = merge ? this.autoMergeEnds(pts, ys, hw, KIND.ramp.shoulder) : null;
       if (am) { pts = am.pts; ys = am.ys; L = 0; for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); }
       this.addRoad({ tier: 3, kind: 'ramp', name, closed: false, pts, halfWidth: hw, lanes: hw > 4 ? 2 : 1, speedKmh: hw > 4 ? 50 : 40, maxGrade: 0.05, fixedY: ys, daylight: dayl, halfAt: am?.halfAt });
