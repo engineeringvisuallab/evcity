@@ -13,6 +13,7 @@ import { getCityGreen, type CityGreen } from '../city/CityGreen';
 import { MS, medianHalfAt, planMedians } from '../roads/MedianPlan';
 import { sightZoneLen } from '../roads/Planting';
 import { uturnZoneHas } from '../roads/UTurns';
+import { PARK, Z_BED, Z_BORDER, Z_LAWN, inPark, parkZone, zoneFlower, zoneKind } from '../park/CentralPark';
 
 
 const V = Config.vegetation;
@@ -69,6 +70,7 @@ export class GrassPlacer {
    * `grass.city.edge` metres outside it, where the patchy meadow takes over again.
    */
   lawnAt(x: number, z: number): number {
+    if (inPark(x, z)) return 1; // the Central station park is all lawn (paths / beds are cut out of it below)
     return this.green.at(x, z, G.city.edge);
   }
 
@@ -288,7 +290,7 @@ export class GrassPlacer {
         if (slope >= G.maxSlope) continue;
         chance *= 1 - smooth(G.slopeFadeFrom, G.maxSlope, slope);
         if (roll >= chance) continue;
-        if (this.blocked(x, z)) continue;
+        if (this.blocked(x, z) || zoneKind(parkZone(x, z)) > Z_LAWN) continue; // park: paths / beds / border have their own plants (placePark)
 
         const dry = Math.min(1, Math.max(0, smooth(G.dryFrom, G.dryTo, h) + (rDry - 0.5) * 0.2)) * (1 - lawn);
         // flag 2 = city lawn tuft (short, mown; may carry a small flower), 0 = normal tuft
@@ -320,7 +322,41 @@ export class GrassPlacer {
     }
     this.placeClumps(tx, tz, stride, out);
     this.placeMedian(tx, tz, stride, ox, oz, out);
+    this.placePark(stride, ox, oz, out);
     return new Float32Array(out);
+  }
+
+  /**
+   * CENTRAL PARK flowers (2026-11-22): dense wild-flower tufts in the oval beds (two colours) and the ring border. A fixed grid of `parkStep` m, one random stream per cell
+   * (the same for every tile / ring); a far ring keeps every stride-th cell. Flag 9 + flower index (pick() turns it into that flower, mostly).
+   */
+  private placePark(stride: number, ox: number, oz: number, out: number[]): void {
+    if (ox > PARK.x + PARK.R || ox + G.tile < PARK.x - PARK.R || oz > PARK.z + PARK.R || oz + G.tile < PARK.z - PARK.R) return;
+    const step = 0.5;
+    const i0 = Math.max(Math.ceil((Math.max(ox, PARK.x - PARK.R)) / step), Math.floor(ox / step));
+    const i1 = Math.floor(Math.min(ox + G.tile, PARK.x + PARK.R) / step);
+    const j0 = Math.max(Math.ceil((Math.max(oz, PARK.z - PARK.R)) / step), Math.floor(oz / step));
+    const j1 = Math.floor(Math.min(oz + G.tile, PARK.z + PARK.R) / step);
+    const s = this.sample;
+    for (let j = j0; j < j1; j++) {
+      if (j % stride !== 0) continue;
+      for (let i = i0; i < i1; i++) {
+        if (i % stride !== 0) continue;
+        const rng = mulberry32(hash2D(this.seed ^ 0x9a4c1, i, j));
+        const x = (i + rng()) * step;
+        const z = (j + rng()) * step;
+        const rScale = rng();
+        const rYaw = rng();
+        const rTint = rng();
+        if (x < ox || x >= ox + G.tile || z < oz || z >= oz + G.tile) continue;
+        const zn = parkZone(x, z);
+        const kind = zoneKind(zn);
+        if (kind !== Z_BED && kind !== Z_BORDER) continue;
+        if (this.gen.railForm.inCorridor(x, z, 0)) continue; // under the viaduct: nothing
+        this.gen.sample(x, z, s);
+        out.push(x - ox, s.h - 0.02, z - oz, 0.9 + 0.7 * rScale ** 1.3, rYaw * Math.PI * 2, 0.85 + rTint * 0.3, 0, 9 + zoneFlower(zn));
+      }
+    }
   }
 
   /** Median pieces by tile (built once): key tx * 4096 + tz -> [run, k, run, k ...]. */
@@ -473,10 +509,11 @@ export class GrassPlacer {
         if (slope >= G.maxSlope) continue;
         chance *= 1 - smooth(G.slopeFadeFrom, G.maxSlope, slope);
         if (roll >= chance) continue;
-        if (this.blocked(x, z)) continue;
+        if (this.blocked(x, z) || zoneKind(parkZone(x, z)) > Z_LAWN) continue; // park: paths / beds / border have their own plants (placePark)
 
         const dry = Math.min(1, Math.max(0, smooth(G.dryFrom, G.dryTo, h) + (rDry - 0.5) * 0.2)) * (1 - lawn);
-        out.push(x - ox, h - 0.03, z - oz, (0.75 + 0.7 * rScale ** 1.2) * (P.edgeScale + (1 - P.edgeScale) * rim) * sizeMul, rYaw * Math.PI * 2, 0.85 + rTint * 0.3, dry, flag);
+        // flag 1 = a clump of the open land (may carry seed plumes), 7 = a clump inside the dense jungle (shady tussocks only), 3 = city tall clump
+        out.push(x - ox, h - 0.03, z - oz, (0.75 + 0.7 * rScale ** 1.2) * (P.edgeScale + (1 - P.edgeScale) * rim) * sizeMul, rYaw * Math.PI * 2, 0.85 + rTint * 0.3, dry, flag === 1 && jd > 0.3 ? 7 : flag);
       }
     }
   }

@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { windGust } from './WindGust';
 import { Config } from '../core/Config';
 import { mulberry32 } from '../world/Seed';
-import { GRASS_TYPE_COUNT, GrassType } from './TreeTypes';
+import { GRASS_TYPE_COUNT, GrassType, isGrassClump, isGrassFlower } from './TreeTypes';
+import { GRASS_TILES, GT, makeGrassAtlas } from './GrassTextures';
 
 /**
  * REALISTIC GRASS + WILDFLOWERS. Ten tuft models (TreeTypes.GrassType), all in ONE shared material:
@@ -15,20 +16,24 @@ import { GRASS_TYPE_COUNT, GrassType } from './TreeTypes';
  * (not a coloured dot): daisy = 12 white petals around a yellow eye, buttercup = 5 round yellow petals, poppy = a red cup with a
  * dark centre, cornflower = 9 pointed blue petals, lavender = a purple spike of tiny florets, clover = a white pom-pom + trefoil leaves.
  *
+ * 2026-11-21 (reference photos of real ground cover and a red-soil savanna): 12 tussockSeed = a big bunch grass with 14-20 bristly seed plumes standing out of it; 13 leafy = a low rosette of
+ * broad oval leaves folded along a pale midrib (plantain / dock); 14 trefoil = a patch of clover-like three-leaflet leaves. Blades now also vary one by one (lighter / darker, a few sun-lit yellow-green).
+ *
  * The real green / dry colour of the meadow still comes from the per-instance colour; vertices flagged `aFlower` ignore it
  * (flowers keep their own colour). Wind sway + distance fade are in the vertex shader, sun-through-the-blades in the fragment shader.
  */
 
 type RNG = () => number;
 type RGB = [number, number, number];
-/** FIXED blade tint: always the same dark green (no straw / yellow blades). The real colour comes from the per-tuft colour in GrassManager. */
-const FIXED_TINT: RGB = [1, 1, 1];
+/** The solid white texel of the painted atlas (tile 0): everything without a picture (flowers, stems, the flower tufts' blades) samples it and keeps its vertex colours. */
+const WHITE_UV: readonly [number, number] = [0.5 / GRASS_TILES, 0.5];
 
 class Builder {
   pos: number[] = [];
   nor: number[] = [];
   col: number[] = [];
   fl: number[] = [];
+  uv: number[] = [];
   idx: number[] = [];
 
   /** A vertex that is NOT shared: pushed together with its own index (flowers, stems: 3 vertices per triangle). */
@@ -38,7 +43,8 @@ class Builder {
   }
 
   /** A vertex that triangles share through `face` (grass blades: 5 vertices for 3 triangles, smooth normals, fewer vertices). Returns its index. */
-  shared(p: ArrayLike<number>, n: THREE.Vector3, c: RGB, flower: number): number {
+  shared(p: ArrayLike<number>, n: THREE.Vector3, c: RGB, flower: number, uv: readonly [number, number] = WHITE_UV): number {
+    this.uv.push(uv[0], uv[1]);
     this.pos.push(p[0], p[1], p[2]);
     this.nor.push(n.x, n.y, n.z);
     this.col.push(c[0], c[1], c[2]);
@@ -62,432 +68,97 @@ class Builder {
     g.setAttribute('normal', new THREE.Float32BufferAttribute(this.nor, 3));
     g.setAttribute('color', new THREE.Float32BufferAttribute(this.col, 3));
     g.setAttribute('aFlower', new THREE.Float32BufferAttribute(this.fl, 1));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv, 2));
     g.setIndex(this.idx);
     g.computeBoundingSphere();
     return g;
   }
 }
 
-const UP = new THREE.Vector3(0, 1, 0);
-/** Flower heads are a little larger than life so they read at game distances. */
-const HEAD = 1.45;
-/** Normal mostly up (lit like the ground under the tuft) with a sideways tilt so the blade is shaded round. */
-const bladeNormal = (sx: number, sz: number, k: number): THREE.Vector3 => new THREE.Vector3(sx * k, 1, sz * k).normalize();
+const FLAT_NORMAL = new THREE.Vector3(0, 1, 0);
 
-interface BladeOpts {
-  cx: number;
-  cz: number;
-  /** growth direction (outward), unit */
-  dx: number;
-  dz: number;
+/** A card model of the painted grass: which tile, its height / width (model units = the same size as the old blade models, so GrassManager's sizes still fit), cards per LOD ring [near, mid, far], arch of the top. */
+interface CardSpec {
+  tile: number;
   h: number;
-  lean: number;
-  droop: number;
-  /** half width at the root */
   w: number;
-  tint: RGB;
-  /** brightness at the root / at the tip */
-  root: number;
-  tip: number;
+  n: [number, number, number];
+  bend: number;
+  /** 1 = a wild flower: the card ignores the green instance tint and keeps its own painted colours */
+  flower?: number;
 }
+const CARDS: Record<number, CardSpec> = {
+  [GrassType.lawn]: { tile: GT.lawn, h: 0.36, w: 0.62, n: [3, 2, 2], bend: 0.05 },
+  [GrassType.wild]: { tile: GT.wild, h: 1.0, w: 1.3, n: [3, 2, 2], bend: 0.08 },
+  [GrassType.clump]: { tile: GT.clump, h: 0.62, w: 0.8, n: [3, 2, 2], bend: 0.07 },
+  [GrassType.seed]: { tile: GT.wild, h: 1.15, w: 1.2, n: [3, 2, 2], bend: 0.08 },
+  [GrassType.tussock]: { tile: GT.tussock, h: 0.72, w: 0.95, n: [4, 3, 2], bend: 0.05 },
+  [GrassType.tussockWide]: { tile: GT.tussockWide, h: 0.86, w: 1.3, n: [4, 3, 2], bend: 0.06 },
+  [GrassType.tussockSeed]: { tile: GT.tussockSeed, h: 1.45, w: 1.35, n: [4, 3, 3], bend: 0.04 },
+  [GrassType.daisy]: { tile: GT.daisy, h: 0.75, w: 0.8, n: [3, 3, 3], bend: 0.05, flower: 1 },
+  [GrassType.buttercup]: { tile: GT.buttercup, h: 0.7, w: 0.8, n: [3, 3, 3], bend: 0.05, flower: 1 },
+  [GrassType.lavender]: { tile: GT.lavender, h: 0.9, w: 0.8, n: [3, 3, 3], bend: 0.04, flower: 1 },
+  [GrassType.poppy]: { tile: GT.poppy, h: 0.72, w: 0.8, n: [3, 3, 3], bend: 0.05, flower: 1 },
+  [GrassType.cornflower]: { tile: GT.cornflower, h: 0.72, w: 0.8, n: [3, 3, 3], bend: 0.05, flower: 1 },
+  [GrassType.clover]: { tile: GT.clover, h: 0.8, w: 0.85, n: [3, 3, 3], bend: 0.05, flower: 1 },
+};
 
-/**
- * One smooth blade = 3 TRIANGLES and only 5 VERTICES (indexed): a quad from the root to the middle (2 triangles) + a pointed tip (1 triangle).
- * Normals are per vertex (shared by the triangles), so the blade is shaded smoothly. The root is dark, the tip bright.
- */
-function blade(b: Builder, o: BladeOpts): void {
-  const tx = -o.dz, tz = o.dx; // sideways
-  const at = (t: number): [number, number, number] => {
-    const out = o.lean * t * t + o.droop * t * t * t;
-    return [o.cx + o.dx * out, o.h * t - o.droop * 0.35 * t * t * t, o.cz + o.dz * out];
-  };
-  const bw = o.w * Config.vegetation.grass.look.bladeWidth;
-  const c = (k: number): RGB => [k * o.tint[0], k * o.tint[1], k * o.tint[2]];
-  const nl = bladeNormal(-tx, -tz, 0.38), nr = bladeNormal(tx, tz, 0.38), nm = bladeNormal(0, 0, 0);
-  if (SMOOTH_BLADES) {
-    // SMOOTH blade (2026-11-21, near rings): 5 triangles / 7 vertices, three width steps (root -> 0.35 -> 0.7 -> tip), so the blade bends and narrows gradually instead of one sharp kink
-    const ts = [0, 0.35, 0.7], ws = [bw, bw * 0.86, bw * 0.55];
-    const ids: [number, number][] = ts.map((t, i) => {
-      const P = at(t);
-      const k = o.root + (o.tip - o.root) * t;
-      return [b.shared([P[0] - tx * ws[i], P[1], P[2] - tz * ws[i]], nl, c(k), 0), b.shared([P[0] + tx * ws[i], P[1], P[2] + tz * ws[i]], nr, c(k), 0)];
+/** A tuft / clump: `n` crossed cards (3 = 60 degrees apart, 4 = 45 degrees) with a gentle arch, each wearing the painted picture; 4 triangles per card. Every LOD ring has the same height. */
+function cardTuft(b: Builder, r: RNG, s: CardSpec, density: number): void {
+  const n = s.n[density >= 0.9 ? 0 : density >= 0.5 ? 1 : 2];
+  const u0 = (s.tile + 0.012) / GRASS_TILES, u1 = (s.tile + 0.988) / GRASS_TILES;
+  const a0 = r() * Math.PI;
+  for (let k = 0; k < n; k++) {
+    const a = a0 + (k / n) * Math.PI + (r() - 0.5) * 0.3;
+    const dx = Math.cos(a), dz = Math.sin(a);
+    const bend = (r() - 0.5) * 2 * s.bend * s.h;
+    const w = s.w * (0.9 + 0.2 * r());
+    const ox = (r() - 0.5) * 0.05 * s.w, oz = (r() - 0.5) * 0.05 * s.w;
+    const rows = [0, 0.5, 1].map((t) => {
+      const off = bend * t * t;
+      const y = s.h * t - 0.012 * s.h;
+      const c = 0.72 + 0.28 * t;
+      const v = 0.004 + 0.992 * (1 - t);
+      const mk = (side: number): number => b.shared([dx * side * w * 0.5 - dz * off + ox, y, dz * side * w * 0.5 + dx * off + oz], FLAT_NORMAL, [c, c, c], s.flower ?? 0, [side < 0 ? u0 : u1, v]);
+      return [mk(-1), mk(1)];
     });
-    const T = b.shared(at(1), nm, c(o.tip), 0);
     for (let i = 0; i < 2; i++) {
-      const [l0, r0] = ids[i], [l1, r1] = ids[i + 1];
-      b.face(l0, r0, r1);
-      b.face(l0, r1, l1);
-    }
-    b.face(ids[2][0], ids[2][1], T);
-    return;
-  }
-  const P0 = at(0), P1 = at(0.55), P3 = at(1);
-  const w0 = bw, w1 = bw * 0.62;
-  const kMid = o.root + (o.tip - o.root) * 0.55;
-  const L0 = b.shared([P0[0] - tx * w0, P0[1], P0[2] - tz * w0], nl, c(o.root), 0);
-  const R0 = b.shared([P0[0] + tx * w0, P0[1], P0[2] + tz * w0], nr, c(o.root), 0);
-  const L1 = b.shared([P1[0] - tx * w1, P1[1], P1[2] - tz * w1], nl, c(kMid), 0);
-  const R1 = b.shared([P1[0] + tx * w1, P1[1], P1[2] + tz * w1], nr, c(kMid), 0);
-  const T = b.shared(P3, nm, c(o.tip), 0);
-  b.face(L0, R0, R1);
-  b.face(L0, R1, L1);
-  b.face(L1, R1, T);
-}
-
-/** Set by make(): the near LOD ring (density >= 1) gets the smooth 5-triangle blade, the far rings keep the cheap 3-triangle one. */
-let SMOOTH_BLADES = false;
-
-interface GrassStyle {
-  blades: number;
-  hMin: number;
-  hMax: number;
-  /** >1 = many short blades, a few tall ones */
-  hPow: number;
-  /** half-width at the root (m) */
-  wMin: number;
-  wMax: number;
-  /** radius of the tuft (m) */
-  rMin: number;
-  rMax: number;
-  lean: [number, number];
-  droop: [number, number];
-  /** share of straw / yellow-green blades */
-  straw: number;
-  yellow: number;
-}
-
-const STYLES: Record<number, GrassStyle> = {
-  [GrassType.lawn]: { blades: 18, hMin: 0.1, hMax: 0.38, hPow: 1.3, wMin: 0.012, wMax: 0.02, rMin: 0.02, rMax: 0.2, lean: [0.03, 0.14], droop: [0.02, 0.07], straw: 0.05, yellow: 0.25 },
-  [GrassType.wild]: { blades: 14, hMin: 0.3, hMax: 1.15, hPow: 1.5, wMin: 0.014, wMax: 0.024, rMin: 0.03, rMax: 0.28, lean: [0.08, 0.34], droop: [0.08, 0.3], straw: 0.1, yellow: 0.32 },
-  [GrassType.clump]: { blades: 9, hMin: 0.22, hMax: 0.6, hPow: 1.2, wMin: 0.032, wMax: 0.05, rMin: 0.02, rMax: 0.16, lean: [0.1, 0.32], droop: [0.06, 0.2], straw: 0.06, yellow: 0.2 },
-  [GrassType.seed]: { blades: 11, hMin: 0.45, hMax: 1.35, hPow: 1.3, wMin: 0.01, wMax: 0.017, rMin: 0.03, rMax: 0.22, lean: [0.04, 0.22], droop: [0.04, 0.16], straw: 0.45, yellow: 0.4 },
-};
-const FLOWER_BASE_STYLE: GrassStyle = { blades: 9, hMin: 0.25, hMax: 0.75, hPow: 1.4, wMin: 0.013, wMax: 0.022, rMin: 0.03, rMax: 0.2, lean: [0.05, 0.22], droop: [0.03, 0.14], straw: 0.05, yellow: 0.25 };
-
-function grassBlades(b: Builder, r: RNG, s: GrassStyle, density = 1, fixed = 0): void {
-  const count = fixed > 0 ? fixed : Math.max(4, Math.round(s.blades * Config.vegetation.grass.bladeDensity * density));
-  for (let i = 0; i < count; i++) {
-    const a = (i / count) * Math.PI * 2 + (r() - 0.5) * 0.9;
-    const rad = s.rMin + (s.rMax - s.rMin) * Math.sqrt(r());
-    const h = s.hMin + Math.pow(r(), s.hPow) * (s.hMax - s.hMin);
-    const da = a + (r() - 0.5) * 1.1;
-    const tint = FIXED_TINT;
-    blade(b, {
-      cx: Math.cos(a) * rad,
-      cz: Math.sin(a) * rad,
-      dx: Math.cos(da),
-      dz: Math.sin(da),
-      h,
-      lean: s.lean[0] + r() * (s.lean[1] - s.lean[0]),
-      droop: (s.droop[0] + r() * (s.droop[1] - s.droop[0])) * (0.5 + h),
-      w: s.wMin + r() * (s.wMax - s.wMin),
-      tint,
-      root: Config.vegetation.grass.look.rootDark * 0.6,
-      tip: 1.0,
-    });
-  }
-}
-
-interface TussockStyle {
-  blades: number;
-  /** radius (m) of the disc the roots grow on */
-  baseR: number;
-  hMin: number;
-  hMax: number;
-  /** outward lean of a blade at the clump edge (m); the middle blades stand up straight */
-  lean: [number, number];
-  /** extra arching of the tip (m, grows with the blade height) */
-  arch: [number, number];
-  wMin: number;
-  wMax: number;
-  straw: number;
-  yellow: number;
-}
-
-const TUSSOCKS: Record<number, TussockStyle> = {
-  [GrassType.tussock]: { blades: 80, baseR: 0.16, hMin: 0.3, hMax: 0.85, lean: [0.04, 0.2], arch: [0.03, 0.12], wMin: 0.013, wMax: 0.022, straw: 0.08, yellow: 0.28 },
-  [GrassType.tussockWide]: { blades: 110, baseR: 0.22, hMin: 0.25, hMax: 1.0, lean: [0.06, 0.26], arch: [0.06, 0.18], wMin: 0.012, wMax: 0.02, straw: 0.2, yellow: 0.35 },
-};
-
-/**
- * A grass clump (tussock): the roots sit evenly on a small disc (golden-angle spiral), every blade grows OUTWARD from the middle.
- * Middle blades are the tallest and stand up, edge blades are short and arch over, so the clump is a fountain, like real bunch grass.
- */
-function tussockBlades(b: Builder, r: RNG, s: TussockStyle, density = 1): void {
-  const count = Math.max(14, Math.round(s.blades * Config.vegetation.grass.bladeDensity * density));
-  for (let i = 0; i < count; i++) {
-    const a = i * 2.39996 + (r() - 0.5) * 0.5;
-    const f = Math.sqrt((i + 0.5) / count); // 0 = middle .. 1 = edge
-    const rad = s.baseR * f * (0.85 + 0.3 * r());
-    const h = (s.hMin + (s.hMax - s.hMin) * (1 - f * 0.65) * (0.65 + 0.35 * r())) * (1 - 0.1 * r());
-    const da = a + (r() - 0.5) * 0.5;
-    const tint = FIXED_TINT;
-    blade(b, {
-      cx: Math.cos(a) * rad,
-      cz: Math.sin(a) * rad,
-      dx: Math.cos(da),
-      dz: Math.sin(da),
-      h,
-      lean: (s.lean[0] + (s.lean[1] - s.lean[0]) * (0.2 + 0.8 * f)) * (0.75 + 0.25 * r()),
-      droop: (s.arch[0] + r() * (s.arch[1] - s.arch[0])) * (0.4 + h) * (0.4 + 0.6 * f),
-      w: s.wMin + r() * (s.wMax - s.wMin),
-      tint,
-      root: Config.vegetation.grass.look.rootDark * 0.6,
-      tip: 1.0,
-    });
-  }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-// flowers
-// ---------------------------------------------------------------------------------------------------------------------
-
-const STEM: RGB = [0.18, 0.36, 0.09];
-const STEM_TOP: RGB = [0.3, 0.5, 0.14];
-
-/** A thin stem (2 segments, leaning) ending at the returned top; `dir` is the stem direction at the top. */
-function stem(b: Builder, x0: number, z0: number, h: number, lx: number, lz: number, width = 0.0055): { top: THREE.Vector3; dir: THREE.Vector3 } {
-  const a = [x0, 0, z0];
-  const m = [x0 + lx * 0.3, h * 0.5, z0 + lz * 0.3];
-  const e = [x0 + lx, h, z0 + lz];
-  const sl = Math.hypot(lx, lz) || 1;
-  const tx = (-lz / sl) * width, tz = (lx / sl) * width;
-  const n = bladeNormal(0, 0, 0);
-  const A = [a, m, e];
-  const widths = [1, 0.85, 0.7];
-  for (let i = 0; i < 2; i++) {
-    const p = A[i], q = A[i + 1];
-    const wp = widths[i], wq = widths[i + 1];
-    const cp: RGB = i === 0 ? STEM : STEM_TOP, cq: RGB = STEM_TOP;
-    b.tri([p[0] - tx * wp, p[1], p[2] - tz * wp], [p[0] + tx * wp, p[1], p[2] + tz * wp], [q[0] + tx * wq, q[1], q[2] + tz * wq], n, cp, cp, cq, 1);
-    b.tri([p[0] - tx * wp, p[1], p[2] - tz * wp], [q[0] + tx * wq, q[1], q[2] + tz * wq], [q[0] - tx * wq, q[1], q[2] - tz * wq], n, cp, cq, cq, 1);
-  }
-  const dir = new THREE.Vector3(e[0] - m[0], e[1] - m[1], e[2] - m[2]).normalize();
-  return { top: new THREE.Vector3(e[0], e[1], e[2]), dir };
-}
-
-/** Orthonormal basis (u, v) of the plane of a flower head whose axis (face direction) is `axis`. */
-function basis(axis: THREE.Vector3): { u: THREE.Vector3; v: THREE.Vector3 } {
-  const ref = Math.abs(axis.y) > 0.9 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
-  const u = new THREE.Vector3().crossVectors(ref, axis).normalize();
-  const v = new THREE.Vector3().crossVectors(axis, u).normalize();
-  return { u, v };
-}
-
-const at3 = (c: THREE.Vector3, u: THREE.Vector3, v: THREE.Vector3, ax: THREE.Vector3, x: number, y: number, h: number): number[] => [
-  c.x + u.x * x + v.x * y + ax.x * h,
-  c.y + u.y * x + v.y * y + ax.y * h,
-  c.z + u.z * x + v.z * y + ax.z * h,
-];
-
-/** A disc of petals around a centre. `lift` raises the petal tips along the axis (cup shape) or lowers them (droop). */
-function petalDisc(
-  b: Builder,
-  r: RNG,
-  c: THREE.Vector3,
-  axis: THREE.Vector3,
-  petals: number,
-  inner: number,
-  outer: number,
-  width: number,
-  lift: number,
-  base: RGB,
-  tip: RGB,
-  rot: number,
-): void {
-  const { u, v } = basis(axis);
-  inner *= HEAD;
-  outer *= HEAD;
-  width *= HEAD;
-  lift *= HEAD;
-  const n = axis.clone().multiplyScalar(0.8).addScaledVector(UP, 0.5).normalize();
-  for (let i = 0; i < petals; i++) {
-    const a = rot + (i / petals) * Math.PI * 2 + (r() - 0.5) * 0.12;
-    const len = outer * (0.88 + r() * 0.24);
-    const ca = Math.cos(a), sa = Math.sin(a);
-    const pa = -sa, pb = ca;
-    const bw = width * 0.45;
-    const mw = width * 0.5;
-    const m = inner + (len - inner) * 0.55;
-    const A = at3(c, u, v, axis, ca * inner - pa * bw, sa * inner - pb * bw, 0);
-    const B = at3(c, u, v, axis, ca * inner + pa * bw, sa * inner + pb * bw, 0);
-    const M1 = at3(c, u, v, axis, ca * m - pa * mw, sa * m - pb * mw, lift * 0.4);
-    const M2 = at3(c, u, v, axis, ca * m + pa * mw, sa * m + pb * mw, lift * 0.4);
-    const T = at3(c, u, v, axis, ca * len, sa * len, lift);
-    const mid: RGB = [(base[0] + tip[0]) / 2, (base[1] + tip[1]) / 2, (base[2] + tip[2]) / 2];
-    b.tri(A, B, M2, n, base, base, mid, 1);
-    b.tri(A, M2, M1, n, base, mid, mid, 1);
-    b.tri(M1, M2, T, n, mid, mid, tip, 1);
-  }
-}
-
-/** A raised fan (the flower's eye / centre). */
-function eye(b: Builder, c: THREE.Vector3, axis: THREE.Vector3, rad: number, rise: number, col: RGB, edge: RGB, sides = 8): void {
-  const { u, v } = basis(axis);
-  rad *= HEAD;
-  rise *= HEAD;
-  const n = axis.clone().multiplyScalar(0.7).addScaledVector(UP, 0.7).normalize();
-  const top = at3(c, u, v, axis, 0, 0, rise);
-  for (let i = 0; i < sides; i++) {
-    const a0 = (i / sides) * Math.PI * 2, a1 = ((i + 1) / sides) * Math.PI * 2;
-    b.tri(top, at3(c, u, v, axis, Math.cos(a0) * rad, Math.sin(a0) * rad, 0), at3(c, u, v, axis, Math.cos(a1) * rad, Math.sin(a1) * rad, 0), n, col, edge, edge, 1);
-  }
-}
-
-/** Small green stem leaf. */
-function leaf(b: Builder, x: number, z: number, dx: number, dz: number, len: number, wid: number): void {
-  const n = bladeNormal(0, 0, 0);
-  const tx = -dz * wid, tz = dx * wid;
-  const A = [x, 0.01, z], B = [x + dx * len * 0.5 + tx, len * 0.25, z + dz * len * 0.5 + tz], C = [x + dx * len * 0.5 - tx, len * 0.25, z + dz * len * 0.5 - tz];
-  const T = [x + dx * len, len * 0.2, z + dz * len];
-  const dark: RGB = [0.16, 0.34, 0.1], light: RGB = [0.3, 0.52, 0.16];
-  b.tri(A, B, C, n, dark, light, light, 1);
-  b.tri(B, T, C, n, light, light, light, 1);
-}
-
-type FlowerFn = (b: Builder, r: RNG, x: number, z: number) => void;
-
-/** Head axis: continues the stem, pulled up a bit and nudged randomly so no two heads face the same way. */
-const headAxis = (r: RNG, dir: THREE.Vector3, up: number, jitter: number): THREE.Vector3 =>
-  dir.clone().lerp(UP, up).add(new THREE.Vector3((r() - 0.5) * jitter, 0, (r() - 0.5) * jitter)).normalize();
-
-/** (was the white daisy) MARIGOLD: orange, many petals, 2026-11-21 */
-const daisy: FlowerFn = (b, r, x, z) => {
-  const { top, dir } = stem(b, x, z, 0.3 + r() * 0.4, (r() - 0.5) * 0.22, (r() - 0.5) * 0.22, 0.0045);
-  const axis = headAxis(r, dir, 0.3, 0.4);
-  const deep = r() < 0.5;
-  petalDisc(b, r, top, axis, 14, 0.006, 0.03 + r() * 0.008, 0.013, 0.004, deep ? [0.78, 0.28, 0.02] : [0.9, 0.5, 0.03], deep ? [0.98, 0.5, 0.05] : [1, 0.74, 0.1], r() * 6.28);
-  eye(b, top, axis, 0.012, 0.006, [0.55, 0.22, 0.03], [0.7, 0.3, 0.04]);
-  const a = r() * 6.28;
-  leaf(b, x, z, Math.cos(a), Math.sin(a), 0.1, 0.02);
-};
-
-const buttercup: FlowerFn = (b, r, x, z) => {
-  const { top, dir } = stem(b, x, z, 0.28 + r() * 0.35, (r() - 0.5) * 0.2, (r() - 0.5) * 0.2, 0.0045);
-  const axis = headAxis(r, dir, 0.4, 0.3);
-  petalDisc(b, r, top, axis, 5, 0.004, 0.026, 0.028, 0.011, [0.95, 0.72, 0.02], [1, 0.9, 0.12], r() * 6.28);
-  eye(b, top, axis, 0.009, 0.003, [0.8, 0.62, 0.02], [0.9, 0.7, 0.03], 6);
-  const a = r() * 6.28;
-  leaf(b, x, z, Math.cos(a), Math.sin(a), 0.1, 0.03);
-};
-
-const lavender: FlowerFn = (b, r, x, z) => {
-  const { top, dir } = stem(b, x, z, 0.4 + r() * 0.4, (r() - 0.5) * 0.18, (r() - 0.5) * 0.18, 0.0035);
-  // spike of florets: whorls getting smaller towards the tip
-  const spike = 0.14 + r() * 0.08;
-  const rows = 8;
-  const pale: RGB = [0.62, 0.44, 0.86], deep: RGB = [0.38, 0.16, 0.68];
-  const hue = r();
-  const n = UP.clone();
-  for (let i = 0; i < rows; i++) {
-    const t = i / (rows - 1);
-    const y = top.clone().addScaledVector(dir, spike * t * 0.95 - 0.02);
-    const size = 0.0145 * 1.25 * (1 - t * 0.6);
-    const rot = r() * 6.28;
-    for (let k = 0; k < 3; k++) {
-      const a = rot + (k / 3) * Math.PI * 2;
-      const ca = Math.cos(a), sa = Math.sin(a);
-      const o = [y.x + ca * size * 0.5, y.y, y.z + sa * size * 0.5];
-      const col: RGB = [pale[0] + (deep[0] - pale[0]) * hue * (0.6 + 0.4 * t), pale[1] + (deep[1] - pale[1]) * hue, pale[2] + (deep[2] - pale[2]) * hue];
-      const tp = [o[0] + ca * size * 0.6, o[1] + size * 1.5, o[2] + sa * size * 0.6];
-      const l = [o[0] - sa * size, o[1], o[2] + ca * size], rr = [o[0] + sa * size, o[1], o[2] - ca * size];
-      b.tri(l, rr, tp, n, deep, deep, col, 1);
-      b.tri(l, tp, [o[0] + ca * size * 1.3, o[1] - size * 0.2, o[2] + sa * size * 1.3], n, deep, col, pale, 1);
-    }
-  }
-};
-
-const poppy: FlowerFn = (b, r, x, z) => {
-  const { top, dir } = stem(b, x, z, 0.36 + r() * 0.4, (r() - 0.5) * 0.24, (r() - 0.5) * 0.24, 0.0045);
-  const axis = headAxis(r, dir, 0.2, 0.5);
-  petalDisc(b, r, top, axis, 4, 0.005, 0.034 + r() * 0.01, 0.044, 0.02, [0.62, 0.04, 0.03], [0.95, 0.12, 0.07], r() * 6.28);
-  eye(b, top, axis, 0.011, 0.006, [0.06, 0.05, 0.04], [0.18, 0.26, 0.08], 7);
-  const a = r() * 6.28;
-  leaf(b, x, z, Math.cos(a), Math.sin(a), 0.12, 0.025);
-};
-
-const cornflower: FlowerFn = (b, r, x, z) => {
-  const { top, dir } = stem(b, x, z, 0.32 + r() * 0.4, (r() - 0.5) * 0.2, (r() - 0.5) * 0.2, 0.0035);
-  const axis = headAxis(r, dir, 0.3, 0.4);
-  const blue = r() < 0.7;
-  const base: RGB = blue ? [0.14, 0.2, 0.72] : [0.55, 0.3, 0.75];
-  const tip: RGB = blue ? [0.33, 0.45, 1] : [0.8, 0.55, 0.95];
-  petalDisc(b, r, top, axis, 9, 0.006, 0.03 + r() * 0.008, 0.01, 0.005, base, tip, r() * 6.28);
-  eye(b, top, axis, 0.009, 0.005, [0.3, 0.12, 0.45], [0.2, 0.1, 0.4], 6);
-  const a = r() * 6.28;
-  leaf(b, x, z, Math.cos(a), Math.sin(a), 0.1, 0.012);
-};
-
-/** (was the white clover) COSMOS: pink / magenta, 8 broad petals, 2026-11-21 */
-const clover: FlowerFn = (b, r, x, z) => {
-  const { top, dir } = stem(b, x, z, 0.34 + r() * 0.4, (r() - 0.5) * 0.2, (r() - 0.5) * 0.2, 0.0035);
-  const axis = headAxis(r, dir, 0.3, 0.4);
-  const magenta = r() < 0.45;
-  petalDisc(b, r, top, axis, 8, 0.006, 0.036 + r() * 0.008, 0.02, 0.004, magenta ? [0.7, 0.1, 0.4] : [0.85, 0.38, 0.6], magenta ? [0.95, 0.35, 0.65] : [1, 0.7, 0.82], r() * 6.28);
-  eye(b, top, axis, 0.009, 0.005, [0.95, 0.75, 0.1], [0.8, 0.55, 0.05], 7);
-  const a = r() * 6.28;
-  leaf(b, x, z, Math.cos(a), Math.sin(a), 0.11, 0.012);
-};
-
-const FLOWERS: Record<number, { fn: FlowerFn; stems: [number, number]; spread: number }> = {
-  [GrassType.daisy]: { fn: daisy, stems: [3, 6], spread: 0.22 },
-  [GrassType.buttercup]: { fn: buttercup, stems: [3, 5], spread: 0.2 },
-  [GrassType.lavender]: { fn: lavender, stems: [3, 5], spread: 0.18 },
-  [GrassType.poppy]: { fn: poppy, stems: [2, 4], spread: 0.22 },
-  [GrassType.cornflower]: { fn: cornflower, stems: [3, 5], spread: 0.2 },
-  [GrassType.clover]: { fn: clover, stems: [3, 5], spread: 0.2 },
-};
-
-/** Seed heads on a few tall stems: a feathery cluster of short bristles at the tip. */
-function seedHeads(b: Builder, r: RNG): void {
-  const n = 5 + Math.floor(r() * 3);
-  for (let i = 0; i < n; i++) {
-    const a = r() * Math.PI * 2;
-    const rad = 0.02 + r() * 0.16;
-    const { top, dir } = stem(b, Math.cos(a) * rad, Math.sin(a) * rad, 0.7 + r() * 0.7, Math.cos(a) * (0.08 + r() * 0.16), Math.sin(a) * (0.08 + r() * 0.16), 0.0045);
-    const len = 0.13 + r() * 0.09;
-    const straw: RGB = [0.78, 0.68, 0.36], pale: RGB = [0.92, 0.85, 0.55];
-    const nrm = UP.clone();
-    const bristles = 10;
-    for (let k = 0; k < bristles; k++) {
-      const t = k / bristles;
-      const base = top.clone().addScaledVector(dir, len * t * 0.8 - 0.03);
-      const sz = 0.017 * (1 - t * 0.55);
-      for (let s = 0; s < 2; s++) {
-        const aa = r() * Math.PI * 2;
-        const ox = Math.cos(aa), oz = Math.sin(aa);
-        const tipP = [base.x + ox * sz * 1.8 + dir.x * 0.02, base.y + dir.y * 0.02 + 0.006, base.z + oz * sz * 1.8 + dir.z * 0.02];
-        b.tri([base.x - oz * 0.0035, base.y, base.z + ox * 0.0035], [base.x + oz * 0.0035, base.y, base.z - ox * 0.0035], tipP, nrm, straw, straw, pale, 1);
-      }
+      b.face(rows[i][0], rows[i][1], rows[i + 1][0]);
+      b.face(rows[i][1], rows[i + 1][1], rows[i + 1][0]);
     }
   }
 }
 
-/** `density` < 1 = a cheaper model for the far LOD rings (fewer blades, no seed heads). */
+/** LEAFY / TREFOIL: shallow cones (a raised middle, the corners on the ground) wearing the top-down picture of a rosette / clover patch; the second layer is turned 40 degrees and a little lower. */
+function flatLeaves(b: Builder, r: RNG, type: number, density: number): void {
+  const leafy = type === GrassType.leafy;
+  const R = leafy ? 0.34 : 0.3, top = leafy ? 0.12 : 0.09;
+  const tile = leafy ? GT.leafy : GT.trefoil;
+  const u0 = (tile + 0.01) / GRASS_TILES, u1 = (tile + 0.99) / GRASS_TILES;
+  const layers = density >= 0.9 ? 2 : 1;
+  for (let l = 0; l < layers; l++) {
+    const rot = l * 0.7 + r() * 0.5;
+    const sc = 1 - 0.14 * l;
+    const cr = Math.cos(rot), sr = Math.sin(rot);
+    const center = b.shared([0, top * (1 - 0.1 * l), 0], FLAT_NORMAL, [1, 1, 1], 0, [(tile + 0.5) / GRASS_TILES, 0.5]);
+    const ids: number[] = [];
+    for (const [qx, qz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+      const x = qx * R * sc, z = qz * R * sc;
+      ids.push(b.shared([x * cr - z * sr, 0.012 + 0.02 * l, x * sr + z * cr], FLAT_NORMAL, [0.8, 0.8, 0.8], 0, [qx < 0 ? u0 : u1, qz < 0 ? 0.01 : 0.99]));
+    }
+    for (let q = 0; q < 4; q++) b.face(center, ids[q], ids[(q + 1) % 4]);
+  }
+}
+
+/** `density` < 1 = a cheaper model for the far LOD rings (fewer cards, no extra layer). Same size in every ring. */
 function make(type: number, density = 1): THREE.BufferGeometry {
-  SMOOTH_BLADES = density >= 1 && Config.vegetation.grass.look.smoothBlades;
   const r = mulberry32(4242 + type * 7919);
   const b = new Builder();
-  const style = STYLES[type];
-  if (TUSSOCKS[type]) {
-    tussockBlades(b, r, TUSSOCKS[type], density);
-  } else if (style) {
-    // SINGLE GRASS: 3-5 blades per tuft (same count in every LOD ring: the far rings are already thinner by their stride)
-    const sg = Config.vegetation.grass.single;
-    const n0 = sg.blades[0] + Math.floor(mulberry32(777 + type)() * (sg.blades[1] - sg.blades[0] + 1));
-    const fixed = sg.enabled ? Math.max(sg.blades[0], Math.round(n0 * density)) : 0; // far rings: down to the minimum (3 blades)
-    grassBlades(b, r, style, density, fixed);
-    if (type === GrassType.seed && density >= 1) seedHeads(b, r);
-  } else {
-    // flower tuft: low grass + several flowers on stems
-    grassBlades(b, r, FLOWER_BASE_STYLE, 1, 4);
-    const f = FLOWERS[type];
-    const count = f.stems[0] + Math.floor(r() * (f.stems[1] - f.stems[0] + 1));
-    for (let i = 0; i < count; i++) {
-      const a = r() * Math.PI * 2;
-      const rad = f.spread * Math.sqrt(r());
-      f.fn(b, r, Math.cos(a) * rad, Math.sin(a) * rad);
-    }
+  const card = CARDS[type];
+  if (card) {
+    cardTuft(b, r, card, density);
+  } else if (type === GrassType.leafy || type === GrassType.trefoil) {
+    flatLeaves(b, r, type, density);
   }
   return b.build();
 }
@@ -498,6 +169,8 @@ export class GrassAssets {
   /** index = GrassType (ring 0) */
   readonly geometries: THREE.BufferGeometry[];
   readonly material: THREE.MeshLambertMaterial;
+  /** The painted atlas (null without a canvas, e.g. in tests: the cards then show their vertex colours only). */
+  private readonly atlas: THREE.DataTexture | null = makeGrassAtlas();
   /** Same shader for the extra (dense) tufts, but with its own, much shorter fade distance (Config grass.denseFade). */
   readonly extraMaterial: THREE.MeshLambertMaterial;
   private time = { value: 0 };
@@ -511,9 +184,9 @@ export class GrassAssets {
     Config.vegetation.grass.lods.forEach((lod, i) => {
       const list: THREE.BufferGeometry[] = [];
       for (let t = 0; t < GRASS_TYPE_COUNT; t++) {
-        const clump = t >= GrassType.tussock;
+        const clump = isGrassClump(t);
         // flowers exist in ring 0 only (the manager never asks for them in the far rings): share the ring 0 model, no extra geometry
-        if (i > 0 && !clump && t >= GrassType.daisy) list.push(this.lodGeometries[0][t]);
+        if (i > 0 && isGrassFlower(t)) list.push(this.lodGeometries[0][t]);
         else list.push(make(t, clump ? lod.clumpDensity : lod.density));
       }
       this.lodGeometries.push(list);
@@ -525,7 +198,7 @@ export class GrassAssets {
 
   /** Wind sway + distance fade in the vertex shader; the sun shining THROUGH the blades (translucency) in the fragment shader. */
   private makeMaterial(fade: { value: THREE.Vector2 }, key: string): THREE.MeshLambertMaterial {
-    const m = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+    const m = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide, map: this.atlas, alphaTest: this.atlas ? 0.42 : 0, alphaToCoverage: !!this.atlas });
     m.onBeforeCompile = (shader) => {
       shader.uniforms.uGrassTime = this.time;
       shader.uniforms.uGrassWind = this.wind;
@@ -569,7 +242,7 @@ export class GrassAssets {
           #include <opaque_fragment>`,
         );
     };
-    m.customProgramCacheKey = () => 'grass-fade-v6' + key;
+    m.customProgramCacheKey = () => 'grass-fade-v7' + key;
     return m;
   }
 
@@ -587,5 +260,6 @@ export class GrassAssets {
     for (const g of new Set(this.lodGeometries.flat())) g.dispose();
     this.material.dispose();
     this.extraMaterial.dispose();
+    this.atlas?.dispose();
   }
 }

@@ -32,10 +32,20 @@ export const TreeKind = {
   leafLitter: 22,
   /** GUM (eucalyptus, Australian-style): tall, pale, crooked trunk, a few bare limbs, a thin open crown of long narrow hanging leaves (sky shows through). */
   gum: 23,
-  /** Second gum shape (more upright, taller, narrower crown) so the gums are not all the same. Keep it the LAST kind: `kind >= TreeKind.gum` means 'a gum'. */
+  /** Second gum shape (more upright, taller, narrower crown) so the gums are not all the same. (Use `isGum(kind)` to test for a gum; the vine kinds come after it.) */
   gum2: 24,
+  /**
+   * JUNGLE VINES (2026-11-21, reference photo of a real rain forest): `liana` = a curtain of thin woody vines hanging from the canopy (8-12 m) to the ground, with a few small leaves, plus one
+   * thick diagonal vine; `tangle` = a bunch of slim, leaning young stems and a long diagonal limb crossing them, with sparse leaves. No colliders. They come AFTER gum2, so every
+   * "gum" test must use `isGum(kind)` (not `kind >= TreeKind.gum`).
+   */
+  liana: 25,
+  tangle: 26,
 } as const;
-export const TREE_KIND_COUNT = 25;
+export const TREE_KIND_COUNT = 27;
+
+/** The two gum (eucalyptus) kinds. */
+export const isGum = (kind: number): boolean => kind === TreeKind.gum || kind === TreeKind.gum2;
 
 /** Kinds drawn with the palm atlas (palms, banana, flowering krishnachura, bamboo); every other kind uses the forest-tree atlas. */
 export const usesPalmAtlas = (kind: number): boolean => (kind >= TreeKind.coconut && kind <= TreeKind.krishnachura) || kind === TreeKind.bamboo;
@@ -74,6 +84,9 @@ export const TREE_TRUNK: Record<number, { r: number; h: number; climb: number }>
   [TreeKind.leafLitter]: { r: 0.03, h: 0.1, climb: 0 },
   [TreeKind.gum]: { r: 0.55, h: 5, climb: 12 },
   [TreeKind.gum2]: { r: 0.5, h: 5, climb: 14 },
+  /** Jungle vines: thin, no collider (r under `passRadius`), nothing to climb. */
+  [TreeKind.liana]: { r: 0.03, h: 1, climb: 0 },
+  [TreeKind.tangle]: { r: 0.03, h: 1, climb: 0 },
 };
 
 /**
@@ -116,8 +129,18 @@ export const GrassType = {
   // GRASS CLUMPS (tussocks): 60..110 blades growing out of one root like a fountain, tall in the middle, arching outwards at the edge
   tussock: 10, // upright, dense
   tussockWide: 11, // wider, more arching, a few straw-coloured blades
+  // 2026-11-21 (reference photos): a big bunch grass with bristly seed plumes standing out of it, a ground-cover rosette of broad leaves, a patch of clover-like trefoil leaves
+  tussockSeed: 12, // tall bunch grass with 14-20 tan / purple-brown seed plumes on thin stems
+  leafy: 13, // low rosette of 5-7 broad oval leaves (plantain / dock type), each folded along its midrib
+  trefoil: 14, // low patch of clover-like three-leaflet leaves on thin stems
 } as const;
-export const GRASS_TYPE_COUNT = 12;
+export const GRASS_TYPE_COUNT = 15;
+/** The big grass bunches (they are sized by `grass.clump`, not by `grass.tuft`). */
+export const isGrassClump = (t: number): boolean => t === GrassType.tussock || t === GrassType.tussockWide || t === GrassType.tussockSeed;
+/** The coloured wild flowers (daisy .. clover). */
+export const isGrassFlower = (t: number): boolean => t >= GrassType.daisy && t <= GrassType.clover;
+/** Low broad-leaf ground cover (sized by `grass.leafy`). */
+export const isGrassLeafy = (t: number): boolean => t === GrassType.leafy || t === GrassType.trefoil;
 
 /** One Float32Array per tree kind (index = TreeKind). Empty kinds have length 0. */
 export type TreeChunkData = Float32Array[];

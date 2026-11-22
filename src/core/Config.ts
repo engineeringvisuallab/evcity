@@ -407,6 +407,12 @@ export const Config = {
     /** Pines replace broadleaf trees between these heights (m); palms grow below `palmBelow` (m). */
     pineFrom: 70,
     pineFull: 150,
+    /** 2026-11-23: the share of pines never goes above this (was 100 % on high hills: the hills were all one tree). */
+    pineMax: 0.45,
+    /** HILLS (above `from` m): this share of the non-big, non-pine trees is the slim debdaru instead of a broadleaf shape. */
+    hill: { from: 40, debdaru: 0.2 },
+    /** MEGA TREES: a big forest species grown to `scale` (same model, bigger: thick and tall; 1 = 20-30 m). `patchChance` inside noise patches (`patchScale` m, noise above `patchFrom`), `chance` elsewhere. */
+    mega: { chance: 0.006, patchChance: 0.08, patchFrom: 0.1, patchScale: 170, scale: [1.9, 2.5] as [number, number] },
     palmBelow: 35,
     /** BIG FOREST TREES (sal, segun, koroi, bot, shimul) in the middle of a forest: share among the forest trees (0..1) and scale range (1 = mature 20-30 m tree). */
     /** Every tree colour is multiplied by this (r, g, b): the leaves were too light / yellow-green; lower = darker, red lower than green = bluer, deeper green. */
@@ -447,6 +453,12 @@ export const Config = {
        * the rest are young trees of `scale` (x the tree's normal size). Lower `layers` / `chance` if the frame rate drops.
        */
       thicket: { layers: 3, chance: 0.88, undergrowth: 0.65, scale: [0.85, 1.3] as [number, number] },
+      /**
+       * JUNGLE VINES (2026-11-21, like a real rain-forest photo): per 10 m jungle cell (x jungle density x Quality treeMul) `lianaChance` = a curtain of hanging woody vines
+       * (8-12 m, TreeKind.liana) and `tangleChance` = slim leaning stems with a diagonal limb across them (TreeKind.tangle). No colliders. Near chunks only (LOD 0).
+       * Every liana is ~300 triangles, every tangle ~600: lower the chances (or set 0 = off) if the frame rate drops.
+       */
+      vines: { lianaChance: 0.08, tangleChance: 0.09, /** 2026-11-22: vines only in PATCHES (not all over the jungle): `scale` m = size of the noise field, `from` .. `full` = noise range that grows from nothing to a full patch (higher `from` = fewer / smaller patches), `boost` = chance multiplier inside a patch (so a patch is denser than before). the noise is about -0.7..0.7 (median 0): `from` -1 + `boost` 1 = the old everywhere-look. */ patch: { scale: 110, from: 0.05, full: 0.32, boost: 2.5 }, lianaScale: [0.8, 1.3] as [number, number], tangleScale: [0.8, 1.4] as [number, number] },
       /**
        * JUNGLE DEADWOOD (sukno gach + sukno pata): old dry trees lying on the ground and patches of dry fallen leaves. Per 10 m jungle cell (x jungle density x Quality treeMul):
        * `logChance` = a fallen dead tree (`logScale` = size range, 1 = 7 m long), `litterLayers` x `litterChance` = loose leaf patches (`litterScale`), and `aroundLog` leaf patches
@@ -572,7 +584,7 @@ export const Config = {
         minValue: 0.25,
         coreAt: 0.35,
         density: 1,
-        clumpChance: 0, // no big clumps: only single grass (see `single`)
+        clumpChance: 0.15, // 2026-11-21: big bunch grass (tussocks, a share with seed plumes) grows in the grass patches again, like the savanna photo (was 0 = only single grass). ~0.15 = one bunch per ~15 m2 of patch; 0 = off
         edgeScale: 0.5,
         boost: 0.9,
         roadStep: 24,
@@ -588,6 +600,8 @@ export const Config = {
         /** A clump is at most `maxHeight` m high (50 cm); its width = its height scale x `width` (the far rings make it a bit wider). */
         maxHeight: 1.0, // 2x the old 0.5 m
         width: 1.8,
+        /** The tall seed-plume bunch (tussockSeed) is this many times taller than the other clumps (its plumes stand above its blades). */
+        seedTall: 1.3,
       },
       /**
        * TREE-BASE GRASS: grass does NOT grow scattered over open ground. It grows in a soft ring around every tree trunk and bamboo clump (a tuft bed, like real
@@ -638,13 +652,18 @@ export const Config = {
        * COLOUR: every tuft is fresh green, yellow-green or straw (`strawShare` of the tufts lean to straw outside the city, `yellowShare` to yellow-green).
        * `rootDark` = brightness of the blade at the root (0..1, 1 = no darkening), `wind` = global wind sway multiplier (0 = still air; the sway grows with blade height, so short lawn moves little anyway).
        */
-      look: { smoothBlades: true, bladeWidth: 1.1, strawShare: 0, yellowShare: 0, rootDark: 0.6, wind: 0 }, // bladeWidth was 0.28, now x3 wider
+      look: { smoothBlades: true, bladeWidth: 1.1, strawShare: 0, yellowShare: 0, rootDark: 0.6, wind: 0, bladeVariation: 1 }, // bladeWidth was 0.28, now x3 wider
       /**
        * SINGLE GRASS: every tuft model has only `blades[0]..blades[1]` blades (3-5 leaves per grass), so the ground can be covered with very many
        * of them cheaply (`cell` 0.2 m). Used for the four grass kinds; flowers keep their own base. enabled false = the old many-blade tufts.
        */
       /** false = NO white things in the grass: no daisy, no clover (white pom-pom), no pale seed-head grass (they become plain green grass). Coloured flowers stay. */
       whiteFlowers: false,
+      /**
+       * GROUND-COVER LEAVES (2026-11-21, `leafy` rosettes of broad leaves and `trefoil` clover patches, mixed into the tufts of the tree-base ring, the road verge, the lawn and the jungle floor):
+       * their height in metres (the tallest point of the model); the width follows the model (a rosette is ~1.3x wider than high). `bladeVariation` (look): 1 = each blade its own tone, 0 = all alike.
+       */
+      leafy: { maxHeight: 0.16, trefoilHeight: 0.14 },
       single: { enabled: true, blades: [6, 9] as [number, number] }, // fuller tufts (was 3-5 thin blades)
       /** No grass is made while the camera is higher than this above the ground (m): free-fly / helicopter. */
       maxAboveGround: 25,

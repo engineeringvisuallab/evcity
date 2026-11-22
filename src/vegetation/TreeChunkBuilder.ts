@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Config } from '../core/Config';
 import type { RockAssets } from './RockAssets';
 import type { TreeAssets } from './TreeAssets';
-import { ROCK_KIND_COUNT, TREE_KIND_COUNT, TREE_STRIDE, TreeKind, treeWidth, type TreeChunkData } from './TreeTypes';
+import { ROCK_KIND_COUNT, TREE_KIND_COUNT, TREE_STRIDE, TreeKind, isGum, treeWidth, type TreeChunkData } from './TreeTypes';
 
 /** Broadleaf kinds that get the full range of real leaf colours (not pine, palms, banana, bamboo, krishnachura with its red flowers, undergrowth). */
 const FULL_COLOUR_KINDS = new Set<number>([TreeKind.broadleaf, TreeKind.oak, TreeKind.vase, TreeKind.slender, TreeKind.sal, TreeKind.segun, TreeKind.koroi, TreeKind.bot, TreeKind.shimul, TreeKind.debdaru, TreeKind.gum, TreeKind.gum2]);
@@ -119,7 +119,7 @@ export class TreeChunkBuilder {
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     mesh.computeBoundingSphere();
     // Tree shadows follow the sun-shadow level (ShadowManager: only 'high' casts them, see setTreeShadows). Undergrowth, logs and leaf litter never cast.
-    const casts = lod === 0 && treeKind >= 0 && (treeKind < TreeKind.fern || treeKind >= TreeKind.gum);
+    const casts = lod === 0 && treeKind >= 0 && (treeKind < TreeKind.fern || isGum(treeKind));
     mesh.userData.treeShadow = casts;
     mesh.castShadow = casts && Config.vegetation.treeShadows;
     mesh.receiveShadow = lod === 0;

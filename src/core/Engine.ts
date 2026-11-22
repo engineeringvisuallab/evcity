@@ -1,3 +1,4 @@
+import { CentralParkLayer } from '../park/CentralParkLayer';
 import * as THREE from 'three';
 import { bootMark } from './BootTimer';
 import { Q, DynamicResolution, SlowDeviceWatch, currentChoice } from './Quality';
@@ -303,6 +304,7 @@ export class Engine {
   /** STAGE 15 / Step 6: signals you see, the station board on the HUD, Bangla station announcements. */
   private signalLayer: SignalLayer;
   private stationSigns: StationSignLayer;
+  private centralPark: CentralParkLayer;
   private trainBoard: StationBoard;
   private trainAnnouncer: TrainAnnouncer;
   /** The player as a train passenger (F at a platform next to a standing train; F again at a station to get off). */
@@ -428,6 +430,7 @@ export class Engine {
     this.trainContacts = new TrainContacts(this.trains, (h) => bus.emit('train:overlap', h));
     this.signalLayer = new SignalLayer(this.world.root, this.trains.fleet);
     this.stationSigns = new StationSignLayer(this.world.root, this.rail, (x, z) => this.world.terrain.heightAt(x, z)); // English + Bangla lettering on the station boards
+    this.centralPark = new CentralParkLayer(this.world.root, (x, z) => this.world.terrain.heightAt(x, z)); // 2026-11-22: park + fountain inside the Central station ring
     this.trainBoard = new StationBoard(this.trains.fleet, this.rail);
 
     bootMark('roads & bridges');
@@ -1381,6 +1384,7 @@ export class Engine {
     this.signalLayer.update(px, pz);
     this.stationSigns.update(this.camera.position.x + this.world.origin.origin.x, this.camera.position.z + this.world.origin.origin.z);
     this.roadSigns.update(this.camera.position.x + this.world.origin.origin.x, this.camera.position.z + this.world.origin.origin.z);
+    this.centralPark.update(this.camera.position.x + this.world.origin.origin.x, this.camera.position.z + this.world.origin.origin.z);
     const board = this.trainBoard.update(px, pz);
     this.hud.setTrainBoard(board ? formatBoard(board) : null);
   }
@@ -1905,6 +1909,7 @@ export class Engine {
     this.signalLayer.dispose();
     this.stationSigns.dispose();
     this.roadSigns.dispose();
+    this.centralPark.dispose();
     this.trains.dispose();
     this.trainLayer.dispose();
     this.world.dispose();

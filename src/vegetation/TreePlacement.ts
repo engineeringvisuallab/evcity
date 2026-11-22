@@ -1,3 +1,4 @@
+import { inPark, parkTreesInChunk } from '../park/CentralPark';
 import { Config } from '../core/Config';
 import type { CityPlan } from '../city/CityPlan';
 import type { TerrainGenerator } from '../terrain/TerrainGenerator';
@@ -11,7 +12,7 @@ import { streetTreesInChunk } from '../roads/Roadside';
 import { plotTreesInChunk } from './PlotTrees';
 import { evlabParkTreesInChunk } from '../evlab/EVLabParkTrees';
 import { evlabHillTreesInChunk } from '../evlab/EVLabHill';
-import { TREE_KIND_COUNT, TREE_TRUNK, TreeKind, type TreeChunkData } from './TreeTypes';
+import { TREE_KIND_COUNT, TREE_TRUNK, TreeKind, isGum, type TreeChunkData } from './TreeTypes';
 import { homesteadFactor } from './Homesteads';
 import { WORLD_REGIONS } from '../city/WorldRegions';
 
@@ -161,6 +162,7 @@ export class TreePlacer {
   private nearRoad(x: number, z: number): boolean {
     // STAGE 12: nothing grows in the railway corridor (embankment / cutting slopes, viaduct footprint, railway land)
     if (this.gen.railForm.inCorridor(x, z, 3)) return true;
+    if (inPark(x, z, 1)) return true; // the Central station park has its own planted trees (parkTreesInChunk)
     if (this.gen.portForm.inFootprint(x, z, 4)) return true; // STAGE 14: sea port
     if (this.gen.airport.contains(x, z, 4)) return true; // airport pad
     if (this.gen.airportSea.contains(x, z, 4)) return true; // sea airport pad + causeway
@@ -289,7 +291,7 @@ export class TreePlacer {
 
     // 4. which tree?
     let kind: number = TreeKind.broadleaf;
-    const pineChance = smooth(V.pineFrom, V.pineFull, h);
+    const pineChance = V.pineMax * smooth(V.pineFrom, V.pineFull, h);
     const palmChance = h < V.palmBelow ? 0.45 * smooth(-0.1, 0.35, this.kindNoise.fbm(x / 260 + 40, z / 260, 2)) : 0;
     // BIG forest trees only in the heart of a forest and on ground that is not too steep (their trunks and buttresses need room)
     const bigChance = (V.bigTreeChance + (D.bigChance - V.bigTreeChance) * dz) * smooth(0.25, 0.75, f) * (1 - pineChance) * (1 - smooth(this.tanMax * 0.45, this.tanMax * 0.75, slope));
@@ -297,11 +299,12 @@ export class TreePlacer {
     else if (rKind > 1 - palmChance) kind = TreeKind.palm;
     else if (rBig < bigChance) kind = bigKind(h, rVar, gi, gj);
     else if (cf < 0.999 && h < 150 && rVar < 0.34) kind = TreeKind.krishnachura; // parks and green zones of the city: the flowering umbrella tree
+    else if (h > V.hill.from && (rVar * 53) % 1 < V.hill.debdaru) kind = TreeKind.debdaru; // HILLS: a tall slim evergreen among the broadleaf trees (the hills were nearly all one kind)
     else kind = rVar < 0.3 ? TreeKind.broadleaf : rVar < 0.58 ? TreeKind.oak : rVar < 0.82 ? TreeKind.vase : TreeKind.slender;
 
     // REAL FOREST SIZES: many young / small trees, a fair number of middle-aged ones, a few old giants (skewed, not uniform).
     // The big species are given as mature trees (scale 1 = 20-30 m): a narrow range, so a banyan never becomes 60 m tall.
-    const big = (kind >= TreeKind.sal && kind <= TreeKind.shimul) || kind >= TreeKind.gum;
+    const big = (kind >= TreeKind.sal && kind <= TreeKind.shimul) || isGum(kind);
     const wide = kind === TreeKind.koroi || kind === TreeKind.bot;
     const giant = 1 + 0.4 * dz; // deep jungle: the canopy giants grow up to 40 % taller (35-45 m)
     const scale0 = big
@@ -310,7 +313,14 @@ export class TreePlacer {
       // 2026-11-21: NO SMALL TREES: the smallest of every kind was ~0.35-0.6 (4-6 m); now the floor is 0.8-1.1 (palm 1.1) and the top end stays about the same
       : kind === TreeKind.palm ? 1.1 + 0.85 * rScale ** 1.3 : kind === TreeKind.pine ? 0.95 + 0.8 * rScale ** 1.3 : kind === TreeKind.slender ? 0.9 + 1.2 * rScale ** 1.4 : 0.85 + 1.4 * rScale ** 1.6;
     // 2026-11-20: trees OUTSIDE the dense jungle are bigger (`treeSizeOutside`, the big species `treeSizeOutsideBig`); the jungle (dz = 1) keeps its size, the edge blends
-    const scale = scale0 * (1 + ((big ? V.treeSizeOutsideBig : V.treeSizeOutside) - 1) * (1 - dz));
+    let scale = scale0 * (1 + ((big ? V.treeSizeOutsideBig : V.treeSizeOutside) - 1) * (1 - dz));
+    // MEGA TREES (2026-11-23): here and there a big forest species is an old giant - the SAME model scaled up (trunk and crown together), so it is thick and tall like a real
+    // jungle emergent. More of them inside noise patches (`mega.patchScale` m), a few anywhere. Own random stream: no other tree changes.
+    if (big && V.mega.chance > 0) {
+      const inPatch = this.kindNoise.fbm(x / V.mega.patchScale + 11, z / V.mega.patchScale - 7, 2) > V.mega.patchFrom;
+      const mr = mulberry32(hash2D(this.seed ^ 0x6e9a1, gi, gj));
+      if (mr() < (inPatch ? V.mega.patchChance : V.mega.chance) * this.mul && slope < this.tanMax * 0.5) scale = V.mega.scale[0] + (V.mega.scale[1] - V.mega.scale[0]) * mr();
+    }
     return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: rYaw * Math.PI * 2, tint: (0.86 + rTint * 0.3) * (1 - 0.12 * dz) };
   }
 
@@ -464,7 +474,7 @@ export class TreePlacer {
     if (this.nearRoad(x, z)) return null;
 
     let kind: number;
-    const pineChance = smooth(V.pineFrom, V.pineFull, h);
+    const pineChance = V.pineMax * smooth(V.pineFrom, V.pineFull, h);
     const flat = slope < this.tanMax * 0.6;
     if (rk < pineChance) kind = TreeKind.pine;
     else if (h < B.maxHeight && rb < D.bambooShare && slope < this.tanMax * B.slopeMax) kind = TreeKind.bamboo;
@@ -473,7 +483,7 @@ export class TreePlacer {
 
     // jungle bamboo: 3-5x taller than a grove clump (random per clump), full inside the jungle
     const bambooScale = (B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * rs) * (1 + (B.jungleTall[0] + (B.jungleTall[1] - B.jungleTall[0]) * ((rs * 13.37 + 0.31) % 1) - 1) * smooth(0.1, 0.6, dz));
-    const big = (kind >= TreeKind.sal && kind <= TreeKind.shimul) || kind >= TreeKind.gum;
+    const big = (kind >= TreeKind.sal && kind <= TreeKind.shimul) || isGum(kind);
     const young = D.understoryScale[0] + (D.understoryScale[1] - D.understoryScale[0]) * rs ** 1.4;
     const scale = big ? V.bigTreeScale[0] + 0.3 * rs : kind === TreeKind.bamboo ? bambooScale : kind === TreeKind.pine ? 0.35 + 0.5 * rs : young;
     return { kind, x, y: this.footY(h, slope, kind, scale), z, scale, yaw: ry * Math.PI * 2, tint: (0.84 + rt * 0.3) * (1 - 0.12 * dz) };
@@ -522,7 +532,7 @@ export class TreePlacer {
         // lata-pata (fern, shrub, lata) are REMOVED: nothing is placed here any more (the kinds stay in the enum so the numbering does not change)
         continue;
       } else {
-        const pineChance = smooth(V.pineFrom, V.pineFull, h);
+        const pineChance = V.pineMax * smooth(V.pineFrom, V.pineFull, h);
         if (rk < pineChance) kind = TreeKind.pine;
         else if (h < B.maxHeight && rv < B.thicketShare && slope < this.tanMax * B.slopeMax) kind = TreeKind.bamboo;
         else kind = rv < 0.3 ? TreeKind.slender : rv < 0.58 ? TreeKind.vase : rv < 0.84 ? TreeKind.broadleaf : TreeKind.oak;
@@ -530,6 +540,52 @@ export class TreePlacer {
       }
       if (this.dropSmall(kind, scale, x, z)) continue; // small trees: only `smallTrees.keep` of them
       lists[kind].push(x - cox, this.footY(h, slope, kind, scale), z - coz, scale, ry * Math.PI * 2, (0.86 + rt * 0.3) * (1 - 0.12 * dz));
+    }
+  }
+
+  /**
+   * JUNGLE VINES (2026-11-21): a liana curtain (hanging vines) and a tangle of slim leaning stems, each its own random stream per 10 m cell (`dense.vines`), so no other tree
+   * ever moves. Same ground tests as the thicket (water, tree line, slope, roads, city). Pushed straight into the chunk lists; no colliders (TREE_TRUNK r 0.03).
+   */
+  private cellVines(gi: number, gj: number, lists: number[][], cox: number, coz: number): void {
+    const VN = D.vines;
+    if (VN.lianaChance <= 0 && VN.tangleChance <= 0) return;
+    const { ox, oz, i, j } = this.cellOf(gi, gj);
+    const cell = V.cellSize;
+    if (this.denseAt(ox + (i + 0.5) * cell, oz + (j + 0.5) * cell) <= 0.02) return; // most cells of the world stop here
+    const s = this.sample;
+    for (let l = 0; l < 2; l++) {
+      const rng = mulberry32(hash2D((this.seed ^ 0x71a4a0) + l * 104729, gi, gj));
+      const roll = rng(), jx = rng(), jz = rng(), rs = rng(), ry = rng(), rt = rng();
+      let chance = (l === 0 ? VN.lianaChance : VN.tangleChance) * this.mul;
+      if (roll >= chance * VN.patch.boost) continue; // (the patch mask below only ever lowers it to <= boost x)
+      const x = ox + (i + jx) * cell;
+      const z = oz + (j + jz) * cell;
+      // PATCHES: vines grow only in some places of the jungle (own noise field per kind: lianas and tangles do not always share a patch), x boost inside, 0 between
+      const pn = smooth(VN.patch.from, VN.patch.full, this.bambooNoise.fbm(x / VN.patch.scale + (l ? 523 : 91), z / VN.patch.scale + (l ? 211 : 47), 2));
+      if (pn <= 0) continue;
+      chance *= pn * VN.patch.boost;
+      const dz = this.denseAt(x, z);
+      if (dz <= 0.02) continue;
+      chance *= dz;
+      if (roll >= chance) continue;
+      this.gen.sample(x, z, s);
+      const h = s.h;
+      if (h < V.seaMargin) continue;
+      if (!Number.isNaN(s.water) && h < s.water + V.waterMargin) continue;
+      const line = 1 - smooth(V.treeLineStart, V.treeLineEnd, h);
+      if (line <= 0) continue;
+      this.gen.sample(x + 2, z, this.sx);
+      this.gen.sample(x, z + 2, this.sz);
+      const slope = Math.hypot(this.sx.h - h, this.sz.h - h) / 2;
+      if (slope > this.tanMax) continue;
+      chance *= line * (1 - smooth(this.tanMax * 0.6, this.tanMax, slope)) * this.cityFactor(x, z);
+      if (roll >= chance) continue;
+      if (this.nearRoad(x, z)) continue;
+      const kind = l === 0 ? TreeKind.liana : TreeKind.tangle;
+      const sr = l === 0 ? VN.lianaScale : VN.tangleScale;
+      const scale = sr[0] + (sr[1] - sr[0]) * rs;
+      lists[kind].push(x - cox, this.footY(h, slope, kind, scale), z - coz, scale, ry * Math.PI * 2, (0.88 + rt * 0.24) * (1 - 0.12 * dz));
     }
   }
 
@@ -672,6 +728,7 @@ export class TreePlacer {
         if (u) lists[u.kind].push(u.x - ox, u.y, u.z - oz, u.scale, u.yaw, u.tint);
         if (lod === 0) this.cellThicket(gx0 + i, gz0 + j, lists, ox, oz); // jungle: lata-pata and young trees (near chunks only)
         if (lod === 0) this.cellDeadwood(gx0 + i, gz0 + j, lists, ox, oz); // jungle: fallen dead trees and dry leaves (near chunks only)
+        if (lod === 0) this.cellVines(gx0 + i, gz0 + j, lists, ox, oz); // jungle: hanging vines and leaning stems (near chunks only)
       }
     }
     // GRASS 4: street trees in the kerbed pits of the city sidewalks (Roadside.ts) join the normal trees: same instancing, LOD and colliders
@@ -685,6 +742,11 @@ export class TreePlacer {
       this.gen.sample(t.x, t.z, this.sample);
       lists[t.kind].push(t.x - ox, this.footY(this.sample.h, 0, t.kind, t.scale), t.z - oz, t.scale, t.yaw, 0.95 + 0.1 * ((t.yaw * 7) % 1));
     }
+    // CENTRAL STATION PARK: coconut palms round the fountain plaza, krishnachura / rain trees on the lawn (never in the rail corridor)
+    for (const e of parkTreesInChunk(ox, oz, S, (x, z) => {
+      this.gen.sample(x, z, this.sample);
+      return this.sample.h;
+    }, (h, kind, scale) => this.footY(h, 0, kind, scale), (x, z) => !this.gen.railForm.inCorridor(x, z, 2.5))) lists[e.kind].push(...e.v);
     // EVLab campus: the park trees (palms, avenue trees, lawn trees) around the tower and the lake
     for (const e of evlabParkTreesInChunk(this.gen.evlab.floorY, ox, oz)) lists[e.kind].push(...e.v);
     // EVLab campus, Step RT4: big palms on the gentle parts of the hill behind the plot (slope and top; the real ground decides, steep ground stays with the forest)

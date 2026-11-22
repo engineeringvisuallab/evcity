@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Config } from '../core/Config';
 import type { GrassResult } from '../workers/messages';
 import type { GrassAssets } from './GrassAssets';
-import { GRASS_STRIDE, GRASS_TYPE_COUNT, GrassType } from './TreeTypes';
+import { GRASS_STRIDE, GRASS_TYPE_COUNT, GrassType, isGrassClump, isGrassFlower, isGrassLeafy } from './TreeTypes';
 
 const G = Config.vegetation.grass;
 /** Height of the tallest point of a grass model at scale 1 (cached): the tufts are scaled so this point reaches the wanted height in metres. */
@@ -300,10 +300,19 @@ export class GrassManager {
   /** Real choice of the model; typeOf() wraps it and removes the white kinds (Config grass.whiteFlowers = false). */
   private pick(wx: number, wz: number, lod: number, h1: number, h2: number, h3: number, dry: number, flag: number): number {
     let type: number;
+    if (flag > 8.5) {
+      // CENTRAL PARK bed / border (flag 9 + flower index): mostly that flower (near ring), the rest short green so the bed has no gaps; far rings = green only
+      if (lod === 0 && h2 < 0.84) return GrassType.daisy + Math.round(flag - 9);
+      return h1 < 0.7 ? GrassType.lawn : GrassType.wild;
+    }
+    if (flag > 6.5) {
+      // JUNGLE grass CLUMP (flag 7): the two shady tussock shapes (no seed plumes: those belong to the open savanna)
+      return h1 < 0.55 ? GrassType.tussock : GrassType.tussockWide;
+    }
     if (flag > 5.5) {
-      // JUNGLE FLOOR grass (flag 6): a few wild flowers (never white), in small patches (~14 m) and only a few elsewhere; the rest is a rich mix of all the plain grass kinds
+      // JUNGLE FLOOR grass (flag 6): a few wild flowers (never white), in small patches (~14 m) and only a few elsewhere; the rest is a rich mix of the plain grass kinds + broad-leaf seedlings (leafy) and a little trefoil
       if (lod === 0 && h2 < (vnoise(wx / 14 + 7, wz / 14 - 3) > 0.62 ? 0.26 : 0.05)) return flowerOf(h3);
-      return h1 < 0.3 ? GrassType.wild : h1 < 0.5 ? GrassType.lawn : h1 < 0.68 ? GrassType.clump : h1 < 0.8 ? GrassType.seed : h1 < 0.91 ? GrassType.tussock : GrassType.tussockWide;
+      return h1 < 0.26 ? GrassType.wild : h1 < 0.4 ? GrassType.lawn : h1 < 0.52 ? GrassType.clump : h1 < 0.72 ? GrassType.leafy : h1 < 0.78 ? GrassType.trefoil : h1 < 0.86 ? GrassType.seed : h1 < 0.94 ? GrassType.tussock : GrassType.tussockWide;
     }
     if (flag > 4.5) {
       // MEDIAN grass (flag 5): the game's grass kinds, and a share of the game's wild flowers (never white ones) in the near ring
@@ -312,18 +321,22 @@ export class GrassManager {
     }
     if (flag > 3.5) {
       // DENSE extra single grass (flag 4): plain grass kinds only, never a flower and never a clump
-      type = h1 < 0.18 ? GrassType.wild : h1 < 0.88 ? GrassType.lawn : h1 < 0.94 ? GrassType.clump : GrassType.seed;
-      if (dry > 0.5 && type === GrassType.lawn) type = GrassType.wild;
+      type = h1 < 0.16 ? GrassType.wild : h1 < 0.78 ? GrassType.lawn : h1 < 0.84 ? GrassType.clump : h1 < 0.94 ? GrassType.leafy : GrassType.trefoil;
+      if (dry > 0.5 && (type === GrassType.lawn || isGrassLeafy(type))) type = GrassType.wild;
       return type + EXTRA;
     }
-    if ((flag > 0.5 && flag < 1.5) || (flag > 2.5 && flag < 3.5)) {
-      // a big grass clump (tussock): two shapes, mixed by the hash (flag 3 = tall clump at a tree base / fence in the city)
+    if (flag > 0.5 && flag < 1.5) {
+      // a big grass clump of the open land (flag 1): upright tussock, wide arching tussock, and the tall savanna bunch with seed plumes (reference photo), mixed by the hash
+      return h1 < 0.35 ? GrassType.tussock : h1 < 0.62 ? GrassType.tussockWide : GrassType.tussockSeed;
+    }
+    if (flag > 2.5 && flag < 3.5) {
+      // flag 3 = tall clump at a tree base / fence in the city
       return h1 < 0.55 ? GrassType.tussock : GrassType.tussockWide;
     }
     if (flag > 1.5) {
       // CITY LAWN tuft (flag 2): short fine lawn, a few broad-leaf tufts, and small white / pink flowers (daisy, clover, buttercup) in the near ring
       if (lod === 0 && h2 < G.city.flowerShare) return flowerOf(h3);
-      return h1 < 0.82 ? GrassType.lawn : h1 < 0.94 ? GrassType.clump : GrassType.wild;
+      return h1 < 0.74 ? GrassType.lawn : h1 < 0.84 ? GrassType.clump : h1 < 0.89 ? GrassType.leafy : h1 < 0.96 ? GrassType.trefoil : GrassType.wild; // lawn weeds: a little broad-leaf and clover
     }
     // flower patches (value noise, ~25 m) with one dominant species per patch (another noise, ~60 m); never on dry high ground
     const patch = vnoise(wx / 22, wz / 22);
@@ -335,8 +348,9 @@ export class GrassManager {
       // 70 % the dominant species of the patch, 30 % a random other flower so the meadow is mixed, not a single colour
       return h3 < 0.7 ? dominant : GrassType.daisy + Math.floor(((h3 - 0.7) / 0.3) * 6) % 6;
     }
-    type = h1 < 0.18 ? GrassType.wild : h1 < 0.88 ? GrassType.lawn : h1 < 0.94 ? GrassType.clump : GrassType.seed;
-    if (dry > 0.5 && type === GrassType.lawn) type = GrassType.wild;
+    // open meadow / tree-base grass: blades with broad-leaf ground cover (leafy) and clover (trefoil) growing between them, like a real forest floor
+    type = h1 < 0.16 ? GrassType.wild : h1 < 0.68 ? GrassType.lawn : h1 < 0.76 ? GrassType.clump : h1 < 0.88 ? GrassType.leafy : h1 < 0.95 ? GrassType.trefoil : GrassType.seed;
+    if (dry > 0.5 && (type === GrassType.lawn || isGrassLeafy(type))) type = GrassType.wild;
     return type;
   }
 
@@ -357,38 +371,38 @@ export class GrassManager {
     // SIZE (metres, not model scale): a meadow tuft's tallest blade is up to tuft.maxHeight (0.6 m), a flower up to tuft.flowerMaxHeight (0.4 m),
     // a big clump up to clump.maxHeight (1 m); the mown city lawn keeps its old 0.2 m x city.height.
     const top = topOf(geoms[type]);
-    const wide = type === GrassType.lawn ? 1.1 : type === GrassType.wild ? 0.95 : 1;
+    const wide = type === GrassType.lawn ? 1.1 : type === GrassType.wild ? 0.95 : type === GrassType.leafy ? 0.55 : type === GrassType.trefoil ? 0.9 : 1;
     const lawnTuft = flag > 1.5 && flag < 2.5;
-    if (type >= GrassType.tussock) {
-      // clump: the larger its placement scale (0.75..1.45 x edge / base factors), the taller it is, never above clump.maxHeight
+    if (isGrassClump(type)) {
+      // clump: the larger its placement scale (0.75..1.45 x edge / base factors), the taller it is, never above clump.maxHeight (the seed-plume bunch is `clump.seedTall` x taller)
       const rel = Math.min(1, sc / 1.2);
-      const ys = (G.clump.maxHeight * (0.55 + 0.45 * rel) * (0.8 + 0.2 * h2)) / top;
+      const ys = (G.clump.maxHeight * (type === GrassType.tussockSeed ? G.clump.seedTall : 1) * (0.55 + 0.45 * rel) * (0.8 + 0.2 * h2)) / top;
       const cw = ys * ring.clumpSize * G.clump.width;
       dummy.scale.set(cw, ys, cw);
     } else {
       // tuft: height from the placement scale (small at the rim of a patch) and the hash; the far rings make a tuft a bit wider (fewer tufts)
       const rel = Math.min(1, sc / 1.5);
       const v = G.tuft.min + (1 - G.tuft.min) * (0.5 * rel + 0.5 * h2 ** 1.2);
-      const isFlower = type >= GrassType.daisy && type <= GrassType.clover;
-      const maxH = lawnTuft ? G.tuft.lawnMaxHeight * G.city.height : isFlower ? G.tuft.flowerMaxHeight : G.tuft.maxHeight;
+      const isFlower = isGrassFlower(type);
+      const maxH = lawnTuft ? G.tuft.lawnMaxHeight * G.city.height : isFlower ? G.tuft.flowerMaxHeight : type === GrassType.trefoil ? G.leafy.trefoilHeight : type === GrassType.leafy ? G.leafy.maxHeight : G.tuft.maxHeight;
       const ys = (maxH * v) / top;
       const w = ys * wide * ring.size * (lawnTuft ? G.tuft.lawnWidthScale : G.widthScale);
       dummy.scale.set(w, ys, w);
     }
-    if (flag > 5.5) {
-      // JUNGLE FLOOR (2026-11-21): short grass, flowers standing a little above it, clumps lower than before
-      const isFl = type >= GrassType.daisy && type <= GrassType.clover;
-      dummy.scale.y *= isFl ? G.jungle.tallFlower : type >= GrassType.tussock ? G.jungle.tallClump : G.jungle.tall;
+    if (flag > 8.5 && isGrassFlower(type)) dummy.scale.y *= 1.35; // park beds: fuller, taller flowers
+    if (flag > 5.5 && flag < 6.5) {
+      // JUNGLE FLOOR (2026-11-21): short grass, flowers standing a little above it, clumps lower than before (the broad-leaf ground cover keeps its own size)
+      const isFl = isGrassFlower(type);
+      dummy.scale.y *= isFl ? G.jungle.tallFlower : isGrassClump(type) ? G.jungle.tallClump : isGrassLeafy(type) ? 1 : G.jungle.tall;
     }
     dummy.updateMatrix();
     mesh.setMatrixAt(slot, dummy.matrix);
-    const t = 1; // FIXED brightness: every tuft has the same dark green
     // COLOUR VARIATION: every tuft is fresh green, yellow-green or straw (shares: Config grass.look). A hash of the tuft's position picks the class;
     // brighter tufts lean yellow-green like sun-lit, drier grass. The city lawn has no straw.
     const cityLawn = flag > 1.5 && flag < 3.5;
     const hc = Math.sin(data[o] * 39.3468 + data[o + 2] * 17.1313 + 5.7) * 43758.5453;
     const pick = hc - Math.floor(hc);
-    const jungleFloor = flag > 5.5;
+    const jungleFloor = flag > 5.5 && flag < 6.5;
     // REAL GRASS COLOURS (2026-11-21): every tuft picks its own colour from a palette (position hash, never changes): fresh green, yellow-green, olive,
     // blue-green, deep green, light lime, a few golden-dry. The city lawn stays in the green family, the shady jungle floor is lighter.
     const pal = cityLawn ? LAWN_PALETTE : jungleFloor ? JUNGLE_PALETTE : GRASS_PALETTE;
@@ -402,9 +416,13 @@ export class GrassManager {
       }
     }
     const hb = Math.sin(data[o] * 7.7 + data[o + 2] * 3.1 + 1.3) * 43758.5453;
-    const bright = 0.88 + 0.24 * (hb - Math.floor(hb));
+    const bright = (0.8 + 0.4 * (hb - Math.floor(hb))) * (isGrassLeafy(type) ? 1.12 : 1); // broad leaves are a little fresher / lighter than the blades round them
     const pc = pal[ci];
-    color.setRGB(pc[0] * bright * t, pc[1] * bright * t, pc[2] * bright * t, THREE.SRGBColorSpace);
+    // PAINTED GRASS (2026-11-21): the cards already carry real greens, so the tuft colour is only a TINT around 1 (the palette colour relative to the fresh green, softened): fresh green = no change,
+    // yellow-green = warmer, olive / golden-dry = browner, deep green = darker. The flower tufts' own blades are tinted dark green in GrassAssets (they have no picture).
+    const tn = (v: number, ref: number, cap: number): number => Math.min(cap, Math.pow(Math.max(v, 0.001) / ref, 0.8));
+    const dry = Math.max(0, Math.min(1, (pc[0] - 0.3) / 0.16)); // golden-dry / straw tufts: less green, so they read yellow-brown, not lime
+    color.setRGB(tn(pc[0], 0.12, 1.8 - 0.4 * dry) * bright, tn(pc[1], 0.36, 1.25) * (1 - 0.1 * dry) * bright, Math.min(1.1, tn(pc[2], 0.08, 1.5)) * (1 - 0.1 * dry) * bright);
     mesh.setColorAt(slot, color);
   }
 

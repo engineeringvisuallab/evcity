@@ -1214,6 +1214,152 @@ function leafLitter(detail: number): THREE.BufferGeometry {
   return m.build();
 }
 
+/**
+ * JUNGLE VINES (2026-11-21, from a photo of a real rain forest: thin leaning stems, long diagonal limbs, wiry vines hanging from the canopy). Two models, both without colliders
+ * (TREE_TRUNK r 0.03), placed by TreePlacement.cellVines in the dense jungle (near chunks only). Every vertex stays above the ground (y >= 0).
+ */
+/** Grey-brown, wiry vine bark and the paler bark of slim young stems (bark tile times a tint). */
+const VINE_BARK: readonly [number, number, number] = [1.12, 1.0, 0.82];
+const STEM_BARK: readonly [number, number, number] = [1.28, 1.18, 1.04];
+
+/** Point at fraction t (0..1) along a polyline. */
+function vinePoint(pts: THREE.Vector3[], t: number): THREE.Vector3 {
+  const f = Math.min(0.9999, Math.max(0, t)) * (pts.length - 1);
+  const i = Math.floor(f);
+  return pts[i].clone().lerp(pts[i + 1], f - i);
+}
+
+/** LIANA (~8-12 m at scale 1): 3-5 thin woody vines hanging from the canopy down to the ground (some stop a little above it), a few small lobed leaves on each, and one thick diagonal vine made of two strands twisted round each other. */
+function liana(detail: number): THREE.BufferGeometry {
+  const r = mulberry32(571);
+  const m = new Mesh();
+  const near = detail === 0;
+  const vines = near ? 5 : 3;
+  const seg = near ? 4 : 3;
+  const N = near ? 7 : 5;
+  for (let k = 0; k < vines; k++) {
+    const a = (k / vines) * Math.PI * 2 + r() * 1.1;
+    const rad = 0.3 + r() * 1.5;
+    const topY = 8.5 + r() * 3.5;
+    const endY = r() < 0.65 ? 0.05 : 0.5 + r() * 2.2; // most reach the ground, a few end in the air
+    const x0 = Math.cos(a) * rad, z0 = Math.sin(a) * rad;
+    const dx = (r() - 0.5) * 1.6, dz = (r() - 0.5) * 1.6;
+    const ph = r() * 6.28, amp = 0.12 + r() * 0.25;
+    const base = 0.016 + r() * 0.03;
+    const pts: THREE.Vector3[] = [];
+    const rr: number[] = [];
+    for (let i = 0; i < N; i++) {
+      const t = i / (N - 1);
+      const env = Math.sin(Math.PI * Math.min(1, t * 1.05));
+      pts.push(V3(x0 + dx * t * t + Math.sin(t * Math.PI * 2.2 + ph) * amp * env, lerp(topY, endY, t), z0 + dz * t * t + Math.cos(t * Math.PI * 1.7 + ph) * amp * 0.7 * env));
+      rr.push(base * lerp(1, 0.55, t));
+    }
+    m.tube(pts, rr, seg, 0.9, TILE_BARK, VINE_BARK);
+    // a few small leaves, mostly in the upper half where the light reaches
+    const nl = near ? 12 : 5; // a leafy vine, like the real thing
+    for (let l = 0; l < nl; l++) {
+      const t = 0.06 + 0.92 * Math.pow(r(), 1.25);
+      const p = vinePoint(pts, t);
+      const out = V3(r() - 0.5, 0.15, r() - 0.5).normalize();
+      const sz = lerp(0.42, 0.72, r());
+      m.card(p, out, V3(0, 1, 0), sz, sz * 1.05, r() < 0.7 ? TILE_LOBED : TILE_LEAF, r() * Math.PI * 2, out, lerp(0.85, 1.12, r()), r() < 0.5, leafTint(r, 0.2));
+    }
+  }
+  // the thick diagonal vine: rises from the ground at ~55 degrees with a lazy S-bend; near detail adds a second strand winding round it (a twisted rope)
+  const D = near ? 9 : 5;
+  const core: THREE.Vector3[] = [];
+  for (let i = 0; i < D; i++) {
+    const t = i / (D - 1);
+    core.push(V3(lerp(-1.5, 2.1, t) + Math.sin(t * Math.PI * 2) * 0.18, 0.12 + 7.2 * Math.pow(t, 0.9), lerp(-0.5, 0.9, t) + Math.sin(t * Math.PI * 1.5 + 0.8) * 0.45));
+  }
+  m.tube(core, core.map((_, i) => lerp(0.075, 0.035, i / (D - 1))), near ? 5 : 3, 0.95, TILE_BARK, VINE_BARK);
+  if (near) {
+    const twist: THREE.Vector3[] = core.map((p, i) => {
+      const t = i / (D - 1);
+      const tan = core[Math.min(D - 1, i + 1)].clone().sub(core[Math.max(0, i - 1)]).normalize();
+      const u = new THREE.Vector3().crossVectors(tan, V3(0, 1, 0)).normalize();
+      const v = new THREE.Vector3().crossVectors(tan, u);
+      const th = t * Math.PI * 7;
+      return p.clone().addScaledVector(u, Math.cos(th) * 0.075).addScaledVector(v, Math.sin(th) * 0.075);
+    });
+    m.tube(twist.map((p) => V3(p.x, Math.max(0.03, p.y), p.z)), twist.map((_, i) => lerp(0.032, 0.018, i / (D - 1))), 4, 0.92, TILE_BARK, VINE_BARK);
+    for (let l = 0; l < 5; l++) {
+      const p = vinePoint(core, 0.3 + 0.65 * r());
+      const out = V3(r() - 0.5, 0.2, r() - 0.5).normalize();
+      m.card(p, out, V3(0, 1, 0), 0.45, 0.5, TILE_LOBED, r() * Math.PI * 2, out, lerp(0.9, 1.15, r()), r() < 0.5, leafTint(r, 0.2));
+    }
+  }
+  return m.build();
+}
+
+/** TANGLE (~4-9 m at scale 1): 4-6 slim young stems leaning every which way out of one spot, a few thin side limbs, sparse leaf sprays at the tips, and one long diagonal limb arching across them (like the criss-cross of thin trunks in a real jungle). */
+function tangle(detail: number): THREE.BufferGeometry {
+  const r = mulberry32(572);
+  const m = new Mesh();
+  const near = detail === 0;
+  const stems = near ? 6 : 4;
+  const seg = near ? 4 : 3;
+  const N = near ? 6 : 4;
+  const spray = (p: THREE.Vector3, dir: THREE.Vector3, n: number, size: number): void => {
+    for (let c = 0; c < n; c++) {
+      const nrm = unit(r).multiplyScalar(0.8).add(V3(0, 0.6, 0)).normalize();
+      const q = p.clone().addScaledVector(dir, r() * 0.25).add(V3((r() - 0.5) * 0.5, (r() - 0.3) * 0.4, (r() - 0.5) * 0.5));
+      const sz = size * lerp(0.75, 1.15, r());
+      m.card(q, nrm, V3(0, 1, 0), sz, sz * 1.05, r() < 0.8 ? TILE_LEAF : TILE_LOBED, r() * Math.PI * 2, nrm, lerp(0.88, 1.15, r()), r() < 0.5, leafTint(r, 0.22));
+    }
+  };
+  for (let k = 0; k < stems; k++) {
+    const a = (k / stems) * Math.PI * 2 + r() * 0.8;
+    const bx = Math.cos(a) * (0.1 + r() * 0.45), bz = Math.sin(a) * (0.1 + r() * 0.45);
+    const la = a + (r() - 0.5) * 1.3; // lean direction
+    const lean = 0.12 + r() * 0.5;
+    const H = 4.5 + r() * 4.3;
+    const lx = Math.cos(la), lz = Math.sin(la);
+    const curve = (r() - 0.5) * 0.9;
+    const pts: THREE.Vector3[] = [];
+    for (let i = 0; i < N; i++) {
+      const t = i / (N - 1);
+      const side = Math.sin(t * Math.PI) * curve;
+      pts.push(V3(bx + lx * H * lean * Math.pow(t, 1.3) - lz * side, H * t * (1 - 0.25 * lean), bz + lz * H * lean * Math.pow(t, 1.3) + lx * side));
+    }
+    const r0 = 0.05 + r() * 0.06;
+    m.tube(pts, pts.map((_, i) => lerp(r0, 0.012, i / (N - 1))), seg, 0.95, TILE_BARK, STEM_BARK);
+    const top = pts[N - 1];
+    const tip = top.clone().sub(pts[N - 2]).normalize();
+    spray(top, tip, near ? 6 : 3, 1.05);
+    if (near) {
+      for (let b = 0; b < 2; b++) {
+        const t = 0.4 + 0.4 * r() + b * 0.05;
+        const p0 = vinePoint(pts, t);
+        const dir = V3(r() - 0.5, 0.55 + 0.4 * r(), r() - 0.5).normalize();
+        const len = 1.1 + r() * 1.6;
+        const p1 = p0.clone().addScaledVector(dir, len * 0.5);
+        const p2 = p0.clone().addScaledVector(dir, len).add(V3(0, -0.12, 0));
+        m.tube([p0, p1, p2], [0.02, 0.014, 0.006], 3, 0.95, TILE_BARK, STEM_BARK);
+        spray(p2, dir, 3, 0.8);
+      }
+    }
+  }
+  // the long diagonal limb: from just above the ground on one side, arching up and across the stems
+  const D = near ? 7 : 4;
+  const limb: THREE.Vector3[] = [];
+  for (let i = 0; i < D; i++) {
+    const t = i / (D - 1);
+    limb.push(V3(lerp(-1.6, 2.4, t), 0.3 + 5.2 * Math.pow(t, 0.85) + Math.sin(t * Math.PI) * 0.35, lerp(0.5, -0.7, t) + Math.sin(t * Math.PI * 1.3) * 0.3));
+  }
+  m.tube(limb, limb.map((_, i) => lerp(0.07, 0.025, i / (D - 1))), near ? 5 : 3, 0.95, TILE_BARK, STEM_BARK);
+  if (near) {
+    for (let b = 0; b < 3; b++) {
+      const p0 = vinePoint(limb, 0.3 + 0.2 * b + 0.1 * r());
+      const dir = V3(r() - 0.5, 0.5 + 0.4 * r(), r() - 0.5).normalize();
+      const p2 = p0.clone().addScaledVector(dir, 0.9 + r() * 0.9);
+      m.tube([p0, p0.clone().lerp(p2, 0.5), p2], [0.016, 0.011, 0.005], 3, 0.95, TILE_BARK, STEM_BARK);
+      spray(p2, dir, 2, 0.6);
+    }
+  }
+  return m.build();
+}
+
 /** Geometries (shared by all chunks, never disposed per chunk) + one material with wind sway. */
 export class TreeAssets {
   /** [kind][detail] */
@@ -1247,6 +1393,8 @@ export class TreeAssets {
       [TreeKind.leafLitter]: leafLitter,
       [TreeKind.gum]: gum,
       [TreeKind.gum2]: gum2,
+      [TreeKind.liana]: liana,
+      [TreeKind.tangle]: tangle,
       ...PALM_MAKERS,
     };
     for (let k = 0; k < TREE_KIND_COUNT; k++) this.geometries.push([makers[k](0), makers[k](1)]);
