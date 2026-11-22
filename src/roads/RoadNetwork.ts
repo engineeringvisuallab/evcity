@@ -487,6 +487,9 @@ export class RoadNetwork {
           return { p: [n.cx + ((x - n.cx) / dl) * want, n.cz + ((z - n.cz) / dl) * want], y: n.y, d: n.d };
         };
         const GAP = 0.3, STEP = 4;
+        // STEP 5 (user 2026-11-22: 'the tails are not connected to the main line'): after the side-by-side part (0.3 m off the paved edge) each tail gets a MERGE ZONE of ME m: the lane moves INTO the pavement of the main road until its outer
+        // edge is flush with the paved edge (centre distance = halfWidth main - halfWidth tail); level = main level - 2 cm at the very tip (the main road lies on top, no z-fight). Same method as the existing tails, the old part is unchanged.
+        const ME = 25, DY = 0.02;
         // STEP 2 (user 2026-11-22: 'flyover start / end too far, bring closer'): convergence length per tail (was 100 m for all, M4L 110 m). Grade <= 5 % is checked by rte-lane-check L6.
         const LT_M3S = 50, LT_M3N = 50, LT_M4G = 70, LT_M4L = 150, LC_M4L = 90;
         const nM3 = M3.x.length - 1, nM4 = M4.x.length - 1;
@@ -495,6 +498,10 @@ export class RoadNetwork {
           const hw = 4.85, pD = RTE_M3_DATA.pts[0], yD = RTE_M3_DATA.ys[0], p8 = [M3.x[0], M3.z[0]], y8 = M3.deckY[0];
           const LT = LT_M3S, uD = uOf(pD[0], pD[1]), uTip = uD - LT, dataD = -vOf(pD[0], pD[1]), tipD = ring.halfWidth + hw + GAP, off = yD - near(ring, pD[0], pD[1]).y;
           const pts: number[][] = [], ys: number[] = [];
+          for (let u = uTip - ME; u < uTip - 1e-6; u += STEP) {                      // STEP 5 merge zone (flush inside the ring pavement)
+            const e = sm((uTip - u) / ME), q = W(u, -dataD), m = moveTo(ring, q[0], q[1], tipD + (ring.halfWidth - hw - tipD) * e);
+            pts.push(m.p); ys.push(m.y - DY * e);
+          }
           for (let u = uTip; u < uD - 1e-6; u += STEP) {
             const k = (u - uTip) / LT, q = W(u, -dataD), dq = near(ring, q[0], q[1]).d, m = moveTo(ring, q[0], q[1], tipD + (dq - tipD) * sm(k));
             pts.push(m.p); ys.push(m.y + off * sm(k));
@@ -511,12 +518,20 @@ export class RoadNetwork {
             const k = (d - dN) / LT, q = W(uN, d), dq = near(armR, q[0], q[1]).d, m = moveTo(armR, q[0], q[1], dq + (tipD - dq) * sm(k));
             pts.push(m.p); ys.push(m.y + off * (1 - sm(k)));
           }
+          for (let d = dN + LT + STEP; d <= dN + LT + ME + 1e-6; d += STEP) {          // STEP 5 merge zone
+            const e = sm((d - dN - LT) / ME), q = W(uN, d), m = moveTo(armR, q[0], q[1], tipD + (armR.halfWidth - hw - tipD) * e);
+            pts.push(m.p); ys.push(m.y - DY * e);
+          }
           emit('RTE-TAIL-M3N', pts, ys, hw);
         }
         // (c) M4 gore at the arm: from the tip beside the arm (d 375) to the first bridge section (s 0, d 275)
         {
           const LT = LT_M4G, hw = 4.85, p0 = [M4.x[0], M4.z[0]], y0 = M4.deckY[0], d0 = vOf(p0[0], p0[1]), u0 = uOf(p0[0], p0[1]), tipD = armR.halfWidth + hw + GAP, off = y0 - near(armR, p0[0], p0[1]).y;
           const pts: number[][] = [], ys: number[] = [];
+          for (let d = d0 + LT + ME; d > d0 + LT + 1e-6; d -= STEP) {                // STEP 5 merge zone (flush inside the arm pavement)
+            const e = sm((d - d0 - LT) / ME), q = W(u0, d), m = moveTo(armR, q[0], q[1], tipD + (armR.halfWidth - hw - tipD) * e);
+            pts.push(m.p); ys.push(m.y - DY * e);
+          }
           for (let d = d0 + LT; d > d0 + 1e-6; d -= STEP) {
             const k = (d0 + LT - d) / LT, q = W(u0, d), dq = near(armR, q[0], q[1]).d, m = moveTo(armR, q[0], q[1], tipD + (dq - tipD) * sm(k));
             pts.push(m.p); ys.push(m.y + off * sm(k));
@@ -535,6 +550,11 @@ export class RoadNetwork {
           for (const i of idx) {
             const u = uOf(dd[i][0], dd[i][1]), w = sm((u - u1) / LC_M4L), dq = near(ring, dd[i][0], dd[i][1]).d, m = moveTo(ring, dd[i][0], dd[i][1], dq + (tipD - dq) * w);
             pts.push(m.p); ys.push(yE + (yT - yE) * Math.min(1, (u - uE) / (uT - uE)));
+          }
+          const vT = vOf(dd[iT][0], dd[iT][1]);
+          for (let u = uT + STEP; u <= uT + ME + 1e-6; u += STEP) {                  // STEP 5 merge zone
+            const e = sm((u - uT) / ME), q = W(u, vT), m = moveTo(ring, q[0], q[1], tipD + (ring.halfWidth - hw - tipD) * e);
+            pts.push(m.p); ys.push(m.y - DY * e);
           }
           emit('RTE-TAIL-M4L', pts, ys, hw);
         }

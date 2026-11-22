@@ -209,10 +209,11 @@ function buildWedge(B: Builder, w: RteWedgeStruct): void {
   for (const p of w.piers) pierMesh(B, p);
 }
 
-export function buildRteMesh(opts: { skipArmWindow1?: boolean } = {}): RteMeshData {
+export function buildRteMesh(opts: { skipArmWindow1?: boolean; skipArmWedges?: boolean } = {}): RteMeshData {
   const B = new Builder();
   for (const r of RTE_RAMP_STRUCTS) buildRamp(B, r);
   for (const w of RTE_WEDGE_STRUCTS) {
+    if (opts.skipArmWedges) continue;   // STEP 5 (user 2026-11-22: old strips beside the arm viaduct / stream must go): no wedge / wing strip beside the arm at all, only the ramp bridges M3 / M4
     if (opts.skipArmWindow1 && w.window[0] === 160 && w.window[1] === 271) continue;   // arm viaduct 160..271 is a ground road now (Config.roads.junctionRteArmGround): no wedge deck beside it
     buildWedge(B, w);
   }

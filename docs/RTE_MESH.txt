@@ -12,8 +12,9 @@ PASS  C8 every pier has its column foot at footY and its cap top at the deck sof
 PASS  C9 triangle budget <= 60000 (ASSUMED; one mesh, vertex colours, no textures)  8782
 PASS  C10 the builder is deterministic (second run identical)  
 PASS  C11 the mesh stays near the data: highest point <= highest deck + parapet / lamp height + 0.1 m  x 2109..2519, z 992..1568, y 18.14..56.00 (highest deck 47.00)
+PASS  C12 skipArmWedges removes every arm wedge / wing strip and keeps the ramp bridges (fewer triangles, ramps unchanged, config default = off)  7434 tris without wedges, 8168 with
 
 NOT RUN  three.js layer (RteLayer.ts), Config / Engine wiring, npx tsc --noEmit of the whole project, npm run build, the game, the look of the mesh in the game, collision (cars / player on the decks), terrain carve and embankment under the ramps, ground-level lanes and slips (A2S, S2A, added lanes), signs, water check (sc.water > sc.h), Validate.ts.
 ASSUMED  parapet 0.9 x 0.4 m, edge line 0.7 m from the deck edge, lane divider on while the deck is >= 8 m wide, lamps every 40 m 9 m high, arrows every 100 m, approach slab 0.5 m, wing net strip starts 0.15 m outside the nominal width centre, 60 000 triangle budget.
 
-SUMMARY: ALL PASS (13 PASS, 0 FAIL)
+SUMMARY: ALL PASS (14 PASS, 0 FAIL)

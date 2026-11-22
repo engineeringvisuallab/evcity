@@ -21,7 +21,7 @@ export class RteLayer {
   }
 
   private build(): void {
-    const d = buildRteMesh({ skipArmWindow1: Config.roads.junctionRteArmGround.enabled });
+    const d = buildRteMesh({ skipArmWindow1: Config.roads.junctionRteArmGround.enabled, skipArmWedges: !Config.roads.junctionRteWedges.enabled });
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(d.positions, 3));
     g.setAttribute('color', new THREE.Float32BufferAttribute(d.colors, 3));

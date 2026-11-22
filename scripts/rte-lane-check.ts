@@ -108,15 +108,17 @@ CHK('L6 max grade of the lanes and tails <= 5 %', mg <= 0.05, `${(mg * 100).toFi
     tipLvl = Math.max(tipLvl, Math.abs(rd.ys[iT] - mainY(main, tx, tz)));
     const uu = uOfP(tx, tz), dd = dOf(tx, tz);
     const clrTip = distTo(main, tx, tz) - main.halfWidth - rd.halfWidth;
-    tipGap = Math.min(tipGap, clrTip); tipGapMax = Math.max(tipGapMax, clrTip);
-    if (w.main === 'ring' ? (t.name === 'RTE-TAIL-M3S' || t.name === 'RTE-TAIL-M4L') && dd >= 0 : (w.st.name === 'M3' ? uu < 0 : uu > 0)) sideBad++;
+    const flushDev = Math.abs(clrTip + 2 * rd.halfWidth);   // STEP 5: the tip lies fully INSIDE the main pavement, its outer edge flush with the paved edge (clearance = -2 * half width)
+    tipGap = Math.max(tipGap === 1e9 ? 0 : tipGap, flushDev); tipGapMax = Math.max(tipGapMax, clrTip);
+    const ub = uOfP(bx, bz), db = dOf(bx, bz);   // side of the main road: judged at the bridge end (at the tip the tail is inside the pavement)
+    if (w.main === 'ring' ? db >= 0 : (w.st.name === 'M3' ? ub < 0 : ub > 0)) sideBad++;
     info.push(`${t.name}: tip u ${uu.toFixed(1)} d ${dd.toFixed(1)} y ${rd.ys[iT].toFixed(2)}, bridge end y ${rd.ys[iB].toFixed(2)}`);
   }
   CHK('T1 the tip of each tail has the level of the main road (ring M8 / arm J1-E) next to it (<= 5 cm)', tails.length === 4 && tipLvl <= 0.05, `worst ${tipLvl.toFixed(3)} m; ${info.join(' | ')}`);
-  CHK('T2 the tip lane edge is 0.3 .. 0.5 m off the paved edge of the main road (side by side, no overlap; real distance from the built centre line)', tails.length === 4 && tipGap >= 0.29 && tipGapMax <= 0.35, `${tipGap.toFixed(2)} .. ${tipGapMax.toFixed(2)} m`);
+  CHK('T2 (STEP 5, merge) the tip of each tail lies fully inside the main pavement, its outer edge flush with the paved edge (<= 0.1 m; real distance from the built centre line)', tails.length === 4 && tipGap <= 0.1, `worst deviation from flush ${tipGap.toFixed(2)} m`);
   CHK('T3 the other end of each tail starts exactly at the bridge end (plan <= 0.1 m, level <= 5 cm)', tails.length === 4 && endXZ <= 0.1 && endY <= 0.05, `plan ${endXZ.toFixed(3)} m, level ${endY.toFixed(3)} m`);
   CHK('T4 road width of each tail = the deck width at that end (9.7 / 6.18 / 9.7 / 6.1 m)', tails.length === 4 && wOk === 4, `${wOk} of 4 (halfWidth ${tails.map(t => net.roads[t.roadId].halfWidth).join(' / ')})`);
-  CHK('T5 each tail is on the correct side (M3S, M4L on ring B d < 0; M3N u > 0; M4G u < 0)', tails.length === 4 && sideBad === 0, `${sideBad} wrong`);
+  CHK('T5 each tail is on the correct side at its bridge end (M3S, M4L on ring B d < 0; M3N u > 0; M4G u < 0)', tails.length === 4 && sideBad === 0, `${sideBad} wrong`);
   CHK('T6 each tail <= 200 m long (STEP 2: convergence 50 / 50 / 70 / 150 m, plus the bridge-end lead-in)', tails.length === 4 && lenMax <= 200, `longest ${lenMax.toFixed(0)} m`);
   // T7 no overlap of a tail with any other road (existing roads, slips, other tails) except the own bridge end: centre line distance >= sum of half widths - 0.05, sampled every point of the tail vs every segment
   let minSep = 1e9, sepAt = '';
@@ -133,9 +135,21 @@ CHK('L6 max grade of the lanes and tails <= 5 %', mg <= 0.05, `${(mg * 100).toFi
   }
   CHK('T7 no tail overlaps any road other than the main road it joins (edge gap >= 0 m, roads closer than 60 m checked)', minSep >= 0, `smallest edge gap ${minSep.toFixed(2)} m (${sepAt})`);
   // T8 tail edge vs the paved edge of the ring / arm along the whole tail (>= 0.29 m; ring paved half 22.1 on both sides, arm 22.1)
-  let minE = 1e9, eAt = '';
-  for (const t of tails) { const w = want[t.name]; if (!w) continue; const rd = net.roads[t.roadId], main = w.main === 'ring' ? ring : armR; for (let i = 0; i < rd.xs.length; i++) { const g = distTo(main, rd.xs[i], rd.zs[i]) - main.halfWidth - rd.halfWidth; if (g < minE) { minE = g; eAt = `${t.name} pt ${i}`; } } }
-  CHK('T8 along each tail the lane edge is >= 0.29 m outside the REAL paved edge of the main road it joins (built centre line + halfWidth)', minE >= 0.29, `smallest ${minE.toFixed(2)} m (${eAt})`);
+  // STEP 5: outside the last 30 m of tail length from the tip (the merge zone is 25 m along the main road) the edge stays >= 0.29 m off the paved edge; in the merge zone it moves INTO the pavement (never beyond flush, never back out)
+  let minE = 1e9, eAt = '', zoneBad = 0, zoneN = 0, zoneIn = 0, backOut = 0;
+  for (const t of tails) {
+    const w = want[t.name]; if (!w) continue; const rd = net.roads[t.roadId], main = w.main === 'ring' ? ring : armR, n = rd.xs.length;
+    const iT = Math.hypot(rd.xs[0] - w.st.x[w.end === 'first' ? 0 : w.st.x.length - 1], rd.zs[0] - w.st.z[w.end === 'first' ? 0 : w.st.x.length - 1]) < 1e-3 ? n - 1 : 0;   // tip = the end that is not the bridge end
+    const step = iT === 0 ? 1 : -1; let arc = 0, prevC = -1e9;
+    for (let k = 0, i = iT; k < n; k++, i += step) {
+      if (k > 0) arc += Math.hypot(rd.xs[i] - rd.xs[i - step], rd.zs[i] - rd.zs[i - step]);
+      const g = distTo(main, rd.xs[i], rd.zs[i]) - main.halfWidth - rd.halfWidth;      // + beside, - inside
+      if (arc > 30 + 1e-6) { if (g < minE) { minE = g; eAt = `${t.name} pt ${i}`; } }
+      else { zoneN++; if (g > 0.6 || g < -2 * rd.halfWidth - 0.1) zoneBad++; if (g < 0) zoneIn++; if (g < prevC - 0.05 && prevC > -1e8) backOut++; prevC = g; }
+    }
+  }
+  CHK('T8 along each tail (more than 30 m of tail length from the tip) the lane edge is >= 0.29 m outside the REAL paved edge of the main road it joins (built centre line + halfWidth)', minE >= 0.29, `smallest ${minE.toFixed(2)} m (${eAt})`);
+  CHK('T8b in the merge zone (last 30 m of tail length = 25 m along the main road) every tail lane edge is between flush-inside and 0.6 m beside the paved edge (the last metres of the old smooth convergence are included), and it never moves back out toward the tip', zoneBad === 0 && backOut === 0 && zoneN > 0 && zoneIn > 0, `${zoneN} points, ${zoneBad} outside the range, ${backOut} moving back out, ${zoneIn} inside the pavement`);
   // T9 piers of the OTHER ramp / own ramp: the tail edge >= 2.0 m from every pier centre of the ramp it does NOT belong to (the own ramp's bridge ends at the tail)
   let tp = 1e9, tpAt = '';
   for (const t of tails) { const w = want[t.name]; if (!w) continue; const rd = net.roads[t.roadId]; for (const st of RTE_RAMP_STRUCTS as any[]) { if (st.name === w.st.name) continue; for (const pr of st.piers as any[]) for (let i = 0; i + 1 < rd.xs.length; i++) { const ax = rd.xs[i], az = rd.zs[i], dx = rd.xs[i + 1] - ax, dz = rd.zs[i + 1] - az, l2 = dx * dx + dz * dz; const q = l2 > 0 ? Math.min(1, Math.max(0, ((pr.x - ax) * dx + (pr.z - az) * dz) / l2)) : 0; const g = Math.hypot(pr.x - (ax + dx * q), pr.z - (az + dz * q)) - rd.halfWidth - 1.5; if (g < tp) { tp = g; tpAt = `${t.name} / ${st.name} pier d ${dOf(pr.x, pr.z).toFixed(0)} u ${uOfP(pr.x, pr.z).toFixed(0)}`; } } } }

@@ -1,6 +1,7 @@
 // STEP RE-9 (headless): CHECK of src/roads/junction/RteMesh.ts (pure math, reads RteStructData.ts only; no game, no three.js, no terrain).
 // Run: npx tsx scripts/rte-mesh-check.ts docs      Writes docs/RTE_MESH.txt. Prints PASS / FAIL; what is not run is printed as NOT RUN.
 import { writeFileSync } from 'node:fs';
+import { Config } from '../src/core/Config';
 import { buildRteMesh, RTE_MESH } from '../src/roads/junction/RteMesh';
 import { RTE_RAMP_STRUCTS, RTE_WEDGE_STRUCTS, RTE_STRUCT_FRAME } from '../src/roads/junction/RteStructData';
 
@@ -108,6 +109,12 @@ CHK('C10 the builder is deterministic (second run identical)', m2.positions.leng
   for (let i = 0; i < pos.length; i += 3) { mnx = Math.min(mnx, pos[i]); mxx = Math.max(mxx, pos[i]); mny = Math.min(mny, pos[i + 1]); mxy = Math.max(mxy, pos[i + 1]); mnz = Math.min(mnz, pos[i + 2]); mxz = Math.max(mxz, pos[i + 2]); }
   const dmax = Math.max(...RTE_RAMP_STRUCTS.flatMap(r => r.deckY));
   CHK('C11 the mesh stays near the data: highest point <= highest deck + parapet / lamp height + 0.1 m', mxy <= dmax + RTE_MESH.lampH + 0.1, `x ${f(mnx, 0)}..${f(mxx, 0)}, z ${f(mnz, 0)}..${f(mxz, 0)}, y ${f(mny)}..${f(mxy)} (highest deck ${f(dmax)})`);
+}
+
+// C12 (STEP 5, user 2026-11-22: old strips beside the arm must go): the game default (Config.roads.junctionRteWedges.enabled = false) draws NO wedge / wing strip, only M3 / M4
+{
+  const noW = buildRteMesh({ skipArmWindow1: true, skipArmWedges: true }), withW = buildRteMesh({ skipArmWindow1: true });
+  CHK('C12 skipArmWedges removes every arm wedge / wing strip and keeps the ramp bridges (fewer triangles, ramps unchanged, config default = off)', noW.stats.tris < withW.stats.tris && noW.stats.tris > 0 && Config.roads.junctionRteWedges.enabled === false, `${noW.stats.tris} tris without wedges, ${withW.stats.tris} with`);
 }
 
 P('');
