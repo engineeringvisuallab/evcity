@@ -1,0 +1,36 @@
+AUTO CONNECT AT GRADE, A-5: pad mesh + terrain carve (pilots JN163, JN033)
+  [PASS] flag OFF: no auto pads: RoadNetwork.autoPads is null
+  JN163: built (PASS)
+  JN033: built (PASS)
+  [PASS] flag ON: both pilots built: 2 pads of 2
+  [PASS] road data identical (flag ON vs OFF): hash -1290245636 / -1290245636 (no road point moved by the pads)
+--- JN163 T, area 422.41 m2, 3 legs
+  [PASS] pad equals the engine on the final roads: plane y0 27.75 / 27.75
+  [PASS] mesh numbers: 3088 vertices, 1064 triangles (surface 960, kerb 80, marks 24, island 0), 39 ms, 0 bad numbers, 0 bad indices
+  [PASS] mesh has every part: surface, kerbs, marks present
+  [PASS] mesh size: 1064 triangles (limit 20000 per pad)
+  [PASS] surface faces up: 0 surface triangles face down
+  [PASS] asphalt lies on the carved terrain (off the corridors): 14 asphalt vertices: biggest gap to terrain + 0.09 m = 0.0000 m (limit 0.005)
+  [PASS] asphalt never below the terrain, follows the old ribbon in the corridors: 1426 vertices in the leg corridors: from 0.000 to +0.093 m above terrain + 0.09 m (limit -0.005 .. +0.17)
+  [PASS] leg L-24 end level: pad level 27.51 m, road 27.51 m, terrain 27.51 m (step 0.00 m)
+  [PASS] leg R2-19 end level: pad level 28.28 m, road 28.28 m, terrain 28.28 m (step 0.00 m)
+  [PASS] leg R2-19 end level: pad level 27.37 m, road 27.37 m, terrain 27.37 m (step 0.00 m)
+  [PASS] terrain skirt is smooth: biggest height step between points 0.5 m apart on 16 rays 0..70 m: 0.27 m (roads, kerbs of the old layout included)
+  [PASS] flag OFF vs ON: terrain far from the pad identical: 3142 random points beyond 37.23 m from the centre: 0 changed; 544 of the points nearer changed (the carve)
+--- JN033 roundabout, area 1157.76 m2, 4 legs
+  [PASS] pad equals the engine on the final roads: plane y0 16.52 / 16.52
+  [PASS] mesh numbers: 35777 vertices, 12072 triangles (surface 11776, kerb 248, marks 0, island 48), 67 ms, 0 bad numbers, 0 bad indices
+  [PASS] mesh has every part: surface, kerbs, island present
+  [INFO] JN033 has NO markings: the engine (A-3 / A-4) makes no give-way line or zebra for this roundabout, so the mesh has none (open item, needs numbers from the user first)
+  [PASS] mesh size: 12072 triangles (limit 20000 per pad)
+  [PASS] surface faces up: 0 surface triangles face down
+  [PASS] asphalt lies on the carved terrain (off the corridors): 1710 asphalt vertices: biggest gap to terrain + 0.09 m = 0.0000 m (limit 0.005)
+  [PASS] asphalt never below the terrain, follows the old ribbon in the corridors: 15954 vertices in the leg corridors: from 0.000 to +0.085 m above terrain + 0.09 m (limit -0.005 .. +0.17)
+  [PASS] leg R2-37.1 end level: pad level 16.36 m, road 16.36 m, terrain 16.36 m (step 0.00 m)
+  [PASS] leg R2-34.2 end level: pad level 16.31 m, road 16.31 m, terrain 16.31 m (step 0.00 m)
+  [PASS] leg R2-37.2 end level: pad level 16.90 m, road 16.90 m, terrain 16.90 m (step 0.00 m)
+  [PASS] leg R2-34.1 end level: pad level 16.50 m, road 16.50 m, terrain 16.50 m (step 0.00 m)
+  [PASS] terrain skirt is smooth: biggest height step between points 0.5 m apart on 16 rays 0..70 m: 0.18 m (roads, kerbs of the old layout included)
+  [PASS] flag OFF vs ON: terrain far from the pad identical: 3051 random points beyond 43.42 m from the centre: 0 changed; 645 of the points nearer changed (the carve)
+  [PASS] no old junction pad overlaps an auto pad: 0 old pads, smallest gap n/a m
+RESULT ALL PASS

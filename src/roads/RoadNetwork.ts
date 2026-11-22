@@ -7,6 +7,8 @@ import { chunkKey, worldToChunkCoord } from '../world/WorldGrid';
 import type { BridgeSpec, CulvertSpec, JunctionSpec, PadSpec, RoadInfo, RoadKind, RoadSpec, SurfaceKind } from './RoadTypes';
 import { buildJunctionPads } from './Junctions';
 import { J1Terrain } from './junction/GroundJ1Terrain';
+import { buildAutoJunction, type PadResult } from './JunctionAuto';
+import { AutoPadTerrain } from './JunctionAutoTerrain';
 import { planLocalStreets } from './LocalRoads';
 import { CityPlan } from '../city/CityPlan';
 import { DIVIDED_SECTIONS, sectionFor } from './RoadSection';
@@ -143,6 +145,12 @@ export class RoadNetwork {
   private trim = new Map<number, Uint8Array>();
   /** STEP J1-e1: the ground-level J1 (pad + lane zones of the four arms), or null. Carves the terrain and keeps the EVLab pad off it. */
   j1: J1Terrain | null = null;
+  /** AUTO CONNECT AT GRADE (A-5, Config.roads.autoJunction): terrain carve + mesh data of the listed junction pads. null while the flag is off. */
+  autoPads: AutoPadTerrain | null = null;
+  /** What the auto pads did (checks, headless script scripts/junction-auto-mesh-check.ts): every listed id with its result. */
+  readonly autoInfo: { id: string; built: boolean; why: string }[] = [];
+  private autoOut = { w: 0, y: 0, inside: false };
+  private autoCells = new Set<number>();
   private j1Out = { w: 0, y: 0 };
   private j1Cells = new Set<number>();
   private padCells = new Map<number, number[]>();
@@ -333,6 +341,7 @@ export class RoadNetwork {
     this.chunkPads.clear();
     this.cells.clear();
     this.j1Cells.clear();
+    this.autoCells.clear();
     this.buildSegments();
   }
 
@@ -365,6 +374,7 @@ export class RoadNetwork {
     this.chunkPads.clear();
     this.cells.clear();
     this.j1Cells.clear();
+    this.autoCells.clear();
     this.buildSegments();
   }
 
@@ -392,6 +402,7 @@ export class RoadNetwork {
     this.chunkPads.clear();
     this.cells.clear();
     this.j1Cells.clear();
+    this.autoCells.clear();
     this.buildSegments();
   }
 
@@ -768,6 +779,7 @@ export class RoadNetwork {
     this.chunkPads.clear();
     this.cells.clear();
     this.j1Cells.clear();
+    this.autoCells.clear();
     this.buildSegments();
     return { roads: nr, pts: np, moved, maxShift };
   }
@@ -1422,6 +1434,33 @@ export class RoadNetwork {
   }
 
   private regCache: { n: number; reg: JunctionRegistry } | null = null;
+
+  /**
+   * AUTO CONNECT AT GRADE (A-5): runs the engine (JunctionAuto.buildAutoJunction) for the ids of Config.roads.autoJunction and keeps the pads whose checks ALL pass.
+   * Reads the roads, moves nothing. A listed id that is not a T / roundabout, not in the registry, or FAILs is skipped and noted in autoInfo (the game then keeps its old junction there).
+   */
+  private makeAutoPads(): AutoPadTerrain | null {
+    this.autoInfo.length = 0;
+    // a FRESH registry, not the cached one: the cache is keyed by the road COUNT, but reprofileResidential changes road heights without changing the count
+    const reg = buildJunctionRegistry(this.roads);
+    const others = reg.nodes.map((n) => ({ id: n.id, x: n.x, z: n.z }));
+    const tmp: TerrainSample = { h: 0, water: NaN, fx: 0, fz: 0 };
+    const ground = (x: number, z: number): { h: number; water: boolean } => {
+      this.natural(x, z, tmp);
+      return { h: tmp.h, water: !Number.isNaN(tmp.water) };
+    };
+    const pads: PadResult[] = [];
+    for (const id of Config.roads.autoJunction.ids) {
+      const n = reg.nodes.find((q) => q.id === id);
+      if (!n) { this.autoInfo.push({ id, built: false, why: 'not in the junction registry' }); continue; }
+      if (n.type !== 'T' && n.type !== 'roundabout') { this.autoInfo.push({ id, built: false, why: `type ${n.type} is not handled` }); continue; }
+      const res = buildAutoJunction({ node: n, roads: this.roads, others, ground });
+      if (!res.pass) { this.autoInfo.push({ id, built: false, why: 'checks FAIL: ' + res.checks.filter((c) => c.ok === false).map((c) => c.name).join('; ') }); continue; }
+      pads.push(res);
+      this.autoInfo.push({ id, built: true, why: 'PASS' });
+    }
+    return pads.length ? new AutoPadTerrain(pads) : null;
+  }
 
   /**
    * JUNCTION REGISTRY (user 2026-11-22: some junctions still came from the OLD road data): the junctions that REALLY exist in the finished roads
@@ -3658,6 +3697,18 @@ export class RoadNetwork {
       if (!l) this.chunkPads.set(ck, (l = []));
       l.push(p.id);
     }
+    // AUTO pads (flag, A-5): built from the roads as they are NOW (every call of buildSegments follows a road change; the last one sees the final roads)
+    this.autoCells.clear();
+    this.autoPads = Config.roads.autoJunction.enabled ? this.makeAutoPads() : null;
+    if (this.autoPads) {
+      for (const [cx0, cz0, r] of this.autoPads.cover()) {
+        for (let cz = Math.floor((cz0 - r) / CELL); cz <= Math.floor((cz0 + r) / CELL); cz++) for (let cx = Math.floor((cx0 - r) / CELL); cx <= Math.floor((cx0 + r) / CELL); cx++) {
+          const k = (cx + 512) * 1024 + (cz + 512);
+          this.autoCells.add(k);
+          if (!temp.has(k)) temp.set(k, []);
+        }
+      }
+    }
     if (this.j1) {
       for (const [cx0, cz0, r] of this.j1.cover()) {
         for (let cz = Math.floor((cz0 - r) / CELL); cz <= Math.floor((cz0 + r) / CELL); cz++) for (let cx = Math.floor((cx0 - r) / CELL); cx <= Math.floor((cx0 + r) / CELL); cx++) {
@@ -3734,6 +3785,12 @@ export class RoadNetwork {
       bw = this.j1Out.w;
       bd = bw >= 1 - 1e-6 ? -1 : (1 - bw) * 20;
       by = this.j1Out.y;
+    }
+    // AUTO pad (flag): inside its outline the terrain IS the pad level (wins over every road strip), around it a skirt of autoPads.emb metres blends back
+    if (this.autoPads && this.autoCells.has((Math.floor(x / CELL) + 512) * 1024 + (Math.floor(z / CELL) + 512)) && this.autoPads.sample(x, z, this.autoOut) && (this.autoOut.inside || this.autoOut.w > bw + 1e-6)) {
+      bw = this.autoOut.w;
+      bd = bw >= 1 - 1e-6 ? -1 : (1 - bw) * this.autoPads.emb;
+      by = this.autoOut.y;
     }
     for (let q = 0; q < segs.length; q++) {
       const s: number = segs[q];
@@ -3855,6 +3912,7 @@ export class RoadNetwork {
   /** Tyre surface under (x, z): asphalt on the road, gravel on the shoulder, 0 = natural ground. */
   surfaceAt(x: number, z: number): SurfaceKind {
     if (this.padAt(x, z)) return 1;
+    if (this.autoPads && this.autoCells.has((Math.floor(x / CELL) + 512) * 1024 + (Math.floor(z / CELL) + 512)) && this.autoPads.sample(x, z, this.autoOut) && this.autoOut.inside) return 1;
     const n = this.nearest(x, z, 0);
     if (!n) return 0;
     return n.d <= this.shw[n.s] && !this.searth[n.s] ? 1 : 2;
@@ -3913,6 +3971,7 @@ export class RoadNetwork {
     }
     // J1 (ground level): the pad / lane-zone ground counts as road ground (the EVLab pad and the grass keep off it)
     if (this.j1 && this.j1Cells.has((Math.floor(x / CELL) + 512) * 1024 + (Math.floor(z / CELL) + 512)) && this.j1.sample(x, z, this.j1Out) && this.j1Out.w > out[1]) out[1] = this.j1Out.w;
+    if (this.autoPads && this.autoCells.has((Math.floor(x / CELL) + 512) * 1024 + (Math.floor(z / CELL) + 512)) && this.autoPads.sample(x, z, this.autoOut) && this.autoOut.w > out[1]) out[1] = this.autoOut.w;
     for (let q = 0; q < segs.length; q++) {
       const s = segs[q];
       const abx = this.sbx[s] - this.sax[s];

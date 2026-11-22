@@ -1,0 +1,118 @@
+import * as fs from 'fs';
+import { Config } from '../src/core/Config';
+import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
+import { buildJunctionRegistry } from '../src/roads/JunctionRegistry';
+import { buildAutoJunction } from '../src/roads/JunctionAuto';
+import { buildAutoPadMesh, AUTO_LIFT } from '../src/roads/JunctionAutoMesh';
+import { pointInOutline } from '../src/roads/JunctionAutoTerrain';
+// AUTO CONNECT AT GRADE, A-5 (headless, no three.js): the pad mesh + the terrain carve of the 2 pilots, flag ON, compared with the same game with the flag OFF.
+// Run: node --experimental-transform-types --import ./scripts/reg.mjs scripts/junction-auto-mesh-check.ts docs [JNxxx JNyyy]  -> docs/STEPA5_OUTPUT.txt
+const out = process.argv[2] ?? 'docs';
+const ids = [process.argv[3] ?? 'JN163', process.argv[4] ?? 'JN033'];
+const lines: string[] = [];
+let fails = 0;
+const P = (s: string): void => { lines.push(s); console.log(s); };
+const T = (name: string, ok: boolean, text: string): void => { if (!ok) fails++; P(`  [${ok ? 'PASS' : 'FAIL'}] ${name}: ${text}`); };
+const f2 = (v: number): string => v.toFixed(2);
+const tmp: any = { h: 0, water: NaN, fx: 0, fz: 0 };
+const hash = (roads: any[]): string => { let h = 0; for (const r of roads) for (let i = 0; i < r.xs.length; i++) h = (h * 31 + Math.round(r.xs[i] * 100) + 7 * Math.round(r.zs[i] * 100) + 13 * Math.round(r.ys[i] * 100)) | 0; return String(h); };
+
+P('AUTO CONNECT AT GRADE, A-5: pad mesh + terrain carve (pilots ' + ids.join(', ') + ')');
+// ---- game with the flag OFF (baseline)
+Config.roads.autoJunction.enabled = false;
+const g0: any = new TerrainGenerator(Config.world.seed);
+T('flag OFF: no auto pads', g0.roads.autoPads === null, 'RoadNetwork.autoPads is ' + (g0.roads.autoPads === null ? 'null' : 'NOT null'));
+const hash0 = hash(g0.roads.roads);
+// ---- game with the flag ON
+Config.roads.autoJunction.enabled = true;
+Config.roads.autoJunction.ids = ids;
+const g1: any = new TerrainGenerator(Config.world.seed);
+const net = g1.roads;
+for (const a of net.autoInfo) P(`  ${a.id}: ${a.built ? 'built' : 'NOT built'} (${a.why})`);
+const terr = net.autoPads;
+T('flag ON: both pilots built', !!terr && terr.count === ids.length, `${terr ? terr.count : 0} pads of ${ids.length}`);
+T('road data identical (flag ON vs OFF)', hash(net.roads) === hash0, `hash ${hash0} / ${hash(net.roads)} (no road point moved by the pads)`);
+if (!terr) { fs.writeFileSync(`${out}/STEPA5_OUTPUT.txt`, lines.join('\n') + '\n'); process.exit(1); }
+
+// the engine run again on the FINAL roads must give the same pad as the game built (stale-height check)
+const reg = buildJunctionRegistry(net.roads);
+const others = reg.nodes.map((n: any) => ({ id: n.id, x: n.x, z: n.z }));
+const ground = (x: number, z: number): { h: number; water: boolean } => { g1.sampleGround(x, z, tmp); return { h: tmp.h, water: !Number.isNaN(tmp.water) }; };
+const o: any = { w: 0, y: 0, inside: false };
+for (let i = 0; i < terr.count; i++) {
+  const pad = terr.padAt(i);
+  P(`--- ${pad.id} ${pad.type}, area ${f2(pad.area)} m2, ${pad.legs.length} legs`);
+  const node = reg.nodes.find((n: any) => n.id === pad.id);
+  const again = buildAutoJunction({ node, roads: net.roads, others, ground });
+  T('pad equals the engine on the final roads', again.pass && Math.abs(again.plane.y0 - pad.plane.y0) < 1e-6 && again.outline.length === pad.outline.length, `plane y0 ${f2(pad.plane.y0)} / ${f2(again.plane.y0)}`);
+
+  // ---- mesh
+  const t0 = Date.now();
+  const m = buildAutoPadMesh(i, terr);
+  const nV = m.positions.length / 3;
+  let bad = 0; for (const v of m.positions) if (!Number.isFinite(v)) bad++;
+  let oob = 0; for (const k of m.indices) if (k < 0 || k >= nV) oob++;
+  T('mesh numbers', bad === 0 && oob === 0 && m.indices.length % 3 === 0 && m.indices.length / 3 === m.stats.tris, `${nV} vertices, ${m.stats.tris} triangles (surface ${m.stats.surfaceTris}, kerb ${m.stats.kerbTris}, marks ${m.stats.markTris}, island ${m.stats.islandTris}), ${Date.now() - t0} ms, ${bad} bad numbers, ${oob} bad indices`);
+  T('mesh has every part', m.stats.surfaceTris > 0 && m.stats.kerbTris > 0 && (pad.markings.length === 0 || m.stats.markTris > 0) && (pad.ring ? m.stats.islandTris > 0 : true), `surface, kerbs${pad.markings.length ? ', marks' : ''}${pad.ring ? ', island' : ''} present`);
+  if (pad.markings.length === 0) P(`  [INFO] ${pad.id} has NO markings: the engine (A-3 / A-4) makes no give-way line or zebra for this roundabout, so the mesh has none (open item, needs numbers from the user first)`);
+  T('mesh size', m.stats.tris < 20000, `${m.stats.tris} triangles (limit 20000 per pad)`);
+  // winding: surface triangles face up
+  let down = 0, up = 0;
+  for (let k = 0; k < m.stats.surfaceTris; k++) {
+    const a = m.indices[k * 3], b = m.indices[k * 3 + 1], c = m.indices[k * 3 + 2];
+    const ny = (m.positions[b * 3 + 2] - m.positions[a * 3 + 2]) * (m.positions[c * 3] - m.positions[a * 3]) - (m.positions[b * 3] - m.positions[a * 3]) * (m.positions[c * 3 + 2] - m.positions[a * 3 + 2]);
+    if (ny >= 0) up++; else down++;
+  }
+  void up;
+  T('surface faces up', down === 0, `${down} surface triangles face down`);
+  // ---- surface vs terrain. The first surfaceTris * 3 vertices are the asphalt. Off the leg corridors (3 m margin) it lies exactly AUTO_LIFT above the carved terrain;
+  // inside a corridor it may rise above that (never below) because it follows the old ribbon, by at most the step limit 0.15 m + 0.02.
+  let maxOff = 0, nOff = 0, minIn = 1e9, maxIn = -1e9, nIn = 0;
+  for (let v = 0; v < m.stats.surfaceTris * 3; v += 2) {
+    const x = m.positions[v * 3], y = m.positions[v * 3 + 1], z = m.positions[v * 3 + 2];
+    g1.sample(x, z, tmp);
+    const d = y - (tmp.h + AUTO_LIFT);
+    let inCorr = false;
+    for (const l of pad.legs) { const s = (x - l.q[0]) * l.u[0] + (z - l.q[1]) * l.u[1], lat = (x - l.q[0]) * l.n[0] + (z - l.q[1]) * l.n[1]; if (s >= -3 && s <= l.trim + 5 && Math.abs(lat) < l.halfW + 3) inCorr = true; }
+    if (inCorr) { nIn++; minIn = Math.min(minIn, d); maxIn = Math.max(maxIn, d); } else { nOff++; maxOff = Math.max(maxOff, Math.abs(d)); }
+  }
+  T('asphalt lies on the carved terrain (off the corridors)', nOff >= 10 && maxOff < 0.005, `${nOff} asphalt vertices: biggest gap to terrain + ${AUTO_LIFT} m = ${maxOff.toFixed(4)} m (limit 0.005)`);
+  T('asphalt never below the terrain, follows the old ribbon in the corridors', nIn === 0 || (minIn > -0.005 && maxIn < 0.17), `${nIn} vertices in the leg corridors: from ${minIn.toFixed(3)} to +${maxIn.toFixed(3)} m above terrain + ${AUTO_LIFT} m (limit -0.005 .. +0.17)`);
+  // ---- pad meets every road end
+  for (const l of pad.legs) {
+    const lv = terr.levelOf(i, l.endXZ[0], l.endXZ[1]);
+    g1.sample(l.endXZ[0], l.endXZ[1], tmp);
+    T(`leg ${l.name} end level`, Math.abs(lv - l.endY) < 0.02 && Math.abs(tmp.h - l.endY) < 0.15, `pad level ${f2(lv)} m, road ${f2(l.endY)} m, terrain ${f2(tmp.h)} m (step ${f2(lv - l.endY)} m)`);
+  }
+  // ---- terrain continuity across the skirt: no step above 0.5 m between points 0.5 m apart, along 4 rays from the centre outwards
+  let maxStep = 0;
+  for (let a = 0; a < 16; a++) {
+    const ang = (a / 16) * 2 * Math.PI;
+    let prev: number | null = null;
+    for (let r = 0; r < 70; r += 0.5) {
+      g1.sample(pad.x + r * Math.cos(ang), pad.z + r * Math.sin(ang), tmp);
+      if (prev !== null) maxStep = Math.max(maxStep, Math.abs(tmp.h - prev));
+      prev = tmp.h;
+    }
+  }
+  T('terrain skirt is smooth', maxStep < 0.5, `biggest height step between points 0.5 m apart on 16 rays 0..70 m: ${f2(maxStep)} m (roads, kerbs of the old layout included)`);
+  // ---- flag OFF vs ON: the terrain changes only near the pad
+  const R = Math.hypot(...pad.outline.map((q) => Math.hypot(q[0] - pad.x, q[1] - pad.z)).slice(0, 0).concat([0, 0])) + Math.max(...pad.outline.map((q) => Math.hypot(q[0] - pad.x, q[1] - pad.z))) + terr.emb;
+  let farChanged = 0, nearChanged = 0, far = 0;
+  for (let k = 0; k < 4000; k++) {
+    const ang = Math.random() * 2 * Math.PI, rr = Math.random() * (R + 150);
+    const x = pad.x + rr * Math.cos(ang), z = pad.z + rr * Math.sin(ang);
+    g0.sample(x, z, tmp); const h0 = tmp.h;
+    g1.sample(x, z, tmp);
+    const d = Math.abs(tmp.h - h0);
+    if (rr > R + 8) { far++; if (d > 1e-9) farChanged++; } else if (d > 1e-6) nearChanged++;
+  }
+  T('flag OFF vs ON: terrain far from the pad identical', farChanged === 0, `${far} random points beyond ${f2(R + 8)} m from the centre: ${farChanged} changed; ${nearChanged} of the points nearer changed (the carve)`);
+}
+// ---- the old junction pads must not overlap an auto pad
+let minGap = 1e18;
+for (let i = 0; i < terr.count; i++) { const p = terr.padAt(i); for (const q of net.pads) minGap = Math.min(minGap, Math.hypot(p.x - q.x, p.z - q.z) - q.rCore - Math.max(...p.outline.map((w: number[]) => Math.hypot(w[0] - p.x, w[1] - p.z)))); }
+T('no old junction pad overlaps an auto pad', net.pads.length === 0 || minGap > 0, `${net.pads.length} old pads, smallest gap ${net.pads.length ? f2(minGap) : 'n/a'} m`);
+P(`RESULT ${fails === 0 ? 'ALL PASS' : fails + ' FAIL'}`);
+fs.writeFileSync(`${out}/STEPA5_OUTPUT.txt`, lines.join('\n') + '\n');
+if (fails) process.exit(1);

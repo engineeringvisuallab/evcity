@@ -1,0 +1,56 @@
+AUTO CONNECT AT GRADE, PILOT (A-3 / A-4 geometry; no road, height or terrain changed)
+constants: {"kerbArterialMinorC":15,"kerbArterialMinorL":10,"kerbMinorMinor":12,"kerbLocalOnMinor":10,"kerbLocalLocal":8,"kerbFloor":6,"rb1":{"icd":30,"circW":5.5,"entryR":15,"exitR":20},"rb2":{"icd":50,"circW":9,"entryR":20,"exitR":30},"maxCrossFall":0.03,"maxPadGrade":0.06,"maxStep":0.15,"maxCut":3,"maxStraightDev":0.5,"bridgeReach":120,"minNeighbour":105,"stopLineBeyondKerb":1.5,"zebraWidth":3,"zebraGapBeyondTrim":2}
+SWEEP of the registry (geometry + checks only): T 102: PASS 11, FAIL 91 {"A4 ground (cut / fill)":14,"A4 pad tilt":18,"A4 no bridge near":5,"A0 no median on a leg":52,"A3 legs are straight":9,"A3 neighbour junction":10,"A3 T shape":4,"A3 corner angle":1}; roundabout-size 31: PASS 4, FAIL 27 {"A4 pad level = road levels":13,"A4 pad tilt":13,"A4 ground (cut / fill)":4,"A4 no bridge near":2,"A0 no median on a leg":12,"A3 neighbour junction":6,"A3 legs are straight":1}
+--- JN163 T at (2121.4, -652.4), legs L-24 (L, hw 2.95), R2-19 (2, hw 4.50), R2-19 (2, hw 4.50)
+pad area 422.4 m2, plane y 27.75 m at the junction point, tilt gx 3.12 % gz -1.38 %, cut 0.83 m, fill 0.55 m, water samples 0
+  leg L-24: heading -135.4 deg, trim (ribbon cut) at 19.0 m, road height at the junction 27.58 m, at the trim end 27.51 m (grade -0.36 %), step to the pad plane 0.00 m, straight-axis offset 0.00 m, deviation 0.00 m, road left after the trim 142.9 m
+  leg R2-19: heading -53.7 deg, trim (ribbon cut) at 18.0 m, road height at the junction 27.60 m, at the trim end 28.28 m (grade 3.77 %), step to the pad plane -0.00 m, straight-axis offset 0.01 m, deviation 0.02 m, road left after the trim 1019.9 m
+  leg R2-19: heading 126.3 deg, trim (ribbon cut) at 13.0 m, road height at the junction 27.60 m, at the trim end 27.37 m (grade -1.83 %), step to the pad plane -0.00 m, straight-axis offset 0.00 m, deviation 0.02 m, road left after the trim 1727.5 m
+  fillet corner leg L-24 x R2-19: R 11.0 m, sweep 98.3 deg, corner angle 81.7 deg
+  fillet corner leg L-24 x R2-19: R 10.9 m, sweep 81.7 deg, corner angle 98.3 deg
+  marking stop on L-24: (2117.1, -656.7) -> (2119.2, -658.8)
+  marking zebra on L-24: (2104.4, -665.1) -> (2108.5, -669.3), depth 3 m
+  [PASS] A0 no median on a leg: no leg has a median
+  [PASS] A3 T angle: angle between the minor leg and the through road 81.7 / 98.3 deg, kerb radius 11.0 / 10.9 m (base 10 m for major 2 x minor L)
+  [PASS] A3 corner angle: smallest corner angle 81.7 deg (a T under 60 deg goes on the fix list)
+  [PASS] A5 stop line / zebra: stop line 6.0 m from the junction axis (through kerb at 4.5 m + 1.5); zebra 3 m deep at 21..24 m (beyond the flare, constant width)
+  [PASS] A4 pad level = road levels: plane through the road ends: biggest step to a road end 0.000 m (limit 0.15 m), pad height 27.75 m at the junction point
+  [PASS] A4 pad tilt: tilt 3.41 %, across the through road 1.70 % (limit 3 %)
+  [PASS] A4 road grade inside the trim: biggest leg grade inside the trim 3.77 %
+  [PASS] A4 ground (cut / fill): inside the pad: biggest fill 0.55 m, biggest cut 0.83 m (limit 3 m) - NATURAL ground, the roads' own cut / fill is not counted
+  [PASS] A4 water: no water inside the pad
+  [PASS] A4 no bridge near: no bridge within 120 m on any leg
+  [PASS] A3 neighbour junction: nearest other junction JN157 163 m (limit 105 m)
+  [PASS] A3 road length left after the trim: shortest road left after the trim 143 m (need 10 m)
+  [PASS] A3 legs are straight: biggest sideways deviation of a real road line from its straight leg axis inside the pad reach 0.02 m (limit 0.5 m); axis offsets from the junction point 0.00 / 0.01 / 0.00 m
+  RESULT PASS
+--- JN033 roundabout at (-1711.9, 1943.8), legs R2-37.1 (2, hw 4.50), R2-34.2 (2, hw 4.50), R2-37.2 (2, hw 4.50), R2-34.1 (2, hw 4.50)
+pad area 1157.8 m2, plane y 16.52 m at the junction point, tilt gx -0.38 % gz 1.07 %, cut 0.00 m, fill 2.48 m, water samples 0
+  leg R2-37.1: heading -90.4 deg, trim (ribbon cut) at 25.0 m, road height at the junction 16.43 m, at the trim end 16.36 m (grade -0.26 %), step to the pad plane 0.11 m, straight-axis offset 0.04 m, deviation 0.04 m, road left after the trim 170.9 m
+  leg R2-34.2: heading 0.0 deg, trim (ribbon cut) at 25.0 m, road height at the junction 16.43 m, at the trim end 16.31 m (grade -0.46 %), step to the pad plane -0.11 m, straight-axis offset 0.10 m, deviation 0.00 m, road left after the trim 191.9 m
+  leg R2-37.2: heading 89.7 deg, trim (ribbon cut) at 25.0 m, road height at the junction 16.43 m, at the trim end 16.90 m (grade 1.86 %), step to the pad plane 0.11 m, straight-axis offset 0.03 m, deviation 0.03 m, road left after the trim 236.5 m
+  leg R2-34.1: heading 179.8 deg, trim (ribbon cut) at 25.0 m, road height at the junction 16.43 m, at the trim end 16.50 m (grade 0.30 %), step to the pad plane -0.11 m, straight-axis offset 0.12 m, deviation 0.04 m, road left after the trim 196.1 m
+  fillet entry leg R2-37.1 x ring: R 12.7 m, sweep 51.5 deg
+  fillet exit leg R2-37.1 x ring: R 17.0 m, sweep 47.9 deg
+  fillet entry leg R2-34.2 x ring: R 12.7 m, sweep 51.8 deg
+  fillet exit leg R2-34.2 x ring: R 17.0 m, sweep 47.5 deg
+  fillet entry leg R2-37.2 x ring: R 12.7 m, sweep 51.7 deg
+  fillet exit leg R2-37.2 x ring: R 17.0 m, sweep 47.7 deg
+  fillet entry leg R2-34.1 x ring: R 12.7 m, sweep 51.2 deg
+  fillet exit leg R2-34.1 x ring: R 17.0 m, sweep 48.1 deg
+  [PASS] A0 no median on a leg: no leg has a median
+  [PASS] A3 roundabout size: 1-lane ring: ICD 30 m, circulating 5.5 m, central island R 9.5 m, entry R 12.7 m, exit R 17.0 m (21.48 constants 15 / 20, scaled by 0.85 so the ring kerb between two legs is at least 8 deg)
+  [PASS] A3 ring kerb between legs: shortest free ring kerb between two legs 8.9 deg of arc (need >= 8 deg, else the fillets nearly touch); smallest angle between legs 89.7 deg
+  [PASS] A4 pad level = road levels: plane through the road ends: biggest step to a road end 0.111 m (limit 0.15 m), pad height 16.52 m at the junction point
+  [PASS] A4 pad tilt: tilt 1.13 %
+  [PASS] A4 road grade inside the trim: biggest leg grade inside the trim 1.86 %
+  [PASS] A4 ground (cut / fill): inside the pad: biggest fill 2.48 m, biggest cut 0.00 m (limit 3 m) - NATURAL ground, the roads' own cut / fill is not counted
+  [PASS] A4 water: no water inside the pad
+  [PASS] A4 no bridge near: no bridge within 120 m on any leg
+  [PASS] A3 neighbour junction: nearest other junction JN037 217 m (limit 105 m)
+  [PASS] A3 road length left after the trim: shortest road left after the trim 171 m (need 10 m)
+  [PASS] A3 legs are straight: biggest sideways deviation of a real road line from its straight leg axis inside the pad reach 0.04 m (limit 0.5 m); axis offsets from the junction point 0.04 / 0.10 / 0.03 / 0.12 m
+  RESULT PASS
+PASS list of the sweep (ids): JN028 JN033 JN037 JN043 JN056 JN059 JN060 JN064 JN073 JN076 JN083 JN124 JN147 JN163 JN165
+FAIL list of the sweep (id: reasons): JN001[A4 pad level = road levels;A4 pad tilt;A4 ground (cut / fill);A4 no bridge near] JN002[A4 ground (cut / fill)] JN003[A4 pad tilt;A4 ground (cut / fill);A4 no bridge near] JN004[A0 no median on a leg] JN005[A0 no median on a leg] JN007[A0 no median on a leg] JN008[A0 no median on a leg] JN009[A0 no median on a leg] JN010[A4 pad level = road levels;A4 pad tilt] JN012[A4 pad tilt;A4 ground (cut / fill)] JN013[A0 no median on a leg] JN020[A0 no median on a leg] JN021[A0 no median on a leg] JN022[A0 no median on a leg] JN024[A0 no median on a leg] JN025[A0 no median on a leg] JN030[A0 no median on a leg] JN031[A0 no median on a leg] JN032[A0 no median on a leg] JN034[A0 no median on a leg] JN038[A0 no median on a leg] JN040[A0 no median on a leg] JN041[A0 no median on a leg] JN042[A0 no median on a leg] JN047[A0 no median on a leg] JN049[A4 pad tilt;A4 ground (cut / fill);A4 no bridge near;A3 legs are straight] JN051[] JN052[A0 no median on a leg] JN053[A0 no median on a leg] JN054[A0 no median on a leg] JN057[A0 no median on a leg] JN058[A0 no median on a leg] JN061[A4 pad tilt] JN062[A4 pad tilt;A4 ground (cut / fill)] JN065[A0 no median on a leg] JN066[A0 no median on a leg] JN067[A0 no median on a leg] JN068[A0 no median on a leg] JN069[A0 no median on a leg] JN070[A0 no median on a leg] JN072[A0 no median on a leg] JN074[A3 neighbour junction;A3 legs are straight] JN075[A3 neighbour junction] JN077[A0 no median on a leg] JN078[A0 no median on a leg] JN079[A3 neighbour junction] JN080[A0 no median on a leg] JN081[A0 no median on a leg] JN084[A0 no median on a leg] JN085[A0 no median on a leg] JN087[A0 no median on a leg] JN089[A0 no median on a leg] JN093[A0 no median on a leg] JN096[A0 no median on a leg] JN097[A0 no median on a leg] JN099[A3 neighbour junction] JN101[A4 ground (cut / fill)] JN102[A0 no median on a leg] JN103[] JN104[A0 no median on a leg] JN105[A4 pad level = road levels;A4 pad tilt;A4 ground (cut / fill)] JN106[A0 no median on a leg] JN109[A0 no median on a leg] JN110[A4 pad level = road levels;A4 pad tilt;A3 neighbour junction] JN111[A0 no median on a leg] JN112[A3 legs are straight] JN113[A4 pad tilt;A3 neighbour junction] JN114[A0 no median on a leg] JN115[A4 pad tilt;A3 neighbour junction] JN116[] JN117[A4 pad tilt;A3 neighbour junction] JN118[A3 neighbour junction] JN119[A0 no median on a leg] JN120[A4 pad tilt;A3 neighbour junction] JN121[A0 no median on a leg] JN122[A4 pad level = road levels;A4 pad tilt;A3 neighbour junction] JN123[A4 pad level = road levels;A4 pad tilt;A4 ground (cut / fill);A4 no bridge near] JN125[A3 T shape] JN126[A4 pad tilt;A3 neighbour junction] JN127[A3 T shape] JN128[A4 pad level = road levels;A4 pad tilt;A3 neighbour junction] JN129[A4 pad tilt;A3 neighbour junction] JN130[A0 no median on a leg] JN132[A4 pad level = road levels;A4 pad tilt;A3 neighbour junction] JN133[A4 ground (cut / fill);A3 legs are straight] JN134[A4 pad level = road levels;A4 pad tilt;A3 neighbour junction] JN135[A4 ground (cut / fill)] JN136[A4 pad tilt] JN137[A4 ground (cut / fill)] JN141[A0 no median on a leg] JN142[A4 pad level = road levels] JN143[A0 no median on a leg] JN145[A3 legs are straight] JN146[A4 ground (cut / fill)] JN148[A0 no median on a leg] JN150[A3 corner angle;A4 pad tilt;A4 ground (cut / fill);A3 legs are straight] JN151[A3 T shape] JN152[A0 no median on a leg] JN153[A4 pad tilt;A4 ground (cut / fill);A3 legs are straight] JN154[A4 pad tilt;A4 no bridge near] JN155[A4 pad level = road levels;A4 pad tilt;A3 legs are straight] JN156[A3 legs are straight] JN157[A4 pad level = road levels;A4 pad tilt] JN158[A0 no median on a leg] JN160[A0 no median on a leg] JN162[A4 pad level = road levels;A4 pad tilt] JN166[A4 pad tilt;A4 ground (cut / fill)] JN167[] JN169[A4 pad tilt] JN170[A0 no median on a leg] JN173[A0 no median on a leg] JN175[A3 T shape] JN176[A0 no median on a leg] JN177[A4 pad tilt;A4 ground (cut / fill);A4 no bridge near;A3 legs are straight] JN178[A0 no median on a leg] JN179[A0 no median on a leg] JN180[A4 pad tilt;A4 ground (cut / fill);A4 no bridge near] JN181[A0 no median on a leg]
+ROAD DATA HASH before -1290245636 after -1290245636: PASS, no road point moved

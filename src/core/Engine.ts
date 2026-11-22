@@ -74,6 +74,7 @@ import { RoadCentreLayer } from '../roads/debug/RoadCentreLayer';
 import { PlotLayer } from '../roads/debug/PlotLayer';
 import { StackInterchangeLayer } from '../interchange/m8/StackInterchangeLayer';
 import { GroundJ1Layer } from '../roads/junction/GroundJ1Layer';
+import { AutoPadLayer } from '../roads/junction/AutoPadLayer';
 import { RteLayer } from '../roads/junction/RteLayer';
 import { RingStructurePhysics } from '../roads/ring/RingStructurePhysics';
 import { SignPhysics } from '../signs/SignPhysics';
@@ -172,6 +173,7 @@ export class Engine {
   private plotLayer: PlotLayer;
   private stackJ1: StackInterchangeLayer;
   private groundJ1: GroundJ1Layer;
+  private autoPads: AutoPadLayer;
   private rteLayer: RteLayer;
   /** STEP 5.3c-6: colliders of the ring structures (bodies only near the player). */
   private ringStructurePhysics: RingStructurePhysics;
@@ -410,6 +412,7 @@ export class Engine {
     this.streetLights = new StreetLights(this.world.root, roads);
     this.ringStructures = new RingStructureLayer(this.world.root, roads);
     this.groundJ1 = new GroundJ1Layer(this.world.root, this.world.terrain.roads.j1);
+    this.autoPads = new AutoPadLayer(this.world.root, this.world.terrain.roads.autoPads); // A-5: empty while Config.roads.autoJunction.enabled is false
     this.rteLayer = new RteLayer(this.world.root, Config.roads.junctionRte.enabled);
     this.stackJ1 = new StackInterchangeLayer(this.world.root, Config.roads.interchangeJ1, (x, z) => this.world.terrain.heightAt(x, z));
     this.rail = this.world.terrain.rail;
@@ -1868,6 +1871,7 @@ export class Engine {
     this.ringStructures.dispose();
     this.stackJ1.dispose();
     this.groundJ1.dispose();
+    this.autoPads.dispose();
     this.rteLayer.dispose();
     this.stationPhysics.dispose();
     this.roadSignPhysics.dispose();

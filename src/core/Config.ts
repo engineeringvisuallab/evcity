@@ -75,6 +75,11 @@ export const Config = {
     junctionJ1: { enabled: true as boolean, x: -87, z: -277, yawDeg: 37.5, y: 18.213952768488063, a: -0.0007693744942258208, b: 0.003387472903877177, rCore: 100, emb: 30 },
     /** STEP J1-e2: the four M8 arms of J1 (src/roads/junction/J1ArmData.ts, made by tools/j1-arm-data.py) from s = 315 m to the T on the ring, as game roads J1-N / J1-E / J1-S / J1-W with their structures. false = no arm roads. */
     junctionJ1Arms: { enabled: true as boolean },
+    /**
+     * AUTO CONNECT AT GRADE, A-5 (HANDOFF_ROAD_DESIGN.md 24.12): pad mesh (asphalt, kerbs, island, stop line, zebra) + terrain carve for the junctions listed in `ids`
+     * (src/roads/JunctionAuto*.ts). OFF = the game is exactly as before (no pad, no carve, no mesh). ON: only the listed ids, and only those whose checks all PASS are built.
+     */
+    autoJunction: { enabled: false as boolean, ids: ['JN163', 'JN033'] as string[] },
     /** RT-E ramp bridges M3 / M4 + arm viaduct widening (RE-9). ON (RE-9): set false to hide it. */
     junctionRte: { enabled: true as boolean },
     /** RE-9 ground-level slip lanes RTE-A2S / RTE-S2A as one-way ramp roads (outside the arm viaduct window). */
