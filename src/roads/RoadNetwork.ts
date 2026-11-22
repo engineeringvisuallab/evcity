@@ -402,7 +402,7 @@ export class RoadNetwork {
     const emit = (name: string, pts: number[][], ys: number[], hw: number = LANE / 2): void => {
       // STEP 2b: the merge tails (RTE-TAIL-*) are NOT daylight roads. A daylight road decides the ground by the NEAREST centre line; a tail 0.3 m beside the 44 m wide arm / ring was nearer than the arm centre line to the outer
       // 6 m of the arm pavement and its fill slope cut the ground there 2 .. 4 m below the pavement. As a normal road it only pulls the ground inside its own platform + blend (the arm / ring keeps its own ground).
-      const dayl = !name.startsWith('RTE-TAIL');
+      const dayl = false;   // STEP 2c: slips AND tails are normal ramp roads (see the comment above)
       const kp: number[][] = [], ky: number[] = [];                                // drop repeated points (a run that starts exactly on a window edge)
       for (let i = 0; i < pts.length; i++) if (i === 0 || Math.hypot(pts[i][0] - kp[kp.length - 1][0], pts[i][1] - kp[kp.length - 1][1]) > 0.05) { kp.push(pts[i]); ky.push(ys[i]); }
       pts = kp; ys = ky;
