@@ -1,0 +1,104 @@
+{
+ "laneC": 19.425,
+ "Rr": 38.85,
+ "arcLen": 61.02543729598173,
+ "clear": 7.0,
+ "zM3": 14.0,
+ "zM4": 7.0,
+ "cross": {
+  "u": 10.012500000000001,
+  "v": 6.608076916684286
+ },
+ "free": {
+  "minus": 1040,
+  "plus": 415,
+  "bridgeA": 200,
+  "bridgeB": 264
+ },
+ "T20": -665,
+ "T21": 640,
+ "m4": {
+  "gore": 160.0,
+  "z0": 4.640000000000001,
+  "desc": 140.0,
+  "descEnd": 178.85,
+  "accel": 192.90123456790124,
+  "accelEnd": 371.75123456790124,
+  "auxEnd": 449.9845679012345
+ },
+ "m3": {
+  "taperStart": -428.2568181818182,
+  "gore": -337.0068181818182,
+  "climb": 318.1818181818182,
+  "tDesc": 194.73442028985505,
+  "uStemOut": 20.025000000000002
+ },
+ "m1": {
+  "arcR": 30.0,
+  "join": 49.425
+ },
+ "checks": [
+  {
+   "id": "G1",
+   "ok": true,
+   "text": "R 38.8 m allows 39.3 km/h >= 35 km/h"
+  },
+  {
+   "id": "G2",
+   "ok": true,
+   "text": "the ramps cross over carriageway B (v 6.6), not over the stem or a slip"
+  },
+  {
+   "id": "V1",
+   "ok": true,
+   "text": "M4 approach grade 1.7 % <= 5 %"
+  },
+  {
+   "id": "V2",
+   "ok": true,
+   "text": "M4 accel terminal ends at u = 371.8 <= 415: margin 43.2 m. NO entry taper is drawn: the lane goes on as a 5th (auxiliary) lane to the T21 exit (a 182.5 m entry taper would NOT fit)"
+  },
+  {
+   "id": "V2a",
+   "ok": true,
+   "text": "M4 aux lane 271.1 m gore to gore (>= 150 min; below the 300 m desirable)"
+  },
+  {
+   "id": "V3",
+   "ok": true,
+   "text": "M3 exit: the 318.2 m climb carries the 135.4 m decel; taper starts at u = -428.3 (minus side free 1040 m)"
+  },
+  {
+   "id": "V4",
+   "ok": true,
+   "text": "M3 taper start (u -428.3) is 236.7 m from T20 (u -665); T20 B-side ramps are not designed yet and must keep clear"
+  },
+  {
+   "id": "V5",
+   "ok": true,
+   "text": "M3 lands 194.7 m from the ring: inside the straight arm (250 m)"
+  },
+  {
+   "id": "V6",
+   "ok": true,
+   "text": "M3 over M4 at the plan crossing: 7.0 m >= 7.0 m (5.5 clearance + 1.5 slab)"
+  },
+  {
+   "id": "J1",
+   "ok": true,
+   "text": "M1 and M3 join the stem outbound 164.7 m apart (min 150) - thin, lengthen the M3 descent if you want 300"
+  },
+  {
+   "id": "L1",
+   "ok": true,
+   "text": "2-lane M4 arc R 42.5 m >= 40.6 m: 40 km/h"
+  },
+  {
+   "id": "C1",
+   "ok": true,
+   "text": "no signal anywhere: ring A and B never stop; the \"over capacity\" FAIL of the ground T (Y 1.60) is gone"
+  }
+ ],
+ "passed": 12,
+ "failed": 0
+}

@@ -1,0 +1,49 @@
+STEP RT-N-f  RING N JUNCTION, FLYOVER (3-leg, grade separated, 8 x 8 lanes)  headless, READ ONLY, nothing in src or data changed
+USER 2026-11-22: flyover wanted; ground cut / fill and more land are allowed. This REPLACES the ground-level decision of 2026-11-15 for RT-N only (the signal, 2 phases and median lanes of design O1 are dropped).
+sanity of the constants against RINGT_N_a.txt: decel 100->60 98.8 m (sheet 98.8), 100->30 140.4 (140.4), accel 30->85 203.4 (203.4), min R at 30 / 40 / 60 km/h = 19.7 / 40.6 / 113.4 (19.7 / 40.6 / 113.4)
+
+1. TOPOLOGY (left-hand traffic; stem from the A side). Level 0 = ring A, B, stem, slips M1 (A -> stem, left) and M2 (stem -> A, left). The two RIGHT turns cross the ring:
+   M4 stem -> B : leaves the stem median side, ONE curved bridge over A and B at +7.0 m, lands on B from its OUTER (left) side, descends, merges as a 5th lane.
+   M3 B -> stem : leaves B from its OUTER (left) side upstream (minus side), climbs beside B, crosses over M4, B and A at +14.0 m, lands east of the stem, descends beside it, merges on the stem outbound.
+   Both are SEMI-DIRECT ramps, no tight loop ramp (a small-radius loop is hard to drive). They cross each other in plan, so M3 needs the 2nd deck: 5.5 + 1.5 = 7.0 m between decks.
+   Why not an UNDERPASS for M3 (ASSUMED, not checked with the terrain): the ground at the T is 21.0 m, the river is 200 m away (S3 is only 1.9 m over the water), so an underpass 7 m below the ring (2.7 m below the ground) probably sits in the flood level / water table. Flyover is the safer choice here.
+
+2. RAMP ARCS
+   quarter circle from lane centre v = -19.4 to +19.4: R = 38.8 m, arc 61.0 m; the radius allows 39.3 km/h (emax 8 %). DESIGN SPEED 35 km/h (min R at 35 = 28.8 m, at 40 = 40.6 m)
+PASS G1: R 38.8 m allows 39.3 km/h >= 35 km/h
+   M4 arc (u,v): (0.0, -19.4) -> (38.8, 19.4);  M3 arc: (-18.8, 19.4) -> (20.0, -19.4)
+   the two ramps cross in plan at u = 10.0, v = 6.6 (carriageway B lies at v 3 .. 17.6)
+PASS G2: the ramps cross over carriageway B (v 6.6), not over the stem or a slip
+
+3. VERTICAL (z above the ring surface at the T; ring is nearly flat: -0.7 % .. +0.5 % within +-150 m). Decks: M4 z = 7.0 m, M3 z = 14.0 m, ramp grade limit 5 %
+   M4: leaves the stem 160 m before the ring (stem surface 4.6 m above the ring there, the arm falls 2.9 % to the ring), rises to 7.0 m over 140.6 m = 1.7 %
+PASS V1: M4 approach grade 1.7 % <= 5 %
+   M4 after the arc: down 7.0 m at 5 % = 140.0 m (ring level at u = 178.8), accel lane 35 -> 85 km/h = 192.9 m (to u = 371.8); the straight ends at u = 415
+PASS V2: M4 accel terminal ends at u = 371.8 <= 415: margin 43.2 m. NO entry taper is drawn: the lane goes on as a 5th (auxiliary) lane to the T21 exit (a 182.5 m entry taper would NOT fit)
+   aux lane: entry gore (ring level) u = 178.8 to the T21 exit taper start u = 450.0 (T21 as it is now) = 271.1 m; it runs over S3 (u 200 .. 264), so S3 is WIDENED by one lane on the B outer side.
+PASS V2a: M4 aux lane 271.1 m gore to gore (>= 150 min; below the 300 m desirable)
+   M3: climbs 14.0 m at 4.4 % over 318.2 m beside B (gore u = -337.0), exit taper 91.2 m before it (starts u = -428.3); decel 100 -> 35 km/h needs 135.4 m of the climb
+PASS V3: M3 exit: the 318.2 m climb carries the 135.4 m decel; taper starts at u = -428.3 (minus side free 1040 m)
+PASS V4: M3 taper start (u -428.3) is 236.7 m from T20 (u -665); T20 B-side ramps are not designed yet and must keep clear
+   M3 after the arc: z = 14.0 m to the arc end, then down 4 % beside the stem (the stem rises 2.9 % away from the ring) and meets it after 194.7 m
+PASS V5: M3 lands 194.7 m from the ring: inside the straight arm (250 m)
+PASS V6: M3 over M4 at the plan crossing: 7.0 m >= 7.0 m (5.5 clearance + 1.5 slab)
+   M1 slip joins the stem outbound 49.4 m from the ring (arc R 30 m, ground); M3 lands 214.2 m from the ring.
+PASS J1: M1 and M3 join the stem outbound 164.7 m apart (min 150) - thin, lengthen the M3 descent if you want 300
+   NOTE: M3 passes OVER the M1 slip (at u = 20 the slip is at v = -34 on the ground, M3 is ~13 m above it): no clash, but the piers of M3 must stay outside the slip.
+
+4. 8 LANE x 8 LANE: HOW MANY LANES DO THE RAMPS NEED (ASSUMED 50 / 50 split on the stem, 10 % of each ring direction turns into the stem; 1800 veh/h per lane)
+   design demand 120 000 AADT: ring 7200 veh/h per direction (= 4 lanes at 100 %); M2 and M4 3600 veh/h -> 2 lanes each, M1 and M3 720 veh/h -> 1 lane each
+   a 2-lane M4 (deck 9.1 m wide) has its centreline 21.2 m from the ring: R = 42.5 m, which allows 40.7 km/h (min R at 40 km/h = 40.6 m): the bigger deck gives a BETTER arc.
+PASS L1: 2-lane M4 arc R 42.5 m >= 40.6 m: 40 km/h
+   Costs of 2-lane M4 / M2: B gets TWO extra lanes (5th and 6th) from M4 to the T21 exit and S3 is widened by 2 lanes on the B side (1 lane on the A side for M1); the length of M4 is the same, so it still fits. At 120 000 AADT the ring itself (4 lanes = 100 %) is the bigger question: that is the demand step of 3.13, still OPEN.
+PASS C1: no signal anywhere: ring A and B never stop; the "over capacity" FAIL of the ground T (Y 1.60) is gone
+
+5. STRUCTURES, GROUND, LAND (ASSUMED: ring surface 4.3 m above the ground, fill limit 7 m, the rest viaduct)
+   M4: ~288 m viaduct of 342 m; M3: ~475 m viaduct of 574 m (the rest embankment up to 7 m, more land and fill on the north side of the ring and the east side of the stem)
+   Ring bridge over A + median + B = 35.2 m wide, curved: M4 span ~61 m at z = 7, M3 ~61 m at z = 14. S3 rebuilt higher (only 1.9 m over the water) and wider.
+   Land: north side of the ring u -428.3 .. 371.8 (~800 m x 30 m) + the east side of the stem for 214 m (M3 landing) + stem median 6 -> 12 m over 160 m (M4 start). Earthwork volumes NOT computed (needs the terrain, step RT-N-c).
+
+RESULT: 12 PASS, 0 FAIL.
+OPEN: (1) M4 leaves the stem inbound carriageway on its RIGHT (median) side = a wrong-side exit in left-hand traffic; normal for a semi-direct ramp but it needs advance signs and its own lane (not the 4th lane shared with through traffic). (2) T21 exit on B must start at u = +450 or later, T20 B-side ramps must clear M3. (3) M1 / M3 join separation is only 165 m. (4) demand and 2-lane ramps (section 4). (5) terrain, piers, drainage not designed.
+NOT RUN: npm run build, tsc, the game, scripts/ringt-n-flyover.ts (needs src/, not in this zip). ASSUMED: ring 4.3 m over the ground, M4 leaves the stem 160 m out, M3 climb 4.4 %, M3 descent 4 %, 50 / 50 split, 10 % ring turn shares.
