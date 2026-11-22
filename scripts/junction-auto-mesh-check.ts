@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import { Config } from '../src/core/Config';
 import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
 import { buildJunctionRegistry } from '../src/roads/JunctionRegistry';
-import { buildAutoJunction } from '../src/roads/JunctionAuto';
+import { buildAutoJunction, AUTO } from '../src/roads/JunctionAuto';
 import { buildAutoPadMesh, AUTO_LIFT } from '../src/roads/JunctionAutoMesh';
 import { pointInOutline } from '../src/roads/JunctionAutoTerrain';
 // AUTO CONNECT AT GRADE, A-5 (headless, no three.js): the pad mesh + the terrain carve of the 2 pilots, flag ON, compared with the same game with the flag OFF.
@@ -17,7 +17,7 @@ const f2 = (v: number): string => v.toFixed(2);
 const tmp: any = { h: 0, water: NaN, fx: 0, fz: 0 };
 const hash = (roads: any[]): string => { let h = 0; for (const r of roads) for (let i = 0; i < r.xs.length; i++) h = (h * 31 + Math.round(r.xs[i] * 100) + 7 * Math.round(r.zs[i] * 100) + 13 * Math.round(r.ys[i] * 100)) | 0; return String(h); };
 
-P('AUTO CONNECT AT GRADE, A-5: pad mesh + terrain carve (' + ids.length + ' junctions: ' + ids.join(', ') + ')');
+P('AUTO CONNECT AT GRADE, A-5 / A-5c: pad mesh + terrain carve + roundabout markings (' + ids.length + ' junctions: ' + ids.join(', ') + ')');
 // ---- game with the flag OFF (baseline)
 Config.roads.autoJunction.enabled = false;
 const g0: any = new TerrainGenerator(Config.world.seed);
@@ -54,7 +54,14 @@ for (let i = 0; i < terr.count; i++) {
   let oob = 0; for (const k of m.indices) if (k < 0 || k >= nV) oob++;
   T('mesh numbers', bad === 0 && oob === 0 && m.indices.length % 3 === 0 && m.indices.length / 3 === m.stats.tris, `${nV} vertices, ${m.stats.tris} triangles (surface ${m.stats.surfaceTris}, kerb ${m.stats.kerbTris}, marks ${m.stats.markTris}, island ${m.stats.islandTris}), ${Date.now() - t0} ms, ${bad} bad numbers, ${oob} bad indices`);
   T('mesh has every part', m.stats.surfaceTris > 0 && m.stats.kerbTris > 0 && (pad.markings.length === 0 || m.stats.markTris > 0) && (pad.ring ? m.stats.islandTris > 0 : true), `surface, kerbs${pad.markings.length ? ', marks' : ''}${pad.ring ? ', island' : ''} present`);
-  if (pad.markings.length === 0) P(`  [INFO] ${pad.id} has NO markings: the engine (A-3 / A-4) makes no give-way line or zebra for this roundabout, so the mesh has none (open item, needs numbers from the user first)`);
+  if (pad.ring) {
+    // A-5c: every leg of a roundabout has a give-way line and a zebra; the line lies on the pad, outside the ring, the zebra is one car length behind it
+    const stops = pad.markings.filter((q: any) => q.kind === 'stop'), zebras = pad.markings.filter((q: any) => q.kind === 'zebra');
+    T('roundabout markings: give-way line + zebra on every leg', stops.length === pad.legs.length && zebras.length === pad.legs.length, `${stops.length} give-way lines, ${zebras.length} zebras, ${pad.legs.length} legs`);
+    let worst = 1e9, onPad = 0;
+    for (const q of stops as any[]) { worst = Math.min(worst, Math.min(Math.hypot(q.p0[0] - pad.x, q.p0[1] - pad.z), Math.hypot(q.p1[0] - pad.x, q.p1[1] - pad.z)) - pad.ring.outerR); if (pointInOutline(pad.outline, q.p0[0], q.p0[1]) && pointInOutline(pad.outline, q.p1[0], q.p1[1])) onPad++; }
+    T('give-way lines: outside the ring, inside the pad', worst >= AUTO.rbGiveWayGap - 0.01 && onPad === stops.length, `closest line ${f2(worst)} m outside the ring edge (aim ${AUTO.rbGiveWayGap} m), ${onPad} of ${stops.length} lines inside the pad outline`);
+  }
   T('mesh size', m.stats.tris < 20000, `${m.stats.tris} triangles (limit 20000 per pad)`);
   // winding: surface triangles face up
   let down = 0, up = 0;
@@ -115,6 +122,33 @@ for (let i = 0; i < terr.count; i++) {
     if (rr > R + 8) { far++; if (d > 1e-9) farChanged++; } else if (d > 1e-6) nearChanged++;
   }
   T('flag OFF vs ON: terrain far from the pad identical', farChanged === 0, `${far} random points beyond ${f2(R + 8)} m from the centre: ${farChanged} changed; ${nearChanged} of the points nearer changed (the carve)`);
+}
+// ---- A-5c part 2: ribbon trim (flag ON, Config.roads.autoJunction.trimRibbon true = default) compared with the same game with trimRibbon false
+{
+  const n1: any = net;
+  const tp = terr.trimmedPoints(net.roads);
+  let still = 0, straddle = 0, maxStr = 0, total1 = 0;
+  for (const [, list] of n1.chunkSegs as Map<string, number[]>) {
+    total1 += list.length;
+    for (const sg of list) {
+      const road = net.roads[n1.segRoad[sg]]; const set = tp.get(road.id); if (!set) continue;
+      const i = n1.segPt[sg], j = (i + 1) % road.xs.length;
+      if (set.has(i) && set.has(j)) still++;
+      else if (set.has(i) || set.has(j)) { straddle++; maxStr = Math.max(maxStr, Math.hypot(road.xs[j] - road.xs[i], road.zs[j] - road.zs[i])); }
+    }
+  }
+  T('ribbon trim: segments removed', net.autoTrimmed > 0, `${net.autoTrimmed} ribbon segments of the leg roads lie inside the ${terr.count} pad outlines and get no ribbon`);
+  T('ribbon trim: no kept segment is fully inside a pad', still === 0, `${still} kept segments have both points inside a pad outline`);
+  T('ribbon trim: the segment at the trim end stays', straddle > 0 && maxStr < 25, `${straddle} segments cross a pad outline and stay (longest ${f2(maxStr)} m, so the ribbon ends inside the pad by less than that)`);
+  Config.roads.autoJunction.trimRibbon = false;
+  const g2: any = new TerrainGenerator(Config.world.seed);
+  Config.roads.autoJunction.trimRibbon = true;
+  let total2 = 0; for (const [, list] of g2.roads.chunkSegs as Map<string, number[]>) total2 += list.length;
+  T('ribbon trim: only the covered segments differ', total2 - total1 === net.autoTrimmed && g2.roads.autoTrimmed === 0, `ribbon segments ${total2} without trim, ${total1} with trim, difference ${total2 - total1} = removed ${net.autoTrimmed}`);
+  T('ribbon trim: road data identical', hash(g2.roads.roads) === hash(net.roads) && hash(net.roads) === hash0, `hash ${hash(net.roads)} (no road point moved by the trim)`);
+  let dt = 0; for (let k = 0; k < 3000; k++) { const q = terr.padAt(k % terr.count); const x = q.x + (Math.random() - 0.5) * 300, z = q.z + (Math.random() - 0.5) * 300; g1.sample(x, z, tmp); const a = tmp.h; g2.sample(x, z, tmp); dt = Math.max(dt, Math.abs(a - tmp.h)); }
+  T('ribbon trim: terrain identical with and without trim', dt < 1e-9, `3000 random points near the pads, biggest height difference ${dt.toExponential(1)} m`);
+  T('flag OFF: nothing trimmed', g0.roads.autoTrimmed === 0, `autoTrimmed ${g0.roads.autoTrimmed} with the flag OFF`);
 }
 // ---- the old junction pads must not overlap an auto pad
 let minGap = 1e18;

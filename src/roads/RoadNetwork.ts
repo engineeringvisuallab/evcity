@@ -149,6 +149,8 @@ export class RoadNetwork {
   autoPads: AutoPadTerrain | null = null;
   /** What the auto pads did (checks, headless script scripts/junction-auto-mesh-check.ts): every listed id with its result. */
   readonly autoInfo: { id: string; built: boolean; why: string }[] = [];
+  /** A-5c: ribbon segments removed because an auto pad covers them (0 with the flag OFF). */
+  autoTrimmed = 0;
   private autoOut = { w: 0, y: 0, inside: false };
   private autoCells = new Set<number>();
   private j1Out = { w: 0, y: 0 };
@@ -3700,6 +3702,22 @@ export class RoadNetwork {
     // AUTO pads (flag, A-5): built from the roads as they are NOW (every call of buildSegments follows a road change; the last one sees the final roads)
     this.autoCells.clear();
     this.autoPads = Config.roads.autoJunction.enabled ? this.makeAutoPads() : null;
+    // A-5c ribbon trim: a segment with both points inside an auto pad gets no ribbon (the pad is drawn there); the road DATA is untouched
+    this.autoTrimmed = 0;
+    if (this.autoPads && Config.roads.autoJunction.trimRibbon) {
+      const tp = this.autoPads.trimmedPoints(this.roads);
+      for (const [ck, list] of this.chunkSegs) {
+        const keep = list.filter((sg) => {
+          const set = tp.get(this.segRoad[sg]);
+          if (!set) return true;
+          const r = this.roads[this.segRoad[sg]];
+          const i = this.segPt[sg], j = (i + 1) % r.xs.length;
+          if (set.has(i) && set.has(j)) { this.autoTrimmed++; return false; }
+          return true;
+        });
+        if (keep.length !== list.length) this.chunkSegs.set(ck, keep);
+      }
+    }
     if (this.autoPads) {
       for (const [cx0, cz0, r] of this.autoPads.cover()) {
         for (let cz = Math.floor((cz0 - r) / CELL); cz <= Math.floor((cz0 + r) / CELL); cz++) for (let cx = Math.floor((cx0 - r) / CELL); cx <= Math.floor((cx0 + r) / CELL); cx++) {

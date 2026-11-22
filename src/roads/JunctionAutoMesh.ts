@@ -1,5 +1,6 @@
 // AUTO CONNECT AT GRADE, A-5 (mesh side). Pure maths (no three.js): the vertex-coloured mesh of ONE pad: asphalt surface, kerb walls, roundabout island, stop / give-way lines, zebra.
 // Heights: the pad surface = the pad level f (AutoPadTerrain) + LIFT, and never lower than the real road ribbon in a leg corridor (JunctionAuto LegGeom.prof) + LIFT, so the old ribbon never shows through.
+import { AUTO } from './JunctionAuto';
 import type { V2, LegGeom } from './JunctionAuto';
 import type { AutoPadTerrain } from './JunctionAutoTerrain';
 
@@ -152,7 +153,7 @@ export function buildAutoPadMesh(padNo: number, terr: AutoPadTerrain): AutoMeshD
       const dash = !!pad.ring;
       if (!dash) { strip(add2(m.p0, leg.u, 0.15), add2(m.p1, leg.u, 0.15), 0.3); continue; }
       const L = Math.hypot(m.p1[0] - m.p0[0], m.p1[1] - m.p0[1]);
-      for (let s = 0; s < L; s += 1.0) { const e = Math.min(L, s + 0.5); strip(lerp(m.p0, m.p1, s / L), lerp(m.p0, m.p1, e / L), 0.4); }
+      for (let s = 0; s < L; s += AUTO.rbGiveWayDash + AUTO.rbGiveWayOff) { const e = Math.min(L, s + AUTO.rbGiveWayDash); strip(lerp(m.p0, m.p1, s / L), lerp(m.p0, m.p1, e / L), AUTO.rbGiveWayWidth); }
     } else {
       const d = m.depth ?? 3, nBars = Math.max(1, Math.floor(Math.hypot(m.p1[0] - m.p0[0], m.p1[1] - m.p0[1]) / 1.0));
       for (let k = 0; k < nBars; k++) {

@@ -33,6 +33,12 @@ export const AUTO = {
   stopLineBeyondKerb: 1.5, // stop line distance behind the through-road kerb (m)
   zebraWidth: 3,
   zebraGapBeyondTrim: 2,
+  /** A-5c roundabout entry markings (my choice, from the numbers already in the project: zebra 3 m deep, bars 0.5 m / pitch 1.0 m as in OpenJ1Mesh and the T pads). CHANGE HERE. */
+  rbGiveWayGap: 1.0, // give-way line distance outside the ring outer edge (m)
+  rbGiveWayDash: 0.5, // dash length of the give-way line (m)
+  rbGiveWayOff: 0.5, // gap between dashes (m)
+  rbGiveWayWidth: 0.4, // line width (m)
+  rbZebraBack: 6, // distance from the give-way line to the near edge of the zebra (m): about one car length, so a waiting car stands between line and zebra
 };
 
 export interface Ground { h: number; water: boolean }
@@ -513,6 +519,32 @@ function buildRoundabout(res: PadResult, raw: RawLeg[], p: V2, chk: (n: string, 
     for (let s = 0; s <= lg.trim + 10; s += 3) { const w = legWalk(raw[i], lg, s); const off = Math.abs(dot(sub([w.x, w.z], lg.q), lg.n)); if (off > dev) dev = off; }
     lg.straightDev = dev;
   });
+  // A-5c: give-way line (dashes) across the inbound half of every leg, rbGiveWayGap outside the ring edge, and a zebra rbZebraBack behind it.
+  // Vehicles keep LEFT (D1): the inbound half is the -n side, the same side as the entry fillet.
+  const gwTxt: string[] = [];
+  let gwOk = true;
+  legs.forEach((lg, i) => {
+    const Rg = Ro + AUTO.rbGiveWayGap;
+    let sGW = 0;
+    for (const lat of [0, -lg.halfW / 2, -lg.halfW]) {
+      const d = add(sub(lg.q, p), mul(lg.n, lat));
+      const du = dot(d, lg.u);
+      const disc = du * du - dot(d, d) + Rg * Rg;
+      sGW = Math.max(sGW, -du + Math.sqrt(Math.max(0, disc)));
+    }
+    const g0 = add(lg.q, mul(lg.u, sGW)), g1 = add(g0, mul(lg.n, -lg.halfW));
+    res.markings.push({ kind: 'stop', leg: i, p0: g0, p1: g1 });
+    let zs0 = sGW + AUTO.rbZebraBack;
+    const onPad = zs0 + AUTO.zebraWidth <= lg.trim + 0.01;
+    if (!onPad) zs0 = lg.trim + AUTO.zebraGapBeyondTrim; // same rule as the T pads: beyond the pad end, on the old ribbon
+    res.markings.push({ kind: 'zebra', leg: i, p0: add(lg.q, add(mul(lg.u, zs0), mul(lg.n, lg.halfW))), p1: add(lg.q, add(mul(lg.u, zs0), mul(lg.n, -lg.halfW))), depth: AUTO.zebraWidth });
+    const inside = pointInPoly(out, g0[0], g0[1]) && pointInPoly(out, g1[0], g1[1]) && pointInPoly(out, add(g0, mul(lg.n, -lg.halfW / 2))[0], add(g0, mul(lg.n, -lg.halfW / 2))[1]);
+    const ringDist = Math.min(len(sub(g0, p)), len(sub(g1, p)));
+    const okLine = inside && ringDist >= Ro + AUTO.rbGiveWayGap - 0.01 && sGW < lg.trim;
+    if (!okLine) gwOk = false;
+    gwTxt.push(`${lg.name}: line at ${sGW.toFixed(1)} m (trim ${lg.trim} m), zebra ${zs0.toFixed(1)}..${(zs0 + AUTO.zebraWidth).toFixed(1)} m ${onPad ? 'on the pad' : 'beyond the pad end'}${okLine ? '' : ' [LINE NOT INSIDE THE PAD]'}`);
+  });
+  chk('A5c roundabout give-way line / zebra', gwOk, `give-way line = dashes ${AUTO.rbGiveWayDash} m on / ${AUTO.rbGiveWayOff} m off, ${AUTO.rbGiveWayWidth} m wide, across the inbound half, ${AUTO.rbGiveWayGap} m outside the ring edge (R ${Ro} m); zebra ${AUTO.zebraWidth} m deep, bars 0.5 m, pitch 1.0 m, full road width, ${AUTO.rbZebraBack} m behind the line (one car length) or beyond the pad end if it does not fit. ${gwTxt.join('; ')}`);
   let minAng = 360;
   for (let i = 0; i < legs.length; i++) { let d = legs[(i + 1) % legs.length].heading - legs[i].heading; while (d <= 0) d += 360; minAng = Math.min(minAng, d); }
   chk('A3 roundabout size', true, `${two ? '2' : '1'}-lane ring: ICD ${P.icd} m, circulating ${P.circW} m, central island R ${(Ro - P.circW).toFixed(1)} m, entry R ${Math.max(10, P.entryR * shrunk).toFixed(1)} m, exit R ${Math.max(12, P.exitR * shrunk).toFixed(1)} m (21.48 constants ${P.entryR} / ${P.exitR}${shrunk < 1 ? `, scaled by ${shrunk.toFixed(2)} so the ring kerb between two legs is at least 8 deg` : ''})`);

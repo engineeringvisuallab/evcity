@@ -1,5 +1,5 @@
 AUTO CONNECT AT GRADE, PILOT (A-3 / A-4 geometry; no road, height or terrain changed)
-constants: {"kerbArterialMinorC":15,"kerbArterialMinorL":10,"kerbMinorMinor":12,"kerbLocalOnMinor":10,"kerbLocalLocal":8,"kerbFloor":6,"rb1":{"icd":30,"circW":5.5,"entryR":15,"exitR":20},"rb2":{"icd":50,"circW":9,"entryR":20,"exitR":30},"maxCrossFall":0.03,"maxPadGrade":0.06,"maxStep":0.15,"maxCut":3,"maxStraightDev":0.5,"bridgeReach":120,"minNeighbour":105,"stopLineBeyondKerb":1.5,"zebraWidth":3,"zebraGapBeyondTrim":2}
+constants: {"kerbArterialMinorC":15,"kerbArterialMinorL":10,"kerbMinorMinor":12,"kerbLocalOnMinor":10,"kerbLocalLocal":8,"kerbFloor":6,"rb1":{"icd":30,"circW":5.5,"entryR":15,"exitR":20},"rb2":{"icd":50,"circW":9,"entryR":20,"exitR":30},"maxCrossFall":0.03,"maxPadGrade":0.06,"maxStep":0.15,"maxCut":3,"maxStraightDev":0.5,"bridgeReach":120,"minNeighbour":105,"stopLineBeyondKerb":1.5,"zebraWidth":3,"zebraGapBeyondTrim":2,"rbGiveWayGap":1,"rbGiveWayDash":0.5,"rbGiveWayOff":0.5,"rbGiveWayWidth":0.4,"rbZebraBack":6}
 SWEEP of the registry (geometry + checks only): T 102: PASS 11, FAIL 91 {"A4 ground (cut / fill)":14,"A4 pad tilt":18,"A4 no bridge near":5,"A0 no median on a leg":52,"A3 legs are straight":9,"A3 neighbour junction":10,"A3 T shape":4,"A3 corner angle":1}; roundabout-size 31: PASS 4, FAIL 27 {"A4 pad level = road levels":13,"A4 pad tilt":13,"A4 ground (cut / fill)":4,"A4 no bridge near":2,"A0 no median on a leg":12,"A3 neighbour junction":6,"A3 legs are straight":1}
 --- JN163 T at (2121.4, -652.4), legs L-24 (L, hw 2.95), R2-19 (2, hw 4.50), R2-19 (2, hw 4.50)
 pad area 422.4 m2, plane y 27.75 m at the junction point, tilt gx 3.12 % gz -1.38 %, cut 0.83 m, fill 0.55 m, water samples 0
@@ -38,7 +38,16 @@ pad area 1157.8 m2, plane y 16.52 m at the junction point, tilt gx -0.38 % gz 1.
   fillet exit leg R2-37.2 x ring: R 17.0 m, sweep 47.7 deg
   fillet entry leg R2-34.1 x ring: R 12.7 m, sweep 51.2 deg
   fillet exit leg R2-34.1 x ring: R 17.0 m, sweep 48.1 deg
+  marking stop on R2-37.1: (-1712.0, 1927.8) -> (-1707.5, 1927.8)
+  marking zebra on R2-37.1: (-1716.5, 1916.8) -> (-1707.5, 1916.8), depth 3 m
+  marking stop on R2-34.2: (-1695.9, 1943.7) -> (-1695.9, 1948.2)
+  marking zebra on R2-34.2: (-1684.9, 1939.2) -> (-1684.9, 1948.2), depth 3 m
+  marking stop on R2-37.2: (-1711.8, 1959.8) -> (-1716.3, 1959.8)
+  marking zebra on R2-37.2: (-1707.2, 1970.8) -> (-1716.2, 1970.8), depth 3 m
+  marking stop on R2-34.1: (-1727.9, 1943.7) -> (-1727.9, 1939.2)
+  marking zebra on R2-34.1: (-1738.9, 1948.3) -> (-1738.9, 1939.3), depth 3 m
   [PASS] A0 no median on a leg: no leg has a median
+  [PASS] A5c roundabout give-way line / zebra: give-way line = dashes 0.5 m on / 0.5 m off, 0.4 m wide, across the inbound half, 1 m outside the ring edge (R 15 m); zebra 3 m deep, bars 0.5 m, pitch 1.0 m, full road width, 6 m behind the line (one car length) or beyond the pad end if it does not fit. R2-37.1: line at 16.0 m (trim 25 m), zebra 27.0..30.0 m beyond the pad end; R2-34.2: line at 16.0 m (trim 25 m), zebra 27.0..30.0 m beyond the pad end; R2-37.2: line at 16.0 m (trim 25 m), zebra 27.0..30.0 m beyond the pad end; R2-34.1: line at 16.0 m (trim 25 m), zebra 27.0..30.0 m beyond the pad end
   [PASS] A3 roundabout size: 1-lane ring: ICD 30 m, circulating 5.5 m, central island R 9.5 m, entry R 12.7 m, exit R 17.0 m (21.48 constants 15 / 20, scaled by 0.85 so the ring kerb between two legs is at least 8 deg)
   [PASS] A3 ring kerb between legs: shortest free ring kerb between two legs 8.9 deg of arc (need >= 8 deg, else the fillets nearly touch); smallest angle between legs 89.7 deg
   [PASS] A4 pad level = road levels: plane through the road ends: biggest step to a road end 0.111 m (limit 0.15 m), pad height 16.52 m at the junction point

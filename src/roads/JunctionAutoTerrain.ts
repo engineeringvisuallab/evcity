@@ -37,6 +37,30 @@ export class AutoPadTerrain {
   }
 
   get count(): number { return this.infos.length; }
+
+  /**
+   * A-5c ribbon trim: the road points that lie INSIDE a pad outline, per road id (only the roads that are legs of that pad). A ribbon segment whose two points are both in
+   * this set is covered by the pad and gets no ribbon. The segment that crosses the trim end stays (it ends inside the pad by less than one point step, the pad lies on top of it).
+   * Reads only: no road point is moved.
+   */
+  trimmedPoints(roads: ReadonlyArray<{ id: number; xs: ArrayLike<number>; zs: ArrayLike<number> }>): Map<number, Set<number>> {
+    const out = new Map<number, Set<number>>();
+    for (const info of this.infos) {
+      const ids = new Set(info.pad.legs.map((l) => l.roadId));
+      for (const id of ids) {
+        const r = roads[id];
+        if (!r) continue;
+        let set = out.get(id);
+        if (!set) out.set(id, (set = new Set<number>()));
+        for (let k = 0; k < r.xs.length; k++) {
+          const x = r.xs[k], z = r.zs[k];
+          if (x < info.x0 || x > info.x1 || z < info.z0 || z > info.z1) continue;
+          if (pointInOutline(info.pad.outline, x, z)) set.add(k);
+        }
+      }
+    }
+    return out;
+  }
   padAt(i: number): PadResult { return this.infos[i].pad; }
 
   private level(info: PadInfo, x: number, z: number): number {
