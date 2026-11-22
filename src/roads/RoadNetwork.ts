@@ -400,13 +400,16 @@ export class RoadNetwork {
     const wins: number[][] = Object.values(RTE_VIADUCT_WIDENING).map((w) => w.window);    // arm viaduct windows: carried by the widened viaduct (RteMesh), not by a ground road
     const inWin = (v: number): boolean => wins.some((w) => v >= w[0] - 1e-9 && v <= w[1] + 1e-9);
     const emit = (name: string, pts: number[][], ys: number[], hw: number = LANE / 2): void => {
+      // STEP 2b: the merge tails (RTE-TAIL-*) are NOT daylight roads. A daylight road decides the ground by the NEAREST centre line; a tail 0.3 m beside the 44 m wide arm / ring was nearer than the arm centre line to the outer
+      // 6 m of the arm pavement and its fill slope cut the ground there 2 .. 4 m below the pavement. As a normal road it only pulls the ground inside its own platform + blend (the arm / ring keeps its own ground).
+      const dayl = !name.startsWith('RTE-TAIL');
       const kp: number[][] = [], ky: number[] = [];                                // drop repeated points (a run that starts exactly on a window edge)
       for (let i = 0; i < pts.length; i++) if (i === 0 || Math.hypot(pts[i][0] - kp[kp.length - 1][0], pts[i][1] - kp[kp.length - 1][1]) > 0.05) { kp.push(pts[i]); ky.push(ys[i]); }
       pts = kp; ys = ky;
       let L = 0;
       for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
       if (pts.length < 3 || L < 20) return;
-      this.addRoad({ tier: 3, kind: 'ramp', name, closed: false, pts, halfWidth: hw, lanes: hw > 4 ? 2 : 1, speedKmh: hw > 4 ? 50 : 40, maxGrade: 0.05, fixedY: ys, daylight: true });
+      this.addRoad({ tier: 3, kind: 'ramp', name, closed: false, pts, halfWidth: hw, lanes: hw > 4 ? 2 : 1, speedKmh: hw > 4 ? 50 : 40, maxGrade: 0.05, fixedY: ys, daylight: dayl });
       this.rteLaneReport.push({ name, roadId: this.roads[this.roads.length - 1].id, length: L, points: pts.length });
     };
     // 1) the slips RTE-A2S / RTE-S2A: ground parts only. Not a ground road: inside a viaduct window; beside the stem where the lane would lie on the arm pavement (taper start, the viaduct wedge / RE-6 lane table owns it); A2S beyond d 66 (RE-6 combined lane replaces the RE-3 stem part)
@@ -483,12 +486,14 @@ export class RoadNetwork {
           const n = near(r, x, z), dl = n.d || 1;
           return { p: [n.cx + ((x - n.cx) / dl) * want, n.cz + ((z - n.cz) / dl) * want], y: n.y, d: n.d };
         };
-        const GAP = 0.3, STEP = 4, LT = 100;
+        const GAP = 0.3, STEP = 4;
+        // STEP 2 (user 2026-11-22: 'flyover start / end too far, bring closer'): convergence length per tail (was 100 m for all, M4L 110 m). Grade <= 5 % is checked by rte-lane-check L6.
+        const LT_M3S = 50, LT_M3N = 50, LT_M4G = 70, LT_M4L = 150, LC_M4L = 90;
         const nM3 = M3.x.length - 1, nM4 = M4.x.length - 1;
         // (a) M3 start on ring B: from the tip beside the ring (100 m before the data start, u about -273) to the first bridge section (s 8)
         {
           const hw = 4.85, pD = RTE_M3_DATA.pts[0], yD = RTE_M3_DATA.ys[0], p8 = [M3.x[0], M3.z[0]], y8 = M3.deckY[0];
-          const uD = uOf(pD[0], pD[1]), uTip = uD - LT, dataD = -vOf(pD[0], pD[1]), tipD = ring.halfWidth + hw + GAP, off = yD - near(ring, pD[0], pD[1]).y;
+          const LT = LT_M3S, uD = uOf(pD[0], pD[1]), uTip = uD - LT, dataD = -vOf(pD[0], pD[1]), tipD = ring.halfWidth + hw + GAP, off = yD - near(ring, pD[0], pD[1]).y;
           const pts: number[][] = [], ys: number[] = [];
           for (let u = uTip; u < uD - 1e-6; u += STEP) {
             const k = (u - uTip) / LT, q = W(u, -dataD), dq = near(ring, q[0], q[1]).d, m = moveTo(ring, q[0], q[1], tipD + (dq - tipD) * sm(k));
@@ -500,7 +505,7 @@ export class RoadNetwork {
         // (b) M3 nose at the arm: from the last bridge section (s 348.5, d 149) to the tip beside the arm (d 251)
         {
           const hw = 3.09, pE = [M3.x[nM3], M3.z[nM3]], yE = M3.deckY[nM3], pN = RTE_M3_DATA.pts[RTE_M3_DATA.pts.length - 1], yN = RTE_M3_DATA.ys[RTE_M3_DATA.ys.length - 1];
-          const dN = vOf(pN[0], pN[1]), uN = uOf(pN[0], pN[1]), tipD = armR.halfWidth + hw + GAP, off = yN - near(armR, pN[0], pN[1]).y;
+          const LT = LT_M3N, dN = vOf(pN[0], pN[1]), uN = uOf(pN[0], pN[1]), tipD = armR.halfWidth + hw + GAP, off = yN - near(armR, pN[0], pN[1]).y;
           const pts: number[][] = [pE, [pN[0], pN[1]]], ys: number[] = [yE, yN];
           for (let d = dN + STEP; d <= dN + LT + 1e-6; d += STEP) {
             const k = (d - dN) / LT, q = W(uN, d), dq = near(armR, q[0], q[1]).d, m = moveTo(armR, q[0], q[1], dq + (tipD - dq) * sm(k));
@@ -510,7 +515,7 @@ export class RoadNetwork {
         }
         // (c) M4 gore at the arm: from the tip beside the arm (d 375) to the first bridge section (s 0, d 275)
         {
-          const hw = 4.85, p0 = [M4.x[0], M4.z[0]], y0 = M4.deckY[0], d0 = vOf(p0[0], p0[1]), u0 = uOf(p0[0], p0[1]), tipD = armR.halfWidth + hw + GAP, off = y0 - near(armR, p0[0], p0[1]).y;
+          const LT = LT_M4G, hw = 4.85, p0 = [M4.x[0], M4.z[0]], y0 = M4.deckY[0], d0 = vOf(p0[0], p0[1]), u0 = uOf(p0[0], p0[1]), tipD = armR.halfWidth + hw + GAP, off = y0 - near(armR, p0[0], p0[1]).y;
           const pts: number[][] = [], ys: number[] = [];
           for (let d = d0 + LT; d > d0 + 1e-6; d -= STEP) {
             const k = (d0 + LT - d) / LT, q = W(u0, d), dq = near(armR, q[0], q[1]).d, m = moveTo(armR, q[0], q[1], tipD + (dq - tipD) * sm(k));
@@ -522,12 +527,14 @@ export class RoadNetwork {
         // (d) M4 landing on ring B: from the last bridge section (s 532.7, u 231.5) along the data line (ring parallel, falling to the ring level); the last 110 m converge to the ring edge and to the ring level
         {
           const hw = 3.05, pE = [M4.x[nM4], M4.z[nM4]], yE = M4.deckY[nM4], uE = uOf(pE[0], pE[1]), dd = RTE_M4_DATA.pts;
-          const uLast = uOf(dd[dd.length - 1][0], dd[dd.length - 1][1]), LC = 110, u1 = uLast - LC, tipD = ring.halfWidth + hw + GAP;
-          const pts: number[][] = [pE], ys: number[] = [yE], iL = dd.length - 1, offEnd = near(ring, dd[iL][0], dd[iL][1]).y - RTE_M4_DATA.ys[iL];   // the data already falls to the ring level (3 cm off): only that small rest is blended in (a full blend would steepen the grade to 7 %)
-          for (let i = 0; i < dd.length; i++) {
-            const u = uOf(dd[i][0], dd[i][1]); if (u <= uE + 0.5) continue;
-            const w = sm((u - u1) / LC), dq = near(ring, dd[i][0], dd[i][1]).d, m = moveTo(ring, dd[i][0], dd[i][1], dq + (tipD - dq) * w);
-            pts.push(m.p); ys.push(RTE_M4_DATA.ys[i] + offEnd * w);
+          // STEP 2: the tail ends LT_M4L (150 m) after the bridge end instead of at the data end (u 420, 188 m). Level: straight line from the bridge end level to the ring level at the tip (about 4.6 %, <= 5 %, checked by L6; 140 m gave 5.12 %);
+          // plan: along the data line, the last LC_M4L (90 m) converge to the ring edge.
+          const idx: number[] = []; for (let i = 0; i < dd.length; i++) { const u = uOf(dd[i][0], dd[i][1]); if (u > uE + 0.5 && u <= uE + LT_M4L + 1e-6) idx.push(i); }
+          const iT = idx[idx.length - 1], uT = uOf(dd[iT][0], dd[iT][1]), u1 = uT - LC_M4L, tipD = ring.halfWidth + hw + GAP, yT = near(ring, dd[iT][0], dd[iT][1]).y;
+          const pts: number[][] = [pE], ys: number[] = [yE];
+          for (const i of idx) {
+            const u = uOf(dd[i][0], dd[i][1]), w = sm((u - u1) / LC_M4L), dq = near(ring, dd[i][0], dd[i][1]).d, m = moveTo(ring, dd[i][0], dd[i][1], dq + (tipD - dq) * w);
+            pts.push(m.p); ys.push(yE + (yT - yE) * Math.min(1, (u - uE) / (uT - uE)));
           }
           emit('RTE-TAIL-M4L', pts, ys, hw);
         }

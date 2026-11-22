@@ -117,7 +117,7 @@ CHK('L6 max grade of the lanes and tails <= 5 %', mg <= 0.05, `${(mg * 100).toFi
   CHK('T3 the other end of each tail starts exactly at the bridge end (plan <= 0.1 m, level <= 5 cm)', tails.length === 4 && endXZ <= 0.1 && endY <= 0.05, `plan ${endXZ.toFixed(3)} m, level ${endY.toFixed(3)} m`);
   CHK('T4 road width of each tail = the deck width at that end (9.7 / 6.18 / 9.7 / 6.1 m)', tails.length === 4 && wOk === 4, `${wOk} of 4 (halfWidth ${tails.map(t => net.roads[t.roadId].halfWidth).join(' / ')})`);
   CHK('T5 each tail is on the correct side (M3S, M4L on ring B d < 0; M3N u > 0; M4G u < 0)', tails.length === 4 && sideBad === 0, `${sideBad} wrong`);
-  CHK('T6 each tail <= 200 m long (convergence 100 m, plus the bridge-end lead-in)', tails.length === 4 && lenMax <= 200, `longest ${lenMax.toFixed(0)} m`);
+  CHK('T6 each tail <= 200 m long (STEP 2: convergence 50 / 50 / 70 / 150 m, plus the bridge-end lead-in)', tails.length === 4 && lenMax <= 200, `longest ${lenMax.toFixed(0)} m`);
   // T7 no overlap of a tail with any other road (existing roads, slips, other tails) except the own bridge end: centre line distance >= sum of half widths - 0.05, sampled every point of the tail vs every segment
   let minSep = 1e9, sepAt = '';
   for (const t of tails) {
