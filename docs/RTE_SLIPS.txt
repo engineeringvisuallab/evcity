@@ -1,0 +1,38 @@
+RE-3 LEFT SLIPS  RT-E (ring x J1-E), ground level, geometry data (part 1). NO game layer, NO mesh.
+Frame: u along the ring (+ = R+), v toward the stem; direction A = -u (near carriageway, stem side), stem outbound keeps left on u +, inbound on u -. Ring level at the T 28.41 m, stem level at the T 28.41 m.
+Criteria: slip V 40 km/h, R 50 m (min 40.6), spiral-arc-spiral; lane 3.65 m; added lane centre 23.925 m (outer lane 20.275); ring V 100, stem V 60 (ASSUMED, D4); grade <= 5 %.
+Speed change (Standards.ts formulas): exit from the ring 130 m + taper 91 m; exit from the stem 31 m + taper 91 m; entry onto the stem 32 m + taper 182 m; entry onto the ring 181 m + taper 182 m.
+
+--- RTE-A2S  A -> S: from ring A (R+ side) station to stem outbound
+  length 554 m = exit taper 91 + decel lane + spiral-arc-spiral (s 233 .. 325, arc length 92 m) + accel lane + entry taper
+  start (u 314.6, v 20.3) level 32.26   end (u 20.3, v 310.4) level 36.58   heading start 180 deg, end 90 deg
+  min radius 50.0 m   max grade 3.14 %   cut max 6.3 m / 9977 m3   fill max 7.7 m / 23948 m3
+  nearest distance to the M3 / M4 layout of RE-2: 3.2 m / 36.2 m
+--- RTE-S2A  S -> A: from stem inbound to ring A (R- side)
+  length 603 m = exit taper 91 + decel lane + spiral-arc-spiral (s 134 .. 226, arc length 92 m) + accel lane + entry taper
+  start (u -20.3, v 215.9) level 33.81   end (u -459.1, v 20.3) level 39.93   heading start 270 deg, end 180 deg
+  min radius 50.0 m   max grade 3.95 %   cut max 3.4 m / 2531 m3   fill max 11.2 m / 58938 m3
+  nearest distance to the M3 / M4 layout of RE-2: 52.4 m / 6.3 m
+
+PASS  SL1 RTE-A2S min radius >= minRadius(40) = 40.6 m  50.0 m
+PASS  SL1 RTE-S2A min radius >= minRadius(40) = 40.6 m  50.0 m
+PASS  SL2 RTE-A2S grade <= 5 %  3.14 %
+PASS  SL2 RTE-S2A grade <= 5 %  3.95 %
+PASS  SL3 smooth: curvature has no jump (max change of curvature per 2 m step <= 0.003 1/m: spiral-arc-spiral and smooth tapers, G1 by construction)  max step 0.00129 1/m
+PASS  SL4 terminals: A->S starts on heading 180 (ring A) and ends on heading 90 (stem out); S->A starts on 270 (stem in) and ends on 180 (ring A)  A2S 180 -> 90, S2A 270 -> 180
+FAIL  SL5 RTE-A2S cut <= 12 m and fill <= 7 m (natural ground)  cut 6.3 fill 7.7
+FAIL  SL5 RTE-S2A cut <= 12 m and fill <= 7 m (natural ground)  cut 3.4 fill 11.2
+  RTE-A2S: along the ring the RING EDGE itself stands up to 0.4 m above natural ground; the slip lane beside it up to 0.4 m (the lane only widens an embankment that already exists; ring is FIXED; a retaining wall on the new edge is the fix, needs the user: decision D5).
+  RTE-S2A: along the ring the RING EDGE itself stands up to 11.4 m above natural ground; the slip lane beside it up to 11.2 m (the lane only widens an embankment that already exists; ring is FIXED; a retaining wall on the new edge is the fix, needs the user: decision D5).
+PASS  SL6 rail >= 30 m (ASSUMED value, D3)  97 m
+PASS  SL7 exit / entry lane + taper lengths equal the Standards.ts formulas (built from them)  ring exit 130+91, stem exit 31+91, stem entry 32+182, ring entry 181+182 m
+FAIL  SL8 slip lanes on the stem keep clear of the arm viaducts (160, 271)/(391, 694)  A2S d 66..310 overlap 111 m;  S2A d 66..216 overlap 56 m  same D1 fact (arm viaduct widening)
+  on the stem: M4 gore d 216, M4 exit taper start d 324; S2A slip taper starts d 216 (0 inside the ring edge). M3 nose d 107, M3 entry taper ends d 293; A2S slip entry taper ends d 310.
+NOT RUN  SL9 stem inbound exit spacing S2A vs M4 gore (weaveMin 150 m): the lane budget of the stem is decided in RE-5 (cross-check), not here.
+FAIL  SL10 stem outbound: A2S entry and M3 entry do not overlap in d  A2S taper d 66..310 vs M3 d 107..293
+
+WIDTH CHANGES (H4 list; the ring and the stem carriageways themselves are NOT changed, only an added lane outside the paved edge):
+  ring, A side (R+ corner): added lane 3.65 m wide along the exit taper + decel lane, u 315 .. 94; taper 91 m (1:25).
+  ring, A side (R- corner): added lane along the entry lane, u -96 .. about -459; taper 182 m (1:50).
+  stem outbound: added lane d 66 .. 310.   stem inbound: added lane d 66 .. 216.
+NOT RUN: src/interchange/Validate.ts (it needs the Ramp / InterchangeParams types of the interchange builder; these slips are not in that format, they are validated by the SL1..SL10 lines above); tsc; npm run build; the game; carved ground (natural ground used); trees; ring median U-turn openings; lane budget / merge conflicts with M3 and M4 (RE-5); the stem lane positions (my reading).

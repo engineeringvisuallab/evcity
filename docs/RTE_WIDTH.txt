@@ -1,0 +1,35 @@
+RE-6 WIDTH CHANGES RT-E.  Decisions D1 and D6 were delegated to the engineer by the user (2026-11-22); defaults of D2 .. D5 kept.
+D6 DECISION (stem outbound lane budget): TWO added lanes join in order, no entry overlaps another. A2S lane (centre u 23.925) is full width from d 66. The M3 ramp narrows to ONE lane (the ramp deck is 2 lanes, convention of RE-3 / RE-4: one added lane + taper per terminal) and at its nose d 151 its lane is 5.70 m outside the second lane position, so it SHIFTS 1:15 to u 27.575 (d 151 .. 236.5), runs beside the A2S lane, then the OUTER lane is dropped into the A2S lane 1:25 (d 236.5 .. 327.8), and the ONE combined lane enters the stem outbound with the Standards entry taper 1:50 (182.5 m, d 327.8 .. 510.3). This REPLACES the A2S entry taper of RE-3 (d 128 .. 310): the A2S lane now ends at d 510.
+D1 DECISION (arm viaducts): the arm pavement and profile are NOT changed. The viaduct deck is widened as a WEDGE that follows the added lanes (width = outer edge of the added lanes + 0.5 m barrier - the paved edge u 22.1), the wedge ends are the abutments / the point where the lane ends. Widths are computed below from the lanes, not assumed.
+D2 (upper deck over the ring, now M4 deck 16.9 m above the ring) accepted; D3 rail 30 m; D4 stem 60 km/h; D5 retaining wall on the S2A / A2S outer edge where the fill passes 7 m = YES (wall, 1 : 0 slope, the wall itself is RE-7).
+
+VIADUCT WIDENING (D1), wedge widths = outer edge of the added lanes + 0.5 m barrier - paved edge, from the lane geometry above:
+  out_viaduct1: viaduct d 160..271, widened on d 160..271 (111 m), width 12.9 m at d 160 -> max 12.9 m at d 160 -> 6.42 m at d 271
+  out_viaduct2: viaduct d 391..694, widened on d 391..507 (116 m), width 2.88 m at d 391 -> max 2.88 m at d 391 -> 0.56 m at d 507
+  in_viaduct1: viaduct d 160..271, widened on d 160..209 (49 m), width 2.93 m at d 160 -> max 2.93 m at d 160 -> 0.57 m at d 209
+  in_viaduct2: viaduct d 391..694, widened on d 391..480 (89 m), width 4.14 m at d 391 -> max 4.14 m at d 391 -> 0.58 m at d 480
+
+PASS  W1 stem outbound: one entry only (M3 lane is merged into the A2S lane before the entry taper starts)  drop ends d 327.8, entry taper d 327.8 .. 510.3
+PASS  W2 the A2S lane is full width 85 m before the M3 lane joins (accel lane 32 m needed, RE-3)  85 m
+PASS  W3 shift taper >= 1:15, drop taper >= 1:25, entry taper = 1:50 (Standards)  shift 85.5 m for 5.70 m, drop 91.2 m for 3.65 m, entry 182.5 m
+PASS  W4 stem inbound: M4 exit lane (d 275 .. 481) and S2A exit lane (d 66 .. 215) do not overlap  gap 59 m between the M4 lane end and the S2A taper start
+PASS  W5 new outbound lane part (d 310 .. 510, outside the viaducts): cut <= 12 m and fill <= 7 m (natural ground)  cut 0.9 fill 2.8
+PASS  W5b outbound lane part d 66 .. 310 (outside the viaducts)  cut 0.7 fill 5.0
+PASS  W5c inbound lanes d 66 .. 482 (outside the viaducts)  cut 0.0 fill 6.4
+PASS  W6 rail >= 30 m from the added lanes OUTSIDE the arm viaducts (ASSUMED D3)  36 m
+INFO  the arm viaduct 391..694 itself is within 30 m of the rail on d 403..523 (the arm crosses the rail there, existing). The widening wedges (outbound to d 507, inbound to d 480) overlap that range: pier positions and rail clearance of the widened deck are a RE-8 item, NOT checked here.
+PASS  W7 gore at the M3 nose: ramp deck edge is >= 3.65 m (one lane) from the A2S lane edge, no overlap  4.50 m (u 30.25 vs 25.75)
+PASS  W8 M3 ramp narrows 2 -> 1 lane in the last 91 m before the nose (d 60 .. 151), after the crossing over the A2S arc (d 47)  narrowing starts d 60
+PASS  W9 ring carriageways, median and profile are NOT changed (the ring is fixed): only added lanes outside the paved edge  by design, see the list below (nothing measured)
+
+WIDTH CHANGE LIST (H4): every added lane, length, taper. Ring and stem pavements are not changed.
+  Ring B, M3 exit lane + taper: added lane 3.65 m outside the ring far edge; u -380 .. -173; 207 m, taper 1:25 = 91 m, decel lane 116 m
+  Ring B, M4 entry lane + taper: added lane 3.65 m outside the ring far edge; u 75 .. 420; 334 m, accel lane 152 m + taper 1:50 = 182.5 m
+  Ring A (stem side), A2S exit lane + taper: added lane 3.65 m outside the ring near edge; u 315 .. 94; taper 91 m + decel lane 130 m (RE-3)
+  Ring A (stem side), S2A entry lane + taper: added lane 3.65 m outside the ring near edge; u -96 .. -459; accel lane 181 m + taper 182 m (RE-3); D5 retaining wall where fill > 7 m
+  Stem inbound, S2A exit lane: added lane 3.65 m; d 216 .. 66; taper 91 m then lane, then the slip arc (RE-3)
+  Stem inbound, M4 exit lane + taper: added lane 3.65 m; d 482 .. 275; taper 91 m + decel lane 116 m; gore at d 275
+  Stem outbound, A2S + M3 combined lane: added lane 3.65 m (second lane d 151 .. 328); d 66 .. 510; M3 lane shift 86 m, drop 91 m, entry taper 182 m; REPLACES the RE-3 A2S entry (d 66 .. 310)
+  M3 ramp deck: narrows 9.7 m -> 6.1 m (1 lane + 2 x 1.2 m shoulder); d 60 .. 151; 91 m (1:25), ASSUMED convention, detailed in RE-8 / RE-9
+  M4 ramp deck: narrows 9.7 m -> 6.1 m before the ring B entry; last 91 m before u 75; same convention, ASSUMED
+NOT RUN  RE-3 A2S polyline is NOT rewritten (the new combined lane is data here: lanes_outbound in RteWidthData.ts replaces the A2S end d 128 .. 310), Validate.ts, full tsc / npm run build, the game, carved ground, trees, ring median U-turn openings, viaduct structural design (RE-8), girder depth (7.8 m assumed), ramp deck narrowing geometry (lengths only).

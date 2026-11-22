@@ -1,0 +1,26 @@
+RE-7 TERRAIN  RT-E.  Natural ground (not the carved ground), geometry data only, ring and arm profiles frozen.
+Rules: embankment 1:3, cut 1:2; ground-level lanes and slips: fill > 7 m = retaining wall (D5 yes), > 12 m = structure (ASSUMED); ramps M3 / M4: deck on piers above 3 m or over a road (RE-1 convention), else fill / cut; arm viaduct windows 160..271 / 391..694 = widened viaduct (RE-6); 0.5 m barrier strip outside every lane; the strip beside an existing ring / arm embankment is a w x h strip (no new slope), elsewhere a trapezoid. Game skirt 30 m (like GroundJ1Terrain) is for RE-9.
+
+PER ELEMENT (m3 / m2 / m, rounded):
+  M3: fill 157 m3, cut 0 m3, wall 0 m long (0 m2 face), structure 345 m (ramp on piers / over a road), viaduct widening 0 m, land 85 m2
+  M4: fill 1187 m3, cut 2238 m3, wall 0 m long (0 m2 face), structure 535 m (ramp on piers / over a road), viaduct widening 0 m, land 2623 m2
+  A2S (ring + arc, v <= 66): fill 144 m3, cut 9050 m3, wall 0 m long (0 m2 face), structure 0 m (ramp on piers / over a road), viaduct widening 0 m, land 4186 m2
+  S2A: fill 11540 m3, cut 2210 m3, wall 130 m long (1193 m2 face), structure 0 m (ramp on piers / over a road), viaduct widening 0 m, land 4385 m2
+  stem out: A2S/combined lane: fill 1825 m3, cut 246 m3, wall 0 m long (0 m2 face), structure 0 m (ramp on piers / over a road), viaduct widening 232 m, land 1025 m2
+  stem out: M3 lane: fill 329 m3, cut 48 m3, wall 0 m long (0 m2 face), structure 0 m (ramp on piers / over a road), viaduct widening 112 m, land 209 m2
+  stem in: M4 exit lane: fill 1301 m3, cut 0 m3, wall 0 m long (0 m2 face), structure 0 m (ramp on piers / over a road), viaduct widening 92 m, land 482 m2
+TOTAL: fill 16483 m3, cut 13792 m3 (net borrow 2691 m3 from outside the junction), retaining wall 130 m / 1193 m2, ramp structure 880 m, viaduct widening 436 m, land 1.30 ha
+RETAINING WALLS (D5): S2A s 0..48 (48 m, up to 9.6 m); S2A s 210..288 (78 m, up to 11.2 m)
+RAMP STRUCTURES (input of RE-8): M3 s 8..350 (342 m, up to 14.2 m high); M4 s 0..533 (533 m, up to 19.6 m high)
+
+PASS  T1 embankment fill (not walls) <= 7 m  max fill 7.0 m
+PASS  T2 cut <= 12 m  max cut 6.3 m
+PASS  T3 retaining wall <= 12 m (ASSUMED limit)  max wall 11.2 m
+PASS  T4 level join: every lane beside the ring / arm is within 0.3 m of the ring / arm level (ASSUMED tolerance)  worst A2S (ring + arc, v <= 66) s 289: -0.29 m over 853 samples
+Sag points (low points of the profile, water collects): 2
+  A2S (ring + arc, v <= 66) s 251: level 28.72, on cut, surface is 0.6 m below the ground there (cut); nearest gravity outfall (same side of the roads, ground at least 1 % + 0.5 m below the sag): 70 m away at ground 26.8 m, (u 82, v 94)
+  S2A s 196: level 28.93, on fill
+PASS  T5 every sag in a cut has a gravity outfall within 150 m (FEASIBILITY only: the catch basin and the pipe are NOT designed, RE-9)  1 sag(s) in a cut, 0 without an outfall
+FAIL  T6 no flat run (grade < 0.5 %) longer than 30 m (the profiles are fixed: flats get cross fall 2 % + deck drains / edge inlets, RE-8 / RE-9, NOT designed)  4 runs: M3 s 168 L 40 m; M4 s 267 L 42 m; A2S (ring + arc, v <= 66) s 216 L 46 m; stem out: A2S/combined lane s 384 L 50 m
+PASS  T7 rail >= 30 m from every embankment / cut toe on open ground (ASSUMED D3)  272 m
+NOT RUN  gore pads (flat areas between a lane and its ramp at the six gores / noses: volume NOT computed), final carved ground and the J1-style skirt (RE-9), drainage network (only low points, no pipes / culverts / outfalls designed), trees, grass, buildings, wall structure design, ring median U-turn openings, Validate.ts, full tsc, npm run build, the game.
