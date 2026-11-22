@@ -53,7 +53,10 @@ for (const r of rep) {
 }
 CHK('L4 lane surface level = RE-3 slip data level / the J1-E arm level on the stem axis (<= 1 cm)', worst <= 0.011, `worst ${worst.toFixed(3)} m, ${stemPts} stem lane points`);
 CHK('L7 no ground lane lies on the arm pavement (lane inner edge >= 22.0 m from the stem axis where d > 40)', overlap === 0, `${overlap} points, worst ${ovWorst.toFixed(2)} m`);
-CHK('L8 stem lanes were built (outbound combined lane parts, inbound M4 exit lane parts)', rep.some(r => r.name.startsWith('RTE-STEM-OUT')) && rep.some(r => r.name.startsWith('RTE-STEM-IN')), rep.filter(r => r.name.startsWith('RTE-STEM')).map(r => `${r.name} ${r.length.toFixed(0)} m`).join(', '));
+// L8 (simple version, 2026-11-22: user 'make it simple'): only the two short slips; each end lies right beside the main road (ring: |d| <= 26 m, arm: |u| <= 26.5 m) and each is <= 250 m long; no long stem lane is built
+const uOfP = (x: number, z: number): number => (x - FR.J[0]) * FR.t[0] + (z - FR.J[1]) * FR.t[1];
+let l8bad = 0; const l8 = rep.map(r => { const rd = net.roads[r.roadId], n = rd.xs.length; const beside = (i: number): boolean => Math.abs(dOf(rd.xs[i], rd.zs[i])) <= 26 || Math.abs(uOfP(rd.xs[i], rd.zs[i])) <= 26.5; const ok = beside(0) && beside(n - 1) && r.length <= 250; if (!ok) l8bad++; return `${r.name} ${r.length.toFixed(0)} m start d ${dOf(rd.xs[0], rd.zs[0]).toFixed(0)} u ${uOfP(rd.xs[0], rd.zs[0]).toFixed(1)}, end d ${dOf(rd.xs[n - 1], rd.zs[n - 1]).toFixed(0)} u ${uOfP(rd.xs[n - 1], rd.zs[n - 1]).toFixed(1)}`; });
+CHK('L8 simple: only the A2S and S2A short slips, both ends beside the main road, each <= 250 m, no stem lane', rep.length === 2 && rep.some(r => r.name === 'RTE-A2S') && rep.some(r => r.name === 'RTE-S2A') && l8bad === 0, l8.join('; '));
 CHK('L5 finished ground on the lane centre line within 0.15 m of the lane level (the lane is carved / filled), except within 15 m of an arm viaduct window edge', gw <= 0.15, `worst ${gw.toFixed(2)} m (${gl})`);
 P(`INFO  ${nEnd} lane points within 15 m of a viaduct window edge have ground up to ${endWorst.toFixed(2)} m below the lane (the lane is on the approach embankment of the arm viaduct; the approach slab of the widened viaduct is RteMesh)`);
 
@@ -62,7 +65,7 @@ let mg = 0; for (const r of rep) { const rd = net.roads[r.roadId]; for (let i = 
 CHK('L6 max grade of the lanes <= 5 %', mg <= 0.05, `${(mg * 100).toFixed(2)} %`);
 
 P('');
-P('NOT RUN  game (look, traffic on the slips, minimap), lane tapers (every lane is a constant 3.65 m road; a lane ends where its taper starts: combined lane d 325, M4 exit lane where it starts to narrow), the M3 lane beside the stem (inside the viaduct window), lane look in the game, retaining wall on S2A where fill > 7 m (daylight slope instead), Validate.ts, npm run build.');
+P("NOT RUN  game (look, traffic on the slips, minimap), lane tapers (the slips start and end beside the main road without a taper, constant 3.65 m), the long stem lanes (not built in the simple version), the viaduct wedge strips (RteMesh, unchanged), S2A retaining wall, signs, gore pads, ground under the piers, Validate.ts, npm run build, full tsc.");
 P('ASSUMED  ramp road halfWidth 1.825 m (lane 3.65 m, gravel shoulder of the ramp class beside it), V 40 km/h, parts inside the arm viaduct window d 160..271 are carried by the widened viaduct (RteMesh), not by a ground road.');
 P(`\nSUMMARY: ${fails === 0 ? 'ALL PASS' : 'FAIL'} (${lines.filter(l => l.startsWith('PASS')).length} PASS, ${fails} FAIL)`);
 writeFileSync(`${dir}/RTE_LANES.txt`, lines.join('\n') + '\n');

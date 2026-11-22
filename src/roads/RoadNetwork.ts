@@ -408,7 +408,19 @@ export class RoadNetwork {
       this.rteLaneReport.push({ name, roadId: this.roads[this.roads.length - 1].id, length: L, points: pts.length });
     };
     // 1) the slips RTE-A2S / RTE-S2A: ground parts only. Not a ground road: inside a viaduct window; beside the stem where the lane would lie on the arm pavement (taper start, the viaduct wedge / RE-6 lane table owns it); A2S beyond d 66 (RE-6 combined lane replaces the RE-3 stem part)
-    for (const q of RTE_SLIP_DATA) {
+    // SIMPLE (2026-11-22, user: 'make it simple'): only the short slip near the junction. The long straight lanes beside the ring (A2S u 315..94, S2A u -96..-459, 220 .. 360 m)
+    // and the long added lanes beside the stem (section 2) are NOT built; the slip starts / ends right beside the main road (12 m of straight lead-in, same level as the data).
+    const SIMPLE: boolean = true;
+    const trimToArc = (q0: (typeof RTE_SLIP_DATA)[number]): (typeof RTE_SLIP_DATA)[number] => {
+      const n = q0.pts.length, dd = (i: number): number => vOf(q0.pts[i][0], q0.pts[i][1]);
+      const seg = (i: number, j: number): number => Math.hypot(q0.pts[i][0] - q0.pts[j][0], q0.pts[i][1] - q0.pts[j][1]);
+      let a = 0, b = n - 1;
+      if (dd(0) < 40) { while (a + 1 < n && dd(a + 1) < 24.3) a++; let s = 0; while (a > 0 && s < 12) { s += seg(a, a - 1); a--; } }                // starts on the ring side: cut the straight lane, keep 12 m lead-in
+      if (dd(n - 1) < 40) { while (b - 1 >= 0 && dd(b - 1) < 24.3) b--; let s = 0; while (b < n - 1 && s < 12) { s += seg(b, b + 1); b++; } }      // ends on the ring side: same
+      return { ...q0, pts: q0.pts.slice(a, b + 1), ys: q0.ys.slice(a, b + 1) };
+    };
+    for (const q0 of RTE_SLIP_DATA) {
+      const q = SIMPLE ? trimToArc(q0) : q0;
       const bad = (x: number, z: number): boolean => {
         const v = vOf(x, z);
         return inWin(v) || (v > 40 && Math.abs(uOf(x, z)) - LANE / 2 < HW - 0.1) || (q.name === 'RTE-A2S' && v > 66);
@@ -434,6 +446,7 @@ export class RoadNetwork {
     }
     // 2) the ADDED LANES beside the stem (RteWidthData rows, RE-6): full-width (3.65 m) parts outside the viaduct windows as ground roads, centre u = +-c, level = the J1-E arm level on the stem axis.
     // The tapers (width < 3.65 m) are NOT built here (the lane ends where its taper starts; constant road width): honest, listed in the handoff.
+    if (SIMPLE) return;                                                              // simple version: no long lanes beside the stem
     const arm = this.roadByName('J1-E');
     if (!arm) return;
     const yS = (d: number): number => this.roadYAt(arm, F.J[0] - d * F.ln[0], F.J[1] - d * F.ln[1]).y;
