@@ -133,13 +133,15 @@ export function planFarms(ground: FarmGround, worldSeed: number, stats?: PlanSta
       const r = mulberry32(hash2D((worldSeed ^ 0x0fa12a) >>> 0, i, j));
       const hillZone = zn.kind === 'forest' || zn.kind === 'mountain';
       // gaps: some cells stay wild (grass, trees)
-      if (r() < (ar ? 0.02 : zn.kind === 'farmland' ? 0.08 : zn.kind === 'village' ? 0.45 : 0.72)) { reject('gap'); continue; }
+      if (r() < (ar ? 0 : zn.kind === 'farmland' ? 0.08 : zn.kind === 'village' ? 0.45 : 0.72)) { reject('gap'); continue; }
 
       // two tries: full size, then a smaller field squeezed between rivers / roads
       let placed = false;
       shrinkLoop: for (const shrink of [1, 0.62]) {
-        const w = (56 + r() * 20) * shrink, d = (56 + r() * 20) * shrink;
-        const yaw = (r() - 0.5) * 0.5;
+        // 2026-11-22 (user): in an agriculture area every field FILLS its whole 96 m cell (no lane between neighbours, ~2.2 x the old area),
+        // not turned; only the squeezed fallback (a road / river beside the cell) stays smaller.
+        const w = ar && shrink === 1 ? FARM_CELL : (56 + r() * 20) * shrink, d = ar && shrink === 1 ? FARM_CELL : (56 + r() * 20) * shrink;
+        const yaw = ar && shrink === 1 ? 0 : (r() - 0.5) * 0.5;
         const c = Math.cos(yaw), s = Math.sin(yaw);
         // RELOCATION: if the field does not fit in the middle of its cell (road / pad / water close by), slide it inside the cell (the
         // turned rectangle must stay inside the 96 m cell so neighbours never overlap) and try again before shrinking.

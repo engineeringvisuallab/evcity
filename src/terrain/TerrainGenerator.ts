@@ -10,6 +10,8 @@ import { islandHeight } from './Island';
 import { AirportSite, SEA_AIRPORT_DEF } from '../airport/AirportSite';
 import { ArmySite } from '../army/ArmySite';
 import { AgroSite } from '../agro/AgroSite';
+import { FarmPads } from '../farm/FarmPads';
+import { FARM_AREAS } from '../farm/FarmAreas';
 import { PortFormation } from '../port/PortFormation';
 import { MallSite, MALL_PLOT } from '../mall/MallSite';
 import { StationPads } from '../parking/StationPads';
@@ -86,6 +88,8 @@ export class TerrainGenerator {
   /** EVC Agro Research Institute (west farmland): a level pad for the building and the research field (applied late in sample(), same in every chunk, worker and collider). */
   readonly agro = new AgroSite();
   private agroMask = new Float32Array(2);
+  /** The agriculture areas (FarmAreas.ts): each one is a fully flat circle (applied late in sample(), same in every chunk, worker and collider). */
+  readonly farmPads = new FarmPads();
   /** STEP 4: level pads of the road-side fuel stations / charge points (src/parking/RoadStationSites.ts). */
   readonly stationPads = new StationPads();
   private stationMask = new Float32Array(2);
@@ -223,6 +227,20 @@ export class TerrainGenerator {
       gh.sort((a, b) => a - b);
       this.agro.floorY = gh[gh.length >> 1];
     }
+    // the floor of every agriculture area = the MEDIAN natural ground over its circle (rings of probes, 12 points each)
+    FARM_AREAS.forEach((a, n) => {
+      const gh: number[] = [];
+      for (let ring = 0; ring <= 8; ring++) {
+        const rr = (a.r * ring) / 8, pts = ring === 0 ? 1 : 12;
+        for (let q = 0; q < pts; q++) {
+          const ang = (q / pts) * Math.PI * 2;
+          this.sampleGround(a.cx + Math.cos(ang) * rr, a.cz + Math.sin(ang) * rr, this.scratch);
+          gh.push(this.scratch.h);
+        }
+      }
+      gh.sort((p, q) => p - q);
+      this.farmPads.floors[n] = gh[gh.length >> 1];
+    });
     // FLAT RESIDENTIAL STEP 3: flat pads under the building plots of the 6 flat zones (level = median of the zone ground over the plot)
     this.residentialFlat.buildPlots([...BUILDING_PLACEMENTS, ...FILL_PLACEMENTS], (x, z) => {
       this.sampleGround(x, z, this.scratch);
@@ -245,6 +263,7 @@ export class TerrainGenerator {
   sample(x: number, z: number, out: TerrainSample): void {
     this.sampleGround(x, z, out);
     this.residentialFlat.apply(x, z, out); // FLAT RESIDENTIAL STEP 2: before the road earthworks, so the embankments grade to the flat ground
+    if (this.padsReady && this.farmPads.near(x, z)) out.h = this.farmPads.height(x, z, out.h); // agriculture areas: fully flat, also before the road earthworks
     this.roads.apply(x, z, out);
     this.railForm.apply(x, z, out);
     this.portForm.apply(x, z, out); // STAGE 14: sea port earthworks

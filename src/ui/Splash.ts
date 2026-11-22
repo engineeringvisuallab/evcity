@@ -54,7 +54,7 @@ const CSS = `
 .evs-tips span{position:absolute;left:0;right:0;top:0;color:rgba(200,230,240,.8);font-size:13px;opacity:0;animation:evs-tip 20s linear infinite;animation-delay:calc(var(--i) * 4s + 2s);}
 @keyframes evs-rise{0%{transform:scaleY(0)}35%,72%{transform:scaleY(1)}100%{transform:scaleY(0)}}
 @keyframes evs-tip{0%{opacity:0;transform:translateY(6px)}3%,17%{opacity:1;transform:none}20%,100%{opacity:0}}
-.evs-shots{position:relative;margin-top:16px;width:min(86vw,1320px);aspect-ratio:2.55 / 1;max-height:48vh;border-radius:14px;overflow:hidden;background:#0a1c28;
+.evs-shots{position:relative;margin-top:16px;width:min(68vw,1040px);aspect-ratio:2.55 / 1;max-height:48vh;border-radius:14px;overflow:hidden;background:#0a1c28;
   box-shadow:0 0 0 1px rgba(16,245,212,.35),0 12px 40px rgba(0,0,0,.55);opacity:0;animation:evs-fade .8s ease 1.8s forwards;}
 .evs-slide{position:absolute;inset:0;opacity:0;animation:evs-slide 40s linear infinite;animation-delay:calc(var(--i) * 5s + 1.8s);}
 .evs-slide img{display:block;width:100%;height:100%;object-fit:cover;transform-origin:50% 50%;animation-duration:40s;animation-timing-function:ease-out;animation-iteration-count:infinite;animation-delay:calc(var(--i) * 5s + 1.8s);}
