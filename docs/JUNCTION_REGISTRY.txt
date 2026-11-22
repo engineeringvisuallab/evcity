@@ -1,0 +1,297 @@
+JUNCTION REGISTRY: 211 roads in the game, 0 junction pads, 0 old junction records
+real junctions found: 181  {"roundabout":31,"T":102,"arterial":18,"tap":26,"ring-T":4}
+free road ends (no road within 12 m): 135;  crossings at the same level with no junction: 14
+flags: {"OFFSET>2m":56,"SKEW<70":25,"OFFSET>5m":25,"LEVEL-STEP":3,"GRADE-SEPARATED?":2}
+old table: 118 real nodes; matched within 25 m: 112; OLD NODE WITHOUT A REAL JUNCTION: 6; REAL JUNCTION NOT IN THE OLD TABLE: 69
+  old only N030 R4-29+R6-15 nearest real junction 204.6 m
+  old only N121 R4-16+R2-24 nearest real junction 308.2 m
+  old only N125 R2-21+R2-26 nearest real junction 283.0 m
+  old only N126 R2-22+R2-27 nearest real junction 262.9 m
+  old only N127 R2-23+R2-24 nearest real junction 299.8 m
+  old only N128 R2-24+R2-25 nearest real junction 274.2 m
+  real only JN004 T R4-6+R2-7 (-4071.0, 1621.0)
+  real only JN016 tap R6-15+M8+M8 (-2618.9, -1099.5)
+  real only JN017 tap R4-5+M8+M8 (-2606.2, -830.0)
+  real only JN018 ring-T J1-W+M8+M8 (-2555.6, 246.6)
+  real only JN019 tap R4-6+M8+M8 (-2523.1, 936.4)
+  real only JN021 T R2-6+R6-7+R6-7 (-2224.2, -3178.3)
+  real only JN023 tap R4-29+J1-W+J1-W (-2140.0, 227.0)
+  real only JN026 tap R4-8+M8+M8 (-2007.1, 2220.3)
+  real only JN036 tap R6-9+R4-9+M8+M8 (-1546.8, -2462.8)
+  real only JN039 arterial R4-16+R4-17 (-1439.0, 4055.0)
+  real only JN044 tap R2-21+R2-22+M6-1+M6-1 (-1289.6, 3751.1)
+  real only JN045 tap R4-18+R4-19+M6-1+M6-1 (-1192.0, 3456.0)
+  real only JN046 tap R2-8.2+M6-1+M6-1 (-1147.9, 2685.0)
+  real only JN048 ring-T J1-S+M8+M8 (-1133.3, 2301.7)
+  real only JN050 tap R6-15+J1-W+J1-W (-1073.3, 140.4)
+  real only JN057 T SH-4+R2-77+R2-77 (-812.1, 347.5)
+  real only JN060 T SH-5+SH-4+SH-4 (-650.9, 159.8)
+  real only JN063 tap R4-20+J1-S+J1-S (-568.4, 440.4)
+  real only JN064 T SH-3+SH-1+2+SH-1+2 (-512.2, 718.3)
+  real only JN065 T SH-4+CRR-WNW-b+CRR-WNW-b (-493.6, -35.0)
+  real only JN068 T SH-1+2+R4-20+R4-20 (-381.5, 1197.6)
+  real only JN069 T CRR-WSW-a+R4-20+R4-20 (-380.9, 558.9)
+  real only JN071 tap CRR-WNW-a+CRR-WNW-b+J1-S+J1-S (-339.4, 51.9)
+  real only JN073 T SH-17+SH-6+15+SH-6+15 (-153.2, -8.3)
+  real only JN074 T SH-10+SH-8+11+SH-8+11 (-114.5, 600.0)
+  real only JN076 T SH-18+R2-29+R2-29 (-103.4, 864.8)
+  real only JN077 T CRR-WSW-a+RR-HUB+RR-HUB (-58.2, 338.6)
+  real only JN078 T CRR-WNW-a+RR-HUB+RR-HUB (-55.6, 257.6)
+  real only JN079 T SH-19+R2-28+R2-28 (-25.3, 674.6)
+  real only JN080 T CRR-S1-a+RR-HUB+RR-HUB (11.4, 368.9)
+  real only JN082 arterial R6-6A+R6-12+R6-13 (25.0, -2161.0)
+  real only JN083 T SH-7+16+SH-6+15+SH-6+15 (41.9, -34.0)
+  real only JN084 T CRR-N1-a+RR-HUB+RR-HUB (48.2, 249.3)
+  real only JN085 T CRR-S1-a+R2-28+R2-28 (58.5, 669.6)
+  real only JN086 tap R4-20+M8+M8 (68.5, 2045.7)
+  real only JN087 T CRR-E1-a+RR-HUB+RR-HUB (68.7, 312.8)
+  real only JN090 tap R4-27+M8+M8 (271.0, -3761.8)
+  real only JN091 tap R4-12+J1-E+J1-E (305.1, 23.8)
+  real only JN092 arterial R6-5+R4-14+R4-13 (320.9, 1190.1)
+  real only JN093 T CRR-E1-a+R2-28+R2-28 (330.9, 355.3)
+  real only JN095 tap R4-9+J1-N+J1-N (397.9, -1272.5)
+  real only JN098 tap R4-14+M8+M8 (530.4, 1874.2)
+  real only JN099 T SH-20+R2-18+R2-18 (548.4, -110.9)
+  real only JN100 arterial R6-2+R6-3+R6-4 (571.7, 2593.4)
+  real only JN103 T R2-18+R2-19 (623.0, -42.0)
+  real only JN107 tap R4-13+J1-E+J1-E (860.0, 389.0)
+  real only JN108 tap R4-11+J1-N+J1-N (869.0, -2040.0)
+  real only JN109 T SH-21+22+R4-12+R4-12 (897.1, -524.9)
+  real only JN111 T R2-43+R6-5+R6-5 (953.0, 1208.8)
+  real only JN112 T SH-21+22+R2-19+R2-19 (987.6, -305.2)
+  real only JN116 T R2-74+C-4 (1118.9, -2206.9)
+  real only JN119 T R6-5+R6-14+R2-44 (1181.0, 1029.8)
+  real only JN121 roundabout R4-12+R2-70+R6-6B+R6-6B (1202.8, -1342.7)
+  real only JN124 T L-30+R2-17+R2-17 (1218.4, -598.4)
+  real only JN125 T SH-20+L-30+L-30 (1221.5, -466.8)
+  real only JN131 tap R4-26+J1-N+J1-N (1330.9, -2188.6)
+  real only JN138 arterial R6-6B+R6-11 (1396.0, -1258.2)
+  real only JN139 tap R6-14+J1-E+J1-E (1397.9, 735.1)
+  real only JN140 tap R4-23+M8+M8 (1439.6, -3413.5)
+  real only JN144 tap R4-10+J1-N+J1-N (1564.0, -2298.1)
+--- junctions with a flag ---
+JN003 T (-4098.5, 2230.9) legs C-10 R2-7~ R2-7~ offset 3.5 m step 0.02 m min angle 88.6  [OFFSET>2m]
+JN006 arterial (-3613.9, 1517.5) legs R4-70 R4-6~ R4-6~ offset 0.1 m step 0.00 m min angle 67.8  [SKEW<70]
+JN007 T (-3519.1, 1717.1) legs L-41 R4-7~ R4-7~ offset 10.7 m step 1.07 m min angle 76.9  [OFFSET>2m OFFSET>5m LEVEL-STEP]
+JN008 T (-3459.0, 1947.5) legs L-51 R4-7~ R4-7~ offset 5.8 m step 0.00 m min angle 26.5  [OFFSET>2m OFFSET>5m SKEW<70]
+JN009 roundabout (-3351.2, 1193.2) legs C-20 L-70 R4-6~ R4-6~ offset 2.8 m step 0.02 m min angle 73.4  [OFFSET>2m]
+JN011 arterial (-3170.6, -3654.2) legs R4-30 R6-10~ R6-10~ offset 4.4 m step 0.01 m min angle 74.4  [OFFSET>2m]
+JN013 T (-3067.1, 2769.9) legs R4-71 R2-8.11 R2-8.20 offset 4.6 m step 0.00 m min angle 85.8  [OFFSET>2m]
+JN014 arterial (-3044.8, 2418.7) legs R4-81 R4-7~ R4-7~ offset 4.4 m step 0.01 m min angle 78.8  [OFFSET>2m]
+JN016 tap (-2618.9, -1099.5) legs R6-151 M8~ M8~ offset 0.0 m step 0.02 m min angle 61.1  [SKEW<70]
+JN020 T (-2337.3, -956.1) legs R2-751 R6-15~ R6-15~ offset 0.1 m step 0.00 m min angle 66.5  [SKEW<70]
+JN024 T (-2130.9, -173.4) legs C-130 R4-29~ R4-29~ offset 5.5 m step 0.00 m min angle 72.0  [OFFSET>2m OFFSET>5m]
+JN025 T (-2049.9, 4142.6) legs R2-240 R4-19~ R4-19~ offset 1.2 m step 0.00 m min angle 51.4  [SKEW<70]
+JN030 T (-1901.2, 4503.3) legs R2-251 R4-19~ R4-19~ offset 3.2 m step 0.00 m min angle 70.3  [OFFSET>2m]
+JN042 T (-1306.6, -41.3) legs R2-761 R6-15~ R6-15~ offset 0.1 m step 0.00 m min angle 67.0  [SKEW<70]
+JN050 tap (-1073.3, 140.4) legs R6-150 J1-W~ J1-W~ offset 0.0 m step 0.00 m min angle 59.4  [SKEW<70]
+JN051 T (-1072.0, -1611.5) legs R2-111 R2-601 offset 5.6 m step 0.56 m min angle 82.1  [OFFSET>2m OFFSET>5m LEVEL-STEP]
+JN052 T (-977.8, 4568.6) legs R2-241 R4-19~ R4-19~ offset 6.2 m step 0.02 m min angle 86.5  [OFFSET>2m OFFSET>5m]
+JN055 arterial (-877.2, 4248.1) legs R4-151 R4-19~ R4-19~ offset 6.2 m step 0.01 m min angle 89.8  [OFFSET>2m OFFSET>5m]
+JN056 T (-867.9, 1705.2) legs R2-40.21 R2-41~ R2-41~ offset 2.5 m step 0.00 m min angle 88.4  [OFFSET>2m]
+JN057 T (-812.1, 347.5) legs SH-40 R2-77~ R2-77~ offset 11.5 m step 0.00 m min angle 69.9  [OFFSET>2m OFFSET>5m SKEW<70]
+JN058 T (-780.1, 3939.0) legs R2-221 R4-19~ R4-19~ offset 3.2 m step 0.01 m min angle 87.3  [OFFSET>2m]
+JN061 T (-639.7, 1876.2) legs R2-40.10 R2-33~ R2-33~ offset 4.7 m step 0.00 m min angle 90.0  [OFFSET>2m]
+JN064 T (-512.2, 718.3) legs SH-31 SH-1+2~ SH-1+2~ offset 4.6 m step 0.05 m min angle 88.0  [OFFSET>2m]
+JN065 T (-493.6, -35.0) legs SH-41 CRR-WNW-b~ CRR-WNW-b~ offset 9.1 m step 0.01 m min angle 81.6  [OFFSET>2m OFFSET>5m]
+JN067 T (-420.0, 1340.4) legs R2-321 R4-20~ R4-20~ offset 9.3 m step 0.08 m min angle 70.8  [OFFSET>2m OFFSET>5m]
+JN068 T (-381.5, 1197.6) legs SH-1+20 R4-20~ R4-20~ offset 11.5 m step 0.00 m min angle 46.5  [OFFSET>2m OFFSET>5m SKEW<70]
+JN070 T (-345.4, 693.5) legs R2-280 R4-20~ R4-20~ offset 11.6 m step 0.01 m min angle 88.9  [OFFSET>2m OFFSET>5m]
+JN074 T (-114.5, 600.0) legs SH-101 SH-8+11~ SH-8+11~ offset 4.7 m step 0.00 m min angle 68.8  [OFFSET>2m SKEW<70]
+JN075 T (-111.1, 679.7) legs R2-290 R2-28~ R2-28~ offset 2.3 m step 0.01 m min angle 88.9  [OFFSET>2m]
+JN076 T (-103.4, 864.8) legs SH-181 R2-29~ R2-29~ offset 7.5 m step 0.00 m min angle 89.2  [OFFSET>2m OFFSET>5m]
+JN077 T (-58.2, 338.6) legs CRR-WSW-a0 RR-HUB~ RR-HUB~ offset 10.1 m step 0.00 m min angle 79.4  [OFFSET>2m OFFSET>5m]
+JN078 T (-55.6, 257.6) legs CRR-WNW-a0 RR-HUB~ RR-HUB~ offset 10.1 m step 0.00 m min angle 78.5  [OFFSET>2m OFFSET>5m]
+JN079 T (-25.3, 674.6) legs SH-190 R2-28~ R2-28~ offset 7.5 m step 0.00 m min angle 89.0  [OFFSET>2m OFFSET>5m]
+JN080 T (11.4, 368.9) legs CRR-S1-a0 RR-HUB~ RR-HUB~ offset 10.1 m step 0.00 m min angle 79.1  [OFFSET>2m OFFSET>5m]
+JN082 arterial (25.0, -2161.0) legs R6-6A1 R6-120 R6-130 offset 0.1 m step 0.00 m min angle 48.9  [SKEW<70]
+JN083 T (41.9, -34.0) legs SH-7+161 SH-6+15~ SH-6+15~ offset 5.0 m step 0.00 m min angle 88.1  [OFFSET>2m]
+JN084 T (48.2, 249.3) legs CRR-N1-a0 RR-HUB~ RR-HUB~ offset 10.1 m step 0.00 m min angle 75.9  [OFFSET>2m OFFSET>5m]
+JN085 T (58.5, 669.6) legs CRR-S1-a1 R2-28~ R2-28~ offset 3.2 m step 0.00 m min angle 84.8  [OFFSET>2m]
+JN087 T (68.7, 312.8) legs CRR-E1-a0 RR-HUB~ RR-HUB~ offset 10.1 m step 0.00 m min angle 74.3  [OFFSET>2m OFFSET>5m]
+JN092 arterial (320.9, 1190.1) legs R6-50 R4-140 R4-130 offset 0.2 m step 0.01 m min angle 61.5  [SKEW<70]
+JN093 T (330.9, 355.3) legs CRR-E1-a1 R2-28~ R2-28~ offset 4.9 m step 0.00 m min angle 87.4  [OFFSET>2m]
+JN094 arterial (333.0, -3537.9) legs R4-280 R4-27~ R4-27~ offset 0.0 m step 0.00 m min angle 43.6  [SKEW<70]
+JN098 tap (530.4, 1874.2) legs R4-141 M8~ M8~ offset 0.0 m step 0.02 m min angle 64.2  [SKEW<70]
+JN099 T (548.4, -110.9) legs SH-200 R2-18~ R2-18~ offset 7.5 m step 0.00 m min angle 84.7  [OFFSET>2m OFFSET>5m]
+JN109 T (897.1, -524.9) legs SH-21+220 R4-12~ R4-12~ offset 11.4 m step 0.00 m min angle 88.4  [OFFSET>2m OFFSET>5m]
+JN110 roundabout (937.5, -2172.3) legs L-200 L-210 C-4~ C-4~ offset 2.8 m step 0.00 m min angle 84.9  [OFFSET>2m]
+JN112 T (987.6, -305.2) legs SH-21+221 R2-19~ R2-19~ offset 4.5 m step 0.01 m min angle 69.1  [OFFSET>2m SKEW<70]
+JN114 T (1061.4, -607.5) legs R2-170 R4-12~ R4-12~ offset 0.1 m step 0.00 m min angle 58.3  [SKEW<70]
+JN118 T (1159.4, -2762.9) legs C-30 R2-15~ R2-15~ offset 4.7 m step 0.02 m min angle 86.4  [OFFSET>2m]
+JN123 roundabout (1211.9, -4483.5) legs R2-710 R2-720 R2-62~ R2-62~ offset 0.5 m step 0.03 m min angle 46.1  [SKEW<70]
+JN124 T (1218.4, -598.4) legs L-301 R2-17~ R2-17~ offset 10.4 m step 0.15 m min angle 81.5  [OFFSET>2m OFFSET>5m]
+JN125 T (1221.5, -466.8) legs SH-201 L-30~ L-30~ offset 7.5 m step 0.05 m min angle 82.5  [OFFSET>2m OFFSET>5m]
+JN126 T (1230.9, -2295.6) legs L-151 R2-13~ R2-13~ offset 3.7 m step 0.00 m min angle 67.7  [OFFSET>2m SKEW<70]
+JN127 T (1236.8, -2357.9) legs R2-140 R2-13~ R2-13~ offset 0.3 m step 0.00 m min angle 32.5  [SKEW<70]
+JN129 roundabout (1312.1, -2507.4) legs L-100 L-130 C-3~ C-3~ offset 2.5 m step 0.00 m min angle 86.5  [OFFSET>2m]
+JN140 tap (1439.6, -3413.5) legs R4-231 M8~ M8~ offset 1.1 m step 0.00 m min angle 57.5  [SKEW<70]
+JN141 roundabout (1456.5, -2499.6) legs R2-120 R2-130 R4-10~ R4-10~ offset 5.1 m step 0.00 m min angle 87.5  [OFFSET>2m OFFSET>5m]
+JN143 T (1553.3, -1815.5) legs R4-260 R2-70~ R2-70~ offset 1.1 m step 0.01 m min angle 68.8  [SKEW<70]
+JN145 T (1572.8, -573.3) legs C-50 R2-17~ R2-17~ offset 4.8 m step 0.00 m min angle 81.9  [OFFSET>2m]
+JN147 T (1577.0, -304.1) legs C-51 R2-19~ R2-19~ offset 2.8 m step 0.00 m min angle 88.7  [OFFSET>2m]
+JN150 T (1655.9, -1664.8) legs R2-651 R2-64~ R2-64~ offset 6.6 m step 0.02 m min angle 44.4  [OFFSET>2m OFFSET>5m SKEW<70]
+JN151 T (1662.0, -2017.0) legs R2-690 R2-681 R2-700 offset 0.0 m step 0.00 m min angle 62.4  [SKEW<70]
+JN152 T (1695.7, -1305.8) legs R2-641 R6-11~ R6-11~ offset 3.5 m step 0.00 m min angle 77.8  [OFFSET>2m]
+JN153 T (1815.1, 1117.6) legs R2-461 R2-45~ R2-45~ offset 4.7 m step 0.00 m min angle 87.7  [OFFSET>2m]
+JN154 T (1815.7, -1914.8) legs R2-680 R2-64~ R2-64~ offset 2.1 m step 0.03 m min angle 89.4  [OFFSET>2m]
+JN160 roundabout (2099.8, -1721.7) legs R2-650 R2-660 R4-25~ R4-25~ offset 2.2 m step 0.01 m min angle 81.1  [OFFSET>2m]
+JN165 T (2219.8, -790.1) legs L-261 R2-19~ R2-19~ offset 10.1 m step 0.04 m min angle 72.2  [OFFSET>2m OFFSET>5m]
+JN166 T (2292.3, -934.2) legs R2-201 R2-19~ R2-19~ offset 4.3 m step 0.07 m min angle 82.2  [OFFSET>2m]
+JN169 T (2389.8, -1797.9) legs R2-661 R2-67~ R2-67~ offset 4.8 m step 0.01 m min angle 77.2  [OFFSET>2m]
+JN171 tap (2536.0, -2297.1) legs R4-240 M8~ M8~ offset 0.1 m step 35.92 m min angle 84.3  [GRADE-SEPARATED?]
+JN174 arterial (2838.6, 2778.6) legs R4-220 R4-21~ R4-21~ offset 4.8 m step 0.01 m min angle 76.5  [OFFSET>2m]
+JN177 T (4106.9, 2108.3) legs R2-530 R2-52~ R2-52~ offset 0.4 m step 0.02 m min angle 15.6  [SKEW<70]
+JN180 T (4492.1, 2098.7) legs R2-540 R2-53~ R2-53~ offset 4.7 m step 0.00 m min angle 89.1  [OFFSET>2m]
+JN181 T (4499.3, 2840.8) legs R2-541 R4-21~ R4-21~ offset 3.5 m step 7.89 m min angle 66.8  [OFFSET>2m LEVEL-STEP GRADE-SEPARATED? SKEW<70]
+--- free ends ---
+J1-N end 0 (104.8, -526.9) class 8
+J1-E end 0 (162.9, -85.2) class 8
+J1-S end 0 (-278.8, -27.1) class 8
+J1-W end 0 (-336.9, -468.8) class 8
+M6-1 end 0 (-1134.3, 2326.7) class 8
+M6-1 end 1 (-1400.0, 4050.0) class 8
+R6-2 end 1 (2417.6, 2298.5) class 6
+R6-3 end 0 (-413.1, 2403.5) class 6
+R6-4 end 1 (476.0, 2006.3) class 6
+R6-6A end 0 (434.8, -1880.1) class 6
+R6-6B end 0 (605.3, -1700.2) class 6
+R6-7 end 0 (-1955.2, -3438.8) class 6
+R6-7 end 1 (-2000.0, -2983.0) class 6
+R6-8 end 0 (1469.1, 626.0) class 6
+R6-8 end 1 (1530.5, 421.8) class 6
+R6-9 end 0 (-2004.2, -2962.4) class 6
+R6-10 end 0 (-2220.2, -3457.5) class 6
+R6-13 end 1 (192.0, -2575.0) class 6
+R4-3 end 1 (-3360.9, -3650.0) class 4
+R4-4 end 1 (-2120.8, -2823.5) class 4
+R4-5 end 1 (-3247.5, -804.1) class 4
+R4-11 end 1 (834.0, -2250.0) class 4
+R4-15 end 0 (-1372.0, 4094.0) class 4
+R4-21 end 0 (4927.4, 3115.9) class 4
+R4-23 end 0 (2648.0, -3592.0) class 4
+R4-29 end 0 (-1786.6, -491.0) class 4
+R2-12 end 1 (1827.9, -2590.7) class 2
+R2-13 end 1 (1235.0, -2190.1) class 2
+R2-14 end 1 (857.0, -2820.0) class 2
+R2-44 end 1 (1439.5, 1768.6) class 2
+R2-28 end 1 (263.9, 90.4) class 2
+R2-29 end 1 (-135.0, 1108.7) class 2
+R2-31 end 1 (-655.1, 739.2) class 2
+R2-38 end 1 (-1987.9, 2148.6) class 2
+R2-39 end 1 (-2408.8, 1624.0) class 2
+R2-41 end 0 (-789.0, 1606.0) class 2
+R2-41 end 1 (-967.0, 1830.0) class 2
+R2-48 end 0 (1458.0, 1919.3) class 2
+R2-48 end 1 (1489.0, 2156.7) class 2
+R2-49 end 1 (1165.0, 2047.0) class 2
+R2-50 end 1 (1727.0, 1976.0) class 2
+R2-34.4 end 1 (-1180.7, 1943.1) class 2
+R2-35.1 end 0 (-1294.0, 1702.0) class 2
+R2-35.2 end 1 (-1287.9, 2220.2) class 2
+R2-36.1 end 0 (-1496.0, 1695.0) class 2
+R2-36.2 end 1 (-1494.3, 2211.6) class 2
+R2-37.1 end 0 (-1713.0, 1748.0) class 2
+R2-37.2 end 1 (-1710.4, 2205.4) class 2
+R2-42.1 end 0 (-643.0, 1688.0) class 2
+R2-42.2 end 1 (-977.0, 2089.0) class 2
+R2-45 end 1 (1818.0, 973.3) class 2
+R2-69 end 1 (2136.6, -2643.4) class 2
+R2-77 end 0 (-641.8, 414.5) class 2
+R2-77 end 1 (-1032.5, 193.2) class 2
+R2-1 end 1 (-496.5, -4111.1) class 2
+R2-2 end 1 (-1122.0, -3240.6) class 2
+R2-4 end 1 (-3912.8, -2955.1) class 2
+R2-5 end 1 (-4361.3, -4809.9) class 2
+R2-6 end 1 (-2397.0, -2129.5) class 2
+R2-8.1 end 0 (-4817.1, 3107.9) class 2
+R2-9 end 0 (-1763.7, -1959.5) class 2
+R2-9 end 1 (-1839.8, -2144.4) class 2
+R2-10 end 1 (-1089.0, -2591.1) class 2
+R2-11 end 0 (-1868.8, -1327.1) class 2
+R2-33 end 0 (-948.9, 2238.6) class 2
+R2-33 end 1 (-695.5, 992.0) class 2
+R2-53 end 1 (4726.0, 2093.0) class 2
+R2-55 end 0 (2876.5, 1117.4) class 2
+R2-55 end 1 (3065.6, 12.2) class 2
+R2-57 end 0 (3948.0, 618.0) class 2
+R2-57 end 1 (3751.9, 624.9) class 2
+R2-58 end 0 (3132.8, -645.5) class 2
+R2-58 end 1 (2826.5, -1659.0) class 2
+R2-59 end 0 (3526.9, -829.2) class 2
+R2-59 end 1 (3874.0, -1110.7) class 2
+R2-60 end 0 (-889.3, -1588.3) class 2
+R2-61 end 1 (-774.7, -326.9) class 2
+R2-62 end 0 (579.0, -3877.6) class 2
+R2-71 end 1 (1905.4, -4995.2) class 2
+R2-73 end 0 (4468.2, -3948.7) class 2
+R2-73 end 1 (4632.3, -3836.7) class 2
+C-6.1 end 0 (144.0, -3603.0) class C
+C-6.2 end 1 (248.0, -3352.0) class C
+C-7.1 end 0 (443.0, -3718.0) class C
+C-7.2 end 1 (563.0, -3432.0) class C
+C-8 end 0 (627.0, -3766.0) class C
+C-8 end 1 (764.8, -3478.4) class C
+C-9 end 1 (-32.0, -3512.0) class C
+C-10 end 1 (56.0, -3280.0) class C
+C-11 end 1 (-1886.0, 0.0) class C
+C-12 end 1 (-2391.0, 13.0) class C
+C-13 end 1 (-2396.3, -409.5) class C
+C-1 end 1 (-4421.0, 2228.0) class C
+SH-1+2 end 1 (-572.4, 616.5) class S
+SH-3 end 0 (-359.8, 696.3) class S
+SH-6+15 end 0 (-466.5, 470.3) class S
+SH-6+15 end 1 (186.6, 75.3) class S
+SH-7+16 end 0 (-407.3, 507.2) class S
+SH-8+11 end 0 (-339.1, 617.7) class S
+SH-8+11 end 1 (267.6, 367.4) class S
+SH-9+13 end 0 (-144.9, 410.9) class S
+SH-9+13 end 1 (131.4, 342.2) class S
+SH-12+14 end 0 (50.1, 531.0) class S
+SH-12+14 end 1 (150.9, 164.8) class S
+SH-17 end 1 (94.9, 180.6) class S
+SH-18 end 0 (-323.9, 873.0) class S
+SH-19 end 1 (6.1, 1060.2) class S
+SH-23+24 end 0 (613.1, -344.6) class S
+SH-23+24 end 1 (745.1, -197.0) class S
+SH-25 end 0 (233.3, -96.4) class S
+SH-25 end 1 (180.4, -529.3) class S
+L-1 end 1 (-4274.0, 2038.0) class L
+L-2 end 1 (-4285.0, 2495.0) class L
+L-3 end 1 (-2986.0, 1246.0) class L
+L-7 end 1 (-3461.0, 1064.0) class L
+L-8 end 1 (1296.5, -2735.5) class L
+L-9 end 1 (1342.6, -2638.1) class L
+L-10 end 1 (1390.7, -2548.4) class L
+L-17 end 1 (719.0, -2250.0) class L
+L-18 end 1 (593.0, -1994.0) class L
+L-19 end 1 (590.0, -2250.0) class L
+L-20 end 1 (930.0, -2250.0) class L
+L-21 end 1 (948.8, -2112.8) class L
+L-22 end 1 (721.0, -2029.0) class L
+L-23 end 1 (1876.0, -893.0) class L
+L-25 end 1 (2041.0, -975.0) class L
+L-28 end 1 (1737.1, -773.9) class L
+L-29 end 1 (1775.8, -433.0) class L
+L-6 end 1 (-2835.2, 1371.1) class L
+L-14 end 1 (1415.8, -2304.1) class L
+L-16 end 1 (1464.6, -2409.9) class L
+SH-5 end 1 (-534.1, 237.0) class S
+SH-10 end 0 (-237.4, 472.1) class S
+CRR-N1-a end 1 (243.0, 3.3) class X
+CRR-WNW-b end 1 (-753.7, -73.1) class X
+--- same-level crossings without a junction ---
+R4-16 x R2-24 at (-1538.3, 4346.5) height diff 0.00 m
+R2-21 x R2-26 at (-1551.4, 3644.0) height diff 0.01 m
+R2-22 x R2-27 at (-1026.7, 3848.0) height diff 0.02 m
+R2-23 x R2-24 at (-1256.8, 4458.3) height diff 0.02 m
+R2-24 x R2-25 at (-1795.2, 4244.6) height diff 0.04 m
+R2-30 x SH-1+2 at (-476.0, 873.0) height diff 1.69 m
+SH-6+15 x CRR-WNW-a at (-251.4, 107.4) height diff 0.08 m
+SH-7+16 x CRR-WNW-a at (-146.5, 187.2) height diff 0.05 m
+SH-7+16 x SH-17 at (-44.8, 74.2) height diff 0.01 m
+SH-8+11 x CRR-S1-a at (47.7, 596.6) height diff 0.09 m
+SH-9+13 x CRR-S1-a at (25.7, 459.0) height diff 0.06 m
+SH-12+14 x CRR-E1-a at (200.4, 337.1) height diff 0.06 m
+SH-20 x SH-23+24 at (686.1, -275.4) height diff 0.23 m
+SH-20 x SH-21+22 at (945.9, -410.9) height diff 0.13 m

@@ -32,6 +32,7 @@ import { C_NEW_LINE_DATA } from './c/CNewLineData';
 import { L_NEW_LINE_DATA } from './l/LNewLineData';
 import { CITY_SHP_LINE_DATA } from './city/CityShpLineData';
 import { CORRIDOR_ROAD_DATA, type CorridorPiece } from './crr/CorridorRoadData';
+import { buildJunctionRegistry, type JunctionRegistry } from './JunctionRegistry';
 import { STRUCT, STRUCT_CARVE } from './ring/RingStructures';
 import { SCENARIOS, cutRange, nearestPoint, uvToWorld, type ScenarioSpec } from '../interchange/scenario/J6Scenario';
 
@@ -1420,6 +1421,18 @@ export class RoadNetwork {
     return this.segRoad.length;
   }
 
+  private regCache: { n: number; reg: JunctionRegistry } | null = null;
+
+  /**
+   * JUNCTION REGISTRY (user 2026-11-22: some junctions still came from the OLD road data): the junctions that REALLY exist in the finished roads
+   * (every road added so far: ring, J1 arms, R6 / R4 / R2 / C / L, city streets, corridor roads), found from the road lines themselves. Reads only, moves nothing.
+   * Cached per road count: the roads join the network in several steps (addJ1Arms, addRteLanes, addCorridorRoads), so ask again after the last one.
+   */
+  junctionRegistry(): JunctionRegistry {
+    if (!this.regCache || this.regCache.n !== this.roads.length) this.regCache = { n: this.roads.length, reg: buildJunctionRegistry(this.roads) };
+    return this.regCache.reg;
+  }
+
   get stats(): { roads: number; highwayKm: number; localKm: number; bridges: number; culverts: number; junctions: number } {
     let hw = 0;
     let lo = 0;
@@ -1433,7 +1446,7 @@ export class RoadNetwork {
       localKm: lo / 1000,
       bridges: this.bridges.length,
       culverts: this.culverts.length,
-      junctions: this.junctions.length,
+      junctions: Math.max(this.junctions.length, this.junctionRegistry().nodes.length),
     };
   }
 

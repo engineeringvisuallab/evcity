@@ -3,7 +3,7 @@
 // NOT a road: no physics, no AI, no traffic. Hidden by default; key 3 toggles it. fog: false on every material (like RailDebug), else the game's fog hides far lines. Parent = world.root, absolute world coordinates.
 import * as THREE from 'three';
 import type { RoadNetwork } from '../RoadNetwork';
-import { CENTRE_ROADS, CENTRE_JUNCTIONS } from './RoadCentreData';
+import { CENTRE_ROADS } from './RoadCentreData';
 import { HOUSING_STREETS, HOUSING_JUNCTIONS } from './HousingStreetData';
 
 const COLOUR: Record<string, number> = { '8': 0x111111, '6': 0x2a6bff, '4': 0xff2a3c, '2': 0x12c24a };
@@ -130,8 +130,14 @@ export class RoadCentreLayer {
       const m = r.pts.length >> 1;
       this.pole(xs[m], ys[m], zs[m], hex, r.flag ? r.id + ' ' + r.flag : r.id, 35 + (k % 3) * 8); // flag: ! = no bigger road within 100 m, ~ = stops short of it (class-sequence rule)
     });
-    // 3. junction placeholders J-xx
-    for (const j of CENTRE_JUNCTIONS) this.pole(j.x, this.heightAt(j.x, j.z) + LIFT, j.z, 0xffb000, j.id, 20);
+    // 3. REAL junctions JNxxx (user 2026-11-22: the old J-xx poles came from the old fitted lines and were used as junctions): found from the finished roads in the game
+    // (RoadNetwork.junctionRegistry), standing at the real road height. Colour: ring-T red, interchange tap orange, arterial yellow, roundabout blue, priority T green.
+    const JCOL: Record<string, number> = { 'ring-T': 0xff1030, tap: 0xff7a00, arterial: 0xffd000, roundabout: 0x00b8ff, T: 0x3ddc54, continuation: 0xaaaaaa };
+    for (const j of this.roads.junctionRegistry().nodes) {
+      if (j.type === 'continuation') continue;
+      const names = [...new Set(j.legs.map((l) => l.name))].join('+');
+      this.pole(j.x, j.y + LIFT, j.z, JCOL[j.type] ?? 0xffb000, `${j.id} ${j.type} ${names}${j.flags.length ? ' [' + j.flags.join(' ') + ']' : ''}`, 20);
+    }
     // 4. housing streets (STEP C, plan view only): arterial / collector / local in their own colours, small name label, white J-xx poles
     HOUSING_STREETS.forEach((r, k) => {
       const hex = HCOL[r.cls];

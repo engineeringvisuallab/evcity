@@ -37,17 +37,21 @@ const r2 = (n: number): number => Math.round(n * 100) / 100;
 const roadsCenterline = (t: TerrainGenerator): GisLayer => {
   const bridges = new Map<number, number>();
   for (const b of t.roads.bridges) bridges.set(b.roadId, (bridges.get(b.roadId) ?? 0) + 1);
+  // topology (user 2026-11-22): the junction at each end of every road (JN id from RoadNetwork.junctionRegistry, empty = the end meets nothing)
+  const jStart = new Map<number, string>();
+  const jEnd = new Map<number, string>();
+  for (const j of t.roads.junctionRegistry().nodes) for (const l of j.legs) if (l.end === 0) jStart.set(l.roadId, j.id); else if (l.end === 1) jEnd.set(l.roadId, j.id);
   const features: GisFeature[] = t.roads.roads.map((r) => {
     const pts: number[][] = [];
     for (let i = 0; i < r.xs.length; i++) pts.push(toGrid(r.xs[i], r.zs[i], r.ys[i]));
     return {
       parts: [pts],
-      attrs: [r.id, r.name, r.kind, r.tier, r.lanes, r2(2 * r.halfWidth), r2(2 * r.medianHalf), r.speedKmh, r2(r.length), r.earth ? 1 : 0, bridges.get(r.id) ?? 0, r.closed ? 1 : 0],
+      attrs: [r.id, r.name, r.kind, r.tier, r.lanes, r2(2 * r.halfWidth), r2(2 * r.medianHalf), r.speedKmh, r2(r.length), r.earth ? 1 : 0, bridges.get(r.id) ?? 0, r.closed ? 1 : 0, jStart.get(r.id) ?? '', jEnd.get(r.id) ?? ''],
     };
   });
   return {
     id: 'roads_centerline', label: 'Road centrelines', geom: 'polyline', hasZ: true, features,
-    fields: [N('ROAD_ID', 6), C('NAME', 12), C('KIND', 12), N('TIER', 2), N('LANES', 3), N('WIDTH_M', 8, 2), N('MEDIAN_M', 8, 2), N('SPEED_KMH', 4), N('LENGTH_M', 10, 1), N('EARTH', 1), N('BRIDGES', 3), N('CLOSED', 1)],
+    fields: [N('ROAD_ID', 6), C('NAME', 12), C('KIND', 12), N('TIER', 2), N('LANES', 3), N('WIDTH_M', 8, 2), N('MEDIAN_M', 8, 2), N('SPEED_KMH', 4), N('LENGTH_M', 10, 1), N('EARTH', 1), N('BRIDGES', 3), N('CLOSED', 1), C('J_START', 8), C('J_END', 8)],
   };
 };
 
@@ -62,6 +66,25 @@ const roadCentreView = (t: TerrainGenerator): GisLayer => {
     fields: [C('SOURCE', 8), C('ROAD_ID', 16), C('CLASS', 4), C('FLAG', 2)],
   };
 };
+
+// REAL junctions (user 2026-11-22): from the finished game roads (RoadNetwork.junctionRegistry), not from the old planned table. One point per junction, with the legs, offsets and level step.
+const junctionsReal = (t: TerrainGenerator): GisLayer => {
+  const reg = t.roads.junctionRegistry();
+  return {
+    id: 'junctions', label: 'Junctions (real, from the game roads)', geom: 'point', hasZ: true,
+    features: reg.nodes.map((j) => ({
+      parts: [[toGrid(j.x, j.z, j.y)]],
+      attrs: [j.id, j.type, j.legs.filter((l, i, a) => a.findIndex((q) => q.roadId === l.roadId) === i).length, [...new Set(j.legs.map((l) => l.name))].join(' ').slice(0, 78), r2(j.minAngle), r2(j.maxOffset), r2(j.maxGapY), j.flags.join(' ').slice(0, 40)],
+    })),
+    fields: [C('JUNCTION', 8), C('TYPE', 12), N('ROADS', 2), C('LEGS', 80), N('MIN_ANGLE', 6, 1), N('OFFSET_M', 6, 2), N('LEVEL_STEP', 6, 2), C('FLAGS', 40)],
+  };
+};
+
+const roadFreeEnds = (t: TerrainGenerator): GisLayer => ({
+  id: 'road_free_ends', label: 'Road ends that meet no road', geom: 'point', hasZ: true,
+  features: t.roads.junctionRegistry().freeEnds.map((e) => ({ parts: [[toGrid(e.x, e.z, e.y)]], attrs: [e.roadId, e.name, e.cls, e.end] })),
+  fields: [N('ROAD_ID', 6), C('NAME', 12), C('CLASS', 2), N('END', 1)],
+});
 
 const roadCentreJunctions = (t: TerrainGenerator): GisLayer => ({
   id: 'road_centre_junctions', label: 'Road Central Line junction marks (key 3 view)', geom: 'point', hasZ: true,
@@ -402,7 +425,9 @@ const buildings3d = (t: TerrainGenerator, ctx: GisContext): GisLayer => {
 export const GIS_LAYERS: readonly GisLayerDef[] = [
   { id: 'roads_centerline', label: 'রাস্তার সেন্টারলাইন', hint: 'সব রাস্তা, উচ্চতা (Z) সহ', build: roadsCenterline },
   { id: 'road_centre_view', label: 'রোড সেন্টার লাইন (৩ চাপলে যা দেখায়)', hint: 'বানানো ৮/৬ লেন + প্ল্যান করা ৬/৪/২ লেন + হাউজিং স্ট্রিট, রঙ ও ক্লাস সহ', build: roadCentreView },
-  { id: 'road_centre_junctions', label: 'রোড সেন্টার লাইনের জংশন মার্ক (J-xx)', hint: '৩ চাপলে যে J-xx খুঁটি দেখা যায় (পয়েন্ট)', build: roadCentreJunctions },
+  { id: 'junctions', label: 'জংশন (আসল, গেমের রাস্তা থেকে)', hint: 'গেমের শেষ রাস্তা থেকে পাওয়া সব জংশন: ধরন, পা (leg), লেভেল ধাপ, ফ্ল্যাগ (পয়েন্ট)', build: junctionsReal },
+  { id: 'road_free_ends', label: 'যে রাস্তার মুখ কোথাও মেলেনি', hint: '১২ মিটারের মধ্যে অন্য রাস্তা নেই (পয়েন্ট)', build: roadFreeEnds },
+  { id: 'road_centre_junctions', label: 'পুরোনো পরিকল্পিত জংশন মার্ক (J-xx)', hint: 'পুরোনো তালিকা: আসল জংশন নয়, শুধু তুলনার জন্য (পয়েন্ট)', build: roadCentreJunctions },
   { id: 'bridges', label: 'ব্রিজ', hint: 'ব্রিজের ডেক, স্প্যান ও লোড', build: bridges },
   { id: 'junction_pads', label: 'জংশন', hint: 'সমতল জংশনের আউটলাইন (পলিগন)', build: junctionPads },
   { id: 'buildings', label: 'বিল্ডিং', hint: 'বিল্ডিংয়ের ফুটপ্রিন্ট (উঠান সহ)', build: () => buildings() },

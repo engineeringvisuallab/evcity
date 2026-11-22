@@ -1,0 +1,59 @@
+pads 126, skipped 54, kinds {"4way":29,"T":93,"bend":4}
+roads mutated 164, max plan shift 63.42 m, max height shift 2.83 m
+reasons {"re-grade would reach a bridge / another junction":8,"another junction too close":16,"bridge within 115 m":22,"a leg would run into water":6,"leg too short":2}
+moved: J1-N:0.9m/0.00y J1-E:1.2m/0.00y J1-S:0.5m/0.00y J1-W:2.0m/0.00y M6-1:1.4m/0.00y R6-2:1.5m/0.20y R6-3:10.1m/0.25y R6-4:0.5m/0.50y R6-5:4.2m/1.43y R6-6B:1.4m/0.00y R6-8:1.0m/0.37y R6-9:0.1m/0.00y R6-10:8.4m/1.66y R6-11:3.1m/0.00y R6-12:3.8m/1.41y R6-14:7.3m/1.40y R6-15:25.8m/1.90y R6-8:m1:12.8m/0.60y R6-8:m2:63.4m/1.39y R4-1:0.7m/2.47y R4-2:0.1m/2.72y R4-3:12.9m/0.25y R4-4:6.3m/0.30y R4-6:7.8m/0.11y R4-7:17.5m/1.26y R4-8:10.3m/2.45y R4-10:5.2m/2.77y R4-11:6.3m/0.01y R4-14:0.1m/1.91y R4-15:6.4m/2.54y R4-16:0.1m/1.12y R4-17:0.2m/2.02y R4-18:4.8m/1.67y R4-22:14.0m/2.37y R4-25:2.2m/1.81y R4-26:20.8m/0.45y R4-27:12.4m/0.29y R4-28:31.1m/0.23y R4-9:10.1m/0.07y R4-12:11.7m/0.84y R4-13:0.2m/2.39y R4-19:8.5m/1.83y R4-20:11.1m/1.39y R4-21:8.3m/0.78y R4-23:0.8m/0.00y R4-29:0.6m/1.78y R2-12:5.7m/1.20y R2-13:6.5m/2.42y R2-14:3.1m/0.00y R2-15:14.1m/2.49y R2-16:1.6m/2.10y R2-17:35.2m/1.45y R2-18:1.7m/0.19y R2-44:6.0m/0.55y R2-63:0.7m/0.95y R2-65:37.0m/2.64y R2-21:5.4m/1.20y R2-22:5.9m/1.71y R2-23:2.9m/1.06y R2-24:6.6m/1.52y R2-25:3.9m/1.29y R2-26:4.9m/1.69y R2-27:4.9m/1.00y R2-28:11.7m/0.16y R2-29:2.5m/0.17y R2-30:4.7m/1.25y R2-31:0.6m/1.88y R2-32:20.4m/1.81y R2-38:0.0m/0.66y R2-39:0.0m/0.13y R2-41:0.1m/0.00y R2-46:21.4m/1.15y R2-48:0.1m/0.00y R2-49:2.7m/0.42y R2-50:2.8m/1.42y R2-66:8.2m/1.82y R2-20:6.7m/2.52y R2-34.1:0.1m/0.07y R2-34.2:0.2m/0.24y R2-34.3:0.3m/0.14y R2-34.4:0.1m/0.13y R2-35.1:0.1m/0.60y R2-35.2:0.1m/0.35y R2-36.1:0.2m/0.14y R2-36.2:0.2m/0.36y R2-37.1:0.1m/0.12y R2-37.2:0.1m/0.61y R2-40.1:4.7m/0.66y R2-40.2:2.9m/0.15y R2-42.1:0.1m/0.14y R2-42.2:0.1m/0.33y R2-45:5.5m/0.05y R2-75:17.2m/1.16y R2-77:0.1m/0.00y R2-1:0.0m/1.78y R2-2:0.3m/1.19y R2-7:8.0m/1.34y R2-8.1:2.3m/1.95y R2-8.2:2.3m/2.08y R2-10:11.4m/1.29y R2-19:9.1m/0.72y R2-33:0.1m/0.03y R2-43:4.5m/2.12y R2-51:22.9m/2.83y R2-52:19.0m/2.79y R2-64:7.1m/1.05y R2-67:8.4m/1.68y R2-70:1.8m/0.73y R2-72:5.8m/0.96y R2-74:1.0m/0.96y R2-76:20.1m/2.13y C-2:12.4m/0.34y C-3:2.1m/1.93y C-4:4.3m/2.51y C-5:9.8m/0.15y C-6.1:4.7m/0.68y C-6.2:2.5m/0.13y C-7.1:8.0m/0.30y C-7.2:3.5m/0.30y C-8:1.6m/0.00y C-9:0.0m/0.12y C-10:0.1m/0.21y C-11:1.2m/0.09y C-12:2.6m/0.30y SH-1+2:38.1m/0.83y SH-3:14.9m/0.50y SH-4:17.2m/0.96y SH-6+15:17.6m/0.27y SH-7+16:14.9m/0.16y SH-9+13:20.4m/0.16y SH-12+14:12.7m/0.30y SH-17:12.8m/0.22y SH-18:14.1m/0.26y SH-20:22.4m/1.38y SH-21+22:11.5m/1.52y SH-23+24:14.6m/1.96y L-3:1.4m/1.32y L-4:12.8m/2.53y L-7:4.1m/0.17y L-8:1.2m/0.44y L-11:4.5m/2.35y L-12:1.2m/1.55y L-18:0.3m/0.50y L-19:0.3m/0.14y L-23:3.3m/0.83y L-25:0.3m/0.70y L-26:11.4m/1.04y L-24:4.6m/0.86y L-27:8.3m/0.48y L-28:5.8m/1.14y L-29:10.0m/0.00y L-30:20.4m/0.46y L-31:5.0m/0.88y L-5:42.9m/2.27y L-14:4.0m/0.60y L-15:16.8m/2.45y SH-5:3.4m/0.43y SH-10:17.4m/0.22y CRR-S1-a:3.8m/0.21y CRR-N1-a:6.2m/0.00y CRR-E1-a:5.4m/0.25y CRR-WNW-a:3.6m/0.61y CRR-WNW-b:11.0m/2.33y CRR-WSW-a:0.6m/0.00y
+skipped:
+R6-6A+R6-12+R6-13: re-grade would reach a bridge / another junction
+R6-8:m1 x J1-E: another junction too close
+R4-2+R2-4+R2-5: bridge within 115 m
+R4-11 x J1-N: re-grade would reach a bridge / another junction
+R4-16 x R4-19: a leg would run into water
+R4-26 x J1-N: bridge within 115 m
+R4-9 x J1-N: bridge within 115 m
+R4-12 x J1-E: bridge within 115 m
+R4-13 x J1-E: bridge within 115 m
+R2-23 x R4-19: a leg would run into water
+R2-24 x R4-19: a leg would run into water
+R2-25 x R4-19: a leg would run into water
+R2-31 x J1-S: bridge within 115 m
+R2-6 x R6-7: bridge within 115 m
+R2-8.2 x M6-1: bridge within 115 m
+R2-52 x R4-21: bridge within 115 m
+R2-54 x R4-21: bridge within 115 m
+R2-64 x R6-11: a leg would run into water
+R2-74 x R4-9: re-grade would reach a bridge / another junction
+C-13 x R4-29: bridge within 115 m
+SH-6+15 x R4-20: another junction too close
+SH-8+11 x R4-20: another junction too close
+SH-8+11 x CRR-E1-a: leg too short
+SH-9+13 x CRR-E1-a: leg too short
+SH-12+14 x CRR-N1-a: another junction too close
+CRR-N1-a x J1-E: re-grade would reach a bridge / another junction
+CRR-WNW-b x J1-W: re-grade would reach a bridge / another junction
+CRR-WSW-a x R4-20: another junction too close
+R6-7+R6-9: another junction too close
+R6-9+R4-9: bridge within 115 m
+R4-6+R2-7: re-grade would reach a bridge / another junction
+R4-24+R2-62: bridge within 115 m
+R2-71+R2-72 x R2-62: bridge within 115 m
+L-1+L-2 x C-1: bridge within 115 m
+L-9+L-11 x C-3: another junction too close
+L-10+L-13 x C-3: another junction too close
+L-17+L-22 x R2-16: re-grade would reach a bridge / another junction
+L-20+L-21 x C-4: another junction too close
+L-15+L-16 x L-14: another junction too close
+R2-14 x R2-13: a leg would run into water
+R2-69+R2-68+R2-70: bridge within 115 m
+R2-53 x R2-52: bridge within 115 m
+R2-54 x R2-53: bridge within 115 m
+R2-61 x R2-11: bridge within 115 m
+R2-68 x R2-64: bridge within 115 m
+C-2+L-5+L-6: re-grade would reach a bridge / another junction
+C-3 x R2-15: another junction too close
+C-1 x R2-7: bridge within 115 m
+SH-19 x R2-28: another junction too close
+L-12 x R2-14: another junction too close
+L-13 x R2-14: another junction too close
+SH-10 x SH-8+11: another junction too close
+R2-18+R2-19: another junction too close
+R2-11+R2-60: bridge within 115 m
