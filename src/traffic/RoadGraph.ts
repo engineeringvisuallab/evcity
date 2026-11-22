@@ -24,6 +24,22 @@ export interface Station {
 }
 
 /**
+ * AUTO CONNECT AT GRADE, A-6 step 1 (HANDOFF_ROAD_DESIGN.md 24.15): where a leg road meets an AUTO pad (Config.roads.autoJunction, src/roads/JunctionAuto*.ts).
+ * READ ONLY: separate from `Station` on purpose. `Station.pad` indexes net.pads / TrafficSignals.pads / Route, and those know nothing about auto pads yet,
+ * so the routing does NOT use this list (step 2). Empty with the flag OFF.
+ */
+export interface AutoStation {
+  /** Distance along the road (m) of the point on the road closest to the auto pad centre. */
+  s: number;
+  /** Index into net.autoPads (padAt(autoPad)). */
+  autoPad: number;
+  /** Index of the leg inside that pad (padAt(autoPad).legs[leg]). */
+  leg: number;
+  /** Distance (m) from that road point to the pad centre. */
+  dist: number;
+}
+
+/**
  * Walking / driving helper on top of the road splines: position at distance s along a road,
  * lane offset (left-hand traffic, as in Bangladesh) and the junction "stations" where a road meets a pad.
  * Pure functions of the (already built) RoadNetwork - no state, no physics.
@@ -32,6 +48,9 @@ export class RoadGraph {
   readonly roads: RoadSpec[];
   private stationsByRoad: Station[][];
   private armsByPad: { roadId: number; s: number }[][] = [];
+  /** A-6 step 1: auto pad stations per road, sorted by s (read only, not used by the routing yet). */
+  private autoStationsByRoad: AutoStation[][];
+  private autoArmsByPad: { roadId: number; s: number; leg: number }[][] = [];
   private cumLen: number[] = [];
   /** ROADS STEP 4: the U-turn openings of each divided road, sorted by s. */
   private uturnsByRoad: Map<number, UTurnOpening[]>;
@@ -97,6 +116,29 @@ export class RoadGraph {
       this.armsByPad.push(arms);
     }
     for (const st of this.stationsByRoad) st.sort((a, b) => a.s - b.s);
+    this.autoStationsByRoad = this.roads.map(() => []);
+    const ap = net.autoPads;
+    if (ap) {
+      for (let k = 0; k < ap.count; k++) {
+        const pad = ap.padAt(k);
+        const arms: { roadId: number; s: number; leg: number }[] = [];
+        pad.legs.forEach((lg, li) => {
+          const r = this.roads[lg.roadId];
+          if (!r) return;
+          let bi = 0;
+          let bd = Infinity;
+          for (let i = 0; i < r.xs.length; i++) {
+            const d = Math.hypot(r.xs[i] - pad.x, r.zs[i] - pad.z);
+            if (d < bd) { bd = d; bi = i; }
+          }
+          if (bd > 40) return; // a leg whose road is not near the pad centre is not linked
+          this.autoStationsByRoad[lg.roadId].push({ s: r.cum[bi], autoPad: k, leg: li, dist: bd });
+          arms.push({ roadId: lg.roadId, s: r.cum[bi], leg: li });
+        });
+        this.autoArmsByPad.push(arms);
+      }
+      for (const st of this.autoStationsByRoad) st.sort((a, b) => a.s - b.s);
+    }
     let acc = 0;
     for (const r of this.roads) {
       this.cumLen.push(acc);
@@ -147,6 +189,16 @@ export class RoadGraph {
 
   arms(pad: number): { roadId: number; s: number }[] {
     return this.armsByPad[pad];
+  }
+
+  /** A-6 step 1: the auto pad stations of a road (empty with the flag OFF). Not used by the routing yet. */
+  autoStations(roadId: number): readonly AutoStation[] {
+    return this.autoStationsByRoad[roadId];
+  }
+
+  /** A-6 step 1: the road / s / leg index of every leg of an auto pad (index into net.autoPads). */
+  autoArms(autoPad: number): ReadonlyArray<{ roadId: number; s: number; leg: number }> {
+    return this.autoArmsByPad[autoPad] ?? [];
   }
 
   /** Closest sampled road point to a WORLD coordinate, useful for deterministic roadside structures. */

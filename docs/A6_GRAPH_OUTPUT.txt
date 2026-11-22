@@ -1,0 +1,25 @@
+AUTO CONNECT AT GRADE, A-6 step 1: traffic RoadGraph knows the auto pads
+  [PASS] flag OFF: no auto stations: autoStations empty on every road
+  [PASS] flag ON: auto pads built: 15 pads of 15
+  [PASS] old stations / arms identical with the flag ON and OFF: Station / arms lists of the old pads are the same (the routing sees no change)
+  JN163 T: 3 of 3 legs linked, roads L-24@162 R2-19@1740 R2-19@1740, farthest station 3.4 m from the pad centre
+  JN033 roundabout: 4 of 4 legs linked, roads R2-37.1@196 R2-34.2@0 R2-37.2@0 R2-34.1@221, farthest station 0.1 m from the pad centre
+  JN028 T: 3 of 3 legs linked, roads R2-39@0 R2-34.1@0 R2-38@0, farthest station 0.0 m from the pad centre
+  JN037 roundabout: 4 of 4 legs linked, roads R2-36.1@248 R2-34.3@0 R2-36.2@0 R2-34.2@217, farthest station 0.2 m from the pad centre
+  JN043 roundabout: 4 of 4 legs linked, roads R2-35.1@241 R2-34.4@0 R2-35.2@0 R2-34.3@204, farthest station 0.1 m from the pad centre
+  JN056 T: 3 of 3 legs linked, roads R2-41@127 R2-40.2@159 R2-41@127, farthest station 2.5 m from the pad centre
+  JN059 roundabout: 4 of 4 legs linked, roads R2-40.2@0 R2-42.1@149 R2-40.1@128 R2-42.2@0, farthest station 0.1 m from the pad centre
+  JN060 T: 3 of 3 legs linked, roads SH-4@239 SH-5@0 SH-4@239, farthest station 2.5 m from the pad centre
+  JN064 T: 3 of 3 legs linked, roads SH-1+2@495 SH-3@150 SH-1+2@495, farthest station 4.6 m from the pad centre
+  JN073 T: 3 of 3 legs linked, roads SH-6+15@573 SH-17@0 SH-6+15@573, farthest station 3.8 m from the pad centre
+  JN076 T: 3 of 3 legs linked, roads R2-29@183 R2-29@183 SH-18@213, farthest station 7.5 m from the pad centre
+  JN083 T: 3 of 3 legs linked, roads SH-6+15@827 SH-6+15@827 SH-7+16@700, farthest station 5.0 m from the pad centre
+  JN124 T: 3 of 3 legs linked, roads R2-17@160 R2-17@160 L-30@481, farthest station 10.4 m from the pad centre
+  JN147 T: 3 of 3 legs linked, roads R2-19@1054 C-5@271 R2-19@1054, farthest station 2.8 m from the pad centre
+  JN165 T: 3 of 3 legs linked, roads L-26@131 R2-19@1908 R2-19@1908, farthest station 10.1 m from the pad centre
+  [PASS] every leg of every auto pad has a station: 49 of 49 legs linked
+  [PASS] station roads and s are valid: 0 wrong road ids, 0 s out of range
+  [PASS] a road with two legs in one pad (through road) gets the same s on both: 10 through-road legs (T pads), 0 with a different s or more than 2 legs
+  [PASS] station is close to the pad: farthest road point 10.4 m from a pad centre (limit 40 m)
+  [PASS] auto stations sorted by s: sorted on every road
+RESULT ALL PASS
