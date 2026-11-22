@@ -6,9 +6,9 @@ import { UI_FONT } from './theme';
  * Pure DOM + CSS (transform/opacity), so it keeps animating while the engine is busy loading.
  */
 
-const HOLD_AFTER_INTRO_MS = 0;    // logo + name stay fully visible this long AFTER the wordmark has appeared
+const HOLD_AFTER_INTRO_MS = 2500; // logo + name stay fully visible this long AFTER the wordmark has appeared
 const INTRO_FALLBACK_MS = 4000;   // safety: treat the intro as done after this even if animationend never fires
-const FADE_OUT_MS = 250;
+const FADE_OUT_MS = 700;
 
 const CSS = `
 .evs-root{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -74,8 +74,10 @@ const CSS = `
 .evs-sweep::after{content:"";position:absolute;top:-20%;bottom:-20%;width:16%;left:-30%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.2),transparent);transform:skewX(-18deg);animation:evs-sw 5s ease-in-out 2.4s infinite;}
 .evs-dust{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden;}
 .evs-dust i{position:absolute;bottom:-8px;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;background:rgba(170,255,240,.85);box-shadow:0 0 7px rgba(16,245,212,.9);opacity:0;animation:evs-dust var(--t) linear var(--d) infinite;}
-.evs-grid,.evs-glow,.evs-sky,.evs-logo,.evs-tips,.evs-shots,.evs-vig,.evs-sweep,.evs-dust{display:none!important}
-.evs-bar,.evs-label{animation:none!important;opacity:1!important}
+/* Image effects removed (user 2026-11-22): no zoom / blur on the screenshots, no glow pulse, vignette, light sweep or dust. Slides still cross-fade with their caption. */
+.evs-slide img{animation:none!important;filter:none!important;transform:none!important}
+.evs-shots{animation:evs-fade .8s ease 1.8s forwards!important;box-shadow:0 0 0 1px rgba(16,245,212,.35),0 12px 40px rgba(0,0,0,.55)!important}
+.evs-vig,.evs-sweep,.evs-dust{display:none!important}
 @media (prefers-reduced-motion:reduce){
   .evs-slide,.evs-slide img,.evs-slide b,.evs-dust i,.evs-sweep::after{animation:none!important}
   .evs-slide b{opacity:1}
@@ -122,10 +124,11 @@ export class Splash {
     this.label = this.root.querySelector('.evs-label') as HTMLDivElement;
 
     const textEl = this.root.querySelector('.evs-text') as HTMLDivElement;
-    // Start effect removed (user 2026-11-22): no logo intro to wait for, the engine load starts at once.
-    void textEl; void INTRO_FALLBACK_MS;
-    this.introEndedAt = performance.now();
-    this.introDone = Promise.resolve();
+    this.introDone = new Promise<void>((resolve) => {
+      const done = () => { if (!this.introEndedAt) { this.introEndedAt = performance.now(); resolve(); } };
+      textEl.addEventListener('animationend', done, { once: true });
+      window.setTimeout(done, INTRO_FALLBACK_MS);
+    });
 
     // Real steps come from setStage(); in between the bar creeps slowly towards the next step's value.
     this.creep = window.setInterval(() => {

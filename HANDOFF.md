@@ -214,5 +214,5 @@ USER (screenshot, X marks + circle): remove the old lots beside F4 (mall lot, si
 - `Engine.ts` uses `FLEET_PARK`; `Roadside.ts` HEDGE_LOTS = [] (no hedges along the removed lots). Fuel / charge stations and the Main Station lot are NOT touched.
 - Checks: tsc PASS; parking-fence-test PASS (threshold 500 -> 100 triangles). NOT seen in a running game. Open: Jobs.ts depot markers at the old lot places.
 
-## Start effect removed (2026-11-22)
-User asked to remove the game-start effect. Nothing deleted: `src/ui/Splash.ts` is still imported by `src/main.ts`. Logo animation, grid, glow, skyline, tips, screenshot slides now hidden (CSS display:none), intro wait removed (introDone resolves at once, HOLD_AFTER_INTRO_MS = 0, fade 250 ms). Only the dark screen with the loading bar and label stays (the engine load still takes seconds). To bring the old splash back: undo the 3 edits marked 'Start effect removed' in Splash.ts. tsc --noEmit PASS; npm run build PASS (exit 0); game look NOT run.
+## Splash image effects removed (2026-11-22)
+User: remove only the effects on the splash screenshots. In `src/ui/Splash.ts` (CSS block 'Image effects removed'): no zoom / blur on the slide images, no glow pulse on the frame, vignette, light sweep and dust hidden. Logo intro, grid, glow, tips, loading bar and the cross-fading slides with captions are unchanged. To undo: delete that CSS block. tsc --noEmit PASS, npm run build PASS; game look NOT run.
