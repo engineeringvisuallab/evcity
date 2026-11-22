@@ -1,0 +1,46 @@
+RE-2 VERTICAL PLAN  OPT-1 outside directional T, ring x J1-E (RT-E).  Layout-level plan of RE-1 + vertical curves.  NO src change.
+Frame: u along the ring, v toward the stem. Ring level at the T 28.41 m, stem level at the T 28.41 m. Over the ring: 7.8 m (5.5 clear + deck + girder), 2nd level +6.9 m.
+Vertical criteria (Checks.ts minVerticalK, ramp V 50 km/h): SSD 63.1 m, K crest 6.1, K sag 11.7; grade <= 5 %; minimum curve length 30 m (ASSUMED).
+
+[upper ramp = M4]
+  M3 B->S : length 312 m | start on ring B (u -141) level 30.21 | deck level 36.55 m = ring + 8.1 | ring clearance 7.80 m | end on the stem outbound at d 107 level 30.73 | exit run on the ring T3 = 75 m
+  M4 S->B : length 690 m | start on the stem inbound at d 216 level 33.81 | deck level 43.48 m = ring + 15.1 | ring clearance 14.77 m | end on ring B (u 441) level 32.99
+  M3 curves: crest at s=131 A=-4.8 % L=30 m; crest at s=195 A=-5.0 % L=30 m
+  M4 curves: crest at s=194 A=-5.0 % L=30 m; crest at s=240 A=-2.3 % L=30 m
+  X crossing at (-1, -17): M3 level minus M4 level = -6.91 m (positive = M3 is the upper ramp)
+  quantities: deck M3 3065 + M4 4734 = 7799 m2 | fill 894 m3 | cut 2189 m3 | ramp length 1002 m
+  PASS  V1 grade <= 5 % on the curved profile (M3, M4)  M3 4.96 %, M4 4.98 %
+  PASS  V2 clearance over the ring pavement >= 7.8 m (5.5 + deck + girder), M3 / M4  M3 7.80 m, M4 14.77 m
+  PASS  V3 X crossing M3 x M4: upper over lower >= 6.9 m  M3 - M4 = -6.91 m at plan point (-1, -17)
+  PASS  V4 every vertical curve has L >= K * A and fits between its neighbours (K crest 6.1, sag 11.7, L min 30 m)  4 curves; all fit
+  PASS  V5 tie-in levels: M3 ring -> stem, M4 stem -> ring (m)  M3 30.21 -> 30.73, M4 33.81 -> 32.99
+  FAIL  V6 M4 diverge on the stem d 216..324 (exit lane + taper 108 m): overlap with the arm viaducts 160..271 / 391..694 = 55 m  
+  FAIL  V6 M3 merge on the stem d 107..292 (entry taper 186 m): overlap with the arm viaducts = 111 m  
+  PASS  V7 cut <= 12 m and fill <= 7 m (ramps)  cut 2.0, fill 2.9
+  PASS  V8 rail >= 30 m from every ramp point (ASSUMED value, D3)  70 m
+
+[upper ramp = M3]
+  M3 B->S : length 490 m | start on ring B (u -231) level 32.39 | deck level 43.42 m = ring + 15.0 | ring clearance 14.66 m | end on the stem outbound at d 195 level 33.19 | exit run on the ring T3 = 165 m
+  M4 S->B : length 601 m | start on the stem inbound at d 127 level 31.26 | deck level 36.51 m = ring + 8.1 | ring clearance 7.80 m | end on ring B (u 441) level 32.99
+  M3 curves: crest at s=221 A=-5.0 % L=30 m; crest at s=285 A=-5.0 % L=30 m
+  M4 curves: crest at s=105 A=-5.0 % L=30 m; crest at s=151 A=-0.8 % L=30 m
+  X crossing at (-1, -17): M3 level minus M4 level = +6.90 m (positive = M3 is the upper ramp)
+  quantities: deck M3 4287 + M4 3123 = 7411 m2 | fill 2755 m3 | cut 8397 m3 | ramp length 1091 m
+  PASS  V1 grade <= 5 % on the curved profile (M3, M4)  M3 4.99 %, M4 4.98 %
+  PASS  V2 clearance over the ring pavement >= 7.8 m (5.5 + deck + girder), M3 / M4  M3 14.66 m, M4 7.80 m
+  PASS  V3 X crossing M3 x M4: upper over lower >= 6.9 m  M3 - M4 = +6.90 m at plan point (-1, -17)
+  PASS  V4 every vertical curve has L >= K * A and fits between its neighbours (K crest 6.1, sag 11.7, L min 30 m)  4 curves; all fit
+  PASS  V5 tie-in levels: M3 ring -> stem, M4 stem -> ring (m)  M3 32.39 -> 33.19, M4 31.26 -> 32.99
+  FAIL  V6 M4 diverge on the stem d 127..235 (exit lane + taper 108 m): overlap with the arm viaducts 160..271 / 391..694 = 75 m  
+  FAIL  V6 M3 merge on the stem d 195..380 (entry taper 186 m): overlap with the arm viaducts = 76 m  
+  PASS  V7 cut <= 12 m and fill <= 7 m (ramps)  cut 4.2, fill 2.9
+  PASS  V8 rail >= 30 m from every ramp point (ASSUMED value, D3)  70 m
+
+COMPARISON (which ramp is the upper one)
+| upper | deck m2 | fill m3 | cut m3 | M4 gore d (m) | M3 nose d (m) | upper deck level (m) | FAIL lines |
+|---|---|---|---|---|---|---|---|
+| M4 | 7799 | 894 | 2189 | 216 | 107 | 43.5 | 2 |
+| M3 | 7411 | 2755 | 8397 | 127 | 195 | 43.4 | 2 |
+
+PICK (engineer): upper ramp = M4 (fewest FAIL lines, then least earthwork). D1..D4 of RE-1 stay open with their defaults.
+NOT DONE / NOT RUN: final geometry (RE-3..RE-5 redraw the plan), carved ground (natural ground used), real girder depth (7.8 m total is ASSUMED from section 24), minimum curve length 30 m (ASSUMED), matching of the ramp end grade to the ring / stem grade at the four tie-ins (listed, not solved), trees / drainage / city-plan buildings, U-turn openings of the ring median, tsc / npm run build / game (no src change).

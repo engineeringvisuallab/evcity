@@ -79,9 +79,9 @@ Nothing is designed or built yet. M3 / M4 are my reading of a pasted chat. RE-0 
 |------|------|--------|---------|-------|
 | RE-plan | This handoff | DONE 2026-11-22 (no code) | waiting | user chose 'Ramp shoho interchange' |
 | RE-0 | Site check | DONE 2026-11-22 (headless, 2 FAIL = site constraints, see section 10; tsc run) | waiting | scripts/rte-site-check.ts, tools/rte-site-plot.py, docs/RTE_SITE.txt, rte_site.json, rte_site.png |
-| RE-1 | Type options | not started | | next |
-| RE-2 | Vertical plan | not started | | |
-| RE-3 | Left slips | not started | | |
+| RE-1 | Type options | DONE 2026-11-22 (numbers + picture, no src, layout-level model, see section 11) | waiting | tools/rte-types.py, docs/RTE_TYPES.txt, rte_types.json, rte_types.png; pick = OPT-1 outside directional T; decisions D1-D4 open |
+| RE-2 | Vertical plan | DONE 2026-11-22 (numbers + picture, no src, layout-level, see section 12) | waiting | tools/rte-levels.py, docs/RTE_LEVELS.txt, RTE_LEVELS.json, rte_levels.png; pick = upper ramp M4 |
+| RE-3 | Left slips | not started | | next |
 | RE-4 | Ramp M3 | not started | | |
 | RE-5 | Ramp M4 + cross-check | not started | | |
 | RE-6 | Width change | not started | | only if needed |
@@ -103,3 +103,31 @@ Four quadrants, box 80..600 m along the ring, 25..200 m from the ring centreline
 | R+ / STEM | 9.6 m | 12.2 m | rail 10 m from the sampled points |
 MEANING for RE-1 (my reading, not decided): the best land for an OUTSIDE loop is the R+ / FAR quarter (flat, no water, no building), but the elevated rail crosses the ring at +481 m, so the ramp zone there is about 400 m long at most and must keep a clearance from the rail piers (the clearance value is not fixed yet, ask). Direction B (far carriageway) diverges on the R- side, upstream, where the far side is the hill (cut up to 24 m): an outside exit for M3 (B to stem) has a hard site, a cut or a retaining wall is needed, or the median route. The arm has only 160 m before its first structure. The 2 FAIL lines of the script are these two site constraints (R- / FAR cut, R+ / FAR rail), they are findings, not a broken script.
 NOT run: trees, grass, drainage, ring carve with the final ground, the game look, rail pier positions and the exact rail clearance.
+
+## 11. RE-1 RESULT (2026-11-22; tools/rte-types.py -> docs/RTE_TYPES.txt, rte_types.json, rte_types.png; NO src change)
+LAYOUT-LEVEL model (ring frame u / v, ramps = straight - spiral - arc - spiral - straight, solved for the 5 % grade, measured on natural ground). Not the final geometry: RE-3 .. RE-5 redraw the chosen type. Stem lanes: inbound on the R- side (u -14), outbound on the R+ side (u +14) (left-hand traffic, my reading). Ramp V 50 km/h R 80 m, loop V 40 km/h R 50 m, ramp 9.7 m wide, over the ring 7.8 m, second level +6.9 m, exit lane + taper 207 m, entry lane + taper 334 m on the ring.
+The two left slips (A -> S, S -> A) are the same in every option and are NOT in the numbers. The options differ in the two RIGHT turns M3 (B -> S) and M4 (S -> B).
+| Option | Upper ramp | deck m2 | fill m3 | cut m3 | land ha | ring stretch u (m) | ring change | FAIL lines |
+|---|---|---|---|---|---|---|---|---|
+| OPT-1 outside directional T (both semi-direct, far side, 3 levels) | M4 | 7838 | 769 | 2328 | 1.22 | -343 .. 431 | none | 2 (stem viaduct) |
+| OPT-1 | M3 | 7411 | 2997 | 8675 | 1.74 | -438 .. 431 | none | 2 (stem viaduct) |
+| OPT-2 median directional T (both in the widened median, 3 levels) | M4 | 7236 | 1539 | 2284 | 1.23 | -343 .. 431 | median 6 -> 14 m over about 1212 m, earthwork about 32-33 thousand m3, cut / fill limits FAIL, ends past the rail crossing (+481) | 4 |
+| OPT-2 | M3 | 7197 | 2309 | 7843 | 1.67 | -433 .. 431 | same | 4 |
+| OPT-3 trumpet (270 deg loop outside on R+ / FAR) | - | 5956 | 5163 | 8282 | 1.82 | -143 .. 431 | none | 4 (weave -574 m, loop overlaps M4 landing) |
+SHARED BY ALL: (S1) the arm is low near the ring (28.4 m at the T, +2.3 % away) and the crossing needs 36.2 m, so with the 5 % limit the first M4 gore on the stem is at d 123 m and the exit / entry lanes run over the arm viaduct 160..271 m (overlap 60 .. 111 m): all options FAIL this; (S2) the two right turns make an X in plan, so one ramp is a second level, 14.7 m over the ring (upper deck 43.1 m); only the trumpet has no X and it fails on the weave; (S3) UNDER the ring is worse (first M4 gore at d 373 m) and needs a new ring bridge.
+RECOMMENDATION (the engineer's pick): OPT-1 outside directional T. Ring, median and ring profile stay untouched (H4, H2); OPT-2 needs a 1.2 km median widening with about 32-33 thousand m3 of earthwork over the cut 12 / fill 7 limits plus right-hand exits and entries and buys no deck saving; the trumpet cannot be laid out. Which ramp is upper (M4 or M3) is decided in RE-2: M3-upper has less deck and less stem overlap but about 4 times more cut and 95 m more of the R- hill side.
+DECISIONS FOR THE USER (defaults, the work does not stop): D1 arm viaduct 160..271 widened by one ramp lane each side (arm STRUCTURE change, needs the user's word; the arm profile stays); D2 upper deck 14.7 m over the ring accepted (with 6.9 m instead of 7.8 m the first gore moves from d 123 to d 112 m); D3 rail clearance ramp - rail: 30 m used (ASSUMED, min found 54 m for OPT-2, 73 m for OPT-1); D4 stem speed 60 km/h (ASSUMED).
+NOT DONE / NOT RUN: final geometry, carved ground, trees / drainage / city-plan buildings, U-turn openings of the ring median, left slips, stem lane positions (my reading), tsc / npm run build / game (no src change).
+
+## 12. RE-2 RESULT (2026-11-22; tools/rte-levels.py -> docs/RTE_LEVELS.txt, RTE_LEVELS.json, rte_levels.png; NO src change)
+Same layout as RE-1 OPT-1 (ramps = straight - spiral - arc - spiral - straight, R 80 m, V 50), now with VERTICAL CURVES: K crest 6.1, K sag 11.7 (Checks.ts minVerticalK, ramp V 50: SSD 63.1 m), grade 5 % max, minimum curve length 30 m (ASSUMED). Clearance is measured on the curved profile; the X is measured at the real plan crossing (-1, -17).
+Result: the vertical curves raise the deck about 0.3 to 0.4 m (the crest cuts the PVI), the other numbers stay close to RE-1.
+| upper ramp | M3 deck level | M4 deck level | M4 gore on stem | M3 nose on stem | deck m2 | fill m3 | cut m3 | FAIL |
+|---|---|---|---|---|---|---|---|---|
+| M4 (PICK) | 36.55 m (ring + 8.1) | 43.48 m (ring + 15.1) | d 216 (level 33.81) | d 107 (level 30.73) | 7799 | 894 | 2189 | 2 |
+| M3 | 43.42 m | 36.51 m | d 127 (level 31.26) | d 195 (level 33.19) | 7411 | 2755 | 8397 | 2 |
+PICK = M4 upper (M3 lower): same 2 FAIL lines, but about 4 times less cut (2189 vs 8397 m3), less fill, M3 starts only at u -141 (not -231) so it stays further from the hill side of R-. M3-upper has 388 m2 less deck.
+Levels for RE-3..RE-5 (M4 upper): M3 starts on ring B at u -141 (exit run T3 = 75 m) at ring level 30.21, rises 4.96 % to a deck of 36.55 m over the ring (clearance 7.80 m), comes down to the stem outbound at d 107 (30.73). M4 starts on the stem inbound at d 216 (33.81), rises 4.98 % to 43.48 m (clearance 14.77 m), crosses M3 at (-1, -17) with 6.91 m between the decks, lands on ring B at u 441 (32.99). Profiles every 10 m are in docs/RTE_LEVELS.json.
+Checks (RUN): V1 grade PASS, V2 ring clearance PASS, V3 X separation PASS (6.91 m, need 6.9), V4 vertical curves fit PASS, V5 tie-in levels PASS, V7 cut / fill PASS, V8 rail 70 m PASS (30 m ASSUMED). FAIL (2, site facts, same as RE-1): V6 M4 exit lane + taper d 216..324 overlaps the arm viaduct 160..271 by 55 m; V6 M3 entry taper d 107..292 overlaps it by 111 m. These stay open until the user decides D1 (widen the arm viaduct there by one ramp lane on each side; arm profile unchanged).
+Decisions D1 to D4 of section 11 are still open with their defaults.
+NOT DONE / NOT RUN: final geometry (RE-3..RE-5), carved ground (natural ground), real girder depth (7.8 m ASSUMED), minimum curve length 30 m (ASSUMED), matching of ramp end grade to the ring / stem grade at the four tie-ins (not solved), trees / drainage / city-plan buildings, ring median U-turn openings, tsc / npm run build / game (no src change).

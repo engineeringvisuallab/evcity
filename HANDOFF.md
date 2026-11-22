@@ -220,3 +220,4 @@ User: remove only the effects on the splash screenshots. In `src/ui/Splash.ts` (
 ## Junction RT-E ramp interchange (2026-11-22)
 Plan only: see `HANDOFF_JUNCTION_RTE.md` (ring x J1-E at X 2335 Z 1438, steps RE-0 .. RE-11, one per chat). `HANDOFF_ROAD_DESIGN.md` 24.9 points to it. No code changed, nothing run.
 RE-0 (site check of RT-E) done: see `HANDOFF_JUNCTION_RTE.md` section 10. New: `scripts/rte-site-check.ts`, `tools/rte-site-plot.py`, `docs/RTE_SITE.txt`, `docs/rte_site.json`, `docs/rte_site.png`. No src change.
+RE-1 (type options of RT-E) done: see `HANDOFF_JUNCTION_RTE.md` section 11. New: `tools/rte-types.py`, `docs/RTE_TYPES.txt`, `docs/rte_types.json`, `docs/rte_types.png`. No src change.

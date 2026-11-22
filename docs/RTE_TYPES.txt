@@ -1,0 +1,123 @@
+RTE TYPE OPTIONS (RE-1)  ring x J1-E, layout-level numbers (NOT the final geometry)
+Frame: u along the ring (+ = R+ = station rises), v toward the stem. Ring half width 22.1, median 6.0 m, ring level at the T 28.41 m, arm level at the T 28.41 m.
+Criteria used: ramp V 50 km/h R 80 m (min 72.9), loop V 40 km/h R 50 m (min 40.6), grade 5 %, over the road 7.8 m (5.5 + deck + girder), 2nd level +6.9 m, ramp 9.7 m wide (2 lanes + 2 x 1.2 m)
+Speed change: exit lane 116 m + taper 91 m = 207 m; entry lane 152 m + taper 182 m = 334 m; weave 150 m min / 300 m desirable (Standards.ts)
+Movements: A->S (left slip) and S->A (left slip) are the SAME in all options (ground slips at the stem corners, RE-3). The options differ for the two RIGHT turns M3 (B -> S) and M4 (S -> B), which cross ring direction A.
+
+[OPT-1 / upper ramp = M4]
+--- OPT-1-M4  OUTSIDE DIRECTIONAL T: both right turns semi-direct on the FAR side (M3 exits R- outside, M4 enters R+ outside), 2 flyovers X-crossing = 3 levels
+  M3 B->S: length 322 m | deck level 36.2 m (ring 28.4) | grade up 4.9 % down 3.8 % | deck 3143 m2 fill 0 m3 cut 0 m3 | max cut 0.0 max fill 0.0 | land 0.41 ha | rail 193 m
+  M4 S->B: length 685 m | deck level 43.1 m (ring 28.4) | grade up 5.0 % down 2.2 % | deck 4695 m2 fill 769 m3 cut 2328 m3 | max cut 2.1 max fill 2.8 | land 0.81 ha | rail 73 m
+  stem: M4 gore at d = 211 m (level 33.7), M3 merge nose at d = 122 m (level 31.1)
+  ring stretch used (decel start of M3 .. end of M4 merge): u -343 .. 431 m
+  plan crossing M3 x M4: at (-1, -17)
+  PASS  grade M3 / M4 <= 5 % (up and down)  M3 4.9 / 3.8 %, M4 5.0 / 2.2 %
+  FAIL  M4 diverge on the stem d 211..319 (exit lane + taper 108 m): overlap with the arm viaducts 160..271 / 391..694 = 60 m  
+  FAIL  M3 merge on the stem d 122..307 (entry taper 186 m): overlap with the arm viaducts = 111 m  
+  PASS  cut <= 12 m and fill <= 7 m (ramps)  cut 2.1 fill 2.8
+  PASS  rail >= 30 m from every ramp point (ASSUMED value)  73 m
+  PASS  ring stretch stays east of the ring bridge (u > -776)  start u -343
+  PASS  plan crossing M3 x M4 solved with a 2nd level (+6.9 m)  upper deck 43.1 m
+
+[OPT-1 / upper ramp = M3]
+--- OPT-1-M3  OUTSIDE DIRECTIONAL T: both right turns semi-direct on the FAR side (M3 exits R- outside, M4 enters R+ outside), 2 flyovers X-crossing = 3 levels
+  M3 B->S: length 505 m | deck level 43.1 m (ring 28.4) | grade up 4.9 % down 4.3 % | deck 4423 m2 fill 256 m3 cut 2051 m3 | max cut 4.2 max fill 2.7 | land 0.75 ha | rail 128 m
+  M4 S->B: length 597 m | deck level 36.2 m (ring 28.4) | grade up 5.0 % down 0.7 % | deck 2988 m2 fill 2741 m3 cut 6624 m3 | max cut 3.3 max fill 3.0 | land 0.99 ha | rail 73 m
+  stem: M4 gore at d = 123 m (level 31.2), M3 merge nose at d = 210 m (level 33.6)
+  ring stretch used (decel start of M3 .. end of M4 merge): u -438 .. 431 m
+  plan crossing M3 x M4: at (-1, -17)
+  PASS  grade M3 / M4 <= 5 % (up and down)  M3 4.9 / 4.3 %, M4 5.0 / 0.7 %
+  FAIL  M4 diverge on the stem d 123..231 (exit lane + taper 108 m): overlap with the arm viaducts 160..271 / 391..694 = 71 m  
+  FAIL  M3 merge on the stem d 210..395 (entry taper 186 m): overlap with the arm viaducts = 66 m  
+  PASS  cut <= 12 m and fill <= 7 m (ramps)  cut 4.2 fill 3.0
+  PASS  rail >= 30 m from every ramp point (ASSUMED value)  73 m
+  PASS  ring stretch stays east of the ring bridge (u > -776)  start u -438
+  PASS  plan crossing M3 x M4 solved with a 2nd level (+6.9 m)  upper deck 43.1 m
+
+[OPT-2 / upper ramp = M4]
+--- OPT-2-M4  MEDIAN DIRECTIONAL T: both right turns in the WIDENED median, flyover over A only (right-side exit / entry), 3 levels
+  M3 B->S: length 294 m | deck level 36.2 m (ring 28.4) | grade up 4.8 % down 3.8 % | deck 2891 m2 fill 0 m3 cut 0 m3 | max cut 0.0 max fill 0.0 | land 0.39 ha | rail 194 m
+  M4 S->B: length 660 m | deck level 43.1 m (ring 28.4) | grade up 5.0 % down 2.2 % | deck 4346 m2 fill 1539 m3 cut 2284 m3 | max cut 2.6 max fill 2.8 | land 0.84 ha | rail 54 m
+  stem: M4 gore at d = 210 m (level 33.6), M3 merge nose at d = 119 m (level 31.1)
+  ring stretch used (decel start of M3 .. end of M4 merge): u -343 .. 431 m
+  plan crossing M3 x M4: at (-1, 8)
+  PASS  grade M3 / M4 <= 5 % (up and down)  M3 4.8 / 3.8 %, M4 5.0 / 2.2 %
+  FAIL  M4 diverge on the stem d 210..318 (exit lane + taper 108 m): overlap with the arm viaducts 160..271 / 391..694 = 61 m  
+  FAIL  M3 merge on the stem d 119..304 (entry taper 186 m): overlap with the arm viaducts = 111 m  
+  PASS  cut <= 12 m and fill <= 7 m (ramps)  cut 2.6 fill 2.8
+  PASS  rail >= 30 m from every ramp point (ASSUMED value)  54 m
+  PASS  ring stretch stays east of the ring bridge (u > -776)  start u -343
+  PASS  plan crossing M3 x M4 solved with a 2nd level (+6.9 m)  upper deck 43.1 m
+
+[OPT-2 / upper ramp = M3]
+--- OPT-2-M3  MEDIAN DIRECTIONAL T: both right turns in the WIDENED median, flyover over A only (right-side exit / entry), 3 levels
+  M3 B->S: length 472 m | deck level 43.1 m (ring 28.4) | grade up 5.0 % down 4.3 % | deck 4210 m2 fill 250 m3 cut 1077 m3 | max cut 3.5 max fill 2.7 | land 0.71 ha | rail 132 m
+  M4 S->B: length 572 m | deck level 36.2 m (ring 28.4) | grade up 5.0 % down 0.7 % | deck 2988 m2 fill 2059 m3 cut 6766 m3 | max cut 3.8 max fill 2.9 | land 0.96 ha | rail 54 m
+  stem: M4 gore at d = 122 m (level 31.1), M3 merge nose at d = 207 m (level 33.5)
+  ring stretch used (decel start of M3 .. end of M4 merge): u -433 .. 431 m
+  plan crossing M3 x M4: at (-1, 8)
+  PASS  grade M3 / M4 <= 5 % (up and down)  M3 5.0 / 4.3 %, M4 5.0 / 0.7 %
+  FAIL  M4 diverge on the stem d 122..230 (exit lane + taper 108 m): overlap with the arm viaducts 160..271 / 391..694 = 70 m  
+  FAIL  M3 merge on the stem d 207..392 (entry taper 186 m): overlap with the arm viaducts = 66 m  
+  PASS  cut <= 12 m and fill <= 7 m (ramps)  cut 3.8 fill 2.9
+  PASS  rail >= 30 m from every ramp point (ASSUMED value)  54 m
+  PASS  ring stretch stays east of the ring bridge (u > -776)  start u -433
+  PASS  plan crossing M3 x M4 solved with a 2nd level (+6.9 m)  upper deck 43.1 m
+
+--- OPT-3  TRUMPET with the 270 deg LOOP OUTSIDE on R+ / FAR (M3 loop, M4 semi-direct), classic 2-level crossing
+  M3 B->S: length 482 m | deck level 36.2 m (ring 28.4) | grade up 2.4 % down 4.2 % | deck 2968 m2 fill 2422 m3 cut 1658 m3 | max cut 2.4 max fill 2.9 | land 0.83 ha | rail 205 m
+  M4 S->B: length 597 m | deck level 36.2 m (ring 28.4) | grade up 5.0 % down 0.7 % | deck 2988 m2 fill 2741 m3 cut 6624 m3 | max cut 3.3 max fill 3.0 | land 0.99 ha | rail 73 m
+  stem: M4 gore at d = 123 m (level 31.2), M3 merge nose at d = 122 m (level 31.1)
+  ring stretch used (decel start of M3 .. end of M4 merge): u -143 .. 431 m
+  plan crossing M3 x M4: at (130, -57)
+  PASS  grade M3 / M4 <= 5 % (up and down)  M3 2.4 / 4.2 %, M4 5.0 / 0.7 %
+  FAIL  M4 diverge on the stem d 123..231 (exit lane + taper 108 m): overlap with the arm viaducts 160..271 / 391..694 = 71 m  
+  FAIL  M3 merge on the stem d 122..307 (entry taper 186 m): overlap with the arm viaducts = 111 m  
+  PASS  cut <= 12 m and fill <= 7 m (ramps)  cut 3.3 fill 3.0
+  PASS  rail >= 30 m from every ramp point (ASSUMED value)  73 m
+  PASS  ring stretch stays east of the ring bridge (u > -776)  start u -143
+  PASS  plan crossing M3 x M4 solved with a 2nd level (+6.9 m)  upper deck 36.2 m
+
+OPT-3 along B: M4 lands at u 96, its merge ends at u 431; M3 gore at u 64, its taper / exit lane starts at u -143; weave length = -574 m (need >= 150) -> FAIL
+OPT-3 distance M3 loop to M4 landing lane: 1.4 m (ramp width 9.7 m, need >= 13.7) -> FAIL
+OPT-3 to meet the weave rule the M3 gore must move to u >= 788 (the loop crossing then at u 738, 724 m off the stem axis; the rail crosses the ring at u +481)
+
+OPT-2 median widening: median 6 m -> 14 m (+8 m) over the ramp stretch u -343 .. 431; shift tapers 2 x 219 m (reverse curves R 1500 m); total widened length 1212 m (u -562 .. 650)
+  widening variant A out (stem side): cut 14757 m3 (max 9.4 m), fill 17500 m3 (max 10.7 m)  FAIL (cut 12 / fill 7)
+  widening variant B out (far side): cut 22840 m3 (max 10.6 m), fill 10178 m3 (max 8.7 m)  FAIL (cut 12 / fill 7)
+  widening variant both 4 + 4: cut 18740 m3 (max 10.6 m), fill 13848 m3 (max 11.1 m)  FAIL (cut 12 / fill 7)
+  OPT-2 ring bridge (R- side) ends at u -776: the widening starts at u -562 -> PASS;  rail crossing the ring at u +481: the widening ends at u 650 -> FAIL (the rail bridge over the ring is inside or close to the widened stretch)
+  U-turn openings of the ring median (UTurns.ts / MedianPlan.ts) inside the stretch: NOT checked (need the table), they would have to be closed or moved.
+
+M4 gore on the stem, OVER the ring (ramp level ring + 7.8 m): first possible gore at d = 124 m (stem level 31.2 m); arm viaduct 160..271 m
+M4 gore on the stem, UNDER the ring (ramp level ring - 7.8 m, NEW ring bridge, ring structure = user word): first possible gore at d = 373 m (stem level 38.2 m); arm viaduct 160..271 m
+sensitivity: rise over the ring 7.8 m (lower level), M4 gore on the stem at d = 123 m
+sensitivity: rise over the ring 6.9 m (lower level), M4 gore on the stem at d = 112 m
+
+SUMMARY (layout-level, both ramps together; deck = bridge m2 (higher than 3 m over ground or over a road), fill / cut = embankment / trench m3 of the ramps only)
+| option | upper ramp | deck m2 | fill m3 | cut m3 | land ha | ramp length m | ring stretch u (m) | ring change | FAIL lines |
+|---|---|---|---|---|---|---|---|---|---|
+| OPT-1 outside directional | M4 | 7838 | 769 | 2328 | 1.22 | 1007 | -343 .. 431 | none (ring untouched) | 2 |
+| OPT-1 outside directional | M3 | 7411 | 2997 | 8675 | 1.74 | 1102 | -438 .. 431 | none (ring untouched) | 2 |
+| OPT-2 median directional | M4 | 7236 | 1539 | 2284 | 1.23 | 954 | -343 .. 431 | median 6 -> 14 m over about 1212 m, earthwork 32257 m3 (best variant), cut / fill limits FAIL | 4 |
+| OPT-2 median directional | M3 | 7197 | 2309 | 7843 | 1.67 | 1044 | -433 .. 431 | same as above | 4 |
+| OPT-3 trumpet (loop outside) | - | 5956 | 5163 | 8282 | 1.82 | 1079 | -143 .. 431 | none | 4 |
+(OPT-2 extra FAIL lines: widening cut / fill limit, rail near the widened stretch. OPT-3 extra FAIL lines: weave length, loop / M4 overlap.)
+
+SHARED BY EVERY OPTION (not a type difference, a site fact):
+  S1  The stem is low near the ring (level 28.4 m at the T, +2.3 % away from it) and the ring crossing needs 36.2 m (ring + 7.8 m). With the 5 % limit the first possible M4 gore on the stem is d = 123 m, and the exit / entry lanes then run over the arm viaduct (160..271 m) and further. All options FAIL this line. It is a decision for the user (D1 below).
+  S2  Every right-turn pair makes an X in plan (M3 goes far side R- -> stem R+, M4 goes stem R- -> far side R+), so one ramp must be a SECOND level, +6.9 m over the first: upper deck 43.1 m = 14.7 m over the ring. Only the trumpet avoids the X, and the trumpet fails on length (weave) and overlap.
+  S3  UNDER the ring instead of OVER: first possible M4 gore at d = 373 m (worse) and a new ring bridge = ring structure change (user word). OVER is taken.
+
+RECOMMENDATION (my pick, the engineer): OPT-1 OUTSIDE DIRECTIONAL T, both right turns as semi-direct flyovers on the FAR (outside) side.
+  Why: (1) the ring carriageways, median and ring profile stay untouched (H4 outside first, H2 profile fixed); OPT-2 needs about 1.2 km of median widening with about 32-33 thousand m3 earthwork (all three shift variants) that breaks the 12 m / 7 m limits, wrong-side (right-hand) exits and entries, and ends past the rail crossing; (2) the trumpet has the smallest deck (6.0 thousand m2) but it cannot be laid out: the weave between the M4 entry and the M3 exit comes out at -574 m (need 150 m) and the loop overlaps the M4 landing (1.4 m apart); to repair it the M3 gore must move to u 788 or more, but the rail crosses the ring at u +481; (3) deck m2 of OPT-1 and OPT-2 are about the same (7.2-7.8 thousand m2), so the median route buys nothing; (4) the outside stretch u -343 .. 431 is on land with cut / fill under 5 m, no water, no building, the rail at least 54 m away (the 30 m is my ASSUMED value).
+  Weak points of OPT-1 (said plainly): the upper ramp is 14.7 m over the ring; M3 starts on the R- side where the ring climbs 4 % into the hill (the far side is cut up to 24 m at 80-600 m out, but the ramp stays within 30-40 m of the ring and its own cut is under 5 m in this layout: NOT yet checked with the final ground); the rail leaves only 431 -> 481 = 50 m between the end of the M4 merge lane and the rail crossing of the ring.
+  Which ramp is the upper one (M4 or M3) is left to RE-2 (vertical plan): M3-upper has less deck (7.4 vs 7.8 thousand m2) and less stem overlap but about 4 times more cut and 95 m more of the R- side.
+
+DECISIONS FOR THE USER (each has my default, work does not stop):
+  D1  Stem: the ramp lanes need the arm at d about 120 .. 320 m, the arm viaduct is 160..271 m. DEFAULT: widen the arm viaduct there by one ramp lane on each side (arm STRUCTURE change, needs your word; the arm profile stays). Other way: no ramp on the stem side before d = 271 (then a 300 m flyover along the stem, not designed).
+  D2  Second level: upper deck 14.7 m over the ring (43.1 m) is accepted? DEFAULT yes (rise 7.8 m; with the Levels.ts default 6.9 m the first gore moves to d = 112 m).
+  D3  Rail clearance ramp - rail: I used 30 m (ASSUMED). Tell me the value you want.
+  D4  Stem speed at the junction: I used 60 km/h (ASSUMED, the arm speed was not read).
+
+NOT DONE / NOT RUN: layout-level model only (arcs with spirals, solved for the 5 % grade), not final geometry; natural ground, not the carved ground; trees, drainage, buildings of the city plan not checked; U-turn openings of the ring median not checked; the left slips A->S and S->A are not in these numbers; stem lane positions (inbound R- / outbound R+, axes at u -14 / +14) are my reading; tsc / npm run build / game: nothing run (no src change).

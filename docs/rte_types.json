@@ -1,0 +1,289 @@
+{
+ "options": {
+  "OPT-1-M4": {
+   "tot": {
+    "deck_m2": 7837.600000000011,
+    "fill_m3": 769.3905664372205,
+    "cut_m3": 2328.2176317554377,
+    "land_m2": 12180.232518552408,
+    "len_m": 1007.2697934028665,
+    "max_cut": 2.0835164164792204,
+    "max_fill": 2.768117561194913,
+    "rail_m": 72.96232489531627,
+    "ring_u_min": -136.0,
+    "ring_u_max": 440.81803165646215
+   },
+   "u_lo": -342.99074074074076,
+   "u_hi": 430.81803165646215,
+   "X": [
+    -0.6603086301025112,
+    -16.934382682235224
+   ],
+   "checks": [
+    [
+     "grade M3 / M4 <= 5 % (up and down)",
+     true,
+     "M3 4.9 / 3.8 %, M4 5.0 / 2.2 %"
+    ],
+    [
+     "M4 diverge on the stem d 211..319 (exit lane + taper 108 m): overlap with the arm viaducts 160..271 / 391..694 = 60 m",
+     false,
+     ""
+    ],
+    [
+     "M3 merge on the stem d 122..307 (entry taper 186 m): overlap with the arm viaducts = 111 m",
+     false,
+     ""
+    ],
+    [
+     "cut <= 12 m and fill <= 7 m (ramps)",
+     true,
+     "cut 2.1 fill 2.8"
+    ],
+    [
+     "rail >= 30 m from every ramp point (ASSUMED value)",
+     true,
+     "73 m"
+    ],
+    [
+     "ring stretch stays east of the ring bridge (u > -776)",
+     true,
+     "start u -343"
+    ],
+    [
+     "plan crossing M3 x M4 solved with a 2nd level (+6.9 m)",
+     true,
+     "upper deck 43.1 m"
+    ]
+   ]
+  },
+  "OPT-1-M3": {
+   "tot": {
+    "deck_m2": 7410.800000000016,
+    "fill_m3": 2997.0001898237456,
+    "cut_m3": 8674.85804587751,
+    "land_m2": 17354.199448977713,
+    "len_m": 1102.2697934028631,
+    "max_cut": 4.2032771981713,
+    "max_fill": 2.979304859831153,
+    "rail_m": 72.96232489531627,
+    "ring_u_min": -231.0,
+    "ring_u_max": 440.81803165646215
+   },
+   "u_lo": -437.99074074074076,
+   "u_hi": 430.81803165646215,
+   "X": [
+    -0.6603086301026282,
+    -16.934382682235032
+   ],
+   "checks": [
+    [
+     "grade M3 / M4 <= 5 % (up and down)",
+     true,
+     "M3 4.9 / 4.3 %, M4 5.0 / 0.7 %"
+    ],
+    [
+     "M4 diverge on the stem d 123..231 (exit lane + taper 108 m): overlap with the arm viaducts 160..271 / 391..694 = 71 m",
+     false,
+     ""
+    ],
+    [
+     "M3 merge on the stem d 210..395 (entry taper 186 m): overlap with the arm viaducts = 66 m",
+     false,
+     ""
+    ],
+    [
+     "cut <= 12 m and fill <= 7 m (ramps)",
+     true,
+     "cut 4.2 fill 3.0"
+    ],
+    [
+     "rail >= 30 m from every ramp point (ASSUMED value)",
+     true,
+     "73 m"
+    ],
+    [
+     "ring stretch stays east of the ring bridge (u > -776)",
+     true,
+     "start u -438"
+    ],
+    [
+     "plan crossing M3 x M4 solved with a 2nd level (+6.9 m)",
+     true,
+     "upper deck 43.1 m"
+    ]
+   ]
+  },
+  "OPT-2-M4": {
+   "tot": {
+    "deck_m2": 7236.200000000016,
+    "fill_m3": 1539.1791527814773,
+    "cut_m3": 2283.731677339451,
+    "land_m2": 12279.94669219734,
+    "len_m": 954.3697934028662,
+    "max_cut": 2.5975857030987086,
+    "max_fill": 2.770711693732224,
+    "rail_m": 54.41476764623799,
+    "ring_u_min": -136.0,
+    "ring_u_max": 440.81803165646215
+   },
+   "u_lo": -342.99074074074076,
+   "u_hi": 430.81803165646215,
+   "X": [
+    -0.6603086301025745,
+    7.5156173177647405
+   ],
+   "checks": [
+    [
+     "grade M3 / M4 <= 5 % (up and down)",
+     true,
+     "M3 4.8 / 3.8 %, M4 5.0 / 2.2 %"
+    ],
+    [
+     "M4 diverge on the stem d 210..318 (exit lane + taper 108 m): overlap with the arm viaducts 160..271 / 391..694 = 61 m",
+     false,
+     ""
+    ],
+    [
+     "M3 merge on the stem d 119..304 (entry taper 186 m): overlap with the arm viaducts = 111 m",
+     false,
+     ""
+    ],
+    [
+     "cut <= 12 m and fill <= 7 m (ramps)",
+     true,
+     "cut 2.6 fill 2.8"
+    ],
+    [
+     "rail >= 30 m from every ramp point (ASSUMED value)",
+     true,
+     "54 m"
+    ],
+    [
+     "ring stretch stays east of the ring bridge (u > -776)",
+     true,
+     "start u -343"
+    ],
+    [
+     "plan crossing M3 x M4 solved with a 2nd level (+6.9 m)",
+     true,
+     "upper deck 43.1 m"
+    ]
+   ]
+  },
+  "OPT-2-M3": {
+   "tot": {
+    "deck_m2": 7197.40000000002,
+    "fill_m3": 2309.1561256091136,
+    "cut_m3": 7843.478794922665,
+    "land_m2": 16698.603980440254,
+    "len_m": 1044.3697934028655,
+    "max_cut": 3.7766267512636205,
+    "max_fill": 2.92912088340071,
+    "rail_m": 54.41476764623799,
+    "ring_u_min": -226.0,
+    "ring_u_max": 440.81803165646215
+   },
+   "u_lo": -432.99074074074076,
+   "u_hi": 430.81803165646215,
+   "X": [
+    -0.6603086301025745,
+    7.5156173177647405
+   ],
+   "checks": [
+    [
+     "grade M3 / M4 <= 5 % (up and down)",
+     true,
+     "M3 5.0 / 4.3 %, M4 5.0 / 0.7 %"
+    ],
+    [
+     "M4 diverge on the stem d 122..230 (exit lane + taper 108 m): overlap with the arm viaducts 160..271 / 391..694 = 70 m",
+     false,
+     ""
+    ],
+    [
+     "M3 merge on the stem d 207..392 (entry taper 186 m): overlap with the arm viaducts = 66 m",
+     false,
+     ""
+    ],
+    [
+     "cut <= 12 m and fill <= 7 m (ramps)",
+     true,
+     "cut 3.8 fill 2.9"
+    ],
+    [
+     "rail >= 30 m from every ramp point (ASSUMED value)",
+     true,
+     "54 m"
+    ],
+    [
+     "ring stretch stays east of the ring bridge (u > -776)",
+     true,
+     "start u -433"
+    ],
+    [
+     "plan crossing M3 x M4 solved with a 2nd level (+6.9 m)",
+     true,
+     "upper deck 43.1 m"
+    ]
+   ]
+  },
+  "OPT-3--": {
+   "tot": {
+    "deck_m2": 5955.800000000016,
+    "fill_m3": 5163.484443263917,
+    "cut_m3": 8282.031042594794,
+    "land_m2": 18210.04163753543,
+    "len_m": 1079.1339439145404,
+    "max_cut": 3.3442274726254055,
+    "max_fill": 2.979304859831153,
+    "rail_m": 72.96232489531627,
+    "ring_u_min": -14.0,
+    "ring_u_max": 440.81803165646215
+   },
+   "u_lo": -142.99074074074073,
+   "u_hi": 430.81803165646215,
+   "X": [
+    129.93333492166883,
+    -56.86355421444851
+   ],
+   "checks": [
+    [
+     "grade M3 / M4 <= 5 % (up and down)",
+     true,
+     "M3 2.4 / 4.2 %, M4 5.0 / 0.7 %"
+    ],
+    [
+     "M4 diverge on the stem d 123..231 (exit lane + taper 108 m): overlap with the arm viaducts 160..271 / 391..694 = 71 m",
+     false,
+     ""
+    ],
+    [
+     "M3 merge on the stem d 122..307 (entry taper 186 m): overlap with the arm viaducts = 111 m",
+     false,
+     ""
+    ],
+    [
+     "cut <= 12 m and fill <= 7 m (ramps)",
+     true,
+     "cut 3.3 fill 3.0"
+    ],
+    [
+     "rail >= 30 m from every ramp point (ASSUMED value)",
+     true,
+     "73 m"
+    ],
+    [
+     "ring stretch stays east of the ring bridge (u > -776)",
+     true,
+     "start u -143"
+    ],
+    [
+     "plan crossing M3 x M4 solved with a 2nd level (+6.9 m)",
+     true,
+     "upper deck 36.2 m"
+    ]
+   ]
+  }
+ }
+}
