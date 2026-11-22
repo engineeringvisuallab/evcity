@@ -65,7 +65,9 @@ export function buildAutoPadMesh(padNo: number, terr: AutoPadTerrain): AutoMeshD
       const s = dot(d, l.u), lat = dot(d, l.n);
       if (s < 0 || s > l.prof.length - 1 || Math.abs(lat) > l.halfW + 1.5) continue;
       const k = Math.floor(s), f = s - k;
-      const yr = l.prof[k] + (l.prof[Math.min(l.prof.length - 1, k + 1)] - l.prof[k]) * f;
+      const y0 = l.prof[k], y1 = l.prof[Math.min(l.prof.length - 1, k + 1)];
+      if (Number.isNaN(y0) || Number.isNaN(y1)) continue; // no road (no ribbon) at this station: nothing to follow (JN124 fix)
+      const yr = y0 + (y1 - y0) * f;
       if (y === null || yr > y) y = yr;
     }
     return y === null ? null : y + extra;

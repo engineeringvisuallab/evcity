@@ -75,16 +75,21 @@ for (let i = 0; i < terr.count; i++) {
   // ---- surface vs terrain. The first surfaceTris * 3 vertices are the asphalt. Off the leg corridors (3 m margin) it lies exactly AUTO_LIFT above the carved terrain;
   // inside a corridor it may rise above that (never below) because it follows the old ribbon, by at most the step limit 0.15 m + 0.02.
   let maxOff = 0, nOff = 0, minIn = 1e9, maxIn = -1e9, nIn = 0;
+  let nNoRoad = 0, maxNoRoad = 0; // vertices in a leg corridor where that leg has no road (it stops short of the junction) and no other leg has one
   for (let v = 0; v < m.stats.surfaceTris * 3; v += 2) {
     const x = m.positions[v * 3], y = m.positions[v * 3 + 1], z = m.positions[v * 3 + 2];
     g1.sample(x, z, tmp);
     const d = y - (tmp.h + AUTO_LIFT);
     let inCorr = false;
     for (const l of pad.legs) { const s = (x - l.q[0]) * l.u[0] + (z - l.q[1]) * l.u[1], lat = (x - l.q[0]) * l.n[0] + (z - l.q[1]) * l.n[1]; if (s >= -3 && s <= l.trim + 5 && Math.abs(lat) < l.halfW + 3) inCorr = true; }
+    let roadHere = false, noRoadHere = false;
+    for (const l of pad.legs) { const s = (x - l.q[0]) * l.u[0] + (z - l.q[1]) * l.u[1], lat = (x - l.q[0]) * l.n[0] + (z - l.q[1]) * l.n[1]; if (s < 0 || s > l.prof.length - 1 || Math.abs(lat) > l.halfW + 1.5) continue; const k = Math.floor(s); if (Number.isNaN(l.prof[k]) || Number.isNaN(l.prof[Math.min(l.prof.length - 1, k + 1)])) noRoadHere = true; else roadHere = true; }
+    if (noRoadHere && !roadHere) { nNoRoad++; maxNoRoad = Math.max(maxNoRoad, Math.abs(d)); }
     if (inCorr) { nIn++; minIn = Math.min(minIn, d); maxIn = Math.max(maxIn, d); } else { nOff++; maxOff = Math.max(maxOff, Math.abs(d)); }
   }
   T('asphalt lies on the carved terrain (off the corridors)', nOff >= 10 && maxOff < 0.005, `${nOff} asphalt vertices: biggest gap to terrain + ${AUTO_LIFT} m = ${maxOff.toFixed(4)} m (limit 0.005)`);
-  T('asphalt never below the terrain, follows the old ribbon in the corridors', nIn === 0 || (minIn > -0.005 && maxIn < 0.17), `${nIn} vertices in the leg corridors: from ${minIn.toFixed(3)} to +${maxIn.toFixed(3)} m above terrain + ${AUTO_LIFT} m (limit -0.005 .. +0.17)`);
+  T('asphalt never below the terrain, follows the old ribbon in the corridors', nIn === 0 || (minIn > -0.005 && maxIn < 0.18), `${nIn} vertices in the leg corridors: from ${minIn.toFixed(3)} to +${maxIn.toFixed(3)} m above terrain + ${AUTO_LIFT} m (limit -0.005 .. +0.18 = 0.15 step limit + 0.03 for the flat old ribbon on the tilted pad plane)`);
+  T('no ribbon-following where a road stops short of the junction', maxNoRoad < 0.005, `${nNoRoad} asphalt vertices on road-less stretches of a leg: biggest gap to terrain + ${AUTO_LIFT} m = ${maxNoRoad.toFixed(4)} m (limit 0.005)`);
   // ---- pad meets every road end
   for (const l of pad.legs) {
     const lv = terr.levelOf(i, l.endXZ[0], l.endXZ[1]);

@@ -71,7 +71,7 @@ export interface LegGeom {
   stepToPlane: number;
   /** Grade of the leg inside the trim length (m/m): (end height - height at Q) / trim. */
   gradeInTrim: number;
-  /** Real road surface height every metre along the leg: prof[k] = height at k m from Q, k = 0..trim + 2 (A-5: the pad mesh never lies below the old ribbon). */
+  /** Real road surface height every metre along the leg: prof[k] = height at k m from Q, k = 0..trim + 2 (A-5: the pad mesh never lies below the old ribbon). NaN for the stations before the real road end (a leg that stops short of the junction has no road and no ribbon there). */
   prof: number[];
 }
 
@@ -303,7 +303,7 @@ export function buildAutoJunction(inp: AutoInput): PadResult {
   result.area = polyArea(result.outline);
 
   // ---- plane + trim-end heights
-  const ends = legs.map((lg, i) => { const w = legWalk(raw[i], lg, lg.trim); lg.endXZ = [w.x, w.z]; lg.endY = w.y; const w0 = legWalk(raw[i], lg, 0); lg.yAtJ = w0.y; lg.gradeInTrim = (w.y - w0.y) / Math.max(1, lg.trim); lg.prof = []; for (let k = 0; k <= Math.ceil(lg.trim) + 2; k++) lg.prof.push(legWalk(raw[i], lg, k).y); return { x: lg.endXZ[0], z: lg.endXZ[1], y: w.y }; });
+  const ends = legs.map((lg, i) => { const w = legWalk(raw[i], lg, lg.trim); lg.endXZ = [w.x, w.z]; lg.endY = w.y; const w0 = legWalk(raw[i], lg, 0); lg.yAtJ = w0.y; lg.gradeInTrim = (w.y - w0.y) / Math.max(1, lg.trim); lg.prof = []; const sBase = dot(sub(raw[i].base, lg.q), lg.u); for (let k = 0; k <= Math.ceil(lg.trim) + 2; k++) lg.prof.push(k < sBase - 1e-6 ? NaN : legWalk(raw[i], lg, k).y); /* NaN = no road there (the leg ends before the junction): no ribbon to follow (JN124 fix) */ return { x: lg.endXZ[0], z: lg.endXZ[1], y: w.y }; });
   // use the CENTRE point of the leg at the trim end on the straight axis (kerb lines were built on it); heights come from the real road
   const pl = fitPlane(ends, p[0], p[1]);
   result.plane = pl;
