@@ -193,6 +193,9 @@ export class RoadNetwork {
   private searth = new Uint8Array(0);
   /** 1 = the terrain beside this segment follows daylight slopes (ring, STEP 5.2). */
   private sday = new Uint8Array(0);
+  /** LEVEL LOCK (user 2026-11-22): 1 = piece of a merge tail (RTE-TAIL-*); 2 = piece of an on-ground main road (not a ramp, not earth, no bridge) whose pavement ground must keep its own level where a tail runs beside it. */
+  private stailguard = new Uint8Array(0);
+  private tailCells = new Set<number>();
   /** Cut slope (rise per metre of run) of the daylight face at the two ends of the segment. */
   private sca = new Float32Array(0);
   private scb = new Float32Array(0);
@@ -3627,6 +3630,7 @@ export class RoadNetwork {
     this.sbridge = new Uint8Array(total);
     this.searth = new Uint8Array(total);
     this.sday = new Uint8Array(total);
+    this.stailguard = new Uint8Array(total);
     this.sca = new Float32Array(total);
     this.scb = new Float32Array(total);
     this.scity = new Uint8Array(total);
@@ -3673,6 +3677,7 @@ export class RoadNetwork {
         this.searth[s] = r.earth ? 1 : 0;
         // STEP 5.3b: the piece that joins the embankment to a structure (one end on the deck, one on the ground) is still a daylight piece (with the ordinary embankment it would pull the ground up under the slab)
         this.sday[s] = r.daylight && !(r.bridgeOf[i] >= 0 && r.bridgeOf[i] === r.bridgeOf[j]) ? 1 : 0;
+        this.stailguard[s] = r.name.startsWith('RTE-TAIL') ? 1 : r.kind !== 'ramp' && !r.earth && r.bridgeOf[i] < 0 && r.bridgeOf[j] < 0 ? 2 : 0;
         if (this.sday[s]) {
           this.sca[s] = day(r).cut[i];
           this.scb[s] = day(r).cut[j];
@@ -3768,6 +3773,8 @@ export class RoadNetwork {
       }
     }
     for (const [k, a] of temp) this.cells.set(k, Int32Array.from(a));
+    this.tailCells.clear();
+    for (const [k, a] of temp) for (const q of a) if (this.stailguard[q] === 1) { this.tailCells.add(k); break; }
     for (const c of this.culverts) c.roadY = Math.round(c.roadY * 100) / 100;
   }
 
@@ -3934,6 +3941,21 @@ export class RoadNetwork {
     carveW *= 1 - bw;
     if (nbBeyond) carveW = 0;
     if (carveW > 0 && out.h > carve) out.h -= (out.h - carve) * carveW;
+    // LEVEL LOCK (user 2026-11-22: 'the ring pavement beside the M4L tail is bent / dented, white edge line dips'): where a merge tail runs beside an on-ground main road, the tail's fill / blend must not
+    // change the ground under that road's pavement. The nearest main road piece within its asphalt (+ a 2 m soft edge) sets the ground to its own surface level (measured: 219 of 759 ring pavement samples were off by > 0.1 m).
+    if (this.tailCells.size > 0 && this.tailCells.has((Math.floor(x / CELL) + 512) * 1024 + (Math.floor(z / CELL) + 512))) {
+      let gd = Infinity, gy = 0, gw = 0;
+      for (let q = 0; q < segs.length; q++) {
+        const s = segs[q];
+        if (this.stailguard[s] !== 2) continue;
+        const abx = this.sbx[s] - this.sax[s], abz = this.sbz[s] - this.saz[s], l2 = abx * abx + abz * abz;
+        let t = l2 > 0 ? ((x - this.sax[s]) * abx + (z - this.saz[s]) * abz) / l2 : 0;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const d = Math.hypot(x - (this.sax[s] + abx * t), z - (this.saz[s] + abz * t));
+        if (d < gd) { gd = d; gy = this.say[s] + (this.sby[s] - this.say[s]) * t; gw = this.shw[s]; }
+      }
+      if (gd <= gw + 2) { const f = gd <= gw ? 1 : 1 - smoothstep(0, 2, gd - gw); out.h += (gy - out.h) * f; }
+    }
   }
 
   /** Nearest road segment to (x, z) within its width: returns [segment, distance] or null. */

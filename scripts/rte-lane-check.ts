@@ -167,6 +167,21 @@ CHK('L6 max grade of the lanes and tails <= 5 %', mg <= 0.05, `${(mg * 100).toFi
     for (let v = 0; v < m.positions.length / 3; v++) if (Math.hypot(m.positions[v * 3] + ox - tx, m.positions[v * 3 + 2] + oz - tz) < 3 && Math.abs(m.info[v * 4]) < 20) { tipVerts++; tipU = Math.max(tipU, Math.abs(m.info[v * 4])); }
   }
   CHK('T8d AUTO MERGE mesh: the drawn ribbon (buildRoadMesh) is a point at the tip of every tail (vertices within 3 m of the tip have |across| <= 0.3 m)', tipVerts >= 8 && tipU <= 0.3, `${tipVerts} vertices, widest half ${tipU.toFixed(2)} m`);
+  // T8e LEVEL LOCK: the ground under the pavement of the main road beside each tail keeps the road's own level (the tail's fill / blend must not bend it): every 1 m sample across the pavement within 60 m of a tail point is within 0.1 m
+  {
+    let bad = 0, cnt = 0, worstDev = 0;
+    for (const t of tails) {
+      const w = want[t.name]; if (!w) continue; const rd = net.roads[t.roadId], main = w.main === 'ring' ? ring : armR;
+      for (let i = 0; i < rd.xs.length; i += 2) {
+        let bk = 0, bd = 1e9; for (let k = 0; k + 1 < main.xs.length; k++) { const d = Math.hypot((main.xs[k] + main.xs[k + 1]) / 2 - rd.xs[i], (main.zs[k] + main.zs[k + 1]) / 2 - rd.zs[i]); if (d < bd) { bd = d; bk = k; } }
+        const k = bk, vx = main.xs[k + 1] - main.xs[k], vz = main.zs[k + 1] - main.zs[k], l = Math.hypot(vx, vz), nx = -vz / l, nz = vx / l, side = Math.sign((rd.xs[i] - main.xs[k]) * nx + (rd.zs[i] - main.zs[k]) * nz) || 1;
+        for (let o = 0; o <= main.halfWidth - 0.5; o += 1) {
+          gen.sample(main.xs[k] + side * nx * o, main.zs[k] + side * nz * o, sc); const dev = Math.abs(sc.h - main.ys[k]); cnt++; if (dev > 0.1) bad++; worstDev = Math.max(worstDev, dev);
+        }
+      }
+    }
+    CHK('T8e LEVEL LOCK: the ground under the main road pavement beside each tail keeps the road level (<= 0.1 m; the tail fill / blend must not bend the ring / arm pavement)', cnt > 100 && bad === 0, `${cnt} samples, ${bad} off by more than 0.1 m, worst ${worstDev.toFixed(2)} m`);
+  }
   // T9 piers of the OTHER ramp / own ramp: the tail edge >= 2.0 m from every pier centre of the ramp it does NOT belong to (the own ramp's bridge ends at the tail)
   let tp = 1e9, tpAt = '';
   for (const t of tails) { const w = want[t.name]; if (!w) continue; const rd = net.roads[t.roadId]; for (const st of RTE_RAMP_STRUCTS as any[]) { if (st.name === w.st.name) continue; for (const pr of st.piers as any[]) for (let i = 0; i + 1 < rd.xs.length; i++) { const ax = rd.xs[i], az = rd.zs[i], dx = rd.xs[i + 1] - ax, dz = rd.zs[i + 1] - az, l2 = dx * dx + dz * dz; const q = l2 > 0 ? Math.min(1, Math.max(0, ((pr.x - ax) * dx + (pr.z - az) * dz) / l2)) : 0; const g = Math.hypot(pr.x - (ax + dx * q), pr.z - (az + dz * q)) - rd.halfWidth - 1.5; if (g < tp) { tp = g; tpAt = `${t.name} / ${st.name} pier d ${dOf(pr.x, pr.z).toFixed(0)} u ${uOfP(pr.x, pr.z).toFixed(0)}`; } } } }
