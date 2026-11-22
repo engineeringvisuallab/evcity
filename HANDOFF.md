@@ -216,3 +216,6 @@ USER (screenshot, X marks + circle): remove the old lots beside F4 (mall lot, si
 
 ## Splash image effects removed (2026-11-22)
 User: remove only the effects on the splash screenshots. In `src/ui/Splash.ts` (CSS block 'Image effects removed'): no zoom / blur on the slide images, no glow pulse on the frame, vignette, light sweep and dust hidden. Logo intro, grid, glow, tips, loading bar and the cross-fading slides with captions are unchanged. To undo: delete that CSS block. tsc --noEmit PASS, npm run build PASS; game look NOT run.
+
+## Junction RT-E ramp interchange (2026-11-22)
+Plan only: see `HANDOFF_JUNCTION_RTE.md` (ring x J1-E at X 2335 Z 1438, steps RE-0 .. RE-11, one per chat). `HANDOFF_ROAD_DESIGN.md` 24.9 points to it. No code changed, nothing run.

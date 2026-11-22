@@ -2208,3 +2208,6 @@ Every step: R1 / R2 / R8 / R10 lines printed, tsc / npm run build / mission-test
 
 ### 24.8 STARTER PROMPT FOR A NEW CHAT
 "Read HANDOFF_ROAD_DESIGN.md: the block CURRENT ORDER (point 0), HARD RULES, then section 24 completely (and 21.47 - 21.53, 21.60, HANDOFF_RING_T_JUNCTIONS.md if the junction is a ring join). Run J-1 Jx-a only: site + design sheet of the pilot interchange T14 (R4-8 on the M8 ring, st 2090), numbers and a picture, PASS / FAIL, STOP and wait for my OK. Reply in Banglish, one junction per step, deliver only the changed files in a zip named by version, say what was NOT run."
+
+### 24.9 JUNCTION RT-E (ring x J1-E, X 2335 Z 1438) (2026-11-22)
+USER 2026-11-22: this 8-lane x 8-lane junction (ring st 16813) gets a RAMP INTERCHANGE (not the ground CFI of HANDOFF_RING_T_JUNCTIONS.md 3.1); ramp curves outside the ring, median route with widening allowed if the outside fails; small steps. Own handoff: HANDOFF_JUNCTION_RTE.md (steps RE-0 .. RE-11, status table there). Only the plan is written; no code, nothing run.
