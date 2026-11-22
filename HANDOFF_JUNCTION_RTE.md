@@ -230,3 +230,17 @@ Checks (scripts/rte-lane-check.ts, new T0..T9; L6 and L1 now cover tails; L9a us
 - T7 (no overlap with other roads) found no other road within 60 m of any tail; the bridge decks of M3 / M4 are not roads, their pier clearance is T9 (other ramp >= 59 m).
 
 Not done (honest): STEP B (ramp strips 1, 2 to ground; M4 is 12 m above M3, needs new vertical profile, tools/rte-m3.py, rte-m4.py, then rte-width / rte-terrain / rte-struct), STEP C (lane taper, S2A retaining wall, signs, gore pad).
+
+## 24. STEP B DECISION: ramp strips M3 / M4 beside the arm STAY bridges on piers (2026-11-22, engineer decision, user: 'you are my engineer so you decide right design'). NO src change, NO data change.
+
+Why (numbers measured on the real game data, natural ground; deck height above ground along the strips):
+- M3 strip (u +35, d 48 .. 149, s 248 .. 348): deck 7.9 m (d 48) .. 0.8 m (d 143) above ground. M3 must be about 38.4 m over the ring (ring 28.4 + 5.5 clearance + 3.0 girder, min about 37), then it falls 4.8 % to the arm level at the nose (31.85 at d 151). Its grade is already at the limit, so it cannot come down earlier.
+- M4 strip (u -35, d 275 .. 36, s 0 .. 239): deck 6.4 m .. 16 m above ground. M4 must cross the ring AND M3 (plan crossing): >= 8.6 m over M3 (47.0 now, minimum about 45.5). From the gore (arm level 35.5) up to 45.5 .. 47 on 239 m = 4.2 .. 4.5 %. A new vertical profile (rte-m4.py re-run) could lower M4 by at most about 1.5 m: the strip stays 5 .. 14 m above ground. Ground (30.2) to 47 would need 340 m at 5 %, the strip is 275 m.
+- A fill (embankment 1:3, rule from RE-7) next to the arm does not fit: the M3 deck inner edge is only 8 m from the arm paved edge, a 1:3 slope fits only where the deck is <= 2.7 m above the arm level (d >= 118, about 30 m, s >= 321). A retaining wall on the arm side (fill 7 m high) needs a wall mesh + terrain pad that do not exist (RteMesh has walls only under the viaduct approach slabs, data driven) and cannot be checked without the game.
+- The only possible gain (M3 nose, deck <= 3 m, s 326 .. 348, 22 m) removes no pier (last pier s 305), and the deck there is in its width taper (7.0 -> 6.1 m), a ground road has constant width. Not worth the risk. Tested: tools/rte-struct.py re-run without change reproduces RteStructData.ts byte for byte (so the tool chain works if STEP B is ever done).
+
+What the user already has for the 'ramp comes down to the road' wish: STEP A (section 23): at the 4 ends the ramps are ground roads merging beside the ring / arm. The bridge strips beside the arm remain because the ramps must reach the ring crossing at 38 / 47 m.
+
+If the user still wants the strips on ground, the only real way is a different geometry (not a profile change): e.g. M3 and M4 move 20 m or more away from the arm (rte-m3.py / rte-m4.py plan change, then rte-width / rte-terrain / rte-struct, wall or slope room), or the ring crossing is made by an underpass (ring in cut) = a big redesign. Not started.
+
+Next (user decides): STEP C items (lane taper, S2A retaining wall, signs, gore pad), or first look at the game (teleport x 2354, z 1437, key 0) and send a marked screenshot.
