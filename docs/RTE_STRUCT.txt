@@ -1,0 +1,55 @@
+RE-8 STRUCTURES  RT-E.  Ramp bridges M3 / M4 and arm viaduct widening as DATA (deck, girder, pier, abutment). No mesh. Natural ground, ring and arm profile / structure FIXED, left-hand traffic, Config switch OFF (RE-9).
+D7 (engineer, new): ramp bridges = single-cell post-tensioned concrete box girder, continuous, one hammer-head pier per support line on the ramp axis; the arm viaduct is widened by a CANTILEVER WING where the net width is <= CANT_MAX and by its OWN independent box wedge on single columns where it is wider; the existing arm deck (a plain girder abutment to abutment, no piers, 16 m approach slabs) is NOT loaded by the new piers.
+D8 (engineer, new): (a) the plan crossing of the ring by M3 and M4 leaves NO pier position between the ring edges (the 90 deg turn is made over the ring, RE-4 / RE-5), so each ramp has ONE span of about 100 m there: composite steel-concrete box, constant depth L / 33 (ASSUMED feasible, structural design NOT RUN); (b) over every other road the span is chosen so that girder depth <= deck-to-surface - 5.5 m (DP with a penalty); (c) where that is impossible (M4 over M3) the profile is NOT changed here (RE-5 owns it), the shortfall is printed as FAIL and the fix is named.
+Numbers (ASSUMED unless a source is named): pier gap to a road below 3.0 m (= roadRailBuffer.pierToDeckEdge), column foot 2.4 x 3.0 m, top 1.8 x 2.6, cap 2.8 x (deck - 1.0, max 8.7) x 1.4 m, footing 3.0 m below ground; span target 40 / min 16 / max 70 m; girder depth L / 22 (min 1.6) up to 45 m, composite box L / 33 above (D8); cantilever wing limit 4.5 m; arm existing deck half width 22.4 m (ASSUMED, not read from the game); approach slab 16 m (STRUCT.approach); ramp deck narrows 9.7 -> 6.1 m in the last 91 m (RE-6 convention).
+
+M3: structure s 8.0 .. 348.5 (340.5 m), 6 piers, 7 spans, longest 99.7 m (span limit used 100 m), tallest pier 13.8 m (clear height 10.8 m), girder depth 1.63 .. 3.02 m, deck 9.7 -> 6.1 m
+   spans (m): 40.0, 40.0, 39.9, 99.7, 35.9, 41.6, 43.4
+   piers (s / u / v / deck level / column height): 48 (-125, -28) 33.2 h10.8; 88 (-85, -28) 35.1 h13.8; 128 (-45, -28) 37.1 h11.7; 228 (30, 29) 38.0 h9.6; 264 (35, 64) 36.2 h7.4; 305 (35, 106) 34.2 h7.0
+   abutments: s 8.0 deck 31.31 ground 28.16; s 348.5 deck 32.00 ground 27.31
+M4: structure s 0.0 .. 532.7 (532.7 m), 11 piers, 12 spans, longest 99.7 m (span limit used 100 m), tallest pier 18.1 m (clear height 15.1 m), girder depth 1.64 .. 3.02 m, deck 9.7 -> 6.1 m
+   spans (m): 41.8, 41.8, 41.8, 41.8, 39.8, 39.9, 99.7, 37.9, 36.0, 38.0, 38.0, 36.0
+   piers (s / u / v / deck level / column height): 42 (-35, 233) 37.1 h11.3; 84 (-35, 191) 38.7 h13.7; 125 (-35, 150) 40.3 h13.8; 167 (-35, 108) 41.9 h14.4; 207 (-35, 68) 43.5 h17.0; 247 (-30, 29) 45.0 h18.1; 347 (45, -28) 44.4 h16.6; 384 (83, -28) 43.3 h16.3; 421 (119, -28) 42.1 h13.7; 459 (157, -28) 41.0 h9.6; 497 (195, -28) 39.8 h7.2
+   abutments: s 0.0 deck 35.55 ground 29.46; s 532.7 deck 38.68 ground 35.65
+
+ARM VIADUCT WIDENING (D1): kind per wedge
+  out_viaduct1: d 160..271, viaduct window 160..271 (approach slabs d 160..176 and 255..271), width 12.90 -> 6.42 m from the paved edge (net of the existing deck edge 12.60 -> 6.12 m), kind: own wedge on columns, 1 column(s) at d 214, 2 spans of 38.0 m, box depth 1.73 m, column clear height 2.3 m
+     approach slabs on the embankment: retaining wall under the outer edge up to 4.2 m high over 36 m (4 m samples)
+  out_viaduct2: d 391..507, viaduct window 391..694 (approach slabs d 391..407 and 678..694), width 2.88 -> 0.56 m from the paved edge (net of the existing deck edge 2.59 -> 0.27 m), kind: cantilever wing, wing slab 0.56 m at the root
+     approach slabs on the embankment: retaining wall under the outer edge up to 1.8 m high over 16 m (4 m samples)
+  in_viaduct1: d 160..209, viaduct window 160..271 (approach slabs d 160..176 and 255..271), width 2.93 -> 0.57 m from the paved edge (net of the existing deck edge 2.63 -> 0.27 m), kind: cantilever wing, wing slab 0.57 m at the root
+     approach slabs on the embankment: retaining wall under the outer edge up to 5.8 m high over 16 m (4 m samples)
+  in_viaduct2: d 391..480, viaduct window 391..694 (approach slabs d 391..407 and 678..694), width 4.14 -> 0.58 m from the paved edge (net of the existing deck edge 3.84 -> 0.28 m), kind: cantilever wing, wing slab 0.71 m at the root
+
+PASS  S1 every span except the ring-crossing spans <= 70 m  longest normal span 43.4 m (M3 43.4, M4 41.8)
+ASSUMED  S1b the ring-crossing spans (no pier position between the ring edges: the 90 deg turn is made over the ring) are composite steel-concrete box girders, depth L / 33 (D8)  M3 99.7 m, M4 99.7 m, depth 3.02 m; structural feasibility of a ~100 m span is NOT checked; the alternative is a new ring crossing geometry (RE-4 / RE-5), not done in this step
+PASS  S2 every ramp pier column face is >= 3.0 m from the barrier strip of every road / slip / other ramp below  tightest 3.03 m (M3 pier s 128 to ring)
+PASS  S3 M3 over A2S slip: underside above the road surface >= 5.5 m (5.5 + real girder depth)  5.52 m clear at s 258 (deck-to-surface 7.15 m, girder 1.63 m there)
+PASS  S3 M3 over ring: underside above the road surface >= 5.5 m (5.5 + real girder depth)  5.55 m clear at s 134 (deck-to-surface 8.57 m, girder 3.02 m there)
+FAIL  S3 M4 over M3 deck: underside above the road surface >= 5.5 m (5.5 + real girder depth)  3.89 m clear at s 295 (deck-to-surface 6.91 m, girder 3.02 m there)
+PASS  S3 M4 over S2A slip: underside above the road surface >= 5.5 m (5.5 + real girder depth)  12.48 m clear at s 217 (deck-to-surface 14.29 m, girder 1.81 m there)
+PASS  S3 M4 over ring: underside above the road surface >= 5.5 m (5.5 + real girder depth)  13.22 m clear at s 335 (deck-to-surface 16.24 m, girder 3.02 m there)
+   -> M4 over M3 deck: short by 1.61 m at s 295. Profiles are RE-4 / RE-5 outputs and are NOT changed in RE-8 (only RE-8 was ordered). FIX (proposal D8c, NOT applied): raise the upper deck by about 1.66 m there, i.e. a re-run of the ramp solve; M4 has grade budget (max 3.82 % of 5 %, RE-5), ring / S2A clearances only grow, M3 stays as it is.
+PASS  S4 every column <= 25 m tall (ASSUMED limit)  tallest 18.1 m
+PASS  S5 piers of different structures >= 6 m apart in plan (ASSUMED)  closest 58.4 m (M3 s/d 128 / M4 s/d 247)
+PASS  S6 out_viaduct1: own wedge on columns, every span <= 48 m (VI.spanLong)  2 spans of 38.0 m, 1 column(s)
+PASS  S6b out_viaduct1: retaining wall under the approach-slab wedge <= 12 m (ASSUMED limit, as RE-7 T3)  4.2 m
+PASS  S6 out_viaduct2: cantilever wing, largest net overhang on the main span <= 4.5 m (ASSUMED limit)  2.27 m (the existing deck edge and its capacity to carry a wing are NOT checked)
+PASS  S6b out_viaduct2: retaining wall under the approach-slab wedge <= 12 m (ASSUMED limit, as RE-7 T3)  1.8 m
+PASS  S6 in_viaduct1: cantilever wing, largest net overhang on the main span <= 4.5 m (ASSUMED limit)  1.68 m (the existing deck edge and its capacity to carry a wing are NOT checked)
+PASS  S6b in_viaduct1: retaining wall under the approach-slab wedge <= 12 m (ASSUMED limit, as RE-7 T3)  5.8 m
+PASS  S6 in_viaduct2: cantilever wing, largest net overhang on the main span <= 4.5 m (ASSUMED limit)  3.20 m (the existing deck edge and its capacity to carry a wing are NOT checked)
+PASS  S6b in_viaduct2: retaining wall under the approach-slab wedge <= 12 m (ASSUMED limit, as RE-7 T3)  0.0 m
+PASS  S7 every NEW pier is >= 30 m from the rail centre line (D3)  nearest 158 m (wedge out_viaduct1)
+Widened deck footprint over the rail row (rail centre line <= 14 m, RAIL_DESIGN.rowHalf): out_viaduct2 d 419..451; in_viaduct2 d 471..480
+PASS  S8 road over rail: wedge surface above the top of rail >= 9.0 m (Config roadRailBuffer.roadOverRail)  9.58 m at out_viaduct2 d 419 (rail level there 29.10)
+PASS  S8b deck underside above the messenger wire >= 1.0 m (ASSUMED margin; underside = surface - 1.5 m)  1.18 m
+PASS  S8c no new column inside the rail row (14 m + column) - the widened deck has no pier over the rail  0 columns
+PASS  S8d the arm viaduct 391..694 (rail crossing d ~463, arm within 30 m of the rail on d 403..523) gets NO new column: the widening there is a cantilever wing / approach slab  0 new columns on d 391..694
+PASS  S9 ramp abutment walls <= 12 m high (ASSUMED limit, as RE-7 T3)  highest 6.2 m (M3 ends 28.2 / 27.3 m ground, M4 ends 29.5 / 35.6 m ground)
+INFO  wedge deck within 30 m of the rail (the arm itself is there, existing): out_viaduct2 d 399..479; in_viaduct2 d 447..480 - all of it is a cantilever wing or approach slab, no column
+INFO  M3 last abutment (s 348.5, nose d 151) stands 9 m before the first wedge (d 160); M4 first abutment is the gore d 275, 4 m after the end of viaduct 160..271.
+
+ASSUMED  the M3 exit lane (ring B, u -380 .. -173) and the M4 entry lane (u 75 .. 420) are carried ON the ramp deck (the deck is that lane + shoulders at its end), so they are not an obstacle for the ramp's own piers; RE-5 / RE-6 give these lanes as lengths only (ramp axis v -28.45 vs lane centre v -23.925), the plan relation of deck and lane is NOT drawn.
+ASSUMED  every number marked ASSUMED above (pier, girder and wing sizes, span limits, existing deck half width 22.4 m, 1.0 m wire margin, 6 m pier separation, 25 m column limit)
+NOT RUN  structural design: loads, bending / shear, bearings, expansion joints, wing capacity of the existing arm deck, pile / footing design (EMBED 3 m is a placeholder), seismic; construction staging over the live ring; rail pier positions (the rail builder places them at game start, no headless data); gore / nose geometry of the abutments; drainage of the decks (T6 flats: deck drains, RE-9); girder depth of the existing arm deck (1.5 m from STRUCT.deckDepth); Validate.ts; full tsc / npm run build (only RteStructData.ts compiled with tsc --strict); the game; carved ground; trees; ring median U-turn openings.
