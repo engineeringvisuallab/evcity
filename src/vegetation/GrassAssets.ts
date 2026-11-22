@@ -236,13 +236,13 @@ export class GrassAssets {
               vec3 gView = normalize(-vViewPosition);
               float gBack = pow(clamp(dot(-gView, directionalLights[0].direction), 0.0, 1.0), 3.0);
               float gTip = clamp(dot(vColor.rgb, vec3(0.333)) * 1.1, 0.0, 1.0);
-              outgoingLight += diffuseColor.rgb * directionalLights[0].color * gBack * gTip * mix(0.55, 0.3, vFlower) * vec3(1.0, 1.15, 0.55);
+              outgoingLight += diffuseColor.rgb * directionalLights[0].color * gBack * gTip * mix(0.3, 0.25, vFlower) * vec3(1.0, 1.08, 0.7);
             }
           #endif
           #include <opaque_fragment>`,
         );
     };
-    m.customProgramCacheKey = () => 'grass-fade-v7' + key;
+    m.customProgramCacheKey = () => 'grass-fade-v8' + key;
     return m;
   }
 

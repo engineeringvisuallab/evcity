@@ -54,6 +54,11 @@ Ager version-er ghas flat rong-er polygon chhilo, tai ekhon **ghas pura bodle pa
 - **Mega gach** (`vegetation.mega`): boro forest gach (sal, segun, koroi, bot, shimul, gum)-er majhe majhe ekta puro **scale kore** 1.9-2.5x (45-75 m, mota trunk + boro crown, ek-i model). 170 m-er noise patch-er bhetor 8%, baire 0.6% (~5-6% boro gach). Jungle-er shadharon giant 1.8x porjonto, tai mega tar cheye boro. Kom/beshi: `mega.patchChance` / `chance`, off: 0. Collider trunk-er scale-e boro hoy (ager system).
 - Test: `scripts/hill-trees-test.ts` PASS. **Game-e dekhi ni**; boro gach-er FPS (crown boro) / shadow dekhe bolo. Mega-r ashe-pashe chhoto gach crown-er niche dhoke jabe (natural).
 
+## UPDATE 6 (2026-11-23): ghas aro realistic rong + ghono
+- **Rong:** ager ghas uggol lime-sobuj, sob blade ek rokom chhilo. Ekhon proti blade-er nijer saturation (dull), hue olive theke nil-sobuj, ~14% blade mora (khor / brown), ~25% blade-er dog roddure shukano (sobuj theke khor), mule dark chhaya + chhoto blade-er "skirt" (tuft-er gora bhora). Instance palette: lime 10% -> 3%, olive / deep / straw / dry beshi, brightness 0.8-1.2 -> 0.7-1.06, red cap kom. Roddur-er glow (back-light) 0.55 -> 0.3, tint kom holud.
+- **Ghono:** ager ghas shudhu gach-er gorar ring-e (reach 2.6 m) chhilo, khola meadow patch-er code bondho chhilo. Ekhon `grass.treeBase.meadow: 0.5` -- meadow patch (`grass.patch.coverage` 0.3 -> 0.4) o ghas dey, ring reach 3.0, `maxChance` 0.4, `minChance` 0.2, `widthScale` 1.25 (tuft ektu chaura). Mapa (`scripts/grass-density-test.ts`, khola jayga-r 600 tile): tuft **~2.0x** (97k -> 199k). **FPS-e chap porbe** (tumi preset low-e 28 FPS dekhiyechho) -- bhari hole `treeBase.meadow` 0.5 -> 0.25, ba `grass.patch.coverage` 0.4 -> 0.3, ba Quality preset-er `grassMul` komao. `meadow: 0` = ager moto shudhu gach-er gora.
+- Game-e dekhi ni; atlas headless Chrome-e render kore dekhechi.
+
 ## Jeta kori ni
 - **fern / shrub / lata (puraton lata-pata) ferot ani ni.** CHANGES_GUM_TREE_BN.md-e tumi bolechile "LATA-PATA FULL REMOVE" -- tai oigulo off-i ache. Notun liana / tangle alada kind, oder sathe milay nai.
 - Gach-er tolar mati-r rong (brown) bodlai ni (agey-r note: alada step).

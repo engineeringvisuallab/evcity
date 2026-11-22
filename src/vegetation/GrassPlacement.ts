@@ -265,13 +265,16 @@ export class GrassPlacer {
         const lawn = this.lawnAt(x, z);
         const jd = jTile > 0.02 ? this.trees.denseAt(x, z) : 0; // dense jungle 0..1
         if (jd > JG.clear) continue; // NO GRASS inside the jungle: only trees and lata-pata (fern / shrub / creeper) grow there
-        let patch = near ? Math.max(near[j * per + i], lawn) : this.patchIn(x, z, tx, tz, grid);
+        const nearV = near ? near[j * per + i] : 0;
+        let patch = near ? Math.max(nearV, lawn) : this.patchIn(x, z, tx, tz, grid);
+        // MEADOW (2026-11-23): besides the rings round the trees, the patchy meadow grows again (the old patch noise: `grass.patch`, x `treeBase.meadow`); asked only when the cell could get a tuft at all
+        if (near && TB.meadow > 0 && patch < 0.99 && roll < G.maxChance * this.mul * P.density * 1.05) patch = Math.max(patch, this.patchIn(x, z, tx, tz, grid) * TB.meadow);
         if (jd > 0.02) patch = Math.max(patch, JG.floor * jd);
         if (patch < P.minValue) continue;
         const rim = smooth(P.minValue, P.coreAt, patch); // 0 at the rim .. 1 in the core
         const lush = Math.max(smooth(-0.35, 0.25, this.meadow.fbm(x / 45, z / 45, 2)), lawn);
         let chance = (G.minChance + (G.maxChance - G.minChance) * lush) * this.mul * P.density * rim;
-        if (near && lawn < 0.5) chance = TB.chance * this.mul * rim; // inside a tree ring the grass is thick (not the sparse open-land chance)
+        if (near && lawn < 0.5 && nearV > 0.02) chance = TB.chance * this.mul * rim; // inside a tree ring the grass is thick (not the sparse open-land chance)
         chance *= 1 - G.forestThin * this.trees.forestAt(x, z) * (1 - lawn);
         if (jd > 0.02) chance = Math.max(chance, JG.chance * jd * this.mul * rim);
         chance *= 1 - lawn * (1 - G.city.density); // city lawn: `grass.city.density` x the open-meadow density (the 0.5 city thinning is gone)

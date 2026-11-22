@@ -75,14 +75,14 @@ const dummy = new THREE.Object3D();
 const color = new THREE.Color();
 type Pal = ReadonlyArray<readonly [number, number, number, number]>; // r, g, b, share
 const GRASS_PALETTE: Pal = [
-  [0.12, 0.36, 0.08, 0.26], // fresh green
-  [0.24, 0.42, 0.09, 0.18], // yellow-green
-  [0.2, 0.3, 0.08, 0.14], // olive
-  [0.07, 0.3, 0.14, 0.12], // blue-green
-  [0.07, 0.24, 0.06, 0.1], // deep green
-  [0.3, 0.46, 0.12, 0.1], // light lime
-  [0.46, 0.4, 0.15, 0.06], // golden-dry
-  [0.36, 0.32, 0.13, 0.04], // straw
+  [0.12, 0.36, 0.08, 0.22], // fresh green
+  [0.24, 0.42, 0.09, 0.1], // yellow-green
+  [0.2, 0.3, 0.08, 0.18], // olive
+  [0.07, 0.3, 0.14, 0.1], // blue-green
+  [0.07, 0.24, 0.06, 0.16], // deep green
+  [0.3, 0.46, 0.12, 0.03], // light lime (rare: the bright lime of the old tufts looked unreal)
+  [0.46, 0.4, 0.15, 0.09], // golden-dry
+  [0.36, 0.32, 0.13, 0.12], // straw
 ];
 const LAWN_PALETTE: Pal = [
   [0.12, 0.36, 0.08, 0.34],
@@ -416,13 +416,13 @@ export class GrassManager {
       }
     }
     const hb = Math.sin(data[o] * 7.7 + data[o + 2] * 3.1 + 1.3) * 43758.5453;
-    const bright = (0.8 + 0.4 * (hb - Math.floor(hb))) * (isGrassLeafy(type) ? 1.12 : 1); // broad leaves are a little fresher / lighter than the blades round them
+    const bright = (0.7 + 0.36 * (hb - Math.floor(hb))) * (isGrassLeafy(type) ? 1.12 : 1); // broad leaves are a little fresher / lighter than the blades round them
     const pc = pal[ci];
     // PAINTED GRASS (2026-11-21): the cards already carry real greens, so the tuft colour is only a TINT around 1 (the palette colour relative to the fresh green, softened): fresh green = no change,
     // yellow-green = warmer, olive / golden-dry = browner, deep green = darker. The flower tufts' own blades are tinted dark green in GrassAssets (they have no picture).
     const tn = (v: number, ref: number, cap: number): number => Math.min(cap, Math.pow(Math.max(v, 0.001) / ref, 0.8));
     const dry = Math.max(0, Math.min(1, (pc[0] - 0.3) / 0.16)); // golden-dry / straw tufts: less green, so they read yellow-brown, not lime
-    color.setRGB(tn(pc[0], 0.12, 1.8 - 0.4 * dry) * bright, tn(pc[1], 0.36, 1.25) * (1 - 0.1 * dry) * bright, Math.min(1.1, tn(pc[2], 0.08, 1.5)) * (1 - 0.1 * dry) * bright);
+    color.setRGB(tn(pc[0], 0.12, 1.45 - 0.3 * dry) * bright, tn(pc[1], 0.36, 1.25) * (1 - 0.1 * dry) * bright, Math.min(1.1, tn(pc[2], 0.08, 1.5)) * (1 - 0.1 * dry) * bright);
     mesh.setColorAt(slot, color);
   }
 

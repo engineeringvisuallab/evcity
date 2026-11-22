@@ -31,6 +31,9 @@ interface Blade {
   w: number;
   hue: number;
   light: number;
+  /** colour saturation (%) and kind: 0 green, 1 dry-tipped (green going to straw), 2 dead straw / brown blade */
+  sat: number;
+  dry: number;
 }
 
 /** One tapered, curved blade: a gradient from a dark root to a bright tip, a darker rim and a pale midrib. */
@@ -52,10 +55,18 @@ function drawBlade(c: Ctx, x0: number, base: number, b: Blade): void {
     R.push([p[0] + dy * hw, p[1] - dx * hw]);
   }
   const g = c.createLinearGradient(bx, by, tx, ty);
-  g.addColorStop(0, hsl(b.hue - 6, 58, b.light * 0.42));
-  g.addColorStop(0.3, hsl(b.hue, 58, b.light * 0.8));
-  g.addColorStop(0.75, hsl(b.hue - 3, 60, b.light * 1.15));
-  g.addColorStop(1, hsl(b.hue - 8, 62, b.light * 1.3));
+  if (b.dry === 2) {
+    // a dead blade: straw to brown, pale at the tip
+    g.addColorStop(0, hsl(b.hue, b.sat * 0.9, b.light * 0.55));
+    g.addColorStop(0.5, hsl(b.hue + 2, b.sat, b.light * 0.95));
+    g.addColorStop(1, hsl(b.hue + 6, b.sat * 0.8, b.light * 1.2));
+  } else {
+    g.addColorStop(0, hsl(b.hue - 6, b.sat, b.light * 0.42));
+    g.addColorStop(0.3, hsl(b.hue, b.sat, b.light * 0.8));
+    g.addColorStop(b.dry === 1 ? 0.6 : 0.75, hsl(b.hue - 3, b.sat * 1.03, b.light * 1.1));
+    // a sun-dried tip: the green fades to straw
+    g.addColorStop(1, b.dry === 1 ? hsl(44, 34, b.light * 1.35) : hsl(b.hue - 8, b.sat * 1.05, b.light * 1.25));
+  }
   c.beginPath();
   c.moveTo(L[0][0], L[0][1]);
   for (let i = 1; i <= N; i++) c.lineTo(L[i][0], L[i][1]);
@@ -63,7 +74,7 @@ function drawBlade(c: Ctx, x0: number, base: number, b: Blade): void {
   c.closePath();
   c.fillStyle = g;
   c.fill();
-  c.strokeStyle = hsl(b.hue, 50, b.light * 0.38, 0.55);
+  c.strokeStyle = hsl(b.hue, b.sat * 0.8, b.light * 0.36, 0.55);
   c.lineWidth = 0.7;
   c.stroke();
   if (b.w > 2.2) {
@@ -73,7 +84,7 @@ function drawBlade(c: Ctx, x0: number, base: number, b: Blade): void {
       if (i === 1) c.moveTo(p[0], p[1]);
       else c.lineTo(p[0], p[1]);
     }
-    c.strokeStyle = hsl(b.hue - 10, 45, b.light * 1.55, 0.3);
+    c.strokeStyle = hsl(b.hue - 10, b.sat * 0.75, b.light * 1.5, 0.28);
     c.lineWidth = Math.max(0.6, b.w * 0.22);
     c.stroke();
   }
@@ -119,12 +130,29 @@ function paintTuft(c: Ctx, tile: number, seed: number, T: TuftLook): number[] {
       curve = Math.sign(side || 1) * T.curve * (0.2 + 0.8 * f) * (0.4 + 0.6 * r());
       if (f < 0.25) { lean *= 0.35; curve *= 0.35; }
     }
-    blades.push({ x: cx + side * LS * T.spread * 0.5 - cx + cx, h, lean, curve, w: T.wMin + (T.wMax - T.wMin) * r(), hue: T.hue + (r() - 0.5) * 26, light: T.light * (0.82 + 0.36 * r()) });
+    // REAL COLOURS (2026-11-23): each blade has its own saturation (dull, not lime), a wider hue range (olive .. blue-green), ~1 in 7 blades dead (straw / brown), ~1 in 4 sun-dried at the tip
+    const kr = r();
+    const dead = kr < 0.14;
+    blades.push({
+      x: cx + side * LS * T.spread * 0.5, h: dead ? h * (0.7 + 0.3 * r()) : h, lean, curve, w: T.wMin + (T.wMax - T.wMin) * r(),
+      hue: dead ? 36 + 14 * r() : T.hue + (r() - 0.5) * 36, light: dead ? 38 + 16 * r() : T.light * (0.7 + 0.5 * r()),
+      sat: dead ? 26 + 16 * r() : 30 + 22 * r(), dry: dead ? 2 : kr < 0.4 ? 1 : 0,
+    });
+  }
+  // a skirt of short blades round the root: the tuft is full at the bottom, no gap to the ground
+  const skirt = Math.round(T.n * 0.45);
+  for (let i = 0; i < skirt; i++) {
+    const side = (r() + r() - 1) * 1.15;
+    const dead = r() < 0.1;
+    blades.push({
+      x: cx + side * LS * T.spread * 0.55, h: LS * T.H * (0.16 + 0.26 * r()), lean: side * T.lean * 0.3 + (r() - 0.5) * 20, curve: (r() - 0.5) * T.curve * 0.5,
+      w: T.wMin + (T.wMax - T.wMin) * r() * 0.8, hue: dead ? 38 + 10 * r() : T.hue + (r() - 0.5) * 30, light: dead ? 36 + 12 * r() : T.light * (0.6 + 0.4 * r()), sat: dead ? 28 : 28 + 20 * r(), dry: dead ? 2 : 0,
+    });
   }
   blades.sort((a, b) => a.h - b.h);
   const tops: number[] = [];
   blades.forEach((b, i) => {
-    b.light *= 0.78 + 0.3 * (i / blades.length); // the back blades are in shade
+    b.light *= 0.74 + 0.34 * (i / blades.length); // the back blades are in shade
     drawBlade(c, x0, base, b);
     if (i > blades.length * 0.8) tops.push(b.x + b.lean * 0.4);
   });
@@ -132,7 +160,7 @@ function paintTuft(c: Ctx, tile: number, seed: number, T: TuftLook): number[] {
   c.save();
   c.globalCompositeOperation = 'source-atop';
   const ao = c.createLinearGradient(0, base, 0, base - LS * 0.4);
-  ao.addColorStop(0, 'rgba(6,20,2,0.62)');
+  ao.addColorStop(0, 'rgba(14,16,4,0.7)');
   ao.addColorStop(1, 'rgba(6,20,2,0)');
   c.fillStyle = ao;
   c.fillRect(x0, 0, LS, LS);

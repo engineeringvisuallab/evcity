@@ -555,7 +555,7 @@ export const Config = {
         lawnWidthScale: 2.2,
       },
       /** Width of every tuft = its height scale x this. */
-      widthScale: 1.1, // wider tufts (was 0.8); was 2.2 when the grass was 3x lower: the tuft is 3x taller but only ~1.5x wider, so the blades stand more upright instead of splaying
+      widthScale: 1.25, // wider tufts (was 0.8); was 2.2 when the grass was 3x lower: the tuft is 3x taller but only ~1.5x wider, so the blades stand more upright instead of splaying
       /**
        * Grass LOD rings (like the trees): `to` = up to this distance (m, nearest edge of the tile), `stride` = only every n-th cell gets a tuft
        * (must divide tile / cell = 128: 1, 2, 4), `density` = blades per tuft model, `size` = width of a tuft (fewer tufts, each a bit wider).
@@ -579,7 +579,7 @@ export const Config = {
        */
       patch: {
         scale: 40,
-        coverage: 0.3, // only 30 % of the land has grass (patches), the rest is bare soil (was 1 = grass everywhere)
+        coverage: 0.4, // only 30 % of the land has grass (patches), the rest is bare soil (was 1 = grass everywhere)
         edge: 0.2,
         minValue: 0.25,
         coreAt: 0.35,
@@ -608,10 +608,10 @@ export const Config = {
        * undergrowth), thick at the trunk and thinning out to nothing at `reach` m (x 0.7..1.3 with the tree size). Open soil between trees stays bare.
        * `chance` = chance per cell inside the ring (cell 0.5 m); city lawn, roads and farm / plot rules are unchanged. enabled false = the old patchy meadow.
        */
-      treeBase: { enabled: true, reach: 2.6, chance: 1, core: 0.75 }, // SMALLER but MUCH DENSER ring: every cell has grass, full density out to `core` x reach, then a short soft rim (was reach 3.2, chance 0.7, core 0.45)
+      treeBase: { enabled: true, reach: 3.0, chance: 1, core: 0.75, meadow: 0.5 /* 2026-11-23: DENSER grass: the meadow patches grow again (x `meadow` of the patch noise) besides the rings round the trees; ring reach 2.6 -> 3.0; ~2x tufts in open land (0 = the old tree rings only) */ }, // SMALLER but MUCH DENSER ring: every cell has grass, full density out to `core` x reach, then a short soft rim (was reach 3.2, chance 0.7, core 0.45)
       /** Chance per cell inside a meadow / on bare patches, and the extra thinning inside forests. Higher = denser, fewer bald patches. */
-      maxChance: 0.35, // SPARSE: ~1 cell in 3 grows a tuft (was 0.98 / 0.9 = every cell)
-      minChance: 0.15,
+      maxChance: 0.4, // SPARSE: ~1 cell in 3 grows a tuft (was 0.98 / 0.9 = every cell)
+      minChance: 0.2,
       forestThin: 0.3,
       /**
        * JUNGLE FLOOR (ghono jongol ground cover): inside the dense jungle every cell gets grass (`floor` = patch value forced up to this x jungle density, so no bald
