@@ -33,7 +33,7 @@ const CSS = `
 .evs-shine::after{content:"";position:absolute;top:-20%;bottom:-20%;width:22%;left:-30%;
   background:linear-gradient(100deg,transparent,rgba(255,255,255,.95),transparent);transform:skewX(-18deg);
   animation:evs-sweep 1.1s ease-in-out 2.3s forwards;}
-.evs-bar{position:relative;margin-top:7vh;width:min(46vw,340px);height:3px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;opacity:0;animation:evs-fade .6s ease 1.4s forwards;}
+.evs-bar{position:relative;margin-top:3vh;width:min(46vw,340px);height:3px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;opacity:0;animation:evs-fade .6s ease 1.4s forwards;}
 .evs-fill{position:absolute;left:0;top:0;bottom:0;width:100%;background:linear-gradient(90deg,#00c8e6,#10f5d4);border-radius:3px;
   transform:scaleX(.04);transform-origin:left center;transition:transform .5s ease;box-shadow:0 0 10px rgba(16,245,212,.8);}
 .evs-label{margin-top:12px;color:rgba(200,230,240,.7);font-size:13px;letter-spacing:.5px;opacity:0;animation:evs-fade .6s ease 1.6s forwards;}
@@ -54,14 +54,14 @@ const CSS = `
 .evs-tips span{position:absolute;left:0;right:0;top:0;color:rgba(200,230,240,.8);font-size:13px;opacity:0;animation:evs-tip 20s linear infinite;animation-delay:calc(var(--i) * 4s + 2s);}
 @keyframes evs-rise{0%{transform:scaleY(0)}35%,72%{transform:scaleY(1)}100%{transform:scaleY(0)}}
 @keyframes evs-tip{0%{opacity:0;transform:translateY(6px)}3%,17%{opacity:1;transform:none}20%,100%{opacity:0}}
-.evs-shots{position:relative;margin-top:24px;width:min(88vw,calc(32vh * 3.07),920px);aspect-ratio:1400 / 456;border-radius:14px;overflow:hidden;background:#0a1c28;
+.evs-shots{position:relative;margin-top:16px;width:min(86vw,1320px);aspect-ratio:2.55 / 1;max-height:48vh;border-radius:14px;overflow:hidden;background:#0a1c28;
   box-shadow:0 0 0 1px rgba(16,245,212,.35),0 12px 40px rgba(0,0,0,.55);opacity:0;animation:evs-fade .8s ease 1.8s forwards;}
 .evs-slide{position:absolute;inset:0;opacity:0;animation:evs-slide 40s linear infinite;animation-delay:calc(var(--i) * 5s + 1.8s);}
 .evs-slide img{display:block;width:100%;height:100%;object-fit:cover;transform-origin:50% 50%;animation-duration:40s;animation-timing-function:ease-out;animation-iteration-count:infinite;animation-delay:calc(var(--i) * 5s + 1.8s);}
 .evs-slide.zin img{animation-name:evs-kin}
 .evs-slide.zout img{animation-name:evs-kout}
-.evs-slide b{position:absolute;left:0;right:0;bottom:0;padding:26px 16px 9px;font-weight:600;font-size:15px;letter-spacing:.4px;color:#eaffff;text-shadow:0 1px 6px rgba(0,0,0,.8);
-  background:linear-gradient(transparent,rgba(4,12,20,.78));}
+.evs-slide b{position:absolute;left:14px;top:12px;padding:5px 14px;border-radius:999px;font-weight:600;font-size:15px;letter-spacing:.4px;color:#eaffff;
+  background:rgba(4,12,20,.62);box-shadow:0 0 0 1px rgba(16,245,212,.3);}
 @keyframes evs-slide{0%{opacity:0}2%,13%{opacity:1}16%,100%{opacity:0}}
 @keyframes evs-kin{0%{transform:scale(1)}16%,100%{transform:scale(1.22)}}
 @keyframes evs-kout{0%{transform:scale(1.22)}16%,100%{transform:scale(1)}}
@@ -102,10 +102,9 @@ export class Splash {
         <div class="evs-layer evs-text"></div>
         <div class="evs-shine"></div>
       </div>
+      <div class="evs-bar"><div class="evs-fill"></div></div><div class="evs-label">লোড হচ্ছে…</div><div class="evs-tips"><span style="--i:0">N চাপলে যেকোনো গাড়ি তোমার কাছে চলে আসবে</span><span style="--i:1">Y চাপলে গাইডেড ভয়েস ট্যুর শুরু হয়</span><span style="--i:2">0 চাপে X ও Z লিখে সরাসরি সেখানে যাওয়া যায়</span><span style="--i:3">Tab চাপলে সেটিংস মেনু খোলে</span><span style="--i:4">F2 চাপলে FPS ও ড্র-কল দেখা যায়</span></div>
       <div class="evs-shots"><div class="evs-slide zin" style="--i:0"><img src="${BASE}assets/splash/mall.webp" alt="" decoding="async"><b>সিটি মল</b></div><div class="evs-slide zout" style="--i:1"><img src="${BASE}assets/splash/evlab.webp" alt="" decoding="async"><b>EVLab</b></div><div class="evs-slide zin" style="--i:2"><img src="${BASE}assets/splash/hall.webp" alt="" decoding="async"><b>EVLab হল</b></div><div class="evs-slide zout" style="--i:3"><img src="${BASE}assets/splash/mosque.webp" alt="" decoding="async"><b>মসজিদ</b></div><div class="evs-slide zin" style="--i:4"><img src="${BASE}assets/splash/plant.webp" alt="" decoding="async"><b>জল শোধনাগার</b></div><div class="evs-slide zout" style="--i:5"><img src="${BASE}assets/splash/jungle.webp" alt="" decoding="async"><b>জঙ্গল</b></div><div class="evs-slide zin" style="--i:6"><img src="${BASE}assets/splash/sea.webp" alt="" decoding="async"><b>সাগরের তলদেশ</b></div><div class="evs-slide zout" style="--i:7"><img src="${BASE}assets/splash/farm.webp" alt="" decoding="async"><b>কৃষিজমি</b></div></div>
-      <div class="evs-bar"><div class="evs-fill"></div></div>
-      <div class="evs-label">লোড হচ্ছে…</div>
-      <div class="evs-tips"><span style="--i:0">N চাপলে যেকোনো গাড়ি তোমার কাছে চলে আসবে</span><span style="--i:1">Y চাপলে গাইডেড ভয়েস ট্যুর শুরু হয়</span><span style="--i:2">0 চাপে X ও Z লিখে সরাসরি সেখানে যাওয়া যায়</span><span style="--i:3">Tab চাপলে সেটিংস মেনু খোলে</span><span style="--i:4">F2 চাপলে FPS ও ড্র-কল দেখা যায়</span></div>`;
+`;
     parent.appendChild(this.root);
     this.fill = this.root.querySelector('.evs-fill') as HTMLDivElement;
     this.label = this.root.querySelector('.evs-label') as HTMLDivElement;
