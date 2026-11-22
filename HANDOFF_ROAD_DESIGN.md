@@ -2211,3 +2211,4 @@ Every step: R1 / R2 / R8 / R10 lines printed, tsc / npm run build / mission-test
 
 ### 24.9 JUNCTION RT-E (ring x J1-E, X 2335 Z 1438) (2026-11-22)
 USER 2026-11-22: this 8-lane x 8-lane junction (ring st 16813) gets a RAMP INTERCHANGE (not the ground CFI of HANDOFF_RING_T_JUNCTIONS.md 3.1); ramp curves outside the ring, median route with widening allowed if the outside fails; small steps. Own handoff: HANDOFF_JUNCTION_RTE.md (steps RE-0 .. RE-11, status table there). Only the plan is written; no code, nothing run.
+RE-0 DONE 2026-11-22 (site check, headless, natural ground): result in HANDOFF_JUNCTION_RTE.md section 10, files scripts/rte-site-check.ts, tools/rte-site-plot.py, docs/RTE_SITE.txt, rte_site.json, rte_site.png. Next RE-1 (type options).

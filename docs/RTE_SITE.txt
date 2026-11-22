@@ -1,0 +1,79 @@
+RTE SITE CHECK (RE-0) ring x J1-E
+Junction point (arm end) X 2354.5 Z 1437.0; ring station 16813 m of 19293 m; ring point 2356.2, 1436.1, distance 1.87 m
+Ring: half width 22.1 m, median half 3 m (median 6 m), lane 3.65 m, shoulder 0.6 m. Arm: half width 22.1, median half 3
+Ring heading (x, z) = (-0.896, 0.443); stem points (-0.443, -0.896); stem is on the RIGHT of the increasing station direction
+Left-hand traffic: direction A (keep-left lane on the stem side) = DECREASING station (R+ to R-); direction B = the other one.
+
+1. LEVELS
+  ring: station offset s-J (m), level y (m), grade to the next point (%)
+     -1000    61.55   -4.00
+      -900    57.55   -4.00
+      -800    53.55   -4.00
+      -700    49.55   -4.00
+      -600    45.55   -4.00
+      -500    41.55   -4.00
+      -400    37.60   -3.72
+      -300    34.32   -2.83
+      -200    31.52   -2.72
+      -100    29.30   -1.42
+         0    28.41   -0.10
+       100    28.85    1.25
+       200    30.54    1.95
+       300    32.17    0.91
+       400    32.74    0.41
+       500    33.34    0.52
+       600    33.40   -0.70
+       700    32.37   -1.12
+       800    31.75    0.19
+       900    32.46    1.49
+      1000    34.51    2.85
+  PASS  ring grade within +-300 m of the T <= 3 %                        max 2.87 %
+  ring level at the T 28.41 m, arm end level 28.41 m (diff -0.00 m)
+  arm: distance from the T (m), level (m), natural ground (m), bridge index
+         0    28.41    26.83  -1
+        50    29.47    27.96  -1
+       100    30.55    27.43  -1
+       150    31.87    26.57  -1
+       200    33.34    22.91  15
+       250    34.82    27.83  15
+       300    36.28    35.43  -1
+       350    37.70    38.79  -1
+       400    38.70    34.43  14
+       450    39.21    26.20  14
+       500    39.22    31.18  14
+       550    38.75    24.92  14
+       600    37.79    25.28  14
+       650    36.39    26.50  14
+       700    35.01    30.31  -1
+  ring structures (s offset from the T): -1496..-776
+  arm structures (distance from the T): 694..391 | 271..160
+  INFO  arm: first structure from the T                                  271 m
+  PASS  ring nearly straight within +-400 m (mean radius >= 1500 m)      R 2839 m
+  PASS  stem meets the ring at 70..110 deg                               90.0 deg
+
+2. FREE LAND (4 quadrants). Box: along the ring 80..S1 m from the T, offset 25..200 m from the ring centreline.
+  R- / FAR side      ground above ring (cut) max 24.1 m, below ring (fill) max 8.4 m, steepest 5 m slope 49 %, wet 0 %, rail min 422 m (east-2), buildings in box 0
+  R- / STEM side     ground above ring (cut) max 3.2 m, below ring (fill) max 17.3 m, steepest 5 m slope 26 %, wet 0 %, rail min 243 m (east-2), buildings in box 0
+  R+ / FAR side      ground above ring (cut) max 8.5 m, below ring (fill) max 6.8 m, steepest 5 m slope 20 %, wet 0 %, rail min 15 m (east-2), buildings in box 0
+  R+ / STEM side     ground above ring (cut) max 9.6 m, below ring (fill) max 12.2 m, steepest 5 m slope 20 %, wet 0 %, rail min 10 m (east-2), buildings in box 0
+  PASS  R- / FAR side: no water in the box                               wet 0 %
+  PASS  R- / FAR side: no building in the box                            0
+  PASS  R- / FAR side: rail more than 60 m from the sampled points       422 m
+  FAIL  R- / FAR side: ring-to-ground difference within fill 7 / cut 12  fill 8.4 cut 24.1
+  PASS  R+ / FAR side: no water in the box                               wet 0 %
+  PASS  R+ / FAR side: no building in the box                            0
+  FAIL  R+ / FAR side: rail more than 60 m from the sampled points       15 m
+  PASS  R+ / FAR side: ring-to-ground difference within fill 7 / cut 12  fill 6.8 cut 8.5
+
+3. OTHER ROADS AND RAIL NEAR THE T
+  roads within 700 m of the T: R2-46 624 m, R2-45 535 m, R2-55 612 m
+  INFO  other roads within 700 m (R2 lines, not a ramp conflict: a ramp must stay clear of them, see RE-1) R2-46 624 m, R2-45 535 m, R2-55 612 m
+  INFO  nearest rail point to the T                                      330 m (east-2)
+  INFO  buildings within 400 m of the T (all quadrants, arm and ring corridor included) 0
+  INFO  natural ground at the T / water                                  26.83 m / false
+  rail east-2 inside the 900 x 600 m window: 70 points, along-ring -134..884 m, lateral (left +) -595..331 m
+  rail point nearest to the T: along 222 m, lateral -245 m, rail level 33.7 m, ground 25.8 m
+
+4. NOT CHECKED in RE-0: trees and grass, drainage lines, the user's look in the game, ring carve with the final ground (natural ground is used), buildings of the city plan not yet placed.
+
+RESULT: 2 FAIL

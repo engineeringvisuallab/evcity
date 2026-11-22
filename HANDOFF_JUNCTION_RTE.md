@@ -21,7 +21,7 @@ The pasted old chat called two ramps M3 (B to stem) and M4 (stem to B) and used 
 
 ## 2. Site facts already known (from the zip, re-measure in RE-0)
 - Ring: road 0 'M8', closed, 19293 m, 4 + 4 lanes, median 6 m, half width 22.1 m, V100, lane 3.65 m (SECTION_M8 = build('M8', 4, 6) in src/roads/standards/SectionTable.ts). The arm meets the ring at exactly 90 deg.
-- Ring level near the T (m) at s-1000 / -500 / -150 / 0 / +150 / +500 / +1000: 61.6 / 41.6 / 30.2 / 28.4 / 29.6 / 33.3 / 34.5. Ring grade at the T about 0.8 to 1.2 %. The ring falls steeply from the west.
+- Ring level near the T (m) at s-1000 / -500 / -150 / 0 / +150 / +500 / +1000: 61.6 / 41.6 / 30.2 / 28.4 / 29.6 / 33.3 / 34.5. CORRECTION 2026-11-22 (RE-0): R- is the EAST-NORTH-EAST side and the ring CLIMBS toward it at 4 % (61.6 m at s-1000) into the hill; R+ is the WEST-SOUTH-WEST side and is flat. An earlier line of this file said 'falls from the west': wrong.
 - Ring structure near the T: a bridge at -1200 .. -780 m. Arm structure: its viaduct starts only 160 m from the T (up to 700 m). So the stem has little room.
 - Free straight ring: 780 m on the minus side, 1000 m or more on the plus side.
 - Nothing is built at this junction. The AI uses the temporary tLink (RoadGraph.tLinks, Route.tLink).
@@ -63,13 +63,13 @@ Do not start the next step before the user says OK.
 
 ## 6. Known risks
 - The arm viaduct is 160 m from the T: a ramp that needs the stem for storage or a long taper may not fit; check in RE-0 / RE-1.
-- The ring falls steeply on the west side: a ramp bridge on that side may become very high or impossible; say so with numbers.
+- The ring climbs 4 % toward R- (east-north-east, into the hill, cut up to 24 m on the far side): a ramp on the R- side meets a rising ring and a hill; the R+ side is flat but the elevated rail crosses the ring at +481 m (RE-0).
 - The ring is one closed road: a pad changes its carve and cell grid (see HANDOFF_RING_T_JUNCTIONS.md section 6).
 - The ring median has U-turn openings (UTurns.ts, MedianPlan.ts): a median route or a widening must tell them.
 - Old numbers in the docs (RING_RADIAL_JOINS still has old N and W stations): use the E station 16813 only.
 
 ## 7. What was NOT done (honest)
-Nothing is designed or built yet. This session only read the zip and wrote this plan. M3 / M4 are my reading of a pasted chat. The ring-E site numbers in section 2 are copied from earlier handoffs, not re-measured.
+Nothing is designed or built yet. M3 / M4 are my reading of a pasted chat. RE-0 (section 10) re-measured the site with natural ground (not the final carved ground); trees, grass, drainage and the look in the game were NOT checked.
 
 ## 8. Starter prompt for a NEW chat
 "Read HANDOFF_JUNCTION_RTE.md completely, then sections 1, 3 and 24 of HANDOFF_ROAD_DESIGN.md and HANDOFF_RING_T_JUNCTIONS.md sections 1 to 4. Run only the next step that is not DONE in the status table (section 9). Numbers + picture + PASS / FAIL, update the status table, zip of the changed files, say what was NOT run, STOP and wait for my OK. Reply in Banglish."
@@ -78,8 +78,8 @@ Nothing is designed or built yet. This session only read the zip and wrote this 
 | Step | Name | Status | User OK | Notes |
 |------|------|--------|---------|-------|
 | RE-plan | This handoff | DONE 2026-11-22 (no code) | waiting | user chose 'Ramp shoho interchange' |
-| RE-0 | Site check | not started | | next |
-| RE-1 | Type options | not started | | |
+| RE-0 | Site check | DONE 2026-11-22 (headless, 2 FAIL = site constraints, see section 10; tsc run) | waiting | scripts/rte-site-check.ts, tools/rte-site-plot.py, docs/RTE_SITE.txt, rte_site.json, rte_site.png |
+| RE-1 | Type options | not started | | next |
 | RE-2 | Vertical plan | not started | | |
 | RE-3 | Left slips | not started | | |
 | RE-4 | Ramp M3 | not started | | |
@@ -90,3 +90,16 @@ Nothing is designed or built yet. This session only read the zip and wrote this 
 | RE-9 | Mesh + marking | not started | | |
 | RE-10 | Traffic graph + AI | not started | | |
 | RE-11 | Game check + final | not started | | |
+
+## 10. RE-0 RESULT (2026-11-22; scripts/rte-site-check.ts, natural ground, headless; the picture is docs/rte_site.png)
+Frame: R- = east-north-east of the T (ring station falls), R+ = west-south-west (station rises). The stem (J1-E arm) comes from the north-north-west and is on the right of the increasing direction, so direction A (keep-left lane on the stem side) = DECREASING station (R+ to R-), direction B = increasing station (R- to R+), running on the FAR (south-south-east) carriageway.
+Facts (RUN): junction (2354.5, 1437.0), ring station 16813, ring and arm 90.0 deg, ring nearly straight (R about 2840 m within 400 m), ring level at the T 28.41 m = arm end level. Ring grade within +-300 m at most 2.87 % (PASS, limit 3). Ring structure on R-: s-1496 .. -776. Arm structures from the T: 160-271 m and 391-694 m. Ring median 6 m (half 3), 4 lanes of 3.65 m per direction, half width 22.1 m. No building within 400 m. Roads within 700 m: R2-45 (535 m), R2-55 (612 m), R2-46 (624 m). Rail east-2 (elevated, about 33.7 m at its nearest point) crosses the ring at +481 m on R+ and passes 330 m from the T.
+Four quadrants, box 80..600 m along the ring, 25..200 m from the ring centreline (ground above ring = cut, below = fill):
+| Quadrant | cut max | fill max | notes |
+|---|---|---|---|
+| R- / FAR (hill side) | 24.1 m | 8.4 m | slope up to 49 %, no water, no building, rail 422 m: FAIL for cut (limit 12) |
+| R- / STEM | 3.2 m | 17.3 m | ring is high on the ground here (fill / structure), rail 243 m |
+| R+ / FAR | 8.5 m | 6.8 m | cut and fill within the limits (PASS), but the rail is only 15 m from the sampled points: FAIL for rail clearance |
+| R+ / STEM | 9.6 m | 12.2 m | rail 10 m from the sampled points |
+MEANING for RE-1 (my reading, not decided): the best land for an OUTSIDE loop is the R+ / FAR quarter (flat, no water, no building), but the elevated rail crosses the ring at +481 m, so the ramp zone there is about 400 m long at most and must keep a clearance from the rail piers (the clearance value is not fixed yet, ask). Direction B (far carriageway) diverges on the R- side, upstream, where the far side is the hill (cut up to 24 m): an outside exit for M3 (B to stem) has a hard site, a cut or a retaining wall is needed, or the median route. The arm has only 160 m before its first structure. The 2 FAIL lines of the script are these two site constraints (R- / FAR cut, R+ / FAR rail), they are findings, not a broken script.
+NOT run: trees, grass, drainage, ring carve with the final ground, the game look, rail pier positions and the exact rail clearance.
