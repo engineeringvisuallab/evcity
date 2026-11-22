@@ -998,7 +998,9 @@ export class RoadNetwork {
         ys.push(a.ys[j] + (a.ys[j + 1] - a.ys[j]) * t);
       }
       this.addRoad({ tier: 1, kind: 'highway', name: a.name, closed: false, pts, fixedY: ys, halfWidth: sec.halfWidth, shoulder: sec.shoulder, lanes: sec.lanesPerDir * 2, speedKmh: RING_DESIGN_SPEED, maxGrade: 0.04, section: sec, daylight: true });
-      this.bridgeArm(this.roads[this.roads.length - 1], a);
+      // RE-9 (user: 'bridge remove, ground e road'): J1-E viaduct station range 2768.5 .. 2880.4 (= stem d 156 .. 268 from the T) is NOT registered as a structure: the finished heights stay, the terrain follows (embankment, daylight slopes).
+      const armData = Config.roads.junctionRteArmGround.enabled && a.name === 'J1-E' ? { ...a, structs: a.structs.filter(([s0, s1]) => !(s0 >= 2750 && s1 <= 2900)) } : a;
+      this.bridgeArm(this.roads[this.roads.length - 1], armData);
     }
   }
 

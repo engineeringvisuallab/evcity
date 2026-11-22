@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { buildRteMesh, type RteMeshData } from './RteMesh';
 import type { RingSolid } from '../ring/RingStructureLayer';
+import { Config } from '../../core/Config';
 
 export class RteLayer {
   private readonly group = new THREE.Group();
@@ -20,7 +21,7 @@ export class RteLayer {
   }
 
   private build(): void {
-    const d = buildRteMesh();
+    const d = buildRteMesh({ skipArmWindow1: Config.roads.junctionRteArmGround.enabled });
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(d.positions, 3));
     g.setAttribute('color', new THREE.Float32BufferAttribute(d.colors, 3));

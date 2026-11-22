@@ -209,10 +209,13 @@ function buildWedge(B: Builder, w: RteWedgeStruct): void {
   for (const p of w.piers) pierMesh(B, p);
 }
 
-export function buildRteMesh(): RteMeshData {
+export function buildRteMesh(opts: { skipArmWindow1?: boolean } = {}): RteMeshData {
   const B = new Builder();
   for (const r of RTE_RAMP_STRUCTS) buildRamp(B, r);
-  for (const w of RTE_WEDGE_STRUCTS) buildWedge(B, w);
+  for (const w of RTE_WEDGE_STRUCTS) {
+    if (opts.skipArmWindow1 && w.window[0] === 160 && w.window[1] === 271) continue;   // arm viaduct 160..271 is a ground road now (Config.roads.junctionRteArmGround): no wedge deck beside it
+    buildWedge(B, w);
+  }
   B.end();
   // the build opens the same part many times; vertices are not shared, so only the index list is re-ordered by part
   const order: PartName[] = ['deck', 'concrete', 'barrier', 'mark', 'lamp'];
