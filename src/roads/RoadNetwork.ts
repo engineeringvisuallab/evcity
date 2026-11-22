@@ -22,7 +22,7 @@ import { R6_NEW_LINE_DATA } from './r6/R6NewLineData';
 import { R6_SLIP_DATA } from './r6/R6SlipData';
 import { RTE_SLIP_DATA } from './junction/RteGeometry';
 import { RTE_STRUCT_FRAME } from './junction/RteStructData';
-import { RTE_VIADUCT_WIDENING } from './junction/RteWidthData';
+import { RTE_VIADUCT_WIDENING, RTE_STEM_OUTBOUND, RTE_STEM_INBOUND } from './junction/RteWidthData';
 import { R4_NEW_LINE_DATA } from './r4/R4NewLineData';
 import { CLASS_R4_OPEN, CLASS_R2_OPEN, CLASS_C_ZONE, CLASS_L_ZONE } from './standards/ClassSections';
 import { R2_NEW_LINE_DATA } from './r2/R2NewLineData';
@@ -392,43 +392,86 @@ export class RoadNetwork {
 
   private layoutRteLanes(): void {
     const F = RTE_STRUCT_FRAME;
-    const vOf = (p: number[]): number => -((p[0] - F.J[0]) * F.ln[0] + (p[1] - F.J[1]) * F.ln[1]); // d along the stem
+    const LANE = 3.65, HW = 22.1;                                                   // lane width (RE-3), arm paved half width
+    const uOf = (x: number, z: number): number => (x - F.J[0]) * F.t[0] + (z - F.J[1]) * F.t[1];
+    const vOf = (x: number, z: number): number => -((x - F.J[0]) * F.ln[0] + (z - F.J[1]) * F.ln[1]); // d along the stem
+    const wins: number[][] = Object.values(RTE_VIADUCT_WIDENING).map((w) => w.window);    // arm viaduct windows: carried by the widened viaduct (RteMesh), not by a ground road
+    const inWin = (v: number): boolean => wins.some((w) => v >= w[0] - 1e-9 && v <= w[1] + 1e-9);
+    const emit = (name: string, pts: number[][], ys: number[]): void => {
+      const kp: number[][] = [], ky: number[] = [];                                // drop repeated points (a run that starts exactly on a window edge)
+      for (let i = 0; i < pts.length; i++) if (i === 0 || Math.hypot(pts[i][0] - kp[kp.length - 1][0], pts[i][1] - kp[kp.length - 1][1]) > 0.05) { kp.push(pts[i]); ky.push(ys[i]); }
+      pts = kp; ys = ky;
+      let L = 0;
+      for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+      if (pts.length < 3 || L < 20) return;
+      this.addRoad({ tier: 3, kind: 'ramp', name, closed: false, pts, halfWidth: LANE / 2, lanes: 1, speedKmh: 40, maxGrade: 0.05, fixedY: ys, daylight: true });
+      this.rteLaneReport.push({ name, roadId: this.roads[this.roads.length - 1].id, length: L, points: pts.length });
+    };
+    // 1) the slips RTE-A2S / RTE-S2A: ground parts only. Not a ground road: inside a viaduct window; beside the stem where the lane would lie on the arm pavement (taper start, the viaduct wedge / RE-6 lane table owns it); A2S beyond d 66 (RE-6 combined lane replaces the RE-3 stem part)
     for (const q of RTE_SLIP_DATA) {
-      const win = (q.name === 'RTE-A2S' ? RTE_VIADUCT_WIDENING.out_viaduct1 : RTE_VIADUCT_WIDENING.in_viaduct1).window;
-      const inWin = (v: number): boolean => v > win[0] && v < win[1];
+      const bad = (x: number, z: number): boolean => {
+        const v = vOf(x, z);
+        return inWin(v) || (v > 40 && Math.abs(uOf(x, z)) - LANE / 2 < HW - 0.1) || (q.name === 'RTE-A2S' && v > 66);
+      };
       const runs: { pts: number[][]; ys: number[] }[] = [];
       let cur: { pts: number[][]; ys: number[] } | null = null;
-      const n = q.pts.length;
-      for (let i = 0; i < n; i++) {
-        const v = vOf(q.pts[i]);
-        const ok = !inWin(v);
+      for (let i = 0; i < q.pts.length; i++) {
+        const ok = !bad(q.pts[i][0], q.pts[i][1]);
         if (i > 0) {
-          const v0 = vOf(q.pts[i - 1]);
-          const ok0 = !inWin(v0);
+          const a = q.pts[i - 1], b = q.pts[i], ok0 = !bad(a[0], a[1]);
           if (ok !== ok0) {
-            const edge = Math.abs(v0 - win[0]) + Math.abs(v - win[0]) < Math.abs(v0 - win[1]) + Math.abs(v - win[1]) ? win[0] : win[1]; // the window edge that lies between the two points
-            const t = Math.min(1, Math.max(0, (edge - v0) / (v - v0)));
-            const bp = [q.pts[i - 1][0] + (q.pts[i][0] - q.pts[i - 1][0]) * t, q.pts[i - 1][1] + (q.pts[i][1] - q.pts[i - 1][1]) * t];
-            const by = q.ys[i - 1] + (q.ys[i] - q.ys[i - 1]) * t;
-            if (ok0 && cur) { cur.pts.push(bp); cur.ys.push(by); runs.push(cur); cur = null; } else if (!ok0) { cur = { pts: [bp], ys: [by] }; }
+            let lo = 0, hi = 1;                                                      // bisection for the point where the lane leaves / enters the allowed part
+            for (let k = 0; k < 24; k++) { const m = (lo + hi) / 2; (!bad(a[0] + (b[0] - a[0]) * m, a[1] + (b[1] - a[1]) * m) === ok0 ? (lo = m) : (hi = m)); }
+            const t = ok0 ? lo : hi;
+            const bp = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t], by = q.ys[i - 1] + (q.ys[i] - q.ys[i - 1]) * t;
+            if (ok0 && cur) { cur.pts.push(bp); cur.ys.push(by); runs.push(cur); cur = null; } else if (!ok0) cur = { pts: [bp], ys: [by] };
           }
         }
-        if (ok) {
-          if (!cur) cur = { pts: [], ys: [] };
-          cur.pts.push([q.pts[i][0], q.pts[i][1]]);
-          cur.ys.push(q.ys[i]);
-        }
+        if (ok) { if (!cur) cur = { pts: [], ys: [] }; cur.pts.push([q.pts[i][0], q.pts[i][1]]); cur.ys.push(q.ys[i]); }
       }
       if (cur) runs.push(cur);
-      let k = 0;
-      for (const r of runs) {
-        let L = 0;
-        for (let i = 1; i < r.pts.length; i++) L += Math.hypot(r.pts[i][0] - r.pts[i - 1][0], r.pts[i][1] - r.pts[i - 1][1]);
-        if (r.pts.length < 3 || L < 20) continue;
-        const name = k === 0 ? q.name : `${q.name}-${String.fromCharCode(97 + k)}`;
-        this.addRoad({ tier: 3, kind: 'ramp', name, closed: false, pts: r.pts, halfWidth: 3.0, lanes: 1, speedKmh: 40, maxGrade: 0.05, fixedY: r.ys, daylight: true });
-        this.rteLaneReport.push({ name, roadId: this.roads[this.roads.length - 1].id, length: L, points: r.pts.length });
-        k++;
+      runs.forEach((r, k) => emit(k === 0 ? q.name : `${q.name}-${String.fromCharCode(97 + k)}`, r.pts, r.ys));
+    }
+    // 2) the ADDED LANES beside the stem (RteWidthData rows, RE-6): full-width (3.65 m) parts outside the viaduct windows as ground roads, centre u = +-c, level = the J1-E arm level on the stem axis.
+    // The tapers (width < 3.65 m) are NOT built here (the lane ends where its taper starts; constant road width): honest, listed in the handoff.
+    const arm = this.roadByName('J1-E');
+    if (!arm) return;
+    const yS = (d: number): number => this.roadYAt(arm, F.J[0] - d * F.ln[0], F.J[1] - d * F.ln[1]).y;
+    const sides: [string, number, { d: number; lanes: [string, number, number][] }[]][] = [['OUT', 1, RTE_STEM_OUTBOUND], ['IN', -1, RTE_STEM_INBOUND]];
+    for (const [tag, sign, rows] of sides) {
+      const laneNames = [...new Set(rows.flatMap((r) => r.lanes.map((l) => l[0])))];
+      for (const nm of laneNames) {
+        if (nm === 'S2A exit lane') continue;                                          // = the RTE-S2A slip road above (same RE-3 centre line)
+        const at = (d: number): { c: number; w: number } | null => {                  // lane centre / width at d, linear between the rows that carry the lane
+          for (let i = 0; i + 1 < rows.length; i++) {
+            if (d < rows[i].d - 1e-9 || d > rows[i + 1].d + 1e-9) continue;
+            const a = rows[i].lanes.find((l) => l[0] === nm), b = rows[i + 1].lanes.find((l) => l[0] === nm);
+            if (!a || !b) return null;
+            const t = (d - rows[i].d) / (rows[i + 1].d - rows[i].d);
+            return { c: a[1] + (b[1] - a[1]) * t, w: a[2] + (b[2] - a[2]) * t };
+          }
+          return null;
+        };
+        const ds: number[] = [];
+        for (let d = rows[0].d; d <= rows[rows.length - 1].d + 1e-9; d += 4) ds.push(d);
+        for (const w of wins) for (const e of w) if (e >= rows[0].d && e <= rows[rows.length - 1].d) ds.push(e);
+        ds.sort((a, b) => a - b);
+        let run: { pts: number[][]; ys: number[] } = { pts: [], ys: [] };
+        let k = 0;
+        const flush = (): void => {
+          if (run.pts.length) emit(`RTE-STEM-${tag}-${nm.split('/')[0].replace(/\s+/g, '')}${k > 0 ? '-' + String.fromCharCode(97 + k) : ''}`, run.pts, run.ys);
+          if (run.pts.length) k++;
+          run = { pts: [], ys: [] };
+        };
+        for (const d of ds) {
+          const l = at(d);
+          if (!l || l.w < LANE - 0.05 || (inWin(d) && !wins.some((w) => Math.abs(d - w[0]) < 1e-9 || Math.abs(d - w[1]) < 1e-9))) { flush(); continue; }
+          if (inWin(d) && run.pts.length === 0 && wins.some((w) => Math.abs(d - w[0]) < 1e-9)) continue;   // window start: nothing to start here
+          const x = F.J[0] + sign * l.c * F.t[0] - d * F.ln[0], z = F.J[1] + sign * l.c * F.t[1] - d * F.ln[1];
+          run.pts.push([x, z]); run.ys.push(yS(d));
+          if (wins.some((w) => Math.abs(d - w[0]) < 1e-9)) flush();                // the run ends exactly at the window start
+        }
+        flush();
       }
     }
   }

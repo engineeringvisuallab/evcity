@@ -1,14 +1,16 @@
-RE-9 GROUND LANES: roads OFF 205, ON 208; built RTE-A2S 403 m / 69 pts, RTE-A2S-b 39 m / 8 pts, RTE-S2A 547 m / 93 pts
-PASS  L0 the switch builds at least the A2S and S2A ground parts  3 roads
+RE-9 GROUND LANES: roads OFF 205, ON 210; built RTE-A2S 309 m / 53 pts, RTE-S2A 521 m / 89 pts, RTE-STEM-OUT-A2S 88 m / 23 pts, RTE-STEM-OUT-A2S-b 57 m / 16 pts, RTE-STEM-IN-M4exitlane 115 m / 30 pts
+PASS  L0 the switch builds at least the A2S and S2A ground parts  5 roads
 PASS  L1 no wet ground under the lanes (sc.water > sc.h, 5 offsets per point)  0 wet samples
 PASS  L2 rail unchanged (piers, edges)  9be4e562e3:422:12 / 9be4e562e3:422:12
 PASS  L3 every existing road unchanged (xs, zs, ys)  0 changed of 205
-PASS  L4 lane surface level = RE-3 data level (<= 1 cm)  worst 0.000 m
+PASS  L4 lane surface level = RE-3 slip data level / the J1-E arm level on the stem axis (<= 1 cm)  worst 0.000 m, 69 stem lane points
+PASS  L7 no ground lane lies on the arm pavement (lane inner edge >= 22.0 m from the stem axis where d > 40)  0 points, worst 0.00 m
+PASS  L8 stem lanes were built (outbound combined lane parts, inbound M4 exit lane parts)  RTE-STEM-OUT-A2S 88 m, RTE-STEM-OUT-A2S-b 57 m, RTE-STEM-IN-M4exitlane 115 m
 PASS  L5 finished ground on the lane centre line within 0.15 m of the lane level (the lane is carved / filled), except within 15 m of an arm viaduct window edge  worst 0.00 m ()
-INFO  5 lane points within 15 m of a viaduct window edge have ground up to 1.81 m below the lane (the lane is on the approach embankment of the arm viaduct; the approach slab of the widened viaduct is RteMesh)
+INFO  4 lane points within 15 m of a viaduct window edge have ground up to 1.80 m below the lane (the lane is on the approach embankment of the arm viaduct; the approach slab of the widened viaduct is RteMesh)
 PASS  L6 max grade of the lanes <= 5 %  3.96 %
 
-NOT RUN  game (look, traffic on the slips, minimap), the stem added lanes beside the J1-E arm (RteWidthData rows, d 66 .. 510, outside the viaduct windows), lane tapers (the slips are a constant 3.65 m lane inside a 6.0 m paved ramp road), retaining wall on S2A where fill > 7 m (daylight slope instead), Validate.ts, npm run build.
-ASSUMED  ramp road halfWidth 3.0 m (lane 3.65 m + 1.2 m shoulders), V 40 km/h, parts inside the arm viaduct window d 160..271 are carried by the widened viaduct (RteMesh), not by a ground road.
+NOT RUN  game (look, traffic on the slips, minimap), lane tapers (every lane is a constant 3.65 m road; a lane ends where its taper starts: combined lane d 325, M4 exit lane where it starts to narrow), the M3 lane beside the stem (inside the viaduct window), lane look in the game, retaining wall on S2A where fill > 7 m (daylight slope instead), Validate.ts, npm run build.
+ASSUMED  ramp road halfWidth 1.825 m (lane 3.65 m, gravel shoulder of the ramp class beside it), V 40 km/h, parts inside the arm viaduct window d 160..271 are carried by the widened viaduct (RteMesh), not by a ground road.
 
-SUMMARY: ALL PASS (7 PASS, 0 FAIL)
+SUMMARY: ALL PASS (9 PASS, 0 FAIL)

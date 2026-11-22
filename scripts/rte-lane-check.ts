@@ -37,26 +37,32 @@ CHK('L3 every existing road unchanged (xs, zs, ys)', chg === 0, `${chg} changed 
 // L4 surface = data (1 cm) and L5 finished ground at the centre line = lane level
 const data = new Map(RTE_SLIP_DATA.map(q => [q.name, q])); let worst = 0, gw = 0, gl = '', nEnd = 0, endWorst = 0;
 const dOf = (x: number, z: number): number => -((x - FR.J[0]) * FR.ln[0] + (z - FR.J[1]) * FR.ln[1]);
+const arm = net.roads.find((r: any) => r.name === 'J1-E'); let overlap = 0, ovWorst = 0, stemPts = 0;
 for (const r of rep) {
-  const rd = net.roads[r.roadId], q = data.get(r.name.replace(/-[a-z]$/, ''))!;
+  const rd = net.roads[r.roadId], q = data.get(r.name.replace(/-[a-z]$/, ''));
   for (let i = 0; i < rd.xs.length; i++) {
     let bd = 1e9, by = 0;
+    const vv = dOf(rd.xs[i], rd.zs[i]), uu = (rd.xs[i] - FR.J[0]) * FR.t[0] + (rd.zs[i] - FR.J[1]) * FR.t[1];
+    if (vv > 40) { const gap = Math.abs(uu) - 1.825 - 22.1; if (gap < -0.1) { overlap++; ovWorst = Math.min(ovWorst, gap); if (overlap < 5) P(`  overlap ${r.name} pt ${i} d ${vv.toFixed(0)} u ${uu.toFixed(2)}`); } }
+    if (!q) { stemPts++; by = net.roadYAt(arm, FR.J[0] - vv * FR.ln[0], FR.J[1] - vv * FR.ln[1]).y; } else
     for (let k = 0; k + 1 < q.pts.length; k++) { const ax = q.pts[k][0], az = q.pts[k][1], bx = q.pts[k + 1][0], bz = q.pts[k + 1][1], dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz; const t = Math.min(1, Math.max(0, ((rd.xs[i] - ax) * dx + (rd.zs[i] - az) * dz) / l2)); const d = Math.hypot(ax + dx * t - rd.xs[i], az + dz * t - rd.zs[i]); if (d < bd) { bd = d; by = q.ys[k] + (q.ys[k + 1] - q.ys[k]) * t; } }
     worst = Math.max(worst, Math.abs(rd.ys[i] - by));
     gen.sample(rd.xs[i], rd.zs[i], sc); const e = Math.abs(sc.h - rd.ys[i]); const dd = dOf(rd.xs[i], rd.zs[i]);
     if (Math.abs(dd - 160) < 15 || Math.abs(dd - 271) < 15) { if (e > 0.15) { nEnd++; endWorst = Math.max(endWorst, e); } } else if (e > gw) { gw = e; gl = `${r.name} pt ${i}`; }
   }
 }
-CHK('L4 lane surface level = RE-3 data level (<= 1 cm)', worst <= 0.011, `worst ${worst.toFixed(3)} m`);
+CHK('L4 lane surface level = RE-3 slip data level / the J1-E arm level on the stem axis (<= 1 cm)', worst <= 0.011, `worst ${worst.toFixed(3)} m, ${stemPts} stem lane points`);
+CHK('L7 no ground lane lies on the arm pavement (lane inner edge >= 22.0 m from the stem axis where d > 40)', overlap === 0, `${overlap} points, worst ${ovWorst.toFixed(2)} m`);
+CHK('L8 stem lanes were built (outbound combined lane parts, inbound M4 exit lane parts)', rep.some(r => r.name.startsWith('RTE-STEM-OUT')) && rep.some(r => r.name.startsWith('RTE-STEM-IN')), rep.filter(r => r.name.startsWith('RTE-STEM')).map(r => `${r.name} ${r.length.toFixed(0)} m`).join(', '));
 CHK('L5 finished ground on the lane centre line within 0.15 m of the lane level (the lane is carved / filled), except within 15 m of an arm viaduct window edge', gw <= 0.15, `worst ${gw.toFixed(2)} m (${gl})`);
 P(`INFO  ${nEnd} lane points within 15 m of a viaduct window edge have ground up to ${endWorst.toFixed(2)} m below the lane (the lane is on the approach embankment of the arm viaduct; the approach slab of the widened viaduct is RteMesh)`);
 
 // L6 grade
-let mg = 0; for (const r of rep) { const rd = net.roads[r.roadId]; for (let i = 1; i < rd.xs.length; i++) mg = Math.max(mg, Math.abs(rd.ys[i] - rd.ys[i - 1]) / Math.hypot(rd.xs[i] - rd.xs[i - 1], rd.zs[i] - rd.zs[i - 1])); }
+let mg = 0; for (const r of rep) { const rd = net.roads[r.roadId]; for (let i = 1; i < rd.xs.length; i++) { const dl = Math.hypot(rd.xs[i] - rd.xs[i - 1], rd.zs[i] - rd.zs[i - 1]); if (dl > 0.01) mg = Math.max(mg, Math.abs(rd.ys[i] - rd.ys[i - 1]) / dl); } }
 CHK('L6 max grade of the lanes <= 5 %', mg <= 0.05, `${(mg * 100).toFixed(2)} %`);
 
 P('');
-P('NOT RUN  game (look, traffic on the slips, minimap), the stem added lanes beside the J1-E arm (RteWidthData rows, d 66 .. 510, outside the viaduct windows), lane tapers (the slips are a constant 3.65 m lane inside a 6.0 m paved ramp road), retaining wall on S2A where fill > 7 m (daylight slope instead), Validate.ts, npm run build.');
-P('ASSUMED  ramp road halfWidth 3.0 m (lane 3.65 m + 1.2 m shoulders), V 40 km/h, parts inside the arm viaduct window d 160..271 are carried by the widened viaduct (RteMesh), not by a ground road.');
+P('NOT RUN  game (look, traffic on the slips, minimap), lane tapers (every lane is a constant 3.65 m road; a lane ends where its taper starts: combined lane d 325, M4 exit lane where it starts to narrow), the M3 lane beside the stem (inside the viaduct window), lane look in the game, retaining wall on S2A where fill > 7 m (daylight slope instead), Validate.ts, npm run build.');
+P('ASSUMED  ramp road halfWidth 1.825 m (lane 3.65 m, gravel shoulder of the ramp class beside it), V 40 km/h, parts inside the arm viaduct window d 160..271 are carried by the widened viaduct (RteMesh), not by a ground road.');
 P(`\nSUMMARY: ${fails === 0 ? 'ALL PASS' : 'FAIL'} (${lines.filter(l => l.startsWith('PASS')).length} PASS, ${fails} FAIL)`);
 writeFileSync(`${dir}/RTE_LANES.txt`, lines.join('\n') + '\n');
