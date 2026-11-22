@@ -109,6 +109,8 @@ interface RawRoad {
   maxGrade?: number;
   /** STEP 5.2 (the ring): terrain beside the road follows straight daylight slopes (RoadSpec.daylight). */
   daylight?: boolean;
+  /** AUTO MERGE: asphalt half width per point (RoadSpec.halfAt). */
+  halfAt?: number[];
   /** STEP 5.1 (the ring): own cross-section that replaces the Config section of the road kind (metres from the centreline, see roads/ring/RingRoad.ts). */
   section?: { halfWidth: number; medianHalf: number; laneW: number; shyOuter: number; lanesPerDir: number };
 }
@@ -392,6 +394,59 @@ export class RoadNetwork {
     this.buildSegments();
   }
 
+  /** Nearest point of a road's centre line (closed roads include the wrap segment): foot, level, distance, tangent. */
+  private footOn(r: RoadSpec, x: number, z: number): { cx: number; cz: number; y: number; d: number; tx: number; tz: number } {
+    let best = Infinity, cx = 0, cz = 0, y = 0, tx = 1, tz = 0;
+    const n = r.xs.length, m = r.closed ? n : n - 1;
+    for (let k = 0; k < m; k++) {
+      const k2 = (k + 1) % n, vx = r.xs[k2] - r.xs[k], vz = r.zs[k2] - r.zs[k], l2 = vx * vx + vz * vz || 1;
+      const t = Math.max(0, Math.min(1, ((x - r.xs[k]) * vx + (z - r.zs[k]) * vz) / l2));
+      const px = r.xs[k] + t * vx, pz = r.zs[k] + t * vz, d = Math.hypot(x - px, z - pz);
+      if (d < best) { best = d; cx = px; cz = pz; y = r.ys[k] + (r.ys[k2] - r.ys[k]) * t; const l = Math.sqrt(l2); tx = vx / l; tz = vz / l; }
+    }
+    return { cx, cz, y, d: best, tx, tz };
+  }
+
+  /**
+   * AUTO MERGE (user 2026-11-22: 'road to road connection must joint automatically, smooth, and merge'). General rule for an open road (used for the ramp tails):
+   * when an END of the road arrives beside another road (paved edge gap <= maxGap) and runs roughly parallel to it (<= maxAngle), the last `length` metres are replaced by a MERGE: the ribbon narrows
+   * smoothly (smoothstep, slope 0 at both ends) to a point and its inner edge slides onto the paved edge of the other road, the level follows the other road. No overlap of the two ribbons
+   * (they are built on the same ground heightfield, overlap = z-fight), no abrupt end. Returns the new centre line / levels and the asphalt half width per point (RoadSpec.halfAt).
+   * Not handled here: a road that ends at a right angle (T joint) is a junction pad, see Junctions.ts.
+   */
+  private autoMergeEnds(pts0: number[][], ys0: number[], hw: number, shoulder: number): { pts: number[][]; ys: number[]; halfAt: number[] } | null {
+    const C = Config.roads.autoMerge;
+    if (!C.enabled || pts0.length < 3) return null;
+    let P = pts0.map((p) => [p[0], p[1]]), Y = ys0.slice(), H = P.map(() => hw), done = false;
+    const sm = (x: number): number => { const t = Math.min(1, Math.max(0, x)); return t * t * (3 - 2 * t); };
+    const rib = hw + shoulder, STEP = 4;
+    for (const atStart of [false, true]) {
+      if (atStart) { P.reverse(); Y.reverse(); H.reverse(); }                               // always work on the END of the arrays
+      const n = P.length, e = P[n - 1], a = P[Math.max(0, n - 4)];
+      let tx = e[0] - a[0], tz = e[1] - a[1]; const tl = Math.hypot(tx, tz) || 1; tx /= tl; tz /= tl;
+      let best: { r: RoadSpec; g: number } | null = null;
+      for (const r of this.roads) {
+        if (r.kind === 'ramp' || r.earth) continue;
+        const f = this.footOn(r, e[0], e[1]), g = f.d - r.halfWidth - hw;
+        if (g < -0.5 || g > C.maxGap) continue;
+        if (Math.abs(tx * f.tx + tz * f.tz) < Math.cos((C.maxAngleDeg * Math.PI) / 180)) continue;
+        if (!best || g < best.g) best = { r, g };
+      }
+      if (best) {
+        const { r, g } = best, g0 = g - shoulder;                                           // g0 = gap between the RIBBON inner edge and the paved edge of the other road (negative = the old end overlaps by the shoulder)
+        for (let s = STEP; s <= C.length + 1e-6; s += STEP) {
+          const w = sm(s / C.length), k = Math.max(0.02, 1 - w), q = [e[0] + tx * s, e[1] + tz * s];
+          const f = this.footOn(r, q[0], q[1]); let nx = q[0] - f.cx, nz = q[1] - f.cz; const nl = Math.hypot(nx, nz) || 1; nx /= nl; nz /= nl;
+          const dist = r.halfWidth + g0 * (1 - w) + rib * k;                                // centre distance from the other road: inner ribbon edge slides to its paved edge, ribbon half = rib * k
+          P.push([f.cx + nx * dist, f.cz + nz * dist]); Y.push(f.y); H.push(hw * k);
+        }
+        done = true;
+      }
+      if (atStart) { P.reverse(); Y.reverse(); H.reverse(); }
+    }
+    return done ? { pts: P, ys: Y, halfAt: H } : null;
+  }
+
   private layoutRteLanes(): void {
     const F = RTE_STRUCT_FRAME;
     const LANE = 5.5, HW = 22.1;                                                    // lane width (was 3.65 in RE-3; user 2026-11-22: wider, 5.5 m = one-lane ramp with shoulders, ASSUMED), arm paved half width
@@ -399,7 +454,7 @@ export class RoadNetwork {
     const vOf = (x: number, z: number): number => -((x - F.J[0]) * F.ln[0] + (z - F.J[1]) * F.ln[1]); // d along the stem
     const wins: number[][] = Object.values(RTE_VIADUCT_WIDENING).map((w) => w.window);    // arm viaduct windows: carried by the widened viaduct (RteMesh), not by a ground road
     const inWin = (v: number): boolean => wins.some((w) => v >= w[0] - 1e-9 && v <= w[1] + 1e-9);
-    const emit = (name: string, pts: number[][], ys: number[], hw: number = LANE / 2): void => {
+    const emit = (name: string, pts: number[][], ys: number[], hw: number = LANE / 2, merge = false): void => {
       // STEP 2b: the merge tails (RTE-TAIL-*) are NOT daylight roads. A daylight road decides the ground by the NEAREST centre line; a tail 0.3 m beside the 44 m wide arm / ring was nearer than the arm centre line to the outer
       // 6 m of the arm pavement and its fill slope cut the ground there 2 .. 4 m below the pavement. As a normal road it only pulls the ground inside its own platform + blend (the arm / ring keeps its own ground).
       const dayl = false;   // STEP 2c: slips AND tails are normal ramp roads (see the comment above)
@@ -409,7 +464,10 @@ export class RoadNetwork {
       let L = 0;
       for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
       if (pts.length < 3 || L < 20) return;
-      this.addRoad({ tier: 3, kind: 'ramp', name, closed: false, pts, halfWidth: hw, lanes: hw > 4 ? 2 : 1, speedKmh: hw > 4 ? 50 : 40, maxGrade: 0.05, fixedY: ys, daylight: dayl });
+      // AUTO MERGE (user 2026-11-22: 'road to road connection: auto joint, smooth, and it merges'): a ramp end that arrives beside another road, roughly parallel, narrows to a point on that road's paved edge
+      const am = merge ? this.autoMergeEnds(pts, ys, hw, KIND.ramp.shoulder) : null;
+      if (am) { pts = am.pts; ys = am.ys; L = 0; for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); }
+      this.addRoad({ tier: 3, kind: 'ramp', name, closed: false, pts, halfWidth: hw, lanes: hw > 4 ? 2 : 1, speedKmh: hw > 4 ? 50 : 40, maxGrade: 0.05, fixedY: ys, daylight: dayl, halfAt: am?.halfAt });
       this.rteLaneReport.push({ name, roadId: this.roads[this.roads.length - 1].id, length: L, points: pts.length });
     };
     // 1) the slips RTE-A2S / RTE-S2A: ground parts only. Not a ground road: inside a viaduct window; beside the stem where the lane would lie on the arm pavement (taper start, the viaduct wedge / RE-6 lane table owns it); A2S beyond d 66 (RE-6 combined lane replaces the RE-3 stem part)
@@ -487,10 +545,7 @@ export class RoadNetwork {
           return { p: [n.cx + ((x - n.cx) / dl) * want, n.cz + ((z - n.cz) / dl) * want], y: n.y, d: n.d };
         };
         const GAP = 0.3, STEP = 4;
-        // STEP 5 (user 2026-11-22: 'the tails are not connected to the main line'): after the side-by-side part (0.3 m off the paved edge) each tail gets a MERGE ZONE of ME m in which the gap closes to 0: the lane edge TOUCHES the paved edge
-        // of the main road (centre distance = halfWidth main + halfWidth tail). NOT inside the pavement: a first try (tail inside the main pavement, 25 m) showed z-fight and saw-tooth patches in the game, because the road ribbons are built on the
-        // same ground heightfield, so two overlapping ribbons have the same height whatever their own level is.
-        const ME = 10;
+        // STEP 5 (user 2026-11-22): the end of every tail merges into the main road by the general AUTO MERGE logic in emit() (autoMergeEnds): no hand made merge zone here.
         // STEP 2 (user 2026-11-22: 'flyover start / end too far, bring closer'): convergence length per tail (was 100 m for all, M4L 110 m). Grade <= 5 % is checked by rte-lane-check L6.
         const LT_M3S = 50, LT_M3N = 50, LT_M4G = 70, LT_M4L = 150, LC_M4L = 90;
         const nM3 = M3.x.length - 1, nM4 = M4.x.length - 1;
@@ -499,16 +554,12 @@ export class RoadNetwork {
           const hw = 4.85, pD = RTE_M3_DATA.pts[0], yD = RTE_M3_DATA.ys[0], p8 = [M3.x[0], M3.z[0]], y8 = M3.deckY[0];
           const LT = LT_M3S, uD = uOf(pD[0], pD[1]), uTip = uD - LT, dataD = -vOf(pD[0], pD[1]), tipD = ring.halfWidth + hw + GAP, off = yD - near(ring, pD[0], pD[1]).y;
           const pts: number[][] = [], ys: number[] = [];
-          for (let u = uTip - ME; u < uTip - 1e-6; u += STEP) {                      // STEP 5 merge zone (flush inside the ring pavement)
-            const e = sm((uTip - u) / ME), q = W(u, -dataD), m = moveTo(ring, q[0], q[1], tipD - GAP * e);
-            pts.push(m.p); ys.push(m.y);
-          }
           for (let u = uTip; u < uD - 1e-6; u += STEP) {
             const k = (u - uTip) / LT, q = W(u, -dataD), dq = near(ring, q[0], q[1]).d, m = moveTo(ring, q[0], q[1], tipD + (dq - tipD) * sm(k));
             pts.push(m.p); ys.push(m.y + off * sm(k));
           }
           pts.push([pD[0], pD[1]], [(pD[0] + p8[0]) / 2, (pD[1] + p8[1]) / 2], p8); ys.push(yD, (yD + y8) / 2, y8);
-          emit('RTE-TAIL-M3S', pts, ys, hw);
+          emit('RTE-TAIL-M3S', pts, ys, hw, true);
         }
         // (b) M3 nose at the arm: from the last bridge section (s 348.5, d 149) to the tip beside the arm (d 251)
         {
@@ -519,26 +570,18 @@ export class RoadNetwork {
             const k = (d - dN) / LT, q = W(uN, d), dq = near(armR, q[0], q[1]).d, m = moveTo(armR, q[0], q[1], dq + (tipD - dq) * sm(k));
             pts.push(m.p); ys.push(m.y + off * (1 - sm(k)));
           }
-          for (let d = dN + LT + STEP; d <= dN + LT + ME + 1e-6; d += STEP) {          // STEP 5 merge zone
-            const e = sm((d - dN - LT) / ME), q = W(uN, d), m = moveTo(armR, q[0], q[1], tipD - GAP * e);
-            pts.push(m.p); ys.push(m.y);
-          }
-          emit('RTE-TAIL-M3N', pts, ys, hw);
+          emit('RTE-TAIL-M3N', pts, ys, hw, true);
         }
         // (c) M4 gore at the arm: from the tip beside the arm (d 375) to the first bridge section (s 0, d 275)
         {
           const LT = LT_M4G, hw = 4.85, p0 = [M4.x[0], M4.z[0]], y0 = M4.deckY[0], d0 = vOf(p0[0], p0[1]), u0 = uOf(p0[0], p0[1]), tipD = armR.halfWidth + hw + GAP, off = y0 - near(armR, p0[0], p0[1]).y;
           const pts: number[][] = [], ys: number[] = [];
-          for (let d = d0 + LT + ME; d > d0 + LT + 1e-6; d -= STEP) {                // STEP 5 merge zone (flush inside the arm pavement)
-            const e = sm((d - d0 - LT) / ME), q = W(u0, d), m = moveTo(armR, q[0], q[1], tipD - GAP * e);
-            pts.push(m.p); ys.push(m.y);
-          }
           for (let d = d0 + LT; d > d0 + 1e-6; d -= STEP) {
             const k = (d0 + LT - d) / LT, q = W(u0, d), dq = near(armR, q[0], q[1]).d, m = moveTo(armR, q[0], q[1], tipD + (dq - tipD) * sm(k));
             pts.push(m.p); ys.push(m.y + off * sm(k));
           }
           pts.push(p0); ys.push(y0);
-          emit('RTE-TAIL-M4G', pts, ys, hw);
+          emit('RTE-TAIL-M4G', pts, ys, hw, true);
         }
         // (d) M4 landing on ring B: from the last bridge section (s 532.7, u 231.5) along the data line (ring parallel, falling to the ring level); the last 110 m converge to the ring edge and to the ring level
         {
@@ -552,12 +595,7 @@ export class RoadNetwork {
             const u = uOf(dd[i][0], dd[i][1]), w = sm((u - u1) / LC_M4L), dq = near(ring, dd[i][0], dd[i][1]).d, m = moveTo(ring, dd[i][0], dd[i][1], dq + (tipD - dq) * w);
             pts.push(m.p); ys.push(yE + (yT - yE) * Math.min(1, (u - uE) / (uT - uE)));
           }
-          const vT = vOf(dd[iT][0], dd[iT][1]);
-          for (let u = uT + STEP; u <= uT + ME + 1e-6; u += STEP) {                  // STEP 5 merge zone
-            const e = sm((u - uT) / ME), q = W(u, vT), m = moveTo(ring, q[0], q[1], tipD - GAP * e);
-            pts.push(m.p); ys.push(m.y);
-          }
-          emit('RTE-TAIL-M4L', pts, ys, hw);
+          emit('RTE-TAIL-M4L', pts, ys, hw, true);
         }
       }
     }
@@ -2691,6 +2729,7 @@ export class RoadNetwork {
       bridgeOf: new Int16Array(n).fill(-1),
       areaId: raw.areaId,
       daylight: raw.daylight,
+      halfAt: raw.halfAt ? Float32Array.from(raw.halfAt) : undefined,
     };
     this.roads.push(road);
     if (raw.earth) {

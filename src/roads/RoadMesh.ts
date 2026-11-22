@@ -98,8 +98,10 @@ export function buildRoadMesh(roads: RoadNetwork, cx: number, cz: number, lod: n
     const segLen = Math.hypot(r.xs[j] - r.xs[i], r.zs[j] - r.zs[i]);
     const onDeck = r.bridgeOf[i] >= 0 || r.bridgeOf[j] >= 0;
     const base = v;
+    const kA = r.halfAt ? Math.max(0.02, r.halfAt[i] / r.halfWidth) : 1, kB = r.halfAt ? Math.max(0.02, r.halfAt[j] / r.halfWidth) : 1;   // AUTO MERGE: ribbon scale at the segment ends (1 = full width)
     for (let k = 0; k <= pieces; k++) {
       const t = k / pieces;
+      const kt = kA + (kB - kA) * t, hA = r.halfWidth * kt, halfT = half * kt;
       const cxm = r.xs[i] + (r.xs[j] - r.xs[i]) * t;
       const czm = r.zs[i] + (r.zs[j] - r.zs[i]) * t;
       const nxm = r.nx[i] + (r.nx[j] - r.nx[i]) * t;
@@ -108,7 +110,7 @@ export function buildRoadMesh(roads: RoadNetwork, cx: number, cz: number, lod: n
       const sAlong = r.cum[i] + segLen * t;
       const endD = r.closed ? 999 : Math.min(sAlong, r.length - sAlong);
       for (let c = 0; c < cols; c++) {
-        const u = half * (1 - (2 * c) / (cols - 1)); // +half (left) ... -half (right)
+        const u = halfT * (1 - (2 * c) / (cols - 1)); // +half (left) ... -half (right)
         const lx = cxm + nxm * u - ox;
         const lz = czm + nzm * u - oz;
         positions[v * 3] = lx;
@@ -119,7 +121,7 @@ export function buildRoadMesh(roads: RoadNetwork, cx: number, cz: number, lod: n
         info[v * 4 + 1] = sAlong;
         // local streets (tier 4) are flagged for the shader by +100: footpath + kerb instead of gravel shoulder, own markings
         // GRASS 4: roads of tier 1-3 inside a planned city are flagged +4000 (city style: paved sidewalk, kerb, striped median kerb)
-        info[v * 4 + 2] = r.earth ? r.halfWidth + 2000 : r.tier === 4 ? r.halfWidth + 100 : city ? r.halfWidth + 4000 : r.halfWidth;
+        info[v * 4 + 2] = r.earth ? hA + 2000 : r.tier === 4 ? hA + 100 : city ? hA + 4000 : hA;
         info[v * 4 + 3] = endD;
         v++;
       }

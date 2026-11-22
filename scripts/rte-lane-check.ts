@@ -4,6 +4,8 @@ import { writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
 import { Config } from '../src/core/Config';
+import { buildRoadMesh } from '../src/roads/RoadMesh';
+import { chunkOriginX, chunkOriginZ, worldToChunkCoord } from '../src/world/WorldGrid';
 import { RTE_SLIP_DATA } from '../src/roads/junction/RteGeometry';
 import { RTE_STRUCT_FRAME as FR, RTE_RAMP_STRUCTS } from '../src/roads/junction/RteStructData';
 
@@ -94,6 +96,8 @@ CHK('L6 max grade of the lanes and tails <= 5 %', mg <= 0.05, `${(mg * 100).toFi
   const mainY = (r: any, x: number, z: number): number => net.roadYAt(r, x, z).y;
   // REAL distance of a point from the built centre line of a main road (the ring is slightly curved: the frame line d / u is not the road)
   const distTo = (r: any, x: number, z: number): number => { let b = 1e9; for (let k = 0; k + 1 < r.xs.length; k++) { const vx = r.xs[k + 1] - r.xs[k], vz = r.zs[k + 1] - r.zs[k], l2 = vx * vx + vz * vz || 1, q = Math.max(0, Math.min(1, ((x - r.xs[k]) * vx + (z - r.zs[k]) * vz) / l2)); b = Math.min(b, Math.hypot(x - r.xs[k] - q * vx, z - r.zs[k] - q * vz)); } return b; };
+  const SHOULDER = 1.2;   // KIND.ramp.shoulder
+  const ribbonHalf = (rd: any, i: number): number => (rd.halfWidth + SHOULDER) * (rd.halfAt ? Math.max(0.02, rd.halfAt[i] / rd.halfWidth) : 1);   // ribbon half width as the mesh builder draws it (AUTO MERGE scale)
   P(`TAILS built: ${tails.map(t => `${t.name} ${t.length.toFixed(0)} m`).join(', ') || 'none'}`);
   CHK('T0 exactly the four tails RTE-TAIL-M3S / M3N / M4G / M4L are built', tails.length === 4 && Object.keys(want).every(k => tails.some(t => t.name === k)), tails.map(t => t.name).join(', '));
   let tipLvl = 0, tipGap = 1e9, tipGapMax = 0, endXZ = 0, endY = 0, wOk = 0, lenMax = 0, sideBad = 0; const info: string[] = [];
@@ -107,15 +111,15 @@ CHK('L6 max grade of the lanes and tails <= 5 %', mg <= 0.05, `${(mg * 100).toFi
     const main = w.main === 'ring' ? ring : armR; const tx = rd.xs[iT], tz = rd.zs[iT];
     tipLvl = Math.max(tipLvl, Math.abs(rd.ys[iT] - mainY(main, tx, tz)));
     const uu = uOfP(tx, tz), dd = dOf(tx, tz);
-    const clrTip = distTo(main, tx, tz) - main.halfWidth - rd.halfWidth;
-    const flushDev = Math.abs(clrTip);   // STEP 5: the tip edge TOUCHES the paved edge of the main road (clearance 0, no overlap)
+    const clrTip = distTo(main, tx, tz) - main.halfWidth - ribbonHalf(rd, iT);
+    const flushDev = Math.abs(clrTip);   // STEP 5 (auto merge): the tip of the RIBBON (asphalt + shoulder, narrowed to a point) lies on the paved edge of the main road (clearance 0, no overlap)
     tipGap = Math.max(tipGap === 1e9 ? 0 : tipGap, flushDev); tipGapMax = Math.max(tipGapMax, clrTip);
     const ub = uOfP(bx, bz), db = dOf(bx, bz);   // side of the main road: judged at the bridge end (at the tip the tail is inside the pavement)
     if (w.main === 'ring' ? db >= 0 : (w.st.name === 'M3' ? ub < 0 : ub > 0)) sideBad++;
     info.push(`${t.name}: tip u ${uu.toFixed(1)} d ${dd.toFixed(1)} y ${rd.ys[iT].toFixed(2)}, bridge end y ${rd.ys[iB].toFixed(2)}`);
   }
   CHK('T1 the tip of each tail has the level of the main road (ring M8 / arm J1-E) next to it (<= 5 cm)', tails.length === 4 && tipLvl <= 0.05, `worst ${tipLvl.toFixed(3)} m; ${info.join(' | ')}`);
-  CHK('T2 (STEP 5, merge) the tip lane edge of each tail touches the paved edge of the main road (|gap| <= 0.05 m, no overlap; real distance from the built centre line)', tails.length === 4 && tipGap <= 0.05, `worst deviation from touching ${tipGap.toFixed(2)} m`);
+  CHK('T2 (STEP 5, merge) the tip of each tail (ribbon narrowed to a point by the AUTO MERGE) lies on the paved edge of the main road (|gap| <= 0.05 m, no overlap; real distance from the built centre line)', tails.length === 4 && tipGap <= 0.05, `worst deviation from touching ${tipGap.toFixed(2)} m`);
   CHK('T3 the other end of each tail starts exactly at the bridge end (plan <= 0.1 m, level <= 5 cm)', tails.length === 4 && endXZ <= 0.1 && endY <= 0.05, `plan ${endXZ.toFixed(3)} m, level ${endY.toFixed(3)} m`);
   CHK('T4 road width of each tail = the deck width at that end (9.7 / 6.18 / 9.7 / 6.1 m)', tails.length === 4 && wOk === 4, `${wOk} of 4 (halfWidth ${tails.map(t => net.roads[t.roadId].halfWidth).join(' / ')})`);
   CHK('T5 each tail is on the correct side at its bridge end (M3S, M4L on ring B d < 0; M3N u > 0; M4G u < 0)', tails.length === 4 && sideBad === 0, `${sideBad} wrong`);
@@ -136,20 +140,33 @@ CHK('L6 max grade of the lanes and tails <= 5 %', mg <= 0.05, `${(mg * 100).toFi
   CHK('T7 no tail overlaps any road other than the main road it joins (edge gap >= 0 m, roads closer than 60 m checked)', minSep >= 0, `smallest edge gap ${minSep.toFixed(2)} m (${sepAt})`);
   // T8 tail edge vs the paved edge of the ring / arm along the whole tail (>= 0.29 m; ring paved half 22.1 on both sides, arm 22.1)
   // STEP 5: outside the last 12 m of tail length from the tip (the merge zone is 10 m along the main road) the edge stays >= 0.29 m off the paved edge; in the merge zone it moves INTO the pavement (never beyond flush, never back out)
-  let minE = 1e9, eAt = '', zoneBad = 0, zoneN = 0, zoneIn = 0, backOut = 0;
+  let minE = 1e9, eAt = '', zoneBad = 0, zoneN = 0, backOut = 0, narrowBad = 0, mergeZ = 0;
   for (const t of tails) {
     const w = want[t.name]; if (!w) continue; const rd = net.roads[t.roadId], main = w.main === 'ring' ? ring : armR, n = rd.xs.length;
-    const iT = Math.hypot(rd.xs[0] - w.st.x[w.end === 'first' ? 0 : w.st.x.length - 1], rd.zs[0] - w.st.z[w.end === 'first' ? 0 : w.st.x.length - 1]) < 1e-3 ? n - 1 : 0;   // tip = the end that is not the bridge end
-    const step = iT === 0 ? 1 : -1; let arc = 0, prevC = -1e9;
+    const bi = w.end === 'first' ? 0 : w.st.x.length - 1;
+    const iT = Math.hypot(rd.xs[0] - w.st.x[bi], rd.zs[0] - w.st.z[bi]) < 1e-3 ? n - 1 : 0;   // tip = the end that is not the bridge end
+    const step = iT === 0 ? 1 : -1; let arc = 0, prevG = 1e9, prevK = -1;
+    if (!rd.halfAt) narrowBad++;
     for (let k = 0, i = iT; k < n; k++, i += step) {
       if (k > 0) arc += Math.hypot(rd.xs[i] - rd.xs[i - step], rd.zs[i] - rd.zs[i - step]);
-      const g = distTo(main, rd.xs[i], rd.zs[i]) - main.halfWidth - rd.halfWidth;      // + beside, - inside
-      if (arc > 12 + 1e-6) { if (g < minE) { minE = g; eAt = `${t.name} pt ${i}`; } }
-      else { zoneN++; if (g > 0.6 || g < -0.05) zoneBad++; if (g < 0) zoneIn++; if (g < prevC - 0.05 && prevC > -1e8) backOut++; prevC = g; }
+      const dist = distTo(main, rd.xs[i], rd.zs[i]);
+      const gr = dist - main.halfWidth - ribbonHalf(rd, i);              // ribbon inner edge vs the paved edge (negative = the ribbon shoulder lies on the main shoulder / paved edge strip)
+      const kk = rd.halfAt ? rd.halfAt[i] / rd.halfWidth : 1;
+      if (arc > 31 + 1e-6) { const ga = dist - main.halfWidth - rd.halfWidth; if (ga < minE) { minE = ga; eAt = `${t.name} pt ${i}`; } }
+      else { zoneN++; mergeZ = Math.max(mergeZ, arc); if (gr > 0.05 || gr < -1.0) zoneBad++; if (gr > prevG + 0.05) backOut++; if (kk < prevK - 1e-6) narrowBad++; prevG = gr; prevK = kk; }
     }
   }
-  CHK('T8 along each tail (more than 12 m of tail length from the tip) the lane edge is >= 0.29 m outside the REAL paved edge of the main road it joins (built centre line + halfWidth)', minE >= 0.29, `smallest ${minE.toFixed(2)} m (${eAt})`);
-  CHK('T8b in the merge zone (last 12 m of tail length = 10 m along the main road) every tail lane edge is between touching (-0.05 m) and 0.6 m beside the paved edge, never inside the pavement, and it never moves back out toward the tip', zoneBad === 0 && backOut === 0 && zoneN > 0, `${zoneN} points, ${zoneBad} outside the range, ${backOut} moving back out`);
+  CHK('T8 along each tail (more than 31 m of tail length from the tip) the lane (asphalt) edge is >= 0.29 m outside the REAL paved edge of the main road it joins (built centre line + halfWidth)', minE >= 0.29, `smallest ${minE.toFixed(2)} m (${eAt})`);
+  CHK('T8b AUTO MERGE zone (last 31 m of tail length): the ribbon inner edge slides onto the paved edge of the main road (between -1.0 m and +0.05 m, never beside it, never moving back out toward the tip)', zoneBad === 0 && backOut === 0 && zoneN > 0, `${zoneN} points, ${zoneBad} outside the range, ${backOut} moving back out`);
+  CHK('T8c AUTO MERGE width: every tail has a per-point asphalt half width (RoadSpec.halfAt) that only narrows toward the tip, to <= 0.1 m of ribbon scale at the tip', narrowBad === 0 && tails.every((t: any) => { const rd = net.roads[t.roadId]; const hs = rd.halfAt; return hs && Math.min(hs[0], hs[hs.length - 1]) / rd.halfWidth <= 0.1; }), `${narrowBad} bad`);
+  // T8d the REAL ribbon (buildRoadMesh, LOD1) is narrow at the tip: every vertex within 3 m of the tip has |across| <= 0.3 m
+  let tipVerts = 0, tipU = 0;
+  for (const t of tails) {
+    const rd = net.roads[t.roadId], n = rd.xs.length, iT = rd.halfAt && rd.halfAt[0] < rd.halfAt[n - 1] ? 0 : n - 1, tx = rd.xs[iT], tz = rd.zs[iT], { cx, cz } = worldToChunkCoord(tx, tz);
+    const m: any = buildRoadMesh(net, cx, cz, 1); if (!m) continue; const ox = chunkOriginX(cx), oz = chunkOriginZ(cz);
+    for (let v = 0; v < m.positions.length / 3; v++) if (Math.hypot(m.positions[v * 3] + ox - tx, m.positions[v * 3 + 2] + oz - tz) < 3 && Math.abs(m.info[v * 4]) < 20) { tipVerts++; tipU = Math.max(tipU, Math.abs(m.info[v * 4])); }
+  }
+  CHK('T8d AUTO MERGE mesh: the drawn ribbon (buildRoadMesh) is a point at the tip of every tail (vertices within 3 m of the tip have |across| <= 0.3 m)', tipVerts >= 8 && tipU <= 0.3, `${tipVerts} vertices, widest half ${tipU.toFixed(2)} m`);
   // T9 piers of the OTHER ramp / own ramp: the tail edge >= 2.0 m from every pier centre of the ramp it does NOT belong to (the own ramp's bridge ends at the tail)
   let tp = 1e9, tpAt = '';
   for (const t of tails) { const w = want[t.name]; if (!w) continue; const rd = net.roads[t.roadId]; for (const st of RTE_RAMP_STRUCTS as any[]) { if (st.name === w.st.name) continue; for (const pr of st.piers as any[]) for (let i = 0; i + 1 < rd.xs.length; i++) { const ax = rd.xs[i], az = rd.zs[i], dx = rd.xs[i + 1] - ax, dz = rd.zs[i + 1] - az, l2 = dx * dx + dz * dz; const q = l2 > 0 ? Math.min(1, Math.max(0, ((pr.x - ax) * dx + (pr.z - az) * dz) / l2)) : 0; const g = Math.hypot(pr.x - (ax + dx * q), pr.z - (az + dz * q)) - rd.halfWidth - 1.5; if (g < tp) { tp = g; tpAt = `${t.name} / ${st.name} pier d ${dOf(pr.x, pr.z).toFixed(0)} u ${uOfP(pr.x, pr.z).toFixed(0)}`; } } } }

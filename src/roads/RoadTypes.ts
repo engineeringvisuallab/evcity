@@ -54,6 +54,8 @@ export interface RoadSpec {
   areaId?: string;
   /** STEP 5.2 (the ring): the terrain beside the road is cut / filled along straight DAYLIGHT slopes (cut 1:2, fill 1:3, see RoadNetwork.apply) instead of the old smooth embankment blend. */
   daylight?: boolean;
+  /** AUTO MERGE (user 2026-11-22): asphalt half width per point (m), only on a road whose end merges into another road; the ribbon narrows to a point there. undefined = constant halfWidth. */
+  halfAt?: Float32Array;
 }
 
 export interface BridgeSpec {
