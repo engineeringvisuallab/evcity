@@ -1,7 +1,8 @@
 AUTO CONNECT AT GRADE, A-6 step 1: traffic RoadGraph knows the auto pads
   [PASS] flag OFF: no auto stations: autoStations empty on every road
+  [PASS] traffic sub-flag OFF: stations / arms identical to the flag OFF game: routing graph unchanged (the read-only autoStations are still there)
   [PASS] flag ON: auto pads built: 15 pads of 15
-  [PASS] old stations / arms identical with the flag ON and OFF: Station / arms lists of the old pads are the same (the routing sees no change)
+  [PASS] old pads: stations / arms identical with the flag ON and OFF: Station / arms lists of the old pads are the same (only auto stations are added)
   JN163 T: 3 of 3 legs linked, roads L-24@162 R2-19@1740 R2-19@1740, farthest station 3.4 m from the pad centre
   JN033 roundabout: 4 of 4 legs linked, roads R2-37.1@196 R2-34.2@0 R2-37.2@0 R2-34.1@221, farthest station 0.1 m from the pad centre
   JN028 T: 3 of 3 legs linked, roads R2-39@0 R2-34.1@0 R2-38@0, farthest station 0.0 m from the pad centre
@@ -22,4 +23,33 @@ AUTO CONNECT AT GRADE, A-6 step 1: traffic RoadGraph knows the auto pads
   [PASS] a road with two legs in one pad (through road) gets the same s on both: 10 through-road legs (T pads), 0 with a different s or more than 2 legs
   [PASS] station is close to the pad: farthest road point 10.4 m from a pad centre (limit 40 m)
   [PASS] auto stations sorted by s: sorted on every road
+--- A-6 step 2: routing
+  JN163: pad number 0, 2 roads in the arm list, routes found from 2 of 2 roads
+  JN028: pad number 2, 3 roads in the arm list, routes found from 3 of 3 roads
+  JN056: pad number 5, 2 roads in the arm list, routes found from 2 of 2 roads
+  JN060: pad number 7, 2 roads in the arm list, routes found from 2 of 2 roads
+  JN064: pad number 8, 2 roads in the arm list, routes found from 2 of 2 roads
+  JN073: pad number 9, 2 roads in the arm list, routes found from 2 of 2 roads
+  JN076: pad number 10, 2 roads in the arm list, routes found from 2 of 2 roads
+  JN083: pad number 11, 2 roads in the arm list, routes found from 2 of 2 roads
+  JN124: pad number 12, 2 roads in the arm list, routes found from 2 of 2 roads
+  JN147: pad number 13, 2 roads in the arm list, routes found from 2 of 2 roads
+  JN165: pad number 14, 2 roads in the arm list, routes found from 2 of 2 roads
+  [PASS] auto T pads are junctions (pad number base + k): 11 T pads, 0 wrong arm lists, 0 wrong stations; 4 roundabouts keep no station and no arms
+  [PASS] the route planner finds routes through the T pads: 36 of 36 start / target pairs routed through an auto pad; 0 pads without any route
+--- A-6 step 2: RouteBuilder driving
+  JN163 (pad 0): L-24+ -> R2-19+:12 L-26-:6 R2-19-:22 | R2-19+ -> R2-19+:21 L-24-:14 L-26-:5 | R2-19- -> R2-19-:35 L-24-:5
+  JN028 (pad 2): R2-39- -> R2-38+:18 R2-34.1+:22 | R2-34.1- -> R2-38+:23 R2-39+:17 | R2-38- -> R2-34.1+:25 R2-39+:15
+  JN056 (pad 5): R2-41+ -> R2-41+:27 R2-40.2-:13 | R2-41- -> R2-41-:31 R2-40.2-:9 | R2-40.2+ -> R2-41-:25 R2-41+:15
+  JN060 (pad 7): SH-4+ -> SH-5+:6 SH-4+:34 | SH-4- -> SH-4-:28 SH-5+:12 | SH-5- -> SH-4-:20 SH-4+:20
+  JN064 (pad 8): SH-1+2+ -> SH-1+2+:24 SH-3-:16 | SH-1+2- -> SH-1+2-:27 SH-3-:13 | SH-3+ -> SH-1+2-:27 SH-1+2+:13
+  JN073 (pad 9): SH-6+15+ -> SH-6+15+:20 SH-7+16-:11 SH-17+:9 | SH-6+15- -> SH-17+:10 SH-6+15-:30 | SH-17- -> SH-6+15+:14 SH-7+16-:6 SH-6+15-:20
+  JN076 (pad 10): R2-29+ -> R2-29+:30 SH-18-:10 | R2-29- -> R2-29-:32 SH-18-:8 | SH-18+ -> R2-29-:23 R2-29+:17
+  JN083 (pad 11): SH-6+15+ -> SH-6+15+:32 SH-7+16-:8 | SH-6+15- -> SH-6+15-:23 SH-17+:10 SH-7+16-:7 | SH-7+16+ -> SH-17+:3 SH-6+15-:15 SH-6+15+:22
+  JN124 (pad 12): R2-17+ -> R2-17+:30 L-30-:10 | R2-17- -> L-30-:10 R2-17-:30 | L-30+ -> R2-17-:17 R2-17+:23
+  JN147 (pad 13): R2-19+ -> C-5-:9 R2-19+:31 | R2-19- -> R2-19-:35 C-5-:5 | C-5+ -> R2-19+:17 R2-19-:23
+  JN165 (pad 14): L-26+ -> R2-19+:27 R2-19-:11 L-24-:2 | R2-19+ -> R2-19+:28 L-26-:12 | R2-19- -> R2-19-:20 L-24-:10 L-26-:10
+  [PASS] cars pass the pad on every approach: 33 approaches x 40 runs = 1320 routes, every route passes within 16 m of the pad centre (1320 of 1320); approaches with a miss: 0
+  [PASS] routes are smooth: biggest point-to-point jump 5.91 m (limit 8), biggest height step 0.46 m (limit 1.5)
+  [PASS] cars leave onto a road of the pad: 1267 of 1320 routes end on one of the pad's own roads (the rest drive on along the through road beyond the 400 m window, which may be another road)
 RESULT ALL PASS

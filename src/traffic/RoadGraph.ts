@@ -25,8 +25,9 @@ export interface Station {
 
 /**
  * AUTO CONNECT AT GRADE, A-6 step 1 (HANDOFF_ROAD_DESIGN.md 24.15): where a leg road meets an AUTO pad (Config.roads.autoJunction, src/roads/JunctionAuto*.ts).
- * READ ONLY: separate from `Station` on purpose. `Station.pad` indexes net.pads / TrafficSignals.pads / Route, and those know nothing about auto pads yet,
- * so the routing does NOT use this list (step 2). Empty with the flag OFF.
+ * Separate from `Station` on purpose: this list holds EVERY leg of EVERY auto pad (T and roundabout), nothing in the routing reads it. A-6 step 2: the auto T pads
+ * (Config.roads.autoJunction.traffic) are ALSO in the normal stations() / arms() lists, with the pad number net.pads.length + autoPad (the old pads keep 0 .. length - 1);
+ * roundabouts are not (step 3). Empty with the flag OFF.
  */
 export interface AutoStation {
   /** Distance along the road (m) of the point on the road closest to the auto pad centre. */
@@ -115,13 +116,17 @@ export class RoadGraph {
       }
       this.armsByPad.push(arms);
     }
-    for (const st of this.stationsByRoad) st.sort((a, b) => a.s - b.s);
     this.autoStationsByRoad = this.roads.map(() => []);
     const ap = net.autoPads;
     if (ap) {
       for (let k = 0; k < ap.count; k++) {
         const pad = ap.padAt(k);
         const arms: { roadId: number; s: number; leg: number }[] = [];
+        // A-6 step 2: the auto T pads are junctions for the routing, with the pad number net.pads.length + k (roundabouts: an EMPTY arm list, no station, until A-6 step 3)
+        const asJunction = Config.roads.autoJunction.traffic && pad.type === 'T';
+        const padNo = net.pads.length + k;
+        const jSeen = new Set<number>();
+        const jArms: { roadId: number; s: number }[] = [];
         pad.legs.forEach((lg, li) => {
           const r = this.roads[lg.roadId];
           if (!r) return;
@@ -134,11 +139,14 @@ export class RoadGraph {
           if (bd > 40) return; // a leg whose road is not near the pad centre is not linked
           this.autoStationsByRoad[lg.roadId].push({ s: r.cum[bi], autoPad: k, leg: li, dist: bd });
           arms.push({ roadId: lg.roadId, s: r.cum[bi], leg: li });
+          if (asJunction && !jSeen.has(lg.roadId)) { jSeen.add(lg.roadId); this.stationsByRoad[lg.roadId].push({ s: r.cum[bi], pad: padNo }); jArms.push({ roadId: lg.roadId, s: r.cum[bi] }); }
         });
         this.autoArmsByPad.push(arms);
+        this.armsByPad.push(jArms);
       }
       for (const st of this.autoStationsByRoad) st.sort((a, b) => a.s - b.s);
     }
+    for (const st of this.stationsByRoad) st.sort((a, b) => a.s - b.s);
     let acc = 0;
     for (const r of this.roads) {
       this.cumLen.push(acc);
