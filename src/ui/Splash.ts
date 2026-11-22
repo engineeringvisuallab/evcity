@@ -55,18 +55,28 @@ const CSS = `
 @keyframes evs-rise{0%{transform:scaleY(0)}35%,72%{transform:scaleY(1)}100%{transform:scaleY(0)}}
 @keyframes evs-tip{0%{opacity:0;transform:translateY(6px)}3%,17%{opacity:1;transform:none}20%,100%{opacity:0}}
 .evs-shots{position:relative;margin-top:16px;width:min(68vw,1040px);aspect-ratio:2.55 / 1;max-height:48vh;border-radius:14px;overflow:hidden;background:#0a1c28;
-  box-shadow:0 0 0 1px rgba(16,245,212,.35),0 12px 40px rgba(0,0,0,.55);opacity:0;animation:evs-fade .8s ease 1.8s forwards;}
+  box-shadow:0 0 0 1px rgba(16,245,212,.35),0 12px 40px rgba(0,0,0,.55);opacity:0;animation:evs-fade .8s ease 1.8s forwards,evs-bglow 3.2s ease-in-out 2.6s infinite;}
 .evs-slide{position:absolute;inset:0;opacity:0;animation:evs-slide 40s linear infinite;animation-delay:calc(var(--i) * 5s + 1.8s);}
 .evs-slide img{display:block;width:100%;height:100%;object-fit:cover;transform-origin:50% 50%;animation-duration:40s;animation-timing-function:ease-out;animation-iteration-count:infinite;animation-delay:calc(var(--i) * 5s + 1.8s);}
 .evs-slide.zin img{animation-name:evs-kin}
 .evs-slide.zout img{animation-name:evs-kout}
-.evs-slide b{position:absolute;left:14px;top:12px;padding:5px 14px;border-radius:999px;font-weight:600;font-size:15px;letter-spacing:.4px;color:#eaffff;
+.evs-slide b{position:absolute;z-index:4;left:14px;top:12px;animation:evs-cap 40s linear infinite;animation-delay:calc(var(--i) * 5s + 1.8s);padding:5px 14px;border-radius:999px;font-weight:600;font-size:15px;letter-spacing:.4px;color:#eaffff;
   background:rgba(4,12,20,.62);box-shadow:0 0 0 1px rgba(16,245,212,.3);}
 @keyframes evs-slide{0%{opacity:0}2%,13%{opacity:1}16%,100%{opacity:0}}
-@keyframes evs-kin{0%{transform:scale(1)}16%,100%{transform:scale(1.22)}}
-@keyframes evs-kout{0%{transform:scale(1.22)}16%,100%{transform:scale(1)}}
+@keyframes evs-kin{0%{transform:scale(1) translate(0,0);filter:blur(7px) brightness(1.2)}7%{filter:blur(0) brightness(1)}16%,100%{transform:scale(1.22) translate(-2.5%,-1.5%);filter:blur(0) brightness(1)}}
+@keyframes evs-kout{0%{transform:scale(1.22) translate(2.5%,1.5%);filter:blur(7px) brightness(1.2)}7%{filter:blur(0) brightness(1)}16%,100%{transform:scale(1) translate(0,0);filter:blur(0) brightness(1)}}
+@keyframes evs-cap{0%,1%{opacity:0;transform:translateX(-18px)}4%,13%{opacity:1;transform:none}16%,100%{opacity:0}}
+@keyframes evs-bglow{0%,100%{box-shadow:0 0 0 1px rgba(16,245,212,.35),0 0 14px rgba(16,245,212,.12),0 12px 40px rgba(0,0,0,.55)}50%{box-shadow:0 0 0 1px rgba(16,245,212,.75),0 0 34px rgba(16,245,212,.4),0 12px 40px rgba(0,0,0,.55)}}
+@keyframes evs-sw{0%{left:-30%}35%,100%{left:130%}}
+@keyframes evs-dust{0%{transform:translateY(0);opacity:0}12%{opacity:.9}85%{opacity:.6}100%{transform:translateY(-52vh);opacity:0}}
+.evs-vig{position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,transparent 52%,rgba(2,8,14,.6) 100%);}
+.evs-sweep{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden;}
+.evs-sweep::after{content:"";position:absolute;top:-20%;bottom:-20%;width:16%;left:-30%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.2),transparent);transform:skewX(-18deg);animation:evs-sw 5s ease-in-out 2.4s infinite;}
+.evs-dust{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden;}
+.evs-dust i{position:absolute;bottom:-8px;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;background:rgba(170,255,240,.85);box-shadow:0 0 7px rgba(16,245,212,.9);opacity:0;animation:evs-dust var(--t) linear var(--d) infinite;}
 @media (prefers-reduced-motion:reduce){
-  .evs-slide,.evs-slide img{animation:none!important}
+  .evs-slide,.evs-slide img,.evs-slide b,.evs-dust i,.evs-sweep::after{animation:none!important}
+  .evs-slide b{opacity:1}
   .evs-slide:first-child{opacity:1}
   .evs-sky i,.evs-tips span,.evs-grid,.evs-glow,.evs-iconwrap,.evs-text,.evs-shine::after{animation-duration:.01s!important;animation-delay:0s!important;animation-iteration-count:1!important}
 }
@@ -103,7 +113,7 @@ export class Splash {
         <div class="evs-shine"></div>
       </div>
       <div class="evs-bar"><div class="evs-fill"></div></div><div class="evs-label">লোড হচ্ছে…</div><div class="evs-tips"><span style="--i:0">N চাপলে যেকোনো গাড়ি তোমার কাছে চলে আসবে</span><span style="--i:1">Y চাপলে গাইডেড ভয়েস ট্যুর শুরু হয়</span><span style="--i:2">0 চাপে X ও Z লিখে সরাসরি সেখানে যাওয়া যায়</span><span style="--i:3">Tab চাপলে সেটিংস মেনু খোলে</span><span style="--i:4">F2 চাপলে FPS ও ড্র-কল দেখা যায়</span></div>
-      <div class="evs-shots"><div class="evs-slide zin" style="--i:0"><img src="${BASE}assets/splash/mall.webp" alt="" decoding="async"><b>সিটি মল</b></div><div class="evs-slide zout" style="--i:1"><img src="${BASE}assets/splash/evlab.webp" alt="" decoding="async"><b>EVLab</b></div><div class="evs-slide zin" style="--i:2"><img src="${BASE}assets/splash/hall.webp" alt="" decoding="async"><b>EVLab হল</b></div><div class="evs-slide zout" style="--i:3"><img src="${BASE}assets/splash/mosque.webp" alt="" decoding="async"><b>মসজিদ</b></div><div class="evs-slide zin" style="--i:4"><img src="${BASE}assets/splash/plant.webp" alt="" decoding="async"><b>জল শোধনাগার</b></div><div class="evs-slide zout" style="--i:5"><img src="${BASE}assets/splash/jungle.webp" alt="" decoding="async"><b>জঙ্গল</b></div><div class="evs-slide zin" style="--i:6"><img src="${BASE}assets/splash/sea.webp" alt="" decoding="async"><b>সাগরের তলদেশ</b></div><div class="evs-slide zout" style="--i:7"><img src="${BASE}assets/splash/farm.webp" alt="" decoding="async"><b>কৃষিজমি</b></div></div>
+      <div class="evs-shots"><div class="evs-slide zin" style="--i:0"><img src="${BASE}assets/splash/mall.webp" alt="" decoding="async"><b>সিটি মল</b></div><div class="evs-slide zout" style="--i:1"><img src="${BASE}assets/splash/evlab.webp" alt="" decoding="async"><b>EVLab</b></div><div class="evs-slide zin" style="--i:2"><img src="${BASE}assets/splash/hall.webp" alt="" decoding="async"><b>EVLab হল</b></div><div class="evs-slide zout" style="--i:3"><img src="${BASE}assets/splash/mosque.webp" alt="" decoding="async"><b>মসজিদ</b></div><div class="evs-slide zin" style="--i:4"><img src="${BASE}assets/splash/plant.webp" alt="" decoding="async"><b>জল শোধনাগার</b></div><div class="evs-slide zout" style="--i:5"><img src="${BASE}assets/splash/jungle.webp" alt="" decoding="async"><b>জঙ্গল</b></div><div class="evs-slide zin" style="--i:6"><img src="${BASE}assets/splash/sea.webp" alt="" decoding="async"><b>সাগরের তলদেশ</b></div><div class="evs-slide zout" style="--i:7"><img src="${BASE}assets/splash/farm.webp" alt="" decoding="async"><b>কৃষিজমি</b></div><div class="evs-vig"></div><div class="evs-sweep"></div><div class="evs-dust"><i style="--x:6%;--s:3px;--t:7s;--d:0s"></i><i style="--x:14%;--s:2px;--t:9s;--d:2.1s"></i><i style="--x:22%;--s:4px;--t:8s;--d:4.2s"></i><i style="--x:31%;--s:2px;--t:10s;--d:1.2s"></i><i style="--x:40%;--s:3px;--t:7.5s;--d:5.3s"></i><i style="--x:48%;--s:2px;--t:9.5s;--d:3.1s"></i><i style="--x:57%;--s:4px;--t:8.5s;--d:0.7s"></i><i style="--x:65%;--s:3px;--t:7s;--d:6.2s"></i><i style="--x:73%;--s:2px;--t:10s;--d:2.9s"></i><i style="--x:81%;--s:4px;--t:8s;--d:4.8s"></i><i style="--x:88%;--s:3px;--t:9s;--d:1.6s"></i><i style="--x:94%;--s:2px;--t:7.5s;--d:5.7s"></i></div></div>
 `;
     parent.appendChild(this.root);
     this.fill = this.root.querySelector('.evs-fill') as HTMLDivElement;
