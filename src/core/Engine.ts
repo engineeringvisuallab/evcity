@@ -483,7 +483,7 @@ export class Engine {
     // ROAD SIGN BOARDS: overhead gantries with Bangla + English boards (both faces); posts and bases are solid
     this.roadSigns = new RoadSignLayer(this.world.root);
     this.roadSignPhysics = new SignPhysics(physics, this.world.origin, this.roadSigns.solidGroups);
-    this.ringStructurePhysics = new RingStructurePhysics(physics, this.world.origin, [...this.ringStructures.solids, ...this.stackJ1.solids]);
+    this.ringStructurePhysics = new RingStructurePhysics(physics, this.world.origin, [...this.ringStructures.solids, ...this.stackJ1.solids, ...this.rteLayer.solids]);
 
     bootMark('parking lots');
     // --- City Mall (always standing there when the game starts) ---
