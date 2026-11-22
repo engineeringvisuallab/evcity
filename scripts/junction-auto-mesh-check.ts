@@ -8,7 +8,7 @@ import { pointInOutline } from '../src/roads/JunctionAutoTerrain';
 // AUTO CONNECT AT GRADE, A-5 (headless, no three.js): the pad mesh + the terrain carve of the 2 pilots, flag ON, compared with the same game with the flag OFF.
 // Run: node --experimental-transform-types --import ./scripts/reg.mjs scripts/junction-auto-mesh-check.ts docs [JNxxx JNyyy]  -> docs/STEPA5_OUTPUT.txt
 const out = process.argv[2] ?? 'docs';
-const ids = [process.argv[3] ?? 'JN163', process.argv[4] ?? 'JN033'];
+const ids = process.argv.length > 3 ? process.argv.slice(3) : [...Config.roads.autoJunction.ids];
 const lines: string[] = [];
 let fails = 0;
 const P = (s: string): void => { lines.push(s); console.log(s); };
@@ -17,7 +17,7 @@ const f2 = (v: number): string => v.toFixed(2);
 const tmp: any = { h: 0, water: NaN, fx: 0, fz: 0 };
 const hash = (roads: any[]): string => { let h = 0; for (const r of roads) for (let i = 0; i < r.xs.length; i++) h = (h * 31 + Math.round(r.xs[i] * 100) + 7 * Math.round(r.zs[i] * 100) + 13 * Math.round(r.ys[i] * 100)) | 0; return String(h); };
 
-P('AUTO CONNECT AT GRADE, A-5: pad mesh + terrain carve (pilots ' + ids.join(', ') + ')');
+P('AUTO CONNECT AT GRADE, A-5: pad mesh + terrain carve (' + ids.length + ' junctions: ' + ids.join(', ') + ')');
 // ---- game with the flag OFF (baseline)
 Config.roads.autoJunction.enabled = false;
 const g0: any = new TerrainGenerator(Config.world.seed);
@@ -85,17 +85,21 @@ for (let i = 0; i < terr.count; i++) {
     T(`leg ${l.name} end level`, Math.abs(lv - l.endY) < 0.02 && Math.abs(tmp.h - l.endY) < 0.15, `pad level ${f2(lv)} m, road ${f2(l.endY)} m, terrain ${f2(tmp.h)} m (step ${f2(lv - l.endY)} m)`);
   }
   // ---- terrain continuity across the skirt: no step above 0.5 m between points 0.5 m apart, along 4 rays from the centre outwards
-  let maxStep = 0;
+  let maxStep = 0, maxStep0 = 0;
   for (let a = 0; a < 16; a++) {
     const ang = (a / 16) * 2 * Math.PI;
-    let prev: number | null = null;
+    let prev: number | null = null, prev0: number | null = null;
     for (let r = 0; r < 70; r += 0.5) {
-      g1.sample(pad.x + r * Math.cos(ang), pad.z + r * Math.sin(ang), tmp);
+      const x = pad.x + r * Math.cos(ang), z = pad.z + r * Math.sin(ang);
+      g1.sample(x, z, tmp);
       if (prev !== null) maxStep = Math.max(maxStep, Math.abs(tmp.h - prev));
       prev = tmp.h;
+      g0.sample(x, z, tmp);
+      if (prev0 !== null) maxStep0 = Math.max(maxStep0, Math.abs(tmp.h - prev0));
+      prev0 = tmp.h;
     }
   }
-  T('terrain skirt is smooth', maxStep < 0.5, `biggest height step between points 0.5 m apart on 16 rays 0..70 m: ${f2(maxStep)} m (roads, kerbs of the old layout included)`);
+  T('terrain skirt is smooth', maxStep < 0.5 || maxStep <= maxStep0 + 0.05, `biggest height step between points 0.5 m apart on 16 rays 0..70 m: ${f2(maxStep)} m with the pad, ${f2(maxStep0)} m without it (a step that is also there without the pad is old terrain, not the skirt)`);
   // ---- flag OFF vs ON: the terrain changes only near the pad
   const R = Math.hypot(...pad.outline.map((q) => Math.hypot(q[0] - pad.x, q[1] - pad.z)).slice(0, 0).concat([0, 0])) + Math.max(...pad.outline.map((q) => Math.hypot(q[0] - pad.x, q[1] - pad.z))) + terr.emb;
   let farChanged = 0, nearChanged = 0, far = 0;
@@ -105,6 +109,9 @@ for (let i = 0; i < terr.count; i++) {
     g0.sample(x, z, tmp); const h0 = tmp.h;
     g1.sample(x, z, tmp);
     const d = Math.abs(tmp.h - h0);
+    let nearOther = false;
+    for (let j = 0; j < terr.count; j++) if (j !== i) { const q = terr.padAt(j); if (Math.hypot(x - q.x, z - q.z) < 90) nearOther = true; }
+    if (nearOther) continue; // another pad's carve may be here
     if (rr > R + 8) { far++; if (d > 1e-9) farChanged++; } else if (d > 1e-6) nearChanged++;
   }
   T('flag OFF vs ON: terrain far from the pad identical', farChanged === 0, `${far} random points beyond ${f2(R + 8)} m from the centre: ${farChanged} changed; ${nearChanged} of the points nearer changed (the carve)`);

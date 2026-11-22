@@ -1,12 +1,24 @@
-AUTO CONNECT AT GRADE, A-5: pad mesh + terrain carve (pilots JN163, JN033)
+AUTO CONNECT AT GRADE, A-5: pad mesh + terrain carve (14 junctions: JN163, JN033, JN028, JN037, JN043, JN056, JN059, JN060, JN064, JN073, JN076, JN083, JN147, JN165)
   [PASS] flag OFF: no auto pads: RoadNetwork.autoPads is null
   JN163: built (PASS)
   JN033: built (PASS)
-  [PASS] flag ON: both pilots built: 2 pads of 2
+  JN028: built (PASS)
+  JN037: built (PASS)
+  JN043: built (PASS)
+  JN056: built (PASS)
+  JN059: built (PASS)
+  JN060: built (PASS)
+  JN064: built (PASS)
+  JN073: built (PASS)
+  JN076: built (PASS)
+  JN083: built (PASS)
+  JN147: built (PASS)
+  JN165: built (PASS)
+  [PASS] flag ON: both pilots built: 14 pads of 14
   [PASS] road data identical (flag ON vs OFF): hash -1290245636 / -1290245636 (no road point moved by the pads)
 --- JN163 T, area 422.41 m2, 3 legs
   [PASS] pad equals the engine on the final roads: plane y0 27.75 / 27.75
-  [PASS] mesh numbers: 3088 vertices, 1064 triangles (surface 960, kerb 80, marks 24, island 0), 39 ms, 0 bad numbers, 0 bad indices
+  [PASS] mesh numbers: 3088 vertices, 1064 triangles (surface 960, kerb 80, marks 24, island 0), 25 ms, 0 bad numbers, 0 bad indices
   [PASS] mesh has every part: surface, kerbs, marks present
   [PASS] mesh size: 1064 triangles (limit 20000 per pad)
   [PASS] surface faces up: 0 surface triangles face down
@@ -15,11 +27,11 @@ AUTO CONNECT AT GRADE, A-5: pad mesh + terrain carve (pilots JN163, JN033)
   [PASS] leg L-24 end level: pad level 27.51 m, road 27.51 m, terrain 27.51 m (step 0.00 m)
   [PASS] leg R2-19 end level: pad level 28.28 m, road 28.28 m, terrain 28.28 m (step 0.00 m)
   [PASS] leg R2-19 end level: pad level 27.37 m, road 27.37 m, terrain 27.37 m (step 0.00 m)
-  [PASS] terrain skirt is smooth: biggest height step between points 0.5 m apart on 16 rays 0..70 m: 0.27 m (roads, kerbs of the old layout included)
-  [PASS] flag OFF vs ON: terrain far from the pad identical: 3142 random points beyond 37.23 m from the centre: 0 changed; 544 of the points nearer changed (the carve)
+  [PASS] terrain skirt is smooth: biggest height step between points 0.5 m apart on 16 rays 0..70 m: 0.27 m with the pad, 0.28 m without it (a step that is also there without the pad is old terrain, not the skirt)
+  [PASS] flag OFF vs ON: terrain far from the pad identical: 2837 random points beyond 37.23 m from the centre: 0 changed; 518 of the points nearer changed (the carve)
 --- JN033 roundabout, area 1157.76 m2, 4 legs
   [PASS] pad equals the engine on the final roads: plane y0 16.52 / 16.52
-  [PASS] mesh numbers: 35777 vertices, 12072 triangles (surface 11776, kerb 248, marks 0, island 48), 67 ms, 0 bad numbers, 0 bad indices
+  [PASS] mesh numbers: 35777 vertices, 12072 triangles (surface 11776, kerb 248, marks 0, island 48), 38 ms, 0 bad numbers, 0 bad indices
   [PASS] mesh has every part: surface, kerbs, island present
   [INFO] JN033 has NO markings: the engine (A-3 / A-4) makes no give-way line or zebra for this roundabout, so the mesh has none (open item, needs numbers from the user first)
   [PASS] mesh size: 12072 triangles (limit 20000 per pad)
@@ -30,7 +42,169 @@ AUTO CONNECT AT GRADE, A-5: pad mesh + terrain carve (pilots JN163, JN033)
   [PASS] leg R2-34.2 end level: pad level 16.31 m, road 16.31 m, terrain 16.31 m (step 0.00 m)
   [PASS] leg R2-37.2 end level: pad level 16.90 m, road 16.90 m, terrain 16.90 m (step 0.00 m)
   [PASS] leg R2-34.1 end level: pad level 16.50 m, road 16.50 m, terrain 16.50 m (step 0.00 m)
-  [PASS] terrain skirt is smooth: biggest height step between points 0.5 m apart on 16 rays 0..70 m: 0.18 m (roads, kerbs of the old layout included)
-  [PASS] flag OFF vs ON: terrain far from the pad identical: 3051 random points beyond 43.42 m from the centre: 0 changed; 645 of the points nearer changed (the carve)
+  [PASS] terrain skirt is smooth: biggest height step between points 0.5 m apart on 16 rays 0..70 m: 0.18 m with the pad, 0.18 m without it (a step that is also there without the pad is old terrain, not the skirt)
+  [PASS] flag OFF vs ON: terrain far from the pad identical: 2764 random points beyond 43.42 m from the centre: 0 changed; 674 of the points nearer changed (the carve)
+--- JN028 T, area 574.38 m2, 3 legs
+  [PASS] pad equals the engine on the final roads: plane y0 17.35 / 17.35
+  [PASS] mesh numbers: 13328 vertices, 4488 triangles (surface 4352, kerb 94, marks 42, island 0), 7 ms, 0 bad numbers, 0 bad indices
+  [PASS] mesh has every part: surface, kerbs, marks present
+  [PASS] mesh size: 4488 triangles (limit 20000 per pad)
+  [PASS] surface faces up: 0 surface triangles face down
+  [PASS] asphalt lies on the carved terrain (off the corridors): 119 asphalt vertices: biggest gap to terrain + 0.09 m = 0.0000 m (limit 0.005)
+  [PASS] asphalt never below the terrain, follows the old ribbon in the corridors: 6409 vertices in the leg corridors: from 0.000 to +0.136 m above terrain + 0.09 m (limit -0.005 .. +0.17)
+  [PASS] leg R2-39 end level: pad level 17.27 m, road 17.27 m, terrain 17.27 m (step 0.00 m)
+  [PASS] leg R2-34.1 end level: pad level 17.35 m, road 17.35 m, terrain 17.35 m (step 0.00 m)
+  [PASS] leg R2-38 end level: pad level 17.72 m, road 17.72 m, terrain 17.72 m (step 0.00 m)
+  [PASS] terrain skirt is smooth: biggest height step between points 0.5 m apart on 16 rays 0..70 m: 0.18 m with the pad, 0.18 m without it (a step that is also there without the pad is old terrain, not the skirt)
+  [PASS] flag OFF vs ON: terrain far from the pad identical: 3011 random points beyond 39.48 m from the centre: 0 changed; 527 of the points nearer changed (the carve)
+--- JN037 roundabout, area 1157.82 m2, 4 legs
+  [PASS] pad equals the engine on the final roads: plane y0 16.64 / 16.64
+  [PASS] mesh numbers: 35777 vertices, 12072 triangles (surface 11776, kerb 248, marks 0, island 48), 57 ms, 0 bad numbers, 0 bad indices
+  [PASS] mesh has every part: surface, kerbs, island present
+  [INFO] JN037 has NO markings: the engine (A-3 / A-4) makes no give-way line or zebra for this roundabout, so the mesh has none (open item, needs numbers from the user first)
+  [PASS] mesh size: 12072 triangles (limit 20000 per pad)
+  [PASS] surface faces up: 0 surface triangles face down
+  [PASS] asphalt lies on the carved terrain (off the corridors): 1736 asphalt vertices: biggest gap to terrain + 0.09 m = 0.0000 m (limit 0.005)
+  [PASS] asphalt never below the terrain, follows the old ribbon in the corridors: 15928 vertices in the leg corridors: from 0.000 to +0.043 m above terrain + 0.09 m (limit -0.005 .. +0.17)
+  [PASS] leg R2-36.1 end level: pad level 16.44 m, road 16.44 m, terrain 16.44 m (step 0.00 m)
+  [PASS] leg R2-34.3 end level: pad level 16.45 m, road 16.45 m, terrain 16.45 m (step 0.00 m)
+  [PASS] leg R2-36.2 end level: pad level 16.87 m, road 16.87 m, terrain 16.87 m (step 0.00 m)
+  [PASS] leg R2-34.2 end level: pad level 16.80 m, road 16.80 m, terrain 16.80 m (step 0.00 m)
+  [PASS] terrain skirt is smooth: biggest height step between points 0.5 m apart on 16 rays 0..70 m: 0.18 m with the pad, 0.18 m without it (a step that is also there without the pad is old terrain, not the skirt)
+  [PASS] flag OFF vs ON: terrain far from the pad identical: 2723 random points beyond 43.44 m from the centre: 0 changed; 689 of the points nearer changed (the carve)
+--- JN043 roundabout, area 1157.72 m2, 4 legs
+  [PASS] pad equals the engine on the final roads: plane y0 16.73 / 16.73
+  [PASS] mesh numbers: 35777 vertices, 12072 triangles (surface 11776, kerb 248, marks 0, island 48), 20 ms, 0 bad numbers, 0 bad indices
+  [PASS] mesh has every part: surface, kerbs, island present
+  [INFO] JN043 has NO markings: the engine (A-3 / A-4) makes no give-way line or zebra for this roundabout, so the mesh has none (open item, needs numbers from the user first)
+  [PASS] mesh size: 12072 triangles (limit 20000 per pad)
+  [PASS] surface faces up: 0 surface triangles face down
+  [PASS] asphalt lies on the carved terrain (off the corridors): 1712 asphalt vertices: biggest gap to terrain + 0.09 m = 0.0000 m (limit 0.005)
+  [PASS] asphalt never below the terrain, follows the old ribbon in the corridors: 15952 vertices in the leg corridors: from 0.000 to +0.140 m above terrain + 0.09 m (limit -0.005 .. +0.17)
+  [PASS] leg R2-35.1 end level: pad level 16.29 m, road 16.29 m, terrain 16.29 m (step 0.00 m)
+  [PASS] leg R2-34.4 end level: pad level 16.66 m, road 16.66 m, terrain 16.66 m (step 0.00 m)
+  [PASS] leg R2-35.2 end level: pad level 17.09 m, road 17.09 m, terrain 17.09 m (step 0.00 m)
+  [PASS] leg R2-34.3 end level: pad level 16.89 m, road 16.89 m, terrain 16.89 m (step 0.00 m)
+  [PASS] terrain skirt is smooth: biggest height step between points 0.5 m apart on 16 rays 0..70 m: 0.19 m with the pad, 0.19 m without it (a step that is also there without the pad is old terrain, not the skirt)
+  [PASS] flag OFF vs ON: terrain far from the pad identical: 2892 random points beyond 43.42 m from the centre: 0 changed; 656 of the points nearer changed (the carve)
+--- JN056 T, area 531.43 m2, 3 legs
+  [PASS] pad equals the engine on the final roads: plane y0 14.81 / 14.81
+  [PASS] mesh numbers: 12540 vertices, 4222 triangles (surface 4096, kerb 88, marks 38, island 0), 8 ms, 0 bad numbers, 0 bad indices
+  [PASS] mesh has every part: surface, kerbs, marks present
+  [PASS] mesh size: 4222 triangles (limit 20000 per pad)
+  [PASS] surface faces up: 0 surface triangles face down
+  [PASS] asphalt lies on the carved terrain (off the corridors): 55 asphalt vertices: biggest gap to terrain + 0.09 m = 0.0000 m (limit 0.005)
+  [PASS] asphalt never below the terrain, follows the old ribbon in the corridors: 6089 vertices in the leg corridors: from 0.000 to +0.003 m above terrain + 0.09 m (limit -0.005 .. +0.17)
+  [PASS] leg R2-41 end level: pad level 14.80 m, road 14.80 m, terrain 14.80 m (step 0.00 m)
+  [PASS] leg R2-40.2 end level: pad level 14.80 m, road 14.80 m, terrain 14.80 m (step 0.00 m)
+  [PASS] leg R2-41 end level: pad level 14.82 m, road 14.82 m, terrain 14.82 m (step 0.00 m)
+  [PASS] terrain skirt is smooth: biggest height step between points 0.5 m apart on 16 rays 0..70 m: 0.13 m with the pad, 0.13 m without it (a step that is also there without the pad is old terrain, not the skirt)
+  [PASS] flag OFF vs ON: terrain far from the pad identical: 2799 random points beyond 37.54 m from the centre: 0 changed; 531 of the points nearer changed (the carve)
+--- JN059 roundabout, area 1108.50 m2, 4 legs
+  [PASS] pad equals the engine on the final roads: plane y0 14.93 / 14.93
+  [PASS] mesh numbers: 35793 vertices, 12080 triangles (surface 11776, kerb 256, marks 0, island 48), 23 ms, 0 bad numbers, 0 bad indices
+  [PASS] mesh has every part: surface, kerbs, island present
+  [INFO] JN059 has NO markings: the engine (A-3 / A-4) makes no give-way line or zebra for this roundabout, so the mesh has none (open item, needs numbers from the user first)
+  [PASS] mesh size: 12080 triangles (limit 20000 per pad)
+  [PASS] surface faces up: 0 surface triangles face down
+  [PASS] asphalt lies on the carved terrain (off the corridors): 1578 asphalt vertices: biggest gap to terrain + 0.09 m = 0.0000 m (limit 0.005)
+  [PASS] asphalt never below the terrain, follows the old ribbon in the corridors: 16086 vertices in the leg corridors: from 0.000 to +0.121 m above terrain + 0.09 m (limit -0.005 .. +0.17)
+  [PASS] leg R2-40.2 end level: pad level 14.94 m, road 14.94 m, terrain 14.94 m (step 0.00 m)
+  [PASS] leg R2-42.1 end level: pad level 15.11 m, road 15.11 m, terrain 15.11 m (step 0.00 m)
+  [PASS] leg R2-40.1 end level: pad level 14.92 m, road 14.92 m, terrain 14.92 m (step 0.00 m)
+  [PASS] leg R2-42.2 end level: pad level 14.75 m, road 14.75 m, terrain 14.75 m (step 0.00 m)
+  [PASS] terrain skirt is smooth: biggest height step between points 0.5 m apart on 16 rays 0..70 m: 0.03 m with the pad, 0.10 m without it (a step that is also there without the pad is old terrain, not the skirt)
+  [PASS] flag OFF vs ON: terrain far from the pad identical: 2715 random points beyond 42.43 m from the centre: 0 changed; 637 of the points nearer changed (the carve)
+--- JN060 T, area 435.13 m2, 3 legs
+  [PASS] pad equals the engine on the final roads: plane y0 19.50 / 19.50
+  [PASS] mesh numbers: 13292 vertices, 4470 triangles (surface 4352, kerb 94, marks 24, island 0), 5 ms, 0 bad numbers, 0 bad indices
+  [PASS] mesh has every part: surface, kerbs, marks present
+  [PASS] mesh size: 4470 triangles (limit 20000 per pad)
+  [PASS] surface faces up: 0 surface triangles face down
+  [PASS] asphalt lies on the carved terrain (off the corridors): 128 asphalt vertices: biggest gap to terrain + 0.09 m = 0.0000 m (limit 0.005)
+  [PASS] asphalt never below the terrain, follows the old ribbon in the corridors: 6400 vertices in the leg corridors: from 0.000 to +0.091 m above terrain + 0.09 m (limit -0.005 .. +0.17)
+  [PASS] leg SH-4 end level: pad level 18.81 m, road 18.81 m, terrain 18.81 m (step 0.00 m)
+  [PASS] leg SH-5 end level: pad level 18.95 m, road 18.95 m, terrain 18.95 m (step 0.00 m)
+  [PASS] leg SH-4 end level: pad level 20.01 m, road 20.01 m, terrain 20.01 m (step 0.00 m)
+  [PASS] terrain skirt is smooth: biggest height step between points 0.5 m apart on 16 rays 0..70 m: 0.17 m with the pad, 0.20 m without it (a step that is also there without the pad is old terrain, not the skirt)
+  [PASS] flag OFF vs ON: terrain far from the pad identical: 3132 random points beyond 39.21 m from the centre: 0 changed; 551 of the points nearer changed (the carve)
+--- JN064 T, area 411.24 m2, 3 legs
+  [PASS] pad equals the engine on the final roads: plane y0 15.84 / 15.84
+  [PASS] mesh numbers: 12516 vertices, 4210 triangles (surface 4096, kerb 82, marks 32, island 0), 4 ms, 0 bad numbers, 0 bad indices
+  [PASS] mesh has every part: surface, kerbs, marks present
+  [PASS] mesh size: 4210 triangles (limit 20000 per pad)
+  [PASS] surface faces up: 0 surface triangles face down
+  [PASS] asphalt lies on the carved terrain (off the corridors): 92 asphalt vertices: biggest gap to terrain + 0.09 m = 0.0000 m (limit 0.005)
+  [PASS] asphalt never below the terrain, follows the old ribbon in the corridors: 6052 vertices in the leg corridors: from 0.000 to +0.061 m above terrain + 0.09 m (limit -0.005 .. +0.17)
+  [PASS] leg SH-1+2 end level: pad level 16.12 m, road 16.12 m, terrain 16.12 m (step 0.00 m)
+  [PASS] leg SH-3 end level: pad level 15.99 m, road 15.99 m, terrain 15.99 m (step 0.00 m)
+  [PASS] leg SH-1+2 end level: pad level 15.56 m, road 15.56 m, terrain 15.56 m (step 0.00 m)
+  [PASS] terrain skirt is smooth: biggest height step between points 0.5 m apart on 16 rays 0..70 m: 0.06 m with the pad, 0.14 m without it (a step that is also there without the pad is old terrain, not the skirt)
+  [PASS] flag OFF vs ON: terrain far from the pad identical: 3195 random points beyond 35.42 m from the centre: 0 changed; 508 of the points nearer changed (the carve)
+--- JN073 T, area 422.84 m2, 3 legs
+  [PASS] pad equals the engine on the final roads: plane y0 17.82 / 17.82
+  [PASS] mesh numbers: 12524 vertices, 4214 triangles (surface 4096, kerb 86, marks 32, island 0), 4 ms, 0 bad numbers, 0 bad indices
+  [PASS] mesh has every part: surface, kerbs, marks present
+  [PASS] mesh size: 4214 triangles (limit 20000 per pad)
+  [PASS] surface faces up: 0 surface triangles face down
+  [PASS] asphalt lies on the carved terrain (off the corridors): 98 asphalt vertices: biggest gap to terrain + 0.09 m = 0.0000 m (limit 0.005)
+  [PASS] asphalt never below the terrain, follows the old ribbon in the corridors: 6046 vertices in the leg corridors: from 0.000 to +0.059 m above terrain + 0.09 m (limit -0.005 .. +0.17)
+  [PASS] leg SH-6+15 end level: pad level 17.93 m, road 17.93 m, terrain 17.93 m (step 0.00 m)
+  [PASS] leg SH-17 end level: pad level 17.73 m, road 17.73 m, terrain 17.73 m (step 0.00 m)
+  [PASS] leg SH-6+15 end level: pad level 17.72 m, road 17.72 m, terrain 17.72 m (step 0.00 m)
+  [PASS] terrain skirt is smooth: biggest height step between points 0.5 m apart on 16 rays 0..70 m: 0.05 m with the pad, 0.16 m without it (a step that is also there without the pad is old terrain, not the skirt)
+  [PASS] flag OFF vs ON: terrain far from the pad identical: 3007 random points beyond 36.36 m from the centre: 0 changed; 518 of the points nearer changed (the carve)
+--- JN076 T, area 477.20 m2, 3 legs
+  [PASS] pad equals the engine on the final roads: plane y0 17.67 / 17.67
+  [PASS] mesh numbers: 12520 vertices, 4212 triangles (surface 4096, kerb 84, marks 32, island 0), 7 ms, 0 bad numbers, 0 bad indices
+  [PASS] mesh has every part: surface, kerbs, marks present
+  [PASS] mesh size: 4212 triangles (limit 20000 per pad)
+  [PASS] surface faces up: 0 surface triangles face down
+  [PASS] asphalt lies on the carved terrain (off the corridors): 61 asphalt vertices: biggest gap to terrain + 0.09 m = 0.0000 m (limit 0.005)
+  [PASS] asphalt never below the terrain, follows the old ribbon in the corridors: 6083 vertices in the leg corridors: from 0.000 to +0.070 m above terrain + 0.09 m (limit -0.005 .. +0.17)
+  [PASS] leg R2-29 end level: pad level 17.91 m, road 17.91 m, terrain 17.91 m (step 0.00 m)
+  [PASS] leg R2-29 end level: pad level 17.41 m, road 17.41 m, terrain 17.41 m (step 0.00 m)
+  [PASS] leg SH-18 end level: pad level 17.68 m, road 17.68 m, terrain 17.68 m (step 0.00 m)
+  [PASS] terrain skirt is smooth: biggest height step between points 0.5 m apart on 16 rays 0..70 m: 0.03 m with the pad, 0.11 m without it (a step that is also there without the pad is old terrain, not the skirt)
+  [PASS] flag OFF vs ON: terrain far from the pad identical: 3175 random points beyond 36.59 m from the centre: 0 changed; 559 of the points nearer changed (the carve)
+--- JN083 T, area 424.11 m2, 3 legs
+  [PASS] pad equals the engine on the final roads: plane y0 18.56 / 18.56
+  [PASS] mesh numbers: 12524 vertices, 4214 triangles (surface 4096, kerb 86, marks 32, island 0), 4 ms, 0 bad numbers, 0 bad indices
+  [PASS] mesh has every part: surface, kerbs, marks present
+  [PASS] mesh size: 4214 triangles (limit 20000 per pad)
+  [PASS] surface faces up: 0 surface triangles face down
+  [PASS] asphalt lies on the carved terrain (off the corridors): 126 asphalt vertices: biggest gap to terrain + 0.09 m = 0.0000 m (limit 0.005)
+  [PASS] asphalt never below the terrain, follows the old ribbon in the corridors: 6018 vertices in the leg corridors: from 0.000 to +0.027 m above terrain + 0.09 m (limit -0.005 .. +0.17)
+  [PASS] leg SH-6+15 end level: pad level 18.59 m, road 18.59 m, terrain 18.59 m (step 0.00 m)
+  [PASS] leg SH-6+15 end level: pad level 18.53 m, road 18.53 m, terrain 18.53 m (step 0.00 m)
+  [PASS] leg SH-7+16 end level: pad level 18.53 m, road 18.53 m, terrain 18.53 m (step 0.00 m)
+  [PASS] terrain skirt is smooth: biggest height step between points 0.5 m apart on 16 rays 0..70 m: 1.20 m with the pad, 1.20 m without it (a step that is also there without the pad is old terrain, not the skirt)
+  [PASS] flag OFF vs ON: terrain far from the pad identical: 2957 random points beyond 36.39 m from the centre: 0 changed; 534 of the points nearer changed (the carve)
+--- JN147 T, area 479.71 m2, 3 legs
+  [PASS] pad equals the engine on the final roads: plane y0 31.74 / 31.74
+  [PASS] mesh numbers: 12520 vertices, 4212 triangles (surface 4096, kerb 84, marks 32, island 0), 6 ms, 0 bad numbers, 0 bad indices
+  [PASS] mesh has every part: surface, kerbs, marks present
+  [PASS] mesh size: 4212 triangles (limit 20000 per pad)
+  [PASS] surface faces up: 0 surface triangles face down
+  [PASS] asphalt lies on the carved terrain (off the corridors): 58 asphalt vertices: biggest gap to terrain + 0.09 m = 0.0000 m (limit 0.005)
+  [PASS] asphalt never below the terrain, follows the old ribbon in the corridors: 6086 vertices in the leg corridors: from 0.000 to +0.045 m above terrain + 0.09 m (limit -0.005 .. +0.17)
+  [PASS] leg R2-19 end level: pad level 31.69 m, road 31.69 m, terrain 31.69 m (step 0.00 m)
+  [PASS] leg C-5 end level: pad level 31.88 m, road 31.88 m, terrain 31.88 m (step 0.00 m)
+  [PASS] leg R2-19 end level: pad level 31.79 m, road 31.79 m, terrain 31.79 m (step 0.00 m)
+  [PASS] terrain skirt is smooth: biggest height step between points 0.5 m apart on 16 rays 0..70 m: 0.17 m with the pad, 0.17 m without it (a step that is also there without the pad is old terrain, not the skirt)
+  [PASS] flag OFF vs ON: terrain far from the pad identical: 3149 random points beyond 36.56 m from the centre: 0 changed; 543 of the points nearer changed (the carve)
+--- JN165 T, area 506.98 m2, 3 legs
+  [PASS] pad equals the engine on the final roads: plane y0 32.25 / 32.25
+  [PASS] mesh numbers: 12528 vertices, 4216 triangles (surface 4096, kerb 96, marks 24, island 0), 16 ms, 0 bad numbers, 0 bad indices
+  [PASS] mesh has every part: surface, kerbs, marks present
+  [PASS] mesh size: 4216 triangles (limit 20000 per pad)
+  [PASS] surface faces up: 0 surface triangles face down
+  [PASS] asphalt lies on the carved terrain (off the corridors): 90 asphalt vertices: biggest gap to terrain + 0.09 m = 0.0000 m (limit 0.005)
+  [PASS] asphalt never below the terrain, follows the old ribbon in the corridors: 6054 vertices in the leg corridors: from 0.000 to +0.116 m above terrain + 0.09 m (limit -0.005 .. +0.17)
+  [PASS] leg L-26 end level: pad level 31.70 m, road 31.70 m, terrain 31.70 m (step 0.00 m)
+  [PASS] leg R2-19 end level: pad level 32.13 m, road 32.13 m, terrain 32.13 m (step 0.00 m)
+  [PASS] leg R2-19 end level: pad level 32.32 m, road 32.32 m, terrain 32.32 m (step 0.00 m)
+  [PASS] terrain skirt is smooth: biggest height step between points 0.5 m apart on 16 rays 0..70 m: 0.20 m with the pad, 0.21 m without it (a step that is also there without the pad is old terrain, not the skirt)
+  [PASS] flag OFF vs ON: terrain far from the pad identical: 2703 random points beyond 41.67 m from the centre: 0 changed; 566 of the points nearer changed (the carve)
   [PASS] no old junction pad overlaps an auto pad: 0 old pads, smallest gap n/a m
 RESULT ALL PASS

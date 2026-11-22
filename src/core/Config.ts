@@ -79,7 +79,7 @@ export const Config = {
      * AUTO CONNECT AT GRADE, A-5 (HANDOFF_ROAD_DESIGN.md 24.12): pad mesh (asphalt, kerbs, island, stop line, zebra) + terrain carve for the junctions listed in `ids`
      * (src/roads/JunctionAuto*.ts). OFF = the game is exactly as before (no pad, no carve, no mesh). ON: only the listed ids, and only those whose checks all PASS are built.
      */
-    autoJunction: { enabled: false as boolean, ids: ['JN163', 'JN033'] as string[] },
+    autoJunction: { enabled: false as boolean, ids: ['JN163', 'JN033', 'JN028', 'JN037', 'JN043', 'JN056', 'JN059', 'JN060', 'JN064', 'JN073', 'JN076', 'JN083', 'JN147', 'JN165'] as string[] },
     /** RT-E ramp bridges M3 / M4 + arm viaduct widening (RE-9). ON (RE-9): set false to hide it. */
     junctionRte: { enabled: true as boolean },
     /** RE-9 ground-level slip lanes RTE-A2S / RTE-S2A as one-way ramp roads (outside the arm viaduct window). */
