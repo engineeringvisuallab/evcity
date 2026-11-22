@@ -207,3 +207,26 @@ Files: Config.ts (roads.junctionRteArmGround.enabled = true; false = old viaduct
 RUN (headless): rte-armground-check.ts 8 PASS 0 FAIL (structure gone at 160..271 and unchanged at 391..694; rail unchanged; 207 roads unchanged; ground = road level on the centre line, worst 0.00 m, before up to 4.95 m below; +-15 m worst 0.06 m; no wet ground). rte-mesh-check.ts 13 PASS. rte-lane-check.ts 9 PASS.
 NOT RUN: the game (look of the embankment), npm run build, full tsc, traffic, minimap.
 STILL OPEN (next steps, user OK first): (3b) ramp strips M3 / M4 beside the arm are still bridges on piers (M4 deck is 12 m above the arm at d 160, it must come down by grade, so a pure ground ramp there needs a new vertical profile = re-run of tools/rte-m3.py / rte-m4.py); (1) / (2) ramp ends merge into the ring and into the arm (taper of the deck width, bigger radius where needed); (4) wider slip lanes (3.65 -> wider, the lane centre must move outward so it does not overlap the ring / arm pavement).
+
+## 22. RE-9 WIDER SLIP LANES (2026-11-22, user mark 4; user order: small items first, the big one (3b) later)
+Slip lanes RTE-A2S / RTE-S2A: 3.65 m -> 5.5 m (halfWidth 2.75; one-lane ramp with shoulders, ASSUMED). Only src/roads/RoadNetwork.ts (layoutRteLanes) and scripts/rte-lane-check.ts changed. The centre line is an OFFSET curve of the RE-3 data line, 1.8 m toward the inside of the corner (away from the ring and the arm), so the arc radius only shrinks by 1.8 m (R 50 -> about 48; smallest point-to-point estimate 47.1 m). The lane is cut where its edge is less than 0.3 m outside the arm pavement edge (S2A now starts at d 148). Levels are the data levels (nearest data point, worst 0.003 m). Now: RTE-A2S 91 m (ring side u 99.7, d 26 -> stem d 66), RTE-S2A 173 m (stem d 148 -> ring side u -99.7, d 26).
+RUN (headless): rte-lane-check.ts 12 PASS 0 FAIL (new L9a clearance to the paved edges 0.30 m, L9b radius 47.1 m >= 40.6, L9c lane edge to the nearest M3 / M4 pier 3.62 m >= 2.0 m (ASSUMED column half 1.5 m + 0.5 m)); L4 tolerance changed 1 cm -> 5 cm (the line is moved), worst 0.003 m. rte-armground-check.ts 8 PASS, rte-mesh-check.ts 13 PASS.
+NOT RUN: the game, npm run build, full tsc, traffic, signs, drainage, shoulder / gravel width of the road class beside the 5.5 m (the road system adds its own shoulder, not measured).
+NEXT (user OK first): (1) / (2) ramp ends merge into the ring and into the arm: deck-width taper tail at the 4 ends (M3 start on ring B, M3 nose at the arm, M4 gore at the arm, M4 landing on ring B), radius bigger only where needed; then 3b (ramp strips beside the arm as ground roads, needs a new vertical profile of M3 / M4).
+
+## 23. RE-9 STEP A: MERGE TAILS of the ramps M3 / M4 (2026-11-22, user marks 1 and 2: 'the ramp must come to the road and merge')
+
+What was done (src/roads/RoadNetwork.ts, layoutRteLanes, block '1b) MERGE TAILS', inside `if (SIMPLE)`; switch = Config.roads.junctionRteLanes, no new switch):
+- The four free ends of the ramp bridges now continue as GROUND ramp roads (fixedY levels, daylight terrain, same method as the slips): RTE-TAIL-M3S (ring B, 108 m, width 9.7), RTE-TAIL-M3N (beside the arm, 103 m, width 6.18), RTE-TAIL-M4G (beside the arm, 98 m, width 9.7), RTE-TAIL-M4L (ring B, 188 m, width 6.1).
+- Each tail starts exactly at the bridge end (plan 0.000 m, level 0.000 m) and runs side by side with the main road: the tip lane edge is 0.30 m off the REAL paved edge of the ring M8 / arm J1-E (measured from the BUILT centre line + halfWidth 22.1; the ring is slightly curved and the arm bends toward +u after d 275, so the straight frame line u / d is NOT the road). Tip level = main road level (<= 5 cm).
+- Convergence = 100 m smoothstep (M4L 110 m); the road system has constant width, so there is NO width taper: the deck width stays (that is a lane add, the ramp joins the main road side by side).
+- M4L level: the M4 data already falls to the ring level (3 cm rest blended in). A full blend would have made 7 % grade.
+- Grade: tails <= 5 % (max 4.97 %, M3N bridge-end part = data), slips 3.2 %.
+
+Checks (scripts/rte-lane-check.ts, new T0..T9; L6 and L1 now cover tails; L9a uses |d| and the real halfWidth; the old L9a FAIL -53 m was a CHECK bug: it assumed ring side d > 0 and half width 2.75):
+- RUN headless (about 11 s each): rte-lane-check ALL PASS (22), rte-mesh-check ALL PASS (13), rte-armground-check ALL PASS (8). Existing roads unchanged (0 of 205), rail unchanged.
+- Picture: docs/rte_tails.png (top view, u along ring, d along arm).
+- NOT RUN: game (look, traffic, minimap), npm run build, full tsc, Validate.ts. ASSUMED: the abutment / deck start look at the tail join (RteMesh unchanged), tail road shoulders, ground collision of the tails in the game (built as normal roads, so collision is as the slips).
+- T7 (no overlap with other roads) found no other road within 60 m of any tail; the bridge decks of M3 / M4 are not roads, their pier clearance is T9 (other ramp >= 59 m).
+
+Not done (honest): STEP B (ramp strips 1, 2 to ground; M4 is 12 m above M3, needs new vertical profile, tools/rte-m3.py, rte-m4.py, then rte-width / rte-terrain / rte-struct), STEP C (lane taper, S2A retaining wall, signs, gore pad).

@@ -21,7 +21,9 @@ import { R6_LINE_DATA } from './r6/R6LineData';
 import { R6_NEW_LINE_DATA } from './r6/R6NewLineData';
 import { R6_SLIP_DATA } from './r6/R6SlipData';
 import { RTE_SLIP_DATA } from './junction/RteGeometry';
-import { RTE_STRUCT_FRAME } from './junction/RteStructData';
+import { RTE_STRUCT_FRAME, RTE_RAMP_STRUCTS } from './junction/RteStructData';
+import { RTE_M3_DATA } from './junction/RteM3Data';
+import { RTE_M4_DATA } from './junction/RteM4Data';
 import { RTE_VIADUCT_WIDENING, RTE_STEM_OUTBOUND, RTE_STEM_INBOUND } from './junction/RteWidthData';
 import { R4_NEW_LINE_DATA } from './r4/R4NewLineData';
 import { CLASS_R4_OPEN, CLASS_R2_OPEN, CLASS_C_ZONE, CLASS_L_ZONE } from './standards/ClassSections';
@@ -392,19 +394,19 @@ export class RoadNetwork {
 
   private layoutRteLanes(): void {
     const F = RTE_STRUCT_FRAME;
-    const LANE = 3.65, HW = 22.1;                                                   // lane width (RE-3), arm paved half width
+    const LANE = 5.5, HW = 22.1;                                                    // lane width (was 3.65 in RE-3; user 2026-11-22: wider, 5.5 m = one-lane ramp with shoulders, ASSUMED), arm paved half width
     const uOf = (x: number, z: number): number => (x - F.J[0]) * F.t[0] + (z - F.J[1]) * F.t[1];
     const vOf = (x: number, z: number): number => -((x - F.J[0]) * F.ln[0] + (z - F.J[1]) * F.ln[1]); // d along the stem
     const wins: number[][] = Object.values(RTE_VIADUCT_WIDENING).map((w) => w.window);    // arm viaduct windows: carried by the widened viaduct (RteMesh), not by a ground road
     const inWin = (v: number): boolean => wins.some((w) => v >= w[0] - 1e-9 && v <= w[1] + 1e-9);
-    const emit = (name: string, pts: number[][], ys: number[]): void => {
+    const emit = (name: string, pts: number[][], ys: number[], hw: number = LANE / 2): void => {
       const kp: number[][] = [], ky: number[] = [];                                // drop repeated points (a run that starts exactly on a window edge)
       for (let i = 0; i < pts.length; i++) if (i === 0 || Math.hypot(pts[i][0] - kp[kp.length - 1][0], pts[i][1] - kp[kp.length - 1][1]) > 0.05) { kp.push(pts[i]); ky.push(ys[i]); }
       pts = kp; ys = ky;
       let L = 0;
       for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
       if (pts.length < 3 || L < 20) return;
-      this.addRoad({ tier: 3, kind: 'ramp', name, closed: false, pts, halfWidth: LANE / 2, lanes: 1, speedKmh: 40, maxGrade: 0.05, fixedY: ys, daylight: true });
+      this.addRoad({ tier: 3, kind: 'ramp', name, closed: false, pts, halfWidth: hw, lanes: hw > 4 ? 2 : 1, speedKmh: hw > 4 ? 50 : 40, maxGrade: 0.05, fixedY: ys, daylight: true });
       this.rteLaneReport.push({ name, roadId: this.roads[this.roads.length - 1].id, length: L, points: pts.length });
     };
     // 1) the slips RTE-A2S / RTE-S2A: ground parts only. Not a ground road: inside a viaduct window; beside the stem where the lane would lie on the arm pavement (taper start, the viaduct wedge / RE-6 lane table owns it); A2S beyond d 66 (RE-6 combined lane replaces the RE-3 stem part)
@@ -417,13 +419,23 @@ export class RoadNetwork {
       let a = 0, b = n - 1;
       if (dd(0) < 40) { while (a + 1 < n && dd(a + 1) < 24.3) a++; let s = 0; while (a > 0 && s < 12) { s += seg(a, a - 1); a--; } }                // starts on the ring side: cut the straight lane, keep 12 m lead-in
       if (dd(n - 1) < 40) { while (b - 1 >= 0 && dd(b - 1) < 24.3) b--; let s = 0; while (b < n - 1 && s < 12) { s += seg(b, b + 1); b++; } }      // ends on the ring side: same
-      return { ...q0, pts: q0.pts.slice(a, b + 1), ys: q0.ys.slice(a, b + 1) };
+      // wider lane (5.5 m): the centre line is OFFSET by K toward the inside of the corner (away from the ring and the arm; same direction on the straights and on the arc, so the arc radius only changes by K), so the lane edge keeps its distance from the paved edges; levels unchanged
+      const K = 1.8, base = q0.pts.slice(a, b + 1), m = base.length;
+      const pts = base.map((p, i) => {
+        const p0 = base[Math.max(0, i - 1)], p1 = base[Math.min(m - 1, i + 1)];
+        const tx = p1[0] - p0[0], tz = p1[1] - p0[1], tl = Math.hypot(tx, tz) || 1;
+        let nx = -tz / tl, nz = tx / tl;
+        const su = uOf(p[0], p[1]) >= 0 ? 1 : -1, ex = -F.ln[0] + su * F.t[0], ez = -F.ln[1] + su * F.t[1];   // 'inside of the corner' = d grows and |u| grows
+        if (nx * ex + nz * ez < 0) { nx = -nx; nz = -nz; }
+        return [p[0] + nx * K, p[1] + nz * K];
+      });
+      return { ...q0, pts, ys: q0.ys.slice(a, b + 1) };
     };
     for (const q0 of RTE_SLIP_DATA) {
       const q = SIMPLE ? trimToArc(q0) : q0;
       const bad = (x: number, z: number): boolean => {
         const v = vOf(x, z);
-        return inWin(v) || (v > 40 && Math.abs(uOf(x, z)) - LANE / 2 < HW - 0.1) || (q.name === 'RTE-A2S' && v > 66);
+        return inWin(v) || (v > 40 && Math.abs(uOf(x, z)) - LANE / 2 < HW + 0.3) || (q.name === 'RTE-A2S' && v > 66);
       };
       const runs: { pts: number[][]; ys: number[] }[] = [];
       let cur: { pts: number[][]; ys: number[] } | null = null;
@@ -443,6 +455,83 @@ export class RoadNetwork {
       }
       if (cur) runs.push(cur);
       runs.forEach((r, k) => emit(k === 0 ? q.name : `${q.name}-${String.fromCharCode(97 + k)}`, r.pts, r.ys));
+    }
+    // 1b) MERGE TAILS (STEP A, user 2026-11-22, marks 1 and 2: 'the ramp must come to the road and merge'). The four free ends of the ramp bridges M3 / M4 continue as GROUND ramp roads (same method as the
+    // slips: finished levels used exactly via fixedY, terrain follows with daylight slopes) and run side by side with the main road: the lane edge ends GAP = 0.3 m off the REAL paved edge of the ring (M8) or the
+    // arm (J1-E) (distance measured from the built centre line and its halfWidth, NOT from the straight frame line: the ring is slightly curved). The road system has a constant width, so the 'taper' is a
+    // lateral convergence over LT = 100 m (smoothstep), the width stays that of the deck at that end (M3 start 9.7, M3 nose 6.18, M4 gore 9.7, M4 landing 6.1). Level: the main road level at the tip,
+    // blended to the data level of the ramp end (M3 start, M3 nose, M4 gore); M4 landing: the data level (it already falls to the ring level, 3 cm rest blended in over the last 110 m).
+    if (SIMPLE) {
+      const ring = this.roadByName('M8'), armR = this.roadByName('J1-E');
+      const M3 = RTE_RAMP_STRUCTS.find((r) => r.name === 'M3'), M4 = RTE_RAMP_STRUCTS.find((r) => r.name === 'M4');
+      if (ring && armR && M3 && M4) {
+        const W = (u: number, d: number): number[] => [F.J[0] + u * F.t[0] - d * F.ln[0], F.J[1] + u * F.t[1] - d * F.ln[1]];
+        const sm = (x: number): number => { const t = Math.min(1, Math.max(0, x)); return t * t * (3 - 2 * t); };
+        // nearest point on the built centre line of a main road: foot point, its level and the distance
+        const near = (r: RoadSpec, x: number, z: number): { cx: number; cz: number; y: number; d: number } => {
+          let best = Infinity, cx = 0, cz = 0, y = 0;
+          for (let k = 0; k + 1 < r.xs.length; k++) {
+            const vx = r.xs[k + 1] - r.xs[k], vz = r.zs[k + 1] - r.zs[k], l2 = vx * vx + vz * vz || 1;
+            const t = Math.max(0, Math.min(1, ((x - r.xs[k]) * vx + (z - r.zs[k]) * vz) / l2));
+            const px = r.xs[k] + t * vx, pz = r.zs[k] + t * vz, d = Math.hypot(x - px, z - pz);
+            if (d < best) { best = d; cx = px; cz = pz; y = r.ys[k] + (r.ys[k + 1] - r.ys[k]) * t; }
+          }
+          return { cx, cz, y, d: best };
+        };
+        // move a point along the normal of the main road (foot point -> point) so that its distance from the centre line becomes 'want'
+        const moveTo = (r: RoadSpec, x: number, z: number, want: number): { p: number[]; y: number; d: number } => {
+          const n = near(r, x, z), dl = n.d || 1;
+          return { p: [n.cx + ((x - n.cx) / dl) * want, n.cz + ((z - n.cz) / dl) * want], y: n.y, d: n.d };
+        };
+        const GAP = 0.3, STEP = 4, LT = 100;
+        const nM3 = M3.x.length - 1, nM4 = M4.x.length - 1;
+        // (a) M3 start on ring B: from the tip beside the ring (100 m before the data start, u about -273) to the first bridge section (s 8)
+        {
+          const hw = 4.85, pD = RTE_M3_DATA.pts[0], yD = RTE_M3_DATA.ys[0], p8 = [M3.x[0], M3.z[0]], y8 = M3.deckY[0];
+          const uD = uOf(pD[0], pD[1]), uTip = uD - LT, dataD = -vOf(pD[0], pD[1]), tipD = ring.halfWidth + hw + GAP, off = yD - near(ring, pD[0], pD[1]).y;
+          const pts: number[][] = [], ys: number[] = [];
+          for (let u = uTip; u < uD - 1e-6; u += STEP) {
+            const k = (u - uTip) / LT, q = W(u, -dataD), dq = near(ring, q[0], q[1]).d, m = moveTo(ring, q[0], q[1], tipD + (dq - tipD) * sm(k));
+            pts.push(m.p); ys.push(m.y + off * sm(k));
+          }
+          pts.push([pD[0], pD[1]], [(pD[0] + p8[0]) / 2, (pD[1] + p8[1]) / 2], p8); ys.push(yD, (yD + y8) / 2, y8);
+          emit('RTE-TAIL-M3S', pts, ys, hw);
+        }
+        // (b) M3 nose at the arm: from the last bridge section (s 348.5, d 149) to the tip beside the arm (d 251)
+        {
+          const hw = 3.09, pE = [M3.x[nM3], M3.z[nM3]], yE = M3.deckY[nM3], pN = RTE_M3_DATA.pts[RTE_M3_DATA.pts.length - 1], yN = RTE_M3_DATA.ys[RTE_M3_DATA.ys.length - 1];
+          const dN = vOf(pN[0], pN[1]), uN = uOf(pN[0], pN[1]), tipD = armR.halfWidth + hw + GAP, off = yN - near(armR, pN[0], pN[1]).y;
+          const pts: number[][] = [pE, [pN[0], pN[1]]], ys: number[] = [yE, yN];
+          for (let d = dN + STEP; d <= dN + LT + 1e-6; d += STEP) {
+            const k = (d - dN) / LT, q = W(uN, d), dq = near(armR, q[0], q[1]).d, m = moveTo(armR, q[0], q[1], dq + (tipD - dq) * sm(k));
+            pts.push(m.p); ys.push(m.y + off * (1 - sm(k)));
+          }
+          emit('RTE-TAIL-M3N', pts, ys, hw);
+        }
+        // (c) M4 gore at the arm: from the tip beside the arm (d 375) to the first bridge section (s 0, d 275)
+        {
+          const hw = 4.85, p0 = [M4.x[0], M4.z[0]], y0 = M4.deckY[0], d0 = vOf(p0[0], p0[1]), u0 = uOf(p0[0], p0[1]), tipD = armR.halfWidth + hw + GAP, off = y0 - near(armR, p0[0], p0[1]).y;
+          const pts: number[][] = [], ys: number[] = [];
+          for (let d = d0 + LT; d > d0 + 1e-6; d -= STEP) {
+            const k = (d0 + LT - d) / LT, q = W(u0, d), dq = near(armR, q[0], q[1]).d, m = moveTo(armR, q[0], q[1], tipD + (dq - tipD) * sm(k));
+            pts.push(m.p); ys.push(m.y + off * sm(k));
+          }
+          pts.push(p0); ys.push(y0);
+          emit('RTE-TAIL-M4G', pts, ys, hw);
+        }
+        // (d) M4 landing on ring B: from the last bridge section (s 532.7, u 231.5) along the data line (ring parallel, falling to the ring level); the last 110 m converge to the ring edge and to the ring level
+        {
+          const hw = 3.05, pE = [M4.x[nM4], M4.z[nM4]], yE = M4.deckY[nM4], uE = uOf(pE[0], pE[1]), dd = RTE_M4_DATA.pts;
+          const uLast = uOf(dd[dd.length - 1][0], dd[dd.length - 1][1]), LC = 110, u1 = uLast - LC, tipD = ring.halfWidth + hw + GAP;
+          const pts: number[][] = [pE], ys: number[] = [yE], iL = dd.length - 1, offEnd = near(ring, dd[iL][0], dd[iL][1]).y - RTE_M4_DATA.ys[iL];   // the data already falls to the ring level (3 cm off): only that small rest is blended in (a full blend would steepen the grade to 7 %)
+          for (let i = 0; i < dd.length; i++) {
+            const u = uOf(dd[i][0], dd[i][1]); if (u <= uE + 0.5) continue;
+            const w = sm((u - u1) / LC), dq = near(ring, dd[i][0], dd[i][1]).d, m = moveTo(ring, dd[i][0], dd[i][1], dq + (tipD - dq) * w);
+            pts.push(m.p); ys.push(RTE_M4_DATA.ys[i] + offEnd * w);
+          }
+          emit('RTE-TAIL-M4L', pts, ys, hw);
+        }
+      }
     }
     // 2) the ADDED LANES beside the stem (RteWidthData rows, RE-6): full-width (3.65 m) parts outside the viaduct windows as ground roads, centre u = +-c, level = the J1-E arm level on the stem axis.
     // The tapers (width < 3.65 m) are NOT built here (the lane ends where its taper starts; constant road width): honest, listed in the handoff.
