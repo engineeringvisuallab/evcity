@@ -13,6 +13,7 @@ import { StationSignLayer } from '../rail/StationSignLayer';
 import { Player } from '../characters';
 import { HELI, HelicopterManager } from '../aircraft';
 import { BoatManager, findWaterSpot } from '../boats';
+import { LakeTree } from '../vegetation/LakeTree';
 import { PolicePursuitManager } from '../people/PolicePursuitManager';
 import { TourManager } from '../tour/TourManager';
 import { HelicopterBombs } from '../combat/HelicopterBombs';
@@ -147,6 +148,8 @@ export class Engine {
   readonly helis: HelicopterManager;
   /** Speedboats floating on the sea, lakes and rivers (F to get in). */
   readonly boats: BoatManager;
+  /** The one lone autumn tree standing in the shallow sea on the south-west side (Wanaka-style). */
+  readonly lakeTree: LakeTree;
   /** The Tour button: pick an engineering site and its guided tour starts. */
   readonly tour: TourManager;
   /** Police vehicles pursue the player when the wanted level rises. */
@@ -854,6 +857,7 @@ export class Engine {
       project: this.project,
     });
     this.spawnBoats();
+    this.lakeTree = new LakeTree(this.world.root, this.world.terrain);
 
     this.birds = new BirdManager(this.world.root, this.world.terrain, this.world.seed.value);
     this.animals = new AnimalManager(this.world.root, this.world.terrain, this.world.seed.value);
@@ -1164,6 +1168,7 @@ export class Engine {
     this.vehicles.update(alpha, this.world.playerWorld, dt);
     this.explosions.update(dt);
     this.treeDestruction.update(dt);
+    this.lakeTree.update(performance.now() / 1000);
     this.busStops.update(dt, this.world.playerWorld);
     this.busStops.place();
     this.trafficSignals.now = this.time.elapsed;
