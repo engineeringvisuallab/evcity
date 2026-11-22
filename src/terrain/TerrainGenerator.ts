@@ -116,6 +116,7 @@ export class TerrainGenerator {
     this.rail = new RailNetwork(this);
     this.railForm = new RailFormation(this.rail);
     this.roads.addJ1Arms(); // STEP J1-e2: the J1 arms join the road network after the railway is planned (the railway cannot change)
+    this.roads.addRteLanes(); // STEP RE-9: ground-level RT-E slip lanes (Config.roads.junctionRteLanes), after the rail, before the corridor roads
     this.roads.addCorridorRoads(); // STEP CRR-5b: the 5 rail-corridor roads, AFTER the rail, railForm and the J1 arms (Config.roads.corridorRoads, default OFF)
     // RESIDENTIAL LEVEL (2026-11-19): the C / L / R2 / R4 roads inside the flat residential zones are laid on the flat ground (road level = ground level). After the railway (it cannot change): the weight fades out near the rail corridor and near every other road.
     this.roads.reprofileResidential(

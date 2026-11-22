@@ -20,6 +20,9 @@ import { ISLAND_LINK_DATA } from './island/IslandLinkData';
 import { R6_LINE_DATA } from './r6/R6LineData';
 import { R6_NEW_LINE_DATA } from './r6/R6NewLineData';
 import { R6_SLIP_DATA } from './r6/R6SlipData';
+import { RTE_SLIP_DATA } from './junction/RteGeometry';
+import { RTE_STRUCT_FRAME } from './junction/RteStructData';
+import { RTE_VIADUCT_WIDENING } from './junction/RteWidthData';
 import { R4_NEW_LINE_DATA } from './r4/R4NewLineData';
 import { CLASS_R4_OPEN, CLASS_R2_OPEN, CLASS_C_ZONE, CLASS_L_ZONE } from './standards/ClassSections';
 import { R2_NEW_LINE_DATA } from './r2/R2NewLineData';
@@ -358,6 +361,76 @@ export class RoadNetwork {
     this.cells.clear();
     this.j1Cells.clear();
     this.buildSegments();
+  }
+
+  /** STEP RE-9 (ground lanes): what addRteLanes built (headless check scripts/rte-lane-check.ts). */
+  readonly rteLaneReport: { name: string; roadId: number; length: number; points: number }[] = [];
+  private rteLanesAdded = false;
+
+  /**
+   * STEP RE-9: the GROUND-LEVEL slip lanes of RT-E (RTE-A2S, RTE-S2A from RteGeometry.ts, made by tools/rte-slips.py) as one-way ramp roads, finished heights used exactly (fixedY), terrain follows daylight slopes.
+   * Same method as the R6 slips. The part of a slip that lies inside an arm viaduct window (stem d 160..271) is NOT a ground road: the widened viaduct (RteMesh wedge) carries it. Called by TerrainGenerator AFTER the rail
+   * (the railway never sees the new asphalt, THE RAILWAY CANNOT CHANGE). Existing roads are not changed. Switch: Config.roads.junctionRteLanes (a wrong piece must never break the world build).
+   */
+  addRteLanes(): void {
+    if (!Config.roads.junctionRteLanes.enabled || this.rteLanesAdded) return;
+    this.rteLanesAdded = true;
+    const before = this.roads.length;
+    try {
+      this.layoutRteLanes();
+    } catch (err) {
+      console.warn(`[RTE lanes] skipped: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    if (this.roads.length === before) return;
+    this.chunkSegs.clear();
+    this.padCells.clear();
+    this.chunkPads.clear();
+    this.cells.clear();
+    this.j1Cells.clear();
+    this.buildSegments();
+  }
+
+  private layoutRteLanes(): void {
+    const F = RTE_STRUCT_FRAME;
+    const vOf = (p: number[]): number => -((p[0] - F.J[0]) * F.ln[0] + (p[1] - F.J[1]) * F.ln[1]); // d along the stem
+    for (const q of RTE_SLIP_DATA) {
+      const win = (q.name === 'RTE-A2S' ? RTE_VIADUCT_WIDENING.out_viaduct1 : RTE_VIADUCT_WIDENING.in_viaduct1).window;
+      const inWin = (v: number): boolean => v > win[0] && v < win[1];
+      const runs: { pts: number[][]; ys: number[] }[] = [];
+      let cur: { pts: number[][]; ys: number[] } | null = null;
+      const n = q.pts.length;
+      for (let i = 0; i < n; i++) {
+        const v = vOf(q.pts[i]);
+        const ok = !inWin(v);
+        if (i > 0) {
+          const v0 = vOf(q.pts[i - 1]);
+          const ok0 = !inWin(v0);
+          if (ok !== ok0) {
+            const edge = Math.abs(v0 - win[0]) + Math.abs(v - win[0]) < Math.abs(v0 - win[1]) + Math.abs(v - win[1]) ? win[0] : win[1]; // the window edge that lies between the two points
+            const t = Math.min(1, Math.max(0, (edge - v0) / (v - v0)));
+            const bp = [q.pts[i - 1][0] + (q.pts[i][0] - q.pts[i - 1][0]) * t, q.pts[i - 1][1] + (q.pts[i][1] - q.pts[i - 1][1]) * t];
+            const by = q.ys[i - 1] + (q.ys[i] - q.ys[i - 1]) * t;
+            if (ok0 && cur) { cur.pts.push(bp); cur.ys.push(by); runs.push(cur); cur = null; } else if (!ok0) { cur = { pts: [bp], ys: [by] }; }
+          }
+        }
+        if (ok) {
+          if (!cur) cur = { pts: [], ys: [] };
+          cur.pts.push([q.pts[i][0], q.pts[i][1]]);
+          cur.ys.push(q.ys[i]);
+        }
+      }
+      if (cur) runs.push(cur);
+      let k = 0;
+      for (const r of runs) {
+        let L = 0;
+        for (let i = 1; i < r.pts.length; i++) L += Math.hypot(r.pts[i][0] - r.pts[i - 1][0], r.pts[i][1] - r.pts[i - 1][1]);
+        if (r.pts.length < 3 || L < 20) continue;
+        const name = k === 0 ? q.name : `${q.name}-${String.fromCharCode(97 + k)}`;
+        this.addRoad({ tier: 3, kind: 'ramp', name, closed: false, pts: r.pts, halfWidth: 3.0, lanes: 1, speedKmh: 40, maxGrade: 0.05, fixedY: r.ys, daylight: true });
+        this.rteLaneReport.push({ name, roadId: this.roads[this.roads.length - 1].id, length: L, points: r.pts.length });
+        k++;
+      }
+    }
   }
 
   /** Ground that daylightReach() measures against (flat residential ground included). Set by reprofileResidential(); null = the natural sampler. */

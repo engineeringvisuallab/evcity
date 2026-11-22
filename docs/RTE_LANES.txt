@@ -1,0 +1,14 @@
+RE-9 GROUND LANES: roads OFF 205, ON 208; built RTE-A2S 403 m / 69 pts, RTE-A2S-b 39 m / 8 pts, RTE-S2A 547 m / 93 pts
+PASS  L0 the switch builds at least the A2S and S2A ground parts  3 roads
+PASS  L1 no wet ground under the lanes (sc.water > sc.h, 5 offsets per point)  0 wet samples
+PASS  L2 rail unchanged (piers, edges)  9be4e562e3:422:12 / 9be4e562e3:422:12
+PASS  L3 every existing road unchanged (xs, zs, ys)  0 changed of 205
+PASS  L4 lane surface level = RE-3 data level (<= 1 cm)  worst 0.000 m
+PASS  L5 finished ground on the lane centre line within 0.15 m of the lane level (the lane is carved / filled), except within 15 m of an arm viaduct window edge  worst 0.00 m ()
+INFO  5 lane points within 15 m of a viaduct window edge have ground up to 1.81 m below the lane (the lane is on the approach embankment of the arm viaduct; the approach slab of the widened viaduct is RteMesh)
+PASS  L6 max grade of the lanes <= 5 %  3.96 %
+
+NOT RUN  game (look, traffic on the slips, minimap), the stem added lanes beside the J1-E arm (RteWidthData rows, d 66 .. 510, outside the viaduct windows), lane tapers (the slips are a constant 3.65 m lane inside a 6.0 m paved ramp road), retaining wall on S2A where fill > 7 m (daylight slope instead), Validate.ts, npm run build.
+ASSUMED  ramp road halfWidth 3.0 m (lane 3.65 m + 1.2 m shoulders), V 40 km/h, parts inside the arm viaduct window d 160..271 are carried by the widened viaduct (RteMesh), not by a ground road.
+
+SUMMARY: ALL PASS (7 PASS, 0 FAIL)

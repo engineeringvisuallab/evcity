@@ -77,6 +77,8 @@ export const Config = {
     junctionJ1Arms: { enabled: true as boolean },
     /** RT-E ramp bridges M3 / M4 + arm viaduct widening (RE-9). ON (RE-9): set false to hide it. */
     junctionRte: { enabled: true as boolean },
+    /** RE-9 ground-level slip lanes RTE-A2S / RTE-S2A as one-way ramp roads (outside the arm viaduct window). */
+    junctionRteLanes: { enabled: true as boolean },
     /** STEP 17.1g-a: the island link M6-1 (6-lane, src/roads/island/IslandLinkData.ts, made by tools/island-link-data.py, deck option A of 17.1d) from the ring S node to the island centre, as game road 'M6-1' with its structure range. enabled = false: no island link.
      *  bridgeDeck = true (17.1g-b): the strait structure (mainland viaduct + bridge + island viaduct, s 489-873) has its plain girder mesh (RingBridgeGeometry.straitGirder, listed last in ringStructures()) and the ribbon is drawn on it. false = deck mesh off and the ribbon held back on the inner part (the old 17.1g-a state, only for checks). */
     islandLink: { enabled: true as boolean, bridgeDeck: true as boolean },
