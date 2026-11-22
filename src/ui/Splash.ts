@@ -54,7 +54,20 @@ const CSS = `
 .evs-tips span{position:absolute;left:0;right:0;top:0;color:rgba(200,230,240,.8);font-size:13px;opacity:0;animation:evs-tip 20s linear infinite;animation-delay:calc(var(--i) * 4s + 2s);}
 @keyframes evs-rise{0%{transform:scaleY(0)}35%,72%{transform:scaleY(1)}100%{transform:scaleY(0)}}
 @keyframes evs-tip{0%{opacity:0;transform:translateY(6px)}3%,17%{opacity:1;transform:none}20%,100%{opacity:0}}
+.evs-shots{position:relative;margin-top:24px;width:min(88vw,calc(32vh * 3.07),920px);aspect-ratio:1400 / 456;border-radius:14px;overflow:hidden;background:#0a1c28;
+  box-shadow:0 0 0 1px rgba(16,245,212,.35),0 12px 40px rgba(0,0,0,.55);opacity:0;animation:evs-fade .8s ease 1.8s forwards;}
+.evs-slide{position:absolute;inset:0;opacity:0;animation:evs-slide 40s linear infinite;animation-delay:calc(var(--i) * 5s + 1.8s);}
+.evs-slide img{display:block;width:100%;height:100%;object-fit:cover;transform-origin:50% 50%;animation-duration:40s;animation-timing-function:ease-out;animation-iteration-count:infinite;animation-delay:calc(var(--i) * 5s + 1.8s);}
+.evs-slide.zin img{animation-name:evs-kin}
+.evs-slide.zout img{animation-name:evs-kout}
+.evs-slide b{position:absolute;left:0;right:0;bottom:0;padding:26px 16px 9px;font-weight:600;font-size:15px;letter-spacing:.4px;color:#eaffff;text-shadow:0 1px 6px rgba(0,0,0,.8);
+  background:linear-gradient(transparent,rgba(4,12,20,.78));}
+@keyframes evs-slide{0%{opacity:0}2%,13%{opacity:1}16%,100%{opacity:0}}
+@keyframes evs-kin{0%{transform:scale(1)}16%,100%{transform:scale(1.22)}}
+@keyframes evs-kout{0%{transform:scale(1.22)}16%,100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){
+  .evs-slide,.evs-slide img{animation:none!important}
+  .evs-slide:first-child{opacity:1}
   .evs-sky i,.evs-tips span,.evs-grid,.evs-glow,.evs-iconwrap,.evs-text,.evs-shine::after{animation-duration:.01s!important;animation-delay:0s!important;animation-iteration-count:1!important}
 }
 `;
@@ -73,6 +86,7 @@ export class Splash {
 
   constructor(parent: HTMLElement = document.body) {
     const logoUrl = `${import.meta.env.BASE_URL}assets/evcity-logo.png`;
+    const BASE = import.meta.env.BASE_URL;
     const style = document.createElement('style');
     style.textContent = CSS.split('LOGO_URL').join(`"${logoUrl}"`);
     document.head.appendChild(style);
@@ -88,6 +102,7 @@ export class Splash {
         <div class="evs-layer evs-text"></div>
         <div class="evs-shine"></div>
       </div>
+      <div class="evs-shots"><div class="evs-slide zin" style="--i:0"><img src="${BASE}assets/splash/mall.webp" alt="" decoding="async"><b>সিটি মল</b></div><div class="evs-slide zout" style="--i:1"><img src="${BASE}assets/splash/evlab.webp" alt="" decoding="async"><b>EVLab</b></div><div class="evs-slide zin" style="--i:2"><img src="${BASE}assets/splash/hall.webp" alt="" decoding="async"><b>EVLab হল</b></div><div class="evs-slide zout" style="--i:3"><img src="${BASE}assets/splash/mosque.webp" alt="" decoding="async"><b>মসজিদ</b></div><div class="evs-slide zin" style="--i:4"><img src="${BASE}assets/splash/plant.webp" alt="" decoding="async"><b>জল শোধনাগার</b></div><div class="evs-slide zout" style="--i:5"><img src="${BASE}assets/splash/jungle.webp" alt="" decoding="async"><b>জঙ্গল</b></div><div class="evs-slide zin" style="--i:6"><img src="${BASE}assets/splash/sea.webp" alt="" decoding="async"><b>সাগরের তলদেশ</b></div><div class="evs-slide zout" style="--i:7"><img src="${BASE}assets/splash/farm.webp" alt="" decoding="async"><b>কৃষিজমি</b></div></div>
       <div class="evs-bar"><div class="evs-fill"></div></div>
       <div class="evs-label">লোড হচ্ছে…</div>
       <div class="evs-tips"><span style="--i:0">N চাপলে যেকোনো গাড়ি তোমার কাছে চলে আসবে</span><span style="--i:1">Y চাপলে গাইডেড ভয়েস ট্যুর শুরু হয়</span><span style="--i:2">0 চাপে X ও Z লিখে সরাসরি সেখানে যাওয়া যায়</span><span style="--i:3">Tab চাপলে সেটিংস মেনু খোলে</span><span style="--i:4">F2 চাপলে FPS ও ড্র-কল দেখা যায়</span></div>`;
