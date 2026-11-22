@@ -14,9 +14,10 @@ SJ = json.load(open('docs/rte_site.json'))
 
 # ------------------------------------------------------------------ decisions and numbers (ASSUMED where marked)
 D7 = 'D7 (engineer, new): ramp bridges = single-cell post-tensioned concrete box girder, continuous, one hammer-head pier per support line on the ramp axis; the arm viaduct is widened by a CANTILEVER WING where the net width is <= CANT_MAX and by its OWN independent box wedge on single columns where it is wider; the existing arm deck (a plain girder abutment to abutment, no piers, 16 m approach slabs) is NOT loaded by the new piers.'
-D8 = 'D8 (engineer, new): (a) the plan crossing of the ring by M3 and M4 leaves NO pier position between the ring edges (the 90 deg turn is made over the ring, RE-4 / RE-5), so each ramp has ONE span of about 100 m there: composite steel-concrete box, constant depth L / 33 (ASSUMED feasible, structural design NOT RUN); (b) over every other road the span is chosen so that girder depth <= deck-to-surface - 5.5 m (DP with a penalty); (c) where that is impossible (M4 over M3) the profile is NOT changed here (RE-5 owns it), the shortfall is printed as FAIL and the fix is named.'
+D8 = 'D8 REVISED (user order 2026-11-22: one pier in the ring median for each ramp, no 100 m span): the old text follows as history - (a) the plan crossing of the ring by M3 and M4 leaves NO pier position between the ring edges (the 90 deg turn is made over the ring, RE-4 / RE-5), so each ramp has ONE span of about 100 m there: composite steel-concrete box, constant depth L / 33 (ASSUMED feasible, structural design NOT RUN); (b) over every other road the span is chosen so that girder depth <= deck-to-surface - 5.5 m (DP with a penalty); (c) where that is impossible (M4 over M3) the profile is NOT changed here (RE-5 owns it), the shortfall is printed as FAIL and the fix is named.'
 GAP = 3.0          # pier column face to the barrier strip of a road below (ASSUMED; same value as Config.roads.roadRailBuffer.pierToDeckEdge)
 BARS = 0.5         # barrier strip outside every paved edge / added lane (RE-6 convention)
+MEDH = 6.3         # ring median clear half width (ASSUMED from HANDOFF section 25: clear ~12.6 m; Config highway section medianHalf ~6.5); a ramp pier may stand in the median (D8 revised, user order 2026-11-22)
 COLA, COLB = 2.4, 3.0            # pier column foot, along x across (ASSUMED, between VI and IB numbers of RingBridgeGeometry.ts)
 TOPA, TOPB = 1.8, 2.6            # column top
 CAPH, CAPA = 1.4, 2.8            # hammer-head cap height / length along the road (ASSUMED, as IB)
@@ -65,7 +66,8 @@ def env_edge(side, d):
 # plan clearance of a point (u, v) to every obstacle on the ground / below the ramp, edge to point (m), negative = inside; per obstacle name
 def below(u, v, who):
     out = {}
-    out['ring'] = abs(v) - ring_edge(u, 1 if v >= 0 else -1, who) if abs(v) <= 80 else 999
+    if abs(v) < MEDH: out['ring median'] = (MEDH - BARS) - abs(v)   # inside the ring median: clearance to the median barrier strip (carriageways are NOT under a median pier)
+    else: out['ring'] = abs(v) - ring_edge(u, 1 if v >= 0 else -1, who) if abs(v) <= 80 else 999
     if v > HW - 1: out['stem'] = min(abs(u) - env_edge('out' if u >= 0 else 'in', v), 999)
     dA, _, _ = seg_d(A2S, u, v); out['A2S'] = dA - (LANE / 2 + BARS)
     dS, _, _ = seg_d(S2A, u, v); out['S2A'] = dS - (LANE / 2 + BARS)
@@ -87,7 +89,7 @@ def surf_under(nm, P, k_, off, R3_=None):
         if d3 <= 4.85: res.append(('M3 deck', float(R3_['ys'][k3])))
     return res
 def depth_of(L): return max(1.6, L / 22.0) if L <= SLIM_CONST else L / 33.0
-def ramp(name, P, f, s0, s1, other_pts, y_end_narrow, R3_=None):
+def ramp(name, P, f, s0, s1, other_pts, y_end_narrow, R3_=None, med_pier=True):
     """P (u, v, heading, s) every 2 m; structure s0 .. s1 (RE-7); returns dict"""
     S_ = P[:, 3]; n = len(S_)
     ys = np.array([float(f(s)[0]) for s in S_]); g = np.array([ground(P[k, 0], P[k, 1]) for k in range(n)])
@@ -105,7 +107,14 @@ def ramp(name, P, f, s0, s1, other_pts, y_end_narrow, R3_=None):
         if cl - RC < GAP: continue
         if ys[k] - 1.6 - g[k] < 2.0: continue            # the deck is too low there for a pier (at grade)
         cand.append(k)
-    cand = np.array(cand, int)
+    # D8 revised: one pier is FORCED in the ring median, at the sample where the ramp axis is nearest to the ring axis (v = 0)
+    Sf = None
+    if med_pier:
+        kv = [k for k in ok_k if abs(P[k, 1]) < 12.0]
+        kf = min(kv, key=lambda k: abs(P[k, 1]))
+        Sf = float(S_[kf])
+        if kf not in cand: cand.append(kf)   # must pass S2 (printed): column face >= GAP from the median barrier strip
+    cand = np.array(sorted(cand), int)
     nodes = [ok_k[0]] + list(cand) + [ok_k[-1]]
     def dp(smax):
         INF = 1e18; m = len(nodes); cost = [INF] * m; prv = [-1] * m; cost[0] = 0.0
@@ -114,6 +123,7 @@ def ramp(name, P, f, s0, s1, other_pts, y_end_narrow, R3_=None):
                 if cost[i] >= INF: continue
                 L = S_[nodes[j]] - S_[nodes[i]]
                 if L < SPAN_MIN or (L > smax): continue
+                if Sf is not None and S_[nodes[i]] < Sf - 1e-6 and S_[nodes[j]] > Sf + 1e-6: continue   # no span may jump over the forced median pier
                 am = float(Aav[nodes[i]:nodes[j] + 1].min()); c = cost[i] + (L - SPAN_T) ** 2 + VPEN * max(0.0, depth_of(L) - am)
                 if c < cost[j]: cost[j] = c; prv[j] = i
         if cost[m - 1] >= INF: return None
@@ -217,7 +227,10 @@ def forced(R_):
 nrm = [x for R_ in (R3, R4) for x in R_['spans'] if x <= SPAN_MAX]
 C(f'S1 every span except the ring-crossing spans <= {SPAN_MAX:.0f} m', max(nrm) <= SPAN_MAX + 1e-6, f"longest normal span {max(nrm):.1f} m (M3 {max([x for x in R3['spans'] if x <= SPAN_MAX]):.1f}, M4 {max([x for x in R4['spans'] if x <= SPAN_MAX]):.1f})")
 fr = forced(R3) + forced(R4)
-C('S1b the ring-crossing spans (no pier position between the ring edges: the 90 deg turn is made over the ring) are composite steel-concrete box girders, depth L / 33 (D8)', False, f"M3 {', '.join(f'{x:.1f}' for x in forced(R3))} m, M4 {', '.join(f'{x:.1f}' for x in forced(R4))} m, depth {depth_of(max(fr)):.2f} m; structural feasibility of a ~100 m span is NOT checked; the alternative is a new ring crossing geometry (RE-4 / RE-5), not done in this step", tag='ASSUMED')
+C('S1b no span over 70 m any more: no forced ring-crossing span (D8 revised: one pier per ramp in the ring median)', len(fr) == 0, f"M3 spans {', '.join(f'{x:.1f}' for x in R3['spans'])}; M4 spans {', '.join(f'{x:.1f}' for x in R4['spans'])}")
+for R_ in (R3, R4):
+    mp = [p for p in R_['piers'] if abs(p['v']) < MEDH]
+    C(f"S1c {R_['name']} has exactly one pier in the ring median (|v| < {MEDH} m, on the ring axis side by side with the other ramp's median pier)", len(mp) == 1, ', '.join(f"s {p['s']:.0f} u {p['u']:.1f} v {p['v']:.2f} deck {p['deckY']:.1f} column {p['colH']:.1f} m" for p in mp))
 # S2 pier plan clearance to every road below / beside
 worst = (999, '')
 for nm, p in allp:
