@@ -12,6 +12,10 @@ export class RteLayer {
   constructor(private readonly parent: THREE.Object3D, enabled: boolean) {
     this.group.name = 'junction-rte';
     if (!enabled) return;
+    try { this.build(); } catch (e) { console.error('[RteLayer] build failed, layer skipped, game continues', e); }
+  }
+
+  private build(): void {
     const d = buildRteMesh();
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(d.positions, 3));
@@ -25,7 +29,7 @@ export class RteLayer {
     mesh.receiveShadow = true;
     this.geo = g;
     this.group.add(mesh);
-    parent.add(this.group);
+    this.parent.add(this.group);
   }
 
   dispose(): void {
