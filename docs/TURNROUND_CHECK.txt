@@ -1,0 +1,26 @@
+H4 turn-round check  roads 211  (Config.roads.aiTurnRound {"enabled":true,"waitBlocked":30,"waitEnd":1,"widthK":1.7,"maxPhases":9,"maxSeconds":70})
+A: free dead ends (undivided, ordinary, the route ends on its own road): 72
+   wide enough for the stub car (width >= 8.82 m): 49, too narrow: 23
+   gave up cleanly: R2-28 end high halfWidth 4.50: turned 0 aborted 1 (no room) removed false turn 12.8..25.8 s, dir -1 (was 1) speed 8.6, worst corner -0.31 m outside the asphalt
+   gave up cleanly: R2-69 end high halfWidth 4.50: turned 0 aborted 1 (no room) removed false turn 12.9..25.9 s, dir -1 (was 1) speed 8.8, worst corner -0.30 m outside the asphalt
+   gave up cleanly: R2-2 end high halfWidth 4.50: turned 0 aborted 1 (no room) removed false turn 12.8..25.8 s, dir -1 (was 1) speed 8.8, worst corner -0.30 m outside the asphalt
+   gave up cleanly: R2-6 end high halfWidth 4.50: turned 0 aborted 1 (phases) removed false turn 12.7..26.5 s, dir -1 (was 1) speed 8.8, worst corner -0.30 m outside the asphalt
+   gave up cleanly: R2-8.1 end low halfWidth 4.50: turned 0 aborted 1 (no room) removed false turn 12.8..25.8 s, dir 1 (was -1) speed 8.8, worst corner -0.30 m outside the asphalt
+   gave up cleanly: R2-55 end low halfWidth 4.50: turned 0 aborted 1 (no room) removed false turn 12.8..25.8 s, dir 1 (was -1) speed 8.9, worst corner -0.31 m outside the asphalt
+   gave up cleanly: R2-61 end low halfWidth 4.50: turned 0 aborted 1 (phases) removed false turn 12.7..26.8 s, dir 1 (was -1) speed 8.9, worst corner -0.17 m outside the asphalt
+   result over all 49 wide dead ends: turned round 42, gave up cleanly (car drives on) 7, bad 0; worst corner outside the asphalt over all turns 0.43 m
+PASS  A1 free dead end on a wide enough road: >= 80 % turn round with one K-turn (not removed, drives away the other way), the rest give up cleanly, none is removed or stuck   42 turned, 7 gave up, 0 bad of 49
+PASS  A1b during every turn all four corners stay within 0.9 m of the asphalt edge (ASSUMED limit: asphalt + 0.4 m shoulder + braking)   worst 0.43 m
+   ok  narrow C-5 halfWidth 3.60: turned 0 removed true
+   ok  narrow C-6.1 halfWidth 3.60: turned 0 removed true
+   ok  narrow C-7.2 halfWidth 3.60: turned 0 removed true
+   ok  narrow C-8 halfWidth 3.60: turned 0 removed true
+PASS  A2 a dead end that is too narrow: no turn, removed after 4 s as before   4 ok, 0 bad of 4
+PASS  A3 Config.roads.aiTurnRound.enabled = false: old behaviour (removed at the dead end, no turn)
+PASS  B1 a vehicle stands in the lane: the car waits waitBlocked s behind it, then turns round and drives away; no contact   R2-12: turned 1 aborted 0 (rotated), turn starts 41.2 s, dir -1, min centre distance to the blocker 4.5 m, worst corner -0.24 m outside the asphalt
+PASS  B2 the vehicle in front leaves after 20 s (< waitBlocked): no turn, the car drives on   turned 0, speed 8.9
+   B3 detail: turned 1 aborted 0 (rotated) removed false min centre distance 4.34 m
+PASS  B3 vehicles in front AND right behind: the car never touches either (centre distance >= 4.0 m = car half length 2.3 + 2.0 radius - tolerance)   min 4.34 m
+
+ALL PASS
+NOT RUN: the game, the Rapier vehicle (real reverse power / steering lock / body), the player, traffic lights and give-way queues in the game (the jam rule skips them by design: red light ahead, give-way mark, bus stop, station), buses / trucks (too long for most roads = no turn), two-wheelers (never turn).

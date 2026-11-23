@@ -1,0 +1,26 @@
+H3b give-way check  roads 211  end links 377  crossings 14  (Config.roads.aiGiveWay {"enabled":true,"markAhead":48,"lineGap":2,"decel":2.8})
+PASS  A1 crossings: a mark exactly where the road must give way, none on the bigger road   minor 6, equal 16, priority 6 (entries per road side), routes with a mark 39, wrong 0
+PASS  A2 end links: every T end has a mark, continuations none   T 98 (marked 98), continuation 258, too short to test 21, wrong 0
+PASS  A3 marks are sane (stop line 0.5 .. 60 m, centre line of the other road stored)   26 marks looked at
+PASS  U1 minor: vehicle 60 m away at 14 m/s (4.1 s) is too close, 160 m away is fine
+PASS  U2 minor: vehicle in the box blocks, standing vehicle 14 m away does not, receding vehicle does not
+PASS  U3 minor: both directions are seen (vehicle from +x too), the car itself is ignored
+PASS  U4 minor: a long wait accepts a smaller gap, 40 s only the box counts
+PASS  U5 equal class: the other one clearly first -> I give way; clearly later -> I go
+PASS  U6 equal class tie: the car from my right goes first, the car from my left waits for me   from left: '', from right: 'prio'
+B scenario crossing: R2-24 (collector) gives way to R4-16 (highway) at s 552 / 308
+PASS  B1 free crossing: the car does not slow down for it   speed at 45 m 8.9, slowest within 40 m 8.8, crossed at 15.8 s
+PASS  B2a major vehicle (14 m/s, +) on a collision course: the car gives way (is delayed), keeps clear, then goes   stopped false, min separation 23.5 m, crossed at 18.7 s (free 15.8 s), finished true, wait 0.0 s
+PASS  B2b major vehicle (14 m/s, -) on a collision course: the car gives way (is delayed), keeps clear, then goes   stopped false, min separation 7.7 m, crossed at 18.7 s (free 15.8 s), finished true, wait 0.0 s
+PASS  B2c stream of vehicles every 4 s: the car waits for a gap and never touches one   min separation 22.4 m, crossed at 38.9 s, finished true, wait 19.4 s
+PASS  B3 vehicle standing in the crossing until 18 s: the car waits at the line and goes after it leaves   crossed at 20.6 s, min separation 22.6 m
+PASS  B4 vehicle parked 18 m up the major road: no wait   stopped false, crossed at 15.8 s
+PASS  B5 vehicle driving away from the crossing: no wait   stopped false
+PASS  B6 the bigger road has no mark at its crossing
+PASS  B7 a reckless driver (rickshaw) does not yield (as with red lights)   stopped false
+B scenario T: R6-9 (highway) ends on M8 (highway) at s 7592, gap 1.6 m
+PASS  B8a T end: a vehicle of the through road (+) reaches the foot when the car would: the car gives way, keeps clear, then turns in   stopped false, min separation 7.7 m, crossed at 16.7 s (free 12.0 s), finished true
+PASS  B8b T end: a vehicle of the through road (-) reaches the foot when the car would: the car gives way, keeps clear, then turns in   stopped false, min separation 46.0 m, crossed at 16.7 s (free 12.0 s), finished true
+PASS  B9 equal class R2-21 x R2-26: two real drivers arrive together, nobody hits the other, both get through   min separation 6.4 m, crossed at 15.8 / 18.3 s
+ALL PASS
+NOT RUN: the game, the Rapier vehicle physics, the player vehicle, signals (no signal stands at an H2 / H3 link by construction), roundabout circles. The stub car is a bicycle model with the real AIDriver pedals.

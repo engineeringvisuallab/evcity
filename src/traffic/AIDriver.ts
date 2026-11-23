@@ -9,6 +9,8 @@ import { ENERGY } from '../vehicles/Energy';
 import type { BusStop } from './BusStops';
 import type { StationStops, VisitState } from './StationStops';
 import type { TrafficSignals } from './TrafficSignals';
+import { gapCheck, type GwMark } from './GiveWay';
+import { TurnRound, type TurnFrame } from './TurnRound';
 
 /** Something a driver must not hit (WORLD coordinates, metres, m/s). */
 export interface Obstacle {
@@ -64,6 +66,23 @@ export class AIDriver {
   private steer = 0;
   /** ROADS STEP 4: seconds this driver has waited at the start of a U-turn for a gap in the traffic. */
   private utWait = 0;
+  /** H3b GIVE-WAY: the mark already passed / committed to, seconds waiting at the line, and what held the car last (for the check script: '' = nothing). */
+  private gwDone: GwMark | null = null;
+  private gwCommit: GwMark | null = null;
+  private gwLine: { mk: GwMark; x: number; z: number; hx: number; hz: number } | null = null;
+  gwWait = 0;
+  gwWhy = '';
+  gwLimit = Infinity;
+  /** H4 TURN ROUND: the K-turn in progress (null = none), the road / arc position it runs on, seconds the car has been jammed behind a standing vehicle, cool-down before a new try, counters + reasons (for the check script). */
+  private tr: TurnRound | null = null;
+  private trRoad = -1;
+  private trS = 0;
+  private jamT = 0;
+  private trCool = 0;
+  trDone = 0;
+  trAbort = 0;
+  trWhy = '';
+  trEnd = '';
 
   constructor(
     private veh: Vehicle,
@@ -139,6 +158,63 @@ export class AIDriver {
     if (vs.done && Math.hypot(P.x - e.site.x, P.z - e.site.z) > 42) this.releaseStation();
   }
 
+  /** H3b: is a traffic light within 60 m of this crossing (the light rules it, the car does not yield by itself)? Cached on the mark. */
+  private signalNear(mk: GwMark): boolean {
+    if (!this.signals) return false;
+    if (mk.sig === undefined) mk.sig = this.signals.pads.some((sp) => (sp.pad.x - mk.cx) ** 2 + (sp.pad.z - mk.cz) ** 2 < 3600);
+    return mk.sig;
+  }
+
+  /** H4: the arguments of TurnRound for this frame (the car state plus the road frame of the road the turn runs on). */
+  private turnArgs(obstacles: Obstacle[], fx: number, fz: number, speed: number): { x: number; z: number; fx: number; fz: number; speed: number; hl: number; hx: number; wheelbase: number; maxSteer: number; obstacles: readonly Obstacle[]; me: unknown; frame: (x: number, z: number) => TurnFrame } {
+    const spec = this.veh.spec, route = this.route, rid = this.trRoad, sh = this.trS;
+    return { x: P.x, z: P.z, fx, fz, speed, hl: spec.half.z, hx: spec.half.x, wheelbase: 2 * spec.wheelbaseHalf, maxSteer: spec.maxSteer, obstacles, me: this.veh, frame: (x, z) => route.frame(x, z, rid, sh) };
+  }
+
+  /** H4: start a K-turn here if the road allows it (undivided ordinary road, wide enough for this car). Otherwise nothing (removed at a dead end / waits as before) and try again later. */
+  private beginTurn(obstacles: Obstacle[], fx: number, fz: number, why: string): void {
+    const spec = this.veh.spec, TR = Config.roads.aiTurnRound;
+    const hp = this.route.pts[this.head];
+    this.trRoad = hp.rid ?? this.route.roadId;
+    this.trS = hp.rs ?? this.route.s;
+    const fr = this.route.frame(P.x, P.z, this.trRoad, this.trS);
+    if (!fr.ok || 2 * fr.half < TR.widthK * 2 * spec.half.z + 1.0) { this.trCool = 15; return; }
+    this.tr = new TurnRound(this.turnArgs(obstacles, fx, fz, this.veh.forwardSpeed), { maxPhases: TR.maxPhases, maxSeconds: TR.maxSeconds });
+    this.trWhy = why;
+    this.jamT = 0;
+  }
+
+  /** H4: one frame of the K-turn: the pedals come from TurnRound; when it is done (or gives up) the route starts again from here in the direction the car faces. */
+  private turnStep(dt: number, obstacles: Obstacle[], fx: number, fz: number, speed: number): void {
+    const v = this.veh, tr = this.tr!, route = this.route;
+    const out = tr.step(dt, this.turnArgs(obstacles, fx, fz, speed));
+    const inp = this.input;
+    inp.steer = out.steer;
+    inp.throttle = out.throttle;
+    inp.brake = out.brake;
+    inp.handbrake = out.handbrake;
+    inp.throttleAmt = out.throttle ? out.amt : 0;
+    inp.brakeAmt = out.brake ? out.amt : 0;
+    this.steer = out.steer;
+    this.finishedFor = 0; // a car busy turning round is not "parked at the end" (TrafficManager would remove it)
+    this.stuck = 0;
+    this.blocked = 0;
+    if (v.upY < 0.35) this.flipped += dt; else this.flipped = 0;
+    if (this.flipped > 2.5) { this.dead = true; this.tr = null; return; }
+    if (out.state === 'run') return;
+    // finished or given up: forget everything tied to the old route and start a new one in the direction the car faces now
+    this.tr = null;
+    this.trEnd = tr.why;
+    this.releaseStation();
+    if (!route.reseat(P.x, P.z, fx, fz, this.trRoad, this.trS)) { this.dead = true; return; }
+    this.head = 0;
+    this.extra = 0; this.shift = 0; this.laneCool = 0;
+    this.stop = null; this.dwell = 0;
+    this.gwLine = null; this.gwCommit = null; this.gwDone = null; this.gwWait = 0; this.utWait = 0;
+    this.jamT = 0; this.steer = 0;
+    if (out.state === 'done') { this.trDone++; this.trCool = 10; } else { this.trAbort++; this.trCool = 30; }
+  }
+
   update(dt: number, obstacles: Obstacle[]): void {
     const v = this.veh;
     const spec = v.spec;
@@ -149,6 +225,10 @@ export class AIDriver {
     const fz = F.z / flat;
     const speed = v.forwardSpeed;
     const pts = this.route.pts;
+
+    // H4: a K-turn is running: the turn controller drives, nothing else (no route, no give-way, no overtaking)
+    if (this.tr) { this.turnStep(dt, obstacles, fx, fz, speed); return; }
+    this.trCool = Math.max(0, this.trCool - dt);
 
     // ---- keep the road ahead of us built, walk the head forward, forget what is behind ----
     // how far ahead the driver looks: at least 90 m, and always more than his braking distance (a car at freeway speed needs ~200 m)
@@ -250,10 +330,60 @@ export class AIDriver {
     }
 
     // a red (or late yellow) traffic light ahead: stop behind its stop line (nothing to do once the car is past the line)
+    let sigLim = Infinity;
     if (this.signals && !this.ignoreSignals) {
       const sl = this.signals.brakeLimit(P.x, P.z, fx, fz, speed, spec.half.z);
+      sigLim = sl;
       if (sl < vt) vt = sl;
     }
+
+    // H3b GIVE-WAY: a crossing / T ahead where this road has to give way: stop at the line while the other road is not free (vehicle in the crossing, or one that gets there sooner than we can clear it).
+    // The mark sits on a route point ~48 m before the crossing; the world position of the stop line is worked out once from it, so the car keeps "seeing" the line after it has driven past the marked point.
+    this.gwLimit = Infinity;
+    this.gwWhy = '';
+    const GW = Config.roads.aiGiveWay;
+    if (GW.enabled && !this.ignoreSignals && !this.hold && this.speedCap === undefined && this.reckless < 0.5) {
+      if (!this.gwLine) {
+        let dm = Math.hypot(pts[this.head].x - P.x, pts[this.head].z - P.z);
+        for (let j = this.head; j < pts.length && dm < look + 60; j++) {
+          if (j > this.head) dm += Math.hypot(pts[j].x - pts[j - 1].x, pts[j].z - pts[j - 1].z);
+          const q = pts[j].gw;
+          if (!q || q === this.gwDone) continue;
+          if (this.signalNear(q)) { this.gwDone = q; continue; } // a traffic light rules this crossing
+          // walk q.d metres along the route from the marked point
+          let k = j, rest = q.d;
+          while (k + 1 < pts.length && rest > 0) {
+            const sl = Math.hypot(pts[k + 1].x - pts[k].x, pts[k + 1].z - pts[k].z);
+            if (sl >= rest) break;
+            rest -= sl; k++;
+          }
+          const k2 = Math.min(pts.length - 1, k + 1), sl2 = Math.hypot(pts[k2].x - pts[k].x, pts[k2].z - pts[k].z) || 1;
+          const u = k2 === k ? 0 : Math.min(1, rest / sl2);
+          this.gwLine = { mk: q, x: pts[k].x + (pts[k2].x - pts[k].x) * u, z: pts[k].z + (pts[k2].z - pts[k].z) * u, hx: (pts[k2].x - pts[k].x) / sl2, hz: (pts[k2].z - pts[k].z) / sl2 };
+          if (k2 === k) { const kp = Math.max(0, k - 1), lp = Math.hypot(pts[k].x - pts[kp].x, pts[k].z - pts[kp].z) || 1; this.gwLine.hx = (pts[k].x - pts[kp].x) / lp; this.gwLine.hz = (pts[k].z - pts[kp].z) / lp; }
+          this.gwWait = 0;
+          break;
+        }
+      }
+      const gl = this.gwLine;
+      if (gl) {
+        const mk = gl.mk;
+        const dB = (gl.x - P.x) * gl.hx + (gl.z - P.z) * gl.hz - spec.half.z; // front bumper -> stop line
+        if (dB < -3) { this.gwDone = mk; this.gwLine = null; this.gwCommit = null; this.gwWait = 0; } // over the line: the crossing is ours
+        else if (this.gwCommit !== mk && dB < (speed * speed) / (2 * GW.decel) + 14) {
+          const why = gapCheck({ mark: mk, obstacles: obstacles, me: v, x: P.x, z: P.z, fx, fz, speed, dLine: Math.max(0, dB), halfLen: spec.half.z, wait: this.gwWait });
+          if (why === '') {
+            // free: drive on, and once the car is at the line it is committed (no braking in the middle of the crossing)
+            if (dB < Math.max(1.5, 0.4 * speed)) { this.gwCommit = mk; this.gwWait = 0; }
+          } else {
+            this.gwWhy = why;
+            this.gwLimit = dB <= 0.3 ? 0 : Math.sqrt(2 * GW.decel * (dB - 0.3));
+            if (av < 0.5 && dB < 3) this.gwWait += dt;
+          }
+        }
+      }
+    }
+    if (this.gwLimit < vt) vt = this.gwLimit;
 
     if (this.hold) vt = 0;
     if (this.speedCap !== undefined) vt = Math.min(vt, this.speedCap);
@@ -347,6 +477,14 @@ export class AIDriver {
     const toEnd = Math.hypot(last.x - P.x, last.z - P.z);
     if (this.route.terminal && toEnd < 6 && av < 0.5) this.finishedFor += dt;
     else this.finishedFor = 0;
+    // H4: turn round instead of being removed at a free dead end, or when a standing vehicle blocks the way for a long time (never a queue at a light / give-way line / bus stop / station)
+    const TR = Config.roads.aiTurnRound;
+    if (TR.enabled && this.trCool <= 0 && this.route.turnOk && !this.hold && this.speedCap === undefined && !spec.balance && !pts[this.head].jn) {
+      const jam = vFree > 3 && blockedByVehicle && av < 0.6 && this.gwLine === null && this.stop === null && this.visit === null && !Number.isFinite(sigLim);
+      this.jamT = jam ? this.jamT + dt : 0;
+      const atEnd = this.route.terminal && toEnd < 6 && av < 0.5 && this.finishedFor > TR.waitEnd;
+      if (atEnd || this.jamT > TR.waitBlocked) this.beginTurn(obstacles, fx, fz, atEnd ? 'end' : 'jam');
+    }
     if (av < 0.25 && vt > 2) this.stuck += dt;
     else this.stuck = 0;
     if (this.stuck > 14) this.dead = true;

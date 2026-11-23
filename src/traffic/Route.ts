@@ -6,6 +6,7 @@ import { RoadGraph, type RoadPoint } from './RoadGraph';
 import type { VisitState } from './StationStops';
 import { J1_ROAD_START, type J1Link, type J1Move } from './J1Link';
 import type { RteMove } from './RteLink';
+import { crossMode, makeMark, type GwMark } from './GiveWay';
 
 /** Where a driver may go: the route never uses a road kind / place (city area or world zone) this refuses (see vehicles/VehicleUse). */
 export interface RouteRule {
@@ -40,6 +41,11 @@ export interface RoutePt {
   ut?: 0 | 1 | 2;
   /** U-turn start point only: radius (m) of the half circle, i.e. how far to the right of the lane the car sweeps. */
   ur?: number;
+  /** H3b GIVE-WAY: this car has to give way at the crossing / T ahead (mark: stop line distance, the other road's centre line, see GiveWay.ts). */
+  gw?: GwMark;
+  /** H4: the road this point lies on and its arc position (m). RouteBuilder.roadId is the road at the END of the route (built 100+ m ahead), NOT the road of the car: the car's road is pts[head].rid. */
+  rid?: number;
+  rs?: number;
 }
 
 /** One planned junction decision: at pad `pad` leave on road `roadId` in direction `dir` (tour cars). */
@@ -174,7 +180,7 @@ export class RouteBuilder {
     this.onBigHw = this.g.isBigHighway(this.roadId);
     const pi = !junction ? this.g.passInfo(this.roadId, this.s) : { shift: 0, oncoming: false };
     const pl = junction || ut > 0 ? 0 : this.g.passLanes(this.roadId, this.s);
-    this.pts.push({ x, z, y, vmax, os: pi.shift, oc: pi.oncoming, jn: junction || (this.fast && this.nearJunction()), pl, ut, ur });
+    this.pts.push({ x, z, y, vmax, os: pi.shift, oc: pi.oncoming, jn: junction || (this.fast && this.nearJunction()), pl, ut, ur, rid: this.roadId, rs: this.s });
     if (n >= 2) {
       // bend limit for the middle point: v = sqrt(a_lat / curvature)
       const a = this.pts[n - 2];
@@ -257,6 +263,7 @@ export class RouteBuilder {
       // end of the road: finish at the very end, then stop
       const p = this.g.at(this.roadId, this.dir > 0 ? r.length : 0, this.dir, this.laneOff(this.roadId), this.tmp);
       this.push(p.x, p.z, p.y, 0);
+      this.pts[this.pts.length - 1].rs = this.dir > 0 ? r.length : 0;
       this.terminal = true;
       return;
     }
@@ -277,6 +284,7 @@ export class RouteBuilder {
       return;
     }
     this.push(p.x, p.z, p.y, this.cruise());
+    this.giveWayMarks();
     // a pad we already passed is forgotten once we are well beyond it
     if (this.skipPad >= 0) {
       const st = this.g.stations(this.roadId).find((q) => q.pad === this.skipPad);
@@ -589,6 +597,91 @@ export class RouteBuilder {
     }
     for (const id of this.skipEnd) { const L = g.endLinks[id]; if (this.roadId !== L.q && this.roadId !== L.a) this.skipEnd.delete(id); }
     return false;
+  }
+
+  /**
+   * H4: the road `rid` under the point (x, z): nearest centre line point, its tangent (direction of growing s), the half width, and whether a car may turn round here
+   * (ok = undivided, not a big highway / ramp / roundabout / earth track, not on a bridge, the point lies on the asphalt). sHint (arc position, m) limits the search to +-100 m
+   * around it (a closed loop road has two ends at the same place).
+   */
+  frame(x: number, z: number, rid: number, sHint?: number): { ok: boolean; s: number; cx: number; cz: number; tx: number; tz: number; half: number } {
+    const R = this.g.roads[rid];
+    let best = Infinity, s = 0, cx = 0, cz = 0, tx = 0, tz = 1;
+    for (let k = 0; k + 1 < R.xs.length; k++) {
+      if (sHint !== undefined && (R.cum[k + 1] < sHint - 100 || R.cum[k] > sHint + 100)) continue;
+      const vx = R.xs[k + 1] - R.xs[k], vz = R.zs[k + 1] - R.zs[k], l2 = vx * vx + vz * vz || 1;
+      const t = Math.max(0, Math.min(1, ((x - R.xs[k]) * vx + (z - R.zs[k]) * vz) / l2));
+      const px = R.xs[k] + t * vx, pz = R.zs[k] + t * vz, d = Math.hypot(x - px, z - pz);
+      if (d < best) { best = d; const l = Math.sqrt(l2); s = R.cum[k] + t * l; cx = px; cz = pz; tx = vx / l; tz = vz / l; }
+    }
+    if (best === Infinity) return sHint !== undefined ? this.frame(x, z, rid) : { ok: false, s: 0, cx: x, cz: z, tx: 0, tz: 1, half: R.halfWidth };
+    const ok = !R.earth && R.kind !== 'ramp' && R.kind !== 'roundabout' && R.medianHalf <= 0 && !this.g.isBigHighway(rid) && !this.g.onBridge(rid, s) && best <= R.halfWidth + 1.5;
+    return { ok, s, cx, cz, tx, tz, half: R.halfWidth };
+  }
+
+  /** H4: may this driver turn round by himself (AI traffic only: a rule that says the vehicle fits; never a tour car, never a car with a plan)? */
+  get turnOk(): boolean {
+    return !!this.rule && !this.fast && !this.plan && !this.target;
+  }
+
+  /**
+   * H4: the car has turned round (or has to start again from where it stands): forget the route and start a new one from the nearest point of road `rid`, in the direction the car now faces.
+   * Returns false when the car is not on that road any more.
+   */
+  reseat(x: number, z: number, hx: number, hz: number, rid: number, sHint?: number): boolean {
+    const fr = this.frame(x, z, rid, sHint);
+    if (Math.hypot(x - fr.cx, z - fr.cz) > this.g.roads[rid].halfWidth + 4) return false;
+    this.roadId = rid;
+    this.dir = (fr.tx * hx + fr.tz * hz >= 0 ? 1 : -1) as 1 | -1;
+    this.s = fr.s;
+    this.pts.length = 0;
+    this.terminal = false;
+    this.laneCur = null;
+    this.visit = null;
+    this.skipPad = -1; this.skipOp = -1; this.skipT = -1;
+    this.skipEnd.clear(); this.skipCross.clear(); this.skipRte.clear(); this.gwDone.clear();
+    this.start();
+    return true;
+  }
+
+  /** H3b: crossings / T ends already marked (key = road * 100000 + crossing index; 9000000 + end link id), forgotten when far behind. */
+  private gwDone = new Set<number>();
+  /**
+   * H3b GIVE-WAY (Config.roads.aiGiveWay): when a crossing (H3) or the end of my road on another road (H2 T) is markAhead metres ahead and my road has to give way, the route point just pushed gets a mark.
+   * The mark is only information (stop line distance + the centre line of the other road); AIDriver does the stopping. Tour / race cars (fast) do not get marks.
+   */
+  private giveWayMarks(): void {
+    const C = Config.roads.aiGiveWay;
+    if (!C.enabled || this.fast) return;
+    const g = this.g, last = this.pts[this.pts.length - 1], me = g.roads[this.roadId];
+    const cross = g.crossByRoad.get(this.roadId);
+    if (cross) {
+      for (let i = 0; i < cross.length; i++) {
+        const X = cross[i], key = this.roadId * 100000 + i, ahead = (X.s - this.s) * this.dir;
+        if (this.gwDone.has(key)) { if (ahead < -120) this.gwDone.delete(key); continue; }
+        if (ahead <= 0 || ahead > C.markAhead) continue;
+        this.gwDone.add(key);
+        const mode = crossMode(me.kind, g.roads[X.other].kind);
+        if (mode) last.gw = makeMark(g, this.roadId, X.other, X.sOther, ahead, mode, C.lineGap);
+      }
+    }
+    const mine = g.endByRoad.get(this.roadId * 2 + (this.dir > 0 ? 1 : 0));
+    if (mine) {
+      // the link with the smallest gap; when ANY link of this end is a continuation (my road goes on as another road) the car may simply drive on: no mark
+      let id = mine[0], cont = false;
+      for (const k of mine) {
+        const Lk = g.endLinks[k], Qk = g.roads[Lk.q];
+        if (Lk.sQ < 6 || Lk.sQ > Qk.length - 6) cont = true;
+        if (Lk.gap < g.endLinks[id].gap) id = k;
+      }
+      const L = g.endLinks[id], key = 9000000 + id, ahead = (L.sA - this.s) * this.dir;
+      if (this.gwDone.has(key)) { if (ahead < -120) this.gwDone.delete(key); }
+      else if (ahead > 0 && ahead <= C.markAhead) {
+        this.gwDone.add(key);
+        const Q = g.roads[L.q];
+        if (!cont) last.gw = makeMark(g, this.roadId, L.q, L.sQ, ahead + L.gap, crossMode(me.kind, Q.kind) === null ? 'equal' : 'minor', C.lineGap);
+      }
+    }
   }
 
   /** H3: crossings already decided for (road id * 100000 + crossing index), cleared when far. */
