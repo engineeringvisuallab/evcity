@@ -5,6 +5,7 @@ import type { UTurnOpening } from '../roads/UTurns';
 import { RoadGraph, type RoadPoint } from './RoadGraph';
 import type { VisitState } from './StationStops';
 import { J1_ROAD_START, type J1Link, type J1Move } from './J1Link';
+import type { RteMove } from './RteLink';
 
 /** Where a driver may go: the route never uses a road kind / place (city area or world zone) this refuses (see vehicles/VehicleUse). */
 export interface RouteRule {
@@ -231,6 +232,12 @@ export class RouteBuilder {
     }
     // STEP J1-AI: the T between the far end of a J1 arm and the ring (no pad there): arm -> ring and ring -> arm
     if (!this.plan && this.tLink()) return;
+    // RT-E interchange (ring M8 x arm J1-E): the four movements (flyovers M3 / M4, slips A2S / S2A) are real AI paths
+    if (!this.plan && this.rteLink()) return;
+    // H2: a road end that lies on another road (no pad): T / continuation
+    if (!this.plan && this.endLink()) return;
+    // H3: a crossing of two roads at the same level: sometimes turn onto the other road
+    if (!this.plan && this.crossLink()) return;
     // STEP J1-AI: an inbound car on an arm of the ground-level J1 goes through the star (the star is not a road: its paths come from the design movements)
     if (this.dir < 0 && !this.plan && this.g.j1) {
       const k = this.g.j1.armOfRoad(this.roadId);
@@ -467,6 +474,146 @@ export class RouteBuilder {
       if (this.skipT === i && this.roadId !== L.ring && this.roadId !== L.arm) this.skipT = -1;
       else if (this.skipT === i && this.roadId === L.ring && Math.abs(L.sRing - this.s) > 60) this.skipT = -1;
       else if (this.skipT === i && this.roadId === L.arm && L.sArm - this.s > 60) this.skipT = -1;
+    }
+    return false;
+  }
+
+  /** RT-E: movements already decided for (the decision is made once per pass of the exit). */
+  private skipRte = new Set<string>();
+  /** RT-E: the exit lane begins this far (m) before the tip of the path; the car drifts onto it over this distance. */
+  private static readonly RTE_LEAD = 90;
+  /**
+   * RT-E interchange: a car that comes to the start of a movement either takes it (ring cars with exitChance, arm cars towards the ring with m4Chance for the flyover M4, and every
+   * other arm car the slip S2A because the arm ends at the ring) or drives on. Taking it = a smooth lead-in to the tip of the path, the real path (ramp / bridge / slip data),
+   * then a smooth merge into the kerb lane of the target road. Tour / target cars only take the forced one.
+   */
+  private rteLink(): boolean {
+    const rte = this.g.rte;
+    if (!rte) return false;
+    const C = Config.roads.junctionRteTraffic;
+    for (const m of rte.moves) {
+      const f = m.from;
+      if (this.roadId !== f.roadId || this.dir !== f.dir) { this.skipRte.delete(m.id); continue; }
+      const ahead = (f.s - this.s) * this.dir;
+      if (this.skipRte.has(m.id)) { if (ahead < -100) this.skipRte.delete(m.id); continue; }
+      if (ahead <= 0 || ahead > RouteBuilder.RTE_LEAD) continue;
+      this.skipRte.add(m.id);
+      const toKind = this.g.roads[m.to.roadId].kind;
+      if (this.rule && !this.rule.roadOk(toKind)) continue;
+      const p = m.chance === 'forced' ? 1 : this.target ? 0 : m.chance === 'm4' ? C.m4Chance : C.exitChance;
+      if (this.rnd() >= p) continue;
+      this.takeRte(m);
+      return true;
+    }
+    return false;
+  }
+
+  private takeRte(m: RteMove): void {
+    const C = Config.roads.junctionRteTraffic;
+    const v0 = m.id === 'M3' || m.id === 'M4' ? C.flyoverMs : C.slipMs;
+    const vmax = Math.min(this.cruise(), v0);
+    const last = this.pts[this.pts.length - 1];
+    const a = m.pts[0], b = m.pts[1];
+    const hl = Math.hypot(b.x - a.x, b.z - a.z) || 1, hx = (b.x - a.x) / hl, hz = (b.z - a.z) / hl;
+    // 1. lead-in: quadratic curve from the last route point (heading lastHx / lastHz) to the tip of the path (heading hx / hz)
+    const den = this.lastHx * hz - this.lastHz * hx;
+    let cx = (last.x + a.x) / 2, cz = (last.z + a.z) / 2;
+    if (Math.abs(den) > 0.05) {
+      const t0 = ((a.x - last.x) * hz - (a.z - last.z) * hx) / den;
+      if (t0 > 0 && t0 < 120) { cx = last.x + this.lastHx * t0; cz = last.z + this.lastHz * t0; }
+    }
+    const N = 12;
+    for (let i = 1; i < N; i++) {
+      const u = i / N, w0 = (1 - u) * (1 - u), w1 = 2 * (1 - u) * u, w2 = u * u;
+      this.push(w0 * last.x + w1 * cx + w2 * a.x, w0 * last.z + w1 * cz + w2 * a.z, last.y + (a.y - last.y) * u, this.cruise(), true);
+    }
+    // 2. the path itself
+    for (let i = 0; i < m.pts.length; i++) this.push(m.pts[i].x, m.pts[i].z, m.pts[i].y, vmax, true);
+    const e = m.pts[m.pts.length - 1], e0 = m.pts[m.pts.length - 2];
+    const el = Math.hypot(e.x - e0.x, e.z - e0.z) || 1;
+    this.lastHx = (e.x - e0.x) / el;
+    this.lastHz = (e.z - e0.z) / el;
+    // 3. merge into the kerb lane of the target road
+    const tr = this.g.roads[m.to.roadId];
+    this.lane = 0;
+    this.curveOnto(m.to.roadId, m.to.dir, Math.max(5, Math.min(tr.length - 5, m.to.s + m.to.dir * 40)));
+    this.skipRte.clear();
+  }
+
+  /** H2: end links already decided for (cleared when the car is far from the junction). */
+  private skipEnd = new Set<number>();
+  /**
+   * H2 (Config.roads.aiEndLinks): the END of a road that lies on / beside another road is a junction. A car coming to that end turns onto the other road (either way, whatever fits:
+   * a continuation has only one way); a car on the other road passing the foot point sometimes turns into the ending road. Same curve as the J1 / ring T (curveOnto).
+   */
+  private endLink(): boolean {
+    const g = this.g;
+    if (g.endLinks.length === 0) return false;
+    const C = Config.roads.aiEndLinks;
+    // 1. at the end of my own road
+    const mine = g.endByRoad.get(this.roadId * 2 + (this.dir > 0 ? 1 : 0));
+    if (mine) {
+      const L0 = g.endLinks[mine[0]], ahead = (L0.sA - this.s) * this.dir;
+      if (ahead > 0 && ahead <= this.turnDist && !this.skipEnd.has(mine[0])) {
+        for (const id of mine) this.skipEnd.add(id);
+        const opts: Array<{ id: number; d: 1 | -1 }> = [];
+        for (const id of mine) {
+          const L = g.endLinks[id], Q = g.roads[L.q];
+          if (this.rule && !this.rule.roadOk(Q.kind)) continue;
+          for (const d of [1, -1] as const) { const so = L.sQ + d * 30; if (so > 5 && so < Q.length - 5) opts.push({ id, d }); }
+        }
+        if (opts.length === 0) return false;
+        const o = opts[Math.floor(this.rnd() * opts.length)], L = g.endLinks[o.id];
+        this.lane = 0;
+        this.curveOnto(L.q, o.d, L.sQ + o.d * 30);
+        return true;
+      }
+    }
+    // 2. passing the foot point of an ending road
+    const there = g.endByTarget.get(this.roadId);
+    if (there) {
+      for (const id of there) {
+        const L = g.endLinks[id], ahead = (L.sQ - this.s) * this.dir;
+        if (this.skipEnd.has(id)) { if (Math.abs(ahead) > 120 || this.roadId !== L.q) this.skipEnd.delete(id); continue; }
+        if (ahead <= 0 || ahead > this.turnDist) continue;
+        this.skipEnd.add(id);
+        const A = g.roads[L.a];
+        if (this.rule && !this.rule.roadOk(A.kind)) continue;
+        const out = (-L.endDir) as 1 | -1, so = L.sA + out * 30;
+        if (so <= 5 || so >= A.length - 5) continue;
+        if (this.rnd() >= (g.isBigHighway(this.roadId) ? C.pTurnInHighway : C.pTurnIn)) continue;
+        this.lane = 0;
+        this.curveOnto(L.a, out, so);
+        return true;
+      }
+    }
+    for (const id of this.skipEnd) { const L = g.endLinks[id]; if (this.roadId !== L.q && this.roadId !== L.a) this.skipEnd.delete(id); }
+    return false;
+  }
+
+  /** H3: crossings already decided for (road id * 100000 + crossing index), cleared when far. */
+  private skipCross = new Set<number>();
+  /** H3 (Config.roads.aiCrossLinks): at a crossing of two roads (both continue) the car turns onto the other road with a small chance, either way. */
+  private crossLink(): boolean {
+    const list = this.g.crossByRoad.get(this.roadId);
+    if (!list) return false;
+    const C = Config.roads.aiCrossLinks;
+    for (let i = 0; i < list.length; i++) {
+      const X = list[i], key = this.roadId * 100000 + i, ahead = (X.s - this.s) * this.dir;
+      if (this.skipCross.has(key)) { if (ahead < -80) this.skipCross.delete(key); continue; }
+      if (ahead <= 0 || ahead > this.turnDist) continue;
+      this.skipCross.add(key);
+      const B = this.g.roads[X.other];
+      if (this.rule && !this.rule.roadOk(B.kind)) continue;
+      if (this.rnd() >= (this.g.isBigHighway(this.roadId) ? C.pTurnHighway : C.pTurn)) continue;
+      const opts: Array<1 | -1> = [];
+      for (const d of [1, -1] as const) { const so = X.sOther + d * 30; if (so > 5 && so < B.length - 5) opts.push(d); }
+      if (opts.length === 0) continue;
+      const d = opts[Math.floor(this.rnd() * opts.length)];
+      this.lane = 0;
+      this.curveOnto(X.other, d, X.sOther + d * 30);
+      this.skipCross.clear();
+      return true;
     }
     return false;
   }

@@ -75,29 +75,30 @@ const dummy = new THREE.Object3D();
 const color = new THREE.Color();
 type Pal = ReadonlyArray<readonly [number, number, number, number]>; // r, g, b, share
 const GRASS_PALETTE: Pal = [
-  [0.12, 0.36, 0.08, 0.22], // fresh green
-  [0.24, 0.42, 0.09, 0.1], // yellow-green
-  [0.2, 0.3, 0.08, 0.18], // olive
-  [0.07, 0.3, 0.14, 0.1], // blue-green
-  [0.07, 0.24, 0.06, 0.16], // deep green
-  [0.3, 0.46, 0.12, 0.03], // light lime (rare: the bright lime of the old tufts looked unreal)
-  [0.46, 0.4, 0.15, 0.09], // golden-dry
-  [0.36, 0.32, 0.13, 0.12], // straw
+  // 2026-11-23 (user): the grass is DEEP GREEN; ~13 % of the tufts are dead (mora) grass, brown-straw
+  [0.07, 0.24, 0.06, 0.22], // deep green
+  [0.05, 0.2, 0.05, 0.2], // darker deep green
+  [0.06, 0.26, 0.09, 0.14], // deep green, a little blue
+  [0.09, 0.26, 0.06, 0.12], // deep green, a little olive
+  [0.12, 0.3, 0.07, 0.08], // fresh deep green
+  [0.2, 0.26, 0.07, 0.07], // dark olive
+  [0.5, 0.22, 0.04, 0.07], // dead brown
+  [0.44, 0.27, 0.06, 0.06], // dead straw-brown
 ];
 const LAWN_PALETTE: Pal = [
-  [0.12, 0.36, 0.08, 0.34],
-  [0.22, 0.42, 0.1, 0.26],
-  [0.09, 0.3, 0.1, 0.18],
-  [0.3, 0.46, 0.12, 0.14],
-  [0.18, 0.32, 0.08, 0.08],
+  [0.07, 0.25, 0.06, 0.36],
+  [0.05, 0.2, 0.05, 0.26],
+  [0.06, 0.26, 0.09, 0.18],
+  [0.1, 0.28, 0.06, 0.14],
+  [0.44, 0.27, 0.06, 0.06], // a few dead tufts
 ];
 const JUNGLE_PALETTE: Pal = [
-  [0.17, 0.43, 0.1, 0.3],
-  [0.26, 0.46, 0.1, 0.22],
-  [0.22, 0.36, 0.09, 0.16],
-  [0.1, 0.36, 0.16, 0.14],
-  [0.32, 0.48, 0.13, 0.12],
-  [0.4, 0.38, 0.14, 0.06],
+  [0.07, 0.26, 0.06, 0.3],
+  [0.05, 0.2, 0.05, 0.24],
+  [0.06, 0.27, 0.1, 0.18],
+  [0.1, 0.28, 0.06, 0.12],
+  [0.5, 0.22, 0.04, 0.08], // dead brown
+  [0.44, 0.27, 0.06, 0.08], // dead straw-brown
 ];
 /** City lawn: a fresher, slightly brighter green than the wild meadow. */
 
@@ -397,6 +398,7 @@ export class GrassManager {
     }
     if (flag > 7.5 && flag < 8.5) dummy.scale.y *= G.parkLawnTall; // park lawn: 2x taller blades
     if (flag > 8.5 && isGrassFlower(type)) dummy.scale.y *= 1.35; // park beds: fuller, taller flowers
+    if (flag > 4.5 && flag < 5.5 && isGrassFlower(type)) dummy.scale.y *= 2; // road median (centre strip) flowers: 2x taller (user, 2026-11-23)
     if (flag > 5.5 && flag < 6.5) {
       // JUNGLE FLOOR (2026-11-21): short grass, flowers standing a little above it, clumps lower than before (the broad-leaf ground cover keeps its own size)
       const isFl = isGrassFlower(type);

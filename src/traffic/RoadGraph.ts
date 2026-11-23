@@ -5,6 +5,7 @@ import { isDivided, isDual, laneCentre, lanesPerDir, passShift } from '../roads/
 import { planMedians } from '../roads/MedianPlan';
 import type { UTurnOpening } from '../roads/UTurns';
 import { J1Link } from './J1Link';
+import { RteLink } from './RteLink';
 
 export interface RoadPoint {
   x: number;
@@ -60,6 +61,17 @@ export class RoadGraph {
   readonly j1: J1Link | null;
   /** STEP J1-AI: where the far end of each J1 arm meets the ring (a T without a pad): arm road, its end s, the ring road and the ring s of the T. */
   readonly tLinks: Array<{ arm: number; sArm: number; ring: number; sRing: number }> = [];
+  /** RT-E interchange (ring M8 x arm J1-E): the AI paths of its four movements; null = off / not complete. When set, the old T stand-in of the J1-E arm is removed from tLinks. */
+  readonly rte: RteLink | null = null;
+  /** H2: junctions WITHOUT a pad: the end of road `a` (s = sA, `endDir` = travel direction towards that end) lies on / beside road `q` (foot point sQ). See Config.roads... aiEndLinks. */
+  readonly endLinks: Array<{ a: number; endDir: 1 | -1; sA: number; q: number; sQ: number; gap: number }> = [];
+  /** H2: the same links grouped by road + direction towards the end (key = a * 2 + (endDir > 0 ? 1 : 0)). */
+  readonly endByRoad = new Map<number, number[]>();
+  /** H2: the links whose road q is road r (cars passing the foot point may turn into the ending road). */
+  readonly endByTarget = new Map<number, number[]>();
+  /** H3: two roads that cross at the same level (both continue): one entry per road, `s` = the crossing on this road, `other` / `sOther` = the crossing road. Key = road id. */
+  readonly crossByRoad = new Map<number, Array<{ s: number; other: number; sOther: number }>>();
+  crossCount = 0;
   /** Sample spots every ~30 m along every road: lets us find "a road 110-260 m from the player" without scanning splines. */
   private spotX: number[] = [];
   private spotZ: number[] = [];
@@ -89,6 +101,13 @@ export class RoadGraph {
           }
         });
         if (best >= 0) this.tLinks.push({ arm, sArm: a.length, ring: best, sRing: this.roads[best].cum[bi] });
+      }
+    }
+    if (Config.roads.junctionRteTraffic.enabled && Config.roads.junctionRte.enabled && Config.roads.junctionRteLanes.enabled) {
+      const l = new RteLink(net.roads);
+      if (l.complete) {
+        this.rte = l;
+        for (let k = this.tLinks.length - 1; k >= 0; k--) if (this.tLinks[k].arm === l.armRoad) this.tLinks.splice(k, 1);
       }
     }
     for (let p = 0; p < net.pads.length; p++) {
@@ -147,6 +166,8 @@ export class RoadGraph {
       for (const st of this.autoStationsByRoad) st.sort((a, b) => a.s - b.s);
     }
     for (const st of this.stationsByRoad) st.sort((a, b) => a.s - b.s);
+    this.buildEndLinks();
+    this.buildCrossLinks();
     let acc = 0;
     for (const r of this.roads) {
       this.cumLen.push(acc);
@@ -162,6 +183,105 @@ export class RoadGraph {
         this.spotZ.push(p.z);
         this.spotRoad.push(i);
         this.spotS.push(s);
+      }
+    }
+  }
+
+  /**
+   * H2: every road end that lies on / beside another road and has no junction station within 45 m is a junction for the AI (a T, or a continuation when the foot is the end of the other road).
+   * Road ends of the J1 arms are the J1-AI / RT-E business and are left out; so are earth tracks and ramps.
+   */
+  private buildEndLinks(): void {
+    const C = Config.roads.aiEndLinks;
+    if (!C.enabled) return;
+    const arms = new Set<number>(this.j1 ? this.j1.roadOfArm : []);
+    const ok = (r: RoadSpec): boolean => !r.earth && r.kind !== 'ramp';
+    const cosMax = Math.cos((C.maxAngleDeg * Math.PI) / 180);
+    for (let a = 0; a < this.roads.length; a++) {
+      const A = this.roads[a];
+      if (!ok(A) || A.closed || arms.has(a) || A.xs.length < 3) continue;
+      for (const atEnd of [false, true]) {
+        const sA = atEnd ? A.length : 0;
+        if (this.stationsByRoad[a].some((q) => Math.abs(q.s - sA) < 45)) continue;
+        const ie = atEnd ? A.xs.length - 1 : 0, ii = atEnd ? Math.max(0, ie - 2) : Math.min(A.xs.length - 1, 2);
+        const ex = A.xs[ie], ez = A.zs[ie], ey = A.ys[ie];
+        let hx = ex - A.xs[ii], hz = ez - A.zs[ii];
+        const hl = Math.hypot(hx, hz) || 1; hx /= hl; hz /= hl;
+        const endDir: 1 | -1 = atEnd ? 1 : -1;
+        for (let q = 0; q < this.roads.length; q++) {
+          const Q = this.roads[q];
+          if (q === a || !ok(Q) || arms.has(q)) continue;
+          let best = Infinity, sQ = 0, yQ = 0;
+          for (let k = 0; k + 1 < Q.xs.length; k++) {
+            const vx = Q.xs[k + 1] - Q.xs[k], vz = Q.zs[k + 1] - Q.zs[k], l2 = vx * vx + vz * vz || 1;
+            const t = Math.max(0, Math.min(1, ((ex - Q.xs[k]) * vx + (ez - Q.zs[k]) * vz) / l2));
+            const d = Math.hypot(ex - (Q.xs[k] + t * vx), ez - (Q.zs[k] + t * vz));
+            if (d < best) { best = d; sQ = Q.cum[k] + t * Math.sqrt(l2); yQ = Q.ys[k] + (Q.ys[k + 1] - Q.ys[k]) * t; }
+          }
+          if (best > C.maxGap || Math.abs(yQ - ey) > C.levelDiff) continue;
+          if (best > 3) {   // not a plain T: the other road must lie ahead of the end, not behind it
+            const px = this.at(q, sQ, 1, 0, { x: 0, z: 0, y: 0, hx: 0, hz: 0 });
+            const dx = px.x - ex, dz = px.z - ez, dl = Math.hypot(dx, dz) || 1;
+            if ((dx * hx + dz * hz) / dl < cosMax) continue;
+          }
+          if (this.onBridge(q, sQ) || this.onBridge(a, sA)) continue;
+          const id = this.endLinks.length;
+          this.endLinks.push({ a, endDir, sA, q, sQ, gap: best });
+          const ka = a * 2 + (endDir > 0 ? 1 : 0);
+          (this.endByRoad.get(ka) ?? this.endByRoad.set(ka, []).get(ka)!).push(id);
+          (this.endByTarget.get(q) ?? this.endByTarget.set(q, []).get(q)!).push(id);
+        }
+      }
+    }
+  }
+
+  /**
+   * H3: crossings of two roads at the same level in the middle of both (no junction station within 45 m on either road, no end link foot within 45 m, not near an end, no J1 arm, no ramp / earth).
+   * Intersections of the two centre lines closer than 40 m along road a are one crossing (divided roads / bends).
+   */
+  private buildCrossLinks(): void {
+    const C = Config.roads.aiCrossLinks;
+    if (!C.enabled) return;
+    const arms = new Set<number>(this.j1 ? this.j1.roadOfArm : []);
+    const ok = (r: RoadSpec): boolean => !r.earth && r.kind !== 'ramp';
+    const bb = this.roads.map((r) => { let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity; for (let i = 0; i < r.xs.length; i++) { x0 = Math.min(x0, r.xs[i]); x1 = Math.max(x1, r.xs[i]); z0 = Math.min(z0, r.zs[i]); z1 = Math.max(z1, r.zs[i]); } return [x0, x1, z0, z1]; });
+    const blocked = (rid: number, s: number): boolean => {
+      const R = this.roads[rid];
+      if (s < C.endMargin || s > R.length - C.endMargin) return !R.closed;
+      if (this.stationsByRoad[rid].some((q) => Math.abs(q.s - s) < 45)) return true;
+      const t = this.endByTarget.get(rid);
+      return !!t && t.some((id) => Math.abs(this.endLinks[id].sQ - s) < 45);
+    };
+    for (let a = 0; a < this.roads.length; a++) {
+      const A = this.roads[a];
+      if (!ok(A) || arms.has(a)) continue;
+      for (let b = a + 1; b < this.roads.length; b++) {
+        const B = this.roads[b];
+        if (!ok(B) || arms.has(b)) continue;
+        if (bb[a][1] < bb[b][0] || bb[b][1] < bb[a][0] || bb[a][3] < bb[b][2] || bb[b][3] < bb[a][2]) continue;
+        const found: Array<{ sA: number; sB: number }> = [];
+        for (let i = 0; i + 1 < A.xs.length; i++) {
+          const ax = A.xs[i], az = A.zs[i], bx = A.xs[i + 1], bz = A.zs[i + 1];
+          for (let j = 0; j + 1 < B.xs.length; j++) {
+            const cx = B.xs[j], cz = B.zs[j], dx = B.xs[j + 1], dz = B.zs[j + 1];
+            if (Math.max(ax, bx) < Math.min(cx, dx) || Math.max(cx, dx) < Math.min(ax, bx) || Math.max(az, bz) < Math.min(cz, dz) || Math.max(cz, dz) < Math.min(az, bz)) continue;
+            const den = (bx - ax) * (dz - cz) - (bz - az) * (dx - cx);
+            if (Math.abs(den) < 1e-9) continue;
+            const t = ((cx - ax) * (dz - cz) - (cz - az) * (dx - cx)) / den, u = ((cx - ax) * (bz - az) - (cz - az) * (bx - ax)) / den;
+            if (t < 0 || t > 1 || u < 0 || u > 1) continue;
+            const yA = A.ys[i] + (A.ys[i + 1] - A.ys[i]) * t, yB = B.ys[j] + (B.ys[j + 1] - B.ys[j]) * u;
+            if (Math.abs(yA - yB) > C.levelDiff) continue;
+            const sA = A.cum[i] + t * (A.cum[i + 1] - A.cum[i]), sB = B.cum[j] + u * (B.cum[j + 1] - B.cum[j]);
+            if (found.some((f) => Math.abs(f.sA - sA) < 40)) continue;
+            found.push({ sA, sB });
+          }
+        }
+        for (const f of found) {
+          if (blocked(a, f.sA) || blocked(b, f.sB) || this.onBridge(a, f.sA) || this.onBridge(b, f.sB)) continue;
+          (this.crossByRoad.get(a) ?? this.crossByRoad.set(a, []).get(a)!).push({ s: f.sA, other: b, sOther: f.sB });
+          (this.crossByRoad.get(b) ?? this.crossByRoad.set(b, []).get(b)!).push({ s: f.sB, other: a, sOther: f.sA });
+          this.crossCount++;
+        }
       }
     }
   }

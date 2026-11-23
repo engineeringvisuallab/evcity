@@ -136,7 +136,7 @@ export class TrafficManager {
     this._aiCount = ai;
 
     this.timer -= dt;
-    if (this.timer <= 0 && ai < T.target && this.d.player.active) {
+    if (this.timer <= 0 && ai < Math.round(T.target * T.densityMul) && this.d.player.active) {
       this.timer = T.spawnEvery;
       this.trySpawn(focus);
     }
@@ -157,6 +157,7 @@ export class TrafficManager {
       const dir: 1 | -1 = Math.random() < 0.5 ? 1 : -1;
       const road = g.roads[spot.roadId];
       if (spot.s < 20 || spot.s > road.length - 60) continue;
+      if (g.rte?.deadZone(spot.roadId, spot.s, dir)) continue; // RT-E: the arm ends at the ring, a car must not appear after the last exit
       g.at(spot.roadId, spot.s, dir, g.laneOffset(spot.roadId), tmpPt);
       const dist = Math.hypot(tmpPt.x - focus.x, tmpPt.z - focus.z);
       if (dist < T.spawnMin || dist > Math.min(T.spawnMax, PhysicsConfig.activeRadius * 0.9)) continue;
@@ -379,7 +380,7 @@ export class TrafficManager {
     for (const spec of Object.values(SPECS)) {
       if (!canUse(spec.use, road, zone, area)) continue;
       if (road === 'highway' && isSlow(spec)) continue; // no cycle rickshaw / CNG auto on a freeway
-      if (spec.look.kind === 'bus' && buses >= Config.traffic.maxBuses) continue;
+      if (spec.look.kind === 'bus' && buses >= Math.round(Config.traffic.maxBuses * Config.traffic.densityMul)) continue;
       fits.push({ spec, w: spec.use.weight });
       total += spec.use.weight;
     }

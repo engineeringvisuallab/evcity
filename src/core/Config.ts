@@ -90,6 +90,12 @@ export const Config = {
     junctionRteWedges: { enabled: false as boolean },
     /** RT-E guardrail (user 2026-11-23: 'connection road gula er 2 pase railing'): W-beam rail on both sides of the ground connection roads (slips RTE-A2S / S2A, tails RTE-TAIL-*). postStep m between posts, height m, slipEndGap m free at each slip end, mergeMargin m free before the AUTO MERGE zone of a tail. enabled false = no rail. */
     junctionRteRails: { enabled: true as boolean, postStep: 4, height: 0.75, slipEndGap: 12, mergeMargin: 6 },
+    /** RT-E AI traffic (user 2026-11-23: 'traffic AI set koro'): cars use the four movements of the interchange (RteLink): exitChance = share of ring cars that leave by M3 (ring B) / A2S (ring A), m4Chance = share of arm cars (towards the ring) that take the flyover M4; the others take the slip S2A. enabled false = old T stand-in. */
+    junctionRteTraffic: { enabled: true as boolean, exitChance: 0.3, m4Chance: 0.5, flyoverMs: 13, slipMs: 10.5 },
+    /** AI END LINKS (user 2026-11-23: 'sob junction diye car'): a road END that lies on / beside another road (T or continuation, no pad) is a junction for the AI: cars at that end turn onto the other road (both ways), cars on the other road turn into it with pTurnIn (pTurnInHighway on a big freeway). maxGap m = how far the end may be from the other road, maxAngleDeg = the other road must lie ahead of the end within this angle, levelDiff m = max level difference. enabled false = old behaviour (cars stop at such an end). */
+    aiEndLinks: { enabled: true as boolean, maxGap: 25, maxAngleDeg: 70, levelDiff: 3, pTurnIn: 0.15, pTurnInHighway: 0.05 },
+    /** AI CROSS LINKS (H3, user 2026-11-23): two roads that cross at the same level in the middle of both (no pad, no end link within 30 m): a car coming to the crossing sometimes turns onto the other road (either way). pTurn per crossing, pTurnHighway on a big freeway, levelDiff m = max level difference at the crossing. Give-way is NOT part of this (H3b). enabled false = cars only drive straight over such a crossing. */
+    aiCrossLinks: { enabled: true as boolean, pTurn: 0.12, pTurnHighway: 0.04, levelDiff: 2, endMargin: 30 },
     /** AUTO MERGE (user 2026-11-22): an open ramp end that arrives beside another road, roughly parallel (gap <= maxGap m, angle <= maxAngleDeg), narrows smoothly over `length` m to a point on that road's paved edge. See RoadNetwork.autoMergeEnds. LEVEL CLEARANCE (RoadNetwork.levelClearance): the ramp keeps fillSlope (ramp above the other road) / cutSlope (below) metres of room per metre of level difference above levelFree m, the plan moves outward with at most lateralGrade m per m. */
     autoMerge: { enabled: true as boolean, length: 30, maxGap: 1.2, maxAngleDeg: 25, fillSlope: 3, cutSlope: 2, levelFree: 0.3, lateralGrade: 0.3 },
     /** STEP 17.1g-a: the island link M6-1 (6-lane, src/roads/island/IslandLinkData.ts, made by tools/island-link-data.py, deck option A of 17.1d) from the ring S node to the island centre, as game road 'M6-1' with its structure range. enabled = false: no island link.
@@ -747,7 +753,9 @@ export const Config = {
   /** STAGE 9: AI traffic. Every vehicle has a driver (a person); there are no empty cars. */
   traffic: {
     target: 40,
-    spawnEvery: 0.3,
+    /** TRAFFIC 2x (user 2026-11-23: 'full game a traffic 2x'): the AI car target (also the quality presets' trafficTarget) and the bus limit are multiplied by this. 1 = the old traffic, 2 = double. */
+    densityMul: 2,
+    spawnEvery: 0.2,
     spawnMin: 110,
     spawnMax: 260,
     /** Cars farther than this from the player are removed (the physics only runs near the player anyway). */

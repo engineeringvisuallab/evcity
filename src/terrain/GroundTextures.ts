@@ -70,16 +70,17 @@ function makeGrass(): HTMLCanvasElement {
   const c = cv.getContext('2d') as CanvasRenderingContext2D;
   c.scale(K, K);
   const r = rng(101);
-  c.fillStyle = '#4c6a2a';
+  c.fillStyle = '#2f4a1c'; // deep green (user, 2026-11-23)
   c.fillRect(0, 0, LS, LS);
-  patches(c, r, 70, 30, 90, ['rgba(110,140,50,0.35)', 'rgba(40,70,25,0.35)', 'rgba(150,140,70,0.22)']);
+  patches(c, r, 70, 30, 90, ['rgba(60,95,35,0.32)', 'rgba(22,48,16,0.38)', 'rgba(120,95,50,0.26)']); // the brown patches = dead grass
   // dark under-layer (shadow between the blades)
   for (let i = 0; i < 9000; i++) blob(c, r() * LS, r() * LS, 2 + r() * 3, 1 + r() * 2, r() * 6, 'rgba(20,35,10,0.25)');
   // blades: slightly bent strokes, mostly upright, many greens, some straw
-  const greens = ['#3d5c1f', '#4f7326', '#62862f', '#76993a', '#8cab48', '#a3b95a', '#5b7a2a', '#2f4a18'];
+  const greens = ['#2a4a18', '#335a1e', '#3d6a24', '#2f5a22', '#436f28', '#26421a', '#365f1f', '#1f3a14'];
   for (let i = 0; i < 30000; i++) {
     const x = r() * LS, y = r() * LS, len = 7 + r() * 17, a = -Math.PI / 2 + (r() - 0.5) * 1.1;
-    const col = r() < 0.08 ? (r() > 0.5 ? '#b8a966' : '#9c8c4e') : greens[Math.floor(r() * greens.length)];
+    const col = r() < 0.14 ? (r() > 0.5 ? '#8a6a3a' : '#a08652') : // ~14 % dead (mora) blades
+      greens[Math.floor(r() * greens.length)];
     const bend = (r() - 0.5) * 6;
     const x1 = x + Math.cos(a) * len + bend, y1 = y + Math.sin(a) * len;
     line(c, x, y, x1, y1, 0.9 + r() * 0.9, col);

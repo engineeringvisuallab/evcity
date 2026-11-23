@@ -1,0 +1,56 @@
+== AI MOVEMENTS (RteLink) ==
+PASS  A1 all four movements M3 / M4 / A2S / S2A are built from the real roads  M3 M4 A2S S2A
+PASS  A2 the graph has the interchange (g.rte) and the T stand-in of the J1-E arm is gone, the other J1 arms keep theirs  tLinks J1-N,J1-S,J1-W
+PASS  A3 M3: leaves M8 dir +1, joins J1-E dir -1  from M8 s 16584 dir 1 (22.2 m off the axis), to J1-E s 2499 dir -1 (22.2 m), 97 pts, 483 m
+PASS  A4 M3: both ends beside the main road (axis distance 18 .. 40 m)  22.2 / 22.2 m
+PASS  A5 M3: path continuous (spacing <= 6.5 m), grade <= 6.5 % (flyover exception 6 %), no kink > 25 deg per point  max gap 5.12 m, max grade 6.05 %, max turn 6.7 deg
+PASS  A3 M4: leaves J1-E dir +1, joins M8 dir +1  from J1-E s 2361 dir 1 (22.2 m off the axis), to M8 s 17191 dir 1 (22.2 m), 157 pts, 785 m
+PASS  A4 M4: both ends beside the main road (axis distance 18 .. 40 m)  22.2 / 22.2 m
+PASS  A5 M4: path continuous (spacing <= 6.5 m), grade <= 6.5 % (flyover exception 6 %), no kink > 25 deg per point  max gap 5.16 m, max grade 5.53 %, max turn 8.8 deg
+PASS  A3 A2S: leaves M8 dir -1, joins J1-E dir -1  from M8 s 16915 dir -1 (25.7 m off the axis), to J1-E s 2656 dir -1 (27.8 m), 19 pts, 91 m
+PASS  A4 A2S: both ends beside the main road (axis distance 18 .. 40 m)  25.7 / 27.8 m
+PASS  A5 A2S: path continuous (spacing <= 6.5 m), grade <= 6.5 % (flyover exception 6 %), no kink > 25 deg per point  max gap 5.06 m, max grade 3.23 %, max turn 6.0 deg
+PASS  A3 S2A: leaves J1-E dir +1, joins M8 dir -1  from J1-E s 2574 dir 1 (25.2 m off the axis), to M8 s 16715 dir -1 (25.7 m), 36 pts, 173 m
+PASS  A4 S2A: both ends beside the main road (axis distance 18 .. 40 m)  25.2 / 25.7 m
+PASS  A5 S2A: path continuous (spacing <= 6.5 m), grade <= 6.5 % (flyover exception 6 %), no kink > 25 deg per point  max gap 4.94 m, max grade 3.07 %, max turn 6.9 deg
+PASS  A6 every path point near a tail / slip lies within 2.3 m of its centre line (lane offset 1.825 m + slew)  worst 1.82 m
+PASS  B1 M3: a car in the fast lane 150 m before the exit takes it, follows the path and ends on J1-E (dir -1) with a continuous route  route ends on J1-E dir -1, 218 pts, max gap 7.7 m, bad steps 0, terminal false
+PASS  B2 M3: speed limits along the route are sane (3.5 .. 30 m/s, the slow part is the ramp)  slowest point 7.8 m/s (28 km/h)
+PASS  B1 M4: a car in the fast lane 150 m before the exit takes it, follows the path and ends on M8 (dir +1) with a continuous route  route ends on M8 dir 1, 216 pts, max gap 7.7 m, bad steps 0, terminal false
+PASS  B2 M4: speed limits along the route are sane (3.5 .. 30 m/s, the slow part is the ramp)  slowest point 8.5 m/s (31 km/h)
+PASS  B1 A2S: a car in the fast lane 150 m before the exit takes it, follows the path and ends on J1-E (dir -1) with a continuous route  route ends on J1-E dir -1, 219 pts, max gap 8.0 m, bad steps 0, terminal false
+PASS  B2 A2S: speed limits along the route are sane (3.5 .. 30 m/s, the slow part is the ramp)  slowest point 3.9 m/s (14 km/h)
+PASS  B1 S2A: a car in the fast lane 150 m before the exit takes it, follows the path and ends on M8 (dir -1) with a continuous route  route ends on M8 dir -1, 221 pts, max gap 7.7 m, bad steps 0, terminal false
+PASS  B2 S2A: speed limits along the route are sane (3.5 .. 30 m/s, the slow part is the ramp)  slowest point 6.9 m/s (25 km/h)
+PASS  B3 a ring car that does not want to exit (rnd 0.99) stays on the ring in both directions  
+PASS  B4 an arm car that does not want M4 still takes the slip S2A (the arm ends at the ring): ends on the ring dir -1  ends on M8 dir -1
+PASS  B5 about exitChance of the ring cars take M3 (random drivers)  32 % of 600 (exitChance 0.3)
+PASS  B6 spawn dead zone: arm, towards the ring, after the S2A exit = true; before it, or the other way = false  
+== GUARDRAIL (RteRail) ==
+rails: 6 roads, 254 posts, 968 m of beam, 5952 triangles
+   RTE-A2S side L s 12..76 (17 posts)
+   RTE-A2S side R s 12..76 (17 posts)
+   RTE-S2A side L s 12..160 (38 posts)
+   RTE-S2A side R s 12..160 (38 posts)
+   RTE-TAIL-M3S side L s 34..86 (14 posts)
+   RTE-TAIL-M3S side R s 34..86 (14 posts)
+   RTE-TAIL-M3N side L s 0..40 (11 posts)
+   RTE-TAIL-M3N side R s 0..40 (11 posts)
+   RTE-TAIL-M4G side L s 34..98 (17 posts)
+   RTE-TAIL-M4G side R s 34..98 (17 posts)
+   RTE-TAIL-M4L side L s 0..116 (30 posts)
+   RTE-TAIL-M4L side R s 0..116 (30 posts)
+PASS  R1 all six connection roads (A2S, S2A, 4 tails) get a rail  6 roads, rails on 6
+PASS  R2 both sides: every slip has a rail on BOTH sides; every tail has both sides where it is clear of the main road  both sides on: RTE-A2S, RTE-S2A, RTE-TAIL-M3S, RTE-TAIL-M3N, RTE-TAIL-M4G, RTE-TAIL-M4L; one side only: -
+PASS  R3 posts the builder tested: those it kept are not on asphalt of any road (callback = net.surfaceAt === 1)  254 candidate posts tested
+PASS  R4 no rail vertex stands on asphalt (sampled)  744 vertices sampled, 0 on asphalt
+PASS  R5 the rail follows the finished ground: no vertex more than 6 m above it or 2.5 m below it (sampled)  highest 0.91 m above ground, lowest -0.06 m below (post top / base vs terrain height)
+PASS  R6 the guardrail keeps >= 1.2 m from every AI path point (a car does not drive into a rail)  closest rail vertex to a path point 3.54 m (sampled every 8th vertex)
+PASS  R7 no rail run starts or ends inside the AUTO MERGE zone of a tail (halfAt < 98 % of the half width)  28 merge-zone road points, 0 rail run ends inside
+PASS  R8 the rail meets the bridge parapet: tails M3N / M4L start at the bridge end (first post <= 8 m), tails M3S / M4G end at it (last post <= 8 m from the road end)  M3N from 0, M4L from 0, M3S end gap 0, M4G end gap 0
+PASS  R9 triangles built, within a sane budget (< 60 000)  5952 triangles, 17856 vertices
+
+NOT RUN  the game (look of the rails and of the cars on the ramps, the real driving of a car through the movement, traffic jams at the merge, rail collision with a real vehicle), npm run build (vite part), the other old check scripts
+ASSUMED  rail height 0.75 m, post 0.12 m, beam 0.32 x 0.07 m; lane offset 1.825 m on the 2-lane parts; speeds 13 m/s flyover, 10.5 m/s slip; exitChance 0.3, m4Chance 0.5 (Config.roads.junctionRteTraffic)
+
+SUMMARY: ALL PASS

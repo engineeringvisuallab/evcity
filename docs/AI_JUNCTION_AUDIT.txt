@@ -1,0 +1,64 @@
+H2 end links: 377
+roads 211, engineered pads 0, auto pads 15, j1 yes, rte yes
+auto pad types: {"T":11,"roundabout":4}   (only T is a routing junction while Config.roads.autoJunction.traffic is true)
+road kinds: {"highway":58,"ramp":8,"collector":112,"local":33}
+approaches tested: 28
+approaches where some route ended in a dead end before 550 m: 20
+   DEAD  pad 10 on R2-29 dir +: 16/20 runs ended early, exits R2-29+ R2-30+ R4-20+ R4-20-
+   DEAD  pad 2 on R2-39 dir -: 7/20 runs ended early, exits R2-37.1- R2-37.2+ R2-36.2+ R2-38+ R2-34.3+ R2-36.1-
+   DEAD  pad 5 on R2-41 dir -: 18/20 runs ended early, exits R2-41- R2-42.2+ R2-40.1- R2-42.1-
+   DEAD  pad 2 on R2-34.1 dir -: 9/20 runs ended early, exits R2-39+ R2-38+
+   DEAD  pad 5 on R2-40.2 dir +: 20/20 runs ended early, exits R2-41+ R2-41-
+   DEAD  pad 13 on R2-19 dir +: 5/20 runs ended early, exits R2-19+ C-5- L-30+ L-27-
+   DEAD  pad 13 on R2-19 dir -: 5/20 runs ended early, exits R2-19- C-5- L-30+ L-30-
+   DEAD  pad 0 on R2-19 dir +: 1/20 runs ended early, exits R2-17- R2-19+ L-25+ L-23+ R2-20+ R2-20-
+   DEAD  pad 0 on R2-19 dir -: 1/20 runs ended early, exits R2-19- L-28+ L-25+ R2-17- L-23+ R2-17+
+   DEAD  pad 14 on R2-19 dir +: 1/20 runs ended early, exits R2-19+ R2-17- L-25+ L-26+
+   DEAD  pad 14 on R2-19 dir -: 1/20 runs ended early, exits R2-19- R2-17+ R2-17- R2-19+ L-25+ L-23+
+   DEAD  pad 13 on C-5 dir +: 5/20 runs ended early, exits R2-19- R2-19+ L-29+ L-30+ R2-17- L-27-
+   DEAD  pad 8 on SH-1+2 dir +: 17/20 runs ended early, exits SH-1+2+ R4-20- R4-20+
+   DEAD  pad 7 on SH-4 dir +: 4/20 runs ended early, exits CRR-WNW-b+ CRR-WNW-a- SH-5+
+   DEAD  pad 7 on SH-4 dir -: 4/20 runs ended early, exits R2-77+ R2-77- SH-5+
+   DEAD  pad 9 on SH-6+15 dir +: 3/20 runs ended early, exits CRR-WNW-b+ SH-7+16- RR-HUB- CRR-N1-a- CRR-N1-a+ RR-HUB+ SH-17- SH-12+14-
+   DEAD  pad 11 on SH-6+15 dir +: 9/20 runs ended early, exits CRR-N1-a+ SH-12+14- RR-HUB- RR-HUB+ SH-7+16- SH-17-
+   DEAD  pad 11 on SH-7+16 dir +: 4/20 runs ended early, exits CRR-N1-a+ SH-6+15- CRR-WNW-a- RR-HUB- RR-HUB+ SH-17+ SH-12+14-
+   DEAD  pad 9 on SH-17 dir -: 1/20 runs ended early, exits CRR-N1-a+ SH-6+15- RR-HUB- CRR-N1-a- SH-17+ SH-7+16-
+   DEAD  pad 10 on SH-18 dir +: 13/20 runs ended early, exits R2-29+ R4-20- SH-19+ R4-20+ R2-28+
+approaches with a gap / level jump in the route: 1
+   GAP   pad 9 on SH-6+15 dir +: 2/20 runs
+approaches where no run ever left the road (the junction never turns): 0
+road ends with no junction station and no H2 end link (free dead ends, cars stop there): 145
+   END   M6-1 end (highway, 1761 m)
+   END   R6-2 end (highway, 1966 m)
+   END   R6-3 start (highway, 1159 m)
+   END   R6-4 end (highway, 607 m)
+   END   R6-6A start (highway, 501 m)
+   END   R6-6B start (highway, 930 m)
+   END   R6-7 start (highway, 772 m)
+   END   R6-7 end (highway, 772 m)
+   END   R6-8 start (highway, 218 m)
+   END   R6-8 end (highway, 218 m)
+   END   R6-9 start (highway, 716 m)
+   END   R6-10 start (highway, 1877 m)
+   END   R6-13 end (highway, 446 m)
+   END   R6-14 end (highway, 366 m)
+   END   R6-15 start (highway, 2013 m)
+   END   R4-3 start (highway, 199 m)
+   END   R4-3 end (highway, 199 m)
+   END   R4-4 end (highway, 243 m)
+   END   R4-5 end (highway, 642 m)
+   END   R4-7 end (highway, 1540 m)
+   END   R4-8 end (highway, 1147 m)
+   END   R4-10 end (highway, 1115 m)
+   END   R4-11 start (highway, 216 m)
+   END   R4-11 end (highway, 216 m)
+   END   R4-15 start (highway, 524 m)
+   END   R4-15 end (highway, 524 m)
+   END   R4-26 end (highway, 436 m)
+   END   R4-9 start (highway, 2938 m)
+   END   R4-9 end (highway, 2938 m)
+   END   R4-12 start (highway, 1779 m)
+H3 cross links: 14 crossings (both roads continue, same level, no station / end link within 45 m)
+   approaches tested 42, some route turns onto the crossing road: 42, never turns: 0, with a gap / level jump: 0
+
+NOT RUN  the game, signals, the real vehicle physics
