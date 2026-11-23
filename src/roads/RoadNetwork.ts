@@ -37,6 +37,9 @@ import { CORRIDOR_ROAD_DATA, type CorridorPiece } from './crr/CorridorRoadData';
 import { buildJunctionRegistry, type JunctionRegistry } from './JunctionRegistry';
 import { STRUCT, STRUCT_CARVE } from './ring/RingStructures';
 import { NODE_VIADUCT } from './ring/NodeViaductData';
+import { HkTerrain } from './ring/HkTerrain';
+/** STEP HK-9b2: width (m) over which the loop-ramp cut fades out toward another road. */
+const HK_ROAD_FADE = 8;
 import { SCENARIOS, cutRange, nearestPoint, uvToWorld, type ScenarioSpec } from '../interchange/scenario/J6Scenario';
 
 /** Natural terrain WITHOUT roads (hills, rivers, lakes, sea). Roads are planned on top of this. */
@@ -351,6 +354,7 @@ export class RoadNetwork {
     this.j1Cells.clear();
     this.autoCells.clear();
     this.buildSegments();
+    this.hkReady = true; // STEP HK-9b2: ring, J1-S arm and island link now exist, the loop-ramp cut can be built
   }
 
   // =====================================================================================
@@ -3796,6 +3800,9 @@ export class RoadNetwork {
    */
   /** Road id of the island link M6-1 (-1 = none), set by layoutIslandLink(). */
   private islandLinkId = -1;
+  /** STEP HK-9b2: ground cut along the Hatikamrul loop ramps, built on the first apply() with the switch ON. */
+  private hkTerrain: HkTerrain | null = null;
+  private hkReady = false;
   /** STEP 17.1g-b: true when (x, z) lies behind the first point of the island link (projection on its first segment < 0). */
   private behindLinkStart(x: number, z: number): boolean {
     const r = this.roads[this.islandLinkId];
@@ -3803,6 +3810,22 @@ export class RoadNetwork {
   }
 
   apply(x: number, z: number, out: TerrainSample): void {
+    this.applyRoads(x, z, out);
+    // STEP HK-9b2: cut the hillside along the Hatikamrul loop ramps (only with Config.roads.hatikamrul.enabled; built lazily, pure math, same in the chunk workers). Runs after the road earthworks and also where no road cell exists (the ramps lie beside the roads); never on wet ground.
+    if (this.hkReady && Config.roads.hatikamrul.enabled && (Number.isNaN(out.water) || out.h >= out.water + 0.3)) {
+      if (!this.hkTerrain) this.hkTerrain = new HkTerrain(this);
+      const hc = this.hkTerrain.apply(x, z, out.h);
+      if (hc < out.h) {
+        // never undercut another road: full cut only HK_ROAD_FADE m beyond the edge of the nearest road (its asphalt + shoulder), nothing on it (the link / arm run beside the SE and NE loops)
+        const nr = this.nearest(x, z, HK_ROAD_FADE);
+        const g = nr ? nr.d - this.score[nr.s] : HK_ROAD_FADE;
+        const w = g <= 0 ? 0 : g >= HK_ROAD_FADE ? 1 : smoothstep(0, HK_ROAD_FADE, g);
+        out.h -= (out.h - hc) * w;
+      }
+    }
+  }
+
+  private applyRoads(x: number, z: number, out: TerrainSample): void {
     const segs = this.cellOf(x, z);
     if (!segs) return;
     // RIVER PROTECTION: wet ground (river, lake, sea) is never filled or cut by a road. Every wet crossing is a bridge,

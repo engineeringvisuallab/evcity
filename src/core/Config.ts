@@ -119,7 +119,7 @@ export const Config = {
     /** STEP CRR-5b: the 5 rail-corridor roads (4 lanes, pier row = median 6.4 m, 22.4 m wide; centreline = fixed data src/roads/crr/CorridorRoadData.ts, made by scripts/crr-export-data.ts) as game roads. They join AFTER the railway and the J1 arms exist (RoadNetwork.addCorridorRoads, called by TerrainGenerator), so the rail plan never sees them. DEFAULT FALSE until the user has seen it in the game. NO junction pad / traffic link / median mesh yet (CRR-5c, CRR-3). */
     corridorRoads: { enabled: true as boolean, maxGrade: 0.06, smoothHalf: 45 },
     /** STEP HK-8d-1: the Hatikamrul-type interchange at the ring S node (HANDOFF_HATIKAMRUL.md). ON = the ring uses the raised profile src/roads/ring/RingProfileData.hk.ts (ring OVER the arm / link, deck top 27.23 m at the node, HK-6 patch). DEFAULT FALSE: nothing changes until the structures, ramps and loops are in (HK-8d-2 ... HK-13). */
-    hatikamrul: { enabled: false as boolean },
+    hatikamrul: { enabled: true as boolean },
     /** STEP B7-5 (21.6 build, batch C-a): the C lines C-2 .. C-13 (src/roads/c/CNewLineData.ts, made by scripts/centre-c-export.ts) as game roads, collector street 2 lanes undivided, V40, grade <= 8 %, no footpath yet. Ends are free (no junction mouth, no structure yet, 21.61). false = none. */
     cNew: { enabled: true as boolean },
     /** STEP B7-6 (21.6 build, batch L-a): the L lines L-1 .. L-4, L-7 .. L-12 (src/roads/l/LNewLineData.ts, made by scripts/centre-l-export.ts) as game roads, local street 2 lanes undivided, V30, grade <= 10 %, no footpath yet. Ends are free (no junction mouth, no structure yet, 21.61). false = none. */

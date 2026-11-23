@@ -6,12 +6,18 @@ import type { RoadNetwork } from '../RoadNetwork';
 import type { RingSolid } from './RingStructureLayer';
 import { hkFrame, hkRamps, hkRingOffset } from './HkRamps';
 import { buildHkRampMesh } from './HkRampMesh';
+import { buildHkAuxStrip, buildHkTail, hkDeckLevel } from './HkDeckPaving';
+import type { MeshData } from './RingBridgeGeometry';
 
 export class HkInterchangeLayer {
   readonly solids: RingSolid[] = [];
   private readonly group = new THREE.Group();
   private readonly mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0.05, side: THREE.DoubleSide });
+  /** STEP HK-9c-1: visual paving (aux strip + loop tails) lies a few cm over the deck: its own material with a polygon offset, no collider. */
+  private readonly pavMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0.05, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
   private readonly geos: THREE.BufferGeometry[] = [];
+  /** Number of paving meshes built (aux strip + tails); 0 with the switch OFF. */
+  pavingMeshes = 0;
 
   constructor(private readonly parent: THREE.Object3D, roads: RoadNetwork, ground?: (x: number, z: number) => number) {
     this.group.name = 'hk-interchange';
@@ -37,6 +43,25 @@ export class HkInterchangeLayer {
       this.geos.push(g);
       this.group.add(mesh);
     }
+    // HK-9c-1: the paving that joins the loops to the ring (visual only)
+    const pav: [string, MeshData][] = [['hk-aux-strip', buildHkAuxStrip(roads)]];
+    const deckY = hkDeckLevel(roads);
+    for (const rp of hkRamps(f)) pav.push([`hk-tail-${rp.id}`, buildHkTail(rp, off, deckY)]);
+    for (const [name, d] of pav) {
+      if (d.indices.length === 0) continue;
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(d.positions, 3));
+      g.setAttribute('color', new THREE.Float32BufferAttribute(d.colors, 3));
+      g.setIndex(d.indices);
+      g.computeVertexNormals();
+      g.computeBoundingSphere();
+      const mesh = new THREE.Mesh(g, this.pavMat);
+      mesh.name = name;
+      mesh.receiveShadow = true;
+      this.geos.push(g);
+      this.group.add(mesh);
+      this.pavingMeshes++;
+    }
     parent.add(this.group);
   }
 
@@ -44,5 +69,6 @@ export class HkInterchangeLayer {
     this.parent.remove(this.group);
     for (const g of this.geos) g.dispose();
     this.mat.dispose();
+    this.pavMat.dispose();
   }
 }
