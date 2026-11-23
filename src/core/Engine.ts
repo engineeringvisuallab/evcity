@@ -1224,6 +1224,7 @@ export class Engine {
       this.weather.update(dt, this.time.elapsed, this.camera, this.world.origin.origin.x, this.world.origin.origin.z, this.renderer.domElement.height, shelter);
       this.people.setRain(this.weather.intensity);
       CabinState.rain = this.weather.intensity; // wipers sweep while it rains
+      this.player.model.setSunglasses(this.environment.lampOn < 0.4 && !this.mall.inside); // sunglasses by day only
       this.player.model.setUmbrella(this.weather.umbrellaWanted && this.hudSettings.values.rainUmbrella && this.player.active && !this.player.inVehicle && !shelter);
     }
     this.world.update(dt, this.time.elapsed, this.camera, this.cameraController.isFreeFly);

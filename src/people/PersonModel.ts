@@ -109,7 +109,7 @@ export function randomAppearance(r: () => number): Appearance {
   };
 }
 
-/** The player's own look (yellow helmet, orange vest) - used when the player sits in a vehicle. */
+/** The player's own look (white helmet, orange vest) - used when the player sits in a vehicle. */
 export const ENGINEER_LOOK: Appearance = {
   skin: 0xe0b08a,
   hair: 0x2a1d14,
@@ -118,7 +118,7 @@ export const ENGINEER_LOOK: Appearance = {
   shoes: 0x3a2a1a,
   scale: 1,
   headwear: 'helmet',
-  headwearColor: 0xffd21f,
+  headwearColor: 0xf4f2ea, // 2026-11-23: white safety helmet (was yellow 0xffd21f)
   vest: true,
   bodyType: 'average',
 };

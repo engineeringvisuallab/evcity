@@ -119,3 +119,8 @@ Dhyan: `TreeKind` e gum2 (24) er por notun kind (25, 26) bosechhe, tai `kind >= 
 ## UPDATE 12 — grass aro ghono, gaRo rong, rong mix (sobuj + mora)
 - `GrassAssets.ts` `bladeTuft`: tuft e plant 3→4 (near), 2→3 (mid). Prottek plant er nijer rong: 58% gaRo/moddho sobuj, 16% olive, 12% halka-lime, 8% sukno khor (straw), 6% mora brown. Rong ager cheye gaRo (lime kome gese). Key `grass-fade-v10`.
 - `Config.ts`: `grass.maxChance 0.5→0.7`, `grass.jungle.chance 0.3→0.45` (aro ghono). FPS komle eigulo komao.
+
+## UPDATE 13 — player: white helmet + sunglasses
+- `people/PersonModel.ts` `ENGINEER_LOOK.headwearColor` → `0xf4f2ea` (white helmet; gari-te boshle-o same look).
+- `characters/PlayerModel.ts`: chokhe sunglass (2 ta kalo lens, frame, kan porjonto temple), head bone e lage. `setSunglasses(on)`.
+- `core/Engine.ts`: `setSunglasses(environment.lampOn < 0.4 && !mall.inside)` — din e thake, rate (street lamp jolle) ar mall er bhitore khule jay.

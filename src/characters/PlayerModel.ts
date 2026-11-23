@@ -6,6 +6,7 @@ import { buildHuman, kneeFlex, ELBOW_REST, HAND_GRIP_Y, type HumanRig } from '..
 import { blink, gait, relax } from '../people/HumanMotion';
 import { AimController } from '../people/HumanAim';
 import { Umbrella, holdArm } from '../weather/Umbrella';
+import { HEAD_LIFT, J } from '../people/SkinMath';
 
 export type PlayerState = 'idle' | 'walk' | 'run' | 'air' | 'swim' | 'wade' | 'climb';
 
@@ -45,6 +46,8 @@ export class PlayerModel {
   /** FIRST PERSON: the body is drawn with colour and depth writes off (invisible, but it still casts its shadow); the clones replace the real materials only while it is on. */
   private fpOn = false;
   private fpClones = new Map<THREE.Material, THREE.Material>();
+  /** SUNGLASSES (2026-11-23): dark lenses on the eyes by day, taken off at night (setSunglasses). Null when the body has no head bone. */
+  private glasses: THREE.Group | null = null;
 
   constructor() {
     const rig = buildHuman(ENGINEER_LOOK, (c) => {
@@ -64,6 +67,31 @@ export class PlayerModel {
     this.foreR = rig.foreR;
     this.pivot.position.y = 0.9;
     this.root.add(this.pivot);
+    if (rig.head) {
+      const lens = new THREE.MeshLambertMaterial({ color: 0x0b0b0e });
+      const frame = new THREE.MeshLambertMaterial({ color: 0x15151a });
+      this.mats.push(lens, frame);
+      const g = new THREE.Group();
+      const y = 1.675 + HEAD_LIFT - J.head;
+      for (const sx of [-1, 1]) {
+        const l = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.034, 0.008), lens);
+        l.position.set(sx * 0.034, y, 0.106);
+        g.add(l);
+        const arm = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.006, 0.11), frame); // the temple reaching back to the ear
+        arm.position.set(sx * 0.07, y + 0.004, 0.055);
+        g.add(arm);
+      }
+      const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.006, 0.008), frame);
+      bridge.position.set(0, y + 0.008, 0.106);
+      g.add(bridge);
+      rig.head.add(g);
+      this.glasses = g;
+    }
+  }
+
+  /** Sunglasses on (day) / off (night). */
+  setSunglasses(on: boolean): void {
+    if (this.glasses) this.glasses.visible = on;
   }
 
   /** Gun in the right hand (null = hands empty). */
