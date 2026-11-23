@@ -109,3 +109,9 @@ Dhyan: `TreeKind` e gum2 (24) er por notun kind (25, 26) bosechhe, tai `kind >= 
 ## UPDATE 10 — jungle e lata (liana) gach besi
 - `Config.ts` `dense.vines`: `lianaChance 0.08→0.14`, `tangleChance 0.09→0.09` (same), patch `from 0.05→-0.25`, `full 0.32→0.1`, `boost 2.5→3` (patch boro, beshi jaygay). Test: ~5/ha theke ~25/ha liana.
 - FPS komle `lianaChance` komao (ek liana ~300 triangle, shudhu kase LOD 0).
+
+## UPDATE 11 — sob ager (chobi-wala) grass remove, ekhon asol 3D grass
+- `GrassAssets.ts`: sob green grass (lawn, durba, wild, clump, tussock, seed, leafy, trefoil) er painted card model bad. Ekhon `bladeTuft`: ek tuft = 2-3ta chhoto plant, prottek plant 2-3 ta single pata (prottek pata 3 triangle), prai same height, plant-er nijer halka/gaRo sobuj, goray gaRo ogray halka. Chobi/texture nai.
+- Flower card gulo (marigold, buttercup, lavender, poppy, cornflower, cosmos) ager moto majhe majhe thakbe.
+- Material key `grass-fade-v9`. Tuft e ~21-27 triangle (near), kom (far).
+- Density/jaygay bodlai nai (GrassManager/Config same). Aro kom/besi chaile `Config.ts grass.*` e chance.

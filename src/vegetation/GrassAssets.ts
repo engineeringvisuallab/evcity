@@ -130,24 +130,39 @@ function cardTuft(b: Builder, r: RNG, s: CardSpec, density: number): void {
   }
 }
 
-/** LEAFY / TREFOIL: shallow cones (a raised middle, the corners on the ground) wearing the top-down picture of a rosette / clover patch; the second layer is turned 40 degrees and a little lower. */
-function flatLeaves(b: Builder, r: RNG, type: number, density: number): void {
-  const leafy = type === GrassType.leafy;
-  const R = leafy ? 0.34 : 0.3, top = leafy ? 0.12 : 0.09;
-  const tile = leafy ? GT.leafy : GT.trefoil;
-  const u0 = (tile + 0.01) / GRASS_TILES, u1 = (tile + 0.99) / GRASS_TILES;
-  const layers = density >= 0.9 ? 2 : 1;
-  for (let l = 0; l < layers; l++) {
-    const rot = l * 0.7 + r() * 0.5;
-    const sc = 1 - 0.14 * l;
-    const cr = Math.cos(rot), sr = Math.sin(rot);
-    const center = b.shared([0, top * (1 - 0.1 * l), 0], FLAT_NORMAL, [1, 1, 1], 0, [(tile + 0.5) / GRASS_TILES, 0.5]);
-    const ids: number[] = [];
-    for (const [qx, qz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
-      const x = qx * R * sc, z = qz * R * sc;
-      ids.push(b.shared([x * cr - z * sr, 0.012 + 0.02 * l, x * sr + z * cr], FLAT_NORMAL, [0.8, 0.8, 0.8], 0, [qx < 0 ? u0 : u1, qz < 0 ? 0.01 : 0.99]));
+/** REAL 3D GRASS (2026-11-23): no pictures. A tuft = a few small PLANTS, each plant = 2-3 single blades (3 triangles each: a wide base, a narrow middle, a pointed tip) of nearly the same height,
+ * leaning a little and drooping at the tip. Every plant has its own light or deep green; the blade is dark at the root and bright at the tip (vertex colours, the per-instance tint still adjusts them). */
+function bladeTuft(b: Builder, r: RNG, h: number, spread: number, density: number): void {
+  const plants = density >= 0.9 ? 3 : 2;
+  const a0 = r() * Math.PI * 2;
+  for (let p = 0; p < plants; p++) {
+    const pa = a0 + (p / plants) * Math.PI * 2 + (r() - 0.5) * 0.8;
+    const pr = spread * (0.35 + 0.65 * r());
+    const px = Math.cos(pa) * pr, pz = Math.sin(pa) * pr;
+    const shade = 0.8 + 0.4 * r(); // light .. deep green of this plant
+    const nb = density >= 0.9 ? 2 + (r() < 0.55 ? 1 : 0) : 2;
+    const ph = h * (0.88 + 0.12 * r());
+    for (let k = 0; k < nb; k++) {
+      const az = r() * Math.PI * 2;
+      const sx = Math.cos(az), sz = Math.sin(az); // across the blade
+      const lean = (0.1 + 0.16 * r()) * ph;
+      const la = pa + (r() - 0.5) * 1.6; // lean direction: outwards, a little random
+      const lx = Math.cos(la), lz = Math.sin(la);
+      const bh = ph * (0.94 + 0.06 * r());
+      const bw = 0.036 * (0.9 + 0.3 * r());
+      const ox = px + (r() - 0.5) * 0.03, oz = pz + (r() - 0.5) * 0.03;
+      const col = (t: number): RGB => { const f = shade * (0.55 + 0.45 * t); return [0.2 * f, 0.5 * f, 0.1 * f]; };
+      const vtx = (t: number, wid: number, side: number): number => {
+        const off = lean * t * t;
+        return b.shared([ox + lx * off + sx * side * wid * 0.5, bh * t, oz + lz * off + sz * side * wid * 0.5], FLAT_NORMAL, col(t), 0);
+      };
+      const bl = vtx(0, bw, -1), br = vtx(0, bw, 1);
+      const ml = vtx(0.5, bw * 0.7, -1), mr = vtx(0.5, bw * 0.7, 1);
+      const tip = vtx(1, 0, 0);
+      b.face(bl, br, ml);
+      b.face(br, mr, ml);
+      b.face(ml, mr, tip);
     }
-    for (let q = 0; q < 4; q++) b.face(center, ids[q], ids[(q + 1) % 4]);
   }
 }
 
@@ -156,11 +171,9 @@ function make(type: number, density = 1): THREE.BufferGeometry {
   const r = mulberry32(4242 + type * 7919);
   const b = new Builder();
   const card = CARDS[type];
-  if (card) {
-    cardTuft(b, r, card, density);
-  } else if (type === GrassType.leafy || type === GrassType.trefoil) {
-    flatLeaves(b, r, type, density);
-  }
+  if (card && card.flower) cardTuft(b, r, card, density);
+  else if (card) bladeTuft(b, r, Math.min(card.h * 0.85, 0.9), card.w * 0.28, density);
+  else bladeTuft(b, r, 0.45, 0.2, density); // leafy / trefoil: the same green blades
   return b.build();
 }
 
@@ -243,7 +256,7 @@ export class GrassAssets {
           #include <opaque_fragment>`,
         );
     };
-    m.customProgramCacheKey = () => 'grass-fade-v8' + key;
+    m.customProgramCacheKey = () => 'grass-fade-v9' + key;
     return m;
   }
 
