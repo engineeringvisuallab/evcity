@@ -130,3 +130,57 @@ export function buildHkConnector(roads: RoadNetwork, f: HkFrame, ground?: (x: nu
   }
   return m.d;
 }
+
+/** STEP HK-9d-1: LANE-DROP MARKINGS on the J1-S arm next to the node (docs/HK_LANES.txt). Visual only (no collider), drawn over the arm asphalt with the paving material.
+ *  SOUTHBOUND (east side): the outer lane (u 15.45 .. 19.10 from the arm axis) is closed by a taper y +260 .. +30; a solid white diagonal line runs from the lane edge (19.10) to the lane inner edge (15.45); y +30 .. 0 the closed lane is hatched (white 45 deg stripes between two solid lines).
+ *  NORTHBOUND (west side): the 4th lane is GAINED: its diagonal line runs from u -15.45 at y +25.75 (deck edge) to u -19.10 at y +116. All numbers come from HK_LANES.txt; the arm is NOT changed (its own lane dashes stay). */
+export const HM9D = { laneInner: 15.45, laneOuter: 19.10, dropY0: 260, dropY1: 30, gainY0: 25.75, gainY1: 116, hatchPitch: 4, hatchW: 0.45, lineW: 0.2, mark: 0.006 } as const;
+
+export function buildHkLaneMarks(roads: RoadNetwork, f: HkFrame): MeshData {
+  const m = new P();
+  const arm = roads.roads.find((r) => r.name === 'J1-S');
+  if (!arm) return m.d;
+  const locY = (x: number, z: number): number => (x - f.ox) * f.nx + (z - f.oz) * f.nz;
+  const ks: number[] = [];
+  for (let k = 0; k < arm.xs.length; k++) { const y = locY(arm.xs[k], arm.zs[k]); if (y >= -1 && y <= HM9D.dropY0 + 10) ks.push(k); }
+  if (ks.length < 3) return m.d;
+  ks.sort((a, b) => locY(arm.xs[a], arm.zs[a]) - locY(arm.xs[b], arm.zs[b]));
+  // arm frame at index position i of ks: point, east-pointing normal, local y
+  const at = (i: number): { x: number; z: number; y: number; px: number; pz: number; ly: number } => {
+    const a = ks[Math.max(0, i - 1)], b = ks[Math.min(ks.length - 1, i + 1)], k = ks[i];
+    let tx = arm.xs[b] - arm.xs[a], tz = arm.zs[b] - arm.zs[a]; const l = Math.hypot(tx, tz) || 1; tx /= l; tz /= l;
+    let px = -tz, pz = tx; if (px * f.ex + pz * f.ez < 0) { px = -px; pz = -pz; }
+    return { x: arm.xs[k], z: arm.zs[k], y: arm.ys[k], px, pz, ly: locY(arm.xs[k], arm.zs[k]) };
+  };
+  const W = HM9D.lineW, mk = HM9D.mark + HP.lift;
+  const line = (uOf: (ly: number) => number | null, east: boolean): void => {
+    let prev: number[] | null = null;
+    for (let i = 0; i < ks.length; i++) {
+      const p = at(i), u = uOf(p.ly);
+      if (u === null) { prev = null; continue; }
+      const sg = east ? 1 : -1;
+      const cur = [m.v(p.x + p.px * sg * (u - W / 2), p.y + mk, p.z + p.pz * sg * (u - W / 2), COL.mark), m.v(p.x + p.px * sg * (u + W / 2), p.y + mk, p.z + p.pz * sg * (u + W / 2), COL.mark)];
+      if (prev) m.quad(prev[0], prev[1], cur[1], cur[0]);
+      prev = cur;
+    }
+  };
+  const uDrop = (ly: number): number | null => ly < 0 || ly > HM9D.dropY0 ? null : ly <= HM9D.dropY1 ? HM9D.laneInner : HM9D.laneOuter - (HM9D.laneOuter - HM9D.laneInner) * Math.min(1, (HM9D.dropY0 - ly) / (HM9D.dropY0 - HM9D.dropY1));
+  const uGain = (ly: number): number | null => ly < HM9D.gainY0 || ly > HM9D.gainY1 ? null : HM9D.laneInner + (HM9D.laneOuter - HM9D.laneInner) * (ly - HM9D.gainY0) / (HM9D.gainY1 - HM9D.gainY0);
+  line(uDrop, true);
+  line(uGain, false);
+  // hatching of the closed lane y 0 .. dropY1 (east): 45 deg stripes, one quad each, laid on the arm level
+  for (let ly = 0; ly < HM9D.dropY1 - 0.01; ly += HM9D.hatchPitch) {
+    const lo = ly, hi = Math.min(HM9D.dropY1, ly + HM9D.hatchW), shift = HM9D.laneOuter - HM9D.laneInner; // stripe slants by the lane width (45 deg)
+    const pts: [number, number][] = [[HM9D.laneInner, lo], [HM9D.laneInner, hi], [HM9D.laneOuter, Math.min(HM9D.dropY1, hi + shift)], [HM9D.laneOuter, Math.min(HM9D.dropY1, lo + shift)]];
+    if (pts[2][1] - pts[3][1] < 1e-6 && pts[3][1] >= HM9D.dropY1) continue; // clipped away at the end of the hatched area
+    const ids = pts.map(([u, y]) => {
+      // find the arm index segment of local y, interpolate
+      let i = 0; while (i < ks.length - 2 && at(i + 1).ly < y) i++;
+      const a = at(i), b = at(i + 1), t = b.ly === a.ly ? 0 : Math.max(0, Math.min(1, (y - a.ly) / (b.ly - a.ly)));
+      const x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t, px = a.px + (b.px - a.px) * t, pz = a.pz + (b.pz - a.pz) * t, lv = a.y + (b.y - a.y) * t;
+      return m.v(x + px * u, lv + mk, z + pz * u, COL.mark);
+    });
+    m.quad(ids[0], ids[1], ids[2], ids[3]);
+  }
+  return m.d;
+}

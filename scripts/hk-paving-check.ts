@@ -7,7 +7,7 @@ import { Config } from '../src/core/Config';
 import { RingStructureLayer } from '../src/roads/ring/RingStructureLayer';
 import { HkInterchangeLayer } from '../src/roads/ring/HkInterchangeLayer';
 import { hkFrame, hkRamps, hkRingOffset } from '../src/roads/ring/HkRamps';
-import { buildHkAuxStrip, buildHkConnector, buildHkTail, hkDeckLevel, hkTailIndices, HP } from '../src/roads/ring/HkDeckPaving';
+import { buildHkAuxStrip, buildHkConnector, buildHkLaneMarks, buildHkTail, hkDeckLevel, hkTailIndices, HP } from '../src/roads/ring/HkDeckPaving';
 import { NODE_VIADUCT as N } from '../src/roads/ring/NodeViaductData';
 import type { MeshData } from '../src/roads/ring/RingBridgeGeometry';
 
@@ -50,7 +50,7 @@ const deckY = hkDeckLevel(net);
 const ring = net.roads.find((r) => r.name === 'M8')!;
 
 // P1 the layer builds 1 aux strip + 4 tails and still only the 4 ramp colliders (paving is visual only)
-check(layer.pavingMeshes === 6, 'P1 paving meshes: 1 aux strip + 1 connector + 4 loop tails', `${layer.pavingMeshes}`);
+check(layer.pavingMeshes === 7, 'P1 paving meshes: 1 aux strip + 1 connector + 1 lane marks + 4 loop tails', `${layer.pavingMeshes}`);
 check(layer.solids.length === 4, 'P1 colliders unchanged: only the 4 ramps (paving is visual)', `${layer.solids.length} solids`);
 
 // P2 aux strip geometry: finite, between the ring pavement edge and the deck edge, only on the node viaduct stretch, both sides
@@ -117,6 +117,32 @@ check(nT > 10 && worstLvl <= 0.2, 'P5 tail level equals the deck top where it li
   check(under, 'P7 connector lies under the deck (|y| <= 25.75)', under ? 'yes' : 'sticks out');
   check(gap <= 0.5, 'P7 connector level vs ground on the axis (<= 0.5 m, no collider needed)', `worst ${f2(gap)} m`);
   console.log(`  INFO  connector level start ${f2(yAt(0) - HP.lift)} (arm end ${f2(arm.ys[arm.ys.length - 1])}), end ${f2(yAt(rows - 1) - HP.lift)} (link first ${f2(link.ys[0])}); ground may lift it a little`);
+}
+
+
+// P8 (HK-9d-1) lane-drop markings on the J1-S arm: east taper line y +260 .. +30, hatching y 0 .. +30, west lane-gain line y +25.75 .. +116
+{
+  const lm = buildHkLaneMarks(net, f), v = vertsOf(lm);
+  const arm = net.roads.find((r) => r.name === 'J1-S')!;
+  const loc = (x: number, z: number): number[] => { const dx = x - f.ox, dz = z - f.oz; return [dx * f.ex + dz * f.ez, dx * f.nx + dz * f.nz]; };
+  let nearOk = true, gapMax = 0, yMin = Infinity, yMax = -Infinity, uEastMin = Infinity, uEastMax = -Infinity, uWestMin = Infinity, uWestMax = -Infinity;
+  for (const p of v) {
+    let bi = 0, bd = Infinity; for (let k = 0; k < arm.xs.length; k++) { const d = Math.hypot(arm.xs[k] - p[0], arm.zs[k] - p[2]); if (d < bd) { bd = d; bi = k; } }
+    const k0 = Math.max(0, Math.min(arm.xs.length - 2, bi)); const k1 = k0 + 1;
+    const tx = arm.xs[k1] - arm.xs[k0], tz = arm.zs[k1] - arm.zs[k0], tl = Math.hypot(tx, tz) || 1;
+    let px = -tz / tl, pz = tx / tl; if (px * f.ex + pz * f.ez < 0) { px = -px; pz = -pz; }
+    const u = (p[0] - arm.xs[bi]) * px + (p[2] - arm.zs[bi]) * pz;
+    const [, ly] = loc(p[0], p[2]);
+    yMin = Math.min(yMin, ly); yMax = Math.max(yMax, ly);
+    gapMax = Math.max(gapMax, Math.abs(p[1] - HP.lift - 0.006 - arm.ys[bi]));
+    if (u > 0) { uEastMin = Math.min(uEastMin, u); uEastMax = Math.max(uEastMax, u); } else { uWestMin = Math.min(uWestMin, -u); uWestMax = Math.max(uWestMax, -u); }
+    if (!Number.isFinite(p[0] + p[1] + p[2])) nearOk = false;
+  }
+  check(v.length > 100 && nearOk, 'P8 lane marks: built, finite', `${v.length} vertices, ${lm.indices.length / 3} triangles`);
+  check(yMin > -1.5 && yMax < 262, 'P8 lane marks lie between the arm end and the taper start (y 0 .. 260)', `y ${f2(yMin)} .. ${f2(yMax)} m`);
+  check(uEastMin >= 15.3 && uEastMax <= 19.3, 'P8 east marks stay inside the closed outer lane (u 15.45 .. 19.10 +- 0.2)', `u ${f2(uEastMin)} .. ${f2(uEastMax)} m`);
+  check(uWestMin >= 15.3 && uWestMax <= 19.3, 'P8 west lane-gain line stays inside the gained lane (u 15.45 .. 19.10 +- 0.2)', `u ${f2(uWestMin)} .. ${f2(uWestMax)} m`);
+  check(gapMax <= 0.25, 'P8 lane marks lie on the arm surface level (the arm level + lift, +- 0.25 m)', `worst ${f2(gapMax)} m`);
 }
 
 // P6 triangles face up (normal y > 0) so the polygon-offset surface lights like the road
