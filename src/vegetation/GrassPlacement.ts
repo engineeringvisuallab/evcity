@@ -265,6 +265,7 @@ export class GrassPlacer {
         const lawn = this.lawnAt(x, z);
         const jd = jTile > 0.02 ? this.trees.denseAt(x, z) : 0; // dense jungle 0..1
         if (jd > JG.clear) continue; // NO GRASS inside the jungle: only trees and lata-pata (fern / shrub / creeper) grow there
+        if (G.jungleOnly && lawn < 0.5 && jd <= G.jungleMin) continue; // 2026-11-23: grass only in the dense jungle
         const nearV = near ? near[j * per + i] : 0;
         let patch = near ? Math.max(nearV, lawn) : this.patchIn(x, z, tx, tz, grid);
         // MEADOW (2026-11-23): besides the rings round the trees, the patchy meadow grows again (the old patch noise: `grass.patch`, x `treeBase.meadow`); asked only when the cell could get a tuft at all
@@ -302,7 +303,7 @@ export class GrassPlacer {
         // DENSE single grass: extra tufts in the same cell (flag 4 = never a flower). Their random numbers come after the first seven, one fixed set of
         // five per extra, so extra k is always the same tuft and a far ring (fewer extras) is a subset of the near ring. Not on the mown city lawn.
         if (lawn < 0.5) {
-          const total = stride === 1 ? this.dense : 1; // far rings: no extras (they are not drawn there anyway)
+          const total = stride === 1 ? this.dense * (jd > G.jungleMin ? G.jungleDenseMul : 1) : 1; // far rings: no extras (they are not drawn there anyway); 2026-11-23: x jungleDenseMul inside the jungle
           const extras = total - 1; // may be fractional (7.5 -> 6.5 extras: the last one only in some cells)
           if (extras > 0) {
             const gx = this.sx.h - h; // ground slope per metre, so an extra tuft off the cell centre still sits on the ground
@@ -466,6 +467,7 @@ export class GrassPlacer {
         // 1. clumps only inside patches (close together, overlapping), fewer and smaller at the rim
         const jd = jTile > 0.02 ? this.trees.denseAt(x, z) : 0; // dense jungle 0..1
         if (jd > JG.clear) continue; // NO grass clumps inside the jungle either
+        if (G.jungleOnly && this.lawnAt(x, z) < 0.5 && jd <= G.jungleMin) continue; // 2026-11-23: grass only in the dense jungle
         let patch = this.patchIn(x, z, tx, tz, grid);
         if (jd > 0.02) patch = Math.max(patch, JG.floor * jd);
         if (patch < P.minValue) continue;

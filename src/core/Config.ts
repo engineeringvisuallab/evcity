@@ -547,6 +547,10 @@ export const Config = {
        * Far rings (stride > 1) get dense / stride^2 (at least 1). Not applied to the mown city lawn.
        */
       dense: 1, // 1 = no extra tufts at all (was 7.5)
+      /** 2026-11-23: GRASS ONLY IN THE DENSE JUNGLE: outside it (jungle density <= `jungleMin`) no tuft and no clump grows (the mown city lawn and the road median keep their own rules). `jungleDenseMul` = the extra-tuft count (Quality `dense`) is this many times higher inside the jungle. */
+      jungleOnly: true,
+      jungleMin: 0.05,
+      jungleDenseMul: 5,
       /**
        * The extra (dense) tufts fade out with the camera distance: full size inside `denseFade[0]` m, shrunk to nothing at `denseFade[1]` m (smooth, no
        * pop), and a tile's extra tufts are not drawn at all when the tile is farther than `denseFade[1]` m. So the 5x density costs only near the player.
@@ -566,10 +570,10 @@ export const Config = {
        */
       tuft: {
         /** Meadow single grass: tallest blade 0.8 m. */
-        maxHeight: 0.95, // taller, lusher grass (was 0.64)
+        maxHeight: 0.24, // 2026-11-23: grass 0.25x smaller / finer (was 0.95)
         min: 0.2,
         /** Wildflowers keep 2x the old height (0.4 m). Mown city lawn keeps its old size (0.2 m, then x `city.height`) and its old width scale. */
-        flowerMaxHeight: 0.95, // 2026-11-21: flowers as tall as the grass (was 0.4)
+        flowerMaxHeight: 0.24, // 2026-11-23: 0.25x (was 0.95)
         lawnMaxHeight: 0.2,
         lawnWidthScale: 2.2,
       },
@@ -617,7 +621,7 @@ export const Config = {
       clump: {
         cell: 1.6,
         /** A clump is at most `maxHeight` m high (50 cm); its width = its height scale x `width` (the far rings make it a bit wider). */
-        maxHeight: 1.0, // 2x the old 0.5 m
+        maxHeight: 0.25, // 2026-11-23: 0.25x (was 1.0)
         width: 1.8,
         /** The tall seed-plume bunch (tussockSeed) is this many times taller than the other clumps (its plumes stand above its blades). */
         seedTall: 1.3,
