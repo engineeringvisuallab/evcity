@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { classifySurface, SURFACE_SPEC, type PartKind, type Surface, type SurfaceOverrides } from './SurfaceMap';
 import { getSurfaceMaterial } from './BuildingTextures';
+import { carveRect, emptyInfo, type ModelInfo, type Rect2 } from './ModelInfo';
 
 /**
  * BUILDING KIT - small helper to build low-poly buildings from code (no model files), same style as the
@@ -26,8 +27,54 @@ export interface BuiltBuilding {
   width: number;
   depth: number;
   height: number;
+  /** Solid parts, doors and wudu taps of the model (model frame), see ModelInfo.ts. */
+  info: ModelInfo;
   /** Frees the geometry (materials are shared). */
   dispose(): void;
+}
+
+/** Thickness (m) of the walls of a walk-in building. */
+export const WALL_T = 0.3;
+/** Thickness (m) of the roof / ceiling slabs of a walk-in building. */
+const SLAB_T = 0.3;
+/** One step (tread) of the stoop in front of a door that stands higher than the ground. */
+const STEP_RISE = 0.2;
+const STEP_RUN = 0.34;
+
+/** Options for the door(s) of the next walk-in boxes (Kit.doorStyle). */
+export interface DoorOpts {
+  /** Opening width / height (m); default by the width of the building. */
+  w?: number;
+  h?: number;
+  /** Number of doors along the front wall; default by the width of the building. */
+  n?: number;
+  /** No door at all (a hall that is entered through another building). */
+  none?: boolean;
+  /** The main door of a mosque prayer hall. */
+  hall?: boolean;
+  /** Door leaf colour. */
+  leaf?: number;
+}
+
+/** A box that was big enough to be a room: it becomes a hollow shell (4 walls with a door, ceiling, roof) in finish(). Plan rectangle in the model frame. */
+interface Mass {
+  x0: number; x1: number; z0: number; z1: number;
+  y0: number; h: number;
+  color: number;
+  dims: readonly [number, number, number];
+  ceil: number; // height of the room (m above y0)
+  slabT: number; // thickness of the roof slab
+  opts: DoorOpts;
+  doors: { x: number; w: number; h: number }[];
+}
+
+/** A finished piece of geometry: kept until finish() so that parts standing in a doorway can still be dropped. */
+interface Part {
+  surf: Surface;
+  geo: THREE.BufferGeometry;
+  decor: boolean;
+  mn: [number, number, number];
+  mx: [number, number, number];
 }
 
 /** Small deterministic random generator (for colour variants). */
@@ -59,10 +106,16 @@ export interface WindowGridOpts {
 }
 
 export class Kit {
-  private buckets = new Map<Surface, THREE.BufferGeometry[]>();
+  private parts: Part[] = [];
   private stack: THREE.Matrix4[] = [new THREE.Matrix4()];
   private toGlass = false;
   private force: Surface | null = null;
+  /** WALK-IN BUILDINGS: what the game needs besides the looks (collision, doors, wudu taps). */
+  private info: ModelInfo = emptyInfo();
+  private masses: Mass[] = [];
+  private noSolid = 0;
+  private noHollow = 0;
+  private doorOpt: DoorOpts = {};
 
   /** @param overrides colour -> surface for this model (e.g. clay colours -> 'mud'). */
   constructor(private overrides?: SurfaceOverrides) {}
@@ -87,25 +140,200 @@ export class Kit {
     this.toGlass = prev;
   }
 
-  private put(g: THREE.BufferGeometry, color: number, kind: PartKind, dims: readonly [number, number, number]): void {
+  /** Door(s) of the walk-in boxes drawn inside `fn` (size, count, a mosque hall door ...). */
+  doorStyle(opts: DoorOpts, fn: () => void): void {
+    const prev = this.doorOpt;
+    this.doorOpt = { ...prev, ...opts };
+    fn();
+    this.doorOpt = prev;
+  }
+
+  /** Boxes drawn inside `fn` stay SOLID blocks (no room inside, no door): a plinth, a tank house, a parked vehicle ... */
+  solidBlock(fn: () => void): void {
+    this.noHollow++;
+    fn();
+    this.noHollow--;
+  }
+
+  /** Parts drawn inside `fn` are looks only: nobody collides with them (a hanging sign, a flag, a pond sheet ...). */
+  decor(fn: () => void): void {
+    this.noSolid++;
+    fn();
+    this.noSolid--;
+  }
+
+  /** A row of wudu (ablution) taps, positions in the current frame, y = height of the spout. */
+  wudu(taps: readonly { x: number; z: number }[], y: number): void {
+    const f = this.frame();
+    if (!f) return;
+    const c = Math.cos(f.yaw), s = Math.sin(f.yaw);
+    this.info.wudu.push({ y: f.y + y, taps: taps.map((p) => ({ x: f.x + c * p.x + s * p.z, z: f.z - s * p.x + c * p.z })) });
+  }
+
+  /** The current transform when it is only a move + turns about Y (else null: a tilted part is never solid). */
+  private frame(): { yaw: number; x: number; y: number; z: number } | null {
+    const e = this.cur.elements;
+    if (Math.abs(e[1]!) > 1e-6 || Math.abs(e[9]!) > 1e-6 || Math.abs(e[4]!) > 1e-6 || Math.abs(e[6]!) > 1e-6 || Math.abs(e[5]! - 1) > 1e-6 || Math.abs(Math.hypot(e[0]!, e[8]!) - 1) > 1e-6) return null;
+    return { yaw: Math.atan2(e[8]!, e[0]!), x: e[12]!, y: e[13]!, z: e[14]! };
+  }
+
+  /**
+   * Called for every box: a big box standing on the ground becomes a Mass (a room: walls + door + ceiling are made in finish()) and returns true (nothing is drawn now);
+   * any other box that is big enough is recorded as a solid block and the caller draws it as usual.
+   */
+  private claimBox(cx: number, y0: number, cz: number, w: number, h: number, d: number, color: number): boolean {
+    const f = this.frame();
+    if (!f) return false;
+    const c = Math.cos(f.yaw), s = Math.sin(f.yaw);
+    const mx = f.x + c * cx + s * cz, mz = f.z - s * cx + c * cz, gy = f.y + y0;
+    const q = Math.round(f.yaw / (Math.PI / 2));
+    const axis = Math.abs(f.yaw - (q * Math.PI) / 2) < 1e-3;
+    const odd = Math.abs(q) % 2 === 1;
+    const pw = odd ? d : w, pd = odd ? w : d;
+    if (this.noHollow === 0 && axis && gy > -0.06 && gy < 2.0 && h >= 2.0 && pw - 2 * WALL_T >= 2 && pd - 2 * WALL_T >= 2) {
+      const o = this.doorOpt;
+      const dw = Math.min(o.w ?? (pw < 8 ? 1.1 : pw < 20 ? 1.5 : 2.2), pw - 1.6);
+      const slabT = h < 3.2 ? 0.15 : SLAB_T;
+      const dh = Math.min(o.h ?? (pw < 8 ? 1.95 : pw < 20 ? 2.2 : 2.6), h - slabT - 0.1);
+      const n = o.n ?? (pw >= 44 ? 3 : pw >= 22 ? 2 : 1);
+      const xs = n <= 1 ? [mx] : n === 2 ? [mx - pw / 4, mx + pw / 4] : [mx - pw / 3, mx, mx + pw / 3];
+      this.masses.push({
+        x0: mx - pw / 2, x1: mx + pw / 2, z0: mz - pd / 2, z1: mz + pd / 2, y0: gy, h, color, dims: [w, h, d],
+        ceil: h <= 10 ? h : Math.min(h, Math.max(4.2, dh + 0.9)),
+        slabT,
+        opts: o,
+        doors: o.none ? [] : xs.map((x) => ({ x, w: dw, h: dh })),
+      });
+      return true;
+    }
+    if (Math.min(w, d) >= 0.2 && h >= 0.15 && (gy < 2.5 || (h >= 3 && Math.min(w, d) >= 2))) {
+      this.info.solids.push({ x: mx, y: gy + h / 2, z: mz, hx: w / 2, hy: h / 2, hz: d / 2, yaw: f.yaw });
+    }
+    return false;
+  }
+
+  /** A part of a room (wall piece, slab, step) in MODEL coordinates: drawn and solid. */
+  private slab(x0: number, x1: number, y0: number, y1: number, z0: number, z1: number, color: number, dims: readonly [number, number, number]): void {
+    if (x1 - x0 < 0.03 || y1 - y0 < 0.03 || z1 - z0 < 0.03) return;
+    this.boxVisual((x0 + x1) / 2, y0, (z0 + z1) / 2, x1 - x0, y1 - y0, z1 - z0, color, dims, IDENT);
+    this.info.solids.push({ x: (x0 + x1) / 2, y: (y0 + y1) / 2, z: (z0 + z1) / 2, hx: (x1 - x0) / 2, hy: (y1 - y0) / 2, hz: (z1 - z0) / 2, yaw: 0 });
+  }
+
+  /** finish(): turn the Masses into rooms. */
+  private buildRooms(): void {
+    const T = WALL_T;
+    const ms = this.masses;
+    const covers = (n: Mass, x: number, z: number, y: number): boolean =>
+      x > n.x0 + T && x < n.x1 - T && z > n.z0 + T && z < n.z1 - T && y >= n.y0 - 0.1 && y < n.y0 + n.ceil;
+    for (const m of ms) {
+      const top = m.y0 + m.h;
+      const others = ms.filter((n) => n !== m);
+      // doors that open into another room's wall are dropped
+      const doors = m.doors.filter((d) => !others.some((n) => covers(n, d.x, m.z1 - T / 2, m.y0 + 1)));
+      m.doors = doors;
+      // floor: a room that stands higher than the ground needs something under it
+      let supportFront = m.z1;
+      if (m.y0 > 0.06) {
+        const cx = (m.x0 + m.x1) / 2, cz = (m.z0 + m.z1) / 2;
+        let sup: { z1: number } | null = null;
+        for (const sd of this.info.solids) {
+          if (Math.abs(sd.y + sd.hy - m.y0) > 0.07) continue;
+          const sn = Math.abs(Math.sin(sd.yaw)), cs = Math.abs(Math.cos(sd.yaw));
+          const ex = cs * sd.hx + sn * sd.hz, ez = sn * sd.hx + cs * sd.hz;
+          if (Math.abs(cx - sd.x) <= ex && Math.abs(cz - sd.z) <= ez && sd.z + ez >= m.z1 - 0.01) { if (!sup || sd.z + ez > sup.z1) sup = { z1: sd.z + ez }; }
+        }
+        if (sup) supportFront = sup.z1;
+        else this.slab(m.x0, m.x1, 0, m.y0, m.z0, m.z1, 0xcfc7b6, [m.x1 - m.x0, m.y0, m.z1 - m.z0]);
+      }
+      // walls: front (+z), back, left, right; each = a rectangle (along the wall x height) minus doors and the rooms that overlap it
+      const yCut = (n: Mass): [number, number] | null => {
+        const b0 = Math.max(m.y0, n.y0), b1 = Math.min(top, n.y0 + n.ceil);
+        return b1 > b0 + 0.05 ? [b0, b1] : null;
+      };
+      for (const side of ['F', 'B', 'L', 'R'] as const) {
+        const alongX = side === 'F' || side === 'B';
+        const zc = side === 'F' ? m.z1 - T / 2 : m.z0 + T / 2;
+        const xc = side === 'L' ? m.x0 + T / 2 : m.x1 - T / 2;
+        const base: Rect2 = alongX ? { a0: m.x0, a1: m.x1, b0: m.y0, b1: top } : { a0: m.z0 + T, a1: m.z1 - T, b0: m.y0, b1: top };
+        const cuts: Rect2[] = [];
+        for (const n of others) {
+          const yc = yCut(n);
+          if (!yc) continue;
+          if (alongX && zc > n.z0 + T && zc < n.z1 - T) cuts.push({ a0: n.x0 + T, a1: n.x1 - T, b0: yc[0], b1: yc[1] });
+          if (!alongX && xc > n.x0 + T && xc < n.x1 - T) cuts.push({ a0: n.z0 + T, a1: n.z1 - T, b0: yc[0], b1: yc[1] });
+        }
+        if (side === 'F') for (const d of doors) cuts.push({ a0: d.x - d.w / 2, a1: d.x + d.w / 2, b0: m.y0 - 1, b1: m.y0 + d.h });
+        for (const r of carveRect(base, cuts)) {
+          if (alongX) this.slab(r.a0, r.a1, r.b0, r.b1, zc - T / 2, zc + T / 2, m.color, m.dims);
+          else this.slab(xc - T / 2, xc + T / 2, r.b0, r.b1, r.a0, r.a1, m.color, m.dims);
+        }
+      }
+      // roof (and a lower ceiling when the building is taller than one room)
+      const plan = (inset: number): Rect2 => ({ a0: m.x0 + inset, a1: m.x1 - inset, b0: m.z0 + inset, b1: m.z1 - inset });
+      const slabs: { inset: number; y: number }[] = [{ inset: 0, y: top - m.slabT }];
+      if (m.ceil < m.h - 0.05) slabs.push({ inset: T, y: m.y0 + m.ceil - 0.2 });
+      for (const sl of slabs) {
+        const upper = sl.y + (sl.inset ? 0.2 : m.slabT);
+        const cuts: Rect2[] = [];
+        for (const n of others) if (n.y0 <= sl.y + 0.05 && n.y0 + n.ceil >= upper - 0.05) cuts.push({ a0: n.x0 + T, a1: n.x1 - T, b0: n.z0 + T, b1: n.z1 - T });
+        for (const r of carveRect(plan(sl.inset), cuts)) this.slab(r.a0, r.a1, sl.y, upper, r.b0, r.b1, m.color, m.dims);
+      }
+      // the doors: record them + a stoop of steps when the floor is higher than the ground
+      for (const d of doors) {
+        this.info.doors.push({ x: d.x, y: m.y0, z: m.z1, w: d.w, h: d.h, t: T, leaf: m.opts.leaf ?? (d.w >= 2 ? 0x39505e : 0x6b4a2f), hall: !!m.opts.hall });
+        if (m.y0 > 0.12) {
+          const n = Math.ceil(m.y0 / STEP_RISE - 1e-6), rise = m.y0 / n;
+          for (let j = 1; j < n; j++) {
+            const z0 = supportFront + (n - 1 - j) * STEP_RUN;
+            this.slab(d.x - d.w / 2 - 0.4, d.x + d.w / 2 + 0.4, 0, rise * j, z0, z0 + STEP_RUN, 0xcfc7b6, [d.w + 0.8, rise * j, STEP_RUN]);
+          }
+        }
+      }
+    }
+    // nothing solid in the way right outside a door (a sign post, a pot ...): it stays drawn, you just walk through it
+    const spots = this.info.doors;
+    if (spots.length) {
+      const hit = (x: number, z: number, y0: number, y1: number, hx: number, hz: number): boolean =>
+        spots.some((d) => Math.abs(x - d.x) < d.w / 2 + 0.3 + hx && z + hz > d.z + 0.02 && z - hz < d.z + 1.0 && y0 < d.y + d.h && y1 > d.y + 0.1);
+      this.info.solids = this.info.solids.filter((s) => {
+        const sn = Math.abs(Math.sin(s.yaw)), cs = Math.abs(Math.cos(s.yaw));
+        return !hit(s.x, s.z, s.y - s.hy, s.y + s.hy, cs * s.hx + sn * s.hz, sn * s.hx + cs * s.hz);
+      });
+      this.info.cyls = this.info.cyls.filter((c) => !hit(c.x, c.z, c.y - c.hh, c.y + c.hh, c.r, c.r));
+    }
+    // painted doors / windows / frames in a doorway go away
+    this.parts = this.parts.filter((pt) => {
+      if (!pt.decor) return true;
+      const gone = spots.some((d) =>
+        pt.mx[0] > d.x - d.w / 2 - 0.05 && pt.mn[0] < d.x + d.w / 2 + 0.05 && pt.mx[1] > d.y - 0.05 && pt.mn[1] < d.y + d.h + 0.05 && pt.mx[2] > d.z - d.t - 0.05 && pt.mn[2] < d.z + 0.9);
+      if (gone) pt.geo.dispose();
+      return !gone;
+    });
+  }
+
+  private put(g: THREE.BufferGeometry, color: number, kind: PartKind, dims: readonly [number, number, number], matrix: THREE.Matrix4 = this.cur): void {
     const geo = g.index ? g.toNonIndexed() : g;
     geo.deleteAttribute('uv');
-    geo.applyMatrix4(this.cur);
+    geo.applyMatrix4(matrix);
     const surf: Surface = this.toGlass ? 'glass' : this.force ?? classifySurface(kind, color, dims, this.overrides);
     const pos = geo.getAttribute('position') as THREE.BufferAttribute;
     const n = pos.count;
     const c = new THREE.Color(color);
     const col = new Float32Array(n * 3);
+    const mn: [number, number, number] = [1e9, 1e9, 1e9], mx: [number, number, number] = [-1e9, -1e9, -1e9];
     for (let i = 0; i < n; i++) {
       col[i * 3] = c.r;
       col[i * 3 + 1] = c.g;
       col[i * 3 + 2] = c.b;
+      const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+      if (x < mn[0]) mn[0] = x; if (x > mx[0]) mx[0] = x;
+      if (y < mn[1]) mn[1] = y; if (y > mx[1]) mx[1] = y;
+      if (z < mn[2]) mn[2] = z; if (z > mx[2]) mx[2] = z;
     }
     geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
     if (surf !== 'plain') geo.setAttribute('uv', new THREE.BufferAttribute(planarUVs(pos, SURFACE_SPEC[surf].size), 2));
-    let list = this.buckets.get(surf);
-    if (!list) this.buckets.set(surf, (list = []));
-    list.push(geo);
+    // thin boxes and glass are paint (windows, frames, painted doors): they are dropped where a real door opening is cut
+    this.parts.push({ surf, geo, decor: kind === 'box' && (surf === 'glass' || Math.min(dims[0], dims[1], dims[2]) < 0.3), mn, mx });
   }
 
   // ---------- transforms ----------
@@ -131,9 +359,13 @@ export class Kit {
   // ---------- primitives (y0 = bottom) ----------
 
   box(cx: number, y0: number, cz: number, w: number, h: number, d: number, color: number): void {
+    if (this.toGlass || this.noSolid > 0 || !this.claimBox(cx, y0, cz, w, h, d, color)) this.boxVisual(cx, y0, cz, w, h, d, color);
+  }
+
+  private boxVisual(cx: number, y0: number, cz: number, w: number, h: number, d: number, color: number, dims?: readonly [number, number, number], matrix?: THREE.Matrix4): void {
     const g = new THREE.BoxGeometry(w, h, d);
     g.translate(cx, y0 + h / 2, cz);
-    this.put(g, color, 'box', [w, h, d]);
+    this.put(g, color, 'box', dims ?? [w, h, d], matrix);
   }
 
   glass(cx: number, y0: number, cz: number, w: number, h: number, d: number, color: number): void {
@@ -146,6 +378,12 @@ export class Kit {
     const g = new THREE.CylinderGeometry(rTop, rBottom, h, seg, 1);
     g.translate(cx, y0 + h / 2, cz);
     this.put(g, color, 'cyl', [2 * Math.max(rBottom, rTop), h, 2 * Math.max(rBottom, rTop)]);
+    const r = Math.max(rBottom, rTop);
+    const f = this.frame();
+    if (f && !this.toGlass && this.noSolid === 0 && r >= 0.09 && h >= 1 && f.y + y0 < 2.5) {
+      const c = Math.cos(f.yaw), s = Math.sin(f.yaw);
+      this.info.cyls.push({ x: f.x + c * cx + s * cz, y: f.y + y0 + h / 2, z: f.z - s * cx + c * cz, r, hh: h / 2 });
+    }
   }
 
   sphere(cx: number, cy: number, cz: number, r: number, color: number, sy = 1): void {
@@ -315,9 +553,16 @@ export class Kit {
   // ---------- output ----------
 
   finish(width: number, depth: number, height: number): BuiltBuilding {
+    this.buildRooms();
     const root = new THREE.Group();
     const geos: THREE.BufferGeometry[] = [];
-    for (const [surf, list] of this.buckets) {
+    const buckets = new Map<Surface, THREE.BufferGeometry[]>();
+    for (const pt of this.parts) {
+      let list = buckets.get(pt.surf);
+      if (!list) buckets.set(pt.surf, (list = []));
+      list.push(pt.geo);
+    }
+    for (const [surf, list] of buckets) {
       const g = mergeGeometries(list, false)!;
       geos.push(g);
       const m = new THREE.Mesh(g, getSurfaceMaterial(surf));
@@ -327,17 +572,20 @@ export class Kit {
       root.add(m);
       for (const x of list) x.dispose();
     }
-    this.buckets.clear();
+    this.parts = [];
+    this.masses = [];
     return {
       root,
       width,
       depth,
       height,
+      info: this.info,
       dispose: () => geos.forEach((g) => g.dispose()),
     };
   }
 }
 
+const IDENT = new THREE.Matrix4();
 const _a = new THREE.Vector3();
 const _b = new THREE.Vector3();
 const _c = new THREE.Vector3();

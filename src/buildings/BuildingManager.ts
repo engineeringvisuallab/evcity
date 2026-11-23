@@ -1,7 +1,6 @@
 // PROTOTYPE building inside the open world: the police station (thana) from src/buildings/models.
 //  - the model (one merged mesh per surface) stands at PROTO_POS on a flat pad (terrain.protoBuilding), always there when the game starts
-//  - simple Rapier boxes: boundary wall (gate left open), main station, lock-up, barracks, parked jeeps / van, trees, poles. The player,
-//    cars and helicopters cannot go through them. This is the PROTOTYPE collision: later it can follow each wall / room exactly.
+//  - Rapier colliders from the model's own solid parts (walls with door openings, roof slabs, wings, boundary wall, vehicles, trees ...): the station is walk-in
 //  - a paved apron over the whole plot and a footpath from the gate to the F6 road
 //  - hidden when the player is far away
 // To use another model: change PROTO_MODEL_ID in ProtoSite.ts (and the colliders below).
@@ -25,23 +24,6 @@ export interface BuildingDeps {
 
 const SHOW_DIST = 2000; // the building is drawn within this distance (was 900)
 const FLOOR_TOP = 0.1; // the compound's own paving is 6-10 cm above the pad
-
-/** Collision boxes of the police station in the model's local frame: [centre x, centre z, half x, half z, height, yaw]. Numbers come from buildPoliceStation(). */
-const BOXES: readonly (readonly [number, number, number, number, number, number])[] = [
-  [0, -8, 12.4, 6.4, 8.6, 0], // main station (2 storeys + roof sign)
-  [15, -14, 5, 4, 4.6, 0], // lock-up block
-  [-17, -12, 5, 7, 5, 0], // barracks / armoury wing
-  [-5, 14, 0.9, 0.9, 2.8, 0], // guard sentry box
-  [-14, 10, 1, 2.2, 2.6, 0.4], // jeep
-  [-4, 8, 1, 2.2, 2.6, -0.2], // jeep
-  [18, 12, 1, 2.6, 2.8, 0.1], // prison van
-];
-const CYLS: readonly (readonly [number, number, number, number])[] = [
-  [-24, 18, 0.4, 5], // tree
-  [24, -20, 0.4, 5], // tree
-  [10, 10, 0.2, 10], // flag pole
-  [22, -4, 0.25, 14], // wireless mast
-];
 
 export class BuildingManager {
   readonly building: BuiltBuilding;
@@ -106,16 +88,15 @@ export class BuildingManager {
     const hx = PROTO_SIZE.W / 2, hz = PROTO_SIZE.D / 2;
     // floor slab (top = the compound's paving): walking is perfectly smooth
     box(-hx, hx, -hz, hz, -1, FLOOR_TOP, 1);
-    // boundary wall 2.6 m high: back, left, right, and the front wall in two pieces around the 7 m gate
-    const wt = 0.4, wh = 2.6, gate = 3.5;
-    const wx = hx - 0.3, wz = hz - 0.3;
-    box(-wx, wx, -wz - wt / 2, -wz + wt / 2, 0, wh); // back
-    box(-wx - wt / 2, -wx + wt / 2, -wz, wz, 0, wh); // left
-    box(wx - wt / 2, wx + wt / 2, -wz, wz, 0, wh); // right
-    box(-wx, -gate, wz - wt / 2, wz + wt / 2, 0, wh); // front left
-    box(gate, wx, wz - wt / 2, wz + wt / 2, 0, wh); // front right
-    for (const [x, z, rx, rz, h, yaw] of BOXES) box(x - rx, x + rx, z - rz, z + rz, 0, h, 0.4, yaw);
-    for (const [x, z, r, h] of CYLS) world.createCollider(R.ColliderDesc.cylinder(h / 2, r).setTranslation(x, h / 2, z), body);
+    // the model's own solid parts: walls with the door openings, roof slabs, wings, parked vehicles, boundary wall (gate open), trees ...
+    const info = this.building.info;
+    for (const s of info.solids) {
+      world.createCollider(
+        R.ColliderDesc.cuboid(s.hx, s.hy, s.hz).setTranslation(s.x, s.y, s.z).setRotation({ x: 0, y: Math.sin(s.yaw / 2), z: 0, w: Math.cos(s.yaw / 2) }).setFriction(0.4),
+        body,
+      );
+    }
+    for (const c of info.cyls) world.createCollider(R.ColliderDesc.cylinder(c.hh, c.r).setTranslation(c.x, c.y, c.z), body);
     return body;
   }
 

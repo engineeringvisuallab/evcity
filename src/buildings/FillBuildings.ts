@@ -7,13 +7,14 @@
 //    far = hidden. Hysteresis stops flicker at the borders. Chunks outside the camera view are skipped by three.js (frustum culling).
 //  - Templates are warmed up a few ms per frame, nearest chunk first, so walking into the city never freezes the game; until a chunk's models
 //    are ready it shows its boxes.
-// POSITION ONLY like PlacedBuildings (no colliders yet). The 55 hand placed buildings stay in PlacedBuildings.ts, untouched.
+// Collision + doors: BuildingPhysics / BuildingInteract (the instanced models are walk-in: hollow rooms with a door opening). The 55 hand placed buildings stay in PlacedBuildings.ts, untouched.
 import * as THREE from 'three';
 import type { TerrainGenerator } from '../terrain/TerrainGenerator';
 import { FILL_MODEL_BY_ID } from './models/fillRegistry';
 import type { BuiltBuilding } from './models/BuildingKit';
 import type { BuildingPlacement } from './Placements';
 import { DRAWN_FILL_PLACEMENTS } from './PlacementsResidential';
+import { registerInfo } from './BuildingInfo';
 
 export interface FillBuildingsDeps {
   root: THREE.Object3D; // world.root: children use ABSOLUTE world coordinates
@@ -161,6 +162,7 @@ export class FillBuildings {
     if (have || !build) return have ?? null;
     const [id, v] = key.split('#');
     const built = FILL_MODEL_BY_ID[id!]!.build(Number(v) + 1);
+    registerInfo(id!, Number(v) + 1, false, built.info);
     const meshes: THREE.Mesh[] = [];
     built.root.traverse((o) => { if ((o as THREE.Mesh).isMesh) meshes.push(o as THREE.Mesh); });
     const items = this.itemsByKey.get(key) ?? [];

@@ -1,26 +1,21 @@
-// SOLID BUILDINGS: one fixed Rapier box per building (hand placed + city fill), so a person or a car is stopped by the walls instead of walking /
-// driving through. Like SignPhysics / PortPhysics the bodies only exist near the player (5 Hz check) and live in floating-origin LOCAL coordinates.
-// The box is the footprint (W x D from Placements, turned by yaw) shrunk by INSET on every side, from under the lowest ground point up to the roof
-// (floors x FLOOR_H + ROOF_EXTRA). It is a plain block: no door openings, no interior.
+// SOLID, WALK-IN BUILDINGS: every building gets Rapier colliders that follow its real shape (the "solid" parts the model recorded while it was built, see
+// models/ModelInfo.ts): wall pieces with the door openings, ceiling / roof slabs, plinth, columns, counters ... A person or a car is stopped by the walls but
+// can walk through an open door into the room. (Before: one big box per building = no way in.) The door leaves are BuildingInteract.ts.
+// Like SignPhysics / PortPhysics the bodies only exist near the player (5 Hz check) and live in floating-origin LOCAL coordinates; one fixed body per
+// building, all colliders in the model frame (origin = footprint centre at floor level, turned by yaw).
 import type RAPIER from '@dimforge/rapier3d-compat';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import { PhysicsConfig } from '../physics/PhysicsConfig';
 import type { FloatingOrigin } from '../world/FloatingOrigin';
 import type { TerrainGenerator } from '../terrain/TerrainGenerator';
-import { FILL_MODEL_BY_ID } from './models/fillRegistry';
-import { FLOOR_H } from './models/BuildingKit';
-import { BUILDING_PLACEMENTS, type BuildingPlacement } from './Placements';
-import { DRAWN_FILL_PLACEMENTS } from './PlacementsResidential';
+import { groundRange, infoFor, WORLD_PLACEMENTS } from './BuildingInfo';
 
-/** The yard / boundary wall is part of W x D: the solid block is this much (m) smaller on every side. */
-const INSET = 1.0;
-const ROOF_EXTRA = 2.5;
-const MIN_HEIGHT = 3.5;
 const CHECK_PERIOD = 0.2;
 const REMOVE_MARGIN = 64;
+/** The footprint is filled with solid ground up to the model's own floor slab (6 cm above the floor level). */
+const FLOOR_TOP = 0.06;
 
 export class BuildingPhysics {
-  private all: BuildingPlacement[] = [];
   private radius: number[] = [];
   private active = new Map<number, RAPIER.RigidBody>();
   private timer = 1;
@@ -30,11 +25,7 @@ export class BuildingPhysics {
     private origin: FloatingOrigin,
     private terrain: TerrainGenerator,
   ) {
-    for (const p of [...BUILDING_PLACEMENTS, ...DRAWN_FILL_PLACEMENTS]) {
-      if (!FILL_MODEL_BY_ID[p.id]) continue;
-      this.all.push(p);
-      this.radius.push(Math.hypot(p.W, p.D) / 2);
-    }
+    for (const w of WORLD_PLACEMENTS) this.radius.push(Math.hypot(w.p.W, w.p.D) / 2);
   }
 
   get activeCount(): number {
@@ -42,7 +33,7 @@ export class BuildingPhysics {
   }
 
   get total(): number {
-    return this.all.length;
+    return WORLD_PLACEMENTS.length;
   }
 
   /** Every frame with the player's WORLD position (throttled to 5 Hz). */
@@ -50,37 +41,45 @@ export class BuildingPhysics {
     this.timer += dt;
     if (this.timer < CHECK_PERIOD) return;
     this.timer = 0;
-    for (let i = 0; i < this.all.length; i++) {
-      const p = this.all[i];
+    let made = 0;
+    for (let i = 0; i < WORLD_PLACEMENTS.length; i++) {
+      const p = WORLD_PLACEMENTS[i]!.p;
       const d = Math.hypot(px - p.x, pz - p.z);
-      const reach = PhysicsConfig.activeRadius + this.radius[i];
+      const reach = PhysicsConfig.activeRadius + this.radius[i]!;
       const has = this.active.has(i);
-      if (!has && d <= reach) this.create(i, p);
+      if (!has && d <= reach && made < 3) { if (this.create(i)) made++; } // a model that is not built yet costs a few ms: at most 3 per check
       else if (has && d > reach + REMOVE_MARGIN) this.remove(i);
     }
   }
 
-  private create(i: number, p: BuildingPlacement): void {
+  private create(i: number): boolean {
+    const { p, fill } = WORLD_PLACEMENTS[i]!;
+    const info = infoFor(p, fill);
+    if (!info) return false;
     const R = this.physics.RAPIER;
     const world = this.physics.world;
-    const c = Math.cos(p.yaw), s = Math.sin(p.yaw);
-    let mn = 1e9, mx = -1e9;
-    for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) {
-      const lx = (a / 2) * (p.W / 2), lz = (b / 2) * (p.D / 2);
-      const h = this.terrain.heightAt(p.x + lx * c + lz * s, p.z - lx * s + lz * c);
-      mn = Math.min(mn, h); mx = Math.max(mx, h);
-    }
-    const floors = FILL_MODEL_BY_ID[p.id]!.floors;
-    const top = mx + Math.max(MIN_HEIGHT, floors * FLOOR_H + ROOF_EXTRA);
-    const bottom = mn - 0.5;
-    const hx = Math.max(0.5, p.W / 2 - INSET), hz = Math.max(0.5, p.D / 2 - INSET);
+    const { mn, mx } = groundRange(p, (x, z) => this.terrain.heightAt(x, z));
+    const floorY = mx + 0.02;
     const body = world.createRigidBody(
       R.RigidBodyDesc.fixed()
-        .setTranslation(p.x - this.origin.origin.x, (top + bottom) / 2, p.z - this.origin.origin.z)
+        .setTranslation(p.x - this.origin.origin.x, floorY, p.z - this.origin.origin.z)
         .setRotation({ x: 0, y: Math.sin(p.yaw / 2), z: 0, w: Math.cos(p.yaw / 2) }),
     );
-    world.createCollider(R.ColliderDesc.cuboid(hx, (top - bottom) / 2, hz).setFriction(0.6), body);
+    // ground slab under the whole footprint (from under the lowest ground point up to the model's floor)
+    const bottom = mn - 0.5 - floorY;
+    world.createCollider(
+      R.ColliderDesc.cuboid(p.W / 2, (FLOOR_TOP - bottom) / 2, p.D / 2).setTranslation(0, (FLOOR_TOP + bottom) / 2, 0).setFriction(0.8),
+      body,
+    );
+    for (const s of info.solids) {
+      world.createCollider(
+        R.ColliderDesc.cuboid(s.hx, s.hy, s.hz).setTranslation(s.x, s.y, s.z).setRotation({ x: 0, y: Math.sin(s.yaw / 2), z: 0, w: Math.cos(s.yaw / 2) }).setFriction(0.6),
+        body,
+      );
+    }
+    for (const c of info.cyls) world.createCollider(R.ColliderDesc.cylinder(c.hh, c.r).setTranslation(c.x, c.y, c.z).setFriction(0.6), body);
     this.active.set(i, body);
+    return true;
   }
 
   private remove(i: number): void {

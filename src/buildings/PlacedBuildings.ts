@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import type { TerrainGenerator } from '../terrain/TerrainGenerator';
 import { BUILDING_MODEL_BY_ID } from './models/registry';
+import { registerInfo } from './BuildingInfo';
 import type { BuiltBuilding } from './models/BuildingKit';
 import { BUILDING_PLACEMENTS, type BuildingPlacement } from './Placements';
 
@@ -72,6 +73,7 @@ export class PlacedBuildings {
     if (!sl.built) {
       const { p } = sl;
       const b = BUILDING_MODEL_BY_ID[p.id]!.build(p.seed ?? 0, true);
+      registerInfo(p.id, p.seed ?? 0, true, b.info);
       b.root.position.set(p.x, sl.floorY, p.z);
       b.root.rotation.y = p.yaw;
       this.d.root.add(b.root);

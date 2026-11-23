@@ -41,7 +41,7 @@ export function buildMosque(seed = 0): BuiltBuilding {
   // prayer hall
   const hw = 26, hd = 22, hh = 9, hz = -6;
   k.box(0, 0, hz, hw + 1.4, 0.8, hd + 1.4, 0xcfc7b6);
-  k.box(0, 0.8, hz, hw, hh, hd, wall);
+  k.doorStyle({ n: 1, w: 3.4, h: 4.6, hall: true, leaf: 0x5a3f2a }, () => k.box(0, 0.8, hz, hw, hh, hd, wall));
   k.box(0, 0.8 + hh, hz, hw + 0.8, 0.5, hd + 0.8, 0xe9e6de);
   k.parapet(0, 1.3 + hh, hz, hw + 0.8, hd + 0.8, 1.0, 0.25, wall);
   // facade arches: 5 big pointed arch openings on the front, glass infill
@@ -81,6 +81,7 @@ export function buildMosque(seed = 0): BuiltBuilding {
   // courtyard: wudu (ablution) tap row, shoe racks, trees, lamps
   k.box(-14, 0, 20, 10, 0.5, 2.2, 0xcfc7b6);
   for (let i = 0; i < 6; i++) k.cyl(-18 + i * 1.6, 0.5, 20.7, 0.07, 0.07, 0.5, 0xb7bcc2, 6);
+  k.wudu(Array.from({ length: 6 }, (_, i) => ({ x: -18 + i * 1.6, z: 20.7 })), 1.0); // the taps: E near them = wudu (BuildingInteract)
   k.box(-14, 2.8, 20, 11, 0.2, 3.2, 0x8d9aa0);
   for (const x of [-18.6, -9.4]) k.cyl(x, 0, 21, 0.1, 0.1, 2.8, 0x6a6a68, 6);
   for (const x of [8, 11, 14]) k.box(x, 0, 18, 2.2, 0.8, 0.6, 0x7a5a3a);

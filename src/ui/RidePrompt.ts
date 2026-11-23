@@ -5,10 +5,10 @@ export class RidePrompt {
   private el = document.createElement('div');
   private text = '';
 
-  constructor(parent: HTMLElement) {
+  constructor(parent: HTMLElement, bottom = 112) {
     Object.assign(this.el.style, {
       position: 'fixed',
-      bottom: '112px',
+      bottom: `${bottom}px`,
       left: '50%',
       transform: 'translateX(-50%)',
       padding: '9px 20px',

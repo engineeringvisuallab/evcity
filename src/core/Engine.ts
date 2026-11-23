@@ -54,6 +54,7 @@ import { EngineeringBoundary } from '../zones';
 import { LibraryManager } from '../library';
 import { BuildingManager, FillBuildings, PlacedBuildings, PlotYards, setBuildingTextureQuality } from '../buildings';
 import { BuildingPhysics } from '../buildings/BuildingPhysics';
+import { BuildingInteract } from '../buildings/BuildingInteract';
 import { LazyInfra } from '../engineering/LazyInfra';
 import { Minimap, type MapMarker, type MapState } from '../ui/Minimap';
 import { VehicleMenu } from '../ui/VehicleMenu';
@@ -184,6 +185,9 @@ export class Engine {
   private roadSignPhysics: SignPhysics;
   /** Solid colliders of all buildings (hand placed + city fill), bodies only near the player. */
   private buildingPhysics: BuildingPhysics;
+  /** Doors (E) + mosque wudu taps. */
+  private buildingInteract!: BuildingInteract;
+  private doorPrompt!: RidePrompt;
   /** Convex road mirrors at the junctions (2 draw calls for the whole map). */
   /** GRASS 4: tree pits, hedges, guardrails and verge shrubs beside the roads (instanced, grouped in 250 m squares). */
   private lighthouseLight: LighthouseLight | null = null;
@@ -653,6 +657,22 @@ export class Engine {
     this.hud = new HUD(container);
     this.toast = new Toast(container);
     this.ridePrompt = new RidePrompt(container);
+    this.doorPrompt = new RidePrompt(container, 168);
+    this.buildingInteract = new BuildingInteract({
+      root: this.world.root,
+      physics: this.physics,
+      origin: this.world.origin,
+      terrain: this.world.terrain,
+      playerWorld: (out) => this.focusWorld(out),
+      pressedE: () => this.input.wasPressed('KeyE'),
+      onFoot: () => this.player.active && !this.player.inVehicle && !this.cameraController.isFreeFly && !this.helis.pilot && !this.boats.skipper && !this.trainRider.riding && !this.planeRider.riding && !this.playerJet.riding && this.input.gameplayActive,
+      prompt: (text) => this.doorPrompt.set(text),
+      toast: (text, ms) => this.toast.show(text, ms ?? 3000),
+    });
+    {
+      const ps = this.world.terrain.protoBuilding;
+      this.buildingInteract.addStatic(this.protoBuilding.building.info, ps.x, ps.z, ps.floorY, ps.yaw, 40); // the police station prototype has doors too
+    }
     this.trainRider = new TrainRider({
       trains: this.trains,
       rail: this.rail,
@@ -1199,6 +1219,7 @@ export class Engine {
     this.protoBuilding.update();
     this.placedBuildings.update();
     this.fillBuildings.update();
+    this.buildingInteract.update(dt);
     this.airport.update();
     this.airportSea.update();
     this.army.update();
@@ -1885,6 +1906,8 @@ export class Engine {
     this.lighthouseLight?.dispose();
     this.trainRider.dispose();
     this.ridePrompt.dispose();
+    this.doorPrompt.dispose();
+    this.buildingInteract.dispose();
     this.toast.dispose();
     this.jobs.dispose();
     this.extras.dispose();
