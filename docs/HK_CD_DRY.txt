@@ -4,9 +4,9 @@ Old structures along the roads (m from the node): arm 1535.4..1607.3 | 583.8..91
 
 CD-E-N  southbound (arm exit -> deck)
   full piece 611.3 m; wet samples 0 / 153; beside old structure 10 / 153
-  DRY STRETCH 61.4 .. 611.3 m = 549.9 m (90 % of the piece), 70 points at <= 8 m; start cut (water / structure), end = piece end
-  TWIN BRIDGE ZONES (point index ranges, 8 m apart): none
-  levels 19.61 -> 19.28 m
+  DRY STRETCH 0.0 .. 611.3 m = 611.3 m (100 % of the piece), 78 points at <= 8 m; start = piece start, end = piece end
+  TWIN BRIDGE ZONES (point index ranges, 8 m apart): 0..5
+  levels 21.44 -> 19.28 m
   RADIUS RELAX CD-E-S: min radius 92.9 -> 94.5 m (2 point moves, <= 0.5 m)
 
 CD-E-S  southbound (deck -> link entry)
@@ -54,9 +54,9 @@ SLIP-SW  link northbound (W C-D) -> ring westbound (south lane), left turn
   TWIN BRIDGE ZONES (point index ranges, 8 m apart): none
   levels 14.06 -> 28.29 m
 
-C-D POINTS CUT AWAY because they cross an old road with too little clearance (decision: HK-9c-2 sub-step 3): CD-E-N x J1-S (clearance -0.59 m at piece s 41 m)
+C-D POINTS CUT AWAY because they cross an old road with too little clearance (decision: HK-9c-2 sub-step 3): none
 
 LEVEL CAP under the node deck (|y| <= 36 m, ground - 0.06 m): 12 points lowered, worst 0.48 m below the design level (HK_CD_ROADS.txt)
 GRADE REPAIR of the C-D roads (limit 4.8 %): 4 level corrections, worst 0.03 m; CROSSING LIFT of the slips (old road below: clearance 4.9 m + 1.4 m girder + 0.1 m): 100 level corrections, worst raise 3.75 m
 
-WROTE src/roads/ring/HkCdRoadData.ts (8 of 8 pieces, 581 points)
+WROTE src/roads/ring/HkCdRoadData.ts (8 of 8 pieces, 589 points)

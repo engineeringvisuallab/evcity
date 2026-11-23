@@ -148,6 +148,7 @@ for (const p of D.pieces) {
     if (p.id.startsWith('CD')) {
       for (const q of oldRoads) {
         if (PASS_OVER.includes(q.name)) continue; // lifted over instead
+        if (q.name === 'J1-S' || q.name === 'M6-1') continue; // HK-9c-2 step 4: the arm / link run PARALLEL beside the C-D (exit / entry taper), not across it: comparing with arm points further along (other level by the grade) gave a false 'crossing' (CD-E-N s 41 m, -0.59 m)
         const lim = 4.2 + q.halfWidth;
         for (let k = 0; k < q.xs.length && !bad; k++) {
           if (Math.abs(q.xs[k] - cx) > lim + 1 || Math.abs(q.zs[k] - cz) > lim + 1 || Math.hypot(q.xs[k] - cx, q.zs[k] - cz) >= lim + 4) continue;
