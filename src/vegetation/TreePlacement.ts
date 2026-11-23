@@ -8,11 +8,12 @@ import { chunkOriginX, chunkOriginZ } from '../world/WorldGrid';
 import { hash2D, mulberry32 } from '../world/Seed';
 import { placementContains } from '../buildings/Placements';
 import { farmCovers } from '../farm/FarmFields';
+import { farmAreaAt } from '../farm/FarmAreas';
 import { streetTreesInChunk } from '../roads/Roadside';
 import { plotTreesInChunk } from './PlotTrees';
 import { evlabParkTreesInChunk } from '../evlab/EVLabParkTrees';
 import { evlabHillTreesInChunk } from '../evlab/EVLabHill';
-import { TREE_KIND_COUNT, TREE_TRUNK, TreeKind, isGum, type TreeChunkData } from './TreeTypes';
+import { TREE_KIND_COUNT, TREE_STRIDE, TREE_TRUNK, TreeKind, isGum, type TreeChunkData } from './TreeTypes';
 import { homesteadFactor } from './Homesteads';
 import { WORLD_REGIONS } from '../city/WorldRegions';
 
@@ -174,6 +175,7 @@ export class TreePlacer {
     if (placementContains(x, z, 4)) return true; // placed buildings
     if (this.gen.agro.contains(x, z, 4)) return true; // Agro institute pad
     if (farmCovers(x, z, 3)) return true; // crop fields
+    if (farmAreaAt(x, z, V.farmTreeClear)) return true; // 2026-11-23: the whole agriculture area (circle) is tree-free
     for (const s of this.gen.infra) if (s.contains(x, z, 6)) return true; // SWTP / STP plot
     const r = this.gen.roads;
     const m = this.mask;
@@ -758,6 +760,17 @@ export class TreePlacer {
       const slope = Math.hypot(this.sx.h - h, this.sz.h - h) / 2;
       return { h, slope, ok: !this.nearRoad(x, z) && this.cityFactor(x, z) >= 0.999 && !this.waterNear(x, z, 6) };
     })) lists[t.kind].push(t.x - ox, this.footY(t.h, t.slope, t.kind, t.scale), t.z - oz, t.scale, t.yaw, t.tint);
+    // 2026-11-23: final filter: whatever the source (street, plot, park, homestead ...), nothing stands inside an agriculture area
+    for (let k = 0; k < TREE_KIND_COUNT; k++) {
+      const l = lists[k];
+      let w = 0;
+      for (let i = 0; i < l.length; i += TREE_STRIDE) {
+        if (farmAreaAt(ox + l[i], oz + l[i + 2], V.farmTreeClear)) continue;
+        if (w !== i) for (let q = 0; q < TREE_STRIDE; q++) l[w + q] = l[i + q];
+        w += TREE_STRIDE;
+      }
+      l.length = w;
+    }
     return lists.map((l) => new Float32Array(l));
   }
 

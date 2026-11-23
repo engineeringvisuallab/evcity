@@ -407,8 +407,10 @@ export const Config = {
     /** Placement grid (m). One tree at most per cell, jittered inside it. 500 / cellSize must be a whole number. */
     cellSize: 10,
     /** Chance (0..1) of a tree per cell: in the middle of a forest / in open land. */
-    forestChance: 0.4, // was 0.55: fewer trees in forests
-    scatterChance: 0.02, // was 0.035: fewer lone trees
+    forestChance: 0.8, // 2026-11-23: was 0.4 (dense trees everywhere)
+    scatterChance: 0.3, // 2026-11-23: was 0.02 (open land gets trees too, not only forests)
+    /** 2026-11-23: AGRICULTURE AREAS (FarmAreas.ts) are completely tree-free: no tree of any source inside the circle + this margin (m). */
+    farmTreeClear: 8,
     /** Size (m) of the forest patches (noise wavelength). */
     forestScale: 520,
     /** No tree on ground steeper than this (degrees), the chance fades out from 60 % of it. Was 33: over 60 % of the ground above 200 m is steeper than that, so the hills were bare. */
@@ -442,7 +444,7 @@ export const Config = {
     treeSizeOutside: 1.8,
     treeSizeOutsideBig: 1.3,
     /** 2026-11-21: SMALL TREES (broadleaf, oak, vase, slender lower than `maxHeight` m): only `keep` (0..1) of them are placed (a fixed share per spot, so none ever flickers or moves). 1 = all (as before), 0.25 = a quarter. Taller trees, palms, bamboo, city trees are not touched. */
-    smallTrees: { maxHeight: 10, keep: 0.25 },
+    smallTrees: { maxHeight: 10, keep: 0.5 },
     /** HOMESTEADS (gram): coconut, date, palmyra palms and banana clumps stand around rural houses. `reach` = ring width (m) beyond the footprint, `chance` per 10 m cell next to the house (fades out to the edge of the ring). */
     homestead: { reach: 32, chance: 0.42 },
     /** POND / LAKE / RIVER BANKS: palms and banana on low land within `reach` m of water. `chance` per 10 m cell, `maxHeight` = only land lower than this (m above sea level). */
@@ -463,13 +465,13 @@ export const Config = {
      * cell, scale range, `bambooShare` of them are bamboo clumps on low land, `bigShare` = young big trees). The jungle fades out over `fade` m at the district edge
      * (a ragged edge). Lower `understory` (and `chance`) if the frame rate drops: they are the number of trees.
      */
-    dense: { farKeep: 0.6, fade: 260, chance: 0.75, bigChance: 0.62, understory: 0.55, understoryScale: [0.8, 1.2] as [number, number], bambooShare: 0.04, bigShare: 0.1,
+    dense: { farKeep: 0.6, fade: 260, chance: 0.95, bigChance: 0.62, understory: 0.55, understoryScale: [0.8, 1.2] as [number, number], bambooShare: 0.04, bigShare: 0.1,
       /**
        * JUNGLE THICKET (ghono jongol, 2.5x): `layers` more spots in every jungle cell (each its own random stream, `chance` x jungle density x Quality treeMul),
        * so the jungle holds about 2.5x as many plants as before. `undergrowth` = share of them that are lata-pata (fern / shrub / creeper mound, no colliders),
        * the rest are young trees of `scale` (x the tree's normal size). Lower `layers` / `chance` if the frame rate drops.
        */
-      thicket: { layers: 3, chance: 0.88, undergrowth: 0.65, scale: [0.85, 1.3] as [number, number] },
+      thicket: { layers: 6, chance: 0.95, undergrowth: 0.65, scale: [0.85, 1.3] as [number, number] },
       /**
        * JUNGLE VINES (2026-11-21, like a real rain-forest photo): per 10 m jungle cell (x jungle density x Quality treeMul) `lianaChance` = a curtain of hanging woody vines
        * (8-12 m, TreeKind.liana) and `tangleChance` = slim leaning stems with a diagonal limb across them (TreeKind.tangle). No colliders. Near chunks only (LOD 0).
