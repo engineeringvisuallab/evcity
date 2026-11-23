@@ -239,6 +239,16 @@ export class GrassAssets {
             vec4 gip = modelViewMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
             float gFade = 1.0 - smoothstep(uGrassFade.x, uGrassFade.y, length(gip.xyz));
             float gph = instanceMatrix[3].x * 0.9 + instanceMatrix[3].z * 0.7;
+            // WIND: the tip sways, the root stays put (grows with height^2); every tuft has its own phase, speed and direction, two waves of different speed make it irregular
+            {
+              float gh = max(position.y, 0.0);
+              float gsp = 1.4 + 0.5 * sin(gph * 3.1);
+              float gw = sin(uGrassTime * gsp + gph) * 0.65 + sin(uGrassTime * (gsp * 2.3) + gph * 1.9 + position.x * 5.0) * 0.35;
+              float gdir = gph * 0.7 + 0.6 * sin(uGrassTime * 0.35 + gph);
+              float gs = uGrassWind * gh * gh * 0.28 * gw;
+              transformed.x += cos(gdir) * gs;
+              transformed.z += sin(gdir) * gs;
+            }
             transformed *= gFade;
           #endif`,
         );
@@ -260,7 +270,7 @@ export class GrassAssets {
           #include <opaque_fragment>`,
         );
     };
-    m.customProgramCacheKey = () => 'grass-fade-v11' + key;
+    m.customProgramCacheKey = () => 'grass-fade-v12' + key;
     return m;
   }
 

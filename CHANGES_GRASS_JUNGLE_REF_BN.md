@@ -130,3 +130,6 @@ Dhyan: `TreeKind` e gum2 (24) er por notun kind (25, 26) bosechhe, tai `kind >= 
 - `GrassAssets.ts` `bladeTuft(lush)`: jungle (durba / trefoil / leafy) tuft e plant +1, shudhu gaRo sobuj (dry/mora nai), goray onek gaRo, ogray halka (chikon, sleek dekhay). Key `grass-fade-v11`.
 - `GrassManager.ts`: durba tint aro gaRo (0.78–1.04).
 - FPS komle `jungle.chance` komao (0.6).
+
+## UPDATE 15 — grass wind sway
+- `GrassAssets.ts` vertex shader: ager `gph` phase calculate hoto kintu sway lagano chhilo na. Ekhon tip dole (height² onujayi, goray sthir), prottek tuft er nijer phase/speed/direction, 2 ta wave mile irregular. Gust er sathe bare (`windGust`), still air e dole na. Key `grass-fade-v12`.
