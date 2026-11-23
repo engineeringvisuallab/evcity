@@ -67,7 +67,8 @@ P(`INFO  ${nEnd} lane points within 15 m of a viaduct window edge have ground up
 
 // L6 grade
 let mg = 0; for (const r of repAll) { const rd = net.roads[r.roadId]; for (let i = 1; i < rd.xs.length; i++) { const dl = Math.hypot(rd.xs[i] - rd.xs[i - 1], rd.zs[i] - rd.zs[i - 1]); if (dl > 0.01) mg = Math.max(mg, Math.abs(rd.ys[i] - rd.ys[i - 1]) / dl); } }
-CHK('L6 max grade of the lanes and tails <= 5 %', mg <= 0.05, `${(mg * 100).toFixed(2)} %`);
+// 2026-11-23 (HANDOFF_JUNCTION_RTE.md section 30): the flyover bridges M3 / M4 and their tails are a EXCEPTION of 6 % (user order 'game a change dekhte chai. koro' after the study of section 29) (project rule Criteria.ts maxGrade.ramp / Standards.ts rampMaxGrade stay 5 % for everything else); 0.0005 = rounding
+CHK('L6 max grade of the lanes and tails <= 6 % (flyover exception)', mg <= 0.06 + 0.0005, `${(mg * 100).toFixed(2)} %`);
 
 // L9 (wider lane 5.5 m): edge clearance to the paved edges of the ring / arm, minimum radius, distance of the lane edge to the ramp piers (RE-8 data, column half size 1.5 m ASSUMED)
 {

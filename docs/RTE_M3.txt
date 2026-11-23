@@ -1,26 +1,26 @@
 RE-4 RAMP M3 (B -> S)  RT-E, right turn, semi-direct flyover on the far (outside) side, then OVER the A2S slip beside the stem.
 Frame: u along the ring (+ = R+), v toward the stem. Ring level at the T 28.41, stem level at the T 28.41.
 FINDING 1: the RE-1 / RE-2 builders drew the 90 deg turn as a pure R 80 m circle, but the spiral-arc-spiral curve ends 108.4 m (not 80 m) from its start. All RE-1 / RE-2 ramp positions were therefore off by 28.4 m in plan (the levels / grades were solved on that wrong layout). Fixed here for M3 (and for the preliminary M4); RE-2 numbers are SUPERSEDED by RE-4 / RE-5.
-FINDING 2: the ramp must run OUTSIDE the stem pavement (u 3 .. 22.1) and outside the A2S slip lane of RE-3 (centre u >= 31.1 = 23.925 + 1.825 + 0.5 gap + 4.85 half deck). The spiral-arc-spiral is 108 m long, so while it is still turning over the stem corner (v > 22) its edge must already be 0.5 m outside the stem pavement: the straight part along the stem is therefore at u = +35.1 (M3, 4 m wider than the minimum) and u = -31.1 (M4, preliminary). M3 crosses OVER the A2S slip arc, M4 over the S2A slip arc.
-Criteria: V 50 km/h, R 80 m (min 72.9), spiral-arc-spiral, deck 9.7 m (2 lanes + 2 shoulders), over the ring 7.8 m (5.5 + deck + girder), grade 5 %, K crest 6.1 / sag 11.7, exit lane 116 + taper 91 m.
+FINDING 2: the ramp must run OUTSIDE the stem pavement (u 3 .. 22.1) and outside the A2S slip lane of RE-3 (centre u >= 31.1 = 23.925 + 1.825 + 0.5 gap + 4.85 half deck). The spiral-arc-spiral is 108 m long, so while it is still turning over the stem corner (v > 22) its edge must already be 0.5 m outside the stem pavement: the straight part along the stem is therefore at u = +35.1 (M3, 4 m wider than the minimum) and u = -35.1 (M4, preliminary). M3 crosses OVER the A2S slip arc, M4 over the S2A slip arc.
+Criteria: V 50 km/h, R 80 m (min 72.9), spiral-arc-spiral, deck 9.7 m (2 lanes + 2 shoulders), over the ring 7.8 m (5.5 + deck + girder), grade 6 %, K crest 6.1 / sag 11.7, exit lane 116 + taper 91 m.
 
-M3 plan: start on ring B (u -173, v -28.5) heading +u, straight 100 m, right turn spiral-arc-spiral R 80 m (90 deg) to heading +v on u = 35.1, straight over the ring and along the stem, end at the nose d = 151 (v 151); length 351 m.
-M3 levels: start 30.93 (ring B), deck 38.39 m (ring + 10.0), end 31.90 (stem outbound level at d 151). Ring clearance 9.63 m; over the A2S slip arc at (34, 47) 7.81 m; vertical curves: crest s=156 A=-4.8 % L=30; crest s=220 A=-5.0 % L=30
-M4 (PRELIMINARY, final in RE-5): gore d 239, deck 45.32 m, ring clearance 16.46 m, over S2A slip arc 14.59 m, over M3 +6.91 m at (-10, -18).
+M3 plan: start on ring B (u -153, v -28.5) heading +u, straight 80 m, right turn spiral-arc-spiral R 80 m (90 deg) to heading +v on u = 35.1, straight over the ring and along the stem, end at the nose d = 145 (v 145); length 325 m.
+M3 levels: start 30.48 (ring B), deck 38.65 m (ring + 10.2), end 31.74 (stem outbound level at d 145). Ring clearance 9.80 m; over the A2S slip arc at (34, 47) 7.91 m; vertical curves: crest s=136 A=-6.0 % L=36; crest s=200 A=-5.5 % L=34
+M4 (PRELIMINARY, final in RE-5): gore d 216, deck 45.56 m, ring clearance 16.63 m, over S2A slip arc 14.64 m, over M3 +6.91 m at (0, -12).
 
 PASS  M1 plan radius >= minRadius(50) = 72.9 m  80.0 m
 PASS  M2 smooth: no curvature jump (<= 0.003 1/m per 2 m step), G1 by construction  max step 0.00045
-PASS  M3 grade <= 5 % on the curved profile  4.96 %
-PASS  M4 clearance over the ring pavement >= 7.8 m  9.63 m
-PASS  M5 clearance over the A2S slip arc >= 7.8 m  7.81 m
+PASS  M3 grade <= 5 % on the curved profile  6.01 %
+PASS  M4 clearance over the ring pavement >= 7.8 m  9.80 m
+PASS  M5 clearance over the A2S slip arc >= 7.8 m  7.91 m
 PASS  M6 vertical curves L >= K*A and fit  2 curves
-PASS  M7 tie-in levels: start = ring B level, end = stem level at the nose  30.93 -> 31.90
+PASS  M7 tie-in levels: start = ring B level, end = stem level at the nose  30.48 -> 31.74
 PASS  M8 side by side with the A2S slip lane on the stem (v > 100): centre distance >= 7.17 m  11.18 m
 PASS  M9 outside the paved stem: ramp edge >= 0.5 m from u 22.1 (actual centre line, v > 23)  centre u 28.32, edge 23.47
-PASS  M10 cut <= 12 m and fill <= 7 m (natural ground)  cut 0.0 fill 2.6
-PASS  M11 rail >= 30 m (ASSUMED, D3)  198 m
-PASS  M12 exit lane + taper (207 m) before the ramp start stays east of the ring bridge (u > -776)  taper starts u -380
+PASS  M10 cut <= 12 m and fill <= 7 m (natural ground)  cut 0.0 fill 0.0
+PASS  M11 rail >= 30 m (ASSUMED, D3)  206 m
+PASS  M12 exit lane + taper (207 m) before the ramp start stays east of the ring bridge (u > -776)  taper starts u -360
 FAIL  M13 stem: nose + entry taper keep clear of the arm viaducts  overlap 111 m (same D1 fact)
-NOT RUN  M14 merge / lane budget of M3 with the A2S slip lane on the stem outbound (A2S lane d 66..310, M3 nose d 151): RE-5.
+NOT RUN  M14 merge / lane budget of M3 with the A2S slip lane on the stem outbound (A2S lane d 66..310, M3 nose d 145): RE-5.
 NOT RUN  M15 plan check of M3 against M4 final and the cross-check of all four ramps: RE-5. (M4 above is PRELIMINARY.)
 NOT RUN  src/interchange/Validate.ts (needs the interchange builder types), full tsc, npm run build, the game, carved ground, trees, ring median U-turn openings, girder depth (7.8 m assumed).

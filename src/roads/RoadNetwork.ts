@@ -595,7 +595,7 @@ export class RoadNetwork {
         const GAP = 0.3, STEP = 4;
         // STEP 5 (user 2026-11-22): the end of every tail merges into the main road by the general AUTO MERGE logic in emit() (autoMergeEnds): no hand made merge zone here.
         // STEP 2 (user 2026-11-22: 'flyover start / end too far, bring closer'): convergence length per tail (was 100 m for all, M4L 110 m). Grade <= 5 % is checked by rte-lane-check L6.
-        const LT_M3S = 50, LT_M3N = 50, LT_M4G = 70, LT_M4L = 150, LC_M4L = 30;
+        const LT_M3S = 50, LT_M3N = 50, LT_M4G = 70, LT_M4L = 125, LC_M4L = 30;   // 2026-11-23 compact flyover (section 30): LT_M4L 150 -> 125 together with M4_SC 125 / M4_UEND 395 in tools/rte-m3.py
         const nM3 = M3.x.length - 1, nM4 = M4.x.length - 1;
         // (a) M3 start on ring B: from the tip beside the ring (100 m before the data start, u about -273) to the first bridge section (s 8)
         {

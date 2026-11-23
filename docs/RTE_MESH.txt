@@ -1,18 +1,18 @@
-RE-9 MESH of the RT-E structures: 8782 triangles, 26346 vertices (deck 626, concrete 2352, parapet 3198, marks 2102, lamps 504); 0 degenerate triangles skipped.
+RE-9 MESH of the RT-E structures: 8608 triangles, 25824 vertices (deck 614, concrete 2316, parapet 3132, marks 2042, lamps 504); 0 degenerate triangles skipped.
 PASS  C1 every coordinate is a finite number, every index is inside the vertex list, index count is a multiple of 3  0 bad numbers, 0 bad indices
-PASS  C2 the five parts (deck, concrete, parapet, marks, lamps) cover every triangle exactly once  deck 0..626, concrete 626..2978, barrier 2978..6176, mark 6176..8278, lamp 8278..8782
+PASS  C2 the five parts (deck, concrete, parapet, marks, lamps) cover every triangle exactly once  deck 0..614, concrete 614..2930, barrier 2930..6062, mark 6062..8104, lamp 8104..8608
 PASS  C3 every deck and mark triangle looks up (+y)  0 facing down
 PASS  C3b the structure triangle ranges add up to the deck and parapet parts  M3, M4, out_viaduct1, out_viaduct2, in_viaduct1, in_viaduct2
-PASS  C4 every deck-surface vertex is at the data level of its nearest section (<= 1 cm; the mesh is exactly the data)  worst 0.000 m (, 1878 vertices; nearest section of the SAME structure)
-PASS  C5 M3 deck width at section 43 = data width 9.7 m  lateral -4.85 .. 4.85
-PASS  C5 M4 deck width at section 67 = data width 9.7 m  lateral -4.85 .. 4.85
-PASS  C6 every wedge / wing deck vertex is outside the existing arm deck edge |u| >= 22.4 m (no overlap, no z-fight with the arm viaduct)  453 vertices near 97 wedge sections, smallest |u| 22.39 m, 0 inside
-PASS  C7 parapet top faces are 0.9 m above the deck (nearest section of the same structure, slope tolerance 0.3 m)  1066 top triangles, worst 0.00 m (M3)
+PASS  C4 every deck-surface vertex is at the data level of its nearest section (<= 1 cm; the mesh is exactly the data)  worst 0.000 m (, 1842 vertices; nearest section of the SAME structure)
+PASS  C5 M3 deck width at section 40 = data width 9.7 m  lateral -4.85 .. 4.85
+PASS  C5 M4 deck width at section 68 = data width 9.7 m  lateral -4.85 .. 4.85
+PASS  C6 every wedge / wing deck vertex is outside the existing arm deck edge |u| >= 22.4 m (no overlap, no z-fight with the arm viaduct)  459 vertices near 96 wedge sections, smallest |u| 22.39 m, 0 inside
+PASS  C7 parapet top faces are 0.9 m above the deck (nearest section of the same structure, slope tolerance 0.3 m)  1044 top triangles, worst 0.00 m (M3)
 PASS  C8 every pier has its column foot at footY and its cap top at the deck soffit level (data)  20 piers, 0 without
-PASS  C9 triangle budget <= 60000 (ASSUMED; one mesh, vertex colours, no textures)  8782
+PASS  C9 triangle budget <= 60000 (ASSUMED; one mesh, vertex colours, no textures)  8608
 PASS  C10 the builder is deterministic (second run identical)  
-PASS  C11 the mesh stays near the data: highest point <= highest deck + parapet / lamp height + 0.1 m  x 2109..2519, z 992..1568, y 18.14..56.00 (highest deck 47.00)
-PASS  C12 skipArmWedges removes every arm wedge / wing strip and keeps the ramp bridges (fewer triangles, ramps unchanged, config default = off)  7434 tris without wedges, 8168 with
+PASS  C11 the mesh stays near the data: highest point <= highest deck + parapet / lamp height + 0.1 m  x 2112..2501, z 997..1586, y 18.08..56.26 (highest deck 47.26)
+PASS  C12 skipArmWedges removes every arm wedge / wing strip and keeps the ramp bridges (fewer triangles, ramps unchanged, config default = off)  7274 tris without wedges, 7994 with
 
 NOT RUN  three.js layer (RteLayer.ts), Config / Engine wiring, npx tsc --noEmit of the whole project, npm run build, the game, the look of the mesh in the game, collision (cars / player on the decks), terrain carve and embankment under the ramps, ground-level lanes and slips (A2S, S2A, added lanes), signs, water check (sc.water > sc.h), Validate.ts.
 ASSUMED  parapet 0.9 x 0.4 m, edge line 0.7 m from the deck edge, lane divider on while the deck is >= 8 m wide, lamps every 40 m 9 m high, arrows every 100 m, approach slab 0.5 m, wing net strip starts 0.15 m outside the nominal width centre, 60 000 triangle budget.

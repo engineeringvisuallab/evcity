@@ -3,10 +3,10 @@ PASS  A1 the viaduct at d 160..271 was a structure before and is not any more  1
 PASS  A2 the viaduct at d 391..694 (rail and stream crossing) is unchanged  38 / 38 points
 PASS  A3 rail unchanged (piers, edges)  9be4e562e3:422:12 / 9be4e562e3:422:12
 PASS  A4 every road unchanged (xs, zs, ys): the arm profile is NOT changed  0 changed of 211
-PASS  A5 finished ground = road level on the centre line at d 160..271 (<= 0.15 m)  worst 0.00 m over 19 stations (before: ground up to 4.95 m BELOW the road)
-PASS  A6 ground at +-15 m from the axis within 1.0 m of the road level (embankment, not a hole)  worst 0.12 m
+PASS  A5 finished ground = road level on the centre line at d 160..271 (<= 0.15 m)  worst 0.00 m over 19 stations (before: ground up to 4.78 m BELOW the road)
+PASS  A6 ground at +-15 m from the axis within 1.0 m of the road level (embankment, not a hole)  worst 0.06 m
 PASS  A7 no wet ground under / beside the new embankment (sc.water > sc.h)  0 wet samples
-PASS  A8 mesh without the arm window 160..271 wedges is smaller; default (flag false) is the old mesh  full 26346 vertices, without 24504
+PASS  A8 mesh without the arm window 160..271 wedges is smaller; default (flag false) is the old mesh  full 25824 vertices, without 23982
 
 NOT RUN  game (look of the embankment, trees on it), npm run build, full tsc, traffic on the arm, minimap, ramp strips M3 / M4 beside the arm (still bridges), ground-level merge of the ramps, wider slip lanes.
 ASSUMED  the arm road profile (J1ArmData) stays exactly as it is; only the structure registration of the station range 2750..2900 of J1-E is skipped (terrain then follows the road: embankment 2 .. 5 m high, daylight slopes).

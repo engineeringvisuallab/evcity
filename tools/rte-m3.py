@@ -22,7 +22,7 @@ def build_M3(T3, dn): return trace(U_OUT - ARC_D - T3, V_OUT, 0, [('S', T3), ('A
 # STEP 5 (user 2026-11-22, 'make the flyover circle bigger / farther so the ground landing is not squeezed beside the ring'): the M4 landing line (ring B entry) used to run 1.55 m beside the ring edge for 345 m while the ramp was
 # still up to 6.6 m above the ring, so its fill slope fell onto the ring pavement. Now the 90 deg turn ends M4_OUT m farther from the ring (v = V_OUT - M4_OUT), the line is HELD there for M4_HOLD m and then a smooth S-curve
 # (two spiral-arc-spiral pieces, equal and opposite) of u-length ~M4_SC brings it back to V_OUT before the end (u end unchanged). Fill slope 1:3 => the ramp needs gap >= 3 x level difference to the ring.
-M4_OUT, M4_UHOLD, M4_SC, M4_UEND = 21.0, 231.0, 150.0, 419.7   # first S-curve out right after the arc (u ~79 .. 199), held to u 231 (the bridge end), second S-curve back u 231 .. 381 (= the end of the ground tail, RoadNetwork LT_M4L), ring B entry ends at u 419.7 as before
+M4_OUT, M4_UHOLD, M4_SC, M4_UEND = 21.0, 231.0, 125.0, 395.0   # first S-curve out right after the arc (u ~79 .. 199), held to u 231 (the bridge end), second S-curve back u 231 .. 381 (= the end of the ground tail, RoadNetwork LT_M4L), ring B entry ends at u 419.7 as before
 def _scurve(R, th): t = trace(0, 0, 0, [('A', R, th, +1, VR_SEMI), ('A', R, th, -1, VR_SEMI)]); return float(t[-1, 0]), float(t[-1, 1])
 def _solve_scurve(dv, ext):
     lo_t, hi_t = 2.0, 40.0
@@ -55,16 +55,16 @@ for _e in range(0, 150):
     if _s[:, 0].max() <= -U_MIN + 1e-6: break
 EXTRA4 = _e
 
-def need_slip(slipP, slipY):
+def need_slip(slipP, slipY, extra=0.0):
     def need(P_, f_):
         X = seg_hit(P_, slipP)
         if X is None: return -1.0
         j = int(np.hypot(slipP[:, 0] - X[0], slipP[:, 1] - X[1]).argmin())
-        return RISE - (float(f_(at_s(P_, X))[0]) - float(slipY[j]))
+        return RISE + extra - (float(f_(at_s(P_, X))[0]) - float(slipY[j]))   # extra: 2026-11-23 flyover 6 % exception, M3 over A2S slip lost 0.04 m of real clearance (rte-struct S3), +0.10 m asked
     return need
 
 # ---- M3 (lower ramp, as picked in RE-2): clearance over the ring + over the A2S slip arc ----
-nA = need_slip(A2S, A2S_Y)
+nA = need_slip(A2S, A2S_Y, 0.10)
 M3 = solve_M3(lambda o: nA, 'x')                                   # the builder ignores its argument; 'x' only switches it on
 # ---- M4 (upper, PRELIMINARY, final in RE-5): clears the ring, the S2A slip and M3 + STEP_UP ----
 nS = need_slip(S2A, S2A_Y)

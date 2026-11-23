@@ -15,7 +15,7 @@ RAIL = np.array([(p[2], -p[3]) for p in S['railPts']])  # (u, v): u along the ri
 
 # ---------- criteria (copied) ----------
 EMAX = 0.08; F = [(20, .35), (30, .28), (40, .23), (50, .19), (60, .17), (70, .15), (80, .14), (100, .12), (120, .09)]
-A_DEC, A_ACC, WEAVE_MIN, WEAVE_DES, GMAX = 2.5, 1.2, 150, 300, 0.05
+A_DEC, A_ACC, WEAVE_MIN, WEAVE_DES, GMAX = 2.5, 1.2, 150, 300, 0.06
 LANE, HW, MEDH = 3.65, 22.1, 3.0
 CLR, DECK = 5.5, 1.4; RISE = 7.8  # RISE = 7.8 m total over the road (section 24 / 21.47); 5.5 + 1.4 = 6.9 is the Levels.ts default; 7.8 kept (conservative)
 STEP_UP = CLR + DECK  # 6.9: second level over the first (X crossing)

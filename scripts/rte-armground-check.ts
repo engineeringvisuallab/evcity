@@ -41,7 +41,7 @@ CHK('A6 ground at +-15 m from the axis within 1.0 m of the road level (embankmen
 CHK('A7 no wet ground under / beside the new embankment (sc.water > sc.h)', wetN === 0, `${wetN} wet samples`);
 // A8 mesh: the wedge decks of window 160..271 are skipped, the others stay
 const full = buildRteMesh(), skip = buildRteMesh({ skipArmWindow1: true });
-CHK('A8 mesh without the arm window 160..271 wedges is smaller; default (flag false) is the old mesh', skip.positions.length < full.positions.length && full.positions.length / 3 === 26346, `full ${full.positions.length / 3} vertices, without ${skip.positions.length / 3}`);
+CHK('A8 mesh without the arm window 160..271 wedges is smaller; default (flag false) is the old mesh', skip.positions.length < full.positions.length && full.positions.length / 3 === 25824, `full ${full.positions.length / 3} vertices, without ${skip.positions.length / 3}`);
 P('');
 P('NOT RUN  game (look of the embankment, trees on it), npm run build, full tsc, traffic on the arm, minimap, ramp strips M3 / M4 beside the arm (still bridges), ground-level merge of the ramps, wider slip lanes.');
 P('ASSUMED  the arm road profile (J1ArmData) stays exactly as it is; only the structure registration of the station range 2750..2900 of J1-E is skipped (terrain then follows the road: embankment 2 .. 5 m high, daylight slopes).');
