@@ -1,0 +1,115 @@
+HK-9c-2 SUB-STEP 1: the 8 pieces as data (C-D roads + slips), local frame x east / y north, node = end of the J1-S arm. No src change.
+WATER CHECK FIRST (sc.water > sc.h on natural ground, 10 m samples) comes with every piece below.
+Axis curvature (lateral x of the arm / link axis in the straight local frame): arm x(+100) -0.00, (+367) 14.74, (+607) 65.86, (+667) 84.70; link x(-76) -0.01, (-367) -0.03, (-657) -0.06
+Structures along the real roads, distance from the node ALONG the road (m): arm 583.8..919.6 | 1535.4..1607.3; link 487.2..869.7
+
+CD-E-N  southbound (arm exit -> deck)
+  exit taper 180 m (1:15), lead 60 m, slip NE diverges at y 367.3, NE loop merges at y 76.4
+  length 611.3 m, 153 points (~4 m), level 21.44 -> 19.68 m, worst grade 3.06 %, min radius 346.0 m
+  ground: WET samples (water>h) 0 of 62; game rule (h<water+0.3) 0; max fill 7.2 m, max cut 0.7 m; dry stretch with fill > 3 m (= viaduct by the game rule) 140 m
+  structures: the piece lies beside the arm structure for 40 m, beside the link structure for 0 m (10 m samples, nearest axis point)
+  PASS  CD-E-N: grade <= 5 %                                                     3.06 %
+  PASS  CD-E-N: radius >= 92.5 m (V50 93.7 m less 4 m sampling error) / tapers >= 300 m 346.0 m
+  PASS  CD-E-N: no water under the piece (WET = water > h)                       0 of 62 samples
+  WARN  CD-E-N: clear of the arm / link structures                               40 m overlap
+
+CD-E-S  southbound (deck -> link entry)
+  under the deck, S-bend R 93.7 m, SE loop diverges at y -76.4, SE slip merges at y -367.3, lead 60 m, entry taper 230 m (1:20)
+  length 658.2 m, 166 points (~4 m), level 19.68 -> 11.15 m, worst grade 3.25 %, min radius 93.7 m
+  ground: WET samples (water>h) 14 of 66 (first at 522.5 m along the piece); game rule (h<water+0.3) 14; max fill 26.4 m, max cut 4.9 m; dry stretch with fill > 3 m (= viaduct by the game rule) 80 m
+  structures: the piece lies beside the arm structure for 0 m, beside the link structure for 170 m (10 m samples, nearest axis point)
+  PASS  CD-E-S: grade <= 5 %                                                     3.25 %
+  PASS  CD-E-S: radius >= 92.5 m (V50 93.7 m less 4 m sampling error) / tapers >= 300 m 93.7 m
+  WARN  CD-E-S: no water under the piece (WET = water > h)                       14 of 66 samples
+  WARN  CD-E-S: clear of the arm / link structures                               170 m overlap
+
+CD-W-N  northbound (deck -> arm entry)
+  NW loop diverges at y 76.4 (merge back), NW slip merges at y 367.3, lead 60 m, entry taper 240 m (1:20)
+  length 679.7 m, 168 points (~4 m), level 19.68 -> 22.94 m, worst grade 2.95 %, min radius 484.9 m
+  ground: WET samples (water>h) 0 of 68; game rule (h<water+0.3) 0; max fill 8.4 m, max cut 0.5 m; dry stretch with fill > 3 m (= viaduct by the game rule) 210 m
+  structures: the piece lies beside the arm structure for 90 m, beside the link structure for 0 m (10 m samples, nearest axis point)
+  PASS  CD-W-N: grade <= 5 %                                                     2.95 %
+  PASS  CD-W-N: radius >= 92.5 m (V50 93.7 m less 4 m sampling error) / tapers >= 300 m 484.9 m
+  PASS  CD-W-N: no water under the piece (WET = water > h)                       0 of 68 samples
+  WARN  CD-W-N: clear of the arm / link structures                               90 m overlap
+
+CD-W-S  northbound (link exit -> deck)
+  exit taper 180 m, SW slip diverges at y -367.3, SW loop merges at y -76.4, S-bend, under the deck
+  length 608.3 m, 153 points (~4 m), level 10.97 -> 19.68 m, worst grade 3.25 %, min radius 93.7 m
+  ground: WET samples (water>h) 9 of 61 (first at 0.0 m along the piece); game rule (h<water+0.3) 9; max fill 20.6 m, max cut 5.5 m; dry stretch with fill > 3 m (= viaduct by the game rule) 60 m
+  structures: the piece lies beside the arm structure for 0 m, beside the link structure for 130 m (10 m samples, nearest axis point)
+  PASS  CD-W-S: grade <= 5 %                                                     3.25 %
+  PASS  CD-W-S: radius >= 92.5 m (V50 93.7 m less 4 m sampling error) / tapers >= 300 m 93.7 m
+  WARN  CD-W-S: no water under the piece (WET = water > h)                       9 of 61 samples
+  WARN  CD-W-S: clear of the arm / link structures                               130 m overlap
+
+SLIP-NE  arm southbound (E C-D) -> ring eastbound (north lane), left turn
+  V50 R 110 m, about 518 m
+  length 502.2 m, 87 points (~4 m), level 15.41 -> 19.28 m, worst grade 1.16 %, min radius 103.8 m
+  ground: WET samples (water>h) 5 of 51 (first at 462.1 m along the piece); game rule (h<water+0.3) 5; max fill 12.5 m, max cut 7.3 m; dry stretch with fill > 3 m (= viaduct by the game rule) 0 m
+  structures: the piece lies beside the arm structure for 0 m, beside the link structure for 0 m (10 m samples, nearest axis point)
+  PASS  SLIP-NE: grade <= 5 %                                                    1.16 %
+  PASS  SLIP-NE: radius >= 92.5 m (V50 93.7 m less 4 m sampling error) / tapers >= 300 m 103.8 m
+  WARN  SLIP-NE: no water under the piece (WET = water > h)                      5 of 51 samples
+  PASS  SLIP-NE: clear of the arm / link structures                              0 m overlap
+
+SLIP-SE  ring westbound (south lane) -> link southbound (E C-D), left turn
+  V50 R 110 m, about 518 m
+  length 512.2 m, 87 points (~4 m), level 19.35 -> 14.06 m, worst grade 1.55 %, min radius 110.0 m
+  ground: WET samples (water>h) 8 of 52 (first at 0.0 m along the piece); game rule (h<water+0.3) 8; max fill 12.6 m, max cut 10.8 m; dry stretch with fill > 3 m (= viaduct by the game rule) 20 m
+  structures: the piece lies beside the arm structure for 0 m, beside the link structure for 0 m (10 m samples, nearest axis point)
+  PASS  SLIP-SE: grade <= 5 %                                                    1.55 %
+  PASS  SLIP-SE: radius >= 92.5 m (V50 93.7 m less 4 m sampling error) / tapers >= 300 m 110.0 m
+  WARN  SLIP-SE: no water under the piece (WET = water > h)                      8 of 52 samples
+  PASS  SLIP-SE: clear of the arm / link structures                              0 m overlap
+
+SLIP-NW  ring eastbound (north lane) -> arm northbound (W C-D), left turn
+  mirror of NE, travelled the other way
+  length 522.4 m, 87 points (~4 m), level 28.37 -> 15.41 m, worst grade 3.72 %, min radius 110.5 m
+  ground: WET samples (water>h) 0 of 53; game rule (h<water+0.3) 0; max fill 7.3 m, max cut -0.1 m; dry stretch with fill > 3 m (= viaduct by the game rule) 360 m
+  structures: the piece lies beside the arm structure for 0 m, beside the link structure for 0 m (10 m samples, nearest axis point)
+  PASS  SLIP-NW: grade <= 5 %                                                    3.72 %
+  PASS  SLIP-NW: radius >= 92.5 m (V50 93.7 m less 4 m sampling error) / tapers >= 300 m 110.5 m
+  PASS  SLIP-NW: no water under the piece (WET = water > h)                      0 of 53 samples
+  PASS  SLIP-NW: clear of the arm / link structures                              0 m overlap
+
+SLIP-SW  link northbound (W C-D) -> ring westbound (south lane), left turn
+  mirror of SE
+  length 512.2 m, 87 points (~4 m), level 14.06 -> 28.29 m, worst grade 4.17 %, min radius 110.0 m
+  ground: WET samples (water>h) 0 of 52; game rule (h<water+0.3) 0; max fill 5.9 m, max cut 7.1 m; dry stretch with fill > 3 m (= viaduct by the game rule) 130 m
+  structures: the piece lies beside the arm structure for 0 m, beside the link structure for 0 m (10 m samples, nearest axis point)
+  PASS  SLIP-SW: grade <= 5 %                                                    4.17 %
+  PASS  SLIP-SW: radius >= 92.5 m (V50 93.7 m less 4 m sampling error) / tapers >= 300 m 110.0 m
+  PASS  SLIP-SW: no water under the piece (WET = water > h)                      0 of 52 samples
+  PASS  SLIP-SW: clear of the arm / link structures                              0 m overlap
+
+RING STRUCTURES near the node (local x, east +): 431..311 | 111..-161 | -110..-46
+  WARN  SLIP-NE: ring end (x 379.3) is NOT on the ring river bridge              it is ON the arch bridge x 311..431: needs a twin bridge / widening (later sub-step)
+  WARN  SLIP-SE: ring end (x 373.2) is NOT on the ring river bridge              it is ON the arch bridge x 311..431: needs a twin bridge / widening (later sub-step)
+
+JOINS (data):
+  PASS  E-N end meets E-S start (y 0)                                            0.00 m
+  PASS  W-S end meets W-N start (y 0)                                            0.00 m
+  PASS  SLIP-NE diverges from the E C-D (y 367.3)                                0.00 m off the C-D line
+  PASS  SLIP-SE merges into the E C-D (y -367.3)                                 0.00 m
+  PASS  SLIP-NW merges into the W C-D (y 367.3)                                  0.00 m
+  PASS  SLIP-SW diverges from the W C-D (y -367.3)                               0.00 m
+  PASS  NE loop C-D end lies on the E C-D line                                   0.00 m
+  PASS  SE loop C-D start lies on the E C-D line                                 0.00 m
+  PASS  NW loop C-D end lies on the W C-D line                                   0.00 m
+  PASS  SW loop C-D start lies on the W C-D line                                 0.00 m
+  PASS  SLIP-NE: ring end in the ring lane (|y| 17.3)                            y 17.30, x 379.3
+  PASS  SLIP-SE: ring end in the ring lane (|y| 17.3)                            y -17.30, x 373.2
+  PASS  SLIP-NW: ring end in the ring lane (|y| 17.3)                            y 17.30, x -379.3
+  PASS  SLIP-SW: ring end in the ring lane (|y| 17.3)                            y -17.30, x -373.2
+  loop ids in data: HK-SE, HK-NE, HK-NW, HK-SW
+  PASS  SLIP-NE: clears loop NE by >= 14 m (slip shifted onto the CURVED arm axis) 26.1 m
+  PASS  SLIP-SE: clears loop SE by >= 14 m (slip shifted onto the CURVED arm axis) 20.6 m
+  PASS  SLIP-NW: clears loop NW by >= 14 m (slip shifted onto the CURVED arm axis) 15.6 m
+  PASS  SLIP-SW: clears loop SW by >= 14 m (slip shifted onto the CURVED arm axis) 20.7 m
+  PASS  headroom under the node deck over the C-D (>= 4.9 m)                     5.82 m (deck underside 25.84, road 19.68 / 20.02)
+
+GROUND ROAD UNDER THE DECK (the 25 m patch, data): arm end y 0 (half 22.1, level 19.68) -> link start y -24.95 (half 16.0, level 20.02). Today the ground road has NO asphalt between y 0 and -24.95 (headless: nearest road 12.4 m away at y -12.5, only a flat pad at 19.68 m). Needs a connector piece (game layer, later sub-step): 8 lane -> 6 lane pavement step inside y 0 .. -25 as in HK_LANES.txt.
+
+NOT RUN: tsc, npm run build, any other check script, game look; src NOT changed; no mesh, no RoadSpec, no terrain carve in this sub-step. Chunk-worker Config: nothing runtime added.
+RESULT 0 FAIL, 10 WARN

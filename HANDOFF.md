@@ -235,3 +235,6 @@ Terrain cut along the loop ramps (HkTerrain.ts, RoadNetwork.apply wrapper) and t
 
 ## Hatikamrul switch ON (2026-11-23)
 User could not see the interchange (switch was OFF): Config.roads.hatikamrul.enabled is now TRUE. Ring S node (X -1133, Z 2302) shows the raised ring, node viaduct and 4 loop ramps; C-D roads / slips / traffic are still missing (HK-9c-2 onward), so cars cannot drive from the arm / link onto the loops.
+
+## Hatikamrul interchange: HK-9c-2 sub-step 1 (2026-11-23)
+Data only (scripts/hk-cd-roads.ts, docs/HK_CD_ROADS.txt, docs/hk_cd_roads.json), src NOT changed. The 8 pieces (4 C-D + 4 slips) as centrelines with levels; findings: the J1-S arm curves away from the HK straight frame (x +14.7 m at 367 m), the C-D / slips meet the arm structure, the link structure (water from about 520 m) and the ring river arch bridge (x 311 .. 431). 0 FAIL, 10 WARN. NOT RUN: tsc, npm run build, game look. Details: HANDOFF_HATIKAMRUL.md section 22. Switch off: Config.roads.hatikamrul.enabled = false.
