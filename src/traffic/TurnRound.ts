@@ -85,8 +85,6 @@ export class TurnRound {
     this.next = !this.backoff && this.dirFree(a, 1) ? 'fwd' : 'rev';
   }
 
-  private right(a: TurnArgs): { x: number; z: number } { return { x: -a.fz, z: a.fx }; }
-
   /**
    * Margin (m) of the worst corner to the edge of the asphalt (+ EDGE shoulder); < 0 = outside. All four corners count sideways (measured from the centre line), the two corners in the
    * direction of travel `sg` also along the road (a dead end: the centre line point is clamped at the end, so a corner beyond the end is outside).
