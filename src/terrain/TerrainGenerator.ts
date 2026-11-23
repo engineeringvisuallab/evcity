@@ -126,6 +126,7 @@ export class TerrainGenerator {
       (x, z) => this.residentialFlat.weightAt(x, z),
       PLATEAU_M,
     );
+    this.roads.addHkCdRoads(); // STEP HK-9c-2 sub-step 2: the dry stretches of the Hatikamrul C-D roads + slips (Config.roads.hatikamrul.enabled), after reprofileResidential, last of all so no old road sees them
     // the mall floor = the natural ground height at the plot centre (the plot is nearly level there, +-0.4 m)
     // the mall floor = the MEDIAN natural ground over its (bent) plot
     {

@@ -38,6 +38,8 @@ import { buildJunctionRegistry, type JunctionRegistry } from './JunctionRegistry
 import { STRUCT, STRUCT_CARVE } from './ring/RingStructures';
 import { NODE_VIADUCT } from './ring/NodeViaductData';
 import { HkTerrain } from './ring/HkTerrain';
+import { hkFrame, hkWorld } from './ring/HkRamps';
+import { HK_CD_ROADS } from './ring/HkCdRoadData';
 /** STEP HK-9b2: width (m) over which the loop-ramp cut fades out toward another road. */
 const HK_ROAD_FADE = 8;
 import { SCENARIOS, cutRange, nearestPoint, uvToWorld, type ScenarioSpec } from '../interchange/scenario/J6Scenario';
@@ -3179,6 +3181,43 @@ export class RoadNetwork {
       }
       this.interchanges.push(model);
     }
+  }
+
+  /**
+   * STEP HK-9c-2 sub-step 2: the DRY stretches of the 8 pieces of the Hatikamrul-type interchange (4 C-D roads + 4 slips, data src/roads/ring/HkCdRoadData.ts, made by scripts/hk-cd-road-data.ts)
+   * as real one-way ramp roads named 'HK-<id>'. Same method as the R6 slips: finished levels used exactly (fixedY). A stretch higher than 3 m over the ground becomes a viaduct (bridgeRamp, like the 3D-A ramps).
+   * Water and the old arm / link / ring structures are NOT covered here (twin bridges = sub-step 3). Nothing happens while Config.roads.hatikamrul.enabled is false.
+   * Called by TerrainGenerator AFTER addCorridorRoads (NOT inside addJ1Arms): the roads that are planned later (R2, RTE lanes, corridor roads) must not see the new asphalt (checked: scripts/hk-cd-roads-build-check.ts, old-network signature).
+   */
+  private hkCdAdded = false;
+
+  addHkCdRoads(): void {
+    if (!Config.roads.hatikamrul.enabled || this.hkCdAdded) return;
+    this.hkCdAdded = true;
+    const f = hkFrame(this);
+    if (!f) return;
+    const before = this.roads.length;
+    for (const d of HK_CD_ROADS) {
+      const pts = d.pts.map((p) => hkWorld(f, p[0], p[1]));
+      this.addRoad({ tier: 3, kind: 'ramp', name: `HK-${d.id}`, closed: false, pts, halfWidth: 4.2, lanes: 1, speedKmh: 50, fixedY: d.ys.slice() });
+      const r = this.roads[this.roads.length - 1];
+      const high: { i0: number; i1: number }[] = [];
+      for (let i = 0; i < r.xs.length; i++) {
+        if (r.ys[i] - r.hNat[i] <= 3) continue;
+        const last = high[high.length - 1];
+        if (last && last.i1 === i - 1) last.i1 = i;
+        else high.push({ i0: i, i1: i });
+      }
+      this.bridgeRamp(r, high);
+    }
+    if (this.roads.length === before) return;
+    this.chunkSegs.clear();
+    this.padCells.clear();
+    this.chunkPads.clear();
+    this.cells.clear();
+    this.j1Cells.clear();
+    this.autoCells.clear();
+    this.buildSegments();
   }
 
   /**
