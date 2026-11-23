@@ -426,7 +426,7 @@ export class GrassManager {
     const bright = (0.7 + 0.36 * (hb - Math.floor(hb))) * (isGrassLeafy(type) ? 1.12 : 1); // broad leaves are a little fresher / lighter than the blades round them
     if (type === GrassType.durba) {
       // JUNGLE DURBA: stays fresh green (a little lighter or deeper from tuft to tuft), never yellow / dry
-      const k = 0.82 + 0.34 * (hb - Math.floor(hb)); // light .. deep green
+      const k = 0.78 + 0.26 * (hb - Math.floor(hb)); // deep green, a little lighter or deeper from tuft to tuft
       color.setRGB(0.9 * k, 1.1 * k, 0.96 * k);
       mesh.setColorAt(slot, color);
       return;

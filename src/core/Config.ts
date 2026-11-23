@@ -617,7 +617,7 @@ export const Config = {
        * JUNGLE FLOOR (ghono jongol ground cover): inside the dense jungle every cell gets grass (`floor` = patch value forced up to this x jungle density, so no bald
        * ground), tufts are `tall` x higher, `chance` = grass chance per cell, and the grass kinds are mixed (wild, tussocks, broad-leaf, seed-head). Flag 6 in the tuft data.
        */
-      jungle: { floor: 0.9, tall: 1.0, tallFlower: 0.85, tallClump: 0.7, chance: 0.45, clumpChance: 0.06, clear: 2 }, // 2026-11-21: grass is back in the jungle (clear 2 = never skipped) // 2026-11-20: NO grass in the dense jungle (floor / chance / clumpChance 0); `clear` = jungle density above which no tuft or clump is placed
+      jungle: { floor: 1.0, tall: 1.0, tallFlower: 0.85, tallClump: 0.7, chance: 0.9, clumpChance: 0.06, clear: 2 }, // 2026-11-21: grass is back in the jungle (clear 2 = never skipped) // 2026-11-20: NO grass in the dense jungle (floor / chance / clumpChance 0); `clear` = jungle density above which no tuft or clump is placed
       /** Blades per tuft model are multiplied by this (1 = full quality; 0.6 for weak GPUs). */
       bladeDensity: 1,
       /** 2026-11-23: false = NO broad-leaf ground cover anywhere (leafy rosettes and clover patches turn into the fine single grass); the models stay for a water lily. */

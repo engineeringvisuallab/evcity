@@ -132,8 +132,8 @@ function cardTuft(b: Builder, r: RNG, s: CardSpec, density: number): void {
 
 /** REAL 3D GRASS (2026-11-23): no pictures. A tuft = a few small PLANTS, each plant = 2-3 single blades (3 triangles each: a wide base, a narrow middle, a pointed tip) of nearly the same height,
  * leaning a little and drooping at the tip. Every plant has its own light or deep green; the blade is dark at the root and bright at the tip (vertex colours, the per-instance tint still adjusts them). */
-function bladeTuft(b: Builder, r: RNG, h: number, spread: number, density: number): void {
-  const plants = density >= 0.9 ? 4 : density >= 0.4 ? 3 : 2;
+function bladeTuft(b: Builder, r: RNG, h: number, spread: number, density: number, lush = false): void {
+  const plants = (density >= 0.9 ? 4 : density >= 0.4 ? 3 : 2) + (lush && density >= 0.4 ? 1 : 0);
   const a0 = r() * Math.PI * 2;
   for (let p = 0; p < plants; p++) {
     const pa = a0 + (p / plants) * Math.PI * 2 + (r() - 0.5) * 0.8;
@@ -141,8 +141,9 @@ function bladeTuft(b: Builder, r: RNG, h: number, spread: number, density: numbe
     const px = Math.cos(pa) * pr, pz = Math.sin(pa) * pr;
     // every plant has its own colour: mostly deep / mid green, some olive, some dry straw, a few dead brown ("mora")
     const cr = r();
-    const base: RGB = cr < 0.3 ? [0.08, 0.26, 0.05] : cr < 0.58 ? [0.13, 0.36, 0.06] : cr < 0.74 ? [0.22, 0.34, 0.07] : cr < 0.86 ? [0.3, 0.4, 0.09] : cr < 0.94 ? [0.5, 0.42, 0.17] : [0.38, 0.27, 0.13];
-    const shade = 0.85 + 0.3 * r();
+    // lush (jungle) grass: only deep, glossy greens, no dry plants
+    const base: RGB = lush ? (cr < 0.5 ? [0.05, 0.2, 0.04] : cr < 0.85 ? [0.08, 0.28, 0.05] : [0.12, 0.34, 0.06]) : cr < 0.3 ? [0.08, 0.26, 0.05] : cr < 0.58 ? [0.13, 0.36, 0.06] : cr < 0.74 ? [0.22, 0.34, 0.07] : cr < 0.86 ? [0.3, 0.4, 0.09] : cr < 0.94 ? [0.5, 0.42, 0.17] : [0.38, 0.27, 0.13];
+    const shade = lush ? 0.9 + 0.25 * r() : 0.85 + 0.3 * r();
     const nb = density >= 0.9 ? 2 + (r() < 0.55 ? 1 : 0) : 2;
     const ph = h * (0.88 + 0.12 * r());
     for (let k = 0; k < nb; k++) {
@@ -154,7 +155,7 @@ function bladeTuft(b: Builder, r: RNG, h: number, spread: number, density: numbe
       const bh = ph * (0.94 + 0.06 * r());
       const bw = 0.036 * (0.9 + 0.3 * r());
       const ox = px + (r() - 0.5) * 0.03, oz = pz + (r() - 0.5) * 0.03;
-      const col = (t: number): RGB => { const f = shade * (0.5 + 0.5 * t); return [base[0] * f, base[1] * f, base[2] * f]; };
+      const col = (t: number): RGB => { const f = shade * (lush ? 0.4 + 0.75 * t : 0.5 + 0.5 * t); return [base[0] * f, base[1] * f, base[2] * f]; };
       const vtx = (t: number, wid: number, side: number): number => {
         const off = lean * t * t;
         return b.shared([ox + lx * off + sx * side * wid * 0.5, bh * t, oz + lz * off + sz * side * wid * 0.5], FLAT_NORMAL, col(t), 0);
@@ -175,8 +176,8 @@ function make(type: number, density = 1): THREE.BufferGeometry {
   const b = new Builder();
   const card = CARDS[type];
   if (card && card.flower) cardTuft(b, r, card, density);
-  else if (card) bladeTuft(b, r, Math.min(card.h * 0.85, 0.9), card.w * 0.28, density);
-  else bladeTuft(b, r, 0.45, 0.2, density); // leafy / trefoil: the same green blades
+  else if (card) bladeTuft(b, r, Math.min(card.h * 0.85, 0.9), card.w * 0.28, density, type === GrassType.durba);
+  else bladeTuft(b, r, 0.45, 0.2, density, true); // leafy / trefoil: the same green blades
   return b.build();
 }
 
@@ -259,7 +260,7 @@ export class GrassAssets {
           #include <opaque_fragment>`,
         );
     };
-    m.customProgramCacheKey = () => 'grass-fade-v10' + key;
+    m.customProgramCacheKey = () => 'grass-fade-v11' + key;
     return m;
   }
 

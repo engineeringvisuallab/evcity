@@ -124,3 +124,9 @@ Dhyan: `TreeKind` e gum2 (24) er por notun kind (25, 26) bosechhe, tai `kind >= 
 - `people/PersonModel.ts` `ENGINEER_LOOK.headwearColor` → `0xf4f2ea` (white helmet; gari-te boshle-o same look).
 - `characters/PlayerModel.ts`: chokhe sunglass (2 ta kalo lens, frame, kan porjonto temple), head bone e lage. `setSunglasses(on)`.
 - `core/Engine.ts`: `setSunglasses(environment.lampOn < 0.4 && !mall.inside)` — din e thake, rate (street lamp jolle) ar mall er bhitore khule jay.
+
+## UPDATE 14 — jungle grass aro ghono, chikon, gaRo
+- `Config.ts`: `grass.jungle.chance 0.45→0.9`, `floor 0.9→1.0` (prottek jungle cell e grass, ager cheye ~2x).
+- `GrassAssets.ts` `bladeTuft(lush)`: jungle (durba / trefoil / leafy) tuft e plant +1, shudhu gaRo sobuj (dry/mora nai), goray onek gaRo, ogray halka (chikon, sleek dekhay). Key `grass-fade-v11`.
+- `GrassManager.ts`: durba tint aro gaRo (0.78–1.04).
+- FPS komle `jungle.chance` komao (0.6).
