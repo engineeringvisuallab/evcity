@@ -17,6 +17,7 @@ const crossCut = new Set<string>();
 let passed = 0, passMax = 0, capped = 0, capMax = 0, fixed = 0, fixMax = 0, lifted = 0, liftMax = 0;
 // STEP 9c-2 sub-step 3b: optional list of old roads that a C-D road PASSES OVER (raised, the old road is not changed), grade <= G_LIFT.
 const PASS_OVER: string[] = [], G_LIFT = 0.048; // TRIED with R2-8.2: IMPOSSIBLE (the C-D overlaps the link taper for 128 m and must keep the link level there, so it would need 11 % grade to reach 21 m at the crossing); list left empty
+const R_WANT = 94;
 const G_FIX = 0.048, CLR_NEED = 4.9, CLR_MARGIN = 0.1; // grade limit used by the repair (the check limit is 5 %)
 const LAT = 4.2 + 1.2 + 2; // pavement half + shoulder + 2 m: the ground is tested at the centre and at +-LAT
 
@@ -166,12 +167,32 @@ for (const p of D.pieces) {
     const ds = s[bestA] + (L * k) / m;
     while (j < bestB - 1 && s[j + 1] < ds) j++;
     const t = s[j + 1] > s[j] ? Math.min(1, Math.max(0, (ds - s[j]) / (s[j + 1] - s[j]))) : 0;
-    pts.push([+(p.pts[j][0] + (p.pts[j + 1][0] - p.pts[j][0]) * t).toFixed(2), +(p.pts[j][1] + (p.pts[j + 1][1] - p.pts[j][1]) * t).toFixed(2)]);
+    // Catmull-Rom (not linear): the linear mid-chord points lie inside the curve and made the 8 m radius 2 - 6 % smaller than the design radius (CD-W-S 91.4 m instead of 93.7 m)
+    const q0 = p.pts[Math.max(bestA, j - 1)], q1 = p.pts[j], q2 = p.pts[j + 1], q3 = p.pts[Math.min(bestB, j + 2)];
+    const cr = (a: number, b: number, c: number, d: number): number => 0.5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t * t + (-a + 3 * b - 3 * c + d) * t * t * t);
+    pts.push([+cr(q0[0], q1[0], q2[0], q3[0]).toFixed(2), +cr(q0[1], q1[1], q2[1], q3[1]).toFixed(2)]);
     ys.push(+(p.pts[j][2] + (p.pts[j + 1][2] - p.pts[j][2]) * t).toFixed(2));
     let fl = false; // twin bridge zone: water or beside an old arm / link structure within 8 m of this point
     for (let q = bestA; q <= bestB; q++) if ((wetI[q] || stI[q]) && Math.abs(s[q] - ds) <= STEP_OUT) { fl = true; break; }
     flag.push(fl);
   }
+  // RADIUS RELAX: the S-bend of the C-D roads measures 92.3 m on the 8 m polyline (design 93.7 m on the noisy 4 m data). Points with R < R_WANT are pulled toward the mean of their neighbours (<= 0.5 m from the original), ends fixed.
+  const orig = pts.map((q) => q.slice());
+  const rad = (a: number[], b: number[], c: number[]): number => { const cr2 = Math.abs((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])); return cr2 > 1e-9 ? (Math.hypot(b[0] - a[0], b[1] - a[1]) * Math.hypot(c[0] - b[0], c[1] - b[1]) * Math.hypot(c[0] - a[0], c[1] - a[1])) / (2 * cr2) : 1e9; };
+  let minR0 = 1e9; for (let k = 1; k + 1 < pts.length; k++) minR0 = Math.min(minR0, rad(pts[k - 1], pts[k], pts[k + 1]));
+  let relaxed = 0;
+  for (let it = 0; it < 200 && minR0 < R_WANT; it++) {
+    let any = false;
+    for (let k = 1; k + 1 < pts.length; k++) {
+      if (rad(pts[k - 1], pts[k], pts[k + 1]) >= R_WANT) continue;
+      const nx2 = pts[k][0] * 0.6 + 0.2 * (pts[k - 1][0] + pts[k + 1][0]), ny2 = pts[k][1] * 0.6 + 0.2 * (pts[k - 1][1] + pts[k + 1][1]);
+      if (Math.hypot(nx2 - orig[k][0], ny2 - orig[k][1]) > 0.5) continue;
+      pts[k] = [+nx2.toFixed(2), +ny2.toFixed(2)]; any = true; relaxed++;
+    }
+    if (!any) break;
+  }
+  let minR1 = 1e9; for (let k = 1; k + 1 < pts.length; k++) minR1 = Math.min(minR1, rad(pts[k - 1], pts[k], pts[k + 1]));
+  if (relaxed) say(`  RADIUS RELAX ${p.id}: min radius ${minR0.toFixed(1)} -> ${minR1.toFixed(1)} m (${relaxed} point moves, <= 0.5 m)`);
   const zones: number[][] = [];
   for (let k = 0; k < flag.length; k++) if (flag[k]) { const z = zones[zones.length - 1]; if (z && z[1] === k - 1) z[1] = k; else zones.push([k, k]); }
   rows.push({ id: p.id, dir: p.dir, kind: p.id.startsWith('CD') ? 'cd' : 'slip', startM: +s[bestA].toFixed(1), endM: +s[bestB].toFixed(1), fullM: +s[n - 1].toFixed(1), pts, ys, zones });

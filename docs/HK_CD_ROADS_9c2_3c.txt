@@ -1,0 +1,79 @@
+[hk-ring-run] hk-cd-roads-build-check: hatikamrul switch present true, enabled true
+[road fix RC03] skipped: road not found
+HK-9c-2 SUB-STEPS 2 + 3 check, switch ON
+SIGNATURE of the old network: roads 211, bridges 56, hash -170627.438
+
+WATER CHECK (sc.water > sc.h, and the game rule h < water + 0.3), natural ground, every 2 m along each road at the centre and +-7.4 m. Wet samples are allowed only ON a bridge, with the deck above the water.
+  PASS  HK-CD-E-N: no wet sample outside a bridge                              0 of 828 outside; 0 wet samples in total (on bridges)
+  PASS  HK-CD-E-S: no wet sample outside a bridge                              0 of 996 outside; 218 wet samples in total (on bridges)
+  PASS  HK-CD-E-S: deck underside above the water                              9.21 m at the lowest wet centre sample (needs 0.5 m)
+  PASS  HK-CD-W-N: no wet sample outside a bridge                              0 of 1086 outside; 0 wet samples in total (on bridges)
+  PASS  HK-CD-W-S: no wet sample outside a bridge                              0 of 924 outside; 131 wet samples in total (on bridges)
+  PASS  HK-CD-W-S: deck underside above the water                              9.20 m at the lowest wet centre sample (needs 0.5 m)
+  PASS  HK-SLIP-NE: no wet sample outside a bridge                             0 of 516 outside; 0 wet samples in total (on bridges)
+  PASS  HK-SLIP-SE: no wet sample outside a bridge                             0 of 528 outside; 0 wet samples in total (on bridges)
+  PASS  HK-SLIP-NW: no wet sample outside a bridge                             0 of 792 outside; 0 wet samples in total (on bridges)
+  PASS  HK-SLIP-SW: no wet sample outside a bridge                             0 of 780 outside; 0 wet samples in total (on bridges)
+
+ROADS AND DATA
+  PASS  8 HK roads exist                                                       8
+  PASS  road points = data points (local frame -> world)                       0.00 m worst
+  PASS  road levels = data levels (fixedY used exactly)                        0.00 m worst
+
+CALCULATION SHEET (per road)
+  road          length   pts  level (start -> end)   worst grade  min radius  max fill  max cut  viaduct m  bridges
+  HK-CD-E-N      549.9    70  19.61 -> 19.28             3.14 %     879.6 m      5.8      0.7      88.0  1
+  HK-CD-E-S      658.1    84  19.28 -> 11.15             4.79 %      94.5 m     18.4      4.9     232.0  1
+  HK-CD-W-N      679.7    86  19.68 -> 22.94             3.00 %     614.0 m      8.6      0.5     224.0  1
+  HK-CD-W-S      608.2    78  10.97 -> 19.68             3.16 %      95.5 m     17.2      5.5     160.0  1
+  HK-SLIP-NE     339.8    44  15.41 -> 18.32             1.27 %     103.7 m      1.3      4.6       0.0  0
+  HK-SLIP-SE     345.9    45  18.04 -> 14.06             1.65 %     106.3 m     -1.7     10.8       0.0  0
+  HK-SLIP-NW     522.4    67  28.37 -> 15.41             4.81 %     109.3 m      7.7     -0.1     440.0  1
+  HK-SLIP-SW     512.1    66  14.06 -> 28.29             4.19 %     107.6 m      5.9      7.1     144.0  1
+  PASS  all HK roads: grade <= 5 %                                             see sheet
+  PASS  all HK roads: radius >= 92.5 m (V50 93.7 m less 4 m sampling error)    see sheet
+
+VIADUCT RULE (ramp higher than 3 m over the ground = bridge, like the 3D-A ramps; the game rule bridgeRamp keeps a high stretch of fewer than 4 points as an embankment)
+  PASS  HK-CD-E-N: fill > 3 m only on a bridge (one end point may stay a short embankment) 10 high points, 0 without bridge; highest fill outside a bridge 2.11 m
+  PASS  HK-CD-E-S: fill > 3 m only on a bridge (one end point may stay a short embankment) 28 high points, 0 without bridge; highest fill outside a bridge 1.75 m
+  PASS  HK-CD-W-N: fill > 3 m only on a bridge (one end point may stay a short embankment) 27 high points, 0 without bridge; highest fill outside a bridge 2.69 m
+  PASS  HK-CD-W-S: fill > 3 m only on a bridge (one end point may stay a short embankment) 19 high points, 0 without bridge; highest fill outside a bridge 1.74 m
+  PASS  HK-SLIP-NE: fill > 3 m only on a bridge (one end point may stay a short embankment) 0 high points, 0 without bridge; highest fill outside a bridge 1.26 m
+  PASS  HK-SLIP-SE: fill > 3 m only on a bridge (one end point may stay a short embankment) 0 high points, 0 without bridge; highest fill outside a bridge -1.74 m
+  PASS  HK-SLIP-NW: fill > 3 m only on a bridge (one end point may stay a short embankment) 54 high points, 0 without bridge; highest fill outside a bridge 1.93 m
+  PASS  HK-SLIP-SW: fill > 3 m only on a bridge (one end point may stay a short embankment) 17 high points, 0 without bridge; highest fill outside a bridge 2.57 m
+  INFO  bridge 56 on HK-CD-E-N: 88.0 m long, deck over ground min 2.4 m, points 0..11
+  INFO  bridge 57 on HK-CD-E-S: 232.0 m long, deck over ground min 2.4 m, points 54..83
+  INFO  bridge 58 on HK-CD-W-N: 224.0 m long, deck over ground min 2.7 m, points 57..85
+  INFO  bridge 59 on HK-CD-W-S: 160.0 m long, deck over ground min 2.1 m, points 0..20
+  INFO  bridge 60 on HK-SLIP-NW: 440.0 m long, deck over ground min 2.3 m, points 0..55
+  INFO  bridge 61 on HK-SLIP-SW: 144.0 m long, deck over ground min 2.8 m, points 47..65
+
+CROSSINGS AND OVERLAPS WITH OLD ROADS (plan: centreline distance < 4.2 + other half width). Same level (|dy| <= 0.8 m) = flush merge, allowed only in the first / last 250 m of a piece (taper / ring merge).
+  Different level = crossing: clearance = (upper road level - 1.4 m girder) - lower road level, needed >= 4.9 m. Girder depth 1.4 m is the HK ramp girder; old bridges are taken with 1.4 m too (an assumption).
+  PASS  HK-CD-E-N: no flush overlap outside the end zones                      0 points; end-zone flush overlaps 29 (worst dy 0.50 m)
+  PASS  HK-CD-E-N: crossing M8 (over HK): clearance                            6.30 m at s 541.9 m (needs 4.9 m)
+  PASS  HK-CD-E-S: no flush overlap outside the end zones                      0 points; end-zone flush overlaps 64 (worst dy 0.07 m)
+  PASS  HK-CD-E-S: crossing M8 (over HK): clearance                            6.15 m at s 23.8 m (needs 4.9 m)
+  PASS  HK-CD-W-N: no flush overlap outside the end zones                      0 points; end-zone flush overlaps 92 (worst dy 0.65 m)
+  PASS  HK-CD-W-N: crossing M8 (over HK): clearance                            6.15 m at s 0.0 m (needs 4.9 m)
+  PASS  HK-CD-W-S: no flush overlap outside the end zones                      0 points; end-zone flush overlaps 48 (worst dy 0.08 m)
+  PASS  HK-CD-W-S: crossing M8 (over HK): clearance                            5.82 m at s 584.5 m (needs 4.9 m)
+  PASS  HK-SLIP-NE: no flush overlap outside the end zones                     0 points; end-zone flush overlaps 6 (worst dy 0.75 m)
+  PASS  HK-SLIP-SE: no flush overlap outside the end zones                     0 points; end-zone flush overlaps 0 (worst dy 0.00 m)
+  PASS  HK-SLIP-NW: no flush overlap outside the end zones                     0 points; end-zone flush overlaps 25 (worst dy 0.26 m)
+  PASS  HK-SLIP-NW: crossing R2-35.2 (under HK): clearance                     5.00 m at s 269.1 m (needs 4.9 m)
+  PASS  HK-SLIP-SW: no flush overlap outside the end zones                     0 points; end-zone flush overlaps 22 (worst dy 0.20 m)
+
+TERRAIN (final ground = natural + road earthworks + HK cut) at the centreline, points NOT on a bridge
+  PASS  HK-CD-E-N: ground follows the road level on embankment / cut points    58 points, worst |ground - road| 0.00 m
+  PASS  HK-CD-E-S: ground follows the road level on embankment / cut points    54 points, worst |ground - road| 0.00 m
+  PASS  HK-CD-W-N: ground follows the road level on embankment / cut points    57 points, worst |ground - road| 0.00 m
+  PASS  HK-CD-W-S: ground follows the road level on embankment / cut points    57 points, worst |ground - road| 0.00 m
+  PASS  HK-SLIP-NE: ground follows the road level on embankment / cut points   44 points, worst |ground - road| 0.00 m
+  PASS  HK-SLIP-SE: ground follows the road level on embankment / cut points   45 points, worst |ground - road| 0.00 m
+  PASS  HK-SLIP-NW: ground follows the road level on embankment / cut points   11 points, worst |ground - road| 0.00 m
+  PASS  HK-SLIP-SW: ground follows the road level on embankment / cut points   47 points, worst |ground - road| 0.01 m
+
+NOT RUN here: tsc, npm run build, the old check scripts, game look, traffic graph (HK-11). Switch off: Config.roads.hatikamrul.enabled = false.
+RESULT 0 FAIL, 0 FAIL means every check printed above passed; wet samples on bridges 349

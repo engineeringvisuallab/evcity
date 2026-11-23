@@ -247,3 +247,6 @@ Twin bridges for the parts over water / beside the old arm and link structures (
 
 ## Hatikamrul interchange: HK-9c-2 sub-step 3b decisions (2026-11-23)
 No src change. R2-8.2 cannot be passed over / under (11 % grade or a 7.6 m trench): decided to cut R2-8.2 back at the west C-D (step 3c, data src/roads/r2/R2NewLineData.ts, re-run b7-r2new-check). East slips: twin bridge beside the ring arch bridge, merge after x 431 (step 3d). Details: HANDOFF_HATIKAMRUL.md section 25.
+
+## Hatikamrul interchange: HK-9c-2 step 3c (2026-11-23)
+R2-8.2 (old small road, src/roads/r2/R2NewLineData.ts) is cut back by 4 data points so it ends 12 m west of the west C-D; CD-W-S is now the full 608 m piece (was 352 m). The C-D generator got a Catmull-Rom resample and a small radius relax (<= 0.5 m) so the S-bend passes R >= 92.5 m (94.5 / 95.5 m). Build check 0 FAIL; of the 211 old roads only R2-8.2 changed (b7-r2new-check, ring checks: same counts). NOT RUN: tsc, npm run build, game look. Next: step 3d (east slips). Details: HANDOFF_HATIKAMRUL.md section 26. Switch off: Config.roads.hatikamrul.enabled = false.
