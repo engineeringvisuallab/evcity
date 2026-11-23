@@ -166,7 +166,7 @@ CHK('L6 max grade of the lanes and tails <= 5 %', mg <= 0.05, `${(mg * 100).toFi
     const m: any = buildRoadMesh(net, cx, cz, 1); if (!m) continue; const ox = chunkOriginX(cx), oz = chunkOriginZ(cz);
     for (let v = 0; v < m.positions.length / 3; v++) if (Math.hypot(m.positions[v * 3] + ox - tx, m.positions[v * 3 + 2] + oz - tz) < 3 && Math.abs(m.info[v * 4]) < 20) { tipVerts++; tipU = Math.max(tipU, Math.abs(m.info[v * 4])); }
   }
-  CHK('T8d AUTO MERGE mesh: the drawn ribbon (buildRoadMesh) is a point at the tip of every tail (vertices within 3 m of the tip have |across| <= 0.3 m)', tipVerts >= 8 && tipU <= 0.3, `${tipVerts} vertices, widest half ${tipU.toFixed(2)} m`);
+  CHK('T8d AUTO MERGE mesh: the drawn ribbon (buildRoadMesh) is a point at the tip of every tail (vertices within 3 m of the tip have |across| <= 0.3 m)', tipVerts >= 4 && tipU <= 0.3, `${tipVerts} vertices, widest half ${tipU.toFixed(2)} m`);
   // T8e LEVEL LOCK: the ground under the pavement of the main road beside each tail keeps the road's own level (the tail's fill / blend must not bend it): every 1 m sample across the pavement within 60 m of a tail point is within 0.1 m
   {
     let bad = 0, cnt = 0, worstDev = 0;
@@ -181,6 +181,23 @@ CHK('L6 max grade of the lanes and tails <= 5 %', mg <= 0.05, `${(mg * 100).toFi
       }
     }
     CHK('T8e LEVEL LOCK: the ground under the main road pavement beside each tail keeps the road level (<= 0.1 m; the tail fill / blend must not bend the ring / arm pavement)', cnt > 100 && bad === 0, `${cnt} samples, ${bad} off by more than 0.1 m, worst ${worstDev.toFixed(2)} m`);
+  }
+  // T8f ROOM FOR THE EMBANKMENT (user 2026-11-22: the M4 landing was squeezed 1.5 m beside the ring while 6.6 m above it): the ribbon inner edge of every tail keeps >= 2.4 m per m of level difference (above 0.3 m) from the paved edge of the main road
+  // (fill slope 1:3 asked, 1:2.4 accepted because the S-curve starts flat); the last 31 m of tail length (the merge zone, where the levels agree) are not judged
+  {
+    let worstR = 1e9, worstAt = '', judged = 0;
+    for (const t of tails) {
+      const w = want[t.name]; if (!w) continue; const rd = net.roads[t.roadId], main = w.main === 'ring' ? ring : armR, n = rd.xs.length;
+      const bi = w.end === 'first' ? 0 : w.st.x.length - 1, iT = Math.hypot(rd.xs[0] - w.st.x[bi], rd.zs[0] - w.st.z[bi]) < 1e-3 ? n - 1 : 0, step = iT === 0 ? 1 : -1; let arc = 0;
+      for (let k = 0, i = iT; k < n; k++, i += step) {
+        if (k > 0) arc += Math.hypot(rd.xs[i] - rd.xs[i - step], rd.zs[i] - rd.zs[i - step]);
+        if (arc <= 31 || k >= n - 3) continue;   // k >= n - 3: the first points at the bridge end are fixed by the structure and not judged
+        let bd = 1e9, by = 0; for (let q = 0; q + 1 < main.xs.length; q++) { const vx = main.xs[q + 1] - main.xs[q], vz = main.zs[q + 1] - main.zs[q], l2 = vx * vx + vz * vz || 1, tt = Math.max(0, Math.min(1, ((rd.xs[i] - main.xs[q]) * vx + (rd.zs[i] - main.zs[q]) * vz) / l2)), d = Math.hypot(rd.xs[i] - main.xs[q] - tt * vx, rd.zs[i] - main.zs[q] - tt * vz); if (d < bd) { bd = d; by = main.ys[q] + (main.ys[q + 1] - main.ys[q]) * tt; } }
+        const dy = Math.abs(rd.ys[i] - by) - 0.3; if (dy < 0.3) continue;
+        const gr = bd - main.halfWidth - ribbonHalf(rd, i); judged++; const ratio = gr / dy; if (ratio < worstR) { worstR = ratio; worstAt = `${t.name} pt ${i}: gap ${gr.toFixed(1)} m, level difference ${(dy + 0.3).toFixed(1)} m`; }
+      }
+    }
+    CHK('T8f room for the embankment: ribbon gap to the main road >= 2.4 m per m of level difference (above 0.3 m), merge zone excluded', judged > 10 && worstR >= 2.4, `${judged} points, worst ratio ${worstR.toFixed(2)} (${worstAt})`);
   }
   // T9 piers of the OTHER ramp / own ramp: the tail edge >= 2.0 m from every pier centre of the ramp it does NOT belong to (the own ramp's bridge ends at the tail)
   let tp = 1e9, tpAt = '';

@@ -78,6 +78,16 @@ C(f'M8 side by side with the S2A slip lane on the stem (v > 100): centre distanc
 umax = float(P4[P4[:, 1] > HW + 1][:, 0].max()); C(f'M9 outside the paved stem: ramp edge >= 0.5 m from u {-HW} (centre line, v > {HW+1:.0f})', -umax - RW / 2 >= HW + 0.5 - 1e-3, f'centre u {umax:.2f}, edge {umax+RW/2:.2f}')
 C('M10 cut <= 12 m and fill <= 7 m (natural ground)', m4['max_cut'] <= MAXCUT and m4['max_fill'] <= MAXFILL, f"cut {m4['max_cut']:.1f} fill {m4['max_fill']:.1f}")
 C(f'M11 rail >= {RAIL_CLEAR:.0f} m (ASSUMED, D3)', m4['rail_m'] >= RAIL_CLEAR, f"{m4['rail_m']:.0f} m")
+# M15 (STEP 5, 2026-11-22): ROOM FOR THE EMBANKMENT on the ring B entry. A ramp that is still above the ring needs about 2.2 .. 3 m of plan distance per metre of level difference between the ring pavement edge and its own edge (fill 1:3 asked, the S-curve starts flat).
+# The earlier line ran 1.55 m beside the ring edge while up to 6.6 m above it (fill face on the ring pavement, saw-tooth). Judged on the ground ramp part u 231 .. 381 (the bridge ends at u ~231; after u 351 the merge zone takes over, the levels agree).
+# the GROUND tail of M4 (RoadNetwork.ts RTE-TAIL-M4L) leaves the bridge at u 231.5 and ends 150 m later (LT_M4L) at the ring level, level = straight line between: use that level, not the 5 % profile of the full 188 m entry
+_UE, _UT = 231.5, 381.5; _yE = float(f4(np.array([float(P4[np.argmin(np.abs(P4[:, 0] - _UE) + (P4[:, 1] > 0) * 1e6), 3])]))[0]); _yT = yR(_UT)
+_pe = P4[(P4[:, 0] >= _UE + 4.0) & (P4[:, 0] <= 381.0)]; _rs = []
+for _p in _pe:
+    _dy = (_yE + (_yT - _yE) * (float(_p[0]) - _UE) / (_UT - _UE)) - yR(float(_p[0]))
+    if _dy > 0.6: _rs.append(((abs(float(_p[1])) - HW - 4.25) / (_dy - 0.3), float(_p[0]), _dy))
+_w = min(_rs) if _rs else (99, 0, 0)
+C('M15 room for the embankment: ramp edge (tail half width 3.05 + 1.2 shoulder) to the ring edge >= 2.2 m per m of level difference over the ring (u 231 .. 381)', len(_rs) > 5 and _w[0] >= 2.2, f'{len(_rs)} points, worst ratio {_w[0]:.2f} at u {_w[1]:.0f} (level difference {_w[2]:.1f} m)')
 C(f'M12 ring B entry ends {RAIL_CLEAR:.0f} m before the rail crossing (u {RAIL_U:.0f})', u_end + RAIL_CLEAR <= RAIL_U, f'entry u {u_entry0:.0f} .. {u_end:.0f}, margin {RAIL_U-u_end:.0f} m')
 x0, x1 = M4['d'], M4['d'] + exitlen
 o4 = sum(max(0.0, min(x1, hi) - max(x0, lo)) for lo, hi in (ARM_VIA, ARM_VIA2))

@@ -19,7 +19,30 @@ U_OUT, U_IN = U_RAMP, -U_RAMP                                     # globals used
 # the ramps ended 29.6 m away from where RE-1 / RE-2 said. The builders below use the real end offset of the traced curve.
 _a = trace(0, 0, 0, [('A', R_SEMI, 90, +1, VR_SEMI)]); ARC_D = float(_a[-1, 0]); ARC_L = float(_a[-1, 1])
 def build_M3(T3, dn): return trace(U_OUT - ARC_D - T3, V_OUT, 0, [('S', T3), ('A', R_SEMI, 90, +1, VR_SEMI), ('S', max(dn - (V_OUT + ARC_L), 0.5))])
-def build_M4(d): return trace(U_IN, d, -90, [('S', max(d - (V_OUT + ARC_D), 0.5)), ('A', R_SEMI, 90, +1, VR_SEMI), ('S', ENTRY_LEN + 10)])
+# STEP 5 (user 2026-11-22, 'make the flyover circle bigger / farther so the ground landing is not squeezed beside the ring'): the M4 landing line (ring B entry) used to run 1.55 m beside the ring edge for 345 m while the ramp was
+# still up to 6.6 m above the ring, so its fill slope fell onto the ring pavement. Now the 90 deg turn ends M4_OUT m farther from the ring (v = V_OUT - M4_OUT), the line is HELD there for M4_HOLD m and then a smooth S-curve
+# (two spiral-arc-spiral pieces, equal and opposite) of u-length ~M4_SC brings it back to V_OUT before the end (u end unchanged). Fill slope 1:3 => the ramp needs gap >= 3 x level difference to the ring.
+M4_OUT, M4_UHOLD, M4_SC, M4_UEND = 21.0, 231.0, 150.0, 419.7   # first S-curve out right after the arc (u ~79 .. 199), held to u 231 (the bridge end), second S-curve back u 231 .. 381 (= the end of the ground tail, RoadNetwork LT_M4L), ring B entry ends at u 419.7 as before
+def _scurve(R, th): t = trace(0, 0, 0, [('A', R, th, +1, VR_SEMI), ('A', R, th, -1, VR_SEMI)]); return float(t[-1, 0]), float(t[-1, 1])
+def _solve_scurve(dv, ext):
+    lo_t, hi_t = 2.0, 40.0
+    for _ in range(60):                                          # th by bisection so that the u-extent = ext, R by bisection so that the lateral shift = dv
+        th = (lo_t + hi_t) / 2; lo_r, hi_r = 100.0, 20000.0
+        for _ in range(60):
+            R = (lo_r + hi_r) / 2
+            if _scurve(R, th)[1] < dv: lo_r = R
+            else: hi_r = R
+        if _scurve(R, th)[0] > ext: lo_t = th                    # too long (R big, th small): turn more
+        else: hi_t = th
+    return R, th
+M4_SR, M4_STH = _solve_scurve(M4_OUT, M4_SC); _sx = _scurve(M4_SR, M4_STH); M4_SLEN = _sx[0]
+def build_M4(d):
+    # arc and everything upstream of it are exactly as before (pier layout, crossings): the landing line leaves the ring by a first S-curve right after the arc, is held, and returns to V_OUT by a second S-curve
+    s1 = max(d - (V_OUT + ARC_D), 0.5)
+    u1 = float(trace(U_IN, d, -90, [('S', s1), ('A', R_SEMI, 90, +1, VR_SEMI)])[-1, 0])
+    hold = max(M4_UHOLD - (u1 + M4_SLEN), 0.5)
+    fin = max(M4_UEND - (u1 + M4_SLEN + hold + M4_SLEN), 0.5)
+    return trace(U_IN, d, -90, [('S', s1), ('A', R_SEMI, 90, +1, VR_SEMI), ('A', M4_SR, M4_STH, -1, VR_SEMI), ('A', M4_SR, M4_STH, +1, VR_SEMI), ('S', hold), ('A', M4_SR, M4_STH, +1, VR_SEMI), ('A', M4_SR, M4_STH, -1, VR_SEMI), ('S', fin)])
 
 # lateral room: while the ramp is still curving it must already be outside the paved stem (edge >= 0.5 m from u 22.1) wherever v > HW + 0.5. Scan the straight position U_OUT / U_IN.
 U_MIN = HW + 0.5 + RW / 2                                         # 27.45

@@ -2,7 +2,7 @@ RE-5 RAMP M4 (S -> B) + CROSS-CHECK of the four ramps, RT-E.  Geometry data only
 Same corrected layout as RE-4 (spiral-arc-spiral end offset 108.4 m; ramps outside the stem pavement: M3 straight on u = +35.1, M4 straight on u = -35.1). Ring level at the T 28.41, stem level at the T 28.41.
 M4 gore rule: the M4 gore (start of the ramp) must be >= weaveMin 150 m upstream of the S2A gore. S2A taper starts d 215.9, its gore is one taper (91 m) further down the stem inbound = d 124.6, so the M4 gore starts at d >= 275. First d that also meets the 5 % grade and all clearances: d 275.
 
-M4 plan: leaves the stem inbound at d 275 (v 275) beside the stem on u = -35.1, runs down toward the ring, right turn spiral-arc-spiral R 80 m (90 deg) to heading +u on the far side (v -28.5), entry lane + taper on ring B from u 75 to u 420 (334 m); length 721 m.
+M4 plan: leaves the stem inbound at d 275 (v 275) beside the stem on u = -35.1, runs down toward the ring, right turn spiral-arc-spiral R 80 m (90 deg) to heading +u on the far side (v -28.5), entry lane + taper on ring B from u 75 to u 420 (334 m); length 725 m.
 M4 levels: start 35.55 (stem inbound level at d 275), deck 47.00 m (ring + 18.6), end 32.86 (ring B level at u 420). Ring clearance 18.18 m; over the S2A slip arc at (-34, 47) 16.50 m; over M3 +8.61 m at (0, -12); vertical curves: crest s=255 A=-4.5 % L=30; crest s=319 A=-3.5 % L=30
 
 PASS  M1 plan radius >= minRadius(50) = 72.9 m  80.0 m
@@ -15,8 +15,9 @@ PASS  M6 vertical curves L >= K*A and fit  2 curves
 PASS  M7 tie-in levels: start = stem inbound level at the gore, end = ring B level  35.55 -> 32.86
 PASS  M8 side by side with the S2A slip lane on the stem (v > 100): centre distance >= 7.17 m  11.17 m
 PASS  M9 outside the paved stem: ramp edge >= 0.5 m from u -22.1 (centre line, v > 23)  centre u -28.32, edge -23.47
-PASS  M10 cut <= 12 m and fill <= 7 m (natural ground)  cut 2.3 fill 2.9
-PASS  M11 rail >= 30 m (ASSUMED, D3)  65 m
+PASS  M10 cut <= 12 m and fill <= 7 m (natural ground)  cut 2.3 fill 2.7
+PASS  M11 rail >= 30 m (ASSUMED, D3)  68 m
+PASS  M15 room for the embankment: ramp edge (tail half width 3.05 + 1.2 shoulder) to the ring edge >= 2.2 m per m of level difference over the ring (u 231 .. 381)  68 points, worst ratio 2.31 at u 345 (level difference 1.9 m)
 PASS  M12 ring B entry ends 30 m before the rail crossing (u 481)  entry u 75 .. 420, margin 61 m
 FAIL  M13 stem: M4 exit lane + taper (d 275 .. 481) keep clear of the arm viaducts  overlap 91 m (same D1 fact)
 PASS  M14 gore spacing on the stem inbound: M4 gore (d 275) to S2A gore (d 125) >= weaveMin 150 m  150 m (desirable 300 m is NOT met)

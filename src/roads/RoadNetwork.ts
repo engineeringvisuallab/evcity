@@ -595,7 +595,7 @@ export class RoadNetwork {
         const GAP = 0.3, STEP = 4;
         // STEP 5 (user 2026-11-22): the end of every tail merges into the main road by the general AUTO MERGE logic in emit() (autoMergeEnds): no hand made merge zone here.
         // STEP 2 (user 2026-11-22: 'flyover start / end too far, bring closer'): convergence length per tail (was 100 m for all, M4L 110 m). Grade <= 5 % is checked by rte-lane-check L6.
-        const LT_M3S = 50, LT_M3N = 50, LT_M4G = 70, LT_M4L = 150, LC_M4L = 90;
+        const LT_M3S = 50, LT_M3N = 50, LT_M4G = 70, LT_M4L = 150, LC_M4L = 30;
         const nM3 = M3.x.length - 1, nM4 = M4.x.length - 1;
         // (a) M3 start on ring B: from the tip beside the ring (100 m before the data start, u about -273) to the first bridge section (s 8)
         {
@@ -635,7 +635,7 @@ export class RoadNetwork {
         {
           const hw = 3.05, pE = [M4.x[nM4], M4.z[nM4]], yE = M4.deckY[nM4], uE = uOf(pE[0], pE[1]), dd = RTE_M4_DATA.pts;
           // STEP 2: the tail ends LT_M4L (150 m) after the bridge end instead of at the data end (u 420, 188 m). Level: straight line from the bridge end level to the ring level at the tip (about 4.6 %, <= 5 %, checked by L6; 140 m gave 5.12 %);
-          // plan: along the data line, the last LC_M4L (90 m) converge to the ring edge.
+          // plan: along the data line, the last LC_M4L (30 m; the data line itself swings back by an S-curve u 231 .. 381) converge to the ring edge.
           const idx: number[] = []; for (let i = 0; i < dd.length; i++) { const u = uOf(dd[i][0], dd[i][1]); if (u > uE + 0.5 && u <= uE + LT_M4L + 1e-6) idx.push(i); }
           const iT = idx[idx.length - 1], uT = uOf(dd[iT][0], dd[iT][1]), u1 = uT - LC_M4L, tipD = ring.halfWidth + hw + GAP, yT = near(ring, dd[iT][0], dd[iT][1]).y;
           const pts: number[][] = [pE], ys: number[] = [yE];
