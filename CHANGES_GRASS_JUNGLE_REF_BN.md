@@ -115,3 +115,7 @@ Dhyan: `TreeKind` e gum2 (24) er por notun kind (25, 26) bosechhe, tai `kind >= 
 - Flower card gulo (marigold, buttercup, lavender, poppy, cornflower, cosmos) ager moto majhe majhe thakbe.
 - Material key `grass-fade-v9`. Tuft e ~21-27 triangle (near), kom (far).
 - Density/jaygay bodlai nai (GrassManager/Config same). Aro kom/besi chaile `Config.ts grass.*` e chance.
+
+## UPDATE 12 — grass aro ghono, gaRo rong, rong mix (sobuj + mora)
+- `GrassAssets.ts` `bladeTuft`: tuft e plant 3→4 (near), 2→3 (mid). Prottek plant er nijer rong: 58% gaRo/moddho sobuj, 16% olive, 12% halka-lime, 8% sukno khor (straw), 6% mora brown. Rong ager cheye gaRo (lime kome gese). Key `grass-fade-v10`.
+- `Config.ts`: `grass.maxChance 0.5→0.7`, `grass.jungle.chance 0.3→0.45` (aro ghono). FPS komle eigulo komao.

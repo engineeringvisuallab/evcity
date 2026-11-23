@@ -610,14 +610,14 @@ export const Config = {
        */
       treeBase: { enabled: false /* 2026-11-23: NO grass rings round the tree bases (user): the grass is the patchy meadow only */, reach: 3.0, chance: 1, core: 0.75, meadow: 0.5 /* 2026-11-23: DENSER grass: the meadow patches grow again (x `meadow` of the patch noise) besides the rings round the trees; ring reach 2.6 -> 3.0; ~2x tufts in open land (0 = the old tree rings only) */ }, // SMALLER but MUCH DENSER ring: every cell has grass, full density out to `core` x reach, then a short soft rim (was reach 3.2, chance 0.7, core 0.45)
       /** Chance per cell inside a meadow / on bare patches, and the extra thinning inside forests. Higher = denser, fewer bald patches. */
-      maxChance: 0.5, // SPARSE: ~1 cell in 3 grows a tuft (was 0.98 / 0.9 = every cell)
+      maxChance: 0.7, // SPARSE: ~1 cell in 3 grows a tuft (was 0.98 / 0.9 = every cell)
       minChance: 0.28,
       forestThin: 0.3,
       /**
        * JUNGLE FLOOR (ghono jongol ground cover): inside the dense jungle every cell gets grass (`floor` = patch value forced up to this x jungle density, so no bald
        * ground), tufts are `tall` x higher, `chance` = grass chance per cell, and the grass kinds are mixed (wild, tussocks, broad-leaf, seed-head). Flag 6 in the tuft data.
        */
-      jungle: { floor: 0.9, tall: 1.0, tallFlower: 0.85, tallClump: 0.7, chance: 0.3, clumpChance: 0.06, clear: 2 }, // 2026-11-21: grass is back in the jungle (clear 2 = never skipped) // 2026-11-20: NO grass in the dense jungle (floor / chance / clumpChance 0); `clear` = jungle density above which no tuft or clump is placed
+      jungle: { floor: 0.9, tall: 1.0, tallFlower: 0.85, tallClump: 0.7, chance: 0.45, clumpChance: 0.06, clear: 2 }, // 2026-11-21: grass is back in the jungle (clear 2 = never skipped) // 2026-11-20: NO grass in the dense jungle (floor / chance / clumpChance 0); `clear` = jungle density above which no tuft or clump is placed
       /** Blades per tuft model are multiplied by this (1 = full quality; 0.6 for weak GPUs). */
       bladeDensity: 1,
       /** 2026-11-23: false = NO broad-leaf ground cover anywhere (leafy rosettes and clover patches turn into the fine single grass); the models stay for a water lily. */
