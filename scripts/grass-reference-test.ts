@@ -35,7 +35,7 @@ const dist = (flag: number): Record<string, number> => {
 const show = (flag: number): Record<string, number> => { const d = dist(flag); console.log(`flag ${flag}: ` + Object.entries(d).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${(v * 100).toFixed(0)}%`).join(', ')); return d; };
 const open = show(0), jungle = show(6), clumps = show(1), jclumps = show(7), lawn = show(2);
 ok((open.leafy ?? 0) > 0.08 && (open.trefoil ?? 0) > 0.05, 'open tufts: 8 %+ broad-leaf rosettes and 5 %+ trefoil');
-ok((jungle.leafy ?? 0) > 0.15, 'jungle floor: 15 %+ broad-leaf seedlings');
+ok((jungle.durba ?? 0) > 0.6 && (jungle.trefoil ?? 0) > 0.08 && (jungle.leafy ?? 0) > 0.04, 'jungle floor: 60 %+ glossy durba, 8 %+ triple-leaf (trefoil), 4 %+ single broad leaf');
 ok((clumps.tussockSeed ?? 0) > 0.3, 'open-land clumps: 30 %+ carry seed plumes');
 ok((jclumps.tussockSeed ?? 0) === 0 && (jclumps.tussock ?? 0) > 0, 'jungle clumps (flag 7): only the shady tussocks, no seed plumes');
 ok((lawn.leafy ?? 0) > 0.02 && (lawn.trefoil ?? 0) > 0.04, 'city lawn: a little broad-leaf and clover');

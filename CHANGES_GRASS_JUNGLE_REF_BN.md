@@ -67,6 +67,11 @@ Ager version-er ghas flat rong-er polygon chhilo, tai ekhon **ghas pura bodle pa
 - **Jungle-er single durba-type ghas:** ager moto-i ache, ami chui ni (jungle floor-er `lawn` / `wild` type). Leafy / trefoil bad dewar fole oi share-o ei sorou ghas-e giyeche.
 - Game-e dekhi ni. Test: central-park, grass-reference, jungle-vines PASS; typecheck clean.
 
+## UPDATE 8 (2026-11-23): jungle-er ghas = chikon sobuj durba
+- Notun ghas type `durba` (GrassType 15) + notun tile (atlas ekhon 16 tile x 256 px = 4096 px): soru, mosrin (glossy highlight), uggol-kintu-prakritik sobuj blade, mora blade nai. Rong palette bad: shudhu halka / gaero sobuj (jungle durba kokhono holud / shukno hoy na).
+- Jungle floor mix: 70% durba, 11% trefoil (triple pata), 6% leafy (single boro pata), 12% choto tussock; phul majhe majhe (ager moto patch-e). Jungle chhara sob jaygay boro pata / trefoil bondho (`grass.broadLeaf: false`), jungle-e chalu.
+- Atlas tile 272 -> 256 (ghas-er chhobi ektu kom sharp). Test: grass-reference (jungle mix), models (durba 12 tri), typecheck PASS.
+
 ## Jeta kori ni
 - **fern / shrub / lata (puraton lata-pata) ferot ani ni.** CHANGES_GUM_TREE_BN.md-e tumi bolechile "LATA-PATA FULL REMOVE" -- tai oigulo off-i ache. Notun liana / tangle alada kind, oder sathe milay nai.
 - Gach-er tolar mati-r rong (brown) bodlai ni (agey-r note: alada step).

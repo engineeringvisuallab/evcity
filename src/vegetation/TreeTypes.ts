@@ -130,11 +130,12 @@ export const GrassType = {
   tussock: 10, // upright, dense
   tussockWide: 11, // wider, more arching, a few straw-coloured blades
   // 2026-11-21 (reference photos): a big bunch grass with bristly seed plumes standing out of it, a ground-cover rosette of broad leaves, a patch of clover-like trefoil leaves
+  durba: 15, // JUNGLE durba: fine, smooth, glossy bright green single blades
   tussockSeed: 12, // tall bunch grass with 14-20 tan / purple-brown seed plumes on thin stems
   leafy: 13, // low rosette of 5-7 broad oval leaves (plantain / dock type), each folded along its midrib
   trefoil: 14, // low patch of clover-like three-leaflet leaves on thin stems
 } as const;
-export const GRASS_TYPE_COUNT = 15;
+export const GRASS_TYPE_COUNT = 16;
 /** The big grass bunches (they are sized by `grass.clump`, not by `grass.tuft`). */
 export const isGrassClump = (t: number): boolean => t === GrassType.tussock || t === GrassType.tussockWide || t === GrassType.tussockSeed;
 /** The coloured wild flowers (daisy .. clover). */

@@ -89,6 +89,7 @@ interface CardSpec {
 }
 const CARDS: Record<number, CardSpec> = {
   [GrassType.lawn]: { tile: GT.lawn, h: 0.36, w: 0.62, n: [3, 2, 2], bend: 0.05 },
+  [GrassType.durba]: { tile: GT.durba, h: 0.4, w: 0.68, n: [3, 2, 2], bend: 0.05 },
   [GrassType.wild]: { tile: GT.wild, h: 1.0, w: 1.3, n: [3, 2, 2], bend: 0.08 },
   [GrassType.clump]: { tile: GT.clump, h: 0.62, w: 0.8, n: [3, 2, 2], bend: 0.07 },
   [GrassType.seed]: { tile: GT.wild, h: 1.15, w: 1.2, n: [3, 2, 2], bend: 0.08 },

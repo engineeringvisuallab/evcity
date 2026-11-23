@@ -8,10 +8,10 @@ import { atlasTexture } from './TreeAssets';
  * tan / purple-brown seed plumes; a top-down rosette of broad veined leaves; a patch of clover leaves with the pale chevron. Transparent pixels are cut out (alpha test).
  * One strip of 15 square tiles (the last 6 are the wild flowers: marigold, buttercup, lavender, poppy, cornflower, cosmos); tile 0 is solid white (the flowers, stems and everything that has no picture sample it, so they keep their vertex colours).
  */
-export const GT = { white: 0, lawn: 1, wild: 2, clump: 3, tussock: 4, tussockWide: 5, tussockSeed: 6, leafy: 7, trefoil: 8, daisy: 9, buttercup: 10, lavender: 11, poppy: 12, cornflower: 13, clover: 14 } as const;
-export const GRASS_TILES = 15;
-/** 15 x 272 = 4080 px: the atlas stays under 4096 (the limit of many phones). */
-export const GRASS_TILE = 272;
+export const GT = { durba: 15, white: 0, lawn: 1, wild: 2, clump: 3, tussock: 4, tussockWide: 5, tussockSeed: 6, leafy: 7, trefoil: 8, daisy: 9, buttercup: 10, lavender: 11, poppy: 12, cornflower: 13, clover: 14 } as const;
+export const GRASS_TILES = 16;
+/** 16 x 256 = 4096 px: the atlas stays within 4096 (the limit of many phones). */
+export const GRASS_TILE = 256;
 const LS = 512; // logical size the painters draw in (scaled to GRASS_TILE)
 const K = GRASS_TILE / LS;
 
@@ -34,6 +34,8 @@ interface Blade {
   /** colour saturation (%) and kind: 0 green, 1 dry-tipped (green going to straw), 2 dead straw / brown blade */
   sat: number;
   dry: number;
+  /** a glossy blade (smooth, shiny green): a bright streak along it */
+  gloss?: boolean;
 }
 
 /** One tapered, curved blade: a gradient from a dark root to a bright tip, a darker rim and a pale midrib. */
@@ -84,7 +86,7 @@ function drawBlade(c: Ctx, x0: number, base: number, b: Blade): void {
       if (i === 1) c.moveTo(p[0], p[1]);
       else c.lineTo(p[0], p[1]);
     }
-    c.strokeStyle = hsl(b.hue - 10, b.sat * 0.75, b.light * 1.5, 0.28);
+    c.strokeStyle = b.gloss ? hsl(b.hue - 8, 60, 78, 0.5) : hsl(b.hue - 10, b.sat * 0.75, b.light * 1.5, 0.28);
     c.lineWidth = Math.max(0.6, b.w * 0.22);
     c.stroke();
   }
@@ -108,6 +110,8 @@ interface TuftLook {
   fountain: boolean;
   hue: number;
   light: number;
+  /** JUNGLE DURBA: fresh, glossy, saturated green blades, no dead ones */
+  fresh?: boolean;
 }
 
 /** A tuft / clump picture: blades sorted from the back (darker, shorter) to the front, a dark ambient-occlusion shade at the root. */
@@ -132,21 +136,21 @@ function paintTuft(c: Ctx, tile: number, seed: number, T: TuftLook): number[] {
     }
     // REAL COLOURS (2026-11-23): each blade has its own saturation (dull, not lime), a wider hue range (olive .. blue-green), ~1 in 7 blades dead (straw / brown), ~1 in 4 sun-dried at the tip
     const kr = r();
-    const dead = kr < 0.14;
+    const dead = !T.fresh && kr < 0.14;
     blades.push({
       x: cx + side * LS * T.spread * 0.5, h: dead ? h * (0.7 + 0.3 * r()) : h, lean, curve, w: T.wMin + (T.wMax - T.wMin) * r(),
       hue: dead ? 36 + 14 * r() : T.hue + (r() - 0.5) * 36, light: dead ? 38 + 16 * r() : T.light * (0.7 + 0.5 * r()),
-      sat: dead ? 26 + 16 * r() : 30 + 22 * r(), dry: dead ? 2 : kr < 0.4 ? 1 : 0,
+      sat: dead ? 26 + 16 * r() : T.fresh ? 46 + 18 * r() : 30 + 22 * r(), dry: dead ? 2 : !T.fresh && kr < 0.4 ? 1 : 0, gloss: T.fresh,
     });
   }
   // a skirt of short blades round the root: the tuft is full at the bottom, no gap to the ground
   const skirt = Math.round(T.n * 0.45);
   for (let i = 0; i < skirt; i++) {
     const side = (r() + r() - 1) * 1.15;
-    const dead = r() < 0.1;
+    const dead = !T.fresh && r() < 0.1;
     blades.push({
-      x: cx + side * LS * T.spread * 0.55, h: LS * T.H * (0.16 + 0.26 * r()), lean: side * T.lean * 0.3 + (r() - 0.5) * 20, curve: (r() - 0.5) * T.curve * 0.5,
-      w: T.wMin + (T.wMax - T.wMin) * r() * 0.8, hue: dead ? 38 + 10 * r() : T.hue + (r() - 0.5) * 30, light: dead ? 36 + 12 * r() : T.light * (0.6 + 0.4 * r()), sat: dead ? 28 : 28 + 20 * r(), dry: dead ? 2 : 0,
+      gloss: T.fresh, x: cx + side * LS * T.spread * 0.55, h: LS * T.H * (0.16 + 0.26 * r()), lean: side * T.lean * 0.3 + (r() - 0.5) * 20, curve: (r() - 0.5) * T.curve * 0.5,
+      w: T.wMin + (T.wMax - T.wMin) * r() * 0.8, hue: dead ? 38 + 10 * r() : T.hue + (r() - 0.5) * 30, light: dead ? 36 + 12 * r() : T.light * (0.6 + 0.4 * r()), sat: dead ? 28 : T.fresh ? 44 + 16 * r() : 28 + 20 * r(), dry: dead ? 2 : 0,
     });
   }
   blades.sort((a, b) => a.h - b.h);
@@ -603,6 +607,9 @@ export function paintGrassAtlas(c: Ctx): void {
   paintLeafy(c, GT.leafy, 707);
   clip(GT.trefoil);
   paintTrefoil(c, GT.trefoil, 808);
+  clip(GT.durba);
+  // JUNGLE DURBA: fine, smooth, glossy bright-green blades, creeping low, no dead ones
+  paintTuft(c, GT.durba, 1515, { n: 150, H: 0.66, spread: 0.62, lean: 80, curve: 55, wMin: 1.8, wMax: 3.6, hPow: 1, fountain: false, hue: 108, light: 36, fresh: true });
   const kinds: [number, FlowerKind][] = [[GT.daisy, 'marigold'], [GT.buttercup, 'buttercup'], [GT.lavender, 'lavender'], [GT.poppy, 'poppy'], [GT.cornflower, 'cornflower'], [GT.clover, 'cosmos']];
   kinds.forEach(([t, k], i) => {
     clip(t);
