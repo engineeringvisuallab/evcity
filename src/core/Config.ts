@@ -88,6 +88,8 @@ export const Config = {
     junctionRteArmGround: { enabled: true as boolean },
     /** STEP 5 (user 2026-11-22): the viaduct wedge / wing strips beside the J1-E arm (RteMesh, old design with long added stem lanes that are not built any more). false (default) = not drawn, only the ramp bridges M3 / M4. true = old look. */
     junctionRteWedges: { enabled: false as boolean },
+    /** RT-E guardrail (user 2026-11-23: 'connection road gula er 2 pase railing'): W-beam rail on both sides of the ground connection roads (slips RTE-A2S / S2A, tails RTE-TAIL-*). postStep m between posts, height m, slipEndGap m free at each slip end, mergeMargin m free before the AUTO MERGE zone of a tail. enabled false = no rail. */
+    junctionRteRails: { enabled: true as boolean, postStep: 4, height: 0.75, slipEndGap: 12, mergeMargin: 6 },
     /** AUTO MERGE (user 2026-11-22): an open ramp end that arrives beside another road, roughly parallel (gap <= maxGap m, angle <= maxAngleDeg), narrows smoothly over `length` m to a point on that road's paved edge. See RoadNetwork.autoMergeEnds. LEVEL CLEARANCE (RoadNetwork.levelClearance): the ramp keeps fillSlope (ramp above the other road) / cutSlope (below) metres of room per metre of level difference above levelFree m, the plan moves outward with at most lateralGrade m per m. */
     autoMerge: { enabled: true as boolean, length: 30, maxGap: 1.2, maxAngleDeg: 25, fillSlope: 3, cutSlope: 2, levelFree: 0.3, lateralGrade: 0.3 },
     /** STEP 17.1g-a: the island link M6-1 (6-lane, src/roads/island/IslandLinkData.ts, made by tools/island-link-data.py, deck option A of 17.1d) from the ring S node to the island centre, as game road 'M6-1' with its structure range. enabled = false: no island link.

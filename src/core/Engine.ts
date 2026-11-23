@@ -415,7 +415,7 @@ export class Engine {
     this.ringStructures = new RingStructureLayer(this.world.root, roads);
     this.groundJ1 = new GroundJ1Layer(this.world.root, this.world.terrain.roads.j1);
     this.autoPads = new AutoPadLayer(this.world.root, this.world.terrain.roads.autoPads); // A-5: empty while Config.roads.autoJunction.enabled is false
-    this.rteLayer = new RteLayer(this.world.root, Config.roads.junctionRte.enabled);
+    this.rteLayer = new RteLayer(this.world.root, Config.roads.junctionRte.enabled, roads);
     this.stackJ1 = new StackInterchangeLayer(this.world.root, Config.roads.interchangeJ1, (x, z) => this.world.terrain.heightAt(x, z));
     this.rail = this.world.terrain.rail;
     this.railDebug = new RailDebug(this.rail);

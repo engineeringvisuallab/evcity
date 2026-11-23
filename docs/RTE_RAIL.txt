@@ -1,0 +1,27 @@
+== GUARDRAIL (RteRail) ==
+rails: 6 roads, 254 posts, 968 m of beam, 5952 triangles
+   RTE-A2S side L s 12..76 (17 posts)
+   RTE-A2S side R s 12..76 (17 posts)
+   RTE-S2A side L s 12..160 (38 posts)
+   RTE-S2A side R s 12..160 (38 posts)
+   RTE-TAIL-M3S side L s 34..86 (14 posts)
+   RTE-TAIL-M3S side R s 34..86 (14 posts)
+   RTE-TAIL-M3N side L s 0..40 (11 posts)
+   RTE-TAIL-M3N side R s 0..40 (11 posts)
+   RTE-TAIL-M4G side L s 34..98 (17 posts)
+   RTE-TAIL-M4G side R s 34..98 (17 posts)
+   RTE-TAIL-M4L side L s 0..116 (30 posts)
+   RTE-TAIL-M4L side R s 0..116 (30 posts)
+PASS  R1 all six connection roads (A2S, S2A, 4 tails) get a rail  6 roads, rails on 6
+PASS  R2 both sides: every slip has a rail on BOTH sides; every tail has both sides where it is clear of the main road  both sides on: RTE-A2S, RTE-S2A, RTE-TAIL-M3S, RTE-TAIL-M3N, RTE-TAIL-M4G, RTE-TAIL-M4L; one side only: -
+PASS  R3 posts the builder tested: those it kept are not on asphalt of any road (callback = net.surfaceAt === 1)  254 candidate posts tested
+PASS  R4 no rail vertex stands on asphalt (sampled)  744 vertices sampled, 0 on asphalt
+PASS  R5 the rail follows the finished ground: no vertex more than 6 m above it or 2.5 m below it (sampled)  highest 0.91 m above ground, lowest -0.06 m below (post top / base vs terrain height)
+PASS  R7 no rail run starts or ends inside the AUTO MERGE zone of a tail (halfAt < 98 % of the half width)  28 merge-zone road points, 0 rail run ends inside
+PASS  R8 the rail meets the bridge parapet: tails M3N / M4L start at the bridge end (first post <= 8 m), tails M3S / M4G end at it (last post <= 8 m from the road end)  M3N from 0, M4L from 0, M3S end gap 0, M4G end gap 0
+PASS  R9 triangles built, within a sane budget (< 60 000)  5952 triangles, 17856 vertices
+
+NOT RUN  the game (look of the rails, rail collision with a real vehicle), npm run build (vite part), the other old check scripts
+ASSUMED  rail height 0.75 m, post 0.12 m, beam 0.32 x 0.07 m
+
+SUMMARY: ALL PASS
