@@ -1,0 +1,29 @@
+HK-5a  EAST POND LOOPS (SE + NE), centreline data with spirals
+Radius rule: Standards.ts minRadius(45) = 55.0 m but Validate.ts needs 75.9 m for V45 (e+f 0.21). Validate.ts is what the game build runs, so the loop is now R80 / V45 (all four loops EQUAL; size study: R135 / V60 runs into the wet east valley, R95 / V50 and R115 / V55 need slips of 390 m and more, R60 / V40 and R70 / V42 have a C-D weave under 150 m).
+Spiral Ls = V^3 / (R C) = 40.7 -> 45 m each; arc 332.0 m (R 80); total 422.0 m
+SE loop (south, link C-D x 23.2): start (23.2, -76.4) heading -90.0 deg (south, on the east C-D road); end (81.3, -17.3) heading 180.0 deg (west, in the ring south lane)
+  PASS  H5 tangent end: heading west (180 deg) at the ring lane            180.0 deg (error 0.0 arc-min)
+  PASS  H5 curvature 0 at both ends (spiral in and out, G1 and G2 at the joins) k0 0.0e+0 k_end 0.0e+0
+  PASS  H1 radius 80.0 m for V45                                           Validate 75.9 m, Standards 55.0 m
+  PASS  H1 radius against Standards.ts                                     80.0 >= 55.0
+SE loop vertical: ground road 20.3 m -> ring 27.0 m = rise 6.7 m over 422.0 m; peak grade 2.4 %
+  PASS  H1 SE ramp grade <= 5 %                                            2.4 %
+NE loop vertical: ground road 18.5 m -> ring 27.0 m = rise 8.5 m over 422.0 m; peak grade 3.0 %
+  PASS  H1 NE ramp grade <= 5 %                                            3.0 %
+Ring aux lanes: exit (NE loop) decel 100 -> 45: 123 m + taper 25 x 3.65 = 91 m; entrance (SE loop) accel 45 -> 85: 167 m + taper 50 x 3.65 = 183 m.
+The loops meet the ring at x = 81.3 m east of the node: the NE exit lane (decel + taper) therefore starts about 133 m WEST of the node (before the crossing), and the SE entrance lane (accel + taper) runs 268 m west of the node, i.e. over and past the crossing: the flyover deck needs an auxiliary lane on the east side through the crossing (+3.6 m each side, HK-6 to carry it). NOT designed here.
+SE loop circle centre (104.4, -98.8), radius 80; clear infield radius for the pond = 80 - ramp half width 4.2 - verge 12 = 63.8 m (the infield rule D4: existing water object only).
+NE loop = the SE loop mirrored about the ring axis (y -> -y), moved 6.1 m away from the axis (arm C-D x 29.3) and travelled the other way (ring -> C-D): centre (110.5, 98.8).
+  PASS  plan: loop stays east of the east C-D centreline                   x min 23.2 >= 23.2
+Plan extent of the SE loop: x 23.2 .. 184.3, y -178.4 .. -17.3 m.
+OPEN H4 (ESTIMATE, not computed on lawn loops yet): on the RING (plain exits, D2) the SE loop entrance (x +81.3 m, westbound) is followed by the SW lawn loop exit after the crossing: the weave on the ring is only about 170 - 250 m: above the 150 m minimum, below the 300 m desirable. Cloverstack-style C-D roads on the ring would cure it (more width). To be decided in HK-5c, with the real lawn-loop numbers.
+SE loop on NATURAL ground: max fill 7.2 m, max cut 2.4 m, wet samples 0 of 141
+SE loop height above NATURAL ground: 7.2 m at most; about 96 m of its 422 m stand higher than pierFromH 3 m = dry VIADUCT on piers (Builder.ts / RoadNetwork.ts 3D-A); only the first / last stretch up to 3 m is embankment
+  PASS  SE pier height <= 12 m (no pier limit found in the game rules; DESIGN.maxFill 7 m is for road corridor EMBANKMENTS, not ramp viaducts) 7.2 m max pier height
+  PASS  SE loop dry                                                        0 wet samples of 141
+NE loop on NATURAL ground: max fill 7.8 m, max cut 0.9 m, wet samples 0 of 141
+NE loop height above NATURAL ground: 7.8 m at most; about 294 m of its 422 m stand higher than pierFromH 3 m = dry VIADUCT on piers (Builder.ts / RoadNetwork.ts 3D-A); only the first / last stretch up to 3 m is embankment
+  PASS  NE pier height <= 12 m (no pier limit found in the game rules; DESIGN.maxFill 7 m is for road corridor EMBANKMENTS, not ramp viaducts) 7.8 m max pier height
+  PASS  NE loop dry                                                        0 wet samples of 141
+NOT RUN: Validate.ts on real Ramp objects, the game, tsc, build, terrain check at the loop position (HK-0 east boxes: fill 12.9 / 14.8 m, wet: STILL OPEN), loops 3 + 4 (west, HK-5b), C-D road data and slips (HK-5c).
+RESULT 0 FAIL, 0 WARN

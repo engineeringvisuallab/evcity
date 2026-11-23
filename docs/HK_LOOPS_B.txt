@@ -1,0 +1,33 @@
+HK-5b  WEST LAWN LOOPS (NW + SW), centreline data with spirals
+Radius rule: Validate.ts (e+f 0.21, what the build runs) needs 113.4 m for V55 and 135.0 m for V60; Standards.ts minRadius(55) = 91.6 m. All four loops are R80 / V45 (equal).
+Spiral Ls = V^3 / (R C) = 40.7 -> 45 m each; arc 332.0 m (R 80); total 422.0 m
+SE-frame loop (rotated 180 deg below to NW): start (23.2, -76.4) heading -90.0 deg (south, on the east C-D road); end (81.3, -17.3) heading 180.0 deg (west, in the ring south lane)
+  PASS  H5 tangent end: heading west (180 deg) at the ring lane            180.0 deg (error 0.0 arc-min)
+  PASS  H5 curvature 0 at both ends (spiral in and out, G1 and G2 at the joins) k0 0.0e+0 k_end 0.0e+0
+  PASS  H1 radius 80.0 m for V45                                           Validate 75.9 m, Standards 55.0 m
+  PASS  H1 radius against Standards.ts                                     80.0 >= 55.0
+Ring level at the loop end (81.3 m west of the node, HK-4 deck 1.4): 27.2 m (the level deck / start of the west merge).
+NW loop vertical: ground road 18.5 m -> ring 27.2 m = rise 8.7 m over 422.0 m; peak grade 3.1 %
+  PASS  H1 NW ramp grade <= 5 %                                            3.1 %
+SW loop vertical: ground road 20.3 m -> ring 27.2 m = rise 6.9 m over 422.0 m; peak grade 2.5 %
+  PASS  H1 SW ramp grade <= 5 %                                            2.5 %
+Ring aux lanes: exit (SW loop, westbound) decel 100 -> 45: 123 m + taper 25 x 3.65 = 91 m; entrance (NW loop, eastbound) accel 45 -> 85: 167 m + taper 50 x 3.65 = 183 m.
+The lawn loops meet the ring at x = -81.3 m (81.3 m west of the node). SW exit lane (decel + taper) starts about 133 m EAST of the node; NW entrance lane (accel + taper) runs about 268 m east of the node, over and past the crossing: auxiliary lane on the west side of the flyover too (HK-6).
+  PASS  H4 weave on the ring SOUTH lane (SE entrance to SW exit, link side) 162.6 m between the two gore points (min 150, desirable 300)
+  PASS  H4 weave on the ring NORTH lane (NW entrance to NE exit, arm side) 174.8 m between the two gore points (min 150, desirable 300)
+  WARN  H4 weave on the ring reaches the desirable length                  162.6 m south / 174.8 m north vs 300 m
+NW loop arc centre (-104.4, 98.8), SW (-104.4, -98.8), radius 80; clear infield radius = 80 - 4.2 - 12 = 63.8 m (lawn: existing vegetation / grass systems only, D4).
+Plan extent of the NW loop: x -184.3 .. -23.2, y 17.3 .. 178.4 m.
+  PASS  plan: loop stays west of the west C-D centreline                   x min 23.2 >= 23.2 (mirror)
+NW loop on NATURAL ground: max fill 7.5 m, max cut 0.0 m, wet samples 0 of 141
+NW loop height above NATURAL ground: 7.5 m at most; about 297 m of its 422 m stand higher than pierFromH 3 m = dry VIADUCT on piers (Builder.ts / RoadNetwork.ts 3D-A); only the first / last stretch up to 3 m is embankment
+  PASS  NW pier height <= 12 m (no pier limit found in the game rules; DESIGN.maxFill 7 m is for road corridor EMBANKMENTS, not ramp viaducts) 7.5 m max pier height
+  PASS  NW loop cut <= 12 m (DESIGN.maxCut)                                0.0 m (site constraint, not a script error)
+  PASS  NW loop dry                                                        0 wet samples of 141
+SW loop on NATURAL ground: max fill 7.2 m, max cut 2.3 m, wet samples 0 of 141
+SW loop height above NATURAL ground: 7.2 m at most; about 147 m of its 422 m stand higher than pierFromH 3 m = dry VIADUCT on piers (Builder.ts / RoadNetwork.ts 3D-A); only the first / last stretch up to 3 m is embankment
+  PASS  SW pier height <= 12 m (no pier limit found in the game rules; DESIGN.maxFill 7 m is for road corridor EMBANKMENTS, not ramp viaducts) 7.2 m max pier height
+  PASS  SW loop cut <= 12 m (DESIGN.maxCut)                                2.3 m (site constraint, not a script error)
+  PASS  SW loop dry                                                        0 wet samples of 141
+NOT RUN: Validate.ts on real Ramp objects, the game, tsc, build, C-D roads and slips (HK-5c), terrain after the ring raise / carving.
+RESULT 0 FAIL, 1 WARN

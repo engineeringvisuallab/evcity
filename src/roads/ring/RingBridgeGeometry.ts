@@ -9,6 +9,7 @@ import type { BridgeSpec, RoadSpec } from '../RoadTypes';
 import { STRUCT } from './RingStructures';
 import { Config } from '../../core/Config';
 import { ISLAND_LINK_DATA } from '../island/IslandLinkData';
+import { NODE_VIADUCT, nodeDepth } from './NodeViaductData';
 
 export interface MeshData {
   positions: number[];
@@ -185,17 +186,18 @@ function cable(m: Mesher, ax: number, ay: number, az: number, bx: number, by: nu
  * The deck body of a structure: a box girder (trapezoid section, depth STRUCT.deckDepth) lofted along road points i0..i1, parapets on both edges,
  * and two abutment walls at the ends of the main span (the approach slabs rest on the embankment). Shared by every design.
  */
-function deck(m: Mesher, roads: RoadNetwork, r: RoadSpec, b: BridgeSpec): void {
+function deck(m: Mesher, roads: RoadNetwork, r: RoadSpec, b: BridgeSpec, depthOf: (k: number) => number = () => STRUCT.deckDepth): void {
   void roads;
   const W = b.deckHalfWidth;
-  const D = STRUCT.deckDepth;
-  const sec: [number, number][] = [[-W, -0.02], [W, -0.02], [W, -0.9], [0.55 * W, -D], [-0.55 * W, -D], [-W, -0.9]]; // (u, dy) top-left ... around
+  const secOf = (D: number): [number, number][] => [[-W, -0.02], [W, -0.02], [W, -0.9], [0.55 * W, -D], [-0.55 * W, -D], [-W, -0.9]]; // (u, dy) top-left ... around; STEP HK-8d-2: the depth may change along the deck (node viaduct haunch)
+  const sec = secOf(STRUCT.deckDepth);
   const rows: number[][] = [];
   for (let k = b.i0; k <= b.i1; k++) {
     const f = frameAtPoint(r, k);
     const ids: number[] = [];
+    const secK = secOf(depthOf(k));
     for (let q = 0; q < sec.length; q++) {
-      const [u, dy] = sec[q];
+      const [u, dy] = secK[q];
       ids.push(m.vert(f.x + f.nx * u, f.y + dy, f.z + f.nz * u, q >= 2 && q <= 4 ? COL.underside : COL.deck));
     }
     rows.push(ids);
@@ -231,7 +233,7 @@ function deck(m: Mesher, roads: RoadNetwork, r: RoadSpec, b: BridgeSpec): void {
   const ap = Math.ceil(STRUCT.approach / r.step);
   for (const k of [b.i0 + ap, b.i1 - ap]) {
     const f = frameAtPoint(r, k);
-    const top = f.y - D;
+    const top = f.y - depthOf(k);
     const bottom = Math.min(top - 1, r.hNat[k] - 2);
     prism(m, f, bottom, top, 3.2, 2 * W - 0.6, 3.2, 2 * W - 0.6, COL.pier);
   }
@@ -520,8 +522,38 @@ export function straitGirder(roads: RoadNetwork, b: BridgeSpec): MeshData {
   return m.d;
 }
 
+/** STEP HK-8d-2: the structure that carries the ring over the node (only with Config.roads.hatikamrul.enabled): the ring structure whose points include the node station. */
+export function isNodeViaduct(roads: RoadNetwork, b: BridgeSpec): boolean {
+  if (!Config.roads.hatikamrul.enabled) return false;
+  const r = roads.roads[b.roadId];
+  return r?.name === 'M8' && r.cum[b.i0] <= NODE_VIADUCT.stationM && NODE_VIADUCT.stationM <= r.cum[b.i1];
+}
+
+/** STEP HK-8d-2: the node viaduct = the shared deck with a haunched depth (1.4 m over the lower roads, up to 3.4 m at the main piers) on 3 pier lines x 4 columns (HK-8a / HK-8b numbers). The columns carry the deck directly (the haunch is the cap). */
+export function nodeViaduct(roads: RoadNetwork, b: BridgeSpec): MeshData {
+  const r = roads.roads[b.roadId];
+  const N = NODE_VIADUCT;
+  const m = new Mesher();
+  deck(m, roads, r, { ...b, deckHalfWidth: N.deckHalf }, (k) => nodeDepth(r.cum[k] - N.stationM));
+  for (const pd of N.piersD) {
+    const s = N.stationM + pd;
+    const f = frameAt(r, s);
+    const k = Math.round(s / r.step);
+    let low = Infinity;
+    for (let q = k - 1; q <= k + 1; q++) low = Math.min(low, r.hNat[Math.min(r.xs.length - 1, Math.max(0, q))]);
+    const foot = low - N.embed;
+    const under = f.y - nodeDepth(pd);
+    for (const u of N.colU) {
+      const fc: Frame = { ...f, x: f.x + f.nx * u, z: f.z + f.nz * u };
+      prism(m, fc, foot, under, N.colAlong, N.colAcross, N.colAlong, N.colAcross, COL.pier);
+    }
+  }
+  return m.d;
+}
+
 /** Geometry of structure number `k` (0-based, station order) of the ring. */
 export function buildStructure(roads: RoadNetwork, b: BridgeSpec, k: number): MeshData {
+  if (isNodeViaduct(roads, b)) return nodeViaduct(roads, b); // STEP HK-8d-2: before the design list (the node structure is last in ringStructures, so no design number moves)
   if (isStraitStructure(roads, b)) return straitGirder(roads, b); // 17.1g-b: chosen by the road name (M6-1), so the order of the list does not matter
   const design = RING_DESIGNS[k] ?? 'plain';
   if (design === 'cable-stayed') return cableStayed(roads, b);
@@ -536,6 +568,9 @@ export function buildStructure(roads: RoadNetwork, b: BridgeSpec, k: number): Me
 export function ringStructures(roads: RoadNetwork): BridgeSpec[] {
   const ring = roads.roads.find((r) => r.name === 'M8');
   const out: BridgeSpec[] = ring ? roads.bridges.filter((b) => b.roadId === ring.id).sort((a, c) => a.i0 - c.i0) : [];
+  // STEP HK-8d-2: the node viaduct (switch ON) is taken out of the ring part and put LAST, so the design numbers of every other structure stay as they are
+  const nodeAt = out.findIndex((b) => isNodeViaduct(roads, b));
+  const nodeB = nodeAt >= 0 ? out.splice(nodeAt, 1)[0] : null;
   for (const name of ['J1-N', 'J1-E', 'J1-S', 'J1-W']) {
     const arm = roads.roads.find((r) => r.name === name);
     if (arm) out.push(...roads.bridges.filter((b) => b.roadId === arm.id).sort((a, c) => a.i0 - c.i0));
@@ -543,5 +578,6 @@ export function ringStructures(roads: RoadNetwork): BridgeSpec[] {
   // STEP 17.1g-b: the island link strait structure M6-1 comes LAST (index 20 = design number 21, RING_DESIGNS[20] = 'strait-girder'), after the arms
   const link = roads.roads.find((r) => r.name === ISLAND_LINK_DATA.name);
   if (link && Config.roads.islandLink.bridgeDeck) out.push(...roads.bridges.filter((b) => b.roadId === link.id).sort((a, c) => a.i0 - c.i0));
+  if (nodeB) out.push(nodeB);
   return out;
 }

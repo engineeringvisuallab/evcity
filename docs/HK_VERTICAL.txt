@@ -1,0 +1,28 @@
+HK-4 VERTICAL PLAN, ring OVER. Ring old level at node 19.68 m; highest lower-road level inside +-33.5 m: 20.33 m (arm 19.68, link 20.02 at its start).
+V100: crest K 50.9 (Standards.ts), sag K 44.1 (headlight formula), max grade 4 % (3 % desirable) (DESIGN.maxGrade), flat deck = 33.5 + 18 m each side (upperFlat 18).
+
+SCENARIO deck 1.4 m: deck top at node 27.23 m, raise over the old ring 7.55 m
+  WEST: level deck 27.23 m, merges into the old ring at about +591.5 m (blend c 10.5, min sag K 44 vs 44); max grade 1.93 %; more than 3 m above the old ring (piers / embankment) up to +445 m
+  PASS  WEST grade <= 4 % (deck 1.4)                                           1.93 % (equals the old ring's own climb at the join)
+  PASS  WEST sag K >= headlight K (deck 1.4)                                   44 vs 44
+  PASS  WEST joins before any structure (none within 1500 m)                   joins at +591.5 m
+  EAST: bump grade 3.20 %, curves 163 + 141 m, hold 84 m; length needed 439 m; max NET grade 3.91 % (old ring alone 1.23 %); more than 3 m above the old ring up to -270 m
+  PASS  EAST net grade <= 4 % (deck 1.4)                                       3.91 %
+  FAIL  EAST net grade <= 3 % desirable (deck 1.4)                             3.91 %
+  FAIL  EAST length needed <= 312 m (river bridge starts there; it is FIXED)   439 m needed; 127 m over
+    OPTION if the river bridge (-312..-432) may be rebuilt (user: existing structures may be removed): the ramp may run to about -520 m: FITS (439 <= 520, ESTIMATE; bridge level and river clearance NOT checked)
+
+SCENARIO deck 2.3 m: deck top at node 28.13 m, raise over the old ring 8.45 m
+  WEST: level deck 28.13 m, merges into the old ring at about +626.5 m (blend c 8.5, min sag K 44 vs 44); max grade 1.88 %; more than 3 m above the old ring (piers / embankment) up to +465 m
+  PASS  WEST grade <= 4 % (deck 2.3)                                           1.88 % (equals the old ring's own climb at the join)
+  PASS  WEST sag K >= headlight K (deck 2.3)                                   44 vs 44
+  PASS  WEST joins before any structure (none within 1500 m)                   joins at +626.5 m
+  EAST: bump grade 3.20 %, curves 163 + 141 m, hold 112 m; length needed 468 m; max NET grade 3.91 % (old ring alone 1.45 %); more than 3 m above the old ring up to -300 m
+  PASS  EAST net grade <= 4 % (deck 2.3)                                       3.91 %
+  FAIL  EAST net grade <= 3 % desirable (deck 2.3)                             3.91 %
+  FAIL  EAST length needed <= 312 m (river bridge starts there; it is FIXED)   468 m needed; 156 m over
+    OPTION if the river bridge (-312..-432) may be rebuilt (user: existing structures may be removed): the ramp may run to about -520 m: FITS (468 <= 520, ESTIMATE; bridge level and river clearance NOT checked)
+
+ARM / LINK: keep their profiles (D1). Deck clearance over both is built into the raise (y0 = highest lower-road level inside the crossing + 5.5 m clearance + deck). PASS by construction, NOT measured on a built model.
+NOT RUN: game, tsc, build, terrain / fill under the raised ring, drainage, the river bridge level and clearance, loop ramp profiles (HK-5), the old ring second derivative outside the bump.
+RESULT 4 FAIL

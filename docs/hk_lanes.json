@@ -1,0 +1,18 @@
+{
+ "taperStartY": 260.0,
+ "taperEndY": 30.0,
+ "taperLen": 230.0,
+ "gainStartY": 25.75,
+ "gainEndY": 115.75,
+ "deadLaneY": [
+  0,
+  30.0
+ ],
+ "dropSide": "east, southbound",
+ "gainSide": "west, northbound",
+ "connectorY": [
+  -25.0,
+  0
+ ],
+ "edgeStep": 6.100000000000001
+}

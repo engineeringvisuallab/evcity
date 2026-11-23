@@ -1,7 +1,9 @@
 // STEP 5.1: the finished height of the ring centreline as a function of station (the Step 3 grade line, 10 m samples).
 // The ring is a closed loop: station wraps at the alignment length. Between the 10 m samples the height is a periodic
 // cubic Hermite curve (slopes from neighbours), so grade and its change stay smooth for the road mesh and for physics.
-import { RING_PROFILE_STEP, RING_PROFILE_Y } from './RingProfileData';
+import { RING_PROFILE_STEP, RING_PROFILE_Y as RING_PROFILE_Y_ORIG } from './RingProfileData';
+import { RING_PROFILE_Y as RING_PROFILE_Y_HK } from './RingProfileData.hk';
+import { Config } from '../../core/Config';
 
 export interface RingProfile {
   /** Closed length (m): station wraps at this value. */
@@ -14,6 +16,7 @@ export interface RingProfile {
 
 /** `length` = ring alignment length (m). The last sample interval is shorter than 10 m (the ring does not close on a multiple of 10 m). */
 export function makeRingProfile(length: number): RingProfile {
+  const RING_PROFILE_Y = Config.roads.hatikamrul.enabled ? RING_PROFILE_Y_HK : RING_PROFILE_Y_ORIG; // STEP HK-8d-1: the raised Hatikamrul profile only when the switch is ON (default OFF)
   const n = RING_PROFILE_Y.length;
   const ds = (i: number): number => (i === n - 1 ? length - (n - 1) * RING_PROFILE_STEP : RING_PROFILE_STEP); // interval i -> i+1
   const wrapS = (s: number): number => ((s % length) + length) % length;

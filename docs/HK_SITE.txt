@@ -1,0 +1,96 @@
+HK SITE CHECK (HK-0) ring S node: ring M8 x J1-S arm x island link M6-1
+Node (arm end) X -1133.3 Z 2301.8; ring station 1208 of 19293 m; ring point -1134.7, 2301.7, distance 1.35 m; user readout X -1121 Z 2304 is 13 m away
+Ring: half width 22.1 m, median half 3 m, lane 3.65 m. Arm J1-S half width 22.1 m. Link M6-1 half width 16 m, median half 2 m, lane 3.5 m, first point -1134.3, 2326.7
+Ring heading (x, z) = (-0.999, -0.038); arm points (0.038, -0.999) on the RIGHT of increasing station; link points (-0.038, 0.999) on the LEFT
+  PASS  arm and link are on opposite sides of the ring (4-leg cross)   arm -1, link 1
+  PASS  arm meets the ring at 70..110 deg                              90.0 deg
+  INFO  link first 60 m meets the ring at                              90.0 deg
+
+1. LEVELS
+  ring: offset from node (m), level (m), grade to +20 m (%)  [+ = station increasing = WEST]
+      -600    21.43   -0.63
+      -500    20.34   -1.50
+      -400    19.05   -0.68
+      -300    18.88    0.53
+      -200    19.50    0.41
+      -100    19.68    0.00
+         0    19.68    0.00
+       100    19.76    0.39
+       200    20.42    1.04
+       300    21.89    2.22
+       400    24.66    3.53
+       500    28.21    3.36
+       600    31.28    2.57
+  PASS  ring grade within +-300 m of the node <= 3 %                   max 2.18 %
+  arm J1-S: distance from node (m), level, natural ground, structure index (-1 = none)
+         0    19.68    19.66  -1
+        50    18.91    19.23  -1
+       100    18.15    18.10  -1
+       150    17.38    17.25  -1
+       200    16.61    16.55  -1
+       250    15.99    15.20  -1
+       300    15.53    15.53  -1
+       350    15.34    15.17  -1
+       400    15.73    14.29  -1
+       450    16.68    14.46  -1
+       500    18.10    14.00  -1
+       550    19.57    14.17  -1
+       600    21.04    14.14  17
+       650    22.40    14.57  17
+       700    23.30    14.58  17
+  link M6-1: distance along the link (m), level, natural ground, structure index
+         0    20.02    20.15  -1
+        50    20.33    21.00  -1
+       100    20.14    22.63  -1
+       150    19.47    22.82  -1
+       200    18.32    23.42  -1
+       250    16.82    22.19  -1
+       300    15.32    19.83  -1
+       350    13.83    15.54  -1
+       400    12.32    10.96  -1
+       450    11.04     6.08  -1
+       500    10.60    -0.66  20
+       550    10.81    -6.50  20
+       600    11.06   -11.93  20
+       650    11.13   -17.47  20
+       700    10.90   -21.78  20
+  ring structures (offset from node): -432..-312
+  arm structures (distance from node): 920..584
+  link structures (along link): 462..845
+  PASS  arm: first structure at least 450 m from the node (room to raise 290 m) 920 m
+  PASS  link: first structure at least 450 m from the link start       462 m
+  INFO  ring: nearest structure on the EAST (offset -) side            312 m from the node
+  INFO  ring: nearest structure on the WEST (offset +) side            none within 1500 m
+  PASS  ring nearly straight within +-400 m (mean radius >= 1500 m)    straight
+
+2. FREE LAND, 4 QUADRANTS. Box: along the ring 100..450 m from the node, offset 40..350 m from the ring centreline (Hatikamrul is about 600-700 m wide).
+  EAST-LINK(south) cut max 7.6 m, fill max 14.8 m, steepest 5 m slope 20 %, wet 22 %, rail min 780 m (ring-south), buildings 0
+  EAST-ARM(north) cut max 6.7 m, fill max 12.9 m, steepest 5 m slope 37 %, wet 9 %, rail min 404 m (ring-south), buildings 0
+  WEST-LINK(south) cut max 10.9 m, fill max 0.0 m, steepest 5 m slope 9 %, wet 0 %, rail min 650 m (ring-south), buildings 0
+  WEST-ARM(north) cut max 0.1 m, fill max 12.0 m, steepest 5 m slope 7 %, wet 0 %, rail min 285 m (ring-south), buildings 0
+  FAIL  EAST-LINK(south): no water in the box                          wet 22 %
+  PASS  EAST-LINK(south): rail more than 60 m from the sampled points  780 m
+  FAIL  EAST-LINK(south): ground within fill 7 / cut 12 m of the ring level fill 14.8 cut 7.6
+  INFO  EAST-LINK(south): buildings in the box (replaced later, not a FAIL) 0
+  FAIL  EAST-ARM(north): no water in the box                           wet 9 %
+  PASS  EAST-ARM(north): rail more than 60 m from the sampled points   404 m
+  FAIL  EAST-ARM(north): ground within fill 7 / cut 12 m of the ring level fill 12.9 cut 6.7
+  INFO  EAST-ARM(north): buildings in the box (replaced later, not a FAIL) 0
+  PASS  WEST-LINK(south): no water in the box                          wet 0 %
+  PASS  WEST-LINK(south): rail more than 60 m from the sampled points  650 m
+  PASS  WEST-LINK(south): ground within fill 7 / cut 12 m of the ring level fill 0.0 cut 10.9
+  INFO  WEST-LINK(south): buildings in the box (replaced later, not a FAIL) 0
+  PASS  WEST-ARM(north): no water in the box                           wet 0 %
+  PASS  WEST-ARM(north): rail more than 60 m from the sampled points   285 m
+  FAIL  WEST-ARM(north): ground within fill 7 / cut 12 m of the ring level fill 12.0 cut 0.1
+  INFO  WEST-ARM(north): buildings in the box (replaced later, not a FAIL) 0
+
+3. OTHER ROADS AND RAIL NEAR THE NODE
+  INFO  roads within 700 m of the node                                 R2-41 500 m, R2-34.1 680 m, R2-34.2 509 m, R2-34.3 392 m, R2-34.4 362 m, R2-35.1 392 m, R2-35.2 175 m, R2-36.1 509 m, R2-36.2 372 m, R2-37.1 680 m, R2-37.2 585 m, R2-40.1 637 m, R2-40.2 637 m, R2-42.1 637 m, R2-42.2 264 m, R2-8.2 383 m, R2-33 195 m
+  INFO  nearest rail point to the node                                 723 m (ring-south)
+  INFO  buildings within 450 m of the node (all quadrants, corridors included) 0
+  INFO  natural ground at the node / water                             19.66 m / false
+
+4. NOT CHECKED in HK-0: trees and grass, drainage, the carved ground (natural ground is used), the look in the game, city-plan buildings not yet placed, the C-D / ramp geometry itself (HK-3 onwards).
+
+RESULT: 5 FAIL

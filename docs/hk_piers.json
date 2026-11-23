@@ -1,0 +1,39 @@
+{
+ "pierX": [
+  50.0,
+  -50.0,
+  -97.0
+ ],
+ "colY": [
+  -24.2,
+  -8.0,
+  8.0,
+  24.2
+ ],
+ "rows": [
+  {
+   "loop": "SE",
+   "minClear": 28.11,
+   "pierX": 50.0,
+   "colY": -24.2
+  },
+  {
+   "loop": "NE",
+   "minClear": 32.15,
+   "pierX": 50.0,
+   "colY": 24.2
+  },
+  {
+   "loop": "NW",
+   "minClear": 1.39,
+   "pierX": -97.0,
+   "colY": 24.2
+  },
+  {
+   "loop": "SW",
+   "minClear": 1.22,
+   "pierX": -97.0,
+   "colY": -24.2
+  }
+ ]
+}

@@ -1,0 +1,43 @@
+HK-7: existing ring check scripts, BASELINE (old ring profile) and PATCHED (docs/RingProfileData.hk.ts = HK-6 patch). Run with scripts/hk-ring-checks.sh from the game root, once with each RingProfileData.ts.
+
+##### BASELINE
+== ring-structures-check: 5 PASS, 0 FAIL | ALL CHECKS PASS
+== ring-profile-check: 0 PASS, 0 FAIL | Node.js v22.23.5
+== ring-cut-check: 1 PASS, 3 FAIL | 3 CHECK(S) FAILED
+  FAIL  beyond the platform: ground inside the envelope (fill 1:3 below, cut up to 4:1 above) worst outside 6.67 m, bad 42 | pt 225 (1800 m) L at 40 m: 3.57 m outside, ground 21.2 road 31.1 | pt 225 (
+  FAIL  no wall: the cut face is never steeper than 4:1 (76 deg) except natural ground worst excess 1.74, bad 2 at stations 2120L 2880L
+  FAIL  last offset (250 m) is natural ground again                        worst 5.9 m, walls 7: pt 175 (1400 m) left 1.7 m; pt 200 (1600 m) left 1.7 m; pt 220 (1760 m) left 1.0 m; pt 275 (2200 m) lef
+== ring-ground-check: 0 PASS, 0 FAIL | written ./ring_ground.json
+== ring-road-check: 7 PASS, 0 FAIL | ALL CHECKS PASS
+== ring-facade-check: 5 PASS, 4 FAIL | 4 CHECK(S) FAILED
+  FAIL  roads: exactly one road, M8                                    199 road(s)
+  FAIL  stats: 1 road, highwayKm = ring length                         70.933 km
+  FAIL  bridges and pads: 6 structures of the ring (Step 5.3b, scripts/ring-structures-check.ts), no pads yet 41 bridges, 0 pads
+  FAIL  surfaceAt: asphalt on the whole carriageway, natural ground 60 m away pt 1680: 11111
+== ring-drive-check: 1 PASS, 2 FAIL | FAILED 2
+  FAIL  collider height = road height across the whole pavement        worst 9.34 m at point 950, u -17.0 m; 133/15750 samples over 0.25 m
+  FAIL  no stretch where the pavement hangs over lower ground          149-152 (32 m), 260-263 (32 m), 445-448 (32 m), 530-536 (56 m), 666-670 (40 m), 699-699 (8 m), 702-703 (16 m), 947-951 (40 m), 12
+== ring-row-check: 7 PASS, 1 FAIL | 1 CHECK(S) FAILED
+  FAIL  no engineering area inside the corridor                      eng-steel 10399-11109; eng-aerospace 11649-11919
+== ring-ribbons-check: 15 PASS, 0 FAIL | ALL CHECKS PASS
+
+##### PATCHED
+== ring-structures-check: 5 PASS, 0 FAIL | ALL CHECKS PASS
+== ring-profile-check: 0 PASS, 0 FAIL | Node.js v22.23.5
+== ring-cut-check: 1 PASS, 3 FAIL | 3 CHECK(S) FAILED
+  FAIL  beyond the platform: ground inside the envelope (fill 1:3 below, cut up to 4:1 above) worst outside 6.67 m, bad 57 | pt 170 (1360 m) L at 38 m: 1.80 m outside, ground 19.9 road 27.3 | pt 170 (
+  FAIL  no wall: the cut face is never steeper than 4:1 (76 deg) except natural ground worst excess 1.74, bad 2 at stations 2120L 2880L
+  FAIL  last offset (250 m) is natural ground again                        worst 5.9 m, walls 7: pt 175 (1400 m) left 1.7 m; pt 200 (1600 m) left 1.7 m; pt 220 (1760 m) left 1.0 m; pt 275 (2200 m) lef
+== ring-ground-check: 0 PASS, 0 FAIL | written ./ring_ground.json
+== ring-road-check: 7 PASS, 0 FAIL | ALL CHECKS PASS
+== ring-facade-check: 5 PASS, 4 FAIL | 4 CHECK(S) FAILED
+  FAIL  roads: exactly one road, M8                                    199 road(s)
+  FAIL  stats: 1 road, highwayKm = ring length                         70.933 km
+  FAIL  bridges and pads: 6 structures of the ring (Step 5.3b, scripts/ring-structures-check.ts), no pads yet 41 bridges, 0 pads
+  FAIL  surfaceAt: asphalt on the whole carriageway, natural ground 60 m away pt 1680: 11111
+== ring-drive-check: 1 PASS, 2 FAIL | FAILED 2
+  FAIL  collider height = road height across the whole pavement        worst 9.34 m at point 950, u -17.0 m; 142/15750 samples over 0.25 m
+  FAIL  no stretch where the pavement hangs over lower ground          149-153 (40 m), 260-263 (32 m), 445-448 (32 m), 530-536 (56 m), 666-670 (40 m), 699-699 (8 m), 702-703 (16 m), 947-951 (40 m), 12
+== ring-row-check: 7 PASS, 1 FAIL | 1 CHECK(S) FAILED
+  FAIL  no engineering area inside the corridor                      eng-steel 10399-11109; eng-aerospace 11649-11919
+== ring-ribbons-check: 15 PASS, 0 FAIL | ALL CHECKS PASS

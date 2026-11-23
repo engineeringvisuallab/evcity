@@ -1,0 +1,17 @@
+HK-8b PIER FOOTPRINTS vs LOOP RAMPS and C-D ROADS (2026-11-23, data only, src NOT changed)
+Pier lines x = [50.0, -50.0, -97.0] (d = [-50.0, 50.0, 97.0]); 4 columns per line at y = [-24.2, -8.0, 8.0, 24.2]; column 3.0 x 2.5 m; deck half width 25.75 m.
+Ramp half width 4.2 m, clearance wanted 1.0 m (plan only).
+
+Checks:
+  PASS  SE loop ramp edge to nearest column                            28.1 m (column x 50, y -24; need 1.0)
+  PASS  NE loop ramp edge to nearest column                            32.2 m (column x 50, y 24; need 1.0)
+  PASS  NW loop ramp edge to nearest column                            1.4 m (column x -97, y 24; need 1.0)
+  PASS  SW loop ramp edge to nearest column                            1.2 m (column x -97, y -24; need 1.0)
+  PASS  C-D roads (straight 23.2 / 29.3 m + slip points in the deck window, + 4.2 m) to the nearest pier face C-D outer edge x 33.5, pier face x 48.5: 15.0 m
+  PASS  All columns inside the deck width                              outer column face y 25.4 <= 25.75
+  PASS  Cap beam: span between columns / cantilever                    16.0 m between the inner columns and the outer ones / 0.30 m beyond the outer column face (deck edge 25.75)
+
+Tightest loop to column: 1.2 m (SW).
+RUN: this script only. NOT RUN: tsc, npm run build, ring checks, game look.
+NOT CHECKED: levels (plan only; the ramp is at ring level for its first metres, so a plan overlap there would be harmless but would still show FAIL); the ring AUX lanes beyond the viaduct (east 150 - 293 m, HK-5a) and their width on the embankment; terrain under the columns; the ring median / lane layout (4 columns assumed to suit any); abutments; physics; lane drop 8 -> 6 (HK-8c).
+RESULT: 0 FAIL, 0 WARN

@@ -1,0 +1,14 @@
+HK-6 ring profile: ring length 19292.8 m, node at station 1207.8 m, profile grid 10 m (1929 samples).
+Samples in +-800 m: 160; changed: 120 (d -428 .. +762 m); max raise 7.55 m.
+  PASS  ring grade on the 10 m grid <= 4 % (motorway limit)                3.90 % at d -247.79779249798298 m (WEST + / EAST -)
+  PASS  new profile meets the old ring profile at both ends of the change  left d -428, right d 762
+WET stretches of the ring (auto BRIDGE by the wet rule, the E1 rebuilt river bridge is one of them): d -418 .. -328 (90 m)
+New ring more than 7.5 m above natural ground (VIADUCT by the fill rule where a river is beside; else an earth embankment up to RING_VIADUCT_TALL 25 m): d -408 .. -338 (70 m); d -98 .. 12 (110 m); d 102 .. 152 (50 m)
+New ring more than 3 m above natural ground: d -418 .. -308 (110 m); d -178 .. 462 (640 m); d 552 .. 602 (50 m)
+Highest new ring above natural ground: 12.9 m at d -348 m (old ring there: 12.0 m).
+River bridge: 10 wet samples; lowest deck underside above the water: 3.25 m at d -398 m (old ring: 2.82 m).
+  PASS  river bridge: underside at least 1.0 m above the water             3.25 m
+Ring deck over the crossing (lower roads + C-D roads + aux lanes): level part |d| <= 51.5 m at 27.23 m; clearance 5.5 m over the lower roads (HK-4).
+SUMMARY OF WHAT THE GAME DOES WITH THIS PROFILE: a wet stretch becomes a bridge by itself; a ring stretch with fill > 7.5 m beside a river valley becomes a viaduct by itself; the deck over the arm / link / C-D roads at the node is NOT made by any rule (the arm and link are junction roads): it is a hand-made structure (HK-8). Earth embankments up to 7.5 m are built by the ring terrain rule (HK-7 checks the skirt).
+NOT RUN: the game, tsc, build, the existing ring checks (ring-structures, ring-facade, ring-cut: scripts not in the zip), src NOT patched (patch is data in docs/), the river bridge level against the real water table beyond the samples, the arm / link ends.
+RESULT 0 FAIL, 0 WARN

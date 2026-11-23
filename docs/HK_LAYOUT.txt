@@ -1,0 +1,21 @@
+PASS  H1 loop NE pond: R 55 m >= minRadius(V45) 55 m and >= V40 40.6 m; R supports V45
+PASS  H1 loop SE pond: R 55 m >= minRadius(V45) 55 m and >= V40 40.6 m; R supports V45
+PASS  H1 loop NW lawn: R 115 m >= minRadius(V60) 113.4 m and >= V40 40.6 m; R supports V60
+PASS  H1 loop SW lawn: R 115 m >= minRadius(V60) 113.4 m and >= V40 40.6 m; R supports V60
+PASS  H1 ramp grade R55 rise 6.9: peak 4 % over a 259 m arc (limit 5 %)
+PASS  H1 ramp grade R115 rise 6.9: peak 1.9 % over a 542 m arc (limit 5 %)
+PASS  H1 ramp grade R55 rise 7.8: peak 4.5 % over a 259 m arc (limit 5 %)
+PASS  H1 ramp grade R115 rise 7.8: peak 2.2 % over a 542 m arc (limit 5 %)
+C-D: offset 29.3 m, shift 12 m, exit transition 180 m (decel 60.2, 15 x shift 180), entry transition 240 m (accel 68.3, 20 x shift 240)
+FAIL  H3 C-D extent slipSize 250 vs link structure 462 m (south): 507 m from the node
+PASS  H3 C-D extent slipSize 250 vs arm structure 584 m (north): 567 m from the node
+PASS  H3 C-D extent slipSize 150 vs link structure 462 m (south): 407 m from the node
+PASS  H3 C-D extent slipSize 150 vs arm structure 584 m (north): 467 m from the node
+PASS  H4 weave east C-D (ponds) (ESTIMATE): 190 m (min 150, desirable 300: below desirable)
+PASS  H4 weave west C-D (lawns) (ESTIMATE): 310 m (min 150, desirable 300: meets desirable)
+ring exit decel 100 -> 45: 123 m;  entrance accel 45 -> 85: 167 m
+ring exit decel 100 -> 60: 99 m;  entrance accel 60 -> 85: 117 m
+footprint of the 4 loops (sketch): x -285 .. 180, y -270 .. 270 m = 465 x 540 m (video estimate 600-700 m across)
+CARRIED FROM HK-0, NOT RE-RUN: quadrant boxes NW fill 12.0 m FAIL, NE fill 12.9 / wet FAIL, SE fill 14.8 / wet FAIL, SW cut 10.9 PASS.
+NOT RUN: game, tsc, build, terrain check of the new loop positions, ramp spirals.
+RESULT 1 FAIL

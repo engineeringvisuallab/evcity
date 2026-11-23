@@ -1,0 +1,316 @@
+HK-8d-3 RESULT TEXT (2026-11-23). Base = evcity.zip without the HK files; OFF = HK code, switch OFF; ON = HK code, Config.roads.hatikamrul.enabled = true.
+Run: HK=0|1 npx tsx scripts/hk-ring-run.ts <check>. Lines starting with '[' (road-fix log lines) are left out.
+
+===== hk-node-physics-check  [off] =====
+switch OFF: 20 ring-list structures, node viaducts 0
+  PASS  switch OFF: no node viaduct structure                            0
+ALL PASS (OFF)
+
+===== hk-node-physics-check  [on] =====
+switch ON: 21 ring-list structures, node viaducts 1
+  PASS  N1 one node viaduct, LAST in the structure list                  index 20 of 21
+  PASS  N2 solid: finite numbers, valid indices                          680 verts, 1128 tris (render + collider top face)
+  PASS  N2 bounding circle is centred on the deck (render mesh d -112 .. +160) centre off 8.00 m, radius 138.60 m
+  PASS  N2 collider-only deck top past the circle: same as the other structures (old rule) node 15.54 m, other 20 structures 12.42 .. 16.13 m, limit 2 points = 17 m
+  PASS  N3 player far away (reach + 200 m): no collider                  active 1
+  PASS  N3 player 2 m inside the reach: collider created                 reach 438.60 m, active 2
+  PASS  N3 player 70 m outside the reach: collider removed               active 1
+  PASS  N3 player on the deck: collider created again                    active 2
+  PASS  N3 one FIXED body with one trimesh collider                      fixed true, colliders 1
+  PASS  N4 ball dropped 3 m on the deck rests on it (6 stations x 4 offsets) 24 balls, worst error 0.01 m
+  PASS  N5 parapet stops a ray at the deck edge (25.75 m)                hit at u = 25.75 / 25.75 / 25.75 / 25.75 / 25.75 / 25.75 m
+  PASS  N6 both lower roads exist (J1-S arm, M6-1 link)                  J1-S, M6-1
+  PASS  N6 clearance over the lower roads >= 5.50 m (min over all rays)  459 rays, 85 hit the deck, min 6.15 m at J1-S pt 314 u 2.76
+  PASS  N7 terrain collider under the deck is below the soffit (no poke-through) 203 samples, highest terrain minus soffit -4.21 m at d -48 u 24
+  PASS  N8 terrain collider between arm end and link start is at road level (+-0.5 m) gap 24.95 m (arm pt 314 y 19.68 -> link pt 0 y 20.02), worst -0.31 m at 22.50 m; every 5 m: -0.07 -0.22 -0.24 -0.27 -0.30
+  PASS  N3 dispose() removes every body                                  active 0
+ALL PASS
+
+===== ring-facade-check  [base] =====
+RoadNetwork built in 32.0 s
+  FAIL  roads: exactly one road, M8                                    199 road(s)
+  PASS  M8 is a closed tier-1 highway                                  closed true, highway, tier 1
+  PASS  M8 has the Step 4.1 section (8 lanes, 22.1 m, median 3, lane 3.65, shoulder 3) lanes 8, halfWidth 22.1, median 3, laneW 3.65, shyOuter 3
+  PASS  every planned point is in the road                             2412 points
+  PASS  surface heights and positions are exactly the design           dy 0.0e+0, dxz 0.0e+0
+  PASS  road length equals the alignment length                        19292.8 vs 19292.8 m
+  FAIL  stats: 1 road, highwayKm = ring length                         70.933 km
+  FAIL  bridges and pads: 6 structures of the ring (Step 5.3b, scripts/ring-structures-check.ts), no pads yet 41 bridges, 0 pads
+  FAIL  surfaceAt: asphalt on the whole carriageway, natural ground 60 m away pt 1680: 11111
+
+4 CHECK(S) FAILED
+
+===== ring-facade-check  [off] =====
+RoadNetwork built in 33.2 s
+  FAIL  roads: exactly one road, M8                                    199 road(s)
+  PASS  M8 is a closed tier-1 highway                                  closed true, highway, tier 1
+  PASS  M8 has the Step 4.1 section (8 lanes, 22.1 m, median 3, lane 3.65, shoulder 3) lanes 8, halfWidth 22.1, median 3, laneW 3.65, shyOuter 3
+  PASS  every planned point is in the road                             2412 points
+  PASS  surface heights and positions are exactly the design           dy 0.0e+0, dxz 0.0e+0
+  PASS  road length equals the alignment length                        19292.8 vs 19292.8 m
+  FAIL  stats: 1 road, highwayKm = ring length                         70.933 km
+  FAIL  bridges and pads: 6 structures of the ring (Step 5.3b, scripts/ring-structures-check.ts), no pads yet 41 bridges, 0 pads
+  FAIL  surfaceAt: asphalt on the whole carriageway, natural ground 60 m away pt 1680: 11111
+
+4 CHECK(S) FAILED
+
+===== ring-facade-check  [on] =====
+RoadNetwork built in 32.9 s
+  FAIL  roads: exactly one road, M8                                    199 road(s)
+  PASS  M8 is a closed tier-1 highway                                  closed true, highway, tier 1
+  PASS  M8 has the Step 4.1 section (8 lanes, 22.1 m, median 3, lane 3.65, shoulder 3) lanes 8, halfWidth 22.1, median 3, laneW 3.65, shyOuter 3
+  PASS  every planned point is in the road                             2412 points
+  PASS  surface heights and positions are exactly the design           dy 0.0e+0, dxz 0.0e+0
+  PASS  road length equals the alignment length                        19292.8 vs 19292.8 m
+  FAIL  stats: 1 road, highwayKm = ring length                         70.933 km
+  FAIL  bridges and pads: 6 structures of the ring (Step 5.3b, scripts/ring-structures-check.ts), no pads yet 42 bridges, 0 pads
+  FAIL  surfaceAt: asphalt on the whole carriageway, natural ground 60 m away pt 1680: 11111
+
+4 CHECK(S) FAILED
+
+===== ring-cut-check  [base] =====
+ring points tested 449, platform half width 22.7 m, wet samples skipped 12397, other-road / pad samples skipped 11224
+  PASS  platform: ground equals the road surface across the whole width    worst 0.006 m, bad 0
+  FAIL  beyond the platform: ground inside the envelope (fill 1:3 below, cut up to 4:1 above) worst outside 6.67 m, bad 42 | pt 225 (1800 m) L at 40 m: 3.57 m outside, ground 21.2 road 31.1 | pt 225 (1800 m) L at 42 m: 3.85 m outside, ground 20.3 road 31.1 | pt 225 (1800 m) L at 44 m: 3.65 m outside, ground 19.8 road 31.1 | pt 225 (1800 m) L at 46 m: 2.98 m outside, ground 19.8 road 31.1 | pt 225 (1800 m) L at 48 m: 2.31 m outside, ground 19.8 road 31.1
+  info  rock-cut face samples steeper than 1:2 (made by the cut, natural ground is not): 739
+  FAIL  no wall: the cut face is never steeper than 4:1 (76 deg) except natural ground worst excess 1.74, bad 2 at stations 2120L 2880L
+  FAIL  last offset (250 m) is natural ground again                        worst 5.9 m, walls 7: pt 175 (1400 m) left 1.7 m; pt 200 (1600 m) left 1.7 m; pt 220 (1760 m) left 1.0 m; pt 275 (2200 m) left 1.3 m; pt 275 (2200 m) right 2.7 m; pt 295 (2360 m) left 2.5 m
+
+3 CHECK(S) FAILED
+exit 1 time 12
+
+===== ring-cut-check  [off] =====
+ring points tested 449, platform half width 22.7 m, wet samples skipped 12397, other-road / pad samples skipped 11224
+  PASS  platform: ground equals the road surface across the whole width    worst 0.006 m, bad 0
+  FAIL  beyond the platform: ground inside the envelope (fill 1:3 below, cut up to 4:1 above) worst outside 6.67 m, bad 42 | pt 225 (1800 m) L at 40 m: 3.57 m outside, ground 21.2 road 31.1 | pt 225 (1800 m) L at 42 m: 3.85 m outside, ground 20.3 road 31.1 | pt 225 (1800 m) L at 44 m: 3.65 m outside, ground 19.8 road 31.1 | pt 225 (1800 m) L at 46 m: 2.98 m outside, ground 19.8 road 31.1 | pt 225 (1800 m) L at 48 m: 2.31 m outside, ground 19.8 road 31.1
+  info  rock-cut face samples steeper than 1:2 (made by the cut, natural ground is not): 739
+  FAIL  no wall: the cut face is never steeper than 4:1 (76 deg) except natural ground worst excess 1.74, bad 2 at stations 2120L 2880L
+  FAIL  last offset (250 m) is natural ground again                        worst 5.9 m, walls 7: pt 175 (1400 m) left 1.7 m; pt 200 (1600 m) left 1.7 m; pt 220 (1760 m) left 1.0 m; pt 275 (2200 m) left 1.3 m; pt 275 (2200 m) right 2.7 m; pt 295 (2360 m) left 2.5 m
+
+3 CHECK(S) FAILED
+exit 1 time 13
+
+===== ring-cut-check  [on] =====
+ring points tested 442, platform half width 22.7 m, wet samples skipped 12300, other-road / pad samples skipped 11127
+  PASS  platform: ground equals the road surface across the whole width    worst 0.006 m, bad 0
+  FAIL  beyond the platform: ground inside the envelope (fill 1:3 below, cut up to 4:1 above) worst outside 6.67 m, bad 53 | pt 195 (1560 m) L at 40 m: 0.13 m outside, ground 21.7 road 28.1 | pt 195 (1560 m) L at 42 m: 0.42 m outside, ground 20.8 road 28.1 | pt 195 (1560 m) L at 44 m: 0.70 m outside, ground 19.8 road 28.1 | pt 195 (1560 m) L at 46 m: 0.26 m outside, ground 19.6 road 28.1 | pt 220 (1760 m) L at 44 m: 0.39 m outside, ground 23.3 road 31.3
+  info  rock-cut face samples steeper than 1:2 (made by the cut, natural ground is not): 731
+  FAIL  no wall: the cut face is never steeper than 4:1 (76 deg) except natural ground worst excess 1.74, bad 2 at stations 2120L 2880L
+  FAIL  last offset (250 m) is natural ground again                        worst 5.9 m, walls 7: pt 175 (1400 m) left 1.7 m; pt 200 (1600 m) left 1.7 m; pt 220 (1760 m) left 1.0 m; pt 275 (2200 m) left 1.3 m; pt 275 (2200 m) right 2.7 m; pt 295 (2360 m) left 2.5 m
+
+3 CHECK(S) FAILED
+exit 1 time 13
+
+===== ring-drive-check  [base] =====
+RING DRIVE CHECK  ring 19293 m, 2412 points, collider grid 3.91 m
+  FAIL  collider height = road height across the whole pavement        worst 9.34 m at point 950, u -17.0 m; 114/15750 samples over 0.25 m
+  PASS  no step along the lane between neighbouring points (8 m)       largest 0.45 m (4 % grade = 0.32 m)
+  FAIL  no stretch where the pavement hangs over lower ground          149-152 (32 m), 260-263 (32 m), 445-448 (32 m), 530-536 (56 m), 666-670 (40 m), 699-699 (8 m), 702-703 (16 m), 947-951 (40 m), 1233-1236 (32 m), 1395-1395 (8 m), 1398-1399 (16 m), 1427-1431 (40 m), 1510-1514 (40 m), 1677-1680 (32 m), 2101-2104 (32 m), 2341-2344 (32 m), 2403-2406 (32 m)
+FAILED 2
+exit 1 time 13
+
+===== ring-drive-check  [off] =====
+RING DRIVE CHECK  ring 19293 m, 2412 points, collider grid 3.91 m
+  FAIL  collider height = road height across the whole pavement        worst 9.34 m at point 950, u -17.0 m; 114/15750 samples over 0.25 m
+  PASS  no step along the lane between neighbouring points (8 m)       largest 0.45 m (4 % grade = 0.32 m)
+  FAIL  no stretch where the pavement hangs over lower ground          149-152 (32 m), 260-263 (32 m), 445-448 (32 m), 530-536 (56 m), 666-670 (40 m), 699-699 (8 m), 702-703 (16 m), 947-951 (40 m), 1233-1236 (32 m), 1395-1395 (8 m), 1398-1399 (16 m), 1427-1431 (40 m), 1510-1514 (40 m), 1677-1680 (32 m), 2101-2104 (32 m), 2341-2344 (32 m), 2403-2406 (32 m)
+FAILED 2
+exit 1 time 13
+
+===== ring-drive-check  [on] =====
+RING DRIVE CHECK  ring 19293 m, 2412 points, collider grid 3.91 m
+  FAIL  collider height = road height across the whole pavement        worst 9.34 m at point 950, u -17.0 m; 110/15505 samples over 0.25 m
+  PASS  no step along the lane between neighbouring points (8 m)       largest 0.45 m (4 % grade = 0.32 m)
+  FAIL  no stretch where the pavement hangs over lower ground          260-263 (32 m), 445-448 (32 m), 530-536 (56 m), 666-670 (40 m), 699-699 (8 m), 702-703 (16 m), 947-951 (40 m), 1233-1236 (32 m), 1395-1395 (8 m), 1398-1399 (16 m), 1427-1431 (40 m), 1510-1514 (40 m), 1677-1680 (32 m), 2101-2104 (32 m), 2341-2344 (32 m), 2403-2406 (32 m)
+FAILED 2
+exit 1 time 14
+
+===== ring-bridge-physics-check  [base] =====
+ALL PASS
+exit 0 time 17
+
+===== ring-bridge-physics-check  [off] =====
+ALL PASS
+exit 0 time 15
+
+===== ring-bridge-physics-check  [on] =====
+  PASS  S21 mid-span          road 27.23  ball centre 27.62
+  PASS  S21 8 m before start  road 26.76  ball centre 27.15
+  PASS  S21 8 m after end     road 27.33  ball centre 27.72
+  PASS  S21 4 m inside start  road 26.95  ball centre 27.34
+  PASS  S21 4 m inside end    road 27.32  ball centre 27.71
+ALL PASS
+exit 0 time 15
+
+===== ring-bridge-mesh-check  [base] =====
+structures: 20
+  PASS  S1 mesh valid                                                464 verts, 646 tris
+  PASS  S1 mast rises above the deck                                 top 33.6 m over highest deck point
+  PASS  S2 mesh valid                                                788 verts, 902 tris
+  PASS  S2 arch rises over the deck                                  top 5.4 m over highest deck point
+  PASS  S3 mesh valid                                                278 verts, 372 tris
+  PASS  S3 pylon height over the deck                                top 7.2 m over highest deck point
+  PASS  S4 mesh valid                                                880 verts, 1026 tris
+  PASS  S4 top chord rises over the deck                             top 6.5 m over highest deck point
+  PASS  S5 piers reach below the ground, nothing above the parapet   lowest 16.7, top 1.1 m over highest deck point
+  PASS  S5 mesh valid                                                236 verts, 398 tris
+  PASS  S6 piers reach below the ground, nothing above the parapet   lowest 17.1, top 1.1 m over highest deck point
+  PASS  S6 mesh valid                                                1790 verts, 3164 tris
+  PASS  S7 piers reach below the ground, nothing above the parapet   lowest 16.5, top 1.1 m over highest deck point
+  PASS  S7 mesh valid                                                184 verts, 310 tris
+  FAIL  S8 piers reach below the ground, nothing above the parapet   lowest 32.7, top 1.1 m over highest deck point
+  PASS  S8 mesh valid                                                604 verts, 1090 tris
+  PASS  S9 piers reach below the ground, nothing above the parapet   lowest 40.6, top 1.1 m over highest deck point
+  PASS  S9 mesh valid                                                184 verts, 310 tris
+  FAIL  S10 piers reach below the ground, nothing above the parapet  lowest 21.9, top 1.1 m over highest deck point
+  PASS  S10 mesh valid                                               268 verts, 466 tris
+  FAIL  S11 piers reach below the ground, nothing above the parapet  lowest 22.2, top 1.1 m over highest deck point
+  PASS  S11 mesh valid                                               226 verts, 388 tris
+  PASS  S12 piers reach below the ground, nothing above the parapet  lowest 16.1, top 1.1 m over highest deck point
+  PASS  S12 mesh valid                                               254 verts, 440 tris
+  FAIL  S13 piers reach below the ground, nothing above the parapet  lowest 21.2, top 1.1 m over highest deck point
+  PASS  S13 mesh valid                                               758 verts, 1376 tris
+  FAIL  S14 piers reach below the ground, nothing above the parapet  lowest 25.7, top 1.1 m over highest deck point
+  PASS  S14 mesh valid                                               324 verts, 570 tris
+  FAIL  S15 piers reach below the ground, nothing above the parapet  lowest 26.6, top 1.1 m over highest deck point
+  PASS  S15 mesh valid                                               562 verts, 1012 tris
+  FAIL  S16 piers reach below the ground, nothing above the parapet  lowest 14.2, top 1.1 m over highest deck point
+  PASS  S16 mesh valid                                               156 verts, 258 tris
+  PASS  S17 piers reach below the ground, nothing above the parapet  lowest 12.1, top 1.1 m over highest deck point
+  PASS  S17 mesh valid                                               618 verts, 1116 tris
+  FAIL  S18 piers reach below the ground, nothing above the parapet  lowest 21.5, top 1.1 m over highest deck point
+  PASS  S18 mesh valid                                               226 verts, 388 tris
+  PASS  S19 piers reach below the ground, nothing above the parapet  lowest 15.1, top 1.1 m over highest deck point
+  PASS  S19 mesh valid                                               394 verts, 700 tris
+  PASS  S20 piers reach below the ground, nothing above the parapet  lowest -10.3, top 1.1 m over highest deck point
+  PASS  S20 mesh valid                                               982 verts, 1692 tris
+FAILED 8
+exit 1 time 13
+
+===== ring-bridge-mesh-check  [off] =====
+structures: 20
+  PASS  S1 mesh valid                                                464 verts, 646 tris
+  PASS  S1 mast rises above the deck                                 top 33.6 m over highest deck point
+  PASS  S2 mesh valid                                                788 verts, 902 tris
+  PASS  S2 arch rises over the deck                                  top 5.4 m over highest deck point
+  PASS  S3 mesh valid                                                278 verts, 372 tris
+  PASS  S3 pylon height over the deck                                top 7.2 m over highest deck point
+  PASS  S4 mesh valid                                                880 verts, 1026 tris
+  PASS  S4 top chord rises over the deck                             top 6.5 m over highest deck point
+  PASS  S5 piers reach below the ground, nothing above the parapet   lowest 16.7, top 1.1 m over highest deck point
+  PASS  S5 mesh valid                                                236 verts, 398 tris
+  PASS  S6 piers reach below the ground, nothing above the parapet   lowest 17.1, top 1.1 m over highest deck point
+  PASS  S6 mesh valid                                                1790 verts, 3164 tris
+  PASS  S7 piers reach below the ground, nothing above the parapet   lowest 16.5, top 1.1 m over highest deck point
+  PASS  S7 mesh valid                                                184 verts, 310 tris
+  FAIL  S8 piers reach below the ground, nothing above the parapet   lowest 32.7, top 1.1 m over highest deck point
+  PASS  S8 mesh valid                                                604 verts, 1090 tris
+  PASS  S9 piers reach below the ground, nothing above the parapet   lowest 40.6, top 1.1 m over highest deck point
+  PASS  S9 mesh valid                                                184 verts, 310 tris
+  FAIL  S10 piers reach below the ground, nothing above the parapet  lowest 21.9, top 1.1 m over highest deck point
+  PASS  S10 mesh valid                                               268 verts, 466 tris
+  FAIL  S11 piers reach below the ground, nothing above the parapet  lowest 22.2, top 1.1 m over highest deck point
+  PASS  S11 mesh valid                                               226 verts, 388 tris
+  PASS  S12 piers reach below the ground, nothing above the parapet  lowest 16.1, top 1.1 m over highest deck point
+  PASS  S12 mesh valid                                               254 verts, 440 tris
+  FAIL  S13 piers reach below the ground, nothing above the parapet  lowest 21.2, top 1.1 m over highest deck point
+  PASS  S13 mesh valid                                               758 verts, 1376 tris
+  FAIL  S14 piers reach below the ground, nothing above the parapet  lowest 25.7, top 1.1 m over highest deck point
+  PASS  S14 mesh valid                                               324 verts, 570 tris
+  FAIL  S15 piers reach below the ground, nothing above the parapet  lowest 26.6, top 1.1 m over highest deck point
+  PASS  S15 mesh valid                                               562 verts, 1012 tris
+  FAIL  S16 piers reach below the ground, nothing above the parapet  lowest 14.2, top 1.1 m over highest deck point
+  PASS  S16 mesh valid                                               156 verts, 258 tris
+  PASS  S17 piers reach below the ground, nothing above the parapet  lowest 12.1, top 1.1 m over highest deck point
+  PASS  S17 mesh valid                                               618 verts, 1116 tris
+  FAIL  S18 piers reach below the ground, nothing above the parapet  lowest 21.5, top 1.1 m over highest deck point
+  PASS  S18 mesh valid                                               226 verts, 388 tris
+  PASS  S19 piers reach below the ground, nothing above the parapet  lowest 15.1, top 1.1 m over highest deck point
+  PASS  S19 mesh valid                                               394 verts, 700 tris
+  PASS  S20 piers reach below the ground, nothing above the parapet  lowest -10.3, top 1.1 m over highest deck point
+  PASS  S20 mesh valid                                               982 verts, 1692 tris
+FAILED 8
+exit 1 time 14
+
+===== ring-bridge-mesh-check  [on] =====
+structures: 21
+  PASS  S1 mesh valid                                                464 verts, 646 tris
+  PASS  S1 mast rises above the deck                                 top 32.6 m over highest deck point
+  PASS  S2 mesh valid                                                788 verts, 902 tris
+  PASS  S2 arch rises over the deck                                  top 5.4 m over highest deck point
+  PASS  S3 mesh valid                                                278 verts, 372 tris
+  PASS  S3 pylon height over the deck                                top 7.2 m over highest deck point
+  PASS  S4 mesh valid                                                880 verts, 1026 tris
+  PASS  S4 top chord rises over the deck                             top 6.5 m over highest deck point
+  PASS  S5 piers reach below the ground, nothing above the parapet   lowest 16.7, top 1.1 m over highest deck point
+  PASS  S5 mesh valid                                                236 verts, 398 tris
+  PASS  S6 piers reach below the ground, nothing above the parapet   lowest 17.1, top 1.1 m over highest deck point
+  PASS  S6 mesh valid                                                1790 verts, 3164 tris
+  PASS  S7 piers reach below the ground, nothing above the parapet   lowest 16.5, top 1.1 m over highest deck point
+  PASS  S7 mesh valid                                                184 verts, 310 tris
+  FAIL  S8 piers reach below the ground, nothing above the parapet   lowest 32.7, top 1.1 m over highest deck point
+  PASS  S8 mesh valid                                                604 verts, 1090 tris
+  PASS  S9 piers reach below the ground, nothing above the parapet   lowest 40.6, top 1.1 m over highest deck point
+  PASS  S9 mesh valid                                                184 verts, 310 tris
+  FAIL  S10 piers reach below the ground, nothing above the parapet  lowest 21.9, top 1.1 m over highest deck point
+  PASS  S10 mesh valid                                               268 verts, 466 tris
+  FAIL  S11 piers reach below the ground, nothing above the parapet  lowest 22.2, top 1.1 m over highest deck point
+  PASS  S11 mesh valid                                               226 verts, 388 tris
+  PASS  S12 piers reach below the ground, nothing above the parapet  lowest 16.1, top 1.1 m over highest deck point
+  PASS  S12 mesh valid                                               254 verts, 440 tris
+  FAIL  S13 piers reach below the ground, nothing above the parapet  lowest 21.2, top 1.1 m over highest deck point
+  PASS  S13 mesh valid                                               758 verts, 1376 tris
+  FAIL  S14 piers reach below the ground, nothing above the parapet  lowest 25.7, top 1.1 m over highest deck point
+  PASS  S14 mesh valid                                               324 verts, 570 tris
+  FAIL  S15 piers reach below the ground, nothing above the parapet  lowest 26.6, top 1.1 m over highest deck point
+  PASS  S15 mesh valid                                               562 verts, 1012 tris
+  FAIL  S16 piers reach below the ground, nothing above the parapet  lowest 14.2, top 1.1 m over highest deck point
+  PASS  S16 mesh valid                                               156 verts, 258 tris
+  PASS  S17 piers reach below the ground, nothing above the parapet  lowest 12.1, top 1.1 m over highest deck point
+  PASS  S17 mesh valid                                               618 verts, 1116 tris
+  FAIL  S18 piers reach below the ground, nothing above the parapet  lowest 21.5, top 1.1 m over highest deck point
+  PASS  S18 mesh valid                                               226 verts, 388 tris
+  PASS  S19 piers reach below the ground, nothing above the parapet  lowest 15.1, top 1.1 m over highest deck point
+  PASS  S19 mesh valid                                               394 verts, 700 tris
+  PASS  S20 piers reach below the ground, nothing above the parapet  lowest -10.3, top 1.1 m over highest deck point
+  PASS  S20 mesh valid                                               982 verts, 1692 tris
+  PASS  S21 piers reach below the ground, nothing above the parapet  lowest 13.4, top 1.1 m over highest deck point
+  PASS  S21 mesh valid                                               602 verts, 1052 tris
+FAILED 8
+exit 1 time 14
+
+===== ring-structures-check  [hk0] =====
+RING STRUCTURES (Step 5.3b)   ring 19293 m, 2412 points, 6 structures
+  no  stations         length  wet span  type  water  clearance(underside over water/ground)
+  S1    776 -   896    120 m     96 m   arch  14.5   2.8 m
+  S2   8135 -  8207     72 m     48 m   beam  43.5   3.6 m
+  S3  12294 - 12358     64 m     40 m   beam  22.2   1.9 m
+  S4  13950 - 14038     88 m     56 m   beam  19.0   17.0 m
+  S5  14230 - 14334    104 m     72 m   beam  26.8   22.3 m
+  S6  15237 - 16037    800 m    768 m   beam  42.4   32.7 m
+  PASS  1. every wet point of the centreline is inside a structure                     bad 0
+  PASS  2. no fill higher than 25 m outside a structure                                worst 0.0 m, bad 0 
+  PASS  3. every structure is long enough for two approach slabs of 16 m               bad 0
+  PASS  4. terrain under the inner part of a structure is never raised (no earth dam)  966 points, worst rise 0.00 m, bad 0 
+  PASS  5. whole deck incl. approach slabs: ground stays 0.3 m below the slab underside 810 points, worst 0.00 m, bad 0 
+  INFO  S1 (station 776-896): underside only 2.8 m over the water (low; the grade line is unchanged, user decision pending)
+  INFO  S3 (station 12294-12358): underside only 1.9 m over the water (low; the grade line is unchanged, user decision pending)
+ALL CHECKS PASS
+
+===== ring-structures-check  [hk1] =====
+RING STRUCTURES (Step 5.3b)   ring 19293 m, 2412 points, 7 structures
+  no  stations         length  wet span  type  water  clearance(underside over water/ground)
+  S1    776 -   896    120 m     96 m   arch  14.5   3.2 m
+  S2   1096 -  1368    272 m    240 m   beam  20.3   5.4 m
+  S3   8135 -  8207     72 m     48 m   beam  43.5   3.6 m
+  S4  12294 - 12358     64 m     40 m   beam  22.2   1.9 m
+  S5  13950 - 14038     88 m     56 m   beam  19.0   17.0 m
+  S6  14230 - 14334    104 m     72 m   beam  26.8   22.3 m
+  S7  15237 - 16037    800 m    768 m   beam  42.4   32.7 m
+  PASS  1. every wet point of the centreline is inside a structure                     bad 0
+  PASS  2. no fill higher than 25 m outside a structure                                worst 0.0 m, bad 0 
+  PASS  3. every structure is long enough for two approach slabs of 16 m               bad 0
+  PASS  4. terrain under the inner part of a structure is never raised (no earth dam)  1183 points, worst rise 0.00 m, bad 0 
+  PASS  5. whole deck incl. approach slabs: ground stays 0.3 m below the slab underside 985 points, worst 0.00 m, bad 0 
+  INFO  S4 (station 12294-12358): underside only 1.9 m over the water (low; the grade line is unchanged, user decision pending)
+ALL CHECKS PASS

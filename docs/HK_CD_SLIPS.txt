@@ -1,0 +1,15 @@
+HK-5c SLIPS + C-D ROADS, loops R 80 m / V45. C-D offsets: arm (8 lane, V100) 29.3 m (shift 12.0, exit 180 m, entry 240 m); link (6 lane, V80) 23.2 m (shift 11.4, exit 180 m, entry 230 m).
+  PASS  slip clears its loop by >= 14 m (NE on the arm offset, SE on the link offset) smallest slipSize S = 350 m; gaps NE 20.7 m, SE 20.7 m
+  PASS  NE slip ends tangent in the ring lane                                  x 379.3, y 17.3 vs 17.3; length about 518.0 m (V50, Rs 110 m, Validate needs 93.7 m)
+  PASS  SE slip ends tangent in the ring lane                                  x 373.2, y -17.3 vs -17.3; length about 518.0 m (V50, Rs 110 m, Validate needs 93.7 m)
+C-D extents from the node: east C-D 607 m at the arm end, 657 m at the link end; west C-D 607 m at the link end, 667 m at the arm end.
+  WARN  C-D south ends before the first link structure (462 m)                 657 m: the link structure must be moved / rebuilt (user: existing structures may be removed)
+  WARN  C-D north ends before the first arm structure (584 m)                  667 m: the arm structure must be moved / rebuilt
+C-D S-bend: offset change 6.1 m with two reverse arcs of R 93.7 m (V50 minimum) needs 47.4 m of road; available between the ring deck edge (25.8 m, with an auxiliary lane) and the loop start (76.4 m) = 50.7 m.
+  PASS  C-D S-bend fits between the ring deck and the loop start               50.7 m >= 47.4 m (margin 3.2 m): TIGHT, a 1:15 taper (91.5 m) would NOT fit; the reverse curve is the only way
+  PASS  H4 weave on the C-D roads (NE merge to SE diverge, 2 x loop start distance) 152.8 m (min 150, desirable 300); V50 road
+  PASS  H4 weave on the ring WITHOUT a ring C-D road                           south lane 162.6 m, north lane 174.8 m on the V100 through lanes
+  WARN  H4 weave reaches the desirable 300 m                                   152.8 / 162.6 / 174.8 m: not with any loop that fits this site
+NOTE: a C-D road does not lengthen a weave, it moves it from the V100 / V80 through lanes to a V50 road beside them. The ring C-D road is a recommendation, not decided by the user.
+NOT RUN: Validate.ts on real Ramp objects, game, tsc, build, terrain / fill of slips and C-D roads, ring C-D deck width and structure (HK-6), the 8-lane to 6-lane change of the ground road at the node (under the ring deck), the link / arm structures.
+RESULT 0 FAIL, 3 WARN

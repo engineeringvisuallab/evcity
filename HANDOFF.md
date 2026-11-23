@@ -225,3 +225,7 @@ RE-1 (type options of RT-E) done: see `HANDOFF_JUNCTION_RTE.md` section 11. New:
 
 ## CI build fix TurnRound (2026-11-23)
 GitHub Actions build failed: `src/traffic/TurnRound.ts(88,11) TS6133 private right() declared but never read`. Removed the unused `right()` method (no other use). `npx tsc --noEmit` PASS, `npm run build` PASS (local). Not pushed/seen on GitHub yet.
+
+## Hatikamrul interchange merged into the main game (2026-11-23)
+The Hatikamrul-type interchange work (HANDOFF_HATIKAMRUL.md, HK-0 .. HK-9b) was merged onto the current main game with a 3-way merge (base = the older copy inside hatikumrul.zip). 0 conflicts. Files: new src/roads/ring/{NodeViaductData,HkInterchangeLayer,HkRampData,HkRamps,HkRampMesh,RingProfileData.hk}.ts; changed RoadNetwork.ts, Engine.ts, Config.ts (merged), RingProfile.ts, RingBridgeGeometry.ts (main had not changed these); scripts/hk-*, tools/hk-*, docs/HK_*. Switch: Config.roads.hatikamrul.enabled (default FALSE = game unchanged; TRUE = ring goes over the ring S node, node viaduct + 4 loop ramps).
+Checks run here: tsc PASS; npm run build PASS; ring-structures-check 5 PASS (OFF); with the switch ON: hk-ramps-check 10 PASS, hk-node-physics-check 16 PASS, hk-ramp-mesh-check 9 PASS + 1 KNOWN FAIL (M7 terrain pokes through SE ramp, to be fixed in HK-9b2). ring-facade-check fails the same lines as before the merge. NOT run: game look (no screenshot). Not built yet: C-D roads, slips, markings, infield, traffic AI (HK-9b2 .. HK-12).

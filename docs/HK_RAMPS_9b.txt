@@ -1,0 +1,19 @@
+HK-9b RESULT TEXT (2026-11-23). Run: HK=0|1 npx tsx scripts/hk-ring-run.ts hk-ramp-mesh-check
+
+===== switch OFF =====
+  PASS  M0 switch OFF: the layer is empty (no mesh, no solid)                0 solids
+ALL PASS (OFF)
+
+===== switch ON (M7 = known FAIL, terrain carve is HK-9b2) =====
+  PASS  M1 four ramp meshes, finite numbers, valid indices                   4 meshes, 8388 verts, 10120 tris, built in 94 ms
+  PASS  M2 ramp meshes do not overlap the ring deck (>= 25.75 m from the ring axis) closest vertex 26.48 m
+  info  same check with the HK-8d-2 station 1207.798 (before HK-9b): closest 1.31 m (HK-SW column d 97 u 24.2)
+  PASS  M3 ramp edge to the node viaduct columns >= 1.0 m (HK-8b rule)       closest 1.31 m (HK-SW column d 97 u 24.2), station 1206.4462
+  PASS  M4 player far away: no ramp collider                                 active 0
+  PASS  M4 player at the interchange: all 4 ramp colliders created           active 4
+  PASS  M5 ball dropped 3 m on the lane centre rests on the pavement (4 ramps x 5 places) 20 balls, worst error 0.05 m
+  PASS  M6 parapet stops a ray at the ramp edge (4.2 m), both sides of every ramp 8 rays, 0 off
+  FAIL  M7 terrain does not poke through the pavement (ground - pavement <= 0.25 m) highest 3.16 m at HK-SE pt 42, 60 points over 0.25 m
+  PASS  M8 columns go below the lowest ground under the ramps (embedded)     lowest mesh point 12.84 m, lowest ground 16.72 m
+  PASS  M4 dispose() removes every body                                      active 0
+FAILED 1

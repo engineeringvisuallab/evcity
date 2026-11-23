@@ -36,6 +36,7 @@ import { CITY_SHP_LINE_DATA } from './city/CityShpLineData';
 import { CORRIDOR_ROAD_DATA, type CorridorPiece } from './crr/CorridorRoadData';
 import { buildJunctionRegistry, type JunctionRegistry } from './JunctionRegistry';
 import { STRUCT, STRUCT_CARVE } from './ring/RingStructures';
+import { NODE_VIADUCT } from './ring/NodeViaductData';
 import { SCENARIOS, cutRange, nearestPoint, uvToWorld, type ScenarioSpec } from '../interchange/scenario/J6Scenario';
 
 /** Natural terrain WITHOUT roads (hills, rivers, lakes, sea). Roads are planned on top of this. */
@@ -301,6 +302,8 @@ export class RoadNetwork {
         lev[i] = w;
       } else if (r.ys[i] - r.hNat[i] > RING_VIADUCT_TALL || (r.ys[i] - r.hNat[i] > VIADUCT_FILL && this.riverBeside(r, i))) flag[i] = 2;
     }
+    // STEP HK-8d-2: the node viaduct (Config.roads.hatikamrul, default OFF): every point between the two approach slabs is a structure point, so the stretch becomes one structure with the slabs added below
+    if (Config.roads.hatikamrul.enabled && r.name === 'M8') for (let i = 0; i < n; i++) { const d = r.cum[i] - NODE_VIADUCT.stationM; if (d >= NODE_VIADUCT.deckD0 && d <= NODE_VIADUCT.deckD1) flag[i] = 2; }
     const appr = Math.ceil(STRUCT.approach / step);
     const zones: { a: number; b: number }[] = [];
     for (let i = 0; i < n; i++) {

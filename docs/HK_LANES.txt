@@ -1,0 +1,19 @@
+HK-8c LANE DROP 8 -> 6 lanes of the ground road (2026-11-23, data only, src NOT changed)
+Arm 4+4 lanes of 3.65 m (half 22.1, V100); link 3+3 lanes of 3.5 m (half 16.0, V80); the link starts at y -25, the deck covers |y| <= 25.75.
+DECISION: the arm keeps its 8-lane pavement (arm is FIXED). SOUTHBOUND outer (east) lane is closed by a lane-drop taper y +260 .. +30 (230 m, rule 228 m), then hatched + barrier y +30 .. 0. NORTHBOUND (west) lane is GAINED: opens at the deck edge y +25.75, fully open at y +116. The pavement edge steps from half 22.1 to 16.0 inside the connector y 0 .. -25, which lies completely under the deck.
+
+Checks:
+  PASS  Lane balance southbound (4 - 1 dropped = 3)                    3 through lanes = link 3
+  PASS  Lane balance northbound (3 + 1 gained = 4)                     4 lanes = arm 4
+  PASS  Lane-drop taper >= 0.625 x W x V (V100)                        230 m >= 228 m (at V80 the rule gives 182 m)
+  PASS  Taper ends outside the deck (>= 4 m beyond the edge)           ends y 30, deck edge 25.75: 4.25 m
+  PASS  Taper start clear of the first arm structure (>= 100 m)        start y 260, structure at 584: 324 m
+  PASS  Taper start clear of the C-D gore on the arm (>= 100 m)        gore at 607: 347 m, no weave with the C-D exit
+  PASS  Connector (arm end y 0 -> link start y -25) lies under the deck y -25 .. 0 inside |y| <= 25.75
+  PASS  Pavement edge step in the connector (closed lane, no vehicle uses it) 6.1 m over 25 m = 1:4.1, hidden under the deck
+  PASS  Level change over the connector (arm 19.68 -> link 20.02)      1.4 % (limit 4 %); the arm climbs 1.5 % to the node and the link up to 3.5 %: smooth
+  PASS  Northbound lane gain opens over >= 55 m                        90 m
+
+FOR LATER STEPS: HK-9 (markings): taper chevrons + hatching + a barrier / crash cushion on the closed east outer lane y 0 .. +30. HK-11 (traffic graph): southbound lane 4 merges into lane 3 along the taper; northbound a 4th lane starts at y +25.75; both only inside the arm's last 260 m. The arm data / pavement are NOT changed.
+RUN: this script only. NOT RUN: tsc, npm run build, game look, the real traffic graph. NOT CHECKED: the connector pavement mesh (arm and link end shapes in src), terrain / drainage under the deck, lighting under the deck, C-D road tie-in at the arm (assumed to stay clear: C-D inner edge at x 25.1, arm outer edge 22.1).
+RESULT: 0 FAIL, 0 WARN
