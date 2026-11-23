@@ -1,7 +1,7 @@
-// STEP HK-9c-2 sub-step 2 check: the dry stretches of the 8 C-D / slip pieces as real roads (RoadNetwork.layoutHkCdRoads, data src/roads/ring/HkCdRoadData.ts).
+// STEP HK-9c-2 sub-steps 2 + 3 check: the dry stretches of the 8 C-D / slip pieces as real roads (RoadNetwork.layoutHkCdRoads, data src/roads/ring/HkCdRoadData.ts).
 // Headless: real TerrainGenerator / RoadNetwork. WATER CHECK (sc.water > sc.h on natural ground) is the first block.
 // Run: HK=1 npx tsx scripts/hk-ring-run.ts hk-cd-roads-build-check      (HK=0: proves that the switch OFF builds nothing)
-// With HK=1 it also writes docs/HK_CD_ROADS_9c2_2.txt (calculation sheet + PASS / FAIL list).
+// With HK=1 it also writes docs/HK_CD_ROADS_9c2_3.txt (calculation sheet + PASS / FAIL list).
 import { writeFileSync } from 'node:fs';
 import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
 import { Config } from '../src/core/Config';
@@ -18,7 +18,7 @@ const LAT = 4.2 + 1.2 + 2;
 const on = !!Config.roads.hatikamrul.enabled;
 const gen = new TerrainGenerator(Config.world.seed);
 const net: any = gen.roads;
-say(`HK-9c-2 SUB-STEP 2 check, switch ${on ? 'ON' : 'OFF'}`);
+say(`HK-9c-2 SUB-STEPS 2 + 3 check, switch ${on ? 'ON' : 'OFF'}`);
 const hk: any[] = net.roads.filter((r: any) => String(r.name).startsWith('HK-'));
 const others: any[] = net.roads.filter((r: any) => !String(r.name).startsWith('HK-'));
 
@@ -40,17 +40,26 @@ const o = { h: 0, water: NaN, fx: 0, fz: 0 } as any;
 const wetAt = (wx: number, wz: number): boolean => { gen.sampleNatural(wx, wz, o); return !Number.isNaN(o.water) && (o.water > o.h || o.h < o.water + 0.3); };
 
 // ---------- WATER CHECK FIRST ----------
-say('\nWATER CHECK (sc.water > sc.h, and the game rule h < water + 0.3), natural ground, every 2 m along each road at the centre and +-' + LAT + ' m');
+// Sub-step 3: a wet sample is allowed ONLY where the road is a bridge (twin bridge zone), and then the deck must stay above the water (underside = level - 1.4 m girder, needs >= 0.5 m over the water).
+say('\nWATER CHECK (sc.water > sc.h, and the game rule h < water + 0.3), natural ground, every 2 m along each road at the centre and +-' + LAT + ' m. Wet samples are allowed only ON a bridge, with the deck above the water.');
 let wetTotal = 0;
 for (const r of hk) {
-  let wet = 0, n = 0;
+  let wet = 0, wetOut = 0, n = 0, minUnder = 1e9;
   for (let i = 0; i + 1 < r.xs.length; i++) {
     const L = Math.hypot(r.xs[i + 1] - r.xs[i], r.zs[i + 1] - r.zs[i]);
     const tx = (r.xs[i + 1] - r.xs[i]) / L, tz = (r.zs[i + 1] - r.zs[i]) / L;
-    for (let d = 0; d < L; d += 2) for (const l of [0, LAT, -LAT]) { n++; if (wetAt(r.xs[i] + tx * d - tz * l, r.zs[i] + tz * d + tx * l)) wet++; }
+    const onBr = r.bridgeOf[i] >= 0 && r.bridgeOf[i + 1] >= 0;
+    for (let d = 0; d < L; d += 2) for (const l of [0, LAT, -LAT]) {
+      n++;
+      if (wetAt(r.xs[i] + tx * d - tz * l, r.zs[i] + tz * d + tx * l)) {
+        wet++; if (!onBr) wetOut++;
+        else if (l === 0 && !Number.isNaN(o.water)) minUnder = Math.min(minUnder, r.ys[i] - 1.4 - o.water);
+      }
+    }
   }
   wetTotal += wet;
-  check(wet === 0, `${r.name}: no wet sample under / beside the road`, `${wet} of ${n}`);
+  check(wetOut === 0, `${r.name}: no wet sample outside a bridge`, `${wetOut} of ${n} outside; ${wet} wet samples in total (on bridges)`);
+  if (wet > 0) check(minUnder >= 0.5, `${r.name}: deck underside above the water`, `${f2(minUnder)} m at the lowest wet centre sample (needs 0.5 m)`);
 }
 
 say('\nROADS AND DATA');
@@ -140,6 +149,6 @@ for (const r of hk) {
 }
 
 say('\nNOT RUN here: tsc, npm run build, the old check scripts, game look, traffic graph (HK-11). Switch off: Config.roads.hatikamrul.enabled = false.');
-say(`RESULT ${fails} FAIL${fails ? '' : ', 0 FAIL means every check printed above passed'}; water total ${wetTotal} wet samples`);
-writeFileSync('docs/HK_CD_ROADS_9c2_2.txt', out.join('\n') + '\n');
+say(`RESULT ${fails} FAIL${fails ? '' : ', 0 FAIL means every check printed above passed'}; wet samples on bridges ${wetTotal}`);
+writeFileSync('docs/HK_CD_ROADS_9c2_3.txt', out.join('\n') + '\n');
 process.exit(fails ? 1 : 0);

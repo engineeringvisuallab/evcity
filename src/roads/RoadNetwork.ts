@@ -3201,13 +3201,15 @@ export class RoadNetwork {
       const pts = d.pts.map((p) => hkWorld(f, p[0], p[1]));
       this.addRoad({ tier: 3, kind: 'ramp', name: `HK-${d.id}`, closed: false, pts, halfWidth: 4.2, lanes: 1, speedKmh: 50, fixedY: d.ys.slice() });
       const r = this.roads[this.roads.length - 1];
-      const high: { i0: number; i1: number }[] = [];
+      const high: { i0: number; i1: number }[] = d.zones.map((z) => ({ i0: z[0], i1: z[1] })); // STEP HK-9c-2 sub-step 3: twin bridge zones (over water / beside an old arm or link structure) are bridges whatever the height
+      const nz = high.length;
       for (let i = 0; i < r.xs.length; i++) {
         if (r.ys[i] - r.hNat[i] <= 3) continue;
         const last = high[high.length - 1];
-        if (last && last.i1 === i - 1) last.i1 = i;
+        if (last && high.length > nz && last.i1 === i - 1) last.i1 = i;
         else high.push({ i0: i, i1: i });
       }
+      high.sort((p, q) => p.i0 - q.i0 || p.i1 - q.i1);
       this.bridgeRamp(r, high);
     }
     if (this.roads.length === before) return;
