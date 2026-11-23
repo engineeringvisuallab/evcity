@@ -59,6 +59,14 @@ Ager version-er ghas flat rong-er polygon chhilo, tai ekhon **ghas pura bodle pa
 - **Ghono:** ager ghas shudhu gach-er gorar ring-e (reach 2.6 m) chhilo, khola meadow patch-er code bondho chhilo. Ekhon `grass.treeBase.meadow: 0.5` -- meadow patch (`grass.patch.coverage` 0.3 -> 0.4) o ghas dey, ring reach 3.0, `maxChance` 0.4, `minChance` 0.2, `widthScale` 1.25 (tuft ektu chaura). Mapa (`scripts/grass-density-test.ts`, khola jayga-r 600 tile): tuft **~2.0x** (97k -> 199k). **FPS-e chap porbe** (tumi preset low-e 28 FPS dekhiyechho) -- bhari hole `treeBase.meadow` 0.5 -> 0.25, ba `grass.patch.coverage` 0.4 -> 0.3, ba Quality preset-er `grassMul` komao. `meadow: 0` = ager moto shudhu gach-er gora.
 - Game-e dekhi ni; atlas headless Chrome-e render kore dekhechi.
 
+## UPDATE 7 (2026-11-23): gach-er gora ghas, boro pata, narikel, park ghas
+- **Gach-er gorar ghas ring bondho:** `grass.treeBase.enabled: false`. Ghas ekhon shudhu patchy meadow (`grass.patch.coverage` 0.4) + jungle floor + city lawn. Meadow-r jonno `maxChance` 0.5, `minChance` 0.28 (ring chhara ghas komle ei duto barao). Mapa: ager gach-er ring-er tulonay ~1.9x tuft. `treeBase.enabled: true` dile ager moto ring.
+- **Boro pata ghas (leafy rosette + clover/trefoil) sob jaygay bondho:** `grass.broadLeaf: false`. Oi jaygay choto sorou ekok ghas (durba type lawn) boshe. Model code ache, water lily-r jonno rekhechhi (game-e ekhon water lily nai, tai ami banai ni).
+- **Park-er narikel gach remove** (ekhon park-e 16 ta gach: krishnachura / koroi).
+- **Park-er lawn 2x lomba:** park-er ghas alada flag (8), `grass.parkLawnTall: 2`. Phul-er bed / border ager moto.
+- **Jungle-er single durba-type ghas:** ager moto-i ache, ami chui ni (jungle floor-er `lawn` / `wild` type). Leafy / trefoil bad dewar fole oi share-o ei sorou ghas-e giyeche.
+- Game-e dekhi ni. Test: central-park, grass-reference, jungle-vines PASS; typecheck clean.
+
 ## Jeta kori ni
 - **fern / shrub / lata (puraton lata-pata) ferot ani ni.** CHANGES_GUM_TREE_BN.md-e tumi bolechile "LATA-PATA FULL REMOVE" -- tai oigulo off-i ache. Notun liana / tangle alada kind, oder sathe milay nai.
 - Gach-er tolar mati-r rong (brown) bodlai ni (agey-r note: alada step).

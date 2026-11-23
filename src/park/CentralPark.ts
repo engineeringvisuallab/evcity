@@ -5,8 +5,7 @@
 //   radial paths   8 paths (every 45 degrees, 3.2 m wide) from the plaza to the promenade.
 //   r 51..55       PROMENADE: a ring path (benches on its inner side, lamps on its outer side).
 //   r 55..58.6     BORDER: a ring of wild flowers, 6 colours in 12 sectors.
-//   8 sectors      each a LAWN with an oval flower BED (stone kerb): the bed has a main flower and, in the middle oval, a second one (two colours); coconut palms by the plaza,
-//                  flowering krishnachura / rain trees on the outer lawn (shade for the benches).
+//   8 sectors      each a LAWN with an oval flower BED (stone kerb): the bed has a main flower and, in the middle oval, a second one (two colours); flowering krishnachura / rain trees on the outer lawn (shade for the benches).
 // The hotel that stood here is gone (the user removed it). Anything that really stands in the park (rail piers / the viaduct footprint) is left alone by the callers
 // (railForm.inCorridor), not by this file.
 import { GrassType, TreeKind } from '../vegetation/TreeTypes';
@@ -119,15 +118,15 @@ function rng(seed: number): () => number {
 
 let treeCache: ParkTree[] | null = null;
 
-/** All the trees of the park (deterministic, 24): 8 coconut palms round the plaza, 16 shade trees (krishnachura and rain trees) on the outer lawn of the sectors. */
+/** All the trees of the park (deterministic, 16): shade trees (krishnachura and rain trees) on the outer lawn of the sectors. */
 export function parkTrees(): ParkTree[] {
   if (treeCache) return treeCache;
   const out: ParkTree[] = [];
   const r = rng(0x5ea7a1);
   for (let k = 0; k < 8; k++) {
     const f = bedFrame(k);
-    // a coconut palm between the plaza and the bed, on the sector's axis
-    out.push({ x: PARK.x + f.ex * 18.4, z: PARK.z + f.ez * 18.4, kind: TreeKind.coconut, scale: 1.1 + r() * 0.25, yaw: r() * TAU, tint: 0.92 + r() * 0.1 });
+    // (the coconut palms round the plaza were removed 2026-11-23)
+    r(); r(); r(); // keep the random stream of the other trees unchanged
     // two shade trees on the outer lawn, either side of the axis
     for (const s of [-1, 1]) {
       const ang = f.angle + s * (0.17 + r() * 0.05);

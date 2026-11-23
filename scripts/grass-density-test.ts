@@ -22,9 +22,9 @@ function total(): { n: number; land: number } {
   }
   return { n, land };
 }
-const old = { cov: 0.4, mx: 0.4, mn: 0.2, reach: 3.0, meadow: 0.5 };
-G.patch.coverage = 0.3; G.maxChance = 0.35; G.minChance = 0.15; G.treeBase.reach = 2.6; G.treeBase.meadow = 0; // the old settings
+const old = { cov: G.patch.coverage, mx: G.maxChance, mn: G.minChance, reach: G.treeBase.reach, meadow: G.treeBase.meadow, en: G.treeBase.enabled }; // the CURRENT config
+G.patch.coverage = 0.3; G.maxChance = 0.35; G.minChance = 0.15; G.treeBase.reach = 2.6; G.treeBase.meadow = 0; G.treeBase.enabled = true; // the old settings (grass only in rings round the trees)
 const a = total();
-G.patch.coverage = old.cov; G.maxChance = old.mx; G.minChance = old.mn; G.treeBase.reach = old.reach; G.treeBase.meadow = old.meadow;
+G.patch.coverage = old.cov; G.maxChance = old.mx; G.minChance = old.mn; G.treeBase.reach = old.reach; G.treeBase.meadow = old.meadow; G.treeBase.enabled = old.en;
 const b = total();
 console.log(`open-land tiles: before ${a.n} tufts (${a.land} tiles with grass), after ${b.n} (${b.land}); x${(b.n / Math.max(1, a.n)).toFixed(2)}`);

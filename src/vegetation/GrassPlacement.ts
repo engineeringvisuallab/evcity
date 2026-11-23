@@ -297,7 +297,7 @@ export class GrassPlacer {
 
         const dry = Math.min(1, Math.max(0, smooth(G.dryFrom, G.dryTo, h) + (rDry - 0.5) * 0.2)) * (1 - lawn);
         // flag 2 = city lawn tuft (short, mown; may carry a small flower), 0 = normal tuft
-        out.push(x - ox, h - (lawn >= 0.5 ? 0.005 : 0.03), z - oz, (0.55 + 0.95 * rScale ** 1.5) * (P.edgeScale + (1 - P.edgeScale) * rim), rYaw * Math.PI * 2, 0.85 + rTint * 0.3, dry, lawn >= 0.5 ? 2 : jd > 0.3 ? 6 : 0);
+        out.push(x - ox, h - (lawn >= 0.5 ? 0.005 : 0.03), z - oz, (0.55 + 0.95 * rScale ** 1.5) * (P.edgeScale + (1 - P.edgeScale) * rim), rYaw * Math.PI * 2, 0.85 + rTint * 0.3, dry, lawn >= 0.5 ? (inPark(x, z) ? 8 : 2) : jd > 0.3 ? 6 : 0);
 
         // DENSE single grass: extra tufts in the same cell (flag 4 = never a flower). Their random numbers come after the first seven, one fixed set of
         // five per extra, so extra k is always the same tuft and a far ring (fewer extras) is a subset of the near ring. Not on the mown city lawn.

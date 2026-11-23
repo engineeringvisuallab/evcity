@@ -13,7 +13,7 @@ console.log('cells lawn/paved/bed/border (0.25 m2):', count[Z_LAWN], count[Z_PAV
 ok(fl.size === 6, 'all six flowers appear');
 ok(count[Z_BED] * 0.25 > 800, 'bed area > 800 m2');
 const trees = parkTrees();
-ok(trees.length === 24, 'trees ' + trees.length);
+ok(trees.length === 16, 'trees ' + trees.length);
 for (const t of trees) {
   const k = zoneKind(parkZone(t.x, t.z));
   ok(k === Z_LAWN, `tree at ${t.x.toFixed(1)},${t.z.toFixed(1)} zone ${k}`);

@@ -289,6 +289,7 @@ export class GrassManager {
     const dry = data[o + 6];
     const flag = data[o + 7];
     const type0 = this.pick(wx, wz, lod, h1, h2, h3, dry, flag);
+    if (!G.broadLeaf && isGrassLeafy(type0 >= EXTRA ? type0 - EXTRA : type0)) return GrassType.lawn + (type0 >= EXTRA ? EXTRA : 0); // no broad-leaf ground cover (leafy / clover patches): fine single grass instead
     if (G.whiteFlowers) return type0;
     // NO WHITE GRASS: daisy (white petals), clover (white pom-pom) and the pale seed-head grass become plain green grass (keeping the EXTRA offset)
     const extra = type0 >= EXTRA ? EXTRA : 0;
@@ -300,6 +301,10 @@ export class GrassManager {
   /** Real choice of the model; typeOf() wraps it and removes the white kinds (Config grass.whiteFlowers = false). */
   private pick(wx: number, wz: number, lod: number, h1: number, h2: number, h3: number, dry: number, flag: number): number {
     let type: number;
+    if (flag > 7.5 && flag < 8.5) {
+      // CENTRAL PARK LAWN (flag 8): the fine city lawn, a little wild grass, no flowers (the beds have them)
+      return h1 < 0.9 ? GrassType.lawn : GrassType.wild;
+    }
     if (flag > 8.5) {
       // CENTRAL PARK bed / border (flag 9 + flower index): mostly that flower (near ring), the rest short green so the bed has no gaps; far rings = green only
       if (lod === 0 && h2 < 0.84) return GrassType.daisy + Math.round(flag - 9);
@@ -372,7 +377,7 @@ export class GrassManager {
     // a big clump up to clump.maxHeight (1 m); the mown city lawn keeps its old 0.2 m x city.height.
     const top = topOf(geoms[type]);
     const wide = type === GrassType.lawn ? 1.1 : type === GrassType.wild ? 0.95 : type === GrassType.leafy ? 0.55 : type === GrassType.trefoil ? 0.9 : 1;
-    const lawnTuft = flag > 1.5 && flag < 2.5;
+    const lawnTuft = (flag > 1.5 && flag < 2.5) || (flag > 7.5 && flag < 8.5);
     if (isGrassClump(type)) {
       // clump: the larger its placement scale (0.75..1.45 x edge / base factors), the taller it is, never above clump.maxHeight (the seed-plume bunch is `clump.seedTall` x taller)
       const rel = Math.min(1, sc / 1.2);
@@ -389,6 +394,7 @@ export class GrassManager {
       const w = ys * wide * ring.size * (lawnTuft ? G.tuft.lawnWidthScale : G.widthScale);
       dummy.scale.set(w, ys, w);
     }
+    if (flag > 7.5 && flag < 8.5) dummy.scale.y *= G.parkLawnTall; // park lawn: 2x taller blades
     if (flag > 8.5 && isGrassFlower(type)) dummy.scale.y *= 1.35; // park beds: fuller, taller flowers
     if (flag > 5.5 && flag < 6.5) {
       // JUNGLE FLOOR (2026-11-21): short grass, flowers standing a little above it, clumps lower than before (the broad-leaf ground cover keeps its own size)
@@ -399,7 +405,7 @@ export class GrassManager {
     mesh.setMatrixAt(slot, dummy.matrix);
     // COLOUR VARIATION: every tuft is fresh green, yellow-green or straw (shares: Config grass.look). A hash of the tuft's position picks the class;
     // brighter tufts lean yellow-green like sun-lit, drier grass. The city lawn has no straw.
-    const cityLawn = flag > 1.5 && flag < 3.5;
+    const cityLawn = (flag > 1.5 && flag < 3.5) || (flag > 7.5 && flag < 8.5);
     const hc = Math.sin(data[o] * 39.3468 + data[o + 2] * 17.1313 + 5.7) * 43758.5453;
     const pick = hc - Math.floor(hc);
     const jungleFloor = flag > 5.5 && flag < 6.5;
