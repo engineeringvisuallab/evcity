@@ -75,6 +75,9 @@ const NB: [number, number][] = [
   [-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1],
 ];
 
+/** STEP HK-9c-2 3d: metres the river east of the Hatikamrul interchange is moved EAST (see moveHkRiver). */
+const HK_RIVER_SHIFT = 220;
+
 const waterDepthOf = (acc: number): number => 0.8 + 0.06 * Math.sqrt(acc);
 const halfWidthOf = (acc: number): number => (4 + 0.7 * Math.sqrt(acc)) / 2;
 
@@ -348,6 +351,10 @@ export class RiverNetwork {
       if (hasEdge[c] && edgeKept[c] && !(ups.get(c) ?? []).some((u) => edgeKept[u])) this.stats.sources++;
     }
 
+    // STEP HK-9c-2 3d: the river that crossed the ring 375 m east of the Hatikamrul interchange is moved EAST (user, 2026-11-23: move the river and its bridge away, screenshot with the new course drawn).
+    // Only the nodes of that one river (local box below) are shifted, by a smooth weight, so the segments stay connected; the ring bridge follows by itself (wet rule). Switch: Config.roads.hatikamrul.enabled.
+    if (Config.roads.hatikamrul.enabled) this.moveHkRiver();
+
     // 5. spatial index
     this.cells = Array.from({ length: this.GN * this.GN }, () => [] as number[]);
     this.segments.forEach((s, idx) => {
@@ -373,6 +380,28 @@ export class RiverNetwork {
       acc += smoothstep(tk - tw, tk + tw, t);
     }
     return s.wsA - ((s.wsA - s.wsB) * acc) / ns;
+  }
+
+  /**
+   * STEP HK-9c-2 3d: shifts the river nodes inside a box around the Hatikamrul interchange EAST along the ring by HK_RIVER_SHIFT m (weight 0 at local y 420, 1 at local y 230 and further south, down to the mouth).
+   * Local frame of the interchange (same as src/roads/ring/HkRamps.ts hkFrame): origin (HK_O), east (HK_E), north (HK_N). The shift is a function of the node position, so shared nodes stay shared.
+   */
+  private moveHkRiver(): void {
+    const OX = -1133.3, OZ = 2301.8, EX = 0.99928, EZ = 0.03797, NX = 0.03797, NZ = -0.99928; // hkFrame of the ring S node (measured 2026-11-23)
+    const SHIFT = HK_RIVER_SHIFT;
+    const sm = (a: number, b: number, v: number): number => smoothstep(a, b, v);
+    const mv = (x: number, z: number): [number, number] => {
+      const dx = x - OX, dz = z - OZ;
+      const lx = dx * EX + dz * EZ, ly = dx * NX + dz * NZ;
+      if (lx < 100 || lx > 900 || ly > 420 || ly < -700) return [x, z];
+      const w = 1 - sm(230, 420, ly);
+      return [x + EX * SHIFT * w, z + EZ * SHIFT * w];
+    };
+    for (const s of this.segments) {
+      const a = mv(s.ax, s.az), b = mv(s.bx, s.bz);
+      s.ax = a[0]; s.az = a[1]; s.bx = b[0]; s.bz = b[1];
+      s.len = Math.hypot(s.bx - s.ax, s.bz - s.az);
+    }
   }
 
   private nearest(x: number, z: number): { seg: RiverSegment; t: number; d: number } | null {

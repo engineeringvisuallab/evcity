@@ -27,18 +27,20 @@ CD-W-S  northbound (link exit -> deck)
   DRY STRETCH 0.0 .. 608.3 m = 608.3 m (100 % of the piece), 78 points at <= 8 m; start = piece start, end = piece end
   TWIN BRIDGE ZONES (point index ranges, 8 m apart): 0..16
   levels 10.97 -> 19.68 m
+  RING LEVEL SLIP-NE: 8 points inside the ring footprint (|y| < 26.3 m) set to the ring level, worst change 0.66 m
 
 SLIP-NE  arm southbound (E C-D) -> ring eastbound (north lane), left turn
-  full piece 502.2 m; wet samples 8 / 87; beside old structure 0 / 87
-  DRY STRETCH 0.0 .. 339.8 m = 339.8 m (68 % of the piece), 44 points at <= 8 m; start = piece start, end cut (water / structure)
+  full piece 502.2 m; wet samples 0 / 87; beside old structure 0 / 87
+  DRY STRETCH 0.0 .. 502.2 m = 502.2 m (100 % of the piece), 64 points at <= 8 m; start = piece start, end = piece end
   TWIN BRIDGE ZONES (point index ranges, 8 m apart): none
-  levels 15.41 -> 18.32 m
+  levels 15.41 -> 19.31 m
+  RING LEVEL SLIP-SE: 8 points inside the ring footprint (|y| < 26.3 m) set to the ring level, worst change 0.79 m
 
 SLIP-SE  ring westbound (south lane) -> link southbound (E C-D), left turn
-  full piece 512.2 m; wet samples 17 / 87; beside old structure 0 / 87
-  DRY STRETCH 166.3 .. 512.2 m = 345.9 m (68 % of the piece), 45 points at <= 8 m; start cut (water / structure), end = piece end
+  full piece 512.2 m; wet samples 0 / 87; beside old structure 0 / 87
+  DRY STRETCH 0.0 .. 512.2 m = 512.2 m (100 % of the piece), 66 points at <= 8 m; start = piece start, end = piece end
   TWIN BRIDGE ZONES (point index ranges, 8 m apart): none
-  levels 18.04 -> 14.06 m
+  levels 19.36 -> 14.06 m
 
 SLIP-NW  ring eastbound (north lane) -> arm northbound (W C-D), left turn
   full piece 522.4 m; wet samples 0 / 87; beside old structure 0 / 87
@@ -55,6 +57,6 @@ SLIP-SW  link northbound (W C-D) -> ring westbound (south lane), left turn
 C-D POINTS CUT AWAY because they cross an old road with too little clearance (decision: HK-9c-2 sub-step 3): CD-E-N x J1-S (clearance -0.59 m at piece s 41 m)
 
 LEVEL CAP under the node deck (|y| <= 36 m, ground - 0.06 m): 12 points lowered, worst 0.48 m below the design level (HK_CD_ROADS.txt)
-GRADE REPAIR of the C-D roads (limit 4.8 %): 4 level corrections, worst 0.03 m; CROSSING LIFT of the slips (old road below: clearance 4.9 m + 1.4 m girder + 0.1 m): 87 level corrections, worst raise 3.75 m
+GRADE REPAIR of the C-D roads (limit 4.8 %): 4 level corrections, worst 0.03 m; CROSSING LIFT of the slips (old road below: clearance 4.9 m + 1.4 m girder + 0.1 m): 100 level corrections, worst raise 3.75 m
 
-WROTE src/roads/ring/HkCdRoadData.ts (8 of 8 pieces, 540 points)
+WROTE src/roads/ring/HkCdRoadData.ts (8 of 8 pieces, 581 points)

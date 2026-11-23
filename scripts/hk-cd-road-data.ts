@@ -18,6 +18,7 @@ let passed = 0, passMax = 0, capped = 0, capMax = 0, fixed = 0, fixMax = 0, lift
 // STEP 9c-2 sub-step 3b: optional list of old roads that a C-D road PASSES OVER (raised, the old road is not changed), grade <= G_LIFT.
 const PASS_OVER: string[] = [], G_LIFT = 0.048; // TRIED with R2-8.2: IMPOSSIBLE (the C-D overlaps the link taper for 128 m and must keep the link level there, so it would need 11 % grade to reach 21 m at the crossing); list left empty
 const R_WANT = 94;
+const RING_FOOT = 4.2 + 22.1; // ring half width (8 lanes + shoulders) + slip half width: the slip overlaps the ring pavement inside this lateral distance
 const G_FIX = 0.048, CLR_NEED = 4.9, CLR_MARGIN = 0.1; // grade limit used by the repair (the check limit is 5 %)
 const LAT = 4.2 + 1.2 + 2; // pavement half + shoulder + 2 m: the ground is tested at the centre and at +-LAT
 
@@ -29,6 +30,10 @@ if (!f) { say('FAIL frame missing (HK=1 needed)'); process.exit(1); }
 const arm = net.roads.find((r: any) => r.name === 'J1-S');
 const link = net.roads.find((r: any) => r.name === 'M6-1');
 const ring = net.roads.find((r: any) => r.name === 'M8');
+const ringLv: { x: number; lev: number }[] = [];
+for (let k = 0; k < ring.xs.length; k++) { const dx = ring.xs[k] - f.ox, dz = ring.zs[k] - f.oz; const lx = dx * f.ex + dz * f.ez, ly = dx * f.nx + dz * f.nz; if (lx > 200 && lx < 1100 && Math.abs(ly) < 80) ringLv.push({ x: lx, lev: ring.ys[k] }); }
+ringLv.sort((a, b) => a.x - b.x);
+const ringLevelAt = (x: number): number => { let i = 0; while (i + 2 < ringLv.length && ringLv[i + 1].x < x) i++; const a = ringLv[i], b = ringLv[i + 1], t = (x - a.x) / (b.x - a.x); return a.lev + (b.lev - a.lev) * t; };
 const oldRoads: any[] = net.roads.filter((r: any) => !String(r.name).startsWith('HK-')); // the roads that exist without the new C-D / slip roads
 
 const o = { h: 0, water: NaN, fx: 0, fz: 0 } as any;
@@ -103,6 +108,17 @@ for (const p of D.pieces) {
       say(`  PASS-OVER ${p.id}: raised over ${PASS_OVER.join(', ')} by up to ${passMax.toFixed(2)} m at the crossing (grade <= ${G_LIFT * 100} %); ends ${c0} -> ${p.pts[0][2]}, ${c1} -> ${p.pts[n - 1][2]}`);
     }
   } else {
+    // STEP 3d: the EAST slips overlap the ring pavement for the first / last ~50 m (gore + aux lane). The ring level there differs from the design level by up to 1 m (the ring rises toward the node),
+    // which the build check counted as a crossing under the ring (SLIP-SE -0.46 m clearance). Inside the ring footprint (|y| < RING_FOOT) the slip level is the ring level; the repair below fixes the grade.
+    if (p.id === 'SLIP-NE' || p.id === 'SLIP-SE') {
+      let moved = 0, mv = 0;
+      for (let i = 0; i < n; i++) {
+        if (Math.abs(p.pts[i][1]) >= RING_FOOT || p.pts[i][0] < 250) continue;
+        const rl = ringLevelAt(p.pts[i][0]);
+        if (Math.abs(rl - p.pts[i][2]) > 0.001) { mv = Math.max(mv, Math.abs(rl - p.pts[i][2])); p.pts[i][2] = +rl.toFixed(3); moved++; }
+      }
+      say(`  RING LEVEL ${p.id}: ${moved} points inside the ring footprint (|y| < ${RING_FOOT} m) set to the ring level, worst change ${mv.toFixed(2)} m`);
+    }
     const y0 = p.pts[0][2], y1 = p.pts[n - 1][2];
     for (let i = 0; i < n; i++) {
       const [cx, cz] = hkWorld(f, p.pts[i][0], p.pts[i][1]);
