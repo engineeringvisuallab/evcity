@@ -112,6 +112,8 @@ interface TuftLook {
   light: number;
   /** JUNGLE DURBA: fresh, glossy, saturated green blades, no dead ones */
   fresh?: boolean;
+  /** > 0: the tuft is this many small GROUPS of 2-3 thin blades of nearly the same length (jungle durba), not one dense bunch */
+  groups?: number;
 }
 
 /** A tuft / clump picture: blades sorted from the back (darker, shorter) to the front, a dark ambient-occlusion shade at the root. */
@@ -121,7 +123,25 @@ function paintTuft(c: Ctx, tile: number, seed: number, T: TuftLook): number[] {
   const base = LS * 0.985;
   const cx = LS / 2;
   const blades: Blade[] = [];
-  for (let i = 0; i < T.n; i++) {
+  if (T.groups) {
+    // JUNGLE DURBA (2026-11-23): thin, long blades of nearly the same length, 2-3 of them together (one plant), the plants side by side; each plant a little lighter or deeper green
+    for (let g = 0; g < T.groups; g++) {
+      const gx = cx + ((g + 0.5) / T.groups - 0.5) * LS * T.spread + (r() - 0.5) * LS * 0.05;
+      const gl = T.light * (0.78 + 0.5 * r()); // light .. deep
+      const gh = T.hue + (r() - 0.5) * 14;
+      const nb = 2 + (r() < 0.55 ? 1 : 0);
+      const gH = LS * T.H * (0.86 + 0.14 * r());
+      const out = (g / (T.groups - 1) - 0.5) * 2; // plants at the edges lean outwards
+      for (let k = 0; k < nb; k++) {
+        const s = (k - (nb - 1) / 2) * 0.5 + (r() - 0.5) * 0.2;
+        blades.push({
+          x: gx + s * 8, h: gH * (0.9 + 0.1 * r()), lean: out * T.lean * 0.5 + s * T.lean * 0.7 + (r() - 0.5) * 8, curve: s * T.curve + out * T.curve * 0.3 + (r() - 0.5) * 6,
+          w: T.wMin + (T.wMax - T.wMin) * r(), hue: gh + (r() - 0.5) * 8, light: gl * (0.92 + 0.16 * r()), sat: 50 + 14 * r(), dry: 0, gloss: true,
+        });
+      }
+    }
+  }
+  for (let i = 0; i < (T.groups ? 0 : T.n); i++) {
     const side = (r() + r() + r() - 1.5) / 1.5; // -1..1, centred
     const f = Math.abs(side);
     const hr = Math.pow(r(), T.hPow);
@@ -144,7 +164,7 @@ function paintTuft(c: Ctx, tile: number, seed: number, T: TuftLook): number[] {
     });
   }
   // a skirt of short blades round the root: the tuft is full at the bottom, no gap to the ground
-  const skirt = Math.round(T.n * 0.45);
+  const skirt = T.groups ? 0 : Math.round(T.n * 0.45);
   for (let i = 0; i < skirt; i++) {
     const side = (r() + r() - 1) * 1.15;
     const dead = !T.fresh && r() < 0.1;
@@ -609,7 +629,7 @@ export function paintGrassAtlas(c: Ctx): void {
   paintTrefoil(c, GT.trefoil, 808);
   clip(GT.durba);
   // JUNGLE DURBA: fine, smooth, glossy bright-green blades, creeping low, no dead ones
-  paintTuft(c, GT.durba, 1515, { n: 150, H: 0.66, spread: 0.62, lean: 80, curve: 55, wMin: 1.8, wMax: 3.6, hPow: 1, fountain: false, hue: 108, light: 36, fresh: true });
+  paintTuft(c, GT.durba, 1515, { n: 0, groups: 9, H: 0.9, spread: 0.8, lean: 44, curve: 30, wMin: 1.5, wMax: 2.6, hPow: 1, fountain: false, hue: 108, light: 35, fresh: true });
   const kinds: [number, FlowerKind][] = [[GT.daisy, 'marigold'], [GT.buttercup, 'buttercup'], [GT.lavender, 'lavender'], [GT.poppy, 'poppy'], [GT.cornflower, 'cornflower'], [GT.clover, 'cosmos']];
   kinds.forEach(([t, k], i) => {
     clip(t);

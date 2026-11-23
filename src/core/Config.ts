@@ -458,7 +458,7 @@ export const Config = {
        * (8-12 m, TreeKind.liana) and `tangleChance` = slim leaning stems with a diagonal limb across them (TreeKind.tangle). No colliders. Near chunks only (LOD 0).
        * Every liana is ~300 triangles, every tangle ~600: lower the chances (or set 0 = off) if the frame rate drops.
        */
-      vines: { lianaChance: 0.08, tangleChance: 0.09, /** 2026-11-22: vines only in PATCHES (not all over the jungle): `scale` m = size of the noise field, `from` .. `full` = noise range that grows from nothing to a full patch (higher `from` = fewer / smaller patches), `boost` = chance multiplier inside a patch (so a patch is denser than before). the noise is about -0.7..0.7 (median 0): `from` -1 + `boost` 1 = the old everywhere-look. */ patch: { scale: 110, from: 0.05, full: 0.32, boost: 2.5 }, lianaScale: [0.8, 1.3] as [number, number], tangleScale: [0.8, 1.4] as [number, number] },
+      vines: { lianaChance: 0.14, tangleChance: 0.09, /** 2026-11-22: vines only in PATCHES (not all over the jungle): `scale` m = size of the noise field, `from` .. `full` = noise range that grows from nothing to a full patch (higher `from` = fewer / smaller patches), `boost` = chance multiplier inside a patch (so a patch is denser than before). the noise is about -0.7..0.7 (median 0): `from` -1 + `boost` 1 = the old everywhere-look. */ patch: { scale: 110, from: -0.25, full: 0.1, boost: 3 }, lianaScale: [0.8, 1.3] as [number, number], tangleScale: [0.8, 1.4] as [number, number] },
       /**
        * JUNGLE DEADWOOD (sukno gach + sukno pata): old dry trees lying on the ground and patches of dry fallen leaves. Per 10 m jungle cell (x jungle density x Quality treeMul):
        * `logChance` = a fallen dead tree (`logScale` = size range, 1 = 7 m long), `litterLayers` x `litterChance` = loose leaf patches (`litterScale`), and `aroundLog` leaf patches
@@ -617,7 +617,7 @@ export const Config = {
        * JUNGLE FLOOR (ghono jongol ground cover): inside the dense jungle every cell gets grass (`floor` = patch value forced up to this x jungle density, so no bald
        * ground), tufts are `tall` x higher, `chance` = grass chance per cell, and the grass kinds are mixed (wild, tussocks, broad-leaf, seed-head). Flag 6 in the tuft data.
        */
-      jungle: { floor: 0.9, tall: 0.85, tallFlower: 0.85, tallClump: 0.7, chance: 0.2, clumpChance: 0.06, clear: 2 }, // 2026-11-21: grass is back in the jungle (clear 2 = never skipped) // 2026-11-20: NO grass in the dense jungle (floor / chance / clumpChance 0); `clear` = jungle density above which no tuft or clump is placed
+      jungle: { floor: 0.9, tall: 1.0, tallFlower: 0.85, tallClump: 0.7, chance: 0.3, clumpChance: 0.06, clear: 2 }, // 2026-11-21: grass is back in the jungle (clear 2 = never skipped) // 2026-11-20: NO grass in the dense jungle (floor / chance / clumpChance 0); `clear` = jungle density above which no tuft or clump is placed
       /** Blades per tuft model are multiplied by this (1 = full quality; 0.6 for weak GPUs). */
       bladeDensity: 1,
       /** 2026-11-23: false = NO broad-leaf ground cover anywhere (leafy rosettes and clover patches turn into the fine single grass); the models stay for a water lily. */

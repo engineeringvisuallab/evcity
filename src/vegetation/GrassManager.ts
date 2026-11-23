@@ -312,13 +312,13 @@ export class GrassManager {
     }
     if (flag > 6.5) {
       // JUNGLE grass CLUMP (flag 7): the two shady tussock shapes (no seed plumes: those belong to the open savanna)
-      return h1 < 0.55 ? GrassType.tussock : GrassType.tussockWide;
+      return GrassType.durba; // 2026-11-23: no broad tussock leaves in the jungle (user): thin long durba, taller (G.jungle.tall)
     }
     if (flag > 5.5) {
       // JUNGLE FLOOR grass (flag 6): a few wild flowers (never white), in small patches (~14 m) and only a few elsewhere; the rest is a rich mix of the plain grass kinds + broad-leaf seedlings (leafy) and a little trefoil
       if (lod === 0 && h2 < (vnoise(wx / 14 + 7, wz / 14 - 3) > 0.62 ? 0.26 : 0.05)) return flowerOf(h3);
       // 2026-11-23: the jungle floor is mostly fresh glossy DURBA (single fine blades), here and there a triple-leaf (clover) and a single broad leaf, a few small bunches
-      return h1 < 0.7 ? GrassType.durba : h1 < 0.81 ? GrassType.trefoil : h1 < 0.87 ? GrassType.leafy : h1 < 0.935 ? GrassType.tussock : GrassType.tussockWide;
+      return h1 < 0.85 ? GrassType.durba : h1 < 0.95 ? GrassType.trefoil : GrassType.leafy;
     }
     if (flag > 4.5) {
       // MEDIAN grass (flag 5): the game's grass kinds, and a share of the game's wild flowers (never white ones) in the near ring
@@ -426,8 +426,8 @@ export class GrassManager {
     const bright = (0.7 + 0.36 * (hb - Math.floor(hb))) * (isGrassLeafy(type) ? 1.12 : 1); // broad leaves are a little fresher / lighter than the blades round them
     if (type === GrassType.durba) {
       // JUNGLE DURBA: stays fresh green (a little lighter or deeper from tuft to tuft), never yellow / dry
-      const k = 0.92 + 0.2 * (hb - Math.floor(hb));
-      color.setRGB(0.96 * k, 1.1 * k, 0.94 * k);
+      const k = 0.82 + 0.34 * (hb - Math.floor(hb)); // light .. deep green
+      color.setRGB(0.9 * k, 1.1 * k, 0.96 * k);
       mesh.setColorAt(slot, color);
       return;
     }

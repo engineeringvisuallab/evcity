@@ -97,3 +97,15 @@ Dhyan: `TreeKind` e gum2 (24) er por notun kind (25, 26) bosechhe, tai `kind >= 
 - Ghas-er rong ekhono instance palette theke ashe (fresh green / olive / ...). Broad pata ektu ujjol (x1.12). Chhobi 1-er moto roddur-er dag (dappled light) ei step-e nai.
 - Open land-e ghas ekhono "patch" ar "gach-er gora"-y; patch na thakle khali mati thakbe (agey-r design). Aro beshi / kom chaile `grass.patch.coverage` ba `clumpChance` badlao.
 - Trefoil-er leaflet-gulo ekta-r upor ekta overlap kore (alada height-e, tai z-fight hoy na bole mone kori) -- game-e jhilmil korle bolo.
+
+
+## UPDATE 9 — jungle durba: soru, lomba, same-height, 2/3 pata mile 1 gass
+- `GrassTextures.ts`: durba tile ekhon `groups` mode-e ankа — 9ta plant, prottek plant-e 2-3ta soru pata (1.5–2.6 px), prai same height, prottek plant-er nijer halka/gaRo sobuj shade. Mota pata/skirt nai.
+- `GrassManager.ts`: jungle clump (flag 7) ekhon durba; jungle floor = 85% durba, 10% trefoil, 5% leafy; durba tint halka..gaRo sobuj (0.82–1.16).
+- `GrassAssets.ts`: durba card lomba (h 0.55).
+- `Config.ts`: `grass.jungle.chance 0.2→0.3`, `tall 0.85→1.0` (aro ghono, aro lomba). Flower ager moto majhe majhe.
+- Test: `scripts/grass-reference-test.ts` flag 7 expectation update.
+
+## UPDATE 10 — jungle e lata (liana) gach besi
+- `Config.ts` `dense.vines`: `lianaChance 0.08→0.14`, `tangleChance 0.09→0.09` (same), patch `from 0.05→-0.25`, `full 0.32→0.1`, `boost 2.5→3` (patch boro, beshi jaygay). Test: ~5/ha theke ~25/ha liana.
+- FPS komle `lianaChance` komao (ek liana ~300 triangle, shudhu kase LOD 0).
