@@ -7,7 +7,7 @@ import { Config } from '../src/core/Config';
 import { RingStructureLayer } from '../src/roads/ring/RingStructureLayer';
 import { HkInterchangeLayer } from '../src/roads/ring/HkInterchangeLayer';
 import { hkFrame, hkRamps, hkRingOffset } from '../src/roads/ring/HkRamps';
-import { buildHkAuxStrip, buildHkTail, hkDeckLevel, hkTailIndices, HP } from '../src/roads/ring/HkDeckPaving';
+import { buildHkAuxStrip, buildHkConnector, buildHkTail, hkDeckLevel, hkTailIndices, HP } from '../src/roads/ring/HkDeckPaving';
 import { NODE_VIADUCT as N } from '../src/roads/ring/NodeViaductData';
 import type { MeshData } from '../src/roads/ring/RingBridgeGeometry';
 
@@ -50,7 +50,7 @@ const deckY = hkDeckLevel(net);
 const ring = net.roads.find((r) => r.name === 'M8')!;
 
 // P1 the layer builds 1 aux strip + 4 tails and still only the 4 ramp colliders (paving is visual only)
-check(layer.pavingMeshes === 5, 'P1 paving meshes: 1 aux strip + 4 loop tails', `${layer.pavingMeshes}`);
+check(layer.pavingMeshes === 6, 'P1 paving meshes: 1 aux strip + 1 connector + 4 loop tails', `${layer.pavingMeshes}`);
 check(layer.solids.length === 4, 'P1 colliders unchanged: only the 4 ramps (paving is visual)', `${layer.solids.length} solids`);
 
 // P2 aux strip geometry: finite, between the ring pavement edge and the deck edge, only on the node viaduct stretch, both sides
@@ -99,6 +99,25 @@ check(okStart, 'P4 every tail starts where the ramp mesh stops (30 m from the ri
 check(okEnd, 'P4 every tail ends on the ring lane (17.3 m from the axis +- 0.4)', okEnd ? 'yes' : 'a tail ends elsewhere');
 check(okTaper, 'P4 every tail narrows to a point at the ring end (width <= 0.2 m)', okTaper ? 'yes' : 'too wide');
 check(nT > 10 && worstLvl <= 0.2, 'P5 tail level equals the deck top where it lies on the deck (+- 0.2 m)', `${nT} samples, worst ${f2(worstLvl)} m`);
+
+// P7 (HK-9c-3) under-deck connector arm end -> link start: ends match, width 22.1 -> 16.0, level linear, under the deck, close to the ground
+{
+  const cd = buildHkConnector(net, f, (x, z) => gen.heightAt(x, z)); const cv = vertsOf(cd), per = 6, rows = cv.length / per;
+  const arm = net.roads.find((r) => r.name === 'J1-S')!, link = net.roads.find((r) => r.name === 'M6-1')!;
+  const loc = (x: number, z: number): number[] => { const dx = x - f.ox, dz = z - f.oz; return [dx * f.ex + dz * f.ez, dx * f.nx + dz * f.nz]; };
+  const row = (r: number): number[][] => cv.slice(r * per, r * per + per);
+  const wOf = (r: number): number => Math.hypot(row(r)[0][0] - row(r)[1][0], row(r)[0][2] - row(r)[1][2]) / 2;
+  const yAt = (r: number): number => (row(r)[0][1] + row(r)[1][1]) / 2;
+  const [, yFirst] = loc((row(0)[0][0] + row(0)[1][0]) / 2, (row(0)[0][2] + row(0)[1][2]) / 2);
+  const [, yLast] = loc((row(rows - 1)[0][0] + row(rows - 1)[1][0]) / 2, (row(rows - 1)[0][2] + row(rows - 1)[1][2]) / 2);
+  check(rows > 2 && cv.every((v) => Number.isFinite(v[0] + v[1] + v[2])), 'P7 connector: built, finite', `${rows} sections`);
+  check(Math.abs(yFirst) < 0.05 && yLast < -20 && yLast > -30, 'P7 connector runs from the arm end (y 0) to the link start (~ -25 m)', `y ${f2(yFirst)} .. ${f2(yLast)} m`);
+  check(Math.abs(wOf(0) - arm.halfWidth) < 0.05 && Math.abs(wOf(rows - 1) - link.halfWidth) < 0.05, 'P7 connector half width = arm 22.1 at the start, link 16.0 at the end', `${f2(wOf(0))} -> ${f2(wOf(rows - 1))} m`);
+  let gap = 0, under = true; for (let r = 0; r < rows; r++) { const [cx, cz] = [(row(r)[0][0] + row(r)[1][0]) / 2, (row(r)[0][2] + row(r)[1][2]) / 2]; gap = Math.max(gap, Math.abs(yAt(r) - HP.lift - gen.heightAt(cx, cz))); if (Math.abs(loc(cx, cz)[1]) > N.deckHalf) under = false; }
+  check(under, 'P7 connector lies under the deck (|y| <= 25.75)', under ? 'yes' : 'sticks out');
+  check(gap <= 0.5, 'P7 connector level vs ground on the axis (<= 0.5 m, no collider needed)', `worst ${f2(gap)} m`);
+  console.log(`  INFO  connector level start ${f2(yAt(0) - HP.lift)} (arm end ${f2(arm.ys[arm.ys.length - 1])}), end ${f2(yAt(rows - 1) - HP.lift)} (link first ${f2(link.ys[0])}); ground may lift it a little`);
+}
 
 // P6 triangles face up (normal y > 0) so the polygon-offset surface lights like the road
 let up = 0, tot = 0;

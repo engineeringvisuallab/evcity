@@ -6,7 +6,8 @@
 // VISUAL ONLY: the deck solid underneath (ring level = deck top, HK-8d-3 N4) carries the cars, so these meshes are never added to the collider. They lie LIFT m above the deck, drawn with a polygon offset.
 import type { RoadNetwork } from '../RoadNetwork';
 import type { MeshData, Rgb } from './RingBridgeGeometry';
-import type { HkRamp } from './HkRamps';
+import type { HkRamp, HkFrame } from './HkRamps';
+import { hkWorld } from './HkRamps';
 import { NODE_VIADUCT } from './NodeViaductData';
 import { HM } from './HkRampMesh';
 
@@ -94,6 +95,36 @@ export function buildHkTail(rp: HkRamp, ringOff: (x: number, z: number) => numbe
     const at = (u: number, dy: number, c: Rgb): number => m.v(rp.xs[i] - tz * u, y + dy, rp.zs[i] + tx * u, c);
     const li = Math.max(0.02, w - HM.lineGap * Math.min(1, w / W)), lo = Math.max(0.01, li - HP.lineW);
     const cur = [at(-w, 0, COL.asphalt), at(w, 0, COL.asphalt), at(-li, 0.005, COL.mark), at(-lo, 0.005, COL.mark), at(lo, 0.005, COL.mark), at(li, 0.005, COL.mark)];
+    if (prev) { m.quad(prev[0], prev[1], cur[1], cur[0]); m.quad(prev[2], prev[3], cur[3], cur[2]); m.quad(prev[4], prev[5], cur[5], cur[4]); }
+    prev = cur;
+  }
+  return m.d;
+}
+
+/** STEP HK-9c-3 (sub-step 4): the 25 m UNDER-DECK CONNECTOR between the arm end (local y 0, half 22.1, 8 lanes) and the link start (local y ~ -25, half 16.0, 6 lanes).
+ *  Visual asphalt only (no collider): the ground under it is within ~0.4 m of the road level, the deck (|y| <= 25.75) hides it. Pavement edge steps 22.1 -> 16.0 linearly (the closed outer lane, 1:4.1),
+ *  level goes linearly from the arm end level to the link start level. White edge lines inset like the aux strip. Lane lines / hatching: HK-9d. */
+export function buildHkConnector(roads: RoadNetwork, f: HkFrame, ground?: (x: number, z: number) => number): MeshData {
+  const m = new P();
+  const arm = roads.roads.find((r) => r.name === 'J1-S'), link = roads.roads.find((r) => r.name === 'M6-1');
+  if (!arm || !link) return m.d;
+  const nearest = (r: { xs: ArrayLike<number>; zs: ArrayLike<number> }): number => { let bi = 0, bd = Infinity; for (let k = 0; k < r.xs.length; k++) { const d = Math.hypot(r.xs[k] - f.ox, r.zs[k] - f.oz); if (d < bd) { bd = d; bi = k; } } return bi; };
+  const ka = nearest(arm), kl = nearest(link);
+  const yA = arm.ys[ka], yL = link.ys[kl];
+  const locY = (x: number, z: number): number => (x - f.ox) * f.nx + (z - f.oz) * f.nz; // local y (north)
+  const y1 = locY(link.xs[kl], link.zs[kl]); // negative, ~ -25
+  if (!(y1 < -5 && y1 > -60)) return m.d;
+  const hA = Math.max(arm.halfWidth, HP.pavementHalf), hL = link.halfWidth;
+  const n = Math.max(2, Math.ceil(-y1 / 2.5));
+  let prev: number[] | null = null;
+  for (let i = 0; i <= n; i++) {
+    const t = i / n, ly = y1 * t, h = hA + (hL - hA) * t, lvl = yA + (yL - yA) * t;
+    const [cx, cz] = hkWorld(f, 0, ly);
+    const gnd = ground ? ground(cx, cz) : -Infinity;
+    const y = Math.max(lvl, gnd + 0.02) + HP.lift; // never below the ground (no z-fight / sunk strip)
+    const li = h - HP.lineInset, lo = li - HP.lineW;
+    const at = (u: number, dy: number, c: Rgb): number => { const [wx, wz] = hkWorld(f, u, ly); return m.v(wx, y + dy, wz, c); };
+    const cur = [at(-h, 0, COL.asphalt), at(h, 0, COL.asphalt), at(-li, 0.005, COL.mark), at(-lo, 0.005, COL.mark), at(lo, 0.005, COL.mark), at(li, 0.005, COL.mark)];
     if (prev) { m.quad(prev[0], prev[1], cur[1], cur[0]); m.quad(prev[2], prev[3], cur[3], cur[2]); m.quad(prev[4], prev[5], cur[5], cur[4]); }
     prev = cur;
   }
