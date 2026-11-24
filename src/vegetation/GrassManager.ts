@@ -391,14 +391,16 @@ export class GrassManager {
       const rel = Math.min(1, sc / 1.5);
       const v = G.tuft.min + (1 - G.tuft.min) * (0.5 * rel + 0.5 * h2 ** 1.2);
       const isFlower = isGrassFlower(type);
+      // HK-FIX10: GARDEN tufts (Central park lawn flag 8, Hatikamrul lawn flag 2.4, beds / borders flag 9+) have a real size in METRES (grass.garden): the whole tuft is scaled, width follows height
+      const gardenLawn = (flag > 7.5 && flag < 8.5) || (flag > 2.3 && flag < 2.5);
+      const gardenBed = flag > 8.5;
+      const garden = gardenLawn || gardenBed;
+      const [gLo, gHi] = gardenLawn ? G.garden.grass : isFlower ? G.garden.flower : G.garden.filler;
       const maxH = lawnTuft ? G.tuft.lawnMaxHeight * G.city.height : isFlower ? G.tuft.flowerMaxHeight : type === GrassType.trefoil ? G.leafy.trefoilHeight : type === GrassType.leafy ? G.leafy.maxHeight : G.tuft.maxHeight;
-      const ys = (maxH * v) / top;
-      const w = ys * wide * ring.size * (lawnTuft ? G.tuft.lawnWidthScale : G.widthScale);
+      const ys = garden ? (gLo + (gHi - gLo) * h2) / top : (maxH * v) / top; // garden: absolute metres; width = height x widthScale (natural upright proportion, not the wide mown-lawn mat)
+      const w = ys * wide * ring.size * (!garden && lawnTuft ? G.tuft.lawnWidthScale : G.widthScale);
       dummy.scale.set(w, ys, w);
     }
-    if (flag > 7.5 && flag < 8.5) dummy.scale.y *= G.parkLawnTall; // park lawn: 2x taller blades
-    if (flag > 2.3 && flag < 2.5) dummy.scale.y *= G.hkLawnTall; // HK-FIX7: Hatikamrul infield lawn / garden lawn (flag 2.4)
-    if (flag > 8.5) dummy.scale.y *= isGrassFlower(type) ? G.bedFlowerTall : G.bedGrassTall; // park / HK garden beds + borders (flag 9+flower): HK-FIX8: flowers x13.5 (old 1.35 x 10), the green filler x10
     if (flag > 4.5 && flag < 5.5 && isGrassFlower(type)) dummy.scale.y *= 2; // road median (centre strip) flowers: 2x taller (user, 2026-11-23)
     if (flag > 5.5 && flag < 6.5) {
       // JUNGLE FLOOR (2026-11-21): short grass, flowers standing a little above it, clumps lower than before (the broad-leaf ground cover keeps its own size)
