@@ -11,7 +11,7 @@ const SHOW = 330;
 const TAU = Math.PI * 2;
 
 /** Merged triangle soup with vertex colours. */
-class Soup {
+export class Soup {
   p: number[] = [];
   c: number[] = [];
   i: number[] = [];

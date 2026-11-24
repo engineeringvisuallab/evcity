@@ -76,6 +76,7 @@ import { RoadCentreLayer } from '../roads/debug/RoadCentreLayer';
 import { PlotLayer } from '../roads/debug/PlotLayer';
 import { StackInterchangeLayer } from '../interchange/m8/StackInterchangeLayer';
 import { HkInterchangeLayer } from '../roads/ring/HkInterchangeLayer';
+import { HkGardenLayer } from '../roads/ring/HkGardenLayer';
 import { GroundJ1Layer } from '../roads/junction/GroundJ1Layer';
 import { AutoPadLayer } from '../roads/junction/AutoPadLayer';
 import { RteLayer } from '../roads/junction/RteLayer';
@@ -176,6 +177,7 @@ export class Engine {
   private plotLayer: PlotLayer;
   private stackJ1: StackInterchangeLayer;
   private hkInterchange: HkInterchangeLayer;
+  private hkGarden: HkGardenLayer; // STEP HK-10c: pond gardens of the west loops
   private groundJ1: GroundJ1Layer;
   private autoPads: AutoPadLayer;
   private rteLayer: RteLayer;
@@ -437,6 +439,7 @@ export class Engine {
     this.trainContacts = new TrainContacts(this.trains, (h) => bus.emit('train:overlap', h));
     this.signalLayer = new SignalLayer(this.world.root, this.trains.fleet);
     this.stationSigns = new StationSignLayer(this.world.root, this.rail, (x, z) => this.world.terrain.heightAt(x, z)); // English + Bangla lettering on the station boards
+    this.hkGarden = new HkGardenLayer(this.world.root, (x, z) => this.world.terrain.heightAt(x, z)); // STEP HK-10c: empty unless Config.roads.hatikamrul.enabled
     this.centralPark = new CentralParkLayer(this.world.root, (x, z) => this.world.terrain.heightAt(x, z)); // 2026-11-22: park + fountain inside the Central station ring
     this.trainBoard = new StationBoard(this.trains.fleet, this.rail);
 
@@ -1410,6 +1413,7 @@ export class Engine {
     this.stationSigns.update(this.camera.position.x + this.world.origin.origin.x, this.camera.position.z + this.world.origin.origin.z);
     this.roadSigns.update(this.camera.position.x + this.world.origin.origin.x, this.camera.position.z + this.world.origin.origin.z);
     this.centralPark.update(this.camera.position.x + this.world.origin.origin.x, this.camera.position.z + this.world.origin.origin.z);
+    this.hkGarden.update(this.camera.position.x + this.world.origin.origin.x, this.camera.position.z + this.world.origin.origin.z);
     const board = this.trainBoard.update(px, pz);
     this.hud.setTrainBoard(board ? formatBoard(board) : null);
   }
@@ -1938,6 +1942,7 @@ export class Engine {
     this.stationSigns.dispose();
     this.roadSigns.dispose();
     this.centralPark.dispose();
+    this.hkGarden.dispose();
     this.trains.dispose();
     this.trainLayer.dispose();
     this.world.dispose();

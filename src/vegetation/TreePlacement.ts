@@ -1,4 +1,5 @@
 import { inPark, parkTreesInChunk } from '../park/CentralPark';
+import { hkGardenTrees, inHkGarden } from '../roads/ring/HkInfieldData';
 import { Config } from '../core/Config';
 import type { CityPlan } from '../city/CityPlan';
 import type { TerrainGenerator } from '../terrain/TerrainGenerator';
@@ -164,6 +165,7 @@ export class TreePlacer {
     // STAGE 12: nothing grows in the railway corridor (embankment / cutting slopes, viaduct footprint, railway land)
     if (this.gen.railForm.inCorridor(x, z, 3)) return true;
     if (inPark(x, z, 1)) return true; // the Central station park has its own planted trees (parkTreesInChunk)
+    if (inHkGarden(x, z, 1)) return true; // STEP HK-10c: the HK pond gardens have their own planted trees (below)
     if (this.gen.portForm.inFootprint(x, z, 4)) return true; // STAGE 14: sea port
     if (this.gen.airport.contains(x, z, 4)) return true; // airport pad
     if (this.gen.airportSea.contains(x, z, 4)) return true; // sea airport pad + causeway
@@ -749,6 +751,14 @@ export class TreePlacer {
       this.gen.sample(x, z, this.sample);
       return this.sample.h;
     }, (h, kind, scale) => this.footY(h, 0, kind, scale), (x, z) => !this.gen.railForm.inCorridor(x, z, 2.5))) lists[e.kind].push(...e.v);
+    // STEP HK-10c: shade trees of the two HK pond gardens (krishnachura / rain trees, same kinds and scales as the Central park)
+    for (const t of hkGardenTrees()) {
+      if (t.x < ox || t.x >= ox + S || t.z < oz || t.z >= oz + S) continue;
+      if (this.onRoadGround(t.x, t.z)) continue;
+      this.gen.sample(t.x, t.z, this.sample);
+      const kind = t.flowering ? TreeKind.krishnachura : TreeKind.koroi;
+      lists[kind].push(t.x - ox, this.footY(this.sample.h, 0, kind, t.scale), t.z - oz, t.scale, t.yaw, t.tint);
+    }
     // EVLab campus: the park trees (palms, avenue trees, lawn trees) around the tower and the lake
     for (const e of evlabParkTreesInChunk(this.gen.evlab.floorY, ox, oz)) lists[e.kind].push(...e.v);
     // EVLab campus, Step RT4: big palms on the gentle parts of the hill behind the plot (slope and top; the real ground decides, steep ground stays with the forest)

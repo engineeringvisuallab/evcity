@@ -13,7 +13,7 @@ import { getCityGreen, type CityGreen } from '../city/CityGreen';
 import { MS, medianHalfAt, planMedians } from '../roads/MedianPlan';
 import { sightZoneLen } from '../roads/Planting';
 import { uturnZoneHas } from '../roads/UTurns';
-import { hkLawnStripe } from '../roads/ring/HkInfieldData';
+import { hkGardenZone, hkGardens, hkLawnStripe } from '../roads/ring/HkInfieldData';
 import { PARK, Z_BED, Z_BORDER, Z_LAWN, inPark, parkZone, zoneFlower, zoneKind } from '../park/CentralPark';
 
 
@@ -295,7 +295,7 @@ export class GrassPlacer {
         if (slope >= G.maxSlope) continue;
         chance *= 1 - smooth(G.slopeFadeFrom, G.maxSlope, slope);
         if (roll >= chance) continue;
-        if (this.blocked(x, z) || zoneKind(parkZone(x, z)) > Z_LAWN) continue; // park: paths / beds / border have their own plants (placePark)
+        if (this.blocked(x, z) || zoneKind(parkZone(x, z)) > Z_LAWN || zoneKind(hkGardenZone(x, z)) > Z_LAWN) continue; // park / HK pond garden: paths / beds / border have their own plants (placePark, placeHkGarden)
 
         const dry = Math.min(1, Math.max(0, smooth(G.dryFrom, G.dryTo, h) + (rDry - 0.5) * 0.2)) * (1 - lawn);
         // flag 2 = city lawn tuft (short, mown; may carry a small flower), 0 = normal tuft
@@ -329,6 +329,7 @@ export class GrassPlacer {
     this.placeClumps(tx, tz, stride, out);
     this.placeMedian(tx, tz, stride, ox, oz, out);
     this.placePark(stride, ox, oz, out);
+    this.placeHkGarden(stride, ox, oz, out); // STEP HK-10c
     return new Float32Array(out);
   }
 
@@ -361,6 +362,41 @@ export class GrassPlacer {
         if (this.gen.railForm.inCorridor(x, z, 0)) continue; // under the viaduct: nothing
         this.gen.sample(x, z, s);
         out.push(x - ox, s.h - 0.02, z - oz, 0.9 + 0.7 * rScale ** 1.3, rYaw * Math.PI * 2, 0.85 + rTint * 0.3, 0, 9 + zoneFlower(zn));
+      }
+    }
+  }
+
+  /**
+   * STEP HK-10c: the flowers of the two POND GARDENS (HK west loops): the same method as placePark (fixed 0.5 m grid, one random stream per cell, flag 9 + flower index) in the border ring and the 4 oval beds.
+   */
+  private placeHkGarden(stride: number, ox: number, oz: number, out: number[]): void {
+    const gs = hkGardens();
+    if (gs.length === 0) return;
+    const step = 0.5;
+    const s = this.sample;
+    for (const Gd of gs) {
+      if (ox > Gd.x + Gd.gr || ox + G.tile < Gd.x - Gd.gr || oz > Gd.z + Gd.gr || oz + G.tile < Gd.z - Gd.gr) continue;
+      const i0 = Math.floor(Math.max(ox, Gd.x - Gd.gr) / step), i1 = Math.floor(Math.min(ox + G.tile, Gd.x + Gd.gr) / step);
+      const j0 = Math.floor(Math.max(oz, Gd.z - Gd.gr) / step), j1 = Math.floor(Math.min(oz + G.tile, Gd.z + Gd.gr) / step);
+      for (let j = j0; j <= j1; j++) {
+        if (j % stride !== 0) continue;
+        for (let i = i0; i <= i1; i++) {
+          if (i % stride !== 0) continue;
+          const rng = mulberry32(hash2D(this.seed ^ 0x9a4c2, i, j));
+          const x = (i + rng()) * step;
+          const z = (j + rng()) * step;
+          const rScale = rng();
+          const rYaw = rng();
+          const rTint = rng();
+          if (x < ox || x >= ox + G.tile || z < oz || z >= oz + G.tile) continue;
+          const zn = hkGardenZone(x, z);
+          const kind = zoneKind(zn);
+          if (kind !== Z_BED && kind !== Z_BORDER) continue;
+          if (this.blocked(x, z)) continue;
+          this.gen.sample(x, z, s);
+          if (!Number.isNaN(s.water) && s.h < s.water + 0.1) continue;
+          out.push(x - ox, s.h - 0.02, z - oz, 0.9 + 0.7 * rScale ** 1.3, rYaw * Math.PI * 2, 0.85 + rTint * 0.3, 0, 9 + zoneFlower(zn));
+        }
       }
     }
   }
@@ -516,7 +552,7 @@ export class GrassPlacer {
         if (slope >= G.maxSlope) continue;
         chance *= 1 - smooth(G.slopeFadeFrom, G.maxSlope, slope);
         if (roll >= chance) continue;
-        if (this.blocked(x, z) || zoneKind(parkZone(x, z)) > Z_LAWN) continue; // park: paths / beds / border have their own plants (placePark)
+        if (this.blocked(x, z) || zoneKind(parkZone(x, z)) > Z_LAWN || zoneKind(hkGardenZone(x, z)) > Z_LAWN) continue; // park / HK pond garden: paths / beds / border have their own plants (placePark, placeHkGarden)
 
         const dry = Math.min(1, Math.max(0, smooth(G.dryFrom, G.dryTo, h) + (rDry - 0.5) * 0.2)) * (1 - lawn);
         // flag 1 = a clump of the open land (may carry seed plumes), 7 = a clump inside the dense jungle (shady tussocks only), 3 = city tall clump
