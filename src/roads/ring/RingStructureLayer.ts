@@ -1,7 +1,7 @@
 // STEP 5.3c-1: the 3D layer of the ring's structures. One mesh per structure (vertex colours, one shared material), absolute world coordinates, parent = world.root.
 import * as THREE from 'three';
 import type { RoadNetwork } from '../RoadNetwork';
-import { buildStructure, ringStructures, type MeshData } from './RingBridgeGeometry';
+import { buildStructure, otherRoadStructures, ringStructures, type MeshData } from './RingBridgeGeometry';
 
 /** One structure's solid triangles in absolute world coordinates, with a bounding circle (for the near-player collider switch). */
 export interface RingSolid {
@@ -31,7 +31,7 @@ export class RingStructureLayer {
 
   constructor(private readonly parent: THREE.Object3D, roads: RoadNetwork) {
     this.group.name = 'ring-structures';
-    ringStructures(roads).forEach((b, k) => {
+    [...ringStructures(roads), ...otherRoadStructures(roads)].forEach((b, k) => { // STEP BRIDGE-ALL: + the bridges of the R6 / R4 / R2 / C / L roads (they had no deck, no pier, no collider)
       const d = buildStructure(roads, b, k);
       if (d.indices.length === 0) return;
       const g = new THREE.BufferGeometry();

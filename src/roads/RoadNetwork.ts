@@ -1272,6 +1272,7 @@ export class RoadNetwork {
       }
       this.addRoad({ tier: 1, kind: 'highway', name: d.name, closed: false, pts, fixedY: ys, halfWidth: sec.halfWidth, shoulder: sec.shoulder, lanes: sec.lanesPerDir * 2, speedKmh: d.name === 'R6-7' ? 60 : 80, maxGrade: 0.04, section: sec, daylight: true }); // R6-7 (L48): min radius 142 m < 229 m (V80), kept as a V60 curve with a lower posted speed (G7f)
       if (d.structs) this.bridgeArm(this.roads[this.roads.length - 1], { name: d.name, s: d.s, pts: d.pts, ys: d.ys, structs: d.structs }); // STEP G7f: short river bridge (R6-7)
+      this.bridgeWetGaps(this.roads[this.roads.length - 1]); // STEP BRIDGE-ALL
     }
     // STEP G7g: the two slip roads of the JX-2 half interchange (north side of J1-E, stem R6-8): one-way ramps, 1 lane, finished heights used exactly (R6SlipData.ts, made by scripts/r6-export-slips.ts).
     for (const q of R6_SLIP_DATA) this.addRoad({ tier: 3, kind: 'ramp', name: q.name, closed: false, pts: q.pts.map((p) => [p[0], p[1]]), halfWidth: 4.2, lanes: 1, speedKmh: 50, fixedY: q.ys.slice() });
@@ -1305,6 +1306,7 @@ export class RoadNetwork {
       }
       this.addRoad({ tier: 1, kind: 'highway', name: d.name, closed: false, pts, fixedY: ys, halfWidth: sec.halfWidth, shoulder: sec.shoulder, lanes: sec.lanesPerDir * 2, speedKmh: c.speed, maxGrade: 0.06, section: sec, daylight: true });
       if (d.structs) this.bridgeArm(this.roads[this.roads.length - 1], { name: d.name, s: d.s, pts: d.pts, ys: d.ys, structs: d.structs });
+      this.bridgeWetGaps(this.roads[this.roads.length - 1]); // STEP BRIDGE-ALL
     }
   }
 
@@ -1342,6 +1344,7 @@ export class RoadNetwork {
       if (four) this.addRoad({ tier: 1, kind: 'highway', name: d.name, closed: false, pts, fixedY: ys, halfWidth: sec4.halfWidth, shoulder: sec4.shoulder, lanes: sec4.lanesPerDir * 2, speedKmh: c4.speed, maxGrade: 0.08, section: sec4, daylight: true });
       else this.addRoad({ tier: 3, kind: 'collector', name: d.name, closed: false, pts, fixedY: ys, halfWidth: sec.halfWidth, shoulder: sec.shoulder, lanes: sec.lanesPerDir * 2, speedKmh: c.speed, maxGrade: 0.08, section: sec, daylight: true });
       if (d.structs) this.bridgeArm(this.roads[this.roads.length - 1], { name: d.name, s: d.s, pts: d.pts, ys: d.ys, structs: d.structs });
+      this.bridgeWetGaps(this.roads[this.roads.length - 1]); // STEP BRIDGE-ALL
     }
   }
 
@@ -1373,6 +1376,7 @@ export class RoadNetwork {
       }
       this.addRoad({ tier: 3, kind: 'collector', name: d.name, closed: false, pts, fixedY: ys, halfWidth: sec.halfWidth, shoulder: sec.shoulder, lanes: sec.lanesPerDir * 2, speedKmh: c.speed, maxGrade: 0.08, section: sec, daylight: true });
       if (d.structs) this.bridgeArm(this.roads[this.roads.length - 1], { name: d.name, s: d.s, pts: d.pts, ys: d.ys, structs: d.structs });
+      this.bridgeWetGaps(this.roads[this.roads.length - 1]); // STEP BRIDGE-ALL
     }
   }
 
@@ -1404,6 +1408,7 @@ export class RoadNetwork {
       }
       this.addRoad({ tier: 3, kind: 'local', name: d.name, closed: false, pts, fixedY: ys, halfWidth: sec.halfWidth, shoulder: sec.shoulder, lanes: sec.lanesPerDir * 2, speedKmh: c.speed, maxGrade: 0.1, section: sec, daylight: true });
       if (d.structs) this.bridgeArm(this.roads[this.roads.length - 1], { name: d.name, s: d.s, pts: d.pts, ys: d.ys, structs: d.structs });
+      this.bridgeWetGaps(this.roads[this.roads.length - 1]); // STEP BRIDGE-ALL
     }
   }
 
@@ -1426,6 +1431,44 @@ export class RoadNetwork {
       if (!Number.isNaN(w) && this.scratch.h < w + 0.3 && (seaToo || this.scratch.h > 2)) lev[i] = w; // the ring and the arms only count river water (ground above 2 m); the island link crosses the SEA (water 0 m, floor below 0): seaToo
     }
     this.registerStructures(r, a.structs.map(([s0, s1]) => ({ a: idx(s0), b: idx(s1) })), lev);
+  }
+
+  /**
+   * STEP BRIDGE-ALL: a road of the data lines (R6 / R4 / R2 / C / L) that crosses a river ON THE GROUND has no bridge when the design data had no structure there (R6-10 and R6-11 were 11 m earth dams across a river).
+   * Every wet run (river water, ground above 2 m) outside a registered structure becomes a structure. A run inside a fill higher than VIADUCT_FILL grows to the whole high-fill stretch (rule D4: viaduct, no earth dam in the valley),
+   * and gets an approach slab (STRUCT.approach) at each end. Same registration (BridgeSpec + bridgeOf) and same terrain rule as bridgeArm. A road that already has its bridge is not touched.
+   */
+  private bridgeWetGaps(r: RoadSpec): void {
+    const n = r.xs.length;
+    const lev = new Float64Array(n).fill(NaN);
+    for (let i = 0; i < n; i++) {
+      this.natural(r.xs[i], r.zs[i], this.scratch);
+      const w = this.scratch.water;
+      if (!Number.isNaN(w) && this.scratch.h < w + 0.3 && this.scratch.h > 2) lev[i] = w;
+    }
+    const ap = Math.ceil(STRUCT.approach / r.step);
+    const zones: { a: number; b: number }[] = [];
+    let i = 0;
+    while (i < n) {
+      if (Number.isNaN(lev[i]) || r.bridgeOf[i] >= 0) { i++; continue; }
+      let a = i;
+      let b = i;
+      while (b + 1 < n && !Number.isNaN(lev[b + 1]) && r.bridgeOf[b + 1] < 0) b++;
+      const wetA = a;
+      const wetB = b;
+      while (a > 0 && r.bridgeOf[a - 1] < 0 && r.ys[a - 1] - r.hNat[a - 1] > VIADUCT_FILL) a--;
+      while (b + 1 < n && r.bridgeOf[b + 1] < 0 && r.ys[b + 1] - r.hNat[b + 1] > VIADUCT_FILL) b++;
+      a = Math.max(0, a - ap);
+      b = Math.min(n - 1, b + ap);
+      for (let k = a; k <= b; k++) { // never run into a structure that exists already
+        if (r.bridgeOf[k] < 0) continue;
+        if (k < wetA) a = k + 1; else { b = k - 1; break; }
+      }
+      if (zones.length && a <= zones[zones.length - 1].b + 1) zones[zones.length - 1].b = Math.max(zones[zones.length - 1].b, b);
+      else zones.push({ a, b });
+      i = Math.max(b, wetB) + 1;
+    }
+    if (zones.length) this.registerStructures(r, zones, lev);
   }
 
   /** Data of the structures (BridgeSpec + RoadSpec.bridgeOf) for index zones a..b of road r; lev = water level of every point (NaN = dry). Used by the ring (5.3b) and the J1 arms (J1-e2). */

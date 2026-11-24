@@ -592,6 +592,7 @@ export function nodeViaduct(roads: RoadNetwork, b: BridgeSpec): MeshData {
 export function buildStructure(roads: RoadNetwork, b: BridgeSpec, k: number): MeshData {
   if (isNodeViaduct(roads, b)) return nodeViaduct(roads, b); // STEP HK-8d-2: before the design list (the node structure is last in ringStructures, so no design number moves)
   if (isStraitStructure(roads, b)) return straitGirder(roads, b); // 17.1g-b: chosen by the road name (M6-1), so the order of the list does not matter
+  if (isOtherRoadStructure(roads, b)) return roadViaduct(roads, b); // STEP BRIDGE-ALL: R6 / R4 / R2 / C / L roads (chosen by the road name, k is not used)
   const design = RING_DESIGNS[k] ?? 'plain';
   if (design === 'cable-stayed') return cableStayed(roads, b);
   if (design === 'network-arch') return networkArch(roads, b);
@@ -617,4 +618,101 @@ export function ringStructures(roads: RoadNetwork): BridgeSpec[] {
   if (link && Config.roads.islandLink.bridgeDeck) out.push(...roads.bridges.filter((b) => b.roadId === link.id).sort((a, c) => a.i0 - c.i0));
   if (nodeB) out.push(nodeB);
   return out;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------
+// STEP BRIDGE-ALL: the bridges of the R6 / R4 / R2 / C / L roads. They were registered (BridgeSpec + terrain carve) but had NO mesh and NO collider: only the road ribbon hung in the air.
+// Same deck as every structure (box girder, parapets, abutments, collision top face) on piers that follow the deck width: ONE wall pier under a narrow road (2 lanes), TWIN columns under a wide one (4 / 6 lanes).
+// A pier is left out where another road runs under it (it is moved along the deck first) and where the underside is too low to need one (abutments carry the slab).
+// ---------------------------------------------------------------------------------------------------------------------------------------------
+export const RB = {
+  /** Deck half width up to which one central wall pier is used (R2 / C / L = 4.9-6 m), above it twin columns (R4 / R6). */
+  narrowW: 8,
+  /** Target span between piers (m): narrow road, wide road, wide road with a main span longer than `longAbove`. */
+  spanNarrow: 26, spanWide: 34, spanLong: 42, longAbove: 200,
+  /** Column section along the road x across, at the foot and at the top (narrow: wall pier). */
+  wallFoot: [1.6, 3.2], wallTop: [1.2, 2.6],
+  twinFoot: [2.0, 2.2], twinTop: [1.5, 1.8], twinU: 0.5,
+  /** Cap beam under the deck: height, length along the road, how far (m) it stays inside the deck edge. */
+  capH: 1.2, capA: 2.2, capIn: 0.6,
+  /** The column goes this far below the lowest natural ground around it. */
+  embed: 4,
+  /** No pier when the clear height under the deck (underside to ground) is below this (m): too low, the abutments carry the slab. */
+  minGap: 2.6,
+  /** A pier is moved along the deck by these offsets (m) when another road runs under it; if none is free it is left out. */
+  shifts: [0, 5, -5, 10, -10],
+} as const;
+
+const OWN_STRUCT_ROADS = new Set<string>(['M8', 'J1-N', 'J1-E', 'J1-S', 'J1-W', ISLAND_LINK_DATA.name]);
+
+/** A bridge of any road that has no own structure code: not the ring, not a J1 arm, not the island link, not an HK / RTE interchange road (those have their own decks). */
+export function isOtherRoadStructure(roads: RoadNetwork, b: BridgeSpec): boolean {
+  const n = roads.roads[b.roadId]?.name ?? '';
+  return n !== '' && !OWN_STRUCT_ROADS.has(n) && !n.startsWith('HK-') && !n.startsWith('RTE-');
+}
+
+/** The bridges of the roads that have no structure code of their own, in road order, then station order. Not part of ringStructures() (its count and design numbers stay as they are). */
+export function otherRoadStructures(roads: RoadNetwork): BridgeSpec[] {
+  return roads.bridges.filter((b) => isOtherRoadStructure(roads, b)).sort((a, c) => a.roadId - c.roadId || a.i0 - c.i0);
+}
+
+/** Does another road pass within pier reach of (x, z)? Reach = half pavement + shoulder of that road + 5 m. */
+function roadUnder(roads: RoadNetwork, selfId: number, x: number, z: number): boolean {
+  for (const o of roads.roads) {
+    if (o.id === selfId) continue;
+    const reach = o.halfWidth + o.shoulder + 5;
+    for (let q = 0; q + 1 < o.xs.length; q++) {
+      const ax = o.xs[q], az = o.zs[q];
+      if (Math.abs(x - ax) > reach + 40 || Math.abs(z - az) > reach + 40) continue;
+      const bx = o.xs[q + 1] - ax, bz = o.zs[q + 1] - az;
+      const l2 = bx * bx + bz * bz || 1;
+      const t = Math.max(0, Math.min(1, ((x - ax) * bx + (z - az) * bz) / l2));
+      if (Math.hypot(x - ax - bx * t, z - az - bz * t) < reach) return true;
+    }
+  }
+  return false;
+}
+
+/** Plain box-girder bridge on piers that follow the deck width (R6 / R4 / R2 / C / L roads). */
+export function roadViaduct(roads: RoadNetwork, b: BridgeSpec): MeshData {
+  const r = roads.roads[b.roadId];
+  const m = new Mesher();
+  deck(m, roads, r, b);
+  const W = b.deckHalfWidth;
+  const narrow = W <= RB.narrowW;
+  const ap = Math.ceil(STRUCT.approach / r.step);
+  const k0 = Math.min(b.i1, b.i0 + ap), k1 = Math.max(b.i0, b.i1 - ap);
+  if (k1 <= k0) return m.d;
+  const s0 = r.cum[k0], s1 = r.cum[k1];
+  const L = s1 - s0;
+  const span = narrow ? RB.spanNarrow : L > RB.longAbove ? RB.spanLong : RB.spanWide;
+  const n = Math.max(1, Math.round(L / span));
+  for (let i = 1; i < n; i++) {
+    let placed = false;
+    for (const sh of RB.shifts) {
+      const s = s0 + (L * i) / n + sh;
+      if (s <= s0 + 4 || s >= s1 - 4) continue;
+      const f = frameAt(r, s);
+      const k = Math.round(s / r.step);
+      let low = Infinity;
+      for (let q = k - 1; q <= k + 1; q++) low = Math.min(low, r.hNat[Math.min(r.xs.length - 1, Math.max(0, q))]);
+      const under = f.y - STRUCT.deckDepth;
+      if (under - low < RB.minGap) { placed = true; break; } // too low for a pier: nothing to place here
+      if (roadUnder(roads, r.id, f.x, f.z) || (!narrow && (roadUnder(roads, r.id, f.x + f.nx * W * RB.twinU, f.z + f.nz * W * RB.twinU) || roadUnder(roads, r.id, f.x - f.nx * W * RB.twinU, f.z - f.nz * W * RB.twinU)))) continue;
+      const foot = low - RB.embed;
+      if (narrow) {
+        prism(m, f, foot, under - RB.capH, RB.wallFoot[0], RB.wallFoot[1], RB.wallTop[0], RB.wallTop[1], COL.pier);
+      } else {
+        for (const side of [-1, 1]) {
+          const fc: Frame = { ...f, x: f.x + f.nx * W * RB.twinU * side, z: f.z + f.nz * W * RB.twinU * side };
+          prism(m, fc, foot, under - RB.capH, RB.twinFoot[0], RB.twinFoot[1], RB.twinTop[0], RB.twinTop[1], COL.pier);
+        }
+      }
+      prism(m, f, under - RB.capH, under, RB.capA, 2 * (W - RB.capIn), RB.capA, 2 * (W - RB.capIn), COL.pier);
+      placed = true;
+      break;
+    }
+    void placed;
+  }
+  return m.d;
 }
