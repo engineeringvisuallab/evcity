@@ -22,6 +22,8 @@ export class HkInterchangeLayer {
   pavingMeshes = 0;
   /** STEP HK-9d-2: collider of the crash cushion + barrier at the closed lane (kept apart from `solids`, which stays the 4 ramps); Engine adds it to RingStructurePhysics. */
   readonly safetySolids: RingSolid[] = [];
+  /** HK-fix3: colliders of the paving that lies over / beside the ring deck (aux strip, under-deck connector, loop tails). Kept apart from `solids` (= the 4 ramps) and `safetySolids`; Engine adds it to RingStructurePhysics. */
+  readonly pavingSolids: RingSolid[] = [];
   /** Crash cushion + barrier meshes built (1 with the switch ON, 0 OFF). */
   safetyMeshes = 0;
 
@@ -75,6 +77,10 @@ export class HkInterchangeLayer {
       const mesh = new THREE.Mesh(g, this.pavMat);
       mesh.name = name;
       mesh.receiveShadow = true;
+      if (name === 'hk-aux-strip' || name === 'hk-connector' || name.startsWith('hk-tail-')) {
+        const bs = g.boundingSphere!;
+        this.pavingSolids.push({ cx: bs.center.x, cz: bs.center.z, radius: bs.radius, positions: new Float32Array(d.positions), indices: new Uint32Array(d.indices) });
+      }
       this.geos.push(g);
       this.group.add(mesh);
       this.pavingMeshes++;

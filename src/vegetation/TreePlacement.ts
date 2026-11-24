@@ -1,5 +1,6 @@
 import { inPark, parkTreesInChunk } from '../park/CentralPark';
 import { hkGardenTrees, inHkGarden } from '../roads/ring/HkInfieldData';
+import { hkFrame, hkRamps } from '../roads/ring/HkRamps';
 import { Config } from '../core/Config';
 import type { CityPlan } from '../city/CityPlan';
 import type { TerrainGenerator } from '../terrain/TerrainGenerator';
@@ -161,11 +162,38 @@ export class TreePlacer {
     return 1;
   }
 
+  /** HK-fix4: the 4 loop ramps of the Hatikamrul interchange are NOT roads of the network (no road mask), so trees grew on them: their centre line as segments (built once, null = off / no node). */
+  private hkLoopSegs: Float64Array | null | undefined;
+  private nearHkLoop(x: number, z: number): boolean {
+    if (this.hkLoopSegs === undefined) {
+      this.hkLoopSegs = null;
+      if (Config.roads.hatikamrul.enabled) {
+        const f = hkFrame(this.gen.roads);
+        if (f) {
+          const a: number[] = [];
+          for (const rp of hkRamps(f)) for (let i = 0; i + 1 < rp.xs.length; i++) a.push(rp.xs[i], rp.zs[i], rp.xs[i + 1], rp.zs[i + 1]);
+          this.hkLoopSegs = Float64Array.from(a);
+        }
+      }
+    }
+    const S = this.hkLoopSegs;
+    if (!S) return false;
+    const lim = 4.2 + V.roadClear + 1;   // loop half width + the tree clearance of the roads + 1 m
+    for (let i = 0; i < S.length; i += 4) {
+      const ax = S[i], az = S[i + 1], bx = S[i + 2] - ax, bz = S[i + 3] - az;
+      if (x < Math.min(ax, ax + bx) - lim || x > Math.max(ax, ax + bx) + lim || z < Math.min(az, az + bz) - lim || z > Math.max(az, az + bz) + lim) continue;
+      const l2 = bx * bx + bz * bz || 1, t = Math.max(0, Math.min(1, ((x - ax) * bx + (z - az) * bz) / l2));
+      if (Math.hypot(x - ax - bx * t, z - az - bz * t) < lim) return true;
+    }
+    return false;
+  }
+
   private nearRoad(x: number, z: number): boolean {
     // STAGE 12: nothing grows in the railway corridor (embankment / cutting slopes, viaduct footprint, railway land)
     if (this.gen.railForm.inCorridor(x, z, 3)) return true;
     if (inPark(x, z, 1)) return true; // the Central station park has its own planted trees (parkTreesInChunk)
     if (inHkGarden(x, z, 1)) return true; // STEP HK-10c: the HK pond gardens have their own planted trees (below)
+    if (this.nearHkLoop(x, z)) return true; // HK-fix4: no tree on the loop ramps
     if (this.gen.portForm.inFootprint(x, z, 4)) return true; // STAGE 14: sea port
     if (this.gen.airport.contains(x, z, 4)) return true; // airport pad
     if (this.gen.airportSea.contains(x, z, 4)) return true; // sea airport pad + causeway
