@@ -1,0 +1,55 @@
+J0 SITE CHECK 300 ft junction (headless, read only, nothing in src or data changed)
+ring straight PI3->PI4 length 2269 m, heading 24.9 deg, crossing at s=1226 m from PI3 (x -1547, z -2464), zone s 526 .. 1926 (needs to stay inside 0 .. 2269: PASS)
+
+1) GROUND along the ring axis (every 10 m, -700 .. +700 m from the crossing, u>0 = towards PI4)
+natural ground at axis: min 18.6 m, max 71.5 m, at crossing 18.8 m
+ring level (finished surface, planRing ys): min 27.4 m, max 54.1 m, at crossing 28.5 m
+max ring grade over 30 m: 4.00 % at u 240 (design limit for the 8-lane ring: see Criteria; the trench ramps need 3 .. 4 %)
+max natural cross slope over the 91.44 m ROW: 24.92 % at u 680 (limit 6 % ASSUMED)  FAIL
+ring station at the crossing: 7594 m of 19293 m (ring_profile.csv)
+ring surface minus natural ground (fill + / cut -): at crossing 9.7 m, max fill 20.6 m at u -590, max cut 17.4 m at u 700
+  u -700: natural 29.5  ring 44.4  ring - natural 14.9
+  u -600: natural 19.8  ring 40.4  ring - natural 20.6
+  u -500: natural 19.0  ring 36.4  ring - natural 17.4
+  u -450: natural 19.1  ring 34.4  ring - natural 15.3
+  u -300: natural 18.8  ring 29.5  ring - natural 10.7
+  u -150: natural 19.1  ring 27.5  ring - natural 8.3
+  u 0: natural 18.8  ring 28.5  ring - natural 9.7
+  u 150: natural 19.3  ring 32.4  ring - natural 13.2
+  u 300: natural 22.6  ring 38.3  ring - natural 15.8
+  u 450: natural 31.6  ring 44.3  ring - natural 12.7
+  u 560: natural 42.6  ring 48.7  ring - natural 6.1
+  u 700: natural 71.5  ring 54.1  ring - natural -17.4
+rough trench excavation (ASSUMED shape 7.8 m deep, 35 m wide, 4 % ramps, ring level kept): 192430 m3 (about 192 thousand m3)
+low natural ground within the zone (lower than ring level + 1 m, cut would be small there): 128 of 141 samples; high natural ground (higher than ring level + 1 m, hill cut): 10 of 141
+
+2) WATER (sc.water > ground, lakes, river, sea) inside the 91.44 m ROW over the 1400 m zone, and groundwater proxy
+wet stations (u, m): 540 550 560 570 580 590 600 620 630 640 650 660 670 680
+samples with surface water: 14 of 141  FAIL (water on the junction ground)
+nearest water within 700 m: about 475 m from the crossing at (-1211, -2800), water level 18.2 m (a trench floor deeper than that level + capillary rise needs the flotation check, NOT RUN here)
+
+3) RAIL (gen.rail.edges) distance to the ring axis and to the crossing
+closest rail point to the ring axis in the zone: 10 m (edge west-nw, at u -600); ROW half 45.72 + clearance 30 = 75.7 m  FAIL (rail inside ROW + clearance)
+rail crossing the ring axis in the zone: 1 (closest rail point at u -600 = where the ring meets the rail; this is a ring / rail crossing that is already in the game)  FAIL
+closest rail point to the crossing itself: 322 m
+
+4) BUILDINGS (Placements + PlacementsFill, footprint W x D incl. yard) inside the ROW corridor +-46 m of the axis over the zone, and within 300 m of the crossing
+buildings touching the 91.44 m ROW over the 1400 m zone: 0  PASS
+buildings within 300 m of the crossing: 3
+
+5) ENGINEERING AREAS (ENGINEERING_AREAS) at the zone
+areas touching the ROW corridor: none  PASS
+area at the crossing: none
+
+6) OTHER ROADS within 150 m of the axis in the zone, and neighbouring ring junctions
+  M8 cls 8 (built): closest to the axis 0 m
+  R6-9 cls 6 (built): closest to the axis 2 m
+  R6-9 cls 6 (planned): closest to the axis 1 m
+  R4-9 cls 4 (planned): closest to the axis 0 m
+  R2-10 cls 2 (planned): closest to the axis 76 m
+  ring radial join N st 11549 at (1712, -3145): 3329 m from the crossing
+  ring radial join E st 16813 at (2355, 1437): 5517 m from the crossing
+  ring radial join S st 1205 at (-1132, 2302): 4784 m from the crossing
+  ring radial join W st 5104 at (-2595, -592): 2146 m from the crossing
+
+NOT RUN: groundwater level and flotation (not modelled in the game), trees on the ROW (vegetation placement not read), hydrology of the trench (pump / drain), real grade of the ring in the zone beyond the carved ground (profile comes in J1).
