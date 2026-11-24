@@ -418,3 +418,7 @@ FLOWERS: moved out of Config (grass.garden.flower is gone) into the lock file; G
 GRASS (lawn of both gardens + the green filler of the beds, not the flowers): (1) finer blades: tuft width x grass.garden.widthMul 0.55 (height unchanged: lawn 0.7 - 0.9 m, filler 0.3 - 0.45 m); (2) deep green: one dark tint grass.garden.deepTint [0.5, 0.8, 0.55] x deepVar [0.72 + 0.3 x hash] multiplies the painted blade cards: no yellow / straw / dead tufts any more, the HK stripe rings keep their light / dark mark. "Smooth" = clean uniform dark green and thin blades; the material (gloss) is NOT changed.
 NOT RUN: game look; tsc of GrassManager (no error except the missing 'three'); garden-flower-lock-check; npm run build. Thin tufts may look sparse: if so the next knob is the number of tufts of these two lawns (density), not the width.
 KNOBS: Config.ts grass.garden: widthMul, deepTint, deepVar, grass, filler.
+
+## 51. HK-FIX13 (2026-11-24; user: "only the colour of the single grass deep green; and make the width less: 50 % slimmer than now"; src CHANGED core/Config.ts only (2 numbers); STATUS: WRITTEN, NOT RUN)
+CHANGE: grass.garden.widthMul 0.55 -> 0.275 (half the width of FIX12; height unchanged), grass.garden.deepTint [0.5, 0.8, 0.55] -> [0.4, 0.72, 0.45] (a deeper green). Only the garden GRASS (lawn + bed filler); the garden FLOWERS are LOCKED (GardenFlowerLock.ts) and were not touched; no other grass changed.
+NOT RUN: game look, npm run build. If the lawn looks too sparse with the slimmer blades, the knob is the tuft density of the two lawns, not the width.

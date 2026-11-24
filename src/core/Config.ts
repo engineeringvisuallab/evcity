@@ -649,7 +649,7 @@ export const Config = {
       broadLeaf: false,
       /** Central station park lawn: its blades are this many times taller than the city lawn. */
       // HK-FIX12: the GRASS of the Central park / Hatikamrul gardens (the FLOWER size is LOCKED in vegetation/GardenFlowerLock.ts, not here). Height in METRES (lo .. hi by a hash), `widthMul` = finer blades (1 = the normal grass width), deepTint x deepVar = deep green colour (multiplies the painted blade cards).
-      garden: { grass: [0.7, 0.9], filler: [0.3, 0.45], widthMul: 0.55, deepTint: [0.5, 0.8, 0.55], deepVar: [0.72, 0.3] },
+      garden: { grass: [0.7, 0.9], filler: [0.3, 0.45], widthMul: 0.275, deepTint: [0.4, 0.72, 0.45], deepVar: [0.72, 0.3] },
       /** Wildflowers: share of tufts that carry flowers inside a flower patch / scattered in the open meadow. Patches are ~12-30 m wide. */
       flowerInPatch: 0.05, // was 0.14: far fewer flowers
       flowerScatter: 0.002, // was 0.006
