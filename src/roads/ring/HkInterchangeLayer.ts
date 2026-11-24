@@ -10,6 +10,7 @@ import { buildHkAuxStrip, buildHkConnector, buildHkLaneMarks, buildHkTail, hkDec
 import { buildHkCrashBarrier, buildHkGoreMarks } from './HkGoreMarks';
 import { buildHkArrows } from './HkArrows';
 import type { MeshData } from './RingBridgeGeometry';
+import { buildHkBridgeDecks } from './HkBridgeDecks';
 
 export class HkInterchangeLayer {
   readonly solids: RingSolid[] = [];
@@ -26,6 +27,8 @@ export class HkInterchangeLayer {
   readonly pavingSolids: RingSolid[] = [];
   /** Crash cushion + barrier meshes built (1 with the switch ON, 0 OFF). */
   safetyMeshes = 0;
+  /** STEP HK-FIX5: bridged stretches of the HK-CD / HK-SLIP roads that got a deck (0 with the switch OFF). Their colliders are in `pavingSolids`. */
+  bridgeDecks = 0;
 
   constructor(private readonly parent: THREE.Object3D, roads: RoadNetwork, ground?: (x: number, z: number) => number) {
     this.group.name = 'hk-interchange';
@@ -103,6 +106,49 @@ export class HkInterchangeLayer {
       this.geos.push(g);
       this.group.add(mesh);
       this.safetyMeshes++;
+    }
+    // HK-FIX5: deck slab + parapets (visual) and a solid deck (collider) on the bridged stretches of the 8 C-D / slip roads
+    const bd = buildHkBridgeDecks(roads);
+    this.bridgeDecks = bd.bridges;
+    if (bd.visual.indices.length > 0) {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(bd.visual.positions, 3));
+      g.setAttribute('color', new THREE.Float32BufferAttribute(bd.visual.colors, 3));
+      g.setIndex(bd.visual.indices);
+      g.computeVertexNormals();
+      g.computeBoundingSphere();
+      const mesh = new THREE.Mesh(g, this.mat);
+      mesh.name = 'hk-bridge-decks';
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      this.geos.push(g);
+      this.group.add(mesh);
+      // one solid per bridge stretch would be better for the near-player switch: split the soup in chunks of ~60 m by triangle centre
+      const P = bd.solid.positions, I = bd.solid.indices;
+      const cells = new Map<string, number[]>();
+      for (let t = 0; t < I.length; t += 3) {
+        const cx = (P[I[t] * 3] + P[I[t + 1] * 3] + P[I[t + 2] * 3]) / 3, cz = (P[I[t] * 3 + 2] + P[I[t + 1] * 3 + 2] + P[I[t + 2] * 3 + 2]) / 3;
+        const key = `${Math.floor(cx / 60)}_${Math.floor(cz / 60)}`;
+        let a = cells.get(key); if (!a) { a = []; cells.set(key, a); }
+        a.push(I[t], I[t + 1], I[t + 2]);
+      }
+      for (const idx of cells.values()) {
+        const map = new Map<number, number>();
+        const pos: number[] = [];
+        const ind = new Uint32Array(idx.length);
+        for (let q = 0; q < idx.length; q++) {
+          const v = idx[q];
+          let m = map.get(v);
+          if (m === undefined) { m = pos.length / 3; map.set(v, m); pos.push(P[v * 3], P[v * 3 + 1], P[v * 3 + 2]); }
+          ind[q] = m;
+        }
+        let sx = 0, sz = 0;
+        for (let q = 0; q < pos.length; q += 3) { sx += pos[q]; sz += pos[q + 2]; }
+        const cx = sx / (pos.length / 3), cz = sz / (pos.length / 3);
+        let rad = 0;
+        for (let q = 0; q < pos.length; q += 3) rad = Math.max(rad, Math.hypot(pos[q] - cx, pos[q + 2] - cz));
+        this.pavingSolids.push({ cx, cz, radius: rad + 1, positions: new Float32Array(pos), indices: ind });
+      }
     }
     parent.add(this.group);
   }
