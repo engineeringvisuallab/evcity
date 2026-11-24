@@ -10,6 +10,7 @@ import { STRUCT } from './RingStructures';
 import { Config } from '../../core/Config';
 import { ISLAND_LINK_DATA } from '../island/IslandLinkData';
 import { NODE_VIADUCT, nodeDepth } from './NodeViaductData';
+import { hkFrame, hkRamps } from './HkRamps';
 
 export interface MeshData {
   positions: number[];
@@ -186,7 +187,7 @@ function cable(m: Mesher, ax: number, ay: number, az: number, bx: number, by: nu
  * The deck body of a structure: a box girder (trapezoid section, depth STRUCT.deckDepth) lofted along road points i0..i1, parapets on both edges,
  * and two abutment walls at the ends of the main span (the approach slabs rest on the embankment). Shared by every design.
  */
-function deck(m: Mesher, roads: RoadNetwork, r: RoadSpec, b: BridgeSpec, depthOf: (k: number) => number = () => STRUCT.deckDepth): void {
+function deck(m: Mesher, roads: RoadNetwork, r: RoadSpec, b: BridgeSpec, depthOf: (k: number) => number = () => STRUCT.deckDepth, ext?: (side: 1 | -1, k: number) => number): void {
   void roads;
   const W = b.deckHalfWidth;
   const secOf = (D: number): [number, number][] => [[-W, -0.02], [W, -0.02], [W, -0.9], [0.55 * W, -D], [-0.55 * W, -D], [-W, -0.9]]; // (u, dy) top-left ... around; STEP HK-8d-2: the depth may change along the deck (node viaduct haunch)
@@ -210,7 +211,8 @@ function deck(m: Mesher, roads: RoadNetwork, r: RoadSpec, b: BridgeSpec, depthOf
   for (let k = kA; k <= kB; k++) {
     const f = frameAtPoint(r, k);
     const n0 = col.positions.length / 3;
-    col.positions.push(f.x - f.nx * W, f.y - 0.005, f.z - f.nz * W, f.x + f.nx * W, f.y - 0.005, f.z + f.nz * W);
+    const wl = W + (ext ? ext(-1, k) : 0), wr = W + (ext ? ext(1, k) : 0); // HK-fix2: wider where a loop tail leaves the deck edge
+    col.positions.push(f.x - f.nx * wl, f.y - 0.005, f.z - f.nz * wl, f.x + f.nx * wr, f.y - 0.005, f.z + f.nz * wr);
     if (k > kA) col.indices.push(n0 - 2, n0 + 1, n0 - 1, n0 - 2, n0, n0 + 1);
   }
   for (let k = 0; k + 1 < rows.length; k++) for (let q = 1; q < sec.length; q++) m.quad(rows[k][q], rows[k][(q + 1) % sec.length], rows[k + 1][(q + 1) % sec.length], rows[k + 1][q]);
@@ -227,7 +229,13 @@ function deck(m: Mesher, roads: RoadNetwork, r: RoadSpec, b: BridgeSpec, depthOf
         m.vert(f.x + f.nx * ui, f.y + 1.1, f.z + f.nz * ui, COL.parapet),
       ]);
     }
-    for (let k = 0; k + 1 < pr.length; k++) for (let q = 0; q < 4; q++) m.quad(pr[k][q], pr[k][(q + 1) % 4], pr[k + 1][(q + 1) % 4], pr[k + 1][q]);
+    // HK-fix2: no parapet where a loop tail joins the deck edge (ext > 0); an end cap closes the parapet where it stops
+    const gap = (k: number): boolean => !!ext && ext(side as 1 | -1, b.i0 + k) > 0;
+    for (let k = 0; k + 1 < pr.length; k++) {
+      const g0 = gap(k), g1 = gap(k + 1);
+      if (!g0 && !g1) for (let q = 0; q < 4; q++) m.quad(pr[k][q], pr[k][(q + 1) % 4], pr[k + 1][(q + 1) % 4], pr[k + 1][q]);
+      else if (g0 !== g1) { const c = g0 ? pr[k + 1] : pr[k]; m.quad(c[0], c[1], c[2], c[3]); }
+    }
   }
   // abutments at the ends of the main span
   const ap = Math.ceil(STRUCT.approach / r.step);
@@ -529,12 +537,38 @@ export function isNodeViaduct(roads: RoadNetwork, b: BridgeSpec): boolean {
   return r?.name === 'M8' && r.cum[b.i0] <= NODE_VIADUCT.stationM && NODE_VIADUCT.stationM <= r.cum[b.i1];
 }
 
+/**
+ * HK-fix2: where the loop tails leave the node deck edge. ext(side, k) = how far (m) beyond the deck edge the loop pavement reaches at ring point k on that side (0 = no loop there).
+ * There the deck gets NO parapet (the loop joins the ring) and the collision top face is widened by ext, so the tail is solid (it lay over nothing between the deck edge and the end of the ramp mesh).
+ */
+function nodeExt(roads: RoadNetwork, r: RoadSpec, b: BridgeSpec): (side: 1 | -1, k: number) => number {
+  const none = (): number => 0;
+  if (!Config.roads.hatikamrul.enabled) return none;
+  const f = hkFrame(roads);
+  if (!f) return none;
+  const W = NODE_VIADUCT.deckHalf, tab = [new Map<number, number>(), new Map<number, number>()];
+  const put = (si: number, k: number, v: number): void => { if (k >= b.i0 && k <= b.i1 && v > (tab[si].get(k) ?? 0)) tab[si].set(k, v); };
+  for (const rp of hkRamps(f)) {
+    for (let i = 0; i < rp.xs.length; i++) {
+      let kb = -1, bd = Infinity;
+      for (let k = b.i0; k <= b.i1; k++) { const d = Math.hypot(rp.xs[i] - r.xs[k], rp.zs[i] - r.zs[k]); if (d < bd) { bd = d; kb = k; } }
+      if (kb < 0 || bd > 45) continue;
+      const u = (rp.xs[i] - r.xs[kb]) * r.nx[kb] + (rp.zs[i] - r.zs[kb]) * r.nz[kb], au = Math.abs(u);
+      if (au > HM_RING_END_OFF || au - rp.halfW > W) continue;      // the part the ramp mesh builds (centre beyond 30 m) is solid by itself
+      const v = Math.min(9, Math.max(0.5, au + rp.halfW - W)), si = u > 0 ? 0 : 1;
+      put(si, kb, v); put(si, kb - 1, v * 0.5); put(si, kb + 1, v * 0.5);
+    }
+  }
+  return (side, k) => tab[side > 0 ? 0 : 1].get(k) ?? 0;
+}
+const HM_RING_END_OFF = 30.5;
+
 /** STEP HK-8d-2: the node viaduct = the shared deck with a haunched depth (1.4 m over the lower roads, up to 3.4 m at the main piers) on 3 pier lines x 4 columns (HK-8a / HK-8b numbers). The columns carry the deck directly (the haunch is the cap). */
 export function nodeViaduct(roads: RoadNetwork, b: BridgeSpec): MeshData {
   const r = roads.roads[b.roadId];
   const N = NODE_VIADUCT;
   const m = new Mesher();
-  deck(m, roads, r, { ...b, deckHalfWidth: N.deckHalf }, (k) => nodeDepth(r.cum[k] - N.stationM));
+  deck(m, roads, r, { ...b, deckHalfWidth: N.deckHalf }, (k) => nodeDepth(r.cum[k] - N.stationM), nodeExt(roads, r, b));
   for (const pd of N.piersD) {
     const s = N.stationM + pd;
     const f = frameAt(r, s);
