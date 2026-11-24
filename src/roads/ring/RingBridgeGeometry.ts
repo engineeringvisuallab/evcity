@@ -9,6 +9,7 @@ import type { BridgeSpec, RoadSpec } from '../RoadTypes';
 import { STRUCT } from './RingStructures';
 import { Config } from '../../core/Config';
 import { ISLAND_LINK_DATA } from '../island/IslandLinkData';
+import { deckBeside, HKB } from './HkBridgeDecks';
 import { NODE_VIADUCT, nodeDepth } from './NodeViaductData';
 import { hkFrame, hkRamps } from './HkRamps';
 
@@ -504,7 +505,9 @@ export function straitGirder(roads: RoadNetwork, b: BridgeSpec): MeshData {
         m.vert(f.x + f.nx * ut, f.y + IB.parapetH, f.z + f.nz * ut, COL.parapet),
       ]);
     }
-    for (let k = 0; k + 1 < pr.length; k++) for (let q = 0; q < 4; q++) m.quad(pr[k][q], pr[k][(q + 1) % 4], pr[k + 1][(q + 1) % 4], pr[k + 1][q]);
+    // HK-FIX6: leave the parapet out where an HK twin bridge (C-D / slip) lies beside this edge: it was a wall between two carriageways and cars got stuck on it
+    const open = (k: number): boolean => { const f = frameAtPoint(r, b.i0 + k); return deckBeside(roads, f.x + f.nx * side * W, f.z + f.nz * side * W, r.id, HKB.besideD + 4, true); };
+    for (let k = 0; k + 1 < pr.length; k++) { if (open(k) || open(k + 1)) continue; for (let q = 0; q < 4; q++) m.quad(pr[k][q], pr[k][(q + 1) % 4], pr[k + 1][(q + 1) % 4], pr[k + 1][q]); }
   }
   // abutments at the ends of the main span
   for (const s of [L.s0, L.s1]) {

@@ -19,10 +19,31 @@ export const HKB = {
   girder: 1.4, // slab thickness (m), same as the HK ramp girder
   parH: 0.9, // parapet height (m)
   parT: 0.35, // parapet thickness (m)
+  besideD: 10, // HK-FIX6: another deck within this distance (m) of a deck edge = no parapet on that edge
   topGap: 0.005, // collision top face under the road level (m)
   grey: [0.62, 0.62, 0.6] as [number, number, number],
   dark: [0.5, 0.5, 0.49] as [number, number, number],
 };
+
+/**
+ * HK-FIX6: is there ANOTHER deck beside this point? (distance from (x, z) to the centre line of a bridged stretch of any road other than `selfId` (and, with hkOnly, only HK-* roads) < maxD.)
+ * Used to leave out the parapet that would stand as a wall between two carriageways (island strait structure M6-1 beside the HK-CD-E-S twin bridge): cars got stuck on it.
+ */
+export function deckBeside(roads: RoadNetwork, x: number, z: number, selfId: number, maxD: number, hkOnly: boolean): boolean {
+  if (!Config.roads.hatikamrul.enabled) return false;
+  for (const r of roads.roads) {
+    if (r.id === selfId || (hkOnly && !r.name.startsWith('HK-'))) continue;
+    for (let k = 0; k + 1 < r.xs.length; k++) {
+      if (r.bridgeOf[k] < 0 && r.bridgeOf[k + 1] < 0) continue;
+      const ax = r.xs[k], az = r.zs[k], bx = r.xs[k + 1] - ax, bz = r.zs[k + 1] - az;
+      if (Math.abs(x - ax) > maxD + 12 || Math.abs(z - az) > maxD + 12) continue;
+      const l2 = bx * bx + bz * bz || 1;
+      const t = Math.max(0, Math.min(1, ((x - ax) * bx + (z - az) * bz) / l2));
+      if (Math.hypot(x - ax - bx * t, z - az - bz * t) < maxD) return true;
+    }
+  }
+  return false;
+}
 
 export function buildHkBridgeDecks(roads: RoadNetwork): HkBridgeDeckData {
   const out: HkBridgeDeckData = { visual: { positions: [], colors: [], indices: [] }, solid: { positions: [], indices: [] }, bridges: 0, lengthM: 0 };
@@ -76,6 +97,8 @@ export function buildHkBridgeDecks(roads: RoadNetwork): HkBridgeDeckData {
       // parapets, both edges: outer face, top, inner face
       for (const side of [1, -1]) {
         const e = (S2: typeof A): number[] => (side > 0 ? S2.l : S2.r);
+        // HK-FIX6: no parapet where another deck (the island strait structure, an arm structure) lies beside this edge: it would be a wall between two carriageways
+        if (deckBeside(roads, e(A)[0], e(A)[2], b.roadId, HKB.besideD, false) || deckBeside(roads, e(B)[0], e(B)[2], b.roadId, HKB.besideD, false)) continue;
         const ia = inn(e(A), -side * A.nx, -side * A.nz, HKB.parT), ib = inn(e(B), -side * B.nx, -side * B.nz, HKB.parT);
         quad(e(A), e(B), up(e(B), HKB.parH), up(e(A), HKB.parH), HKB.grey, true, true); // outer
         quad(up(e(A), HKB.parH), up(e(B), HKB.parH), up(ib, HKB.parH), up(ia, HKB.parH), HKB.grey, true, true); // top
