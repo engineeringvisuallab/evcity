@@ -1,0 +1,30 @@
+J7-A CHECK: ring underpass box (headless, numbers only, nothing in the game changed)
+box u -67 .. 67 (134 m), clear 45.400000000000006 m (2 cells of 22.1 + wall 1.2), outside 47.4 m, roof 2 m, deck 35.3 m, soffit 33.3 m
+
+1) GEOMETRY
+PASS  box covers the roundabout outer circle (r 62) + 5 m each side  u -67 .. 67
+PASS  roof top = roundabout deck level  35.3 vs 35.3
+PASS  each cell holds the ring pavement edge (SECTION_M8) + barrier offset 0.6 m  cell edge at v 22.700000000000003 m, pavement edge 22.1 m + 0.6
+PASS  central wall fits inside the 6.0 m median (2.4 + 1.2 + 2.4)  wall 1.2 m, median remainder each side 2.4 m
+PASS  outside width inside the half ROW 45.72 m  23.7 m
+PASS  roof span / depth <= 14 (ASSUMED rule of thumb 12 .. 20)  22.1 m / 2 m = 11.05
+
+2) CLEARANCE along the box (soffit minus ring surface on the axis, every 5.5 m, real ring levels)
+PASS  vertical clearance >= 5.5 m at every station  min 5.6 m at u -67, soffit 33.3 m, highest ring surface 27.74 m
+PASS  clearance at the two portals >= 5.5 m  W 5.56 m, E 5.57 m
+INFO  clearance is on the ring axis; crossfall / superelevation, future resurfacing and 0.1 m construction tolerance are NOT modelled (spare over 5.5 m is only 0.1 m)
+
+3) DRAINAGE
+FINDING  J2 assumed the ring falls to both portals (-0.05 %). The real ring profile is a SAG: low point u -5 (level 27.43 m) INSIDE the box, rising 0.48 % to both portals and on beyond them. Gravity drainage to the portals is impossible: the box needs a sump with pumps.
+PASS  low point lies inside the box (sump position)  u -5
+PASS  pump duty capacity (one pump on stand-by) >= design inflow  design 281 L/s (rain 100 mm/h ASSUMED, C 0.9, catchment 11227 m2 = box + 60 m of ring each side), duty 300 L/s (3 pumps x 150 L/s)
+PASS  two sumps (one per cell) sit under the median strips beside the central wall  v 0.8..2.8, v -0.8..-2.8
+INFO  the rest of the ring (rising both ways for more than 700 m) must keep its own inlets / outfalls so that only the 60 m approach reaches the sag; that is a ring drainage item, NOT checked here
+
+4) PORTALS AND WING WALLS
+PASS  wing wall outer face stays inside the ramp inner edge (ramp edge at v 24.2 m)  WWL 23.3 m, WWR 23.3 m, WEL 23.3 m, WER 23.3 m
+PASS  wing wall height positive everywhere  min 6.6 m, max 7.3 m
+INFO  wing wall TOP levels are ASSUMED (deck 35.3 m falling 5 % from r 62): J7-C replaces them with the real J5 ramp rows. Wing wall height about 6.6 .. 7.3 m = a retaining wall, not a decoration
+
+0 FAIL
+NOT RUN: structural design (roof slab loads incl. 1 m island soil and trees, walls under 8 m of platform fill, foundation on the ring embankment, settlement), waterproofing, joints, fire / lighting / ventilation (under 300 m: none planned), power back-up for the pumps, flood level, groundwater, the R6 under the rail (J7-B), retaining walls of platform / R4 / ramps (J7-C), parapets, light and sign positions (J7-C).

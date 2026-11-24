@@ -1,0 +1,45 @@
+J7-B CHECK: R6 road under the railway (headless, real game rail read only, nothing in the game changed)
+crossing: rail edge ring-north at rail s 74.27 m, R6 arm station 294.07 m, world (-1809.67, -2733.47), skew 101.46 deg (acute 78.54), rail kind there = bridge (station)
+
+1) WHAT THE RAIL IS AT THE CROSSING
+PASS  rail at the crossing is a VIADUCT (bridge segment), not an embankment  bridge, reason "station" (station viaduct, deck half width 9.6 m, pier cap across 9.2 m); natural ground 19.18 m
+PASS  crossing angle between 60 and 120 deg (skew not extreme)  101.46 deg
+INFO  deck top (ballast top) 35.26 m, ballast 0.45 m + deck 2.2 m (game RAIL_DESIGN, real values) -> soffit 32.61 m; cap soffit 31.11 m
+
+2) VERTICAL CLEARANCE UNDER THE DECK
+R6 under the deck for 19.6 m of centre line (arm s 284.27 .. 303.86), level 26.75 m (roundabout side) -> 26.11 m, grade 3.26 %
+PASS  clearance >= 5.5 m over the highest road level under the deck  5.85 m (soffit 32.61 - road 26.75); centre 6.17 m; spare 0.35 m
+PASS  clearance >= game roadClearance 5.2 m  5.85 vs 5.2
+INFO  crossfall, resurfacing (+0.1 m) and construction tolerance are NOT modelled; spare 0.4 m
+
+3) PIERS OF THE VIADUCT (real game piers, edge ring-north)
+existing piers within 130 m (s: gap column / gap cap to the R6 centre line, "X" = inside the walled corridor):
+   s 30: 41.68/39.99   s 60: 12.28/10.6 X   s 90: 13.7/12.02 X   s 120: 43.1/41.42   s 150: 72.51/70.83   s 180: 101.91/100.23
+FINDING  the real game piers at rail s 60, 90 stand INSIDE the R6 corridor (gap column / cap: 12.28 / 10.6 and 13.7 / 12.02 m; needed: column >= 19.58 m = wall toe 18.58 + 1.0 working gap, cap >= 18.2 m = 16.6 + game pierRoadGap 1.6). The fix below is DATA, the game is NOT changed
+PASS  new pier A: column and cap gaps respect the walled corridor  s 51.77: column 20.34 m, cap 18.66 m
+PASS  new pier B: column and cap gaps respect the walled corridor  s 96.77: column 20.34 m, cap 18.65 m
+PASS  the two neighbour piers stay (clear already)  rail s 30, 120
+PASS  every span <= game spanMax 46 m  spans 21.77 / 45 / 23.23 m; middle span 45 m is only 1 m under the limit
+PASS  middle span / deck depth <= 22 (ASSUMED limit, prestressed box girder 15 .. 22)  45 / 2.2 = 20.45 (normal 30 m span = 13.6); alternative with more margin: steel through-girder over s 30 .. 120 (90 m <= 120 m steel limit)
+INFO  the pier move is DATA for J9: RailNetwork.placePiers / ctx.pierFree does not know the new R6 arm; J9 must register the R6 corridor so the game result equals this table
+
+4) ROAD UNDER THE VIADUCT
+PASS  R6 is straight at the crossing  straight (k = 0) at the crossing
+PASS  grade under the deck <= 4 % (J4 limit)  3.26 %
+PASS  no sag under the deck (gravity drainage)  falls 3.2 % away from the roundabout, no sag: gravity drainage
+INFO  under-deck length along the road 19.6 m (= 2 x 9.6 / sin 78.54); the full M6 top width 33.2 m passes between the pier faces (checked in 3)
+
+5) THE 7 m FILL UNDER THE VIADUCT = WALLED STRIP
+PASS  fill under the viaduct > 4 m -> MSE walls  fill 7.39 m (left 7.39 / right 7.05); wall about 7.57 m, top 26.75 m, base 19.18 m
+PASS  wall toe stays inside the R6 half ROW  toe 18.58 m, ROW half 33.900000000000006 m
+PASS  wall toe clear of the new piers by the 1.0 m working gap  toe 18.58 m, pier faces 20.34 / 20.34 m
+INFO  walled strip: arm s 264.27 .. 323.86 (59.6 m = under-deck length + 20 m each side ASSUMED). J7-C joins it to the R6 arm wall rows
+
+6) REST OF THE R6 ARM AGAINST THE RAIL
+PASS  more than 90 m from the crossing R6 stays >= 30 m from every rail  closest 90.3 m at arm s 386.3
+
+7) H6 EXCEPTION (wording)
+H6 (30 m rail clearance) is NOT met at this one crossing by design: R6 crosses under a station VIADUCT (deck half 9.6 m, soffit 32.61 m) on its own walled fill (toe 18.58 m). Replaced by: soffit clearance >= 5.5 m, pier faces >= toe + 1.0 m and >= 18.2 m from the centre line, piers moved to rail s 51.77 and 96.77.
+
+0 FAIL
+NOT RUN: structural design of the moved piers and the 45 m span (loads, bearings, foundations near the R6 wall zone), 25 kV mast positions on the changed spans, rail construction staging, impact barrier on the pier faces, road lighting and signs under the deck (J7-C / J8 / J11), game integration (J9).

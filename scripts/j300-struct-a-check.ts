@@ -1,0 +1,34 @@
+// J7-A CHECK (headless). Reads docs/J300_STRUCT_A.json (scripts/j300-struct-a-gen.ts), docs/J300_GEOM.json, docs/J300_TERRAIN.json. Run: npx tsx scripts/j300-struct-a-check.ts docs   Writes docs/J300_STRUCT_A.txt. PASS / FAIL / INFO; NOT RUN is printed.
+import { readFileSync, writeFileSync } from 'fs';
+import { SECTION_M8 } from '../src/roads/standards/SectionTable';
+const dir = process.argv[2] || 'docs'; const S: any = JSON.parse(readFileSync(`${dir}/J300_STRUCT_A.json`, 'utf8')); const G: any = JSON.parse(readFileSync(`${dir}/J300_GEOM.json`, 'utf8'));
+const out: string[] = []; let fails = 0; const P = (s: string): void => { out.push(s); console.log(s); };
+const CHK = (n: string, ok: boolean, d = ''): void => { if (!ok) fails++; P(`${ok ? 'PASS' : 'FAIL'}  ${n}${d ? '  ' + d : ''}`); };
+const f1 = (x: number): string => (Math.round(x * 10) / 10).toString(); const B = S.box;
+P('J7-A CHECK: ring underpass box (headless, numbers only, nothing in the game changed)');
+P(`box u ${B.u0} .. ${B.u1} (${B.length} m), clear ${B.clearW} m (2 cells of ${B.cellClear} + wall ${B.centralWall}), outside ${f1(B.outsideW)} m, roof ${B.roof.thick} m, deck ${B.roof.topY} m, soffit ${B.roof.soffitY} m`);
+P(''); P('1) GEOMETRY');
+CHK('box covers the roundabout outer circle (r 62) + 5 m each side', B.u1 >= 62 + 5 - 1e-6 && B.u0 <= -(62 + 5) + 1e-6, `u ${B.u0} .. ${B.u1}`);
+CHK('roof top = roundabout deck level', Math.abs(B.roof.topY - G.frame.deckY) < 1e-6, `${B.roof.topY} vs ${G.frame.deckY}`);
+CHK('each cell holds the ring pavement edge (SECTION_M8) + barrier offset 0.6 m', B.cells.every((c: any) => Math.abs(c.v1 - c.v0) >= SECTION_M8.pavementEdge - 0.6 + 0.6 - 1e-6) && Math.abs(B.cells[0].v1) >= SECTION_M8.pavementEdge + 0.6 - 1e-6, `cell edge at v ${B.cells[0].v1} m, pavement edge ${SECTION_M8.pavementEdge} m + 0.6`);
+CHK('central wall fits inside the 6.0 m median (2.4 + 1.2 + 2.4)', B.centralWall <= 6.0 - 2 * 2.4 + 1e-6 + 0, `wall ${B.centralWall} m, median remainder each side ${f1((6.0 - B.centralWall) / 2)} m`);
+CHK('outside width inside the half ROW 45.72 m', B.outsideW / 2 <= 45.72, `${f1(B.outsideW / 2)} m`);
+CHK('roof span / depth <= 14 (ASSUMED rule of thumb 12 .. 20)', B.roof.spanDepth <= 14, `${B.roof.spanClear} m / ${B.roof.thick} m = ${B.roof.spanDepth}`);
+P(''); P('2) CLEARANCE along the box (soffit minus ring surface on the axis, every 5.5 m, real ring levels)');
+let minC = 1e9, at = 0; for (const s of S.stations) if (s.clear < minC) { minC = s.clear; at = s.u; }
+CHK('vertical clearance >= 5.5 m at every station', minC >= 5.5, `min ${f1(minC)} m at u ${at}, soffit ${B.roof.soffitY} m, highest ring surface ${S.ring.max} m`);
+CHK('clearance at the two portals >= 5.5 m', S.portals.every((p: any) => p.clearAtPortal >= 5.5), S.portals.map((p: any) => `${p.id} ${p.clearAtPortal} m`).join(', '));
+P('INFO  clearance is on the ring axis; crossfall / superelevation, future resurfacing and 0.1 m construction tolerance are NOT modelled (spare over 5.5 m is only ' + f1(minC - 5.5) + ' m)');
+P(''); P('3) DRAINAGE');
+P(`FINDING  J2 assumed the ring falls to both portals (-0.05 %). The real ring profile is a SAG: low point u ${S.ring.lowPointU} (level ${S.ring.lowPointY} m) INSIDE the box, rising ${S.ring.gradeToCentrePct} % to both portals and on beyond them. Gravity drainage to the portals is impossible: the box needs a sump with pumps.`);
+const D = S.drainage; CHK('low point lies inside the box (sump position)', S.ring.sagLowInside, `u ${S.ring.lowPointU}`);
+CHK('pump duty capacity (one pump on stand-by) >= design inflow', D.dutyCapacityLs >= D.QdesignLs, `design ${D.QdesignLs} L/s (rain ${D.rainMmH} mm/h ASSUMED, C ${D.runoffC}, catchment ${D.catchArea} m2 = box + 60 m of ring each side), duty ${D.dutyCapacityLs} L/s (${D.pumps} pumps x ${D.pumpLs} L/s)`);
+CHK('two sumps (one per cell) sit under the median strips beside the central wall', D.sump.length === 2 && D.sump.every((s: any) => Math.abs(s.v0) >= B.centralWall / 2 && Math.abs(s.v1) <= 3.0), D.sump.map((s: any) => `v ${s.v0}..${s.v1}`).join(', '));
+P('INFO  the rest of the ring (rising both ways for more than 700 m) must keep its own inlets / outfalls so that only the 60 m approach reaches the sag; that is a ring drainage item, NOT checked here');
+P(''); P('4) PORTALS AND WING WALLS');
+CHK('wing wall outer face stays inside the ramp inner edge (ramp edge at v 24.2 m)', S.wing.every((w: any) => Math.abs(w.vFace) + w.rows[0].t <= 24.2 + 1e-6), S.wing.map((w: any) => `${w.id} ${f1(Math.abs(w.vFace) + w.rows[0].t)} m`).join(', '));
+CHK('wing wall height positive everywhere', S.wing.every((w: any) => w.rows.every((r: any) => r.h > 0)), 'min ' + f1(Math.min(...S.wing.flatMap((w: any) => w.rows.map((r: any) => r.h)))) + ' m, max ' + f1(Math.max(...S.wing.flatMap((w: any) => w.rows.map((r: any) => r.h)))) + ' m');
+P('INFO  wing wall TOP levels are ASSUMED (deck 35.3 m falling 5 % from r 62): J7-C replaces them with the real J5 ramp rows. Wing wall height about 6.6 .. 7.3 m = a retaining wall, not a decoration');
+P(''); P(`${fails} FAIL`);
+P('NOT RUN: structural design (roof slab loads incl. 1 m island soil and trees, walls under 8 m of platform fill, foundation on the ring embankment, settlement), waterproofing, joints, fire / lighting / ventilation (under 300 m: none planned), power back-up for the pumps, flood level, groundwater, the R6 under the rail (J7-B), retaining walls of platform / R4 / ramps (J7-C), parapets, light and sign positions (J7-C).');
+writeFileSync(`${dir}/J300_STRUCT_A.txt`, out.join('\n') + '\n');
