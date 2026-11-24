@@ -6,6 +6,8 @@ import { planMedians } from '../roads/MedianPlan';
 import type { UTurnOpening } from '../roads/UTurns';
 import { J1Link } from './J1Link';
 import { RteLink } from './RteLink';
+import { HkLink } from './HkLink';
+import { hkFrame, hkRamps } from '../roads/ring/HkRamps';
 
 export interface RoadPoint {
   x: number;
@@ -63,6 +65,8 @@ export class RoadGraph {
   readonly tLinks: Array<{ arm: number; sArm: number; ring: number; sRing: number }> = [];
   /** RT-E interchange (ring M8 x arm J1-E): the AI paths of its four movements; null = off / not complete. When set, the old T stand-in of the J1-E arm is removed from tLinks. */
   readonly rte: RteLink | null = null;
+  /** HK-11b: the AI paths of the Hatikamrul interchange (ring M8 over the arm J1-S / island link M6-1); null = off / not complete. When set, the T stand-in of the J1-S arm is removed from tLinks. */
+  readonly hk: HkLink | null = null;
   /** H2: junctions WITHOUT a pad: the end of road `a` (s = sA, `endDir` = travel direction towards that end) lies on / beside road `q` (foot point sQ). See Config.roads... aiEndLinks. */
   readonly endLinks: Array<{ a: number; endDir: 1 | -1; sA: number; q: number; sQ: number; gap: number }> = [];
   /** H2: the same links grouped by road + direction towards the end (key = a * 2 + (endDir > 0 ? 1 : 0)). */
@@ -108,6 +112,16 @@ export class RoadGraph {
       if (l.complete) {
         this.rte = l;
         for (let k = this.tLinks.length - 1; k >= 0; k--) if (this.tLinks[k].arm === l.armRoad) this.tLinks.splice(k, 1);
+      }
+    }
+    if (Config.roads.hkTraffic.enabled && Config.roads.hatikamrul.enabled) {
+      const fr = hkFrame(net);
+      if (fr) {
+        const l = new HkLink(net.roads, hkRamps(fr));
+        if (l.complete) {
+          this.hk = l;
+          for (let k = this.tLinks.length - 1; k >= 0; k--) if (this.tLinks[k].arm === l.armRoad) this.tLinks.splice(k, 1);
+        }
       }
     }
     for (let p = 0; p < net.pads.length; p++) {

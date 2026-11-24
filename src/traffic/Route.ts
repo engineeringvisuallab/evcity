@@ -6,6 +6,7 @@ import { RoadGraph, type RoadPoint } from './RoadGraph';
 import type { VisitState } from './StationStops';
 import { J1_ROAD_START, type J1Link, type J1Move } from './J1Link';
 import type { RteMove } from './RteLink';
+import type { HkMove } from './HkLink';
 import { crossMode, makeMark, type GwMark } from './GiveWay';
 
 /** Where a driver may go: the route never uses a road kind / place (city area or world zone) this refuses (see vehicles/VehicleUse). */
@@ -240,6 +241,7 @@ export class RouteBuilder {
     if (!this.plan && this.tLink()) return;
     // RT-E interchange (ring M8 x arm J1-E): the four movements (flyovers M3 / M4, slips A2S / S2A) are real AI paths
     if (!this.plan && this.rteLink()) return;
+    if (!this.plan && this.hkLink()) return;
     // H2: a road end that lies on another road (no pad): T / continuation
     if (!this.plan && this.endLink()) return;
     // H3: a crossing of two roads at the same level: sometimes turn onto the other road
@@ -510,15 +512,45 @@ export class RouteBuilder {
       if (this.rule && !this.rule.roadOk(toKind)) continue;
       const p = m.chance === 'forced' ? 1 : this.target ? 0 : m.chance === 'm4' ? C.m4Chance : C.exitChance;
       if (this.rnd() >= p) continue;
-      this.takeRte(m);
+      this.takeRte(m, m.id === 'M3' || m.id === 'M4' ? Config.roads.junctionRteTraffic.flyoverMs : Config.roads.junctionRteTraffic.slipMs);
       return true;
     }
     return false;
   }
 
-  private takeRte(m: RteMove): void {
-    const C = Config.roads.junctionRteTraffic;
-    const v0 = m.id === 'M3' || m.id === 'M4' ? C.flyoverMs : C.slipMs;
+  /** HK-11b: movements of the Hatikamrul interchange already decided for (cleared like skipRte). */
+  private skipHk = new Set<string>();
+  /**
+   * HK-11b: a car that comes to the tip of a movement group. Arm / link: EVERY car leaves there onto the C-D road (the arm and the link end at the node): one of the 3 movements by Config weights,
+   * tour / target cars the through one (A2L / L2A). Ring: a car takes the exit with exitChance, target cars never. Then the same lead-in / path / merge as the RT-E movements (takeRte).
+   */
+  private hkLink(): boolean {
+    const hk = this.g.hk;
+    if (!hk) return false;
+    const C = Config.roads.hkTraffic;
+    for (const m of hk.moves) {
+      const f = m.from;
+      if (this.roadId !== f.roadId || this.dir !== f.dir) { this.skipHk.delete(m.id); continue; }
+      const ahead = (f.s - this.s) * this.dir;
+      if (this.skipHk.has(m.id)) { if (ahead < -100) this.skipHk.delete(m.id); continue; }
+      if (ahead <= 0 || ahead > RouteBuilder.RTE_LEAD) continue;
+      const grp = hk.group(m);
+      for (const q of grp) this.skipHk.add(q.id);
+      const thr = hk.through(m);
+      let pick: HkMove | null = null;
+      if (thr) {
+        if (this.target) pick = thr;
+        else { let r = this.rnd(), sum = 0; for (const q of grp) sum += C.weights[q.id] ?? 0; r *= sum || 1; for (const q of grp) { r -= C.weights[q.id] ?? 0; if (r <= 0) { pick = q; break; } } pick = pick ?? thr; }
+        if (this.rule && !this.rule.roadOk(this.g.roads[pick.to.roadId].kind)) pick = this.rule.roadOk(this.g.roads[thr.to.roadId].kind) ? thr : null;
+      } else if (!this.target && this.rnd() < C.exitChance && (!this.rule || this.rule.roadOk(this.g.roads[m.to.roadId].kind))) pick = m;
+      if (!pick) return false;
+      this.takeRte(pick, C.rampMs);
+      return true;
+    }
+    return false;
+  }
+
+  private takeRte(m: Pick<RteMove, 'pts' | 'to'>, v0: number): void {
     const vmax = Math.min(this.cruise(), v0);
     const last = this.pts[this.pts.length - 1];
     const a = m.pts[0], b = m.pts[1];
@@ -639,7 +671,7 @@ export class RouteBuilder {
     this.laneCur = null;
     this.visit = null;
     this.skipPad = -1; this.skipOp = -1; this.skipT = -1;
-    this.skipEnd.clear(); this.skipCross.clear(); this.skipRte.clear(); this.gwDone.clear();
+    this.skipEnd.clear(); this.skipCross.clear(); this.skipRte.clear(); this.skipHk.clear(); this.gwDone.clear();
     this.start();
     return true;
   }

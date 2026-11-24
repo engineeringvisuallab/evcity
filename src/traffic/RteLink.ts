@@ -31,7 +31,7 @@ export const RTE_LANE2 = 1.825;
 const STEP = 5;
 const SLEW = 0.12;           // the lane offset changes by at most 0.12 m per m along the path (1:8)
 
-interface Piece { xs: number[]; zs: number[]; ys: number[]; lat: number[] }
+export interface Piece { xs: number[]; zs: number[]; ys: number[]; lat: number[] }
 
 function roadPiece(r: RoadSpec): Piece {
   const hw = r.halfWidth, base = hw > 4 ? RTE_LANE2 : 0;           // 9.7 m / 9.7 m wide tails carry 2 lanes, the 6.1 m ones and the 5.5 m slips 1
@@ -64,7 +64,7 @@ function join(parts: Piece[]): Piece {
 }
 
 /** centre line + lateral offset -> points every STEP m (slew limited offset, left of the travel direction = (hz, -hx) like RoadGraph.at) */
-function resample(p: Piece): RtePt[] {
+export function resample(p: Piece): RtePt[] {
   const n = p.xs.length, cum = [0];
   for (let i = 1; i < n; i++) cum.push(cum[i - 1] + Math.hypot(p.xs[i] - p.xs[i - 1], p.zs[i] - p.zs[i - 1]));
   const lat = p.lat.slice();
