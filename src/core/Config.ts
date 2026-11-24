@@ -648,7 +648,8 @@ export const Config = {
       /** 2026-11-23: false = NO broad-leaf ground cover anywhere (leafy rosettes and clover patches turn into the fine single grass); the models stay for a water lily. */
       broadLeaf: false,
       /** Central station park lawn: its blades are this many times taller than the city lawn. */
-      garden: { grass: [0.7, 0.9], flower: [1.0, 1.2], filler: [0.3, 0.45] }, // HK-FIX10b: real tuft HEIGHT in METRES (lo .. hi by a hash) of the Central park / Hatikamrul garden lawn (0.7 - 0.9 m = about half a person), bed flowers and the green filler of the beds; the width follows the height (grass.widthScale), 1 = natural scale
+      // HK-FIX12: the GRASS of the Central park / Hatikamrul gardens (the FLOWER size is LOCKED in vegetation/GardenFlowerLock.ts, not here). Height in METRES (lo .. hi by a hash), `widthMul` = finer blades (1 = the normal grass width), deepTint x deepVar = deep green colour (multiplies the painted blade cards).
+      garden: { grass: [0.7, 0.9], filler: [0.3, 0.45], widthMul: 0.55, deepTint: [0.5, 0.8, 0.55], deepVar: [0.72, 0.3] },
       /** Wildflowers: share of tufts that carry flowers inside a flower patch / scattered in the open meadow. Patches are ~12-30 m wide. */
       flowerInPatch: 0.05, // was 0.14: far fewer flowers
       flowerScatter: 0.002, // was 0.006

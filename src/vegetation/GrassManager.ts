@@ -1,3 +1,4 @@
+import { GARDEN_FLOWER } from './GardenFlowerLock'; // LOCKED flower size of the gardens (user, 2026-11-24)
 import * as THREE from 'three';
 import { Config } from '../core/Config';
 import type { GrassResult } from '../workers/messages';
@@ -395,10 +396,19 @@ export class GrassManager {
       const gardenLawn = (flag > 7.5 && flag < 8.5) || (flag > 2.3 && flag < 2.5);
       const gardenBed = flag > 8.5;
       const garden = gardenLawn || gardenBed;
-      const [gLo, gHi] = gardenLawn ? G.garden.grass : isFlower ? G.garden.flower : G.garden.filler;
       const maxH = lawnTuft ? G.tuft.lawnMaxHeight * G.city.height : isFlower ? G.tuft.flowerMaxHeight : type === GrassType.trefoil ? G.leafy.trefoilHeight : type === GrassType.leafy ? G.leafy.maxHeight : G.tuft.maxHeight;
-      const ys = garden ? (gLo + (gHi - gLo) * h2) / top : (maxH * v) / top; // garden: absolute metres; width = height x widthScale (natural upright proportion, not the wide mown-lawn mat)
-      const w = ys * wide * ring.size * (!garden && lawnTuft ? G.tuft.lawnWidthScale : G.widthScale);
+      let ys = (maxH * v) / top;
+      let w = ys * wide * ring.size * (lawnTuft ? G.tuft.lawnWidthScale : G.widthScale);
+      if (garden && isFlower) {
+        // GARDEN FLOWERS: LOCKED size (GardenFlowerLock.ts), do not touch
+        ys = (GARDEN_FLOWER.heightLo + (GARDEN_FLOWER.heightHi - GARDEN_FLOWER.heightLo) * h2) / top;
+        w = ys * wide * ring.size * GARDEN_FLOWER.widthScale;
+      } else if (garden) {
+        // HK-FIX12: garden GRASS (lawn 0.7 - 0.9 m, bed filler): real height in metres, FINER blades (width x grass.garden.widthMul), natural upright proportion
+        const [gLo, gHi] = gardenLawn ? G.garden.grass : G.garden.filler;
+        ys = (gLo + (gHi - gLo) * h2) / top;
+        w = ys * wide * ring.size * G.widthScale * G.garden.widthMul;
+      }
       dummy.scale.set(w, ys, w);
     }
     if (flag > 4.5 && flag < 5.5 && isGrassFlower(type)) dummy.scale.y *= 2; // road median (centre strip) flowers: 2x taller (user, 2026-11-23)
@@ -431,6 +441,14 @@ export class GrassManager {
     const ringMark = data[o + 5]; // STEP HK-10b: 2.15 = light ring, 1.85 = dark ring of a striped infield lawn (0.85..1.15 = no ring)
     const ringMul = cityLawn && ringMark > 1.5 ? (ringMark > 2 ? 1.22 : 0.74) : 1;
     const bright = (0.7 + 0.36 * (hb - Math.floor(hb))) * (isGrassLeafy(type) ? 1.12 : 1) * ringMul; // broad leaves are a little fresher / lighter than the blades round them
+    // HK-FIX12: the GRASS of the gardens (not the flowers) is DEEP GREEN and clean: one dark green tint (no yellow / straw / dead tufts), a little lighter or deeper from tuft to tuft; the stripe rings of the HK lawn keep their light / dark mark
+    if (((flag > 7.5 && flag < 8.5) || (flag > 2.3 && flag < 2.5) || flag > 8.5) && !isGrassFlower(type)) {
+      const kk = (G.garden.deepVar[0] + G.garden.deepVar[1] * (hb - Math.floor(hb))) * ringMul;
+      const T = G.garden.deepTint;
+      color.setRGB(T[0] * kk, T[1] * kk, T[2] * kk);
+      mesh.setColorAt(slot, color);
+      return;
+    }
     if (type === GrassType.durba) {
       // JUNGLE DURBA: stays fresh green (a little lighter or deeper from tuft to tuft), never yellow / dry
       const k = 0.78 + 0.26 * (hb - Math.floor(hb)); // deep green, a little lighter or deeper from tuft to tuft
