@@ -11,6 +11,8 @@ export const HM = {
   pierFill: 3, pierSpan: 28, colAlong: 1.6, colAcross: 2.2, capAlong: 2.4, capAcross: 7.2, capH: 1.0, embed: 4, wallT: 0.4,
   /** Ring deck half width (NODE_VIADUCT.deckHalf 25.75) + ramp half width 4.2: from here to the ring the ramp is the auxiliary lane (HK-9c). */
   maxOff: 30,
+  /** HK-fix1: parapets and retaining walls are left out while the ramp centre is closer than this to a C-D road centre (ramp half 4.2 + C-D half 4.2 + 0.4): there the two pavements overlap / touch (the gore), a wall would stand in the road. */
+  parClear: 8.8,
 } as const;
 const COL = {
   asphalt: [0.23, 0.23, 0.24] as Rgb, mark: [0.95, 0.95, 0.93] as Rgb, concrete: [0.7, 0.7, 0.68] as Rgb, under: [0.52, 0.52, 0.52] as Rgb,
@@ -32,7 +34,7 @@ class M {
 }
 
 /** Mesh of one ramp. ringOff(x, z) = distance of a point from the ring axis; ground(x, z) = terrain height (optional: without it the ramp stands on columns 12 m long). */
-export function buildHkRampMesh(rp: HkRamp, ringOff: (x: number, z: number) => number, ground?: (x: number, z: number) => number): MeshData {
+export function buildHkRampMesh(rp: HkRamp, ringOff: (x: number, z: number) => number, ground?: (x: number, z: number) => number, cdDist?: (x: number, z: number) => number): MeshData {
   const m = new M();
   const n = rp.xs.length, W = rp.halfW, D = HM.depth;
   // kept points: from the C-D end toward the ring end until the pavement would touch the ring deck
@@ -47,6 +49,9 @@ export function buildHkRampMesh(rp: HkRamp, ringOff: (x: number, z: number) => n
   const pz = (r: number, u: number): number => rp.zs[keep[r]] + tx[r] * u;
   const yy = (r: number): number => rp.ys[keep[r]];
   const gy = (x: number, z: number, fb: number): number => (ground ? ground(x, z) : fb);
+  // HK-fix1: sections whose parapets / walls are drawn (clear of the C-D road)
+  const hasPar: boolean[] = [];
+  for (let r = 0; r < R; r++) hasPar.push(!cdDist || cdDist(rp.xs[keep[r]], rp.zs[keep[r]]) >= HM.parClear);
   const sec: { top: number[]; lineL: number[]; lineR: number[]; sideL: number[]; sideR: number[]; bot: number[]; parL: number[][]; parR: number[][] }[] = [];
   for (let r = 0; r < R; r++) {
     const y = yy(r);
@@ -67,14 +72,15 @@ export function buildHkRampMesh(rp: HkRamp, ringOff: (x: number, z: number) => n
     m.quad(a.lineL[0], a.lineL[1], b.lineL[1], b.lineL[0]); m.quad(a.lineR[0], a.lineR[1], b.lineR[1], b.lineR[0]);
     m.quad(a.sideL[0], a.sideL[1], b.sideL[1], b.sideL[0]); m.quad(a.sideR[0], a.sideR[1], b.sideR[1], b.sideR[0]);
     m.quad(a.bot[2], a.bot[0], b.bot[0], b.bot[2]); m.quad(a.bot[0], a.bot[1], b.bot[1], b.bot[0]); m.quad(a.bot[1], a.bot[3], b.bot[3], b.bot[1]); // soffit: left slope, flat, right slope
-    for (const [pa, pb] of [[a.parL[0], b.parL[0]], [a.parR[0], b.parR[0]]]) for (let q = 0; q < 4; q++) m.quad(pa[q], pa[(q + 1) % 4], pb[(q + 1) % 4], pb[q]);
+    if (hasPar[r] && hasPar[r + 1]) for (const [pa, pb] of [[a.parL[0], b.parL[0]], [a.parR[0], b.parR[0]]]) for (let q = 0; q < 4; q++) m.quad(pa[q], pa[(q + 1) % 4], pb[(q + 1) % 4], pb[q]);
+    else if (hasPar[r] !== hasPar[r + 1]) { const c = hasPar[r] ? a : b; for (const pq of [c.parL[0], c.parR[0]]) m.quad(pq[0], pq[1], pq[2], pq[3]); } // end cap of a parapet that stops here
   }
   // end caps of the girder (so it is closed at both ends)
   for (const r of [0, R - 1]) { const s = sec[r]; m.quad(s.sideL[0], s.sideR[0], s.sideR[1], s.sideL[1]); m.quad(s.sideL[1], s.sideR[1], s.bot[3], s.bot[2]); m.quad(s.bot[2], s.bot[0], s.bot[1], s.bot[3]); }
   // support: wall (low fill) or cap + column (high fill)
   const fillAt = (r: number): number => yy(r) - gy(rp.xs[keep[r]], rp.zs[keep[r]], yy(r) - 12);
   for (let r = 0; r + 1 < R; r++) {
-    if ((fillAt(r) + fillAt(r + 1)) / 2 > HM.pierFill) continue;
+    if ((fillAt(r) + fillAt(r + 1)) / 2 > HM.pierFill || !hasPar[r] || !hasPar[r + 1]) continue;
     for (const s of [-1, 1]) {
       const bot = (q: number): number => Math.min(yy(q) - 0.7, gy(px(q, s * W), pz(q, s * W), yy(q) - 12) - 0.3);
       m.quad(m.v(px(r, s * W), yy(r) - 0.02, pz(r, s * W), COL.wall), m.v(px(r + 1, s * W), yy(r + 1) - 0.02, pz(r + 1, s * W), COL.wall), m.v(px(r + 1, s * W), bot(r + 1), pz(r + 1, s * W), COL.wall), m.v(px(r, s * W), bot(r), pz(r, s * W), COL.wall));

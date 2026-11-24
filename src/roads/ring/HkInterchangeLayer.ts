@@ -31,8 +31,19 @@ export class HkInterchangeLayer {
     const f = hkFrame(roads);
     if (!f) return;
     const off = hkRingOffset(roads);
+    // HK-fix1: distance of a point from the nearest C-D road centre line (segments of the 4 HK-CD-* roads)
+    const cdRoads = roads.roads.filter((r) => r.name.startsWith('HK-CD-'));
+    const cdDist = (x: number, z: number): number => {
+      let best = Infinity;
+      for (const r of cdRoads) for (let k = 0; k + 1 < r.xs.length; k++) {
+        const ax = r.xs[k], az = r.zs[k], bx = r.xs[k + 1] - ax, bz = r.zs[k + 1] - az, l2 = bx * bx + bz * bz || 1;
+        const t = Math.max(0, Math.min(1, ((x - ax) * bx + (z - az) * bz) / l2));
+        const d = Math.hypot(x - ax - bx * t, z - az - bz * t); if (d < best) best = d;
+      }
+      return best;
+    };
     for (const rp of hkRamps(f)) {
-      const d = buildHkRampMesh(rp, off, ground);
+      const d = buildHkRampMesh(rp, off, ground, cdDist);
       if (d.indices.length === 0) continue;
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.Float32BufferAttribute(d.positions, 3));
