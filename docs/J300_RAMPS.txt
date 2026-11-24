@@ -1,0 +1,94 @@
+J5 RAMP CHECK (headless, real game terrain and rail read only, nothing in the game changed)
+frame O (-1659.94, -2410.42), u0 -125, deck 35.3 m, ramp V50, ring outer lane edge 19.1, aux lane 3.65, S-curve R 250 (length 85.7 m), lane drop 56.45 m
+nose per side (X = |u| from the centre, J1 had 180): {"1":240,"-1":240}  K crest 7.01, K sag 12.9 (5 % downhill braking distance, J3 basis)
+
+E-out (merge, nose X 240, ring u 115, 328 rows, arc 44.47 m)
+PASS  starts exactly on the J4 circle point (r = 62)  41.86, 45.74
+PASS  J4 arc ends on the ramp straight at v = +-30  arc end 82.37, 30, next row 2.00 m away
+PASS  plan radius (ring-side lane edge = path of the retained lane) >= R min V50 (72.9 m)  min 133.4 m
+PASS  S-curve starts after the J4 arc  S starts at X 154.3, arc ends at X 82.4
+PASS  ramp never inside the ring (ring-side edge |v| >= 19.1 m after the arc)  0 rows inside
+PASS  level at the circle edge = deck 35.3, flat  35.3, next 35.3
+PASS  nose level = ring level (G1)  ramp 31.25 vs ring 31.24
+PASS  nose slope = ring slope (G1, tolerance 0.4 %)  ramp 3.00 %, ring 3.19 % (outward)
+PASS  max grade on the ramp <= 5 % (project limit)  max 3.91 % (design 3.81 %)
+PASS  crest L >= K x A (K 7.01)  L 26.73 m, A 3.81 %, needs 26.7 m
+PASS  sag L >= K x A (K 12.9)  L 90.26 m, A 7.00 %, needs 90.3 m
+PASS  crest and sag do not overlap  VPI1 13.36 m, VPI2 157.59 m, nose sigma 202.72 m, straight grade 85.73 m
+FAIL  merge lane + taper >= project rule 423.63 m  222.5 + 182.5 = 405 m, room 405.0 m; speed at the end of the lane about 97 km/h (J3 basis)
+PASS  ramp end inside the water limit (ring u 520)  ends at ring u 520
+PASS  rail clearance >= 30 m (H6)  closest rail point 174.8 m from a ramp edge
+PASS  no surface water on the ramp  0 of 328 rows wet
+PASS  embankment toe inside half ROW 45.72 m (J2)  toe at |v| = 37.7 m (outer edge + barrier 0.6 + wall 0.5 + 0.2 H, or slope 1:2 below 4 m)
+PASS  cut <= 12 m (H7)  max cut 1.95 m
+INFO  max fill 18.72 m (> 4 m needs an MSE wall; J2 assumed walls up to 16.0 m: THIS RAMP IS HIGHER, wall design in J6 / J7), ramp embankment volume about 27736 m3 (rough, before the nose only; J2 rough: 25 200 m3 per ramp)
+
+E-in (diverge, nose X 240, ring u 115, 210 rows, arc 20.49 m)
+PASS  starts exactly on the J4 circle point (r = 62)  51.46, -34.59
+PASS  J4 arc ends on the ramp straight at v = +-30  arc end 71.25, -30, next row 2.00 m away
+PASS  plan radius (ring-side lane edge = path of the retained lane) >= R min V50 (72.9 m)  min 136.9 m
+PASS  S-curve starts after the J4 arc  S starts at X 154.3, arc ends at X 71.3
+PASS  ramp never inside the ring (ring-side edge |v| >= 19.1 m after the arc)  0 rows inside
+PASS  level at the circle edge = deck 35.3, flat  35.3, next 35.3
+PASS  nose level = ring level (G1)  ramp 31.28 vs ring 31.24
+PASS  nose slope = ring slope (G1, tolerance 0.4 %)  ramp 3.00 %, ring 3.19 % (outward)
+PASS  max grade on the ramp <= 5 % (project limit)  max 4.67 % (design 4.56 %)
+PASS  crest L >= K x A (K 7.01)  L 31.98 m, A 4.56 %, needs 32.0 m
+PASS  sag L >= K x A (K 12.9)  L 99.93 m, A 7.75 %, needs 100.0 m
+PASS  crest and sag do not overlap  VPI1 15.99 m, VPI2 139.89 m, nose sigma 189.86 m, straight grade 57.95 m
+PASS  diverge lane + taper >= project rule 206.99 m  115.74 + 91.25 = 206.99 m, room 405.0 m
+PASS  ramp end inside the water limit (ring u 520)  ends at ring u 321.99
+PASS  rail clearance >= 30 m (H6)  closest rail point 260.9 m from a ramp edge
+PASS  no surface water on the ramp  0 of 210 rows wet
+PASS  embankment toe inside half ROW 45.72 m (J2)  toe at |v| = 37.8 m (outer edge + barrier 0.6 + wall 0.5 + 0.2 H, or slope 1:2 below 4 m)
+PASS  cut <= 12 m (H7)  max cut 0 m
+INFO  max fill 16.29 m (> 4 m needs an MSE wall; J2 assumed walls up to 16.0 m: THIS RAMP IS HIGHER, wall design in J6 / J7), ramp embankment volume about 25338 m3 (rough, before the nose only; J2 rough: 25 200 m3 per ramp)
+
+W-out (merge, nose X 240, ring u -365, 223 rows, arc 44.47 m)
+PASS  starts exactly on the J4 circle point (r = 62)  -41.86, -45.74
+PASS  J4 arc ends on the ramp straight at v = +-30  arc end -82.37, -30, next row 2.00 m away
+PASS  plan radius (ring-side lane edge = path of the retained lane) >= R min V50 (72.9 m)  min 133.4 m
+PASS  S-curve starts after the J4 arc  S starts at X 154.3, arc ends at X 82.4
+PASS  ramp never inside the ring (ring-side edge |v| >= 19.1 m after the arc)  0 rows inside
+PASS  level at the circle edge = deck 35.3, flat  35.3, next 35.3
+PASS  nose level = ring level (G1)  ramp 31.31 vs ring 31.30
+PASS  nose slope = ring slope (G1, tolerance 0.4 %)  ramp 3.00 %, ring 3.21 % (outward)
+PASS  max grade on the ramp <= 5 % (project limit)  max 3.90 % (design 3.77 %)
+PASS  crest L >= K x A (K 7.01)  L 26.48 m, A 3.77 %, needs 26.4 m
+PASS  sag L >= K x A (K 12.9)  L 90.13 m, A 6.98 %, needs 90.0 m
+PASS  crest and sag do not overlap  VPI1 13.24 m, VPI2 157.65 m, nose sigma 202.72 m, straight grade 86.11 m
+FAIL  merge lane + taper >= project rule 423.63 m  12.5 + 182.5 = 195 m, room 195.0 m; speed at the end of the lane about 54 km/h (J3 basis)
+PASS  ramp end inside the rail limit (ring u -560)  ends at ring u -560
+PASS  rail clearance >= 30 m (H6)  closest rail point 53.7 m from a ramp edge
+PASS  no surface water on the ramp  0 of 223 rows wet
+PASS  embankment toe inside half ROW 45.72 m (J2)  toe at |v| = 37.6 m (outer edge + barrier 0.6 + wall 0.5 + 0.2 H, or slope 1:2 below 4 m)
+PASS  cut <= 12 m (H7)  max cut 0 m
+INFO  max fill 18.98 m (> 4 m needs an MSE wall; J2 assumed walls up to 16.0 m: THIS RAMP IS HIGHER, wall design in J6 / J7), ramp embankment volume about 27364 m3 (rough, before the nose only; J2 rough: 25 200 m3 per ramp)
+
+W-in (diverge, nose X 240, ring u -365, 204 rows, arc 20.49 m)
+PASS  starts exactly on the J4 circle point (r = 62)  -51.46, 34.59
+PASS  J4 arc ends on the ramp straight at v = +-30  arc end -71.25, 30, next row 2.00 m away
+PASS  plan radius (ring-side lane edge = path of the retained lane) >= R min V50 (72.9 m)  min 136.9 m
+PASS  S-curve starts after the J4 arc  S starts at X 154.3, arc ends at X 71.3
+PASS  ramp never inside the ring (ring-side edge |v| >= 19.1 m after the arc)  0 rows inside
+PASS  level at the circle edge = deck 35.3, flat  35.3, next 35.3
+PASS  nose level = ring level (G1)  ramp 31.34 vs ring 31.30
+PASS  nose slope = ring slope (G1, tolerance 0.4 %)  ramp 3.17 %, ring 3.21 % (outward)
+PASS  max grade on the ramp <= 5 % (project limit)  max 4.67 % (design 4.51 %)
+PASS  crest L >= K x A (K 7.01)  L 31.64 m, A 4.51 %, needs 31.6 m
+PASS  sag L >= K x A (K 12.9)  L 99.63 m, A 7.72 %, needs 99.6 m
+PASS  crest and sag do not overlap  VPI1 15.82 m, VPI2 140.04 m, nose sigma 189.86 m, straight grade 58.59 m
+FAIL  diverge lane + taper >= project rule 206.99 m  103.75 + 91.25 = 195 m, room 195.0 m
+PASS  ramp end inside the rail limit (ring u -560)  ends at ring u -560
+PASS  rail clearance >= 30 m (H6)  closest rail point 31.6 m from a ramp edge
+PASS  no surface water on the ramp  0 of 204 rows wet
+PASS  embankment toe inside half ROW 45.72 m (J2)  toe at |v| = 37.7 m (outer edge + barrier 0.6 + wall 0.5 + 0.2 H, or slope 1:2 below 4 m)
+PASS  cut <= 12 m (H7)  max cut 0 m
+INFO  max fill 19.61 m (> 4 m needs an MSE wall; J2 assumed walls up to 16.0 m: THIS RAMP IS HIGHER, wall design in J6 / J7), ramp embankment volume about 24983 m3 (rough, before the nose only; J2 rough: 25 200 m3 per ramp)
+
+INFO  ring axis vs the straight J4 frame line: up to 2.42 m apart between local u -450 and +650 (levels are read at the nearest ring point, ramps follow the frame line)
+INFO  W-out merge: J3 section 16 decided the exception (about 255 m); with the nose at X 240 only room - taper = 12.5 m of lane exist (see handoff section 18 for the options)
+LANE RULE FAILS: E-out, W-out, W-in
+NOT RUN: superelevation / crossfall, MSE wall design, drainage, 3D sight cones, ring crossfall at the nose (levels are on the ring axis), traffic simulation, game look (nothing is imported by the game).
+
+3 FAIL
