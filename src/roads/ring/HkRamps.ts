@@ -61,6 +61,20 @@ export function hkRamps(f: HkFrame): HkRamp[] {
   });
 }
 
+/** HK-12: distance (m) of a world point from the nearest C-D road centre line (the 4 HK-CD-* roads); Infinity when there are none. */
+export function hkCdDistance(roads: RoadNetwork): (x: number, z: number) => number {
+  const cd = roads.roads.filter((r) => r.name.startsWith('HK-CD-'));
+  return (x, z) => {
+    let best = Infinity;
+    for (const r of cd) for (let k = 0; k + 1 < r.xs.length; k++) {
+      const ax = r.xs[k], az = r.zs[k], bx = r.xs[k + 1] - ax, bz = r.zs[k + 1] - az, l2 = bx * bx + bz * bz || 1;
+      const t = Math.max(0, Math.min(1, ((x - ax) * bx + (z - az) * bz) / l2));
+      const d = Math.hypot(x - ax - bx * t, z - az - bz * t); if (d < best) best = d;
+    }
+    return best;
+  };
+}
+
 /** Distance (m) of a world point from the ring axis (nearest ring segment within +-60 ring points of the node: the ramps lie within 150 m of it). */
 export function hkRingOffset(roads: RoadNetwork): (x: number, z: number) => number {
   const ring = roads.roads.find((r) => r.name === 'M8')!;

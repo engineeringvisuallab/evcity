@@ -113,7 +113,7 @@ No script run on the game (only the data modules were read and run: ring plan, J
 | HK-9d | Gores, hatching, barrier / crash cushion, arrows | markings from docs/HK_LANES.txt and HK_CD_SLIPS | IN PROGRESS: 9d-1 lane-drop markings DONE 2026-11-23 (section 30); 9d-2 gore hatching + chevrons + crash cushion / barrier WRITTEN 2026-11-24, NOT VERIFIED (section 31); 9d-3 direction + lane-end arrows on loops / C-D roads / slips WRITTEN 2026-11-24 (section 32): pure check hk-arrows-check 20 PASS 0 FAIL, but tsc / hk-paving-check / game look NOT RUN (no node_modules, no network) | waiting |
 | HK-10 | Infield | ponds, striped lawns from existing systems (D4) | IN PROGRESS: 10a ponds in the 2 WEST loops DONE 2026-11-24 (section 33); 10b striped lawns in the 2 EAST loops DONE 2026-11-24 (section 34; game look NOT RUN); 10c pond gardens in the 2 WEST loops (bigger ponds, flower border + beds, promenade, paths, benches, lamps, trees) DONE 2026-11-24 (section 35; game look NOT RUN) | waiting |
 | HK-11 | Traffic graph + AI | lanes joined, every movement reachable, remove the tLink stand-in at this node | HK-11a done (section 36); HK-11b hooked in (section 37), not run | |
-| HK-12 | Lamps / night (optional, D6) | with the street-light work | not started | |
+| HK-12 | Lamps / night (optional, D6) | with the street-light work | loop lamps written (section 42), not run | |
 | HK-13 | Game check + final | switch ON, tsc, npm run build, earlier PASS checks stay PASS (ring-facade, ring-cut, ring-structures, j1-arms-game-check, island-link-game-check, island-bridge-*), the user looks in the game and sends a screenshot | not started | |
 
 ## 10. HK_REFERENCE_INDEX (screenshots taken from the video, docs/hatikamrul_ref/)
@@ -360,3 +360,10 @@ FIX: nearHkLoop(x, z): the loop centre lines (hkRamps of hkFrame(gen.roads), bui
 NOT DONE: GRASS (GrassPlacement) on the loops is not checked; the loop tail ends at the ring deck are covered by the ring road mask already. Trees that stand there from a SAVED tree chunk cache (if the game caches chunks) need a cache clear.
 NOT RUN: full tsc (only this file: no error), tree-placement checks, npm run build, game look.
 NEXT: HK-12 lamps, HK-13 final check. Open on the user's side: the C-D road length question (user chose 'shorten', then 'let it stay, look later'): nothing changed, scripts / docs folder would be needed as .zip.
+
+## 42. HK-12 RESULT (2026-11-24; user: 'ok koro'; src CHANGED environment/StreetLights.ts (+ loop lamps in planStreetLights), roads/ring/HkRamps.ts (+ hkCdDistance); STATUS: WRITTEN, NOT RUN)
+FINDING: StreetLights already lights every NETWORK road, so the C-D roads and slips (kind 'ramp') and the ring deck (bridge) already had poles. Only the 4 LOOP ramps (not network roads) had none.
+WHAT: planStreetLights adds poles along each loop: class 'ramp' (spacing 36 m x Q.lampStepMul, scale 1.1, pool 10), ONE side (the outer side of the bend), the foot on top of the parapet (u = W - 0.175, y + 0.9), arm over the lane. Skipped: ring offset <= HM.maxOff + 4 (the tail / deck: the ring lamps are there) and C-D distance < HM.parClear + 2 (the open gore stretch of HK-FIX1). With the switch OFF nothing is added. hkCdDistance(roads) is a shared copy of the helper inside HkInterchangeLayer (that one is not changed).
+LIMITS: the same StreetLights layer draws them (instanced, no new draw call), so the night glow, halo and pool come from the existing system; the pool lies at the road level (roadY). Not placed: lamps on the C-D / slip viaduct stretches (already by the old rule), garden lamps (HK-10c has its own).
+NOT RUN: full tsc (only these two files: no error except the missing 'three' of this machine), a lamp count, game look at night, performance (about 4 loops x 420 m / 36 m = about 45 poles).
+NEXT: HK-13 final check (needs the user's game look of FIX1 .. FIX4 + traffic + lamps).

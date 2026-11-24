@@ -18,6 +18,8 @@ import { Q } from '../core/Quality';
 import { Config } from '../core/Config';
 import { planMedianLamps } from '../roads/Planting';
 import { planMedians, crossingZoneHas } from '../roads/MedianPlan';
+import { hkFrame, hkRamps, hkRingOffset, hkCdDistance } from '../roads/ring/HkRamps';
+import { HM } from '../roads/ring/HkRampMesh';
 
 export interface LampSpot {
   /** Foot of the pole (world metres). */
@@ -135,6 +137,36 @@ export function planStreetLights(roads: RoadNetwork): LampSpot[] {
       tx /= tl;
       tz /= tl;
       out.push({ x: px, y: y + (inCity && bid < 0 ? Config.city.footpath.height : 0), z: pz, ix: -nx * side, iz: -nz * side, tx, ty: ty / tl, tz, scale: c.scale, pool: c.pool });
+    }
+  }
+
+  // HK-12: the 4 loop ramps of the Hatikamrul interchange are not network roads: poles on the outer parapet, one side, only where the ramp mesh stands (not on the ring deck, not in the gore)
+  if (Config.roads.hatikamrul.enabled) {
+    const fr = hkFrame(roads);
+    if (fr) {
+      const off = hkRingOffset(roads), cdd = hkCdDistance(roads), c = CLASS.ramp, step = c.step * Q.lampStepMul;
+      for (const rp of hkRamps(fr)) {
+        const n = rp.xs.length, W = rp.halfW;
+        let target = step * 0.5, i = 0;
+        const len = rp.cum[n - 1];
+        while (target < len) {
+          while (i < n - 2 && rp.cum[i + 1] < target) i++;
+          const seg = rp.cum[i + 1] - rp.cum[i], f = seg > 1e-6 ? Math.min(1, Math.max(0, (target - rp.cum[i]) / seg)) : 0;
+          target += step;
+          const x = rp.xs[i] + (rp.xs[i + 1] - rp.xs[i]) * f, z = rp.zs[i] + (rp.zs[i + 1] - rp.zs[i]) * f, y = rp.ys[i] + (rp.ys[i + 1] - rp.ys[i]) * f;
+          if (off(x, z) <= HM.maxOff + 4 || cdd(x, z) < HM.parClear + 2) continue;
+          const a = Math.max(0, i - 1), b = Math.min(n - 1, i + 2);
+          let tx = rp.xs[b] - rp.xs[a], tz = rp.zs[b] - rp.zs[a];
+          const ty = rp.ys[b] - rp.ys[a], tl = Math.hypot(tx, ty, tz) || 1;
+          tx /= tl; tz /= tl;
+          const hl = Math.hypot(tx, tz) || 1, nx = -tz / hl, nz = tx / hl;             // normal like HkRampMesh (x - tz * u, z + tx * u)
+          // outer side of the bend = away from the turning centre (cross of the tangents before / after)
+          const ux = rp.xs[b] - rp.xs[i], uz = rp.zs[b] - rp.zs[i], vx = rp.xs[i] - rp.xs[a], vz = rp.zs[i] - rp.zs[a];
+          const cross = vx * uz - vz * ux, side = cross > 0 ? -1 : 1;
+          const u = (W - HM.parapetT / 2) * side;
+          out.push({ x: x + nx * u, y: y + HM.parapetH, z: z + nz * u, ix: -nx * side, iz: -nz * side, tx, ty: ty / tl, tz, scale: c.scale, pool: c.pool, roadY: y });
+        }
+      }
     }
   }
 
