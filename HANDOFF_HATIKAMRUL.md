@@ -398,3 +398,7 @@ FINDING: FIX7 raised only the LAWN tufts (park flag 8, HK lawn flag 2.4). The fl
 FIX: flag > 8.5: flowers x grass.bedFlowerTall (13.5 = old 1.35 x 10), the filler x grass.bedGrassTall (10). Height only, same width / count.
 EXPECT: flowers up to about 2 - 4 m (max flower height 0.4 m x the random factor x 13.5): very tall; lower the two numbers in Config.ts if it looks wrong (try 4 and 3).
 NOT RUN: game look, tsc of GrassManager (no error except the missing 'three'), npm run build. Config numbers are read when the mesh is built: no cache problem for this step.
+
+## 47. HK-FIX9 (2026-11-24; user, after a game look at the x10 / x13.5 grass: "2.5 x is probably good"; src CHANGED core/Config.ts only (4 numbers); STATUS: WRITTEN, NOT RUN)
+CHANGE (all = 2.5 x the ORIGINAL height): grass.parkLawnTall 20 -> 5 (old 2), grass.hkLawnTall 10 -> 2.5, grass.bedFlowerTall 13.5 -> 3.375 (old 1.35), grass.bedGrassTall 10 -> 2.5 (old 1). Nothing else (GrassManager / GrassPlacement of FIX7 / FIX8 stay).
+NOT RUN: game look, npm run build. Config numbers only: no cache problem.

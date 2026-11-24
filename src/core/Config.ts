@@ -648,10 +648,10 @@ export const Config = {
       /** 2026-11-23: false = NO broad-leaf ground cover anywhere (leafy rosettes and clover patches turn into the fine single grass); the models stay for a water lily. */
       broadLeaf: false,
       /** Central station park lawn: its blades are this many times taller than the city lawn. */
-      parkLawnTall: 20, // 2026-11-24: 2 -> 20 (user: the railway Central park grass is far too low, x10)
-      bedFlowerTall: 13.5, // HK-FIX8: flowers of the Central park / HK garden beds + borders (old 1.35) x 10
-      bedGrassTall: 10, // HK-FIX8: the short green filler grass of those beds (old 1) x 10
-      hkLawnTall: 10, // 2026-11-24: height multiplier of the Hatikamrul infield lawn / garden tufts (flag 2.4), user: x10 of the old height
+      parkLawnTall: 5, // 2026-11-24: 2 -> 5 (user: x2.5 of the old height; x10 was far too tall)
+      bedFlowerTall: 3.375, // HK-FIX9: flowers of the Central park / HK garden beds + borders (old 1.35) x 2.5
+      bedGrassTall: 2.5, // HK-FIX9: the short green filler grass of those beds (old 1) x 2.5
+      hkLawnTall: 2.5, // 2026-11-24: height multiplier of the Hatikamrul infield lawn / garden tufts (flag 2.4), user: x2.5 of the old height
       /** Wildflowers: share of tufts that carry flowers inside a flower patch / scattered in the open meadow. Patches are ~12-30 m wide. */
       flowerInPatch: 0.05, // was 0.14: far fewer flowers
       flowerScatter: 0.002, // was 0.006
