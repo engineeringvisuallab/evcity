@@ -422,3 +422,10 @@ KNOBS: Config.ts grass.garden: widthMul, deepTint, deepVar, grass, filler.
 ## 51. HK-FIX13 (2026-11-24; user: "only the colour of the single grass deep green; and make the width less: 50 % slimmer than now"; src CHANGED core/Config.ts only (2 numbers); STATUS: WRITTEN, NOT RUN)
 CHANGE: grass.garden.widthMul 0.55 -> 0.275 (half the width of FIX12; height unchanged), grass.garden.deepTint [0.5, 0.8, 0.55] -> [0.4, 0.72, 0.45] (a deeper green). Only the garden GRASS (lawn + bed filler); the garden FLOWERS are LOCKED (GardenFlowerLock.ts) and were not touched; no other grass changed.
 NOT RUN: game look, npm run build. If the lawn looks too sparse with the slimmer blades, the knob is the tuft density of the two lawns, not the width.
+
+## 52. HK-FIX14 (2026-11-24; user: "does real grass stand stiff like a brush? and put grass in the jungle at the same height"; src CHANGED vegetation/GrassManager.ts, core/Config.ts (grass.garden.lean); STATUS: WRITTEN, NOT RUN)
+ANSWER: no. Real lawn / meadow grass 0.7 - 0.9 m tall leans, arches and bends at the tips, every tuft in its own direction; the stiff upright look comes from every tuft model standing exactly vertical.
+LEAN: a tall garden grass tuft (lawn + bed filler) and a jungle-floor grass tuft gets a random tilt of up to +-0.225 rad (about +-13 deg, grass.garden.lean 0.45 total) in a random direction, planted at the root. Garden FLOWERS are not tilted (LOCKED, GardenFlowerLock.ts).
+JUNGLE: the jungle floor grass tufts (flag 6, not flowers, not clumps) get the same height as the garden lawn (grass.garden.grass 0.7 - 0.9 m) and the same fine width (widthMul); the jungle colour palette is unchanged (no deep-green tint there). Clumps and jungle flowers unchanged.
+NOT RUN: game look (a 0.8 m jungle floor carpet may hide the player and cost fill rate: the jungle floor has many tufts; check fps), tsc of GrassManager (no error except the missing 'three'), garden-flower-lock-check, npm run build.
+KNOBS: Config.ts grass.garden.lean (0 = stiff), grass.garden.grass (height of lawn AND jungle grass).

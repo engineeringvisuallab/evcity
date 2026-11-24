@@ -408,8 +408,18 @@ export class GrassManager {
         const [gLo, gHi] = gardenLawn ? G.garden.grass : G.garden.filler;
         ys = (gLo + (gHi - gLo) * h2) / top;
         w = ys * wide * ring.size * G.widthScale * G.garden.widthMul;
+      } else if (flag > 5.5 && flag < 6.5 && !isFlower) {
+        // HK-FIX14: JUNGLE floor grass: the same height (0.7 - 0.9 m) and the same fine blades as the garden grass
+        const [jLo, jHi] = G.garden.grass;
+        ys = (jLo + (jHi - jLo) * h2) / top;
+        w = ys * wide * ring.size * G.widthScale * G.garden.widthMul;
       }
       dummy.scale.set(w, ys, w);
+      // HK-FIX14: real grass LEANS: a tall tuft of the gardens / the jungle floor tilts a little (random direction, up to G.garden.lean rad each way), it does not stand like a stiff brush
+      if (!isFlower && (garden || (flag > 5.5 && flag < 6.5))) {
+        const h3 = h2 * 13.7 + 0.31;
+        dummy.rotation.set((h2 - 0.5) * G.garden.lean, data[o + 4], ((h3 - Math.floor(h3)) - 0.5) * G.garden.lean);
+      }
     }
     if (flag > 4.5 && flag < 5.5 && isGrassFlower(type)) dummy.scale.y *= 2; // road median (centre strip) flowers: 2x taller (user, 2026-11-23)
     if (flag > 5.5 && flag < 6.5) {
