@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Soup } from '../../park/CentralParkLayer';
 import { Config } from '../../core/Config';
-import { HK_GARDEN, hkBedCentre, hkGardenBenches, hkGardenLamps, hkGardens, type HkGarden } from './HkInfieldData';
+import { HK_GARDEN, HK_PLAZA, hkBedCentre, hkGardenBenches, hkGardenLamps, hkGardens, type HkGarden } from './HkInfieldData';
 
 /**
  * STEP HK-10c: meshes of the two POND GARDENS in the Hatikamrul west loops (same look as the Central station park: sand / brick paving, grey stone kerbs, dark soil, wooden benches, iron lamps).
@@ -12,7 +12,7 @@ const SHOW = 330;
 const TAU = Math.PI * 2;
 const col = (hex: number): THREE.Color => new THREE.Color(hex);
 const hash = (a: number, b: number): number => { const h = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return h - Math.floor(h); };
-const SAND = col(0xd8ceb8), SAND2 = col(0xcfc4ac), EDGE = col(0xb7ab92), STONE = col(0xc4c0b6), STONE_D = col(0x8f8b82), SOIL = col(0x3f2c20), WOOD = col(0x7b5230), IRON = col(0x2d3035);
+const BRICK = col(0xb0694a), BRICK2 = col(0xa05a3e), SAND = col(0xd8ceb8), SAND2 = col(0xcfc4ac), EDGE = col(0xb7ab92), STONE = col(0xc4c0b6), STONE_D = col(0x8f8b82), SOIL = col(0x3f2c20), WOOD = col(0x7b5230), IRON = col(0x2d3035);
 
 export class HkGardenLayer {
   readonly group = new THREE.Group();
@@ -27,7 +27,8 @@ export class HkGardenLayer {
         this.promenade(paving, G);
         this.arms(paving, G);
         this.borderSoil(soil, G);
-        this.kerbRing(stone, G, G.shore, 0.3, 0.12); // pond edge kerb
+        if (G.plaza) this.plaza(paving, stone, soil, G);
+        else this.kerbRing(stone, G, G.shore, 0.3, 0.12); // pond edge kerb
         this.kerbRing(stone, G, G.shore + HK_GARDEN.prom + HK_GARDEN.border, 0.3, 0.14); // flower border outer kerb
         this.beds(stone, soil, G);
       }
@@ -80,6 +81,19 @@ export class HkGardenLayer {
   private promenade(s: Soup, G: HkGarden): void {
     const r0 = G.shore, r1 = G.shore + HK_GARDEN.prom;
     this.ring(s, G, r0, r1, 0.07, (r, i) => (r < r0 + 0.4 || r > r1 - 0.4 ? EDGE : i % 2 ? SAND : SAND2));
+  }
+
+  /** HK-10d: the PLAZA of an east loop: round flower bed (soil + stone kerb) in the middle, then paving in alternating brick / sand rings out to the promenade, a stone kerb at the plaza edge. */
+  private plaza(paving: Soup, stone: Soup, soil: Soup, G: HkGarden): void {
+    const core = HK_PLAZA.core;
+    this.ring(soil, G, 0.2, core - 0.35, 0.06, () => SOIL, 0.8);
+    this.kerbRing(stone, G, core - 0.35, 0.7, 0.22);
+    this.ring(paving, G, core + 0.35, G.shore, 0.07, (r, i) => {
+      const band = Math.floor((r - core) / 1.5);
+      if (r > G.shore - 0.6) return EDGE;
+      return band % 4 === 0 ? BRICK : band % 4 === 2 ? BRICK2 : i % 2 ? SAND : SAND2;
+    });
+    this.kerbRing(stone, G, G.shore, 0.3, 0.12);
   }
 
   /** The 4 diagonal paths from the promenade to the garden edge. */

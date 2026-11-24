@@ -1,5 +1,5 @@
 import { inPark, parkTreesInChunk } from '../park/CentralPark';
-import { hkGardenTrees, inHkGarden } from '../roads/ring/HkInfieldData';
+import { hkLoopTrees, inHkGarden, inHkInfield } from '../roads/ring/HkInfieldData';
 import { hkFrame, hkRamps } from '../roads/ring/HkRamps';
 import { Config } from '../core/Config';
 import type { CityPlan } from '../city/CityPlan';
@@ -193,6 +193,7 @@ export class TreePlacer {
     if (this.gen.railForm.inCorridor(x, z, 3)) return true;
     if (inPark(x, z, 1)) return true; // the Central station park has its own planted trees (parkTreesInChunk)
     if (inHkGarden(x, z, 1)) return true; // STEP HK-10c: the HK pond gardens have their own planted trees (below)
+    if (inHkInfield(x, z, 1)) return true; // STEP HK-10d: the whole infield of the four HK loops is planted by hkLoopTrees (no random jungle tree)
     if (this.nearHkLoop(x, z)) return true; // HK-fix4: no tree on the loop ramps
     if (this.gen.portForm.inFootprint(x, z, 4)) return true; // STAGE 14: sea port
     if (this.gen.airport.contains(x, z, 4)) return true; // airport pad
@@ -330,7 +331,7 @@ export class TreePlacer {
     if (rKind < pineChance) kind = TreeKind.pine;
     else if (rKind > 1 - palmChance) kind = TreeKind.palm;
     else if (rBig < bigChance) kind = bigKind(h, rVar, gi, gj);
-    else if (cf < 0.999 && h < 150 && rVar < 0.34) kind = TreeKind.krishnachura; // parks and green zones of the city: the flowering umbrella tree
+    else if (cf < 0.999 && h < 150 && rVar < 0.14) kind = TreeKind.krishnachura; // parks and green zones of the city: the flowering umbrella tree
     else if (h > V.hill.from && (rVar * 53) % 1 < V.hill.debdaru) kind = TreeKind.debdaru; // HILLS: a tall slim evergreen among the broadleaf trees (the hills were nearly all one kind)
     else kind = rVar < 0.3 ? TreeKind.broadleaf : rVar < 0.58 ? TreeKind.oak : rVar < 0.82 ? TreeKind.vase : TreeKind.slender;
 
@@ -397,7 +398,7 @@ export class TreePlacer {
     else if (u < 0.58) kind = TreeKind.banana;
     else if (u < 0.72) kind = TreeKind.datePalm;
     else if (u < 0.82) kind = TreeKind.palmyra;
-    else kind = R.rVar < 0.3 ? TreeKind.krishnachura : R.rVar < 0.6 ? TreeKind.broadleaf : R.rVar < 0.85 ? TreeKind.vase : TreeKind.oak; // shade trees (krishnachura, mango, jackfruit ...)
+    else kind = R.rVar < 0.1 ? TreeKind.krishnachura : R.rVar < 0.5 ? TreeKind.broadleaf : R.rVar < 0.8 ? TreeKind.vase : TreeKind.oak; // shade trees (krishnachura, mango, jackfruit ...)
     const t = R.rHScale;
     const scale = (kind === TreeKind.bamboo ? 1 : V.treeSizeOutside) * (
       kind === TreeKind.bamboo ? B.clumpScale[0] + (B.clumpScale[1] - B.clumpScale[0]) * t
@@ -779,13 +780,12 @@ export class TreePlacer {
       this.gen.sample(x, z, this.sample);
       return this.sample.h;
     }, (h, kind, scale) => this.footY(h, 0, kind, scale), (x, z) => !this.gen.railForm.inCorridor(x, z, 2.5))) lists[e.kind].push(...e.v);
-    // STEP HK-10c: shade trees of the two HK pond gardens (krishnachura / rain trees, same kinds and scales as the Central park)
-    for (const t of hkGardenTrees()) {
+    // STEP HK-10d: the planted trees of the four HK loops (8 shade trees per garden, then rings of big + small coloured trees; the colour family is in the tint, see TreeChunkBuilder)
+    for (const t of hkLoopTrees()) {
       if (t.x < ox || t.x >= ox + S || t.z < oz || t.z >= oz + S) continue;
-      if (this.onRoadGround(t.x, t.z)) continue;
+      if (this.onRoadGround(t.x, t.z) || this.nearHkLoop(t.x, t.z) || this.waterNear(t.x, t.z, 3)) continue;
       this.gen.sample(t.x, t.z, this.sample);
-      const kind = t.flowering ? TreeKind.krishnachura : TreeKind.koroi;
-      lists[kind].push(t.x - ox, this.footY(this.sample.h, 0, kind, t.scale), t.z - oz, t.scale, t.yaw, t.tint);
+      lists[t.kind].push(t.x - ox, this.footY(this.sample.h, 0, t.kind, t.scale), t.z - oz, t.scale, t.yaw, t.tint);
     }
     // EVLab campus: the park trees (palms, avenue trees, lawn trees) around the tower and the lake
     for (const e of evlabParkTreesInChunk(this.gen.evlab.floorY, ox, oz)) lists[e.kind].push(...e.v);

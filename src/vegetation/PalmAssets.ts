@@ -814,7 +814,7 @@ function bamboo(detail: number): THREE.BufferGeometry {
 const STYLE_KRISHNA: Style = {
   seed: 1515, trunkH: 6.6, trunkR: 0.38, trunkBend: 0.14, primary: 6, startFrac: 0.72, spread: [1.0, 1.3], limbLen: 5, fork: 2,
   kids: [3, 3], lenRatio: [0.55, 0.5], droop: -0.1, crownY: 10, rx: 6.5, ry: 2.4, cards: 7, clusterR: 1.5, card: [1.5, 2.2], warm: 0.2, flat: 0.5,
-  tiles: PALM_TILES, barkTile: T_ROUGH, leafTile: T_FEATHER, bloomTile: T_BLOOM, bloom: 7, farScale: 1.7, // 2026-11-21: red flowers at 60% (was 12 per leaf cluster)
+  tiles: PALM_TILES, barkTile: T_ROUGH, leafTile: T_FEATHER, bloomTile: T_BLOOM, bloom: 3, farScale: 1.7, // 2026-11-24 (HK-10d): red flowers cut again, 7 -> 3 per leaf cluster (2026-11-21: 12 -> 7)
 };
 
 /** Model builders of the palm atlas kinds (index = TreeKind, argument = detail 0 near / 1 far). */

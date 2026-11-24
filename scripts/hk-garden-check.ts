@@ -9,7 +9,7 @@ import { GrassPlacer } from '../src/vegetation/GrassPlacement';
 import { GRASS_STRIDE } from '../src/vegetation/TreeTypes';
 import { HK_LOOPS } from '../src/roads/ring/HkRampData';
 import { hkFrame, hkWorld } from '../src/roads/ring/HkRamps';
-import { HK_GARDEN, HK_INFIELD_PONDS, hkGardenBenches, hkGardenLamps, hkGardenTrees, hkGardenZone, hkGardens, hkLawnAt, hkLawnStripe, inHkGarden } from '../src/roads/ring/HkInfieldData';
+import { HK_GARDEN, HK_INFIELD_LAWNS, HK_INFIELD_PONDS, hkGardenBenches, hkGardenLamps, hkLoopTrees, hkGardenZone, hkGardens, hkLawnAt, hkLawnStripe, inHkGarden } from '../src/roads/ring/HkInfieldData';
 import { HkGardenLayer } from '../src/roads/ring/HkGardenLayer';
 
 let fails = 0;
@@ -27,12 +27,13 @@ if (!Config.roads.hatikamrul.enabled) {
 }
 const f = hkFrame(gen.roads)!;
 const G = hkGardens();
-check(G.length === 2 && G.every((g, i) => g.pond === HK_INFIELD_PONDS[i].id), 'G1 two gardens, one per pond', G.map((g) => `${g.id} shore ${f2(g.shore)} edge ${f2(g.gr)}`).join(' | '));
+check(G.length === 4 && G.filter((g) => !g.plaza).every((g, i) => g.pond === HK_INFIELD_PONDS[i].id) && G.filter((g) => g.plaza).length === 2, 'G1 four gardens: two pond gardens + two plaza gardens (HK-10d)', G.map((g) => `${g.id} shore ${f2(g.shore)} edge ${f2(g.gr)}`).join(' | '));
 let worstW = 0; for (const p of HK_INFIELD_PONDS) { const [wx, wz] = hkWorld(f, p.lx, p.ly); worstW = Math.max(worstW, Math.hypot(wx - p.x, wz - p.z)); }
 check(worstW <= 0.1, 'G1b pond world x / z = its local design point', `worst ${f2(worstW)} m`);
 
 for (const g of G) {
-  const p = HK_INFIELD_PONDS[g.index];
+  const p = g.plaza ? { id: g.id, loop: HK_INFIELD_LAWNS[g.index - 2 + 0].loop, lx: 0, ly: 0, level: -1e9 } : HK_INFIELD_PONDS[g.index];
+  if (g.plaza) { const lw = HK_INFIELD_LAWNS.find((q) => q.loop.endsWith('E') && Math.hypot(q.x - g.x, q.z - g.z) < 1)!; (p as { lx: number }).lx = lw.lx; (p as { ly: number }).ly = lw.ly; }
   // clearance of the garden disc to the HK loop pavement and to every other road
   const L = HK_LOOPS.find((q) => q.id === p.loop)!;
   let nearLoop = Infinity; for (const [x, y] of L.pts) nearLoop = Math.min(nearLoop, Math.hypot(x - p.lx, y - p.ly));
@@ -56,10 +57,11 @@ for (const g of G) {
 }
 // furniture and trees on the right ground
 const zk = (x: number, z: number): number => hkGardenZone(x, z) & 15;
-check(hkGardenBenches().length === 16 && hkGardenBenches().every((b) => zk(b.x, b.z) === 2), 'G6 16 benches, all on the paved promenade', `${hkGardenBenches().filter((b) => zk(b.x, b.z) === 2).length} on paving`);
-check(hkGardenLamps().length === 24 && hkGardenLamps().every((l) => zk(l.x, l.z) === 2), 'G6b 24 lamps, all on the paved promenade', `${hkGardenLamps().filter((l) => zk(l.x, l.z) === 2).length} on paving`);
-const tr = hkGardenTrees();
-check(tr.length === 16 && tr.every((t) => zk(t.x, t.z) === 1), 'G6c 16 shade trees, all on the lawn ring (not on path / bed / border)', `${tr.filter((t) => zk(t.x, t.z) === 1).length} on lawn`);
+check(hkGardenBenches().length === 32 && hkGardenBenches().every((b) => zk(b.x, b.z) === 2), 'G6 32 benches (8 per garden), all on the paved promenade', `${hkGardenBenches().filter((b) => zk(b.x, b.z) === 2).length} on paving`);
+check(hkGardenLamps().length === 48 && hkGardenLamps().every((l) => zk(l.x, l.z) === 2), 'G6b 48 lamps (12 per garden), all on the paved promenade', `${hkGardenLamps().filter((l) => zk(l.x, l.z) === 2).length} on paving`);
+const tr = hkLoopTrees().filter((t) => inHkGarden(t.x, t.z)); // HK-10d: the planted loop trees that stand inside a garden disc = the 8 shade trees per garden
+check(tr.length === 32 && tr.every((t) => zk(t.x, t.z) === 1), 'G6c 32 shade trees (8 per garden), all on the lawn ring (not on path / bed / border)', `${tr.length} trees, ${tr.filter((t) => zk(t.x, t.z) === 1).length} on lawn`);
+check(tr.filter((t) => t.kind === 15).length === 8, 'G6e only 2 of the 8 shade trees of a garden are krishnachura (few red flowers)', `${tr.filter((t) => t.kind === 15).length} of ${tr.length}`);
 check(tr.every((t) => { gen.sample(t.x, t.z, s); return Number.isNaN(s.water) || s.h >= s.water + 0.3; }), 'G6d no shade tree stands in water', '');
 
 // grass placer: flowers
@@ -82,7 +84,7 @@ for (const g of G) {
     }
   }
   console.log(`  info  ${g.id}: flower tufts ${flowers} (kinds ${[...kinds].sort().join(',')}), lawn tufts ${lawnTufts}`);
-  check(flowers > 6000 && kinds.size === 6, `G7 ${g.id} the flowers are planted (border + beds), all 6 kinds`, `${flowers} tufts`);
+  check(flowers > (g.plaza ? 3500 : 6000) && kinds.size === 6, `G7 ${g.id} the flowers are planted (border + beds), all 6 kinds`, `${flowers} tufts`);
   check(badZone === 0, `G7b ${g.id} every flower tuft is in a border / bed zone`, `${badZone} stray`);
   check(onPaved === 0 && inPond === 0, `G7c ${g.id} no lawn tuft on paving / kerb / path, none in the water`, `paved ${onPaved}, pond ${inPond}`);
 }

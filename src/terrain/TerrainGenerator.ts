@@ -2,7 +2,7 @@ import { Config } from '../core/Config';
 import { Seed, mulberry32 } from '../world/Seed';
 import { Noise2D } from './Noise';
 import { RiverNetwork } from './RiverNetwork';
-import { HK_INFIELD_PONDS, HK_POND_WOBBLE } from '../roads/ring/HkInfieldData';
+import { HK_INFIELD_PONDS, HK_POND_WOBBLE, hkPadHeight, hkPadNear } from '../roads/ring/HkInfieldData';
 import { LakeSet, type TerrainSample } from './Lakes';
 import { RoadNetwork } from '../roads/RoadNetwork';
 import { RailNetwork } from '../rail/RailNetwork';
@@ -94,6 +94,7 @@ export class TerrainGenerator {
   /** STEP 4: level pads of the road-side fuel stations / charge points (src/parking/RoadStationSites.ts). */
   readonly stationPads = new StationPads();
   private stationMask = new Float32Array(2);
+  private hkPadMask = new Float32Array(2);
   /** FLAT RESIDENTIAL STEP 2: the 6 flat residential zones are levelled (ResidentialFlat.ts). Applied in sample() after the natural ground and before the road earthworks; roads / rail are planned on natural ground and are not changed. */
   readonly residentialFlat = new ResidentialFlat((x, z, o) => { this.rivers.edgeDistance(x, z, o); this.lakes.edgeDistance(x, z, BANK_REACH, o); });
   private scratch: TerrainSample = { h: 0, water: NaN, fx: 0, fz: 0 };
@@ -334,6 +335,12 @@ export class TerrainGenerator {
       this.roads.maskAt(x, z, 1, this.stationMask);
       const k = 1 - this.stationMask[1];
       if (k > 0) out.h = this.stationPads.height(x, z, out.h, k);
+    }
+    // HK-10d: the four Hatikamrul loop infields are LEVEL (flat pads, they give way to roads like the other pads; nothing with the switch OFF)
+    if (hkPadNear(x, z) && Number.isNaN(out.water)) {
+      this.roads.maskAt(x, z, 1, this.hkPadMask);
+      const k = 1 - this.hkPadMask[1];
+      if (k > 0) out.h = hkPadHeight(x, z, out.h, k);
     }
   }
 

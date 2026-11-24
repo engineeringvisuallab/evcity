@@ -30,6 +30,19 @@ const LEAF_FAMILIES: ReadonlyArray<readonly [number, number, number, number]> = 
   [1.0, 1.5, 0.9, 0.6], // rust (rare)
 ];
 
+/** HK-10d: colours of the planted loop trees (multiply the green leaf texture): the tint float of such a tree is 3 + family + brightness fraction. Index = family (HK_TREE_FAMILIES = 9). */
+const GARDEN_COLOURS: ReadonlyArray<readonly [number, number, number]> = [
+  [0.84, 1.0, 0.86], // 0 deep green
+  [1.1, 1.12, 0.62], // 1 fresh lime
+  [1.5, 1.12, 0.5], // 2 golden yellow
+  [1.55, 0.88, 0.5], // 3 orange / rust
+  [1.4, 0.62, 0.62], // 4 red-bronze (only 1 in 9 big trees)
+  [1.15, 0.6, 1.4], // 5 violet
+  [1.5, 0.82, 1.05], // 6 rose pink
+  [0.66, 1.0, 1.2], // 7 teal blue-green
+  [1.0, 1.06, 0.95], // 8 silver olive
+];
+
 const dummy = new THREE.Object3D();
 
 /** The instanced meshes built for a chunk's tree data (index = tree kind), found again through the data array (TreeDestruction). */
@@ -99,7 +112,11 @@ export class TreeChunkBuilder {
         mesh.setColorAt(i, color.setRGB(t * f[0], t * f[1], t * f[2]));
       } else if (hue) {
         const D = Config.vegetation.leafDark;
-        if (treeKind >= 0 && FULL_COLOUR_KINDS.has(treeKind)) {
+        if (t >= 3 && treeKind >= 0 && FULL_COLOUR_KINDS.has(treeKind)) {
+          // HK-10d: a planted loop tree: the colour family is chosen by the design (tint = 3 + family + fraction), not by the position
+          const fam = GARDEN_COLOURS[Math.min(GARDEN_COLOURS.length - 1, Math.floor(t) - 3)], j = 0.93 + 0.14 * (t - Math.floor(t));
+          mesh.setColorAt(i, color.setRGB(j * fam[0] * D[0], j * fam[1] * D[1], j * fam[2] * D[2]));
+        } else if (treeKind >= 0 && FULL_COLOUR_KINDS.has(treeKind)) {
           // like cars of one model in many paint colours: same tree shape, but each tree its own REAL leaf colour (most green, some yellow-green, olive,
           // blue-green, a few golden / rust / red-bronze). The colour comes from the tree's position, so it never changes. Green stays >= 0.85 (leaf transmission uses it).
           const hh = Math.sin(data[o] * 12.9898 + data[o + 2] * 78.233) * 43758.5453;
