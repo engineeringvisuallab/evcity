@@ -1,0 +1,80 @@
+J4 GEOMETRY CHECK (headless, real game terrain read only, nothing in the game changed)
+frame O (-1659.94, -2410.42) yaw -24.87 deg, u0 -125, deck 35.3 m
+
+1) LEGS (entry / exit paths, J3 rules: entry angle 30, R1 <= 59.5, exit R3 >= R2 = 51.5)
+PASS  R6 entry angle  30 deg (target 30)
+PASS  R6 entry radius R1 <= 59.5  50 m
+PASS  R6 yield point on the outer circle r = 62  r 62.00
+PASS  R6 entry heading smooth (no kink)  max step 1.12 deg per sample
+PASS  R6 entry widths 7 -> 10.5 m, flare 20 m  first 7 last 10.5
+PASS  R6 exit radius R3 >= R2 (51.5)  60 m
+PASS  R6 exit leaves the outer circle r = 62 tangentially  r 62.00
+PASS  R6 exit heading smooth (no kink)  max step 0.95 deg per sample
+PASS  E-out exit radius R3 >= R2 (51.5)  60 m
+PASS  E-out exit leaves the outer circle r = 62 tangentially  r 62.00
+PASS  E-out exit heading smooth (no kink)  max step 0.95 deg per sample
+PASS  E-in entry angle  30 deg (target 30)
+PASS  E-in entry radius R1 <= 59.5  45 m
+PASS  E-in yield point on the outer circle r = 62  r 62.00
+PASS  E-in entry heading smooth (no kink)  max step 1.25 deg per sample
+PASS  E-in entry widths 7 -> 8.5 m, flare 20 m  first 7 last 8.5
+PASS  R4 entry angle  30 deg (target 30)
+PASS  R4 entry radius R1 <= 59.5  50 m
+PASS  R4 yield point on the outer circle r = 62  r 62.00
+PASS  R4 entry heading smooth (no kink)  max step 1.12 deg per sample
+PASS  R4 entry widths 7.3 -> 10.9 m, flare 25 m  first 7.3 last 10.9
+PASS  R4 exit radius R3 >= R2 (51.5)  60 m
+PASS  R4 exit leaves the outer circle r = 62 tangentially  r 62.00
+PASS  R4 exit heading smooth (no kink)  max step 0.95 deg per sample
+PASS  W-out exit radius R3 >= R2 (51.5)  60 m
+PASS  W-out exit leaves the outer circle r = 62 tangentially  r 62.00
+PASS  W-out exit heading smooth (no kink)  max step 0.95 deg per sample
+PASS  W-in entry angle  30 deg (target 30)
+PASS  W-in entry radius R1 <= 59.5  45 m
+PASS  W-in yield point on the outer circle r = 62  r 62.00
+PASS  W-in entry heading smooth (no kink)  max step 1.25 deg per sample
+PASS  W-in entry widths 7 -> 8.5 m, flare 20 m  first 7 last 8.5
+
+2) LEG CLEARANCE (centre-line distance >= half widths + 0.5 m, points outside r = 70 m)
+PASS  different legs keep a gap >= 0.5 m between their edges  smallest gap 53.0 m between E-in-in and R4-out
+
+3) PEDESTRIAN CROSSINGS (J3: R6 / R4 2 lanes AT the crossing, refuge >= 2.4 m)
+PASS  R6 entry carriageway at the crossing is 2 lanes  width 7.00 m = 2 lanes (flare not started)
+PASS  R6 refuge >= 2.4 m  4 m (two stages of 7 m)
+PASS  R6 crossing clear of the circle (>= 12 m from the outer edge)  46.93 m
+PASS  R6 island polygon is simple (no self-crossing)  0 crossings
+PASS  R6 splitter island polygon exists  103 points, width at crossing 4 m
+INFO  E-out ramp crossing: single stage 7 m, no refuge (ramp is 2 lanes, 7.0 m), 34.11 m from the circle edge
+INFO  E-in ramp crossing: single stage 7 m, no refuge (ramp is 2 lanes, 7.0 m), 22.99 m from the circle edge
+PASS  R4 entry carriageway at the crossing is 2 lanes  width 7.30 m = 2 lanes (flare not started)
+PASS  R4 refuge >= 2.4 m  4 m (two stages of 7.3 m)
+PASS  R4 crossing clear of the circle (>= 12 m from the outer edge)  46.83 m
+PASS  R4 island polygon is simple (no self-crossing)  0 crossings
+PASS  R4 splitter island polygon exists  98 points, width at crossing 4 m
+INFO  W-out ramp crossing: single stage 7 m, no refuge (ramp is 2 lanes, 7.0 m), 34.11 m from the circle edge
+INFO  W-in ramp crossing: single stage 7 m, no refuge (ramp is 2 lanes, 7.0 m), 22.99 m from the circle edge
+
+4) ARMS (R6 climbs, R4 re-route)
+PASS  R6 end meets the old road: gap <= 0.5 m, heading gap <= 0.1 deg  gap 0 m, heading 0 deg
+PASS  R6 radius >= min radius at 60 km/h (113.4 m)  R 220 m, spiral 40 m
+PASS  R6 deck level at the circle edge = 35.3 m  35.3
+PASS  R6 end level = old road level  16.35 vs 16.35
+PASS  R6 max grade <= 4 % (limit)  max 3.63 %
+PASS  R6 crest curve L >= K x A (K 10.4)  L 40 m, A 3.24 %, needs 33.5 m
+PASS  R6 cut <= 12 m (H7)  max cut 2.3 m at s 605.69
+INFO  R6 fill up to 16.2 m (> 7 m): needs MSE walls (J2 decided walls above 4 m; wall design NOT RUN)
+PASS  R4 end meets the old road: gap <= 0.5 m, heading gap <= 0.1 deg  gap 0 m, heading 0 deg
+PASS  R4 radius >= min radius at 60 km/h (113.4 m)  R 200 m, spiral 40 m
+PASS  R4 deck level at the circle edge = 35.3 m  35.3
+PASS  R4 end level = old road level  68.41 vs 68.41
+PASS  R4 max grade <= 6 % (limit)  max 5.03 %
+PASS  R4 crest curve L >= K x A (K 10.4)  L 40 m, A 3.00 %, needs 31.1 m
+PASS  R4 sag curve L >= K x A (K 16.7)  L 133.4 m, A 8.00 %, needs 133.4 m
+FAIL  R4 cut <= 12 m (H7)  max cut 41.5 m at s 440.17
+INFO  R4 fill up to 16.4 m (> 7 m): needs MSE walls (J2 decided walls above 4 m; wall design NOT RUN)
+PASS  R6 no surface water on the axis  0 of 123 samples wet
+PASS  R4 no surface water on the axis  0 of 189 samples wet
+
+NOT RUN: rail clearance of the new R4 / R6 line, buildings and trees on the arms, crossing with other roads (R1 list), MSE wall design, superelevation (J5), traffic simulation, game look.
+
+1 FAIL
