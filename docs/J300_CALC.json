@@ -1,0 +1,408 @@
+{
+ "u0": -125,
+ "legs": [
+  {
+   "id": "R6",
+   "ang": 90,
+   "enter": true,
+   "exit": true
+  },
+  {
+   "id": "E-out",
+   "ang": 29,
+   "enter": false,
+   "exit": true
+  },
+  {
+   "id": "E-in",
+   "ang": -29,
+   "enter": true,
+   "exit": false
+  },
+  {
+   "id": "R4",
+   "ang": -90,
+   "enter": true,
+   "exit": true
+  },
+  {
+   "id": "W-out",
+   "ang": -151,
+   "enter": false,
+   "exit": true
+  },
+  {
+   "id": "W-in",
+   "ang": 151,
+   "enter": true,
+   "exit": false
+  }
+ ],
+ "od": [
+  [
+   "R6",
+   "R4",
+   700
+  ],
+  [
+   "R6",
+   "E-out",
+   250
+  ],
+  [
+   "R6",
+   "W-out",
+   250
+  ],
+  [
+   "R4",
+   "R6",
+   500
+  ],
+  [
+   "R4",
+   "E-out",
+   200
+  ],
+  [
+   "R4",
+   "W-out",
+   200
+  ],
+  [
+   "W-in",
+   "R6",
+   150
+  ],
+  [
+   "W-in",
+   "R4",
+   100
+  ],
+  [
+   "E-in",
+   "R6",
+   150
+  ],
+  [
+   "E-in",
+   "R4",
+   100
+  ]
+ ],
+ "arcs": [
+  1650,
+  1155,
+  1430,
+  1430,
+  935,
+  1210
+ ],
+ "entries1": [
+  {
+   "id": "R6",
+   "lanes": 3,
+   "v": 1320,
+   "vc": 330.00000000000006,
+   "cHCM": 3186.4841590193023,
+   "cTRL": 2966.4918198819732,
+   "c": 2966.4918198819732,
+   "x": 0.4449700454769898,
+   "d": 4.407556631049446,
+   "los": "A",
+   "q95": 2.3776458257170194
+  },
+  {
+   "id": "E-in",
+   "lanes": 2,
+   "v": 275,
+   "vc": 1155,
+   "cHCM": 1028.400048260171,
+   "cTRL": 1846.1993253815565,
+   "c": 1028.400048260171,
+   "x": 0.26740566617557066,
+   "d": 6.110451811323454,
+   "los": "A",
+   "q95": 1.0825908211646147
+  },
+  {
+   "id": "R4",
+   "lanes": 3,
+   "v": 990,
+   "vc": 440,
+   "cHCM": 2892.601521779723,
+   "cTRL": 2685.541661809891,
+   "c": 2685.541661809891,
+   "x": 0.36864071560625145,
+   "d": 3.964274396532777,
+   "los": "A",
+   "q95": 1.737410123765499
+  },
+  {
+   "id": "W-in",
+   "lanes": 2,
+   "v": 275,
+   "vc": 935,
+   "cHCM": 1247.8192177044618,
+   "cTRL": 1968.3579792259297,
+   "c": 1247.8192177044618,
+   "x": 0.22038448847253772,
+   "d": 4.800620120150984,
+   "los": "A",
+   "q95": 0.8422174878074316
+  }
+ ],
+ "entries15": [
+  {
+   "id": "R6",
+   "lanes": 3,
+   "v": 1980,
+   "vc": 495,
+   "cHCM": 2755.997421288046,
+   "cTRL": 2858.9877298229594,
+   "c": 2755.997421288046,
+   "x": 0.718433183103134,
+   "d": 8.1480139229371,
+   "los": "A",
+   "q95": 7.130497916498349
+  },
+  {
+   "id": "E-in",
+   "lanes": 2,
+   "v": 412.5,
+   "vc": 1732.5,
+   "cHCM": 619.1263824250941,
+   "cTRL": 1525.5328590400768,
+   "c": 619.1263824250941,
+   "x": 0.6662613833128116,
+   "d": 19.973443166320116,
+   "los": "C",
+   "q95": 5.015233180697584
+  },
+  {
+   "id": "R4",
+   "lanes": 3,
+   "v": 1485,
+   "vc": 660.0000000000001,
+   "cHCM": 2383.7268528085547,
+   "cTRL": 2549.005428092712,
+   "c": 2383.7268528085547,
+   "x": 0.6229740619191931,
+   "d": 7.084874952980943,
+   "los": "A",
+   "q95": 4.7556910200449565
+  },
+  {
+   "id": "W-in",
+   "lanes": 2,
+   "v": 412.5,
+   "vc": 1402.5,
+   "cHCM": 827.3635694686618,
+   "cTRL": 1708.7708398066366,
+   "c": 827.3635694686618,
+   "x": 0.49857162585114806,
+   "d": 11.090493666071533,
+   "los": "B",
+   "q95": 2.828619742012386
+  }
+ ],
+ "gcrit": 1.6500000000000006,
+ "V2": 37.953154762067875,
+ "R2": 51.5,
+ "RI": 48,
+ "CW": 14,
+ "merge": {
+  "acc": 241.12654320987656,
+  "nt": 182.5,
+  "acc85": 151.9097222222222,
+  "dec": 115.74074074074073,
+  "xt": 91.25
+ },
+ "feasibility": [
+  {
+   "name": "project rule, merge lane + taper",
+   "Lm": 423.62654320987656,
+   "feasibleCentres": []
+  },
+  {
+   "name": "0.85 Vh rule, lane + taper",
+   "Lm": 334.4097222222222,
+   "feasibleCentres": []
+  },
+  {
+   "name": "J1 value (taper missing)",
+   "Lm": 241,
+   "feasibleCentres": [
+    -125,
+    -100,
+    -75,
+    -50,
+    -25,
+    0,
+    25,
+    50,
+    75,
+    100,
+    125
+   ]
+  },
+  {
+   "name": "lane 72 m + taper 183 m (merge speed only about 70)",
+   "Lm": 255,
+   "feasibleCentres": [
+    -125,
+    -100,
+    -75,
+    -50,
+    -25,
+    0,
+    25,
+    50,
+    75,
+    100
+   ]
+  }
+ ],
+ "checks": [
+  {
+   "id": "X1",
+   "ok": true,
+   "txt": "degree of saturation at x1.0: max 0.44 <= 0.85 (entry R6)"
+  },
+  {
+   "id": "X15",
+   "ok": true,
+   "txt": "degree of saturation with the 1.5 x reserve: max 0.72 <= 0.85 (needs the 3-lane R6 / R4 entries; the 3rd-lane factor 1.5 is ASSUMED, confirm with the J10 microsimulation)"
+  },
+  {
+   "id": "LOS",
+   "ok": true,
+   "txt": "delay at x1.5: worst 20.0 s (LOS C), limit LOS D = 35 s"
+  },
+  {
+   "id": "GROWTH",
+   "ok": true,
+   "txt": "reserve x1.65 >= x1.5"
+  },
+  {
+   "id": "QUEUE",
+   "ok": true,
+   "txt": "ramp queues at x1.5 fit on the ramp"
+  },
+  {
+   "id": "SIGNAL",
+   "ok": true,
+   "txt": "unsignalised roundabout is enough (signal need = NO)"
+  },
+  {
+   "id": "CIRC LANES",
+   "ok": true,
+   "txt": "3 circulating lanes: 2475 pcu/h at x1.5 = 825 pcu/h per lane <= 1200 (lane use not equal, so about 1.3 x that on the busiest lane)"
+  },
+  {
+   "id": "DEFL V2",
+   "ok": true,
+   "txt": "circulating path speed 38.0 km/h <= 40 km/h (multilane roundabout target)"
+  },
+  {
+   "id": "STEP ARM",
+   "ok": true,
+   "txt": "arm approach 50 -> circulating 38.0 km/h = 12 km/h step <= 20 (with the 50 km/h sign)"
+  },
+  {
+   "id": "STEP",
+   "ok": true,
+   "txt": "ramp 50 -> circulating 38.0 km/h = 12 km/h step <= 20"
+  },
+  {
+   "id": "SWEPT",
+   "ok": true,
+   "txt": "swept path 4.3 + 1.0 clearance <= 9.3 m (2 lanes + apron)"
+  },
+  {
+   "id": "SSD BOX",
+   "ok": true,
+   "txt": "straight, level box, sight line open for 183 m at V100 (no horizontal curve, central wall only 1.2 m high inside the 6 m median)"
+  },
+  {
+   "id": "SIGHT ENTRY",
+   "ok": true,
+   "txt": "visible 80 m >= 43 m; rule for J8 / J11: no tree, no sign, no light mast in the island sight cone, planting < 0.6 m"
+  },
+  {
+   "id": "SIGHT MERGE",
+   "ok": true,
+   "txt": "parallel straight ramp, ring kerb lane visible for >= 183 m (3D obstruction check in J8)"
+  },
+  {
+   "id": "MERGE FIT (project rule)",
+   "ok": false,
+   "txt": "4 ramps with the consistent merge 424 m and diverge 207 m fit between rail and water"
+  },
+  {
+   "id": "WEAVE",
+   "ok": true,
+   "txt": "360 m >= 300 m"
+  },
+  {
+   "id": "SPACING",
+   "ok": true,
+   "txt": "2146 m >= 1000 m (J0 measurement)"
+  },
+  {
+   "id": "RAMP R",
+   "ok": true,
+   "txt": "R_min 72.9 m for V50"
+  },
+  {
+   "id": "RAMP VERT E-out",
+   "ok": false,
+   "txt": "130 m of vertical curve vs 126 m available"
+  },
+  {
+   "id": "RAMP VERT E-in",
+   "ok": true,
+   "txt": "69 m of vertical curve vs 126 m available"
+  },
+  {
+   "id": "RAMP VERT W-out",
+   "ok": false,
+   "txt": "131 m of vertical curve vs 126 m available"
+  },
+  {
+   "id": "RAMP VERT W-in",
+   "ok": true,
+   "txt": "68 m of vertical curve vs 126 m available"
+  },
+  {
+   "id": "PED R6 (2 lanes at the crossing)",
+   "ok": true,
+   "txt": "88 gaps/h >= 50"
+  },
+  {
+   "id": "PED R4 (2 lanes at the crossing)",
+   "ok": true,
+   "txt": "127 gaps/h >= 50"
+  },
+  {
+   "id": "PED ramp E-out (exit)",
+   "ok": true,
+   "txt": "169 gaps/h >= 50"
+  },
+  {
+   "id": "PED ramp W-in (entry)",
+   "ok": true,
+   "txt": "145 gaps/h >= 50"
+  },
+  {
+   "id": "DECK DRAIN",
+   "ok": true,
+   "txt": "9 inlets around the deck (spread <= 3.5 m)"
+  },
+  {
+   "id": "SAG OUTFALL",
+   "ok": true,
+   "txt": "gravity pipe DN 600 from the sag to the embankment toe"
+  }
+ ]
+}

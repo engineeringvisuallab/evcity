@@ -1,0 +1,171 @@
+J3 CALCULATION SHEET, TYPE B (B2). Headless, read only. Formulas shown, every check prints PASS / FAIL, ASSUMED values listed in section 12.
+Inputs from J1 / J2: roundabout centre u0 = -125 m, deck 35.3 m, outer radius 62 m, ring V100, ramps V50, ramp grade 5 % (project limit 5 %), rail at u -600 (margin 40 m), water at u 540 (margin 20 m).
+
+1) DEMAND (ASSUMED, peak hour, veh/h). Ring through traffic stays in the underpass and never touches the roundabout.
+  origin -> destination (E-out / W-out = leave to the ring, W-in / E-in = come from the ring; EB side carries W-in + E-out, WB side E-in + W-out):
+    R6    -> R4      700
+    R6    -> E-out   250
+    R6    -> W-out   250
+    R4    -> R6      500
+    R4    -> E-out   200
+    R4    -> W-out   200
+    W-in  -> R6      150
+    W-in  -> R4      100
+    E-in  -> R6      150
+    E-in  -> R4      100
+  basis: highway turning shares of src/interchange/demand/Demand.ts (left 150 + right 100 per ring direction = 250 leave the ring), R6 1200 and R4 900 veh/h entering (arterial defaults 1000 / 700+, 6 lane road a bit higher). No U-turn demand at the roundabout (U-turns use the ring openings, UTurns.ts).
+  all flows x 1.1 (pcu), design reserve x 1.5.
+
+2) ROUNDABOUT CAPACITY: 6 legs (R6, R4 two-way, 4 one-way ramps), circulating flow in front of each entry, HCM 6th entry capacity (src/interchange/Analysis.ts) and TRL (Kimber) cross-check
+  formulas: HCM 2-lane entry  c = 1420 e^(-0.85e-3 vc) + 1420 e^(-0.91e-3 vc);  delay d = 3600/c + 900T[(x-1)+sqrt((x-1)^2+(3600/c)x/(450T))] + 5 min(x,1);  95 % queue Q95 = 900T[(x-1)+sqrt((x-1)^2+(3600/c)x/(150T))] c/3600, T = 0.25 h
+  TRL: Qe = k (F - fc Qc), F = 303 x2, x2 = v + (e-v)/(1+2S), S = 1.6 (e-v)/l', k = 1 - 0.00347 (phi-30) - 0.978 (1/r - 0.05), fc = 0.21 td (1 + 0.2 x2). Inscribed circle D = 124 m is ABOVE the range the formula was fitted for (about 15 .. 100 m): cross-check only, the HCM value rules (the smaller of the two is used).
+  lane configuration tested: B = circulating 3 lanes (J2 geometry, unchanged), entries R6 3 lanes, R4 3 lanes (flare), ramps 2 lanes. HCM has curves for 1 and 2 lanes only: for a 3 lane entry the 2-lane value x 1.5 is used (ASSUMED, lower than the TRL value). A = all entries 2 lanes is computed for comparison.
+
+  circulating arcs (pcu/h on the arc after leg k, clockwise): R6->E-out 1650 | E-out->E-in 1155 | E-in->R4 1430 | R4->W-out 1430 | W-out->W-in 935 | W-in->R6 1210
+
+  configuration B, design demand x 1:
+  entry  lanes  v pcu/h  vc pcu/h  cHCM   cTRL   c used  x=v/c  delay s  LOS  Q95 veh
+  R6        3     1320       330   3186   2966    2966   0.44      4.4  A      2.4
+  E-in      2      275      1155   1028   1846    1028   0.27      6.1  A      1.1
+  R4        3      990       440   2893   2686    2686   0.37      4.0  A      1.7
+  W-in      2      275       935   1248   1968    1248   0.22      4.8  A      0.8
+
+  configuration B, design demand x 1.5:
+  entry  lanes  v pcu/h  vc pcu/h  cHCM   cTRL   c used  x=v/c  delay s  LOS  Q95 veh
+  R6        3     1980       495   2756   2859    2756   0.72      8.1  A      7.1
+  E-in      2      413      1733    619   1526     619   0.67     20.0  C      5.0
+  R4        3     1485       660   2384   2549    2384   0.62      7.1  A      4.8
+  W-in      2      413      1403    827   1709     827   0.50     11.1  B      2.8
+  comparison, configuration A (all entries 2 lanes) at x1.5: R6 x = 1.08, E-in x = 0.67, R4 x = 0.93, W-in x = 0.50 => A fails on R6 / R4, that is why R6 and R4 entries flare to 3 lanes.
+  PASS  X1: degree of saturation at x1.0: max 0.44 <= 0.85 (entry R6)
+  PASS  X15: degree of saturation with the 1.5 x reserve: max 0.72 <= 0.85 (needs the 3-lane R6 / R4 entries; the 3rd-lane factor 1.5 is ASSUMED, confirm with the J10 microsimulation)
+  PASS  LOS: delay at x1.5: worst 20.0 s (LOS C), limit LOS D = 35 s
+  growth until the first entry passes x = 0.85: configuration B x1.65 (entry E-in), configuration A x1.30.
+  PASS  GROWTH: reserve x1.65 >= x1.5
+  queue on ramp E-in: Q95 5.0 veh x 7 m = 35 m vs ramp + deck storage 126 m (a queue must never reach the ring diverge, 116 + 91 m further back)
+  queue on ramp W-in: Q95 2.8 veh x 7 m = 20 m vs ramp + deck storage 126 m (a queue must never reach the ring diverge, 116 + 91 m further back)
+  PASS  QUEUE: ramp queues at x1.5 fit on the ramp
+  SIGNAL NEED: all entries x <= 0.85 at x1.5, LOS <= D, queues fit => NO signal on the roundabout (rule of D5). Re-check in J10 with the traffic graph. Above x1.65 the first fix is metering the entry E-in, not a full signal.
+  PASS  SIGNAL: unsignalised roundabout is enough (signal need = NO)
+  busiest circulating arc: 1650 pcu/h at x1.0 (2 lanes would do), 2475 pcu/h at x1.5 (above the 2000 pcu/h where the HCM 2-lane curve stops being valid) => KEEP the 3 circulating lanes of J2.
+  PASS  CIRC LANES: 3 circulating lanes: 2475 pcu/h at x1.5 = 825 pcu/h per lane <= 1200 (lane use not equal, so about 1.3 x that on the busiest lane)
+  => J2 geometry stays: circulating carriageway 14.0 m (3 lanes x 3.65 + apron 2.0 + shoulder 1.05), island radius 48 m. NO change to the box, the deck or the platform.
+
+3) ROUNDABOUT GEOMETRY: fastest path (deflection), entry flare, size
+  circulating fastest path R2 = island 48 + apron 2.0 + 1.5 offset = 51.5 m;  V = sqrt(127 R (e + f)), e = -0.02, f = friction table of Standards.ts: V2 = 38.0 km/h
+  PASS  DEFL V2: circulating path speed 38.0 km/h <= 40 km/h (multilane roundabout target)
+  entry path radius R1 (through movement, measured in J4 from the splitter-island offset): R1 <= 59.5 m keeps V1 <= 40 km/h; exit radius R3 >= R2 so nobody is thrown out fast.
+  speed steps: ramp 50 km/h -> entry path <= 40 -> circulating 38.0: largest step 12 km/h <= 20 (speed differential rule), R6 / R4 arms: approach speed signed down to 50 km/h before the deck (J11) => 12 km/h step (unsigned V60 would be 22 km/h = too much).
+  PASS  STEP ARM: arm approach 50 -> circulating 38.0 km/h = 12 km/h step <= 20 (with the 50 km/h sign)
+  PASS  STEP: ramp 50 -> circulating 38.0 km/h = 12 km/h step <= 20
+  entry flare (ASSUMED start values for J4): R6: approach 10.5 m -> entry 10.5 m over l' 20 m, entry radius 50 m, entry angle 30 deg | R4: approach 7.3 m -> entry 10.9 m over l' 25 m, entry radius 50 m, entry angle 30 deg | E-in: approach 7.0 m -> entry 8.5 m over l' 20 m, entry radius 40 m, entry angle 30 deg | W-in: approach 7.0 m -> entry 8.5 m over l' 20 m, entry radius 40 m, entry angle 30 deg
+  size: outer radius 62 m (D 124 m) is large for a 2-lane roundabout (typical 50 .. 100 m): it is forced by the underpass box (124 m + 5 m each side) and the ramp positions, not chosen for capacity. Large D = long arcs between legs (58 .. 61 deg = 57 .. 66 m at r 56), so all weaving on the circle has room.
+  truck swept path (WB-15 like, tractor wheelbase 6.1 + trailer 12.2, R 55 m): width about 4.3 m (off-tracking sqrt formula) vs 2 lanes 7.3 m + apron 2.0 m (mountable): PASS (trucks use 2 lanes and the apron, cars one lane).
+  PASS  SWEPT: swept path 4.3 + 1.0 clearance <= 9.3 m (2 lanes + apron)
+
+4) SIGHT DISTANCE
+  stopping sight s = 0.278 V t + V^2 / (254 (a/9.81 + G)), t 2.5 s, a 3.4 m/s2 (Standards.ts)
+    ring in the underpass V100, level                s = 183 m
+    ring V100 downhill 4 %                           s = 198 m
+    R6 arm V60 downhill (leaving the deck) 3.5 %     s = 87 m
+    R4 arm V50 downhill 6 %                          s = 69 m
+    ramp V50 downhill 5 %                            s = 68 m
+    circulating path V38                             s = 43 m
+  underpass: box 134 m long, ring straight there (heading about 25 deg, no curve), surface grade about -0.01 %, so the road is visible through the box. Box length 134 m is BELOW the stopping distance 183 m: the whole box is inside the portal adaptation zone (black-hole effect) => full day lighting + portal light shield are required (levels per CIE 88 / EN 13201 are NOT RUN here, J7).
+  PASS  SSD BOX: straight, level box, sight line open for 183 m at V100 (no horizontal curve, central wall only 1.2 m high inside the 6 m median)
+  roundabout entry: driver 15 m behind the yield line looks up-stream along the circulating path (radius 56.5 m); sight line must clear the central island r 48 m (planting limit below 0.6 m inside the cone).
+  visible length along the circulating path 80 m vs gap distance 43 m (critical gap 4.1 s x 38.0 km/h): PASS. Same for all 4 entries (radial approximation, ramp legs are tilted about 29 deg, see J4 / J8 for the exact sight cones).
+  PASS  SIGHT ENTRY: visible 80 m >= 43 m; rule for J8 / J11: no tree, no sign, no light mast in the island sight cone, planting < 0.6 m
+  merge nose: the ramp driver must see the ring kerb lane for at least the stopping distance of the ring 183 m; ramps run parallel to the ring on the outside (v 24 .. 36 m, MSE wall on the far side only), straight, open: PASS (obstruction by the platform wall / portal wing walls near the W-out nose is NOT RUN, J8).
+  PASS  SIGHT MERGE: parallel straight ramp, ring kerb lane visible for >= 183 m (3D obstruction check in J8)
+
+5) RAMPS ON THE 8 LANE RING (V100 main, ramps V50)
+  DIVERGE (exit): decel lane = (Vh^2 - Vr^2)/(2 a), a 2.5 m/s2: 116 m + exit taper 1:25 x 3.65 = 91 m  => 207 m
+  MERGE (entry), project rule Checks.accelLength (full highway speed): (Vh^2 - Vr^2)/(2 a), a 1.2 m/s2: 241 m + entry taper 1:50 x 3.65 = 183 m  => 424 m
+  MERGE to 0.85 Vh only (AASHTO style, Standards.accelLength): 152 m + taper 183 m => 334 m
+  !! J1 used merge 241 m (the lane WITHOUT its taper 183 m) and diverge 207 m (lane WITH its taper): the two numbers were not on the same basis. The consistent merge length is 424 m.
+  which roundabout centres u0 (J1 candidates) keep all four ramp ends inside the rail (u -560) and the water (u +520)? merge length / diverge length 207 m:
+    merge 424 m (project rule, merge lane + taper): NONE
+    merge 334 m (0.85 Vh rule, lane + taper): NONE
+    merge 241 m (J1 value (taper missing)): feasible u0 = -125, -100, -75, -50, -25, 0, 25, 50, 75, 100, 125
+    merge 255 m (lane 72 m + taper 183 m (merge speed only about 70)): feasible u0 = -125, -100, -75, -50, -25, 0, 25, 50, 75, 100
+  room at each end per centre u0 (rail side W, water side E, from the J1 nose positions), and what merge length each end can take:
+   u0   W nose  W room  E nose  E room | 424 m rule fits | 334 m (0.85 Vh) fits | lane left after the 183 m taper (W / E) -> speed at its end (W / E)
+  -125    -305     255      55     465 | no              | no (short by 79 m)          | 73 / 283 m -> 69 / 106 km/h
+  -100    -290     270      75     445 | no              | no (short by 64 m)          | 88 / 263 m -> 72 / 103 km/h
+   -50    -265     295     115     405 | no              | no (short by 39 m)          | 113 / 223 m -> 77 / 97 km/h
+   -25    -250     310     135     385 | no              | no (short by 24 m)          | 128 / 203 m -> 80 / 94 km/h
+     0    -240     320     155     365 | no              | no (short by 14 m)          | 138 / 183 m -> 82 / 90 km/h
+    25    -230     330     180     340 | no              | no (short by 4 m)          | 148 / 158 m -> 84 / 86 km/h
+    50    -225     335     200     320 | no              | no (short by 14 m)          | 153 / 138 m -> 85 / 82 km/h
+    75    -220     340     225     295 | no              | no (short by 39 m)          | 158 / 113 m -> 86 / 77 km/h
+   100    -210     350     250     270 | no              | no (short by 64 m)          | 168 / 88 m -> 88 / 72 km/h
+  at the J1 centre u0 = -125: W-out merge would end at u -729 (rail limit u -560), E-out merge at u 479 (water limit u 520).
+  FAIL  MERGE FIT (project rule): 4 ramps with the consistent merge 424 m and diverge 207 m fit between rail and water
+  room for the W-out merge at the J1 centre: 255 m (merge nose u -305 to rail limit). The corridor between rail and water is 1080 m; the 4 ramp noses + roundabout need 360 m, so each merge can be at most 360 m on average.
+  speed reached at the end of the parallel lane: lane 72 m => 69 km/h, lane 152 m => 85 km/h (ring V100). Ring kerb lane flow about 810 veh/h (laneShare 0.45 of 1800) + ramp 450 veh/h = 1260 < 2200 laneCap: the ring is far from full, so a short merge is workable but it is an EXCEPTION to the project rule.
+  spacing on one ring carriageway (exit gore -> next entrance nose): 360 m, rule weaveMin 150 / desirable 300 m (exit first, entrance after it, so no weaving)
+  PASS  WEAVE: 360 m >= 300 m
+  nearest other ring junction 2146 m away (J0), min interchange spacing 1000 m: PASS
+  PASS  SPACING: 2146 m >= 1000 m (J0 measurement)
+
+  RAMP RADII (V50): R_min = V^2 / (127 (emax + f)) = 72.9 m (emax 0.08, f 0.19). Needed superelevation e = V^2/(127 R) - f for some radii:
+    R  75 m: e = 0.072
+    R 100 m: e = 0.007
+    R 150 m: e = -0.059 (normal crown 2 % is enough)
+    R 250 m: e = -0.111 (normal crown 2 % is enough)
+  The ramps run STRAIGHT and parallel to the ring (v 24 .. 36 m) and join the roundabout at the legs, so no ramp curve is needed on the long part; the curves are the roundabout entry / exit radii (J4: R >= 41 m for V40, entry path R1 <= 60 m by deflection).
+  PASS  RAMP R: R_min 72.9 m for V50
+
+  RAMP VERTICAL CURVES: crest K = s^2 / (100 (sqrt(2 h1) + sqrt(2 h2))^2), sag (headlights) K = s^2 / (120 + 3.5 s), L = K A; h1 1.08, h2 0.6; s with the 5 % downhill braking
+  s = 67.9 m, K crest 7.0, K sag 12.9
+    E-out: ring grade at the nose 2.4 %, A top 5.0 %, A bottom 7.4 % => crest 35 m + sag 95 m = 130 m vs ramp 110 m + 16 m flat deck edge = 126 m: FAIL
+  FAIL  RAMP VERT E-out: 130 m of vertical curve vs 126 m available
+    E-in : ring grade at the nose -2.4 %, A top 5.0 %, A bottom 2.6 % => crest 35 m + sag 34 m = 69 m vs ramp 110 m + 16 m flat deck edge = 126 m: PASS
+  PASS  RAMP VERT E-in: 69 m of vertical curve vs 126 m available
+    W-out: ring grade at the nose 2.4 %, A top 5.0 %, A bottom 7.4 % => crest 35 m + sag 96 m = 131 m vs ramp 110 m + 16 m flat deck edge = 126 m: FAIL
+  FAIL  RAMP VERT W-out: 131 m of vertical curve vs 126 m available
+    W-in : ring grade at the nose -2.4 %, A top 5.0 %, A bottom 2.6 % => crest 35 m + sag 33 m = 68 m vs ramp 110 m + 16 m flat deck edge = 126 m: PASS
+  PASS  RAMP VERT W-in: 68 m of vertical curve vs 126 m available
+
+6) LANE LAYOUT (decision from sections 2 .. 5)
+  roundabout: 3 circulating lanes x 3.65 + apron 2.0 + outer shoulder 1.05 = 14.0 m (r 48 .. 62), as in J2; 6 legs.
+  R6: 3 lanes each way on the arm; at the pedestrian crossing 2 lanes (lane-drop taper = W V^2/155 = 56 m at V50), the 3rd lane is added again by the entry flare at the yield line (3 entry lanes) and 3 exit lanes after the crossing. R4: 2 lanes each way, entry flares to 3 lanes. Ramps: 2 lanes of 3.5 m on the long part; demand 250 .. 450 veh/h is far below one lane (1900), so each ramp narrows to ONE lane before its merge nose / starts as one lane at its diverge gore (J5 decides, saves width in the ROW).
+  PEDESTRIANS (ASSUMED 150 persons/h per crossing, walking 1.2 m/s + 2 s start-up, refuge island 2.4 m so each crossing is done in 2 stages): usable gaps per hour at a stage = q exp(-q t), q veh/s
+    (information) R6 crossing on all 3 lanes: stage 10.5 m, t 10.8 s => only 33 usable gaps/h: FAIL, so R6 is narrowed to 2 lanes AT the crossing (lane drop, then the 3rd lane is added again by the entry flare at the yield line) or the crossing is given priority / an on-demand signal: J4 decides.
+    R6 (2 lanes at the crossing) stage 7.0 m, t 7.8 s, flow 1200 veh/h => 88 usable gaps/h vs 150 persons/h (groups, ASSUMED 3 persons per group => 50): PASS
+  PASS  PED R6 (2 lanes at the crossing): 88 gaps/h >= 50
+    R4 (2 lanes at the crossing) stage 7.0 m, t 7.8 s, flow 900 veh/h => 127 usable gaps/h vs 150 persons/h (groups, ASSUMED 3 persons per group => 50): PASS
+  PASS  PED R4 (2 lanes at the crossing): 127 gaps/h >= 50
+    ramp E-out (exit)  stage 7.0 m, t 7.8 s, flow 450 veh/h => 169 usable gaps/h vs 150 persons/h (groups, ASSUMED 3 persons per group => 50): PASS
+  PASS  PED ramp E-out (exit): 169 gaps/h >= 50
+    ramp W-in (entry)  stage 7.0 m, t 7.8 s, flow 250 veh/h => 145 usable gaps/h vs 150 persons/h (groups, ASSUMED 3 persons per group => 50): PASS
+  PASS  PED ramp W-in (entry): 145 gaps/h >= 50
+
+7) DRAINAGE (rain ASSUMED: i = 150 mm/h, 10 min, 10 years, runoff C = 0.9, rational Q = C i A / 360 with A in ha, Q in m3/s)
+  roundabout deck 1.21 ha: Q = 0.453 m3/s. Deck falls outward (2 %) to the outer kerb gutter (perimeter 390 m): inflow 0.001 m3/s per m. Gutter capacity at spread 3.5 m (y 0.07 m, n 0.016, S 0.003): Q = (0.376/n)(1/Sx) S^0.5 y^(8/3) = 0.054 m3/s => inlet spacing at most 46 m, so at least 9 inlets around the deck; outfall pipes run down inside the MSE wall (16 m drop) to the arm drains.
+  PASS  DECK DRAIN: 9 inlets around the deck (spread <= 3.5 m)
+  UNDERPASS: the lowest point of the ring surface is at u -120 (27.43 m) and the box covers u -192 .. -58: the sag is INSIDE the box. (J1 wrote "falls to both portals, no sump": that is wrong, the ring falls TOWARD the box from both sides.) Water, wash-down water and fire-fighting water collect at the sag.
+  FINDING (corrects J1): the sag is inside the box, so the box needs sag inlets + an outfall; this is solved below.
+  design flow at the sag: the ring surface rains into it from about 400 m x 44.2 m = 1.77 ha => Q = 0.663 m3/s (the box roof keeps rain off the 134 m inside, so the roof stretch adds nothing); fire-fighting / wash water 0.100 m3/s (ASSUMED) is smaller.
+  sag inlets (weir Q = 1.66 P y^1.5, ponding y 0.08 m, 50 % clogging): clear perimeter P >= 35 m => about 10 grates 0.6 x 1.2 m or slotted drain across both cells.
+  OUTFALL by gravity: the ring surface is 8.2 m above natural ground, so a pipe down the embankment (S about 2 %, n 0.013, full flow) needs D = ((Q n) / (0.3117 S^0.5))^(3/8) = 0.54 m => use DN 600; NO pump, NO flotation problem (box floor stays 8 m above ground, D6 flotation = not applicable). Outfall to the platform drain / pond: location decided in J6.
+  PASS  SAG OUTFALL: gravity pipe DN 600 from the sag to the embankment toe
+  H5 flat-spot rule (grade < 0.3 % over 40 m): the ring grade near the sag is 0.06 % at u -120; this is the EXISTING ring profile (fixed by H4), so it stays; the sag inlets above replace longitudinal drainage there.
+
+8) LIGHTING (underpass): NOT RUN. Rule found: box 134 m < stopping distance 183 m, so the whole box is a threshold / transition zone: day AND night lighting, portal light shield (louvre / sun roof of 8 m at both portals is a J7 item). Luminance values come from CIE 88 / EN 13201 and are not typed from memory here.
+9) CLEARANCE FOR AI / VEHICLES: height limit 5.5 m (box 5.6 m measured in J2), sign the limit before the diverge (J11), AI vehicle heights checked in J10: NOT RUN.
+
+SUMMARY: 25 PASS, 3 FAIL
+  FAIL MERGE FIT (project rule): 4 ramps with the consistent merge 424 m and diverge 207 m fit between rail and water
+  FAIL RAMP VERT E-out: 130 m of vertical curve vs 126 m available
+  FAIL RAMP VERT W-out: 131 m of vertical curve vs 126 m available
+
+10) DECISIONS THE USER MUST MAKE BEFORE J4 (the consistent merge length does not fit between rail and water)
+  The project merge rule (424 m) needs 847 m of corridor for the two merges, the corridor has about 720 m left after the roundabout and its ramps. Short by about 127 m at the J1 centre, for every centre in the J1 table.
+  OPTION A (AI recommends): keep the centre u0 = -125 (J1 / J2 numbers stay). W-out merge = the 255 m that exist (taper 183 + lane 73 m, speed at the end of the lane 69 km/h), a documented EXCEPTION on the least loaded ramp (450 veh/h onto a kerb lane of about 810 veh/h). E-out keeps the full 424 m (room 465 m), both diverges 207 m. Cost: nothing extra. Risk: speed difference of 31 km/h at the W-out nose.
+  OPTION B: move the centre to u0 = 25 and use the 0.85 Vh merge (334 m) on both merges: room W 330 m / E 340 m, still short by 4 m (needs rail margin 36 m instead of 40 m). Cost (J1 table): roundabout deck 37.9 m instead of 35.3 m, platform fill 227249 instead of 194267 m3, R6 arm 552 m / fill 416965 instead of 457 m / 254354 m3, J2 numbers change.
+  OPTION C: ask for a change of the fixed items (move the rail crossing margin to 10 m / ring bridge start): NOT recommended, the ring and rail are fixed (H4 / H6).
+  ALSO (J5 item): the two merge ramps (E-out, W-out) need about 5 m more ramp length for the vertical curves (130 m of curve vs 126 m); that moves their noses 5 m outward.
+12) ASSUMED LIST: demand matrix (section 1), pcu factor 1.1, design reserve x1.5, entry geometry (section 3), crossfall 2 % outward, truck WB-15 like, critical gap 4.1 s, rain 150 mm/h / C 0.9, pedestrian 150 persons/h, fire / wash water 0.1 m3/s, ring catchment 400 m.
+NOT RUN: lighting photometry, 3D sight cones with walls / signs, signal timing (none needed), full TRL geometry (J4), structural loads, groundwater (not modelled), roundabout microsimulation (J10).
