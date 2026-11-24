@@ -25,6 +25,8 @@ interface Lake {
   p3: number;
   reject2: number;
   isPond: boolean;
+  /** STEP HK-10a: a fixed (designed) pond: the residential flat ground fades out over a SHORT distance beside it (see FIXED_BANK_SCALE). */
+  fixed?: boolean;
 }
 
 /** RING 5.4: points of the ring centreline (every 20 m). A lake is never placed so that its water reaches the road (the road would hang over the lake). */
@@ -35,6 +37,9 @@ const ringPoints = (): { x: number; z: number }[] => {
 };
 /** Distance (m) that the shore keeps from the ring centreline: biggest shoreline radius (R * 1.3 with the wobble) + the pavement half width + a margin. */
 const ringKeepOut = (R: number): number => R * 1.3 + 60;
+
+/** STEP HK-10a: for a fixed pond `edgeDistance` reports 12 x the real distance beyond the shore, so the flat ground of a residential zone (fade 90 m beside natural lakes) runs out in 7.5 m: the pond sits in the flat ground of its loop and does not push a 90 m crater into it. */
+const FIXED_BANK_SCALE = 12;
 
 const smoothstep = (a: number, b: number, x: number): number => {
   const t = x <= a ? 0 : x >= b ? 1 : (x - a) / (b - a);
@@ -101,6 +106,14 @@ export class LakeSet {
     };
   }
 
+  /** STEP HK-10a: a FIXED pond (inside a Hatikamrul loop). Same bowl, water level and shoreline as every other pond; it uses its own random numbers, so no older lake moves. */
+  addFixedPond(x: number, z: number, R: number, level: number, depth: number, wobble = 0.06): void {
+    const rng = mulberry32(0x4b100 + this.lakes.length);
+    const L = this.make(x, z, R, level, depth, wobble, rng, true);
+    L.fixed = true;
+    this.lakes.push(L);
+  }
+
   get count(): number {
     return this.lakes.filter((l) => !l.isPond).length;
   }
@@ -122,7 +135,8 @@ export class LakeSet {
       if (d2 > lim * lim) continue;
       const th = Math.atan2(dz, dx);
       const Rt = L.R * (1 + L.wobble * (0.55 * Math.sin(2 * th + L.p1) + 0.3 * Math.sin(3 * th + L.p2) + 0.15 * Math.sin(5 * th + L.p3)));
-      const e = Math.sqrt(d2) - Rt * 1.08;
+      const e0 = Math.sqrt(d2) - Rt * 1.08;
+      const e = L.fixed && e0 > 0 ? e0 * FIXED_BANK_SCALE : e0;
       if (e < out.d) { out.d = e; out.level = L.level; }
     }
   }

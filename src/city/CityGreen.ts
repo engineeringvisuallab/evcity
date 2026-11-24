@@ -2,6 +2,7 @@ import { Config } from '../core/Config';
 import { chunkOriginX, chunkOriginZ } from '../world/WorldGrid';
 import { CityPlan } from './CityPlan';
 import type { TerrainGenerator } from '../terrain/TerrainGenerator';
+import { hkLawnAt, hkLawnTouches } from '../roads/ring/HkInfieldData';
 
 /**
  * CITY GREENNESS (GRASS 4): one number 0..1 per ground point that says "this is a planned city: the ground is lawn".
@@ -25,7 +26,8 @@ export class CityGreen {
 
   /** Greenness 0..1 at world (x, z). `fadeOut` = soft edge outside the city (m). */
   at(x: number, z: number, fadeOut: number = Config.terrain.cityGreen.fadeOut): number {
-    let best = 0;
+    let best = hkLawnAt(x, z); // STEP HK-10b: the striped lawns inside the Hatikamrul east loops (0 with the switch OFF)
+    if (best >= 1) return 1;
     for (let i = 0; i < this.sites.length; i++) {
       const d = Math.hypot(x - this.sites[i].x, z - this.sites[i].z);
       const R = this.radius[i];
@@ -40,6 +42,7 @@ export class CityGreen {
     const cx = (x0 + x1) / 2;
     const cz = (z0 + z1) / 2;
     const half = Math.hypot(x1 - x0, z1 - z0) / 2;
+    if (hkLawnTouches(x0, z0, x1, z1)) return true; // STEP HK-10b
     for (let i = 0; i < this.sites.length; i++) {
       if (Math.hypot(cx - this.sites[i].x, cz - this.sites[i].z) < this.radius[i] + fadeOut + half) return true;
     }

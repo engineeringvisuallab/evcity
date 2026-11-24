@@ -8,6 +8,7 @@ import { hkFrame, hkRamps, hkRingOffset } from './HkRamps';
 import { buildHkRampMesh } from './HkRampMesh';
 import { buildHkAuxStrip, buildHkConnector, buildHkLaneMarks, buildHkTail, hkDeckLevel } from './HkDeckPaving';
 import { buildHkCrashBarrier, buildHkGoreMarks } from './HkGoreMarks';
+import { buildHkArrows } from './HkArrows';
 import type { MeshData } from './RingBridgeGeometry';
 
 export class HkInterchangeLayer {
@@ -17,7 +18,7 @@ export class HkInterchangeLayer {
   /** STEP HK-9c-1: visual paving (aux strip + loop tails) lies a few cm over the deck: its own material with a polygon offset, no collider. */
   private readonly pavMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0.05, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
   private readonly geos: THREE.BufferGeometry[] = [];
-  /** Number of paving meshes built (aux strip + connector + lane marks + C-D gore marks + tails); 0 with the switch OFF. */
+  /** Number of paving meshes built (aux strip + connector + lane marks + C-D gore marks + arrows + tails); 0 with the switch OFF. */
   pavingMeshes = 0;
   /** STEP HK-9d-2: collider of the crash cushion + barrier at the closed lane (kept apart from `solids`, which stays the 4 ramps); Engine adds it to RingStructurePhysics. */
   readonly safetySolids: RingSolid[] = [];
@@ -49,7 +50,7 @@ export class HkInterchangeLayer {
       this.group.add(mesh);
     }
     // HK-9c-1: the paving that joins the loops to the ring (visual only); HK-9c-3: + the under-deck connector arm -> link
-    const pav: [string, MeshData][] = [['hk-aux-strip', buildHkAuxStrip(roads)], ['hk-connector', buildHkConnector(roads, f, ground)], ['hk-lane-marks', buildHkLaneMarks(roads, f)], ['hk-gore-marks', buildHkGoreMarks(roads, f).mesh]];
+    const pav: [string, MeshData][] = [['hk-aux-strip', buildHkAuxStrip(roads)], ['hk-connector', buildHkConnector(roads, f, ground)], ['hk-lane-marks', buildHkLaneMarks(roads, f)], ['hk-gore-marks', buildHkGoreMarks(roads, f).mesh], ['hk-arrows', buildHkArrows(f, off).mesh]];
     const deckY = hkDeckLevel(roads);
     for (const rp of hkRamps(f)) pav.push([`hk-tail-${rp.id}`, buildHkTail(rp, off, deckY)]);
     for (const [name, d] of pav) {

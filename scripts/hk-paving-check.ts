@@ -13,6 +13,7 @@ import type { MeshData } from '../src/roads/ring/RingBridgeGeometry';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { RingStructurePhysics } from '../src/roads/ring/RingStructurePhysics';
 import { GM, CB, buildHkCrashBarrier, buildHkGoreMarks, hkArmAt } from '../src/roads/ring/HkGoreMarks';
+import { buildHkArrows } from '../src/roads/ring/HkArrows';
 
 let fails = 0;
 const check = (ok: boolean, name: string, detail: string): void => { if (!ok) fails++; console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name.padEnd(66)} ${detail}`); };
@@ -53,7 +54,7 @@ const deckY = hkDeckLevel(net);
 const ring = net.roads.find((r) => r.name === 'M8')!;
 
 // P1 the layer builds 1 aux strip + 4 tails and still only the 4 ramp colliders (paving is visual only)
-check(layer.pavingMeshes === 8, 'P1 paving meshes: 1 aux strip + 1 connector + 1 lane marks + 1 C-D gore marks + 4 loop tails', `${layer.pavingMeshes}`);
+check(layer.pavingMeshes === 9, 'P1 paving meshes: 1 aux strip + 1 connector + 1 lane marks + 1 C-D gore marks + 1 arrows + 4 loop tails', `${layer.pavingMeshes}`);
 check(layer.solids.length === 4, 'P1 colliders unchanged: only the 4 ramps (paving is visual)', `${layer.solids.length} solids`);
 
 // P2 aux strip geometry: finite, between the ring pavement edge and the deck edge, only on the node viaduct stretch, both sides
@@ -232,6 +233,25 @@ await RAPIER.init();
   const latOf = (p: { x: number; z: number }): number => polyHit(arm, p.x, p.z).d - uc;
   check(latOf(sideS) > 0.55 && latOf(sideS) < 0.9, 'P10 ball from the side stops at the barrier face (half 0.3 m + ball 0.4 m)', `rests ${f2(latOf(sideS))} m from the barrier axis`);
   check(latOf(sideN) < 0, 'P10 same side shot WITHOUT a collider passes through the barrier', `ends ${f2(latOf(sideN))} m from the barrier axis`);
+}
+
+// P11 (HK-9d-3) ARROWS with the REAL frame / real roads: the arrows of the C-D roads and slips stand on the real game roads HK-<id> (centre line, level); the pure checks are in scripts/hk-arrows-check.ts
+{
+  const set = buildHkArrows(f, off);
+  const real = (id: string): { xs: ArrayLike<number>; zs: ArrayLike<number>; ys: ArrayLike<number> } | undefined => net.roads.find((r) => r.name === `HK-${id}`) as never;
+  let nOn = 0, nBad = 0, worstLat = 0, worstDy = 0;
+  for (const a of set.arrows) {
+    const r = real(a.line); if (!r) continue; // loops are not roads of the network
+    let best = Infinity, lvl = 0;
+    for (let i = 0; i < r.xs.length - 1; i++) {
+      const bx = r.xs[i + 1] - r.xs[i], bz = r.zs[i + 1] - r.zs[i], l2 = bx * bx + bz * bz, t = l2 > 0 ? Math.max(0, Math.min(1, ((a.tip[0] - r.xs[i]) * bx + (a.tip[2] - r.zs[i]) * bz) / l2)) : 0;
+      const d = Math.hypot(a.tip[0] - r.xs[i] - bx * t, a.tip[2] - r.zs[i] - bz * t); if (d < best) { best = d; lvl = r.ys[i] + (r.ys[i + 1] - r.ys[i]) * t; }
+    }
+    nOn++; worstLat = Math.max(worstLat, best - (a.kind === 'end' ? 1.1 : 0)); worstDy = Math.max(worstDy, Math.abs(a.tip[1] - HP.lift - 0.006 - lvl));
+    if (best > 1.2 + 0.5 || Math.abs(a.tip[1] - HP.lift - 0.006 - lvl) > 0.15) nBad++;
+  }
+  check(set.arrows.length > 60 && set.arrows.every((a) => a.tip.every(Number.isFinite)), 'P11 arrows built with the real frame (about 75: 55 straight + 20 lane-end)', `${set.arrows.length} arrows, ${set.mesh.indices.length / 3} triangles`);
+  check(nOn >= 50 && nBad === 0, 'P11 C-D / slip arrows stand on the real game roads HK-* (tip within 0.5 m of the lane centre, level +- 0.15 m)', `${nOn} arrows, ${nBad} off, worst lateral ${f2(worstLat)} m, worst level ${f2(worstDy)} m`);
 }
 
 // P6 triangles face up (normal y > 0) so the polygon-offset surface lights like the road

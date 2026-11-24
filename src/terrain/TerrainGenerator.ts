@@ -2,6 +2,7 @@ import { Config } from '../core/Config';
 import { Seed, mulberry32 } from '../world/Seed';
 import { Noise2D } from './Noise';
 import { RiverNetwork } from './RiverNetwork';
+import { HK_INFIELD_PONDS, HK_POND_WOBBLE } from '../roads/ring/HkInfieldData';
 import { LakeSet, type TerrainSample } from './Lakes';
 import { RoadNetwork } from '../roads/RoadNetwork';
 import { RailNetwork } from '../rail/RailNetwork';
@@ -108,6 +109,8 @@ export class TerrainGenerator {
     const base = (x: number, z: number) => this.baseHeightAt(x, z);
     this.rivers = new RiverNetwork(base);
     this.lakes = new LakeSet(seed, base, this.sites, this.rivers);
+    // STEP HK-10a: the ponds inside the Hatikamrul loops (only with the switch ON; they are added AFTER every older lake)
+    if (Config.roads.hatikamrul.enabled) for (const p of HK_INFIELD_PONDS) this.lakes.addFixedPond(p.x, p.z, p.R, p.level, p.depth, HK_POND_WOBBLE);
     // roads are planned on the natural ground INCLUDING the island (the island roads and the long bridge to the island need it)
     this.roads = new RoadNetwork(this.sites, (x, z, o) => this.sampleGround(x, z, o));
     // the port needs the finished roads (it keeps clear of them); it is ready before the railway is planned

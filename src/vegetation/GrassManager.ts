@@ -425,7 +425,9 @@ export class GrassManager {
       }
     }
     const hb = Math.sin(data[o] * 7.7 + data[o + 2] * 3.1 + 1.3) * 43758.5453;
-    const bright = (0.7 + 0.36 * (hb - Math.floor(hb))) * (isGrassLeafy(type) ? 1.12 : 1); // broad leaves are a little fresher / lighter than the blades round them
+    const ringMark = data[o + 5]; // STEP HK-10b: 2.15 = light ring, 1.85 = dark ring of a striped infield lawn (0.85..1.15 = no ring)
+    const ringMul = cityLawn && ringMark > 1.5 ? (ringMark > 2 ? 1.22 : 0.74) : 1;
+    const bright = (0.7 + 0.36 * (hb - Math.floor(hb))) * (isGrassLeafy(type) ? 1.12 : 1) * ringMul; // broad leaves are a little fresher / lighter than the blades round them
     if (type === GrassType.durba) {
       // JUNGLE DURBA: stays fresh green (a little lighter or deeper from tuft to tuft), never yellow / dry
       const k = 0.78 + 0.26 * (hb - Math.floor(hb)); // deep green, a little lighter or deeper from tuft to tuft
