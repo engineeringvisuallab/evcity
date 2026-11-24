@@ -2,7 +2,9 @@
 
 Written 2026-11-23. Language of this file: English. Reply to the user in Banglish. This is the ONLY md file for this junction. One micro-step per chat session, then STOP and wait for the user's OK. Update the status table in section 9 after every step.
 
-> **DECISION 2026-11-24 (USER): TYPE A.** Ring stays on its embankment (profile and plan FIXED) and crosses on a BRIDGE over a ROUNDABOUT at natural ground; R6-9 (6 lane) and R4-9 (4 lane) meet the roundabout; 4 RAMPS climb to the 8-lane ring from both sides. Everything below about a ring underpass / trench / box (sections 1, 3 D2, D4, D6, section 5 steps, section 6) is TYPE B and is SUPERSEDED by section 11. Where they disagree, section 11 wins. The user's earlier sentences (roundabout, enter the 8 lane from 2 sides, 300 ft, fully engineered) stay.
+> **DECISION 2026-11-24 (USER, latest): TYPE B = photo type, built as B2 (section 14): ring stays at its own level and plan in an UNDERPASS under a RAISED roundabout; R6 climbs to it; 4 ramps run DOWN to the ring. TYPE A (below) is SUPERSEDED by section 14. Earlier banner text kept for history:**
+>
+> **(old) DECISION 2026-11-24: TYPE A.** Ring stays on its embankment (profile and plan FIXED) and crosses on a BRIDGE over a ROUNDABOUT at natural ground; R6-9 (6 lane) and R4-9 (4 lane) meet the roundabout; 4 RAMPS climb to the 8-lane ring from both sides. Everything below about a ring underpass / trench / box (sections 1, 3 D2, D4, D6, section 5 steps, section 6) is TYPE B and is SUPERSEDED by section 11. Where they disagree, section 11 wins. The user's earlier sentences (roundabout, enter the 8 lane from 2 sides, 300 ft, fully engineered) stay.
 
 ## 0. What the user decided (data, do not change without asking)
 0. USER 2026-11-24 (after seeing my first picture): in the photo there is a ROUNDABOUT (circle) on top of the underpass, and from the 2 sides (side roads) traffic can enter / leave the 8-lane main. So the ground junction is a ROUNDABOUT, not a plain signalised cross. Both the picture and section 3 D5 follow this.
@@ -79,13 +81,13 @@ Each step: a script in scripts/ or tools/, output in docs/, PASS / FAIL list, a 
 |------|------|--------|---------|-------|
 | J-plan | This handoff | DONE 2026-11-23 (no code) | waiting | site reading and concept need the user's confirmation in J0 |
 | J0 | Site check + confirm | DONE 2026-11-24, user chose TYPE A | OK (choice) | section 10 findings, section 11 plan |
-| J1 | Type A numbers + vertical plan | not started | | |
-| J2 | Cross-sections | not started | | |
+| J1 | Type B (B2) numbers + vertical plan | DONE 2026-11-24 (scripts/j300-typeb-numbers.ts -> docs/J300_TYPEB.txt/json; docs/j300_typeb_profile.png, j300_typeb_view.png) | waiting for the user's OK for J2 | section 14 |
+| J2 | Cross-sections | DONE 2026-11-24 (tools/j300-sections.py -> docs/J300_SECTIONS.txt/json, sheet docs/j300_sections.png, view docs/j300_sections_view.png); 6 PASS / 0 FAIL | waiting for the user's OK for J3 | section 15 |
 | J3 | Calculation sheet | not started | | |
-| J4 | Geometry: roundabout + arms | not started | | |
+| J4 | Geometry: roundabout + arms (R6 climbs, R4 re-route) | not started | | |
 | J5 | Geometry: main + side + connections | not started | | |
-| J6 | Terrain | not started | | |
-| J7 | Structures (data) | not started | | |
+| J6 | Terrain (platform fill + arm / ramp embankments) | not started | | |
+| J7 | Structures (data): underpass box, deck, portals | not started | | |
 | J8 | Mesh + markings | not started | | |
 | J9 | Game hook-up | not started | | |
 | J10 | Traffic graph + AI | not started | | |
@@ -125,3 +127,50 @@ Step statuses J1 .. J12: see section 9 (names for J1, J4, J5 changed above, the 
 
 ## 12. Starter prompt for the NEXT chat (J1)
 "Read HANDOFF_JUNCTION_300FT.md completely (banner, sections 10 and 11 first), then HANDOFF_JUNCTION_RTE.md sections 0 to 4. TYPE A is decided. Run micro-step J1 only. Reply in Banglish, short, one step per chat, changed-files zip + a 3D picture at the end, reuse what exists in the game, STOP and wait for my OK."
+
+## 13. J1 RESULT (2026-11-24, headless, read only; ramp numbers ASSUMED until J3 / J5)
+- RING (fixed): lowest surface 27.4 m at u -125 (a sag), then rises 4 % both ways from about u +200 east and about u -300 west. Natural ground about 19 m. So the ring is 8.4 m above ground at the sag and 12 .. 17 m above ground 200 .. 450 m away.
+- BRIDGE over the roundabout (works): abutments at +-67 m from the centre, piers on the island at +-30 m, spans 37 + 60 + 37 = 134 m, deck 44.2 m wide x 2.0 m deep (about 5900 m2). Clearance PASS: at the centre u0 = -75 m the lowest ring surface over the bridge is 27.6 m, pad level 18.9 m, so 27.6 - 2.0 - 18.9 = 6.7 m against 5.5 m. Roundabout pad: cut about 1100 m3 and fill about 700 m3 (nearly balanced, natural ground is flat). R6-9 arrives on flat ground (max natural grade 1.4 %, PASS). R4-9 final stretch climbs a hill from 300 m back (natural 35 m at 270 m, 85 m at 535 m: cut / fill and re-route in J4, 32.8 % natural slope there). R2-10 is 401 m away (PASS).
+- RAMPS (the problem): the 4 ramps must climb from the 18.9 m pad to the ring surface, and the ring itself keeps rising 4 % east of u +200 and west of u -300. Ramp limit in the project is 5 % (Criteria ramp 0.05, interchange Standards rampMaxGrade 0.05). Sweep over roundabout centre u0 -450 .. +300 and ramp grade 5 .. 8 %, with all ramps ending (incl. 241 m merge and 207 m diverge) inside the rail at u -600 (40 m margin) and the water at u +540 (20 m margin): 5 % NONE (also with the pad raised 1 m, the most the bridge clearance allows), 6 % NONE, 7 % only u0 = -75 m (and -75 / -50 with the pad raised 1 m), 8 % u0 = -100 .. -25.
+- At 7 %, u0 = -75 m: E ramps 225 m long (meet the ring surface at u +220, merge ends u +461), W ramps 140 m (meet the ring at u -285, diverge ends u -526), fill: E about 82 000 + 88 000 m3, W about 26 000 + 24 000 m3 (about 220 000 m3 in total, on the existing embankment). Margins: 74 m to the rail, 79 m to the water.
+- NOT RUN: groundwater, flotation, drainage outfall of the pad, ramp vertical curves K, real re-route of R6-9 / R4-9 (the roundabout is 75 m west of the old crossing, so both arms move).
+
+DECISION NEEDED FROM THE USER (AI recommends A1):
+- A1 = all 4 ramps at 7 % grade, ramp design speed 40 km/h (real codes allow up to 8 % at 40 km/h; breaks the project's 5 % ramp rule, so a new rule value for this junction only). Roundabout centre u0 = -75 m. Gives exactly "from the 2 sides onto the 8 lane".
+- A2 = keep 5 %, build only the 2 WEST ramps (ring east-bound off-ramp and ring west-bound on-ramp, the ring is lowest there, each 5 % ramp about 215 m); the 2 east ramps are left out (east movements use the other ring junctions). Standards kept, but only half of what the user wanted.
+- B = the photo type (ring dives in a box), much bigger, hits the east hill and the water bridge (section 10).
+After the user's choice, J2 starts. Pictures of J1: docs/j300_typea_profile.png (vertical plan) and docs/j300_typea_view.png (3D, ramps at 7 %).
+
+## 14. TYPE B (B2) PLAN: DECIDED by the user 2026-11-24; replaces section 11 (Type A); ONE micro-step per chat, STOP after each for the OK, each step ends with a changed-files zip + a 3D picture
+J1-B RESULT (docs/J300_TYPEB.txt, json, pictures docs/j300_typeb_profile.png and j300_typeb_view.png; numbers ASSUMED until J3):
+- WHY RAISED: the ring cannot dive. It is 8 .. 21 m above ground here and rises 4 % (its limit) east of u +200 and west of u -300; a lowered profile could never rejoin the old one (max dive 2.5 m for a dive ending at u -13, 1.1 m at u +50, 0.5 m at u +100). A dive of 7.8 m would mean rebuilding the ring profile for about 1.3 km east, down to the water level of the ring bridge at u +540 .. +680. So: ring plan AND profile stay exactly as they are (H4 PASS), the ring runs through an UNDERPASS and the ROUNDABOUT IS RAISED on fill (the photo look: main under, circle on top, ramps on both sides).
+- BEST CENTRE u0 = -125 m (the ring sag, ring surface 27.4 .. 27.8 m): roundabout deck level 35.3 m = 16.0 m above natural ground (19.3 m) and 7.5 m above the highest ring surface under it (5.5 clearance + 2.0 deck, ASSUMED). Feasible centres (all four ramps inside the rail / water limits): u0 -125 .. +125 (table in docs/J300_TYPEB.txt). The roundabout is 125 m west of the old crossing, so R6-9 and R4-9 move with it.
+- UNDERPASS: ring box about 134 m long (roundabout diameter 124 m + 5 m each side), clear width about 44 m, clear height 5.5 m, roof = roundabout deck 2.0 m. Ring surface under it 27.4 .. 27.8 m, grade -0.05 %. Drains to both portals (no sump), groundwater irrelevant, lighting yes, ventilation no (under 300 m).
+- RAMPS (project 5 % limit kept, PASS): all four 110 m long, running DOWN from the roundabout at 5 % to the ring (E meets the ring at u +55, W at u -305), merge 241 m / diverge 207 m beyond: ends at u +296 (east) and u -546 (west, 54 m before the rail at u -600). Ramp fill about 101 700 m3 each (about 407 000 m3 for four).
+- ROUNDABOUT PLATFORM fill about 194 000 m3. R6 ARM climbs 16.0 m at 3.5 % (limit 4 %) = 457 m, fill about 254 000 m3; R6-9 natural ground is flat for 716 m back (PASS). Total fill about 855 000 m3 (Type A was about 220 000 m3 at 7 % ramps, which broke the 5 % rule; this one keeps every limit).
+- R4 ARM: the old R4-9 line runs into a hill (natural 35 m at 270 m back, 85 m at 535 m); at 6 % down from the roundabout it would need a cut of 12 .. 83 m. It must be RE-ROUTED (hill: go around first, ROADFIX rule) in J4; at 270 m back natural ground (34.9 m) is almost the roundabout level (35.3 m), so an R4 arm along the contour reaches the roundabout almost level.
+- NOT RUN: structural design (box, deck, walls), roundabout capacity, ramp vertical curves, R4 re-route, trees, AI clearance rule, groundwater (not modelled).
+STEPS (each: script in scripts/ or tools/, output in docs/, PASS / FAIL, this file updated, changed-files zip, 3D picture, STOP):
+- **J2 CROSS-SECTIONS** (numbers): underpass box (44 m clear, 5.5 m clearance, roof 2.0 m, walls), portals and wing walls, roundabout deck section, platform slopes / retaining walls, R6 2 x 3 lane and R4 2 x 2 lane arms, ramp 2 lane + shoulders, the 300 ft (91.44 m) ROW budget at the ring, sections at 6 stations.
+- **J3 CALCULATION SHEET**: roundabout capacity and geometry on the deck (entry flare, deflection, circulating lanes, degree of saturation <= 0.85, signal need yes / no), ramp diverge / merge onto the 8-lane ring (V100, 241 / 207 m, weave), ramp radii and superelevation, sight distances (roundabout entries, merge nose, in the underpass), pedestrian crossings, drainage of the deck and the platform, lighting levels in the underpass, demand ASSUMED list.
+- **J4 GEOMETRY DATA, ROUNDABOUT + ARMS** (pure math, no three.js): circulating lanes, island, splitter islands, flares, crossings; R6 arm climbing at 3.5 %; R4 arm re-route around the hill; check R1 crossings, R2-10, rail. src/roads/junction/J300Geometry.ts (GENERATED data) + check script.
+- **J5 GEOMETRY DATA, RAMPS + GORES**: 4 ramps down to the ring (5 %), gore noses, merge / diverge tapers, ramp vertical curves (K), embankment footprints, G1 checks.
+- **J6 TERRAIN**: platform fill, R6 / R4 arm embankments, ramp embankments, slopes 1:2 (retaining walls where land is short), join with the ring embankment, drainage; about 855 000 m3 reported; pattern GroundJ1Terrain.ts / RteTerrainData.ts. Check script (cut / fill, slope limits, rail 30 m clearance, water).
+- **J7 STRUCTURES (data)**: underpass box, roof deck, portals, wing walls, ramp retaining walls, parapets, light and sign positions, as data like RteStructData.ts. Check script (clearance 5.5 m, spans, widths).
+- **J8 MESH + MARKINGS**: underpass with lighting, deck, roundabout, ramps, arms, kerbs (yellow-black), islands, lines, arrows, zebra, chevron gore. Game layer with a Config switch default OFF.
+- **J9 GAME HOOK-UP**: carve and fill the terrain (platform, arms, ramps), open the ring mesh / carve so the ring runs through the box at its own level, collision (player and cars inside the underpass and on the deck), minimap. Config ON only for the look.
+- **J10 TRAFFIC GRAPH + AI**: ring lanes with ramps, roundabout rules (give way to the circulating flow), R6 / R4 links, every movement reachable, vehicle height under 5.5 m, check script.
+- **J11 SIGNS + LIGHTS + ENGINEERING TOUR**: Bangla + English green gantry signs on the ring before the underpass and the ramps, high-mast lights, tour stop explaining the junction in Bangla.
+- **J12 FINAL**: all checks, drive of every movement by player and AI, rail / river / structures re-check, zip, status table.
+Starter prompt for the NEXT chat (J2): "Read HANDOFF_JUNCTION_300FT.md completely (banner, sections 10, 13 and 14 first), then HANDOFF_JUNCTION_RTE.md sections 0 to 4. TYPE B (B2) is decided. Run micro-step J2 only. Reply in Banglish, short, one step per chat, changed-files zip + a 3D picture at the end, reuse what exists in the game, STOP and wait for my OK."
+
+## 15. J2 RESULT (2026-11-24, numbers + pictures, no src change; ASSUMED values final in J3 / J7)
+Source widths: SECTION_M8 / M6 / M4 of src/roads/standards/SectionTable.ts (pavement edge from the centreline 22.1 / 16.0 / 13.8 m; M8 ROW half 40.0 m, M6 33.9 m). Checks (docs/J300_SECTIONS.txt): 6 PASS, 0 FAIL.
+- UNDERPASS BOX: 2 cells, each 22.1 m clear (median strip 2.4 + inner shoulder 1.5 + 4 lanes 14.6 + outer shoulder 3.0 + barrier offset 0.6), central wall 1.2 m inside the 6.0 m ring median (2.4 + 1.2 + 2.4), so lanes, shoulders and median of the ring are unchanged (2 x 21.5 + 1.2 = 44.2 m = 2 x 22.1). Clear 45.4 m, outside walls 1.0 m each = 47.4 m wide, 134 m long, clear height 5.5 m, roof deck 2.0 m (span / depth 11.1, limit 14 ASSUMED). Deck underside 33.3 m, highest ring surface under it 27.7 m: clearance 5.6 m (PASS).
+- ROUNDABOUT DECK: outer radius 62 m, circulating carriageway 14 m (3 lanes x 3.65 + inner apron 2.0 + outer shoulder 1.05), island radius 48 m with 1.0 m soil on the roof (trees shallow rooted, ASSUMED), kerb 0.8 m yellow-black, footpath 3.0 m + parapet 0.5 m. Platform edge = MSE retaining wall (vertical, toe offset 0.2 x H, ASSUMED) where H > 4 m (H = 16.0 m at the roundabout, wall toe at r 66 m); slope 1:2 only below 4 m.
+- RAMPS (4, one-way, V 50): 2 lanes x 3.5 + inner shoulder 1.0 + outer shoulder 2.5 = 10.5 m + 2 x 0.6 barrier = 11.7 m on top; inner edge at v = 24.2 m (ring barrier 22.7 + gap 1.5), outer edge v = 35.9 m, outer side MSE wall, toe at v = 39.6 m at the highest point, so inside the 300 ft (91.44 m) ROW (half 45.72 m) with 6.1 m spare for walkway, lights and fence (PASS).
+- R6 ARM (M6 section): top width 33.2 m (median 4.0, pavement edge 16.0, barrier 0.6); with MSE walls the toe half width is 19.8 m at H = 16 m (inside the M6 ROW half 33.9 m, PASS); with 1:2 slopes it would be 48.6 m (FAIL), so walls are needed above about 8.6 m height. R4 arm (M4: 14.4 m half) decided in J4.
+- RING ON ITS EMBANKMENT (existing): toe half width 49.7 m at u -400 (H 13.5 m), already outside the 40.0 m M8 ROW: existing condition, unchanged, noted for J6.
+- REVISED FILL with walls above 4 m (rough): platform about 198 000 m3, R6 arm about 142 000 m3, 4 ramps about 101 000 m3, total about 441 000 m3 (J1-B said 855 000 m3 with slopes; R4 arm not counted, J4).
+- NOT RUN: structural design, island soil load on the roof, MSE wall type, drainage, crossfall / superelevation (J3 / J5).
+Pictures: docs/j300_sections.png (6 section sheet), docs/j300_sections_view.png (3D view along the ring into the underpass, ramps with MSE walls).

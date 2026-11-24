@@ -1,0 +1,56 @@
+J1-B TYPE B NUMBERS (headless, read only, nothing in src or data changed)
+ASSUMED: roundabout outer radius 62 m, deck-to-ring gap 7.5 m (5.5 clearance + 2.0 structure), ramp grade 5 % (project limit), R6 arm 3.5000000000000004 % (limit 4 %), R4 arm 6 % (limit 6 %), merge 241 m, diverge 207 m
+
+1) CAN THE RING DIVE UNDER A ROUNDABOUT AT GROUND? (ring grade limit 4 %)
+  a dive that ends at u -13 can rejoin the old east profile only if it is at most 2.5 m below it (4 % climb vs the old profile that is already 4 % beyond u +200)
+  a dive that ends at u 50 can rejoin the old east profile only if it is at most 1.1 m below it (4 % climb vs the old profile that is already 4 % beyond u +200)
+  a dive that ends at u 100 can rejoin the old east profile only if it is at most 0.5 m below it (4 % climb vs the old profile that is already 4 % beyond u +200)
+  => a dive of 7.8 m (box floor 7.8 m below the roundabout at ground) is IMPOSSIBLE without rebuilding the ring profile for about 1.3 km east into the water bridge (ring at the water level) and the hill. So the ring stays at its level and the ROUNDABOUT IS RAISED.
+
+2) CANDIDATE CENTRES u0 (R6-9 / R4-9 arms move with the roundabout; only ring, rail, river fixed): platform level, fills, ramp lengths (ramps DOWN from the roundabout at 5 %)
+  u0   Ptop  platform fill m3  R6 arm length m / fill m3 | ramp lengths m (E-out E-in W-out W-in) | merge ends u (E-out / W-out) | ok
+  -300  39.0     238553    577 /   470946 |   210   210    85    85 | 221 / -696 | FAIL
+  -275  38.2     228621    554 /   422575 |   190   190    85    85 | 226 / -671 | FAIL
+  -250  37.5     219944    528 /   372300 |   175   175    90    90 | 236 / -651 | FAIL
+  -225  36.9     212643    503 /   327109 |   160   160    90    90 | 246 / -626 | FAIL
+  -200  36.4     206552    491 /   307556 |   145   145    95    95 | 256 / -606 | FAIL
+  -175  36.0     201798    487 /   300017 |   135   135   100   100 | 271 / -586 | FAIL
+  -150  35.6     197551    470 /   274479 |   120   120   105   105 | 281 / -566 | FAIL
+  -125  35.3     194267    457 /   254354 |   110   110   110   110 | 296 / -546 | PASS
+  -100  35.5     196963    472 /   276215 |   105   105   120   120 | 316 / -531 | PASS
+   -75  35.8     201559    483 /   294762 |   100   100   130   130 | 336 / -516 | PASS
+   -50  36.2     207105    500 /   321913 |    95    95   145   145 | 356 / -506 | PASS
+   -25  36.7     213324    515 /   347981 |    90    90   155   155 | 376 / -491 | PASS
+     0  37.2     219073    527 /   369854 |    85    85   170   170 | 396 / -481 | PASS
+    25  37.9     227249    552 /   416965 |    85    85   185   185 | 421 / -471 | PASS
+    50  38.6     235708    565 /   444618 |    80    80   205   205 | 441 / -466 | PASS
+    75  39.5     246060    590 /   499094 |    80    80   225   225 | 466 / -461 | PASS
+   100  40.4     255467    615 /   557853 |    80    80   240   240 | 491 / -451 | PASS
+   125  41.3     264101    631 /   597056 |    75    75   260   260 | 511 / -446 | PASS
+   150  42.3     272779    658 /   669599 |    75    75   280   280 | 536 / -441 | FAIL
+   175  43.3     279734    681 /   733223 |    75    75   305   305 | 561 / -441 | FAIL
+   200  44.3     285796    694 /   773055 |    75    75   325   325 | 586 / -436 | FAIL
+   225  45.3     290818    695 /   773290 |    75    75   345   345 | 611 / -431 | FAIL
+   250  46.3     295878    709 /   818521 |    75    75   365   365 | 636 / -426 | FAIL
+
+BEST: u0 = -125 m, roundabout level Ptop = 35.3 m (natural 19.3 m, so 16.0 m above ground, 7.5 m above the highest ring surface under it)
+  ramp E-out (roundabout -> ring east): length 110 m at 5 % DOWN from the roundabout, meets the ring surface at u 55, merge / diverge ends at u 296 (inside rail -600 / water 540 PASS), fill 101702 m3
+  ramp E-in (ring east -> roundabout): length 110 m at 5 % DOWN from the roundabout, meets the ring surface at u 55, merge / diverge ends at u 296 (inside rail -600 / water 540 PASS), fill 101702 m3
+  ramp W-out (roundabout -> ring west): length 110 m at 5 % DOWN from the roundabout, meets the ring surface at u -305, merge / diverge ends at u -546 (inside rail -600 / water 540 PASS), fill 101643 m3
+  ramp W-in (ring west -> roundabout): length 110 m at 5 % DOWN from the roundabout, meets the ring surface at u -305, merge / diverge ends at u -546 (inside rail -600 / water 540 PASS), fill 101643 m3
+platform fill about 194267 m3, R6 arm: climbs 16.0 m at 3.5000000000000004 % = 457 m long, fill about 254354 m3 (R6-9 natural ground is flat for 716 m back, so it fits: PASS)
+
+3) R4 ARM (R4-9 final stretch, limit 6 %): road level if it descends at 6 % away from the roundabout vs natural ground along the old R4-9 line
+  269 m back: natural 34.9  road at 6 % 22.9  CUT 12.1 m
+  310 m back: natural 44.6  road at 6 % 20.4  CUT 24.2 m
+  345 m back: natural 55.7  road at 6 % 18.3  CUT 37.4 m
+  405 m back: natural 74.7  road at 6 % 14.7  CUT 60.0 m
+  535 m back: natural 84.2  road at 6 % 6.9  CUT 77.3 m
+  800 m back: natural 74.2  road at 6 % -9.0  CUT 83.2 m
+  => the old R4-9 line runs into the hill (natural 85 m at 535 m back): it must be RE-ROUTED around the hill in J4 (ROADFIX rule: only ring, rail, river are fixed; hills: go around first), or the R4 arm reaches the roundabout from another direction. R4 length / level is decided in J4.
+
+4) UNDERPASS: the ring runs under the roundabout inside a box about 134 m long (roundabout diameter 124 m + 5 m each side), clear width about 44 m (ring section 44.2 m, ASSUMED), clear height 5.5 m, roof = roundabout deck 2.0 m thick; the ring surface and plan are NOT changed (H4 PASS)
+ring surface under the roundabout 27.4 .. 27.8 m (grade -0.05 %), roundabout deck 35.3 m, gap to the highest ring point 7.5 m vs 7.5 m: PASS
+  tunnel length 134 m: lighting needed, ventilation not (under 300 m), drainage: ring is on an embankment, falls to both portals (PASS, no sump needed); groundwater irrelevant (the ring stays 8 m above ground).
+
+NOT RUN: structural design (box, deck, retaining walls), roundabout capacity, ramp vertical curves, R4 re-route, landscape / trees, vehicles under 5.5 m clearance rule check on the AI (J10).

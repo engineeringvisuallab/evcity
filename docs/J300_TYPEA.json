@@ -1,0 +1,1870 @@
+{
+ "best": {
+  "u0": -75,
+  "P": 18.9,
+  "cut": 1093.8086431545914,
+  "fill": 698.2591619569617,
+  "clearMin": 6.530105036900974,
+  "clearOK": true,
+  "ramps": {
+   "E-out (roundabout -> ring east)": {
+    "len": 225,
+    "uMeet": 220,
+    "uEnd": 461,
+    "fillV": 81800.84483581554,
+    "ok": true,
+    "gUsed": 0.07
+   },
+   "E-in (ring east -> roundabout)": {
+    "len": 225,
+    "uMeet": 220,
+    "uEnd": 461,
+    "fillV": 87539.33353730886,
+    "ok": true,
+    "gUsed": 0.07
+   },
+   "W-out (roundabout -> ring west)": {
+    "len": 140,
+    "uMeet": -285,
+    "uEnd": -526,
+    "fillV": 25761.612222755568,
+    "ok": true,
+    "gUsed": 0.07
+   },
+   "W-in (ring west -> roundabout)": {
+    "len": 140,
+    "uMeet": -285,
+    "uEnd": -526,
+    "fillV": 23833.764356991298,
+    "ok": true,
+    "gUsed": 0.07
+   }
+  },
+  "score": 169218.28682739486,
+  "shiftOK": true
+ },
+ "cands": [
+  {
+   "u0": -450,
+   "P": 19.1,
+   "cut": 1134.4918053145998,
+   "fill": 664.5016528539758,
+   "clearMin": 11.042441128269559,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 130,
+     "uMeet": -250,
+     "uEnd": -9,
+     "fillV": 22450.903293597545,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 130,
+     "uMeet": -250,
+     "uEnd": -9,
+     "fillV": 21543.717502129966,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 535,
+     "uMeet": -1055,
+     "uEnd": -1296,
+     "fillV": 3962.62305970839,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 535,
+     "uMeet": -1055,
+     "uEnd": -1296,
+     "fillV": 43317.93616134906,
+     "ok": false,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1340922.252042486,
+   "shiftOK": true
+  },
+  {
+   "u0": -425,
+   "P": 19.1,
+   "cut": 715.3149426750848,
+   "fill": 808.3711655653195,
+   "clearMin": 10.196390642580056,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 125,
+     "uMeet": -230,
+     "uEnd": 11,
+     "fillV": 20084.256673534834,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 125,
+     "uMeet": -230,
+     "uEnd": 11,
+     "fillV": 19063.317223395243,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 520,
+     "uMeet": -1015,
+     "uEnd": -1256,
+     "fillV": 12124.832169543044,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 520,
+     "uMeet": -1015,
+     "uEnd": -1256,
+     "fillV": 70994.03622342052,
+     "ok": false,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1336137.0385194402,
+   "shiftOK": true
+  },
+  {
+   "u0": -400,
+   "P": 19.1,
+   "cut": 502.8896078948401,
+   "fill": 993.508922129422,
+   "clearMin": 9.437185893427852,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 120,
+     "uMeet": -210,
+     "uEnd": 31,
+     "fillV": 17855.406890180937,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 120,
+     "uMeet": -210,
+     "uEnd": 31,
+     "fillV": 16511.242341217683,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 510,
+     "uMeet": -980,
+     "uEnd": -1221,
+     "fillV": 25844.11048072323,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 510,
+     "uMeet": -980,
+     "uEnd": -1221,
+     "fillV": 107775.99108161258,
+     "ok": false,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1336844.9447971275,
+   "shiftOK": true
+  },
+  {
+   "u0": -375,
+   "P": 19,
+   "cut": 862.2587693808173,
+   "fill": 430.84883446286346,
+   "clearMin": 8.861130676138387,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 120,
+     "uMeet": -185,
+     "uEnd": 56,
+     "fillV": 17450.6665868406,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 120,
+     "uMeet": -185,
+     "uEnd": 56,
+     "fillV": 15693.313365062066,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 490,
+     "uMeet": -935,
+     "uEnd": -1176,
+     "fillV": 45206.70069642644,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 490,
+     "uMeet": -935,
+     "uEnd": -1176,
+     "fillV": 151548.06076743413,
+     "ok": false,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1341357.554705882,
+   "shiftOK": true
+  },
+  {
+   "u0": -350,
+   "P": 19,
+   "cut": 749.1897698108548,
+   "fill": 576.0314038318077,
+   "clearMin": 8.267047822835554,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 115,
+     "uMeet": -165,
+     "uEnd": 76,
+     "fillV": 15914.150642083281,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 115,
+     "uMeet": -165,
+     "uEnd": 76,
+     "fillV": 13989.056071476405,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 460,
+     "uMeet": -880,
+     "uEnd": -1121,
+     "fillV": 74073.56530026792,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 460,
+     "uMeet": -880,
+     "uEnd": -1121,
+     "fillV": 208371.8274657699,
+     "ok": false,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1349102.146195972,
+   "shiftOK": true
+  },
+  {
+   "u0": -325,
+   "P": 19,
+   "cut": 904.8905687859997,
+   "fill": 668.3297177208049,
+   "clearMin": 7.7554132790688755,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 115,
+     "uMeet": -140,
+     "uEnd": 101,
+     "fillV": 15831.955440676298,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 115,
+     "uMeet": -140,
+     "uEnd": 101,
+     "fillV": 14103.989849127787,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 425,
+     "uMeet": -820,
+     "uEnd": -1061,
+     "fillV": 112946.86303455611,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 425,
+     "uMeet": -820,
+     "uEnd": -1061,
+     "fillV": 266667.99469018244,
+     "ok": false,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1361337.2069903149,
+   "shiftOK": true
+  },
+  {
+   "u0": -300,
+   "P": 19,
+   "cut": 972.6347008652278,
+   "fill": 525.3023186371032,
+   "clearMin": 7.3256133625152735,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 115,
+     "uMeet": -115,
+     "uEnd": 126,
+     "fillV": 15676.962837049057,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 115,
+     "uMeet": -115,
+     "uEnd": 126,
+     "fillV": 14278.941868867272,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 390,
+     "uMeet": -760,
+     "uEnd": -1001,
+     "fillV": 158356.3382253772,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 390,
+     "uMeet": -760,
+     "uEnd": -1001,
+     "fillV": 299865.15397573786,
+     "ok": false,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1367902.60017796,
+   "shiftOK": true
+  },
+  {
+   "u0": -275,
+   "P": 19.1,
+   "cut": 681.5552577160869,
+   "fill": 1057.3602173582767,
+   "clearMin": 6.880166670210571,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 115,
+     "uMeet": -90,
+     "uEnd": 151,
+     "fillV": 15980.502687200926,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 115,
+     "uMeet": -90,
+     "uEnd": 151,
+     "fillV": 15161.722239423543,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 355,
+     "uMeet": -700,
+     "uEnd": -941,
+     "fillV": 199608.8248751157,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 355,
+     "uMeet": -700,
+     "uEnd": -941,
+     "fillV": 304062.7517193377,
+     "ok": false,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1364965.8150988456,
+   "shiftOK": true
+  },
+  {
+   "u0": -250,
+   "P": 19.1,
+   "cut": 940.1196140111989,
+   "fill": 1004.282325293712,
+   "clearMin": 6.620853975587071,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 120,
+     "uMeet": -60,
+     "uEnd": 181,
+     "fillV": 17889.972086933594,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 120,
+     "uMeet": -60,
+     "uEnd": 181,
+     "fillV": 17591.722833051543,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 320,
+     "uMeet": -640,
+     "uEnd": -881,
+     "fillV": 208329.46080549524,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 320,
+     "uMeet": -640,
+     "uEnd": -881,
+     "fillV": 249112.38005682442,
+     "ok": false,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1336460.381316483,
+   "shiftOK": true
+  },
+  {
+   "u0": -225,
+   "P": 19.1,
+   "cut": 1114.3618786624775,
+   "fill": 1047.4310611272404,
+   "clearMin": 6.444679617022366,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 120,
+     "uMeet": -35,
+     "uEnd": 206,
+     "fillV": 18022.0584535676,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 120,
+     "uMeet": -35,
+     "uEnd": 206,
+     "fillV": 18215.132104616703,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 290,
+     "uMeet": -585,
+     "uEnd": -826,
+     "fillV": 185483.58733154036,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 290,
+     "uMeet": -585,
+     "uEnd": -826,
+     "fillV": 189034.98856899468,
+     "ok": false,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1295875.2678195527,
+   "shiftOK": true
+  },
+  {
+   "u0": -200,
+   "P": 19.1,
+   "cut": 1201.5242625221367,
+   "fill": 1018.7788635641722,
+   "clearMin": 6.350480285771919,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 130,
+     "uMeet": 0,
+     "uEnd": 241,
+     "fillV": 22165.624572172313,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 130,
+     "uMeet": 0,
+     "uEnd": 241,
+     "fillV": 23126.146015320075,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 255,
+     "uMeet": -525,
+     "uEnd": -766,
+     "fillV": 137910.65123618717,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 255,
+     "uMeet": -525,
+     "uEnd": -766,
+     "fillV": 131884.67909099712,
+     "ok": false,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1252192.2212122288,
+   "shiftOK": true
+  },
+  {
+   "u0": -175,
+   "P": 19.1,
+   "cut": 1194.5216766949725,
+   "fill": 1037.162691357207,
+   "clearMin": 6.330105036900971,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 135,
+     "uMeet": 30,
+     "uEnd": 271,
+     "fillV": 24466.81053716419,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 135,
+     "uMeet": 30,
+     "uEnd": 271,
+     "fillV": 25808.138347413373,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 220,
+     "uMeet": -465,
+     "uEnd": -706,
+     "fillV": 91324.82598776073,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 220,
+     "uMeet": -465,
+     "uEnd": -706,
+     "fillV": 87896.61905788977,
+     "ok": false,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1210518.4234894842,
+   "shiftOK": true
+  },
+  {
+   "u0": -150,
+   "P": 19.1,
+   "cut": 736.2766167653792,
+   "fill": 1112.5483751959623,
+   "clearMin": 6.330105036900971,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 150,
+     "uMeet": 70,
+     "uEnd": 311,
+     "fillV": 32088.3710666436,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 150,
+     "uMeet": 70,
+     "uEnd": 311,
+     "fillV": 34528.503363837845,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 190,
+     "uMeet": -410,
+     "uEnd": -651,
+     "fillV": 61547.542139809986,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 190,
+     "uMeet": -410,
+     "uEnd": -651,
+     "fillV": 59628.4572437758,
+     "ok": false,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1184892.5096418085,
+   "shiftOK": true
+  },
+  {
+   "u0": -125,
+   "P": 19,
+   "cut": 1086.8084462911709,
+   "fill": 569.0299162340299,
+   "clearMin": 6.430105036900972,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 170,
+     "uMeet": 115,
+     "uEnd": 356,
+     "fillV": 43061.322561381945,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 170,
+     "uMeet": 115,
+     "uEnd": 356,
+     "fillV": 47171.688093674595,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 170,
+     "uMeet": -365,
+     "uEnd": -606,
+     "fillV": 44497.4492412175,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 170,
+     "uMeet": -365,
+     "uEnd": -606,
+     "fillV": 43013.00317638081,
+     "ok": false,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1171819.790430554,
+   "shiftOK": true
+  },
+  {
+   "u0": -100,
+   "P": 19,
+   "cut": 950.1038949145695,
+   "fill": 738.3185153480422,
+   "clearMin": 6.430105036900972,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 195,
+     "uMeet": 165,
+     "uEnd": 406,
+     "fillV": 59950.21454750355,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 195,
+     "uMeet": 165,
+     "uEnd": 406,
+     "fillV": 66320.83210548742,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 150,
+     "uMeet": -320,
+     "uEnd": -561,
+     "fillV": 31694.74368711805,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 150,
+     "uMeet": -320,
+     "uEnd": -561,
+     "fillV": 29999.844117739773,
+     "ok": false,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1165896.2170604332,
+   "shiftOK": true
+  },
+  {
+   "u0": -75,
+   "P": 18.9,
+   "cut": 1093.8086431545914,
+   "fill": 698.2591619569617,
+   "clearMin": 6.530105036900974,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 225,
+     "uMeet": 220,
+     "uEnd": 461,
+     "fillV": 81800.84483581554,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 225,
+     "uMeet": 220,
+     "uEnd": 461,
+     "fillV": 87539.33353730886,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 140,
+     "uMeet": -285,
+     "uEnd": -526,
+     "fillV": 25761.612222755568,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 140,
+     "uMeet": -285,
+     "uEnd": -526,
+     "fillV": 23833.764356991298,
+     "ok": true,
+     "gUsed": 0.07
+    }
+   },
+   "score": 169218.28682739486,
+   "shiftOK": true
+  },
+  {
+   "u0": -50,
+   "P": 18.9,
+   "cut": 591.3291946190627,
+   "fill": 961.1138016869506,
+   "clearMin": 6.5322265290502095,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 260,
+     "uMeet": 280,
+     "uEnd": 521,
+     "fillV": 109050.89696983385,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 260,
+     "uMeet": 280,
+     "uEnd": 521,
+     "fillV": 114189.37312672021,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 130,
+     "uMeet": -250,
+     "uEnd": -491,
+     "fillV": 20941.994993914668,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 130,
+     "uMeet": -250,
+     "uEnd": -491,
+     "fillV": 18897.0794714298,
+     "ok": true,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1177389.5362674615,
+   "shiftOK": true
+  },
+  {
+   "u0": -25,
+   "P": 18.8,
+   "cut": 1143.4018149660917,
+   "fill": 562.6088051234022,
+   "clearMin": 6.68669661747597,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 295,
+     "uMeet": 340,
+     "uEnd": 581,
+     "fillV": 135112.33652641193,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 295,
+     "uMeet": 340,
+     "uEnd": 581,
+     "fillV": 147763.50569428626,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 125,
+     "uMeet": -220,
+     "uEnd": -461,
+     "fillV": 18398.018558908076,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 125,
+     "uMeet": -220,
+     "uEnd": -461,
+     "fillV": 16440.209050035966,
+     "ok": true,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1189826.0241349195,
+   "shiftOK": true
+  },
+  {
+   "u0": 0,
+   "P": 18.9,
+   "cut": 871.9772580862401,
+   "fill": 1260.1642026551947,
+   "clearMin": 6.727297535075493,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 325,
+     "uMeet": 395,
+     "uEnd": 636,
+     "fillV": 163885.59239553238,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 325,
+     "uMeet": 395,
+     "uEnd": 636,
+     "fillV": 186991.80230311086,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 120,
+     "uMeet": -190,
+     "uEnd": -431,
+     "fillV": 17234.288263123723,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 120,
+     "uMeet": -190,
+     "uEnd": -431,
+     "fillV": 15745.455126372828,
+     "ok": true,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1204796.7838646644,
+   "shiftOK": true
+  },
+  {
+   "u0": 25,
+   "P": 18.9,
+   "cut": 1120.8829870343225,
+   "fill": 1320.361882434514,
+   "clearMin": 6.951027858304471,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 360,
+     "uMeet": 455,
+     "uEnd": 696,
+     "fillV": 180549.90612696687,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 360,
+     "uMeet": 455,
+     "uEnd": 696,
+     "fillV": 199585.98224784565,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 120,
+     "uMeet": -165,
+     "uEnd": -406,
+     "fillV": 16785.333259618623,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 120,
+     "uMeet": -165,
+     "uEnd": -406,
+     "fillV": 16161.99231984573,
+     "ok": true,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1230657.3376471237,
+   "shiftOK": true
+  },
+  {
+   "u0": 50,
+   "P": 18.9,
+   "cut": 1237.35061746027,
+   "fill": 1529.9971997355728,
+   "clearMin": 7.256735344695915,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 395,
+     "uMeet": 515,
+     "uEnd": 756,
+     "fillV": 140662.21480253735,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 395,
+     "uMeet": 515,
+     "uEnd": 756,
+     "fillV": 151397.4298551522,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 115,
+     "uMeet": -135,
+     "uEnd": -376,
+     "fillV": 14900.705314656021,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 115,
+     "uMeet": -135,
+     "uEnd": -376,
+     "fillV": 14829.75162486195,
+     "ok": true,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1219367.234824321,
+   "shiftOK": true
+  },
+  {
+   "u0": 75,
+   "P": 18.9,
+   "cut": 1693.013094574855,
+   "fill": 1582.6658536222892,
+   "clearMin": 7.644888868917331,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 425,
+     "uMeet": 570,
+     "uEnd": 811,
+     "fillV": 100958.8222878131,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 425,
+     "uMeet": 570,
+     "uEnd": 811,
+     "fillV": 118966.22732114991,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 115,
+     "uMeet": -110,
+     "uEnd": -351,
+     "fillV": 15009.909079293639,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 115,
+     "uMeet": -110,
+     "uEnd": -351,
+     "fillV": 15443.875705968985,
+     "ok": true,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1214096.354002727,
+   "shiftOK": true
+  },
+  {
+   "u0": 100,
+   "P": 19,
+   "cut": 2094.7163851342066,
+   "fill": 1831.8934368756904,
+   "clearMin": 8.014879367686866,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 455,
+     "uMeet": 625,
+     "uEnd": 866,
+     "fillV": 87033.68947808808,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 455,
+     "uMeet": 625,
+     "uEnd": 866,
+     "fillV": 91925.13331703449,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 115,
+     "uMeet": -85,
+     "uEnd": -326,
+     "fillV": 15726.530401237216,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 115,
+     "uMeet": -85,
+     "uEnd": -326,
+     "fillV": 16432.649956349756,
+     "ok": true,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1218513.3838924158,
+   "shiftOK": true
+  },
+  {
+   "u0": 125,
+   "P": 19.2,
+   "cut": 2286.561353798315,
+   "fill": 2292.9939468278576,
+   "clearMin": 8.36924545788412,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 480,
+     "uMeet": 675,
+     "uEnd": 916,
+     "fillV": 60398.54450176787,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 480,
+     "uMeet": 675,
+     "uEnd": 916,
+     "fillV": 63129.65651180192,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 115,
+     "uMeet": -60,
+     "uEnd": -301,
+     "fillV": 16709.66154221027,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 115,
+     "uMeet": -60,
+     "uEnd": -301,
+     "fillV": 17816.181480545947,
+     "ok": true,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1217790.0798010856,
+   "shiftOK": true
+  },
+  {
+   "u0": 150,
+   "P": 19.5,
+   "cut": 2485.271161477048,
+   "fill": 2803.869114933263,
+   "clearMin": 8.709738351512488,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 495,
+     "uMeet": 715,
+     "uEnd": 956,
+     "fillV": 38247.53342208647,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 495,
+     "uMeet": 715,
+     "uEnd": 956,
+     "fillV": 42438.23269954671,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 115,
+     "uMeet": -35,
+     "uEnd": -276,
+     "fillV": 18093.784800464087,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 115,
+     "uMeet": -35,
+     "uEnd": -276,
+     "fillV": 19700.512485962845,
+     "ok": true,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1219130.7611053411,
+   "shiftOK": true
+  },
+  {
+   "u0": 175,
+   "P": 19.9,
+   "cut": 3325.8121858993522,
+   "fill": 3430.180221656648,
+   "clearMin": 9.03334952062577,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 505,
+     "uMeet": 750,
+     "uEnd": 991,
+     "fillV": 23164.852674712,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 505,
+     "uMeet": 750,
+     "uEnd": 991,
+     "fillV": 27790.55269676409,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 115,
+     "uMeet": -10,
+     "uEnd": -251,
+     "fillV": 20118.269802193023,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 115,
+     "uMeet": -10,
+     "uEnd": -251,
+     "fillV": 22191.731284672504,
+     "ok": true,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1224006.4196597692,
+   "shiftOK": true
+  },
+  {
+   "u0": 200,
+   "P": 20.4,
+   "cut": 4053.043306731338,
+   "fill": 4244.535613872247,
+   "clearMin": 9.338940529069589,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 510,
+     "uMeet": 780,
+     "uEnd": 1021,
+     "fillV": 13458.224550032888,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 510,
+     "uMeet": 780,
+     "uEnd": 1021,
+     "fillV": 17605.817512323334,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 115,
+     "uMeet": 15,
+     "uEnd": -226,
+     "fillV": 22939.314635629587,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 115,
+     "uMeet": 15,
+     "uEnd": -226,
+     "fillV": 25474.51498079859,
+     "ok": true,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1231332.6351798163,
+   "shiftOK": true
+  },
+  {
+   "u0": 225,
+   "P": 21,
+   "cut": 4218.800099623518,
+   "fill": 4652.012367475976,
+   "clearMin": 9.617892374553065,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 510,
+     "uMeet": 805,
+     "uEnd": 1046,
+     "fillV": 7191.74486807011,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 510,
+     "uMeet": 805,
+     "uEnd": 1046,
+     "fillV": 10604.497272619687,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 115,
+     "uMeet": 40,
+     "uEnd": -201,
+     "fillV": 26104.668080634914,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 115,
+     "uMeet": 40,
+     "uEnd": -201,
+     "fillV": 29575.86144386581,
+     "ok": true,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1239704.275239687,
+   "shiftOK": true
+  },
+  {
+   "u0": 250,
+   "P": 21.5,
+   "cut": 4172.8175311047,
+   "fill": 3690.8113052404888,
+   "clearMin": 10.055926059686563,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 505,
+     "uMeet": 825,
+     "uEnd": 1066,
+     "fillV": 2693.031526936614,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 505,
+     "uMeet": 825,
+     "uEnd": 1066,
+     "fillV": 5341.659138308734,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 115,
+     "uMeet": 65,
+     "uEnd": -176,
+     "fillV": 28657.5706065571,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 115,
+     "uMeet": 65,
+     "uEnd": -176,
+     "fillV": 32373.84339837734,
+     "ok": true,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1247078.9200519577,
+   "shiftOK": true
+  },
+  {
+   "u0": 275,
+   "P": 22,
+   "cut": 3341.3413157843984,
+   "fill": 3401.5672325164555,
+   "clearMin": 10.525062066973476,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 505,
+     "uMeet": 850,
+     "uEnd": 1091,
+     "fillV": 325.5888457697608,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 505,
+     "uMeet": 850,
+     "uEnd": 1091,
+     "fillV": 2146.8543269313736,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 115,
+     "uMeet": 90,
+     "uEnd": -151,
+     "fillV": 30783.269005116323,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 115,
+     "uMeet": 90,
+     "uEnd": -151,
+     "fillV": 34525.631143012,
+     "ok": true,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1256357.275560739,
+   "shiftOK": true
+  },
+  {
+   "u0": 300,
+   "P": 22.3,
+   "cut": 3429.4820538024856,
+   "fill": 3199.9945889902597,
+   "clearMin": 11.22443013323122,
+   "clearOK": true,
+   "ramps": {
+    "E-out (roundabout -> ring east)": {
+     "len": 505,
+     "uMeet": 875,
+     "uEnd": 1116,
+     "fillV": 0,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "E-in (ring east -> roundabout)": {
+     "len": 505,
+     "uMeet": 875,
+     "uEnd": 1116,
+     "fillV": 319.2135701281556,
+     "ok": false,
+     "gUsed": 0.07
+    },
+    "W-out (roundabout -> ring west)": {
+     "len": 120,
+     "uMeet": 110,
+     "uEnd": -131,
+     "fillV": 34062.445241321715,
+     "ok": true,
+     "gUsed": 0.07
+    },
+    "W-in (ring west -> roundabout)": {
+     "len": 120,
+     "uMeet": 110,
+     "uEnd": -131,
+     "fillV": 37323.671804865895,
+     "ok": true,
+     "gUsed": 0.07
+    }
+   },
+   "score": 1268500.4421777325,
+   "shiftOK": true
+  }
+ ],
+ "lowSpan": 27.430105036900972,
+ "ring": [
+  {
+   "u": -450,
+   "ring": 34.395959503723766,
+   "nat": 19.108351824474852
+  },
+  {
+   "u": -440,
+   "ring": 34.00620164025697,
+   "nat": 19.188075458253195
+  },
+  {
+   "u": -430,
+   "ring": 33.6202337320085,
+   "nat": 19.256577147605555
+  },
+  {
+   "u": -420,
+   "ring": 33.240475255319,
+   "nat": 19.25735527417521
+  },
+  {
+   "u": -410,
+   "ring": 32.86399442511024,
+   "nat": 19.210918848555593
+  },
+  {
+   "u": -400,
+   "ring": 32.49821891304286,
+   "nat": 19.046476956138562
+  },
+  {
+   "u": -390,
+   "ring": 32.14244112826956,
+   "nat": 18.965591131704045
+  },
+  {
+   "u": -380,
+   "ring": 31.796661070790467,
+   "nat": 18.952920779222097
+  },
+  {
+   "u": -370,
+   "ring": 31.46037045930148,
+   "nat": 18.93924668203114
+  },
+  {
+   "u": -360,
+   "ring": 31.138563844230774,
+   "nat": 19.035465305981162
+  },
+  {
+   "u": -350,
+   "ring": 30.83348392766251,
+   "nat": 18.999554915107183
+  },
+  {
+   "u": -340,
+   "ring": 30.537185893427854,
+   "nat": 18.898833722980257
+  },
+  {
+   "u": -330,
+   "ring": 30.25536713178263,
+   "nat": 18.961122030740867
+  },
+  {
+   "u": -320,
+   "ring": 29.9902795116775,
+   "nat": 18.991092168254895
+  },
+  {
+   "u": -310,
+   "ring": 29.73397405499105,
+   "nat": 18.842519938826356
+  },
+  {
+   "u": -300,
+   "ring": 29.49214314734656,
+   "nat": 18.792275894956816
+  },
+  {
+   "u": -290,
+   "ring": 29.267047822835554,
+   "nat": 18.800720346304416
+  },
+  {
+   "u": -280,
+   "ring": 29.05073494398977,
+   "nat": 18.776233185941443
+  },
+  {
+   "u": -270,
+   "ring": 28.848891890923678,
+   "nat": 18.83993833328327
+  },
+  {
+   "u": -260,
+   "ring": 28.66378886113675,
+   "nat": 18.921183726395142
+  },
+  {
+   "u": -250,
+   "ring": 28.487468560422812,
+   "nat": 19.00645734880254
+  },
+  {
+   "u": -240,
+   "ring": 28.325613362515274,
+   "nat": 19.104759682676033
+  },
+  {
+   "u": -230,
+   "ring": 28.180502626580985,
+   "nat": 19.212758267903155
+  },
+  {
+   "u": -220,
+   "ring": 28.04417490428895,
+   "nat": 19.35084749522018
+  },
+  {
+   "u": -210,
+   "ring": 27.922307562122576,
+   "nat": 19.3064039014428
+  },
+  {
+   "u": -200,
+   "ring": 27.817189119168255,
+   "nat": 19.2012555560707
+  },
+  {
+   "u": -190,
+   "ring": 27.720853975587072,
+   "nat": 19.0186906184075
+  },
+  {
+   "u": -180,
+   "ring": 27.63897448974671,
+   "nat": 18.93387793937977
+  },
+  {
+   "u": -170,
+   "ring": 27.573848338898554,
+   "nat": 19.011138731876084
+  },
+  {
+   "u": -160,
+   "ring": 27.517505774315993,
+   "nat": 19.061341467530376
+  },
+  {
+   "u": -150,
+   "ring": 27.475614145388846,
+   "nat": 19.13277065748359
+  },
+  {
+   "u": -140,
+   "ring": 27.45048028577192,
+   "nat": 19.25827485521071
+  },
+  {
+   "u": -130,
+   "ring": 27.434130300474493,
+   "nat": 19.31214310594595
+  },
+  {
+   "u": -120,
+   "ring": 27.432226529050208,
+   "nat": 19.27257224637699
+  },
+  {
+   "u": -110,
+   "ring": 27.44708495978834,
+   "nat": 19.10495759099611
+  },
+  {
+   "u": -100,
+   "ring": 27.470727554061387,
+   "nat": 18.99308370494822
+  },
+  {
+   "u": -90,
+   "ring": 27.508811640731984,
+   "nat": 18.879296811006583
+  },
+  {
+   "u": -80,
+   "ring": 27.563662360947806,
+   "nat": 18.839777814978895
+  },
+  {
+   "u": -70,
+   "ring": 27.627297535075492,
+   "nat": 18.909070924845366
+  },
+  {
+   "u": -60,
+   "ring": 27.70536948043535,
+   "nat": 18.87181173354725
+  },
+  {
+   "u": -50,
+   "ring": 27.80021248925036,
+   "nat": 18.699631345922818
+  },
+  {
+   "u": -40,
+   "ring": 27.903840243515624,
+   "nat": 18.574476856000288
+  },
+  {
+   "u": -30,
+   "ring": 28.02190004816147,
+   "nat": 18.616168185724064
+  },
+  {
+   "u": -20,
+   "ring": 28.156735344695914,
+   "nat": 18.725144158050373
+  },
+  {
+   "u": -10,
+   "ring": 28.300355679380562,
+   "nat": 18.7676128970637
+  },
+  {
+   "u": 0,
+   "ring": 28.45840334391162,
+   "nat": 18.752621002632296
+  },
+  {
+   "u": 10,
+   "ring": 28.633230927284583,
+   "nat": 18.654293395569667
+  },
+  {
+   "u": 20,
+   "ring": 28.816843842669126,
+   "nat": 18.609376477364982
+  },
+  {
+   "u": 30,
+   "ring": 29.014879367686866,
+   "nat": 18.588210016472416
+  },
+  {
+   "u": 40,
+   "ring": 29.229699237016245,
+   "nat": 18.673048584582403
+  },
+  {
+   "u": 50,
+   "ring": 29.453304733380218,
+   "nat": 18.824741379886593
+  },
+  {
+   "u": 60,
+   "ring": 29.691328119488546,
+   "nat": 18.85841129132008
+  },
+  {
+   "u": 70,
+   "ring": 29.946140273890947,
+   "nat": 18.846181095070083
+  },
+  {
+   "u": 80,
+   "ring": 30.209738351512488,
+   "nat": 18.8461163151024
+  },
+  {
+   "u": 90,
+   "ring": 30.487749599317674,
+   "nat": 18.86484827266692
+  },
+  {
+   "u": 100,
+   "ring": 30.78255403790879,
+   "nat": 18.868730220683585
+  },
+  {
+   "u": 110,
+   "ring": 31.086144697064938,
+   "nat": 18.966849925581904
+  },
+  {
+   "u": 120,
+   "ring": 31.404143807175515,
+   "nat": 19.148505478992384
+  },
+  {
+   "u": 130,
+   "ring": 31.738940529069588,
+   "nat": 19.25128833067874
+  },
+  {
+   "u": 140,
+   "ring": 32.08302297179235,
+   "nat": 19.21329552867078
+  },
+  {
+   "u": 150,
+   "ring": 32.437103141809324,
+   "nat": 19.253229804343285
+  },
+  {
+   "u": 160,
+   "ring": 32.80118103912051,
+   "nat": 19.37349067544618
+  },
+  {
+   "u": 170,
+   "ring": 33.175755328862024,
+   "nat": 19.42095840333741
+  },
+  {
+   "u": 180,
+   "ring": 33.55592605968656,
+   "nat": 19.537443880345347
+  },
+  {
+   "u": 190,
+   "ring": 33.939784103056155,
+   "nat": 19.705708386846798
+  },
+  {
+   "u": 200,
+   "ring": 34.329954212501434,
+   "nat": 19.992718986690495
+  },
+  {
+   "u": 210,
+   "ring": 34.72380833197581,
+   "nat": 20.403555385524395
+  },
+  {
+   "u": 220,
+   "ring": 35.124475589929936,
+   "nat": 20.79307291837226
+  },
+  {
+   "u": 230,
+   "ring": 35.52443013323122,
+   "nat": 21.144788962406842
+  },
+  {
+   "u": 240,
+   "ring": 35.9243846765325,
+   "nat": 21.274451779047233
+  },
+  {
+   "u": 250,
+   "ring": 36.32433921983378,
+   "nat": 21.47381747894827
+  },
+  {
+   "u": 260,
+   "ring": 36.724293763135066,
+   "nat": 21.90380705001582
+  },
+  {
+   "u": 270,
+   "ring": 37.1242483064362,
+   "nat": 22.297234021383524
+  },
+  {
+   "u": 280,
+   "ring": 37.524202849737485,
+   "nat": 22.557926312350745
+  },
+  {
+   "u": 290,
+   "ring": 37.92415739303877,
+   "nat": 22.672445569103022
+  },
+  {
+   "u": 300,
+   "ring": 38.324111936340046,
+   "nat": 22.571013163877303
+  },
+  {
+   "u": 310,
+   "ring": 38.724066479641344,
+   "nat": 22.455593426264194
+  },
+  {
+   "u": 320,
+   "ring": 39.124021022942465,
+   "nat": 22.436940128952436
+  },
+  {
+   "u": 330,
+   "ring": 39.52397556624375,
+   "nat": 22.48024356726821
+  },
+  {
+   "u": 340,
+   "ring": 39.92393010954503,
+   "nat": 22.45602053538649
+  },
+  {
+   "u": 350,
+   "ring": 40.323884652846324,
+   "nat": 22.55635567106511
+  },
+  {
+   "u": 360,
+   "ring": 40.72383919614761,
+   "nat": 22.94624160804775
+  },
+  {
+   "u": 370,
+   "ring": 41.12379373944874,
+   "nat": 23.35429324329933
+  },
+  {
+   "u": 380,
+   "ring": 41.52374828275002,
+   "nat": 23.853475407256614
+  },
+  {
+   "u": 390,
+   "ring": 41.923702826051304,
+   "nat": 24.316687313863476
+  },
+  {
+   "u": 400,
+   "ring": 42.32365736935259,
+   "nat": 24.848802876777782
+  },
+  {
+   "u": 410,
+   "ring": 42.72361191265387,
+   "nat": 25.611954691680424
+  },
+  {
+   "u": 420,
+   "ring": 43.12356645595501,
+   "nat": 26.35084830046194
+  },
+  {
+   "u": 430,
+   "ring": 43.523520999256284,
+   "nat": 27.04418945474678
+  },
+  {
+   "u": 440,
+   "ring": 43.92347554255756,
+   "nat": 28.815850936236295
+  },
+  {
+   "u": 450,
+   "ring": 44.32343008585885,
+   "nat": 31.62292694161404
+  }
+ ]
+}

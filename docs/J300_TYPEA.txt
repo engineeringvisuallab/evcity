@@ -1,0 +1,89 @@
+J1 TYPE A NUMBERS (headless, read only, nothing in src or data changed)
+ASSUMED: roundabout outer radius 62 m, deck depth 2 m, vertical clearance 5.5 m, ramp max grade swept 5 .. 8 % (ramp design speed 50 km/h; Criteria final in J3), ramp width 10 m, ring half width 22.1 m, merge length 241 m, diverge length 207 m
+
+1) RING PROFILE (finished surface, fixed) and natural ground at the axis
+  u  -450: ring 34.4  natural 19.1  ring - natural 15.3  ring grade(+-25) -3.92 %
+  u  -400: ring 32.5  natural 19.0  ring - natural 13.5  ring grade(+-25) -3.61 %
+  u  -350: ring 30.8  natural 19.0  ring - natural 11.8  ring grade(+-25) -3.01 %
+  u  -300: ring 29.5  natural 18.8  ring - natural 10.7  ring grade(+-25) -2.35 %
+  u  -250: ring 28.5  natural 19.0  ring - natural 9.5  ring grade(+-25) -1.67 %
+  u  -200: ring 27.8  natural 19.2  ring - natural 8.6  ring grade(+-25) -1.01 %
+  u  -150: ring 27.5  natural 19.1  ring - natural 8.3  ring grade(+-25) -0.35 %
+  u  -100: ring 27.5  natural 19.0  ring - natural 8.5  ring grade(+-25) 0.33 %
+  u   -50: ring 27.8  natural 18.7  ring - natural 9.1  ring grade(+-25) 0.99 %
+  u     0: ring 28.5  natural 18.8  ring - natural 9.7  ring grade(+-25) 1.65 %
+  u    50: ring 29.5  natural 18.8  ring - natural 10.6  ring grade(+-25) 2.33 %
+  u   100: ring 30.8  natural 18.9  ring - natural 11.9  ring grade(+-25) 2.99 %
+  u   150: ring 32.4  natural 19.3  ring - natural 13.2  ring grade(+-25) 3.59 %
+  u   200: ring 34.3  natural 20.0  ring - natural 14.3  ring grade(+-25) 3.92 %
+  u   250: ring 36.3  natural 21.5  ring - natural 14.9  ring grade(+-25) 4.00 %
+  u   300: ring 38.3  natural 22.6  ring - natural 15.8  ring grade(+-25) 4.00 %
+  u   350: ring 40.3  natural 22.6  ring - natural 17.8  ring grade(+-25) 4.00 %
+  u   400: ring 42.3  natural 24.8  ring - natural 17.5  ring grade(+-25) 4.00 %
+  u   450: ring 44.3  natural 31.6  ring - natural 12.7  ring grade(+-25) 4.00 %
+lowest ring surface in -400..+400: 27.4 m at u -125 (the ring sags here, ring rises both ways, so the ramps have the least to climb near the sag)
+
+2a) SWEEP: ramp grade vs roundabout centre u0 (pad bump 0 m and +1.0 m; feasible = clearance >= 5.5 m AND all 4 ramps meet the ring and end inside rail u -560 / water u +520)
+  grade 5 % pad bump 0 m: feasible u0 = NONE
+  grade 5 % pad bump 1 m: feasible u0 = NONE
+  grade 6 % pad bump 0 m: feasible u0 = NONE
+  grade 6 % pad bump 1 m: feasible u0 = NONE
+  grade 7.000000000000001 % pad bump 0 m: feasible u0 = -75
+  grade 7.000000000000001 % pad bump 1 m: feasible u0 = -75, -50
+  grade 8 % pad bump 0 m: feasible u0 = -100, -75, -50, -25
+  grade 8 % pad bump 1 m: feasible u0 = -75, -50, -25
+
+2) CANDIDATE CENTRES (table for grade 7 %, no pad bump) of the roundabout along the ring (u0 = shift from the crossing; R6-9 / R4-9 final stretches move with it, allowed: only ring, rail and river are fixed)
+  u0   pad P  cut m3  fill m3 clear m | ramp length m (E-out E-in W-out W-in) | merge end u (E-out, W-out) | ramp fill m3 | ok
+  -450   19.1    1134     665   11.0 PASS |   130   130   535   535 | -9 -1296 | 91275 | FAIL
+  -425   19.1     715     808   10.2 PASS |   125   125   520   520 | 11 -1256 | 122266 | FAIL
+  -400   19.1     503     994    9.4 PASS |   120   120   510   510 | 31 -1221 | 167987 | FAIL
+  -375   19.0     862     431    8.9 PASS |   120   120   490   490 | 56 -1176 | 229899 | FAIL
+  -350   19.0     749     576    8.3 PASS |   115   115   460   460 | 76 -1121 | 312349 | FAIL
+  -325   19.0     905     668    7.8 PASS |   115   115   425   425 | 101 -1061 | 409551 | FAIL
+  -300   19.0     973     525    7.3 PASS |   115   115   390   390 | 126 -1001 | 488177 | FAIL
+  -275   19.1     682    1057    6.9 PASS |   115   115   355   355 | 151 -941 | 534814 | FAIL
+  -250   19.1     940    1004    6.6 PASS |   120   120   320   320 | 181 -881 | 492924 | FAIL
+  -225   19.1    1114    1047    6.4 PASS |   120   120   290   290 | 206 -826 | 410756 | FAIL
+  -200   19.1    1202    1019    6.4 PASS |   130   130   255   255 | 241 -766 | 315087 | FAIL
+  -175   19.1    1195    1037    6.3 PASS |   135   135   220   220 | 271 -706 | 229496 | FAIL
+  -150   19.1     736    1113    6.3 PASS |   150   150   190   190 | 311 -651 | 187793 | FAIL
+  -125   19.0    1087     569    6.4 PASS |   170   170   170   170 | 356 -606 | 177743 | FAIL
+  -100   19.0     950     738    6.4 PASS |   195   195   150   150 | 406 -561 | 187966 | FAIL
+   -75   18.9    1094     698    6.5 PASS |   225   225   140   140 | 461 -526 | 218936 | PASS
+   -50   18.9     591     961    6.5 PASS |   260   260   130   130 | 521 -491 | 263079 | FAIL
+   -25   18.8    1143     563    6.7 PASS |   295   295   125   125 | 581 -461 | 317714 | FAIL
+     0   18.9     872    1260    6.7 PASS |   325   325   120   120 | 636 -431 | 383857 | FAIL
+    25   18.9    1121    1320    7.0 PASS |   360   360   120   120 | 696 -406 | 413083 | FAIL
+    50   18.9    1237    1530    7.3 PASS |   395   395   115   115 | 756 -376 | 321790 | FAIL
+    75   18.9    1693    1583    7.6 PASS |   425   425   115   115 | 811 -351 | 250379 | FAIL
+   100   19.0    2095    1832    8.0 PASS |   455   455   115   115 | 866 -326 | 211118 | FAIL
+   125   19.2    2287    2293    8.4 PASS |   480   480   115   115 | 916 -301 | 158054 | FAIL
+   150   19.5    2485    2804    8.7 PASS |   495   495   115   115 | 956 -276 | 118480 | FAIL
+   175   19.9    3326    3430    9.0 PASS |   505   505   115   115 | 991 -251 | 93265 | FAIL
+   200   20.4    4053    4245    9.3 PASS |   510   510   115   115 | 1021 -226 | 79478 | FAIL
+   225   21.0    4219    4652    9.6 PASS |   510   510   115   115 | 1046 -201 | 73477 | FAIL
+   250   21.5    4173    3691   10.1 PASS |   505   505   115   115 | 1066 -176 | 69066 | FAIL
+   275   22.0    3341    3402   10.5 PASS |   505   505   115   115 | 1091 -151 | 67781 | FAIL
+   300   22.3    3429    3200   11.2 PASS |   505   505   120   120 | 1116 -131 | 71705 | FAIL
+
+BEST candidate (smallest ramp length + earthwork + shift, all checks PASS needed): u0 = -75 m, pad level P = 18.9 m, clearance 6.5 m, ring surface at the centre 27.6 m (8.7 m above the pad)
+  ramp E-out (roundabout -> ring east): length to ring level 225 m at the swept grade, meets the ring surface at u 220, merge / diverge ends at u 461 (inside rail -600 / water 540 limits PASS), fill 81801 m3
+  ramp E-in (ring east -> roundabout): length to ring level 225 m at the swept grade, meets the ring surface at u 220, merge / diverge ends at u 461 (inside rail -600 / water 540 limits PASS), fill 87539 m3
+  ramp W-out (roundabout -> ring west): length to ring level 140 m at the swept grade, meets the ring surface at u -285, merge / diverge ends at u -526 (inside rail -600 / water 540 limits PASS), fill 25762 m3
+  ramp W-in (ring west -> roundabout): length to ring level 140 m at the swept grade, meets the ring surface at u -285, merge / diverge ends at u -526 (inside rail -600 / water 540 limits PASS), fill 23834 m3
+
+3) BRIDGE over the roundabout (ASSUMED layout, final in J2 / J7)
+abutments at u0 +- 67 m (just outside the 62 m roundabout radius, with the ring embankment retained behind them), piers at u0 +- 30 m on the roundabout island (island radius 48 m): spans 37 + 60 + 37 = 134 m, deck width 44.2 m (8 lanes + median), deck depth 2 m, lowest ring surface over the bridge 27.4 m
+clearance check: ring surface 27.4 - deck 2 - pad 18.9 = 6.5 m against 5.5 m: PASS
+ring profile fixed: the bridge deck follows the existing surface (grade at the bridge 0.63 %), no vertical change PASS
+
+4) ARMS R6-9 (6 lane, limit 4 %) and R4-9 (4 lane, limit 6 %): natural ground back from the roundabout
+  R6-9: natural ground 184 m: 19.1 | 259 m: 19.1 | 309 m: 19.3 | 413 m: 19.4 | 716 m: 18.6; roundabout pad 18.9 m; max natural grade per segment 1.4 % (limit 4 %): PASS
+  R4-9: natural ground 269 m: 34.9 | 310 m: 44.6 | 345 m: 55.7 | 405 m: 74.7 | 535 m: 84.2; roundabout pad 18.9 m; max natural grade per segment 32.8 % (limit 6 %): CHECK (cut / fill in J6)
+R2-10 closest approach to the roundabout centre: 549 m (roundabout radius 62 m + ramp strip about 45 m from the axis; need > 110 m, else re-route R2-10 in J4): PASS
+
+5) EARTHWORK + QUANTITIES (rough, ASSUMED shapes)
+roundabout pad: cut 1094 m3, fill 698 m3 (pad 18.9 m); 4 ramps fill about 218936 m3; bridge deck about 5923 m2
+
+NOT RUN: groundwater and flotation, drainage outfall of the low pad (J3), real R6-9 / R4-9 re-route (J4), vertical curve K of the ramps (J3 / J5).

@@ -1,0 +1,46 @@
+{
+ "u0": -125,
+ "Ptop": 35.3,
+ "Ht": 16.007642323838528,
+ "box_clear": 45.400000000000006,
+ "box_out": 47.400000000000006,
+ "vin": 24.200000000000003,
+ "vout": 35.900000000000006,
+ "fill": {
+  "platform": 198333.7082593641,
+  "r6": 142284.1372793589,
+  "ramps": 100857.33302305255
+ },
+ "checks": [
+  {
+   "name": "ring pavement kept",
+   "ok": true,
+   "txt": "2 x 21.5 + central wall 1.2 = 44.2 m = 2 x SECTION_M8 pavement edge (22.1 m): lanes and shoulders unchanged, the 1.2 m wall sits inside the 6.0 m median (2.4 + 1.2 + 2.4)"
+  },
+  {
+   "name": "vertical clearance",
+   "ok": true,
+   "txt": "deck underside 33.3 - highest ring surface 27.7 = 5.6 m >= 5.5 m"
+  },
+  {
+   "name": "roof span / depth",
+   "ok": true,
+   "txt": "clear span 22.1 m / deck depth 2.0 m = 11.1 (limit 14 ASSUMED, one-way slab / box girder rule of thumb 12 .. 20)"
+  },
+  {
+   "name": "roundabout lane width",
+   "ok": true,
+   "txt": "3 lanes x 3.65 m (>= 3.5 m)"
+  },
+  {
+   "name": "ROW 91.44 m (300 ft) at the ramps",
+   "ok": true,
+   "txt": "toe of the ramp wall at 39.6 m <= half ROW 45.72 m"
+  },
+  {
+   "name": "R6 arm inside its own ROW (walls above 4 m)",
+   "ok": true,
+   "txt": "wall toe 19.8 m <= 33.9 m (slopes would need 48.6 m, so walls are needed above about 8.6 m height)"
+  }
+ ]
+}

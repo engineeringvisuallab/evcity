@@ -1,0 +1,37 @@
+J2 CROSS-SECTIONS, TYPE B (B2). All widths in metres, from the centreline of the ring (v) unless stated. ASSUMED = first value.
+roundabout centre u0 = -125 m, deck level 35.3 m = 16.0 m above natural ground 19.3 m
+
+1) RING in the UNDERPASS (box, two cells, ring surface and plan unchanged)
+   ring pavement edge 22.1 m each side + barrier offset 0.6 m = 22.7 m
+   cell clear width 22.1 m = median half 2.4 + inner shoulder 1.5 + 4 lanes 14.6 + outer shoulder 3.0 + barrier offset 0.6 = 22.1
+   2 cells + central wall 1.2 m = clear 45.4 m, outside walls 1.0 m each = 47.4 m wide, 134 m long, clear height 5.5 m, roof deck 2.0 m (ASSUMED)
+  PASS  ring pavement kept: 2 x 21.5 + central wall 1.2 = 44.2 m = 2 x SECTION_M8 pavement edge (22.1 m): lanes and shoulders unchanged, the 1.2 m wall sits inside the 6.0 m median (2.4 + 1.2 + 2.4)
+  PASS  vertical clearance: deck underside 33.3 - highest ring surface 27.7 = 5.6 m >= 5.5 m
+  PASS  roof span / depth: clear span 22.1 m / deck depth 2.0 m = 11.1 (limit 14 ASSUMED, one-way slab / box girder rule of thumb 12 .. 20)
+
+2) ROUNDABOUT DECK over the box and the platform
+   outer radius 62 m, circulating carriageway 14 m (r 48 .. 62): 3 lanes x 3.65 = 10.95 + inner apron 2.0 + outer shoulder 1.05; island r 48 m (soil 1.0 m on the roof, trees ASSUMED shallow rooted); kerb 0.8 m yellow-black; footpath outside 3.0 m + parapet 0.5 m
+  PASS  roundabout lane width: 3 lanes x 3.65 m (>= 3.5 m)
+   platform edge: MSE retaining wall (vertical, toe offset 0.2 x H) where H > 4 m; wall height at the roundabout 16.0 m, wall toe at r = 66.0 m; slope 1:2 only below 4 m
+
+3) RAMPS (4, one-way, 2 lane, ramp V 50): lanes 2 x 3.5 = 7.0 + inner shoulder 1.0 + outer shoulder 2.5 = 10.5 m + barrier 0.6 x 2 = 11.7 m wide on top
+   ramp inner edge at v = 24.2 m (ring barrier 22.7 + gap 1.5), outer edge v = 35.9 m; outer side MSE wall, max height 16.0 m, toe v = 39.6 m
+  PASS  ROW 91.44 m (300 ft) at the ramps: toe of the ramp wall at 39.6 m <= half ROW 45.72 m
+
+4) R6 ARM (6 lane, SECTION_M6): median 4.0, pavement edge 16.0, barrier 0.6 -> 16.6 m half (33.2 m top width); climbs 16.0 m at 3.5 % over 457 m
+   at H =  4.0 m: with MSE walls half width at toe 17.4 m (ROW half 33.9 m PASS); with slopes 1:2 24.6 m (PASS)
+   at H =  8.0 m: with MSE walls half width at toe 18.2 m (ROW half 33.9 m PASS); with slopes 1:2 32.6 m (PASS)
+   at H = 12.0 m: with MSE walls half width at toe 19.0 m (ROW half 33.9 m PASS); with slopes 1:2 40.6 m (FAIL)
+   at H = 16.0 m: with MSE walls half width at toe 19.8 m (ROW half 33.9 m PASS); with slopes 1:2 48.6 m (FAIL)
+  PASS  R6 arm inside its own ROW (walls above 4 m): wall toe 19.8 m <= 33.9 m (slopes would need 48.6 m, so walls are needed above about 8.6 m height)
+
+5) R4 ARM (SECTION_M4): pavement edge 13.8, barrier 0.6 -> 14.4 m half; level and line decided in J4 (re-route around the hill)
+
+6) RING on its EMBANKMENT (existing, unchanged, same as before): pavement 44.2 m + barriers = 45.4 m top, slopes 1:2 as built by the game ground; at u -400 (ring 32.5 m, ground 19.0 m, H 13.5 m) toe half width = 22.7 + 2 x 13.5 = 49.7 m, already outside the 40.0 m M8 ROW (existing condition, NOT changed here; at the 300 ft corridor 45.72 m only walls would keep it inside, noted for J6)
+
+7) REVISED FILL with MSE walls above 4 m (rough, replaces the 855 000 m3 slope figure of J1-B): platform 198334 m3, R6 arm 142284 m3, 4 ramps 100857 m3, total about 441475 m3 (R4 arm in J4)
+
+8) 300 ft (91.44 m) ROW BUDGET at the ramps and the underpass portals (from the ring centreline, one side): ring pavement 22.1 | barrier 0.6 | gap 1.5 | ramp 11.7 | wall 0.5 + toe 3.2 | footway / lights / fence to 45.72 (spare 6.1 m)
+
+CHECKS: 6 PASS, 0 FAIL
+NOT RUN: structural design, deck loads from the island soil, drainage details, wall design (MSE type, reinforcement), crossfall / superelevation (J3 / J5), R4 arm section levels (J4).
