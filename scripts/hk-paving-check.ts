@@ -7,9 +7,12 @@ import { Config } from '../src/core/Config';
 import { RingStructureLayer } from '../src/roads/ring/RingStructureLayer';
 import { HkInterchangeLayer } from '../src/roads/ring/HkInterchangeLayer';
 import { hkFrame, hkRamps, hkRingOffset } from '../src/roads/ring/HkRamps';
-import { buildHkAuxStrip, buildHkConnector, buildHkLaneMarks, buildHkTail, hkDeckLevel, hkTailIndices, HP } from '../src/roads/ring/HkDeckPaving';
+import { buildHkAuxStrip, buildHkConnector, buildHkLaneMarks, buildHkTail, hkDeckLevel, hkTailIndices, HM9D, HP } from '../src/roads/ring/HkDeckPaving';
 import { NODE_VIADUCT as N } from '../src/roads/ring/NodeViaductData';
 import type { MeshData } from '../src/roads/ring/RingBridgeGeometry';
+import RAPIER from '@dimforge/rapier3d-compat';
+import { RingStructurePhysics } from '../src/roads/ring/RingStructurePhysics';
+import { GM, CB, buildHkCrashBarrier, buildHkGoreMarks, hkArmAt } from '../src/roads/ring/HkGoreMarks';
 
 let fails = 0;
 const check = (ok: boolean, name: string, detail: string): void => { if (!ok) fails++; console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name.padEnd(66)} ${detail}`); };
@@ -39,7 +42,7 @@ const net = gen.roads;
 console.log(`switch ${on ? 'ON' : 'OFF'}`);
 const layer = new HkInterchangeLayer(new THREE.Group(), net, (x, z) => gen.heightAt(x, z));
 if (!on) {
-  check(layer.pavingMeshes === 0, 'P0 switch OFF: no paving built', `${layer.pavingMeshes} meshes`);
+  check(layer.pavingMeshes === 0 && layer.safetyMeshes === 0 && layer.safetySolids.length === 0, 'P0 switch OFF: no paving, no cushion / barrier, no safety solid built', `${layer.pavingMeshes} + ${layer.safetyMeshes} meshes, ${layer.safetySolids.length} solids`);
   console.log(fails ? `FAILED ${fails}` : 'ALL PASS (OFF)');
   process.exit(fails ? 1 : 0);
 }
@@ -50,7 +53,7 @@ const deckY = hkDeckLevel(net);
 const ring = net.roads.find((r) => r.name === 'M8')!;
 
 // P1 the layer builds 1 aux strip + 4 tails and still only the 4 ramp colliders (paving is visual only)
-check(layer.pavingMeshes === 7, 'P1 paving meshes: 1 aux strip + 1 connector + 1 lane marks + 4 loop tails', `${layer.pavingMeshes}`);
+check(layer.pavingMeshes === 8, 'P1 paving meshes: 1 aux strip + 1 connector + 1 lane marks + 1 C-D gore marks + 4 loop tails', `${layer.pavingMeshes}`);
 check(layer.solids.length === 4, 'P1 colliders unchanged: only the 4 ramps (paving is visual)', `${layer.solids.length} solids`);
 
 // P2 aux strip geometry: finite, between the ring pavement edge and the deck edge, only on the node viaduct stretch, both sides
@@ -143,6 +146,92 @@ check(nT > 10 && worstLvl <= 0.2, 'P5 tail level equals the deck top where it li
   check(uEastMin >= 15.3 && uEastMax <= 19.3, 'P8 east marks stay inside the closed outer lane (u 15.45 .. 19.10 +- 0.2)', `u ${f2(uEastMin)} .. ${f2(uEastMax)} m`);
   check(uWestMin >= 15.3 && uWestMax <= 19.3, 'P8 west lane-gain line stays inside the gained lane (u 15.45 .. 19.10 +- 0.2)', `u ${f2(uWestMin)} .. ${f2(uWestMax)} m`);
   check(gapMax <= 0.25, 'P8 lane marks lie on the arm surface level (the arm level + lift, +- 0.25 m)', `worst ${f2(gapMax)} m`);
+}
+
+// P9 (HK-9d-2) GORE markings of the 4 C-D roads + P10 CRASH CUSHION / BARRIER at the closed east lane (y +30 .. 0), with a collider probe through the real RingStructurePhysics + Rapier
+await RAPIER.init();
+{
+  type Poly = { xs: ArrayLike<number>; zs: ArrayLike<number>; ys: ArrayLike<number> };
+  const roadOf = (n: string): Poly & { halfWidth: number } => net.roads.find((r) => r.name === n)! as never;
+  const polyHit = (r: Poly, x: number, z: number): { d: number; lvl: number } => {
+    let best = Infinity, lvl = 0;
+    for (let i = 0; i < r.xs.length - 1; i++) {
+      const bx = r.xs[i + 1] - r.xs[i], bz = r.zs[i + 1] - r.zs[i], l2 = bx * bx + bz * bz;
+      const t = l2 > 0 ? Math.max(0, Math.min(1, ((x - r.xs[i]) * bx + (z - r.zs[i]) * bz) / l2)) : 0;
+      const d = Math.hypot(x - r.xs[i] - bx * t, z - r.zs[i] - bz * t);
+      if (d < best) { best = d; lvl = r.ys[i] + (r.ys[i + 1] - r.ys[i]) * t; }
+    }
+    return { d: best, lvl };
+  };
+  const locY = (x: number, z: number): number => (x - f.ox) * f.nx + (z - f.oz) * f.nz;
+  const gs = buildHkGoreMarks(net, f), gv = vertsOf(gs.mesh);
+  const want: Record<string, string> = { 'CD-E-N': 'diverge', 'CD-W-S': 'diverge', 'CD-W-N': 'merge', 'CD-E-S': 'merge' };
+  check(gs.zones.length === 4 && gv.length > 0 && gv.every((v) => Number.isFinite(v[0] + v[1] + v[2])), 'P9 gore marks: 4 gores found, mesh built, finite', `${gs.zones.length} gores, ${gv.length} vertices, ${gs.mesh.indices.length / 3} triangles`);
+  console.log(gs.zones.map((z) => `  INFO  ${z.id.padEnd(7)} ${z.kind.padEnd(8)} on ${z.main.padEnd(4)} paved wedge y ${f2(z.yTip)} (tip) .. ${f2(z.yWide)}, ${f2(z.length)} m long, ${f2(z.wMax)} m wide at the wide end, ${z.nHatch} hatch + ${z.nChevron} chevrons`).join('\n'));
+  check(gs.zones.every((z) => want[z.id] === z.kind), 'P9 exits / entries read right: diverge CD-E-N, CD-W-S; merge CD-W-N, CD-E-S', gs.zones.map((z) => `${z.id} ${z.kind}`).join(', '));
+  check(gs.zones.every((z) => z.nChevron >= 3 && z.nHatch >= 2), 'P9 every gore has hatching (>= 2 stripes) and chevrons (>= 3)', gs.zones.map((z) => `${z.id} ${z.nHatch}/${z.nChevron}`).join(', '));
+  const cds = ['CD-E-N', 'CD-W-N', 'CD-E-S', 'CD-W-S'].map((id) => ({ id, cd: roadOf(`HK-${id}`), main: gs.zones.find((z) => z.id === id)! }));
+  let nInMain = 0, nInCd = 0, nAsph = 0, worstLvl = 0, minYArm = Infinity;
+  for (const [x, y, z] of gv) {
+    let bi = 0, bd = Infinity; cds.forEach((c, i) => { const d = polyHit(c.cd, x, z).d; if (d < bd) { bd = d; bi = i; } });
+    const c = cds[bi], mr = roadOf(c.main.main), dM = polyHit(mr, x, z);
+    if (dM.d < c.main.edgeMain + 0.075 - 0.02) nInMain++;
+    if (bd < GM.edgeC + GM.edgeHalf - 0.02) nInCd++;
+    if (!(dM.d <= c.main.mainHalf + 0.02 || bd <= GM.rampHalf + 0.02)) nAsph++;
+    worstLvl = Math.max(worstLvl, Math.abs(y - HP.lift - GM.mark - dM.lvl));
+    if (c.main.main === 'J1-S') minYArm = Math.min(minYArm, locY(x, z));
+  }
+  check(nInMain === 0 && nInCd === 0, 'P9 paint stays between the main lane edge line and the C-D edge line (no vertex on a line)', `${nInMain} on the main edge line, ${nInCd} on the C-D edge line`);
+  check(nAsph === 0, 'P9 paint lies on asphalt (main pavement or C-D pavement), not on the unpaved verge', `${nAsph} vertices off asphalt`);
+  check(worstLvl <= 0.25, 'P9 paint lies on the surface (main road level + lift, +- 0.25 m)', `worst ${f2(worstLvl)} m`);
+  check(minYArm >= 260 + 100, 'P9 arm gores are >= 100 m from the lane-drop marks (taper starts y 260)', `lowest arm gore vertex y ${f2(minYArm)} m`);
+
+  // P10 crash cushion + barrier
+  const cb = buildHkCrashBarrier(net, f), cv = vertsOf(cb.mesh), arm = roadOf('J1-S');
+  check(cv.length > 0 && cv.every((v) => Number.isFinite(v[0] + v[1] + v[2])) && layer.safetyMeshes === 1, 'P10 cushion + barrier: built, finite, one mesh in the layer', `${cv.length} vertices, ${cb.info.triangles} triangles`);
+  let latMin = Infinity, latMax = -Infinity, yMin = Infinity, yMax = -Infinity, hMin = Infinity, hMax = -Infinity, clear = Infinity, nClear = 0;
+  for (const [x, y, z] of cv) {
+    const h = polyHit(arm, x, z); latMin = Math.min(latMin, h.d); latMax = Math.max(latMax, h.d);
+    const ly = locY(x, z); yMin = Math.min(yMin, ly); yMax = Math.max(yMax, ly);
+    hMin = Math.min(hMin, y - h.lvl); hMax = Math.max(hMax, y - h.lvl);
+    if (Math.abs(ly) <= N.deckHalf) { const top = topAt(sol.positions, sol.indices, x, z); if (!Number.isNaN(top)) { nClear++; clear = Math.min(clear, top - N.depthMid - y); } }
+  }
+  check(latMin >= HM9D.laneInner && latMax <= HM9D.laneOuter, `P10 everything lies inside the closed lane (u ${HM9D.laneInner} .. ${HM9D.laneOuter} m from the arm axis)`, `u ${f2(latMin)} .. ${f2(latMax)} m`);
+  check(Math.abs(yMax - CB.y0) <= 0.1 && yMin <= 0.1 && yMin >= -0.1, 'P10 cushion nose at y +30 (end of the taper), barrier ends at y 0', `y ${f2(yMin)} .. ${f2(yMax)} m`);
+  check(Math.abs(hMin) <= 0.05 && Math.abs(hMax - CB.cushionH) <= 0.05, 'P10 stands on the road surface (lowest 0 m) and the cushion is 0.9 m high', `height over the surface ${f2(hMin)} .. ${f2(hMax)} m`);
+  check(nClear > 5 && clear >= 4.5, 'P10 clearance under the node deck soffit (deck top - 1.4 m) >= 4.5 m', `${nClear} samples, least ${f2(clear)} m`);
+  check(latMin - HM9D.laneInner >= 1.0, 'P10 gap from the barrier to the edge of the open lane 3 >= 1.0 m', `${f2(latMin - HM9D.laneInner)} m`);
+
+  // P10 collider decision, in numbers. Real RingStructurePhysics, Rapier, no gravity; ball r 0.4 m, CCD on.
+  check(layer.safetySolids.length === 1 && layer.solids.length === 4, 'P10 collider: 1 safety solid; the 4 ramp solids are unchanged', `${layer.safetySolids.length} + ${layer.solids.length}`);
+  const sl = layer.safetySolids[0], rampTris = layer.solids.reduce((a, s) => a + s.indices.length / 3, 0);
+  console.log(`  INFO  collider cost: ${sl.indices.length / 3} triangles, 1 fixed body, radius ${f2(sl.radius)} m, alive within ${300 + Math.round(sl.radius)} m of it (PhysicsConfig.activeRadius 300); the 4 ramps hold ${rampTris} triangles, so +${(100 * sl.indices.length / 3 / rampTris).toFixed(1)} %`);
+  const shoot = (withSolid: boolean, sx: number, sy: number, sz: number, vx: number, vy: number, vz: number, steps: number): { x: number; y: number; z: number } => {
+    const world = new RAPIER.World({ x: 0, y: 0, z: 0 });
+    const phys = new RingStructurePhysics({ RAPIER, world } as never, { origin: { x: 0, z: 0 } } as never, withSolid ? layer.safetySolids : []);
+    phys.update(1, sl.cx, sl.cz);
+    const ball = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(sx, sy, sz).setLinvel(vx, vy, vz).setCcdEnabled(true));
+    world.createCollider(RAPIER.ColliderDesc.ball(0.4), ball);
+    for (let s = 0; s < steps; s++) world.step();
+    const t = ball.translation(); phys.dispose(); return { x: t.x, y: t.y, z: t.z };
+  };
+  {
+    const world = new RAPIER.World({ x: 0, y: 0, z: 0 });
+    const phys = new RingStructurePhysics({ RAPIER, world } as never, { origin: { x: 0, z: 0 } } as never, layer.safetySolids);
+    phys.update(1, sl.cx + sl.radius + 300 + 800, sl.cz); const far = phys.activeCount; phys.update(1, sl.cx, sl.cz);
+    check(far === 0 && phys.activeCount === 1, 'P10 collider is created / removed by the player distance (RingStructurePhysics)', `far ${far}, near ${phys.activeCount}`);
+  }
+  const uc = (HM9D.laneInner + HM9D.laneOuter) / 2, a60 = hkArmAt(net, f, 60, uc)!, a30 = hkArmAt(net, f, 30, uc)!, a12 = hkArmAt(net, f, 12, uc)!, a12s = hkArmAt(net, f, 12, uc + 3)!;
+  const V = 25; // m/s = 90 km/h head-on shot along the lane centre at 0.5 m height, from y +60 southbound
+  const hy = a30.y + 0.5;
+  const withS = shoot(true, a60.x, hy, a60.z, -a60.tx * V, 0, -a60.tz * V, 120), noS = shoot(false, a60.x, hy, a60.z, -a60.tx * V, 0, -a60.tz * V, 120);
+  check(locY(withS.x, withS.z) >= 29.5, 'P10 ball 90 km/h head-on at the cushion nose is STOPPED at y +30 (with collider)', `ends y ${f2(locY(withS.x, withS.z))} m`);
+  check(locY(noS.x, noS.z) < 25, 'P10 same shot WITHOUT a collider drives straight through the nose (y < 25)', `ends y ${f2(locY(noS.x, noS.z))} m`);
+  const nE = { x: a12s.x - a12.x, z: a12s.z - a12.z }, nl = Math.hypot(nE.x, nE.z);
+  const sideS = shoot(true, a12s.x, a12.y + 0.5, a12s.z, -nE.x / nl * 15, 0, -nE.z / nl * 15, 120), sideN = shoot(false, a12s.x, a12.y + 0.5, a12s.z, -nE.x / nl * 15, 0, -nE.z / nl * 15, 120);
+  const latOf = (p: { x: number; z: number }): number => polyHit(arm, p.x, p.z).d - uc;
+  check(latOf(sideS) > 0.55 && latOf(sideS) < 0.9, 'P10 ball from the side stops at the barrier face (half 0.3 m + ball 0.4 m)', `rests ${f2(latOf(sideS))} m from the barrier axis`);
+  check(latOf(sideN) < 0, 'P10 same side shot WITHOUT a collider passes through the barrier', `ends ${f2(latOf(sideN))} m from the barrier axis`);
 }
 
 // P6 triangles face up (normal y > 0) so the polygon-offset surface lights like the road
