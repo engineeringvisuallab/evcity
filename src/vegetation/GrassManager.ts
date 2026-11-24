@@ -397,7 +397,8 @@ export class GrassManager {
       dummy.scale.set(w, ys, w);
     }
     if (flag > 7.5 && flag < 8.5) dummy.scale.y *= G.parkLawnTall; // park lawn: 2x taller blades
-    if (flag > 8.5 && isGrassFlower(type)) dummy.scale.y *= 1.35; // park beds: fuller, taller flowers
+    if (flag > 2.3 && flag < 2.5) dummy.scale.y *= G.hkLawnTall; // HK-FIX7: Hatikamrul infield lawn / garden lawn (flag 2.4)
+    if (flag > 8.5) dummy.scale.y *= isGrassFlower(type) ? G.bedFlowerTall : G.bedGrassTall; // park / HK garden beds + borders (flag 9+flower): HK-FIX8: flowers x13.5 (old 1.35 x 10), the green filler x10
     if (flag > 4.5 && flag < 5.5 && isGrassFlower(type)) dummy.scale.y *= 2; // road median (centre strip) flowers: 2x taller (user, 2026-11-23)
     if (flag > 5.5 && flag < 6.5) {
       // JUNGLE FLOOR (2026-11-21): short grass, flowers standing a little above it, clumps lower than before (the broad-leaf ground cover keeps its own size)

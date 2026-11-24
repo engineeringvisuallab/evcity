@@ -13,7 +13,7 @@ import { getCityGreen, type CityGreen } from '../city/CityGreen';
 import { MS, medianHalfAt, planMedians } from '../roads/MedianPlan';
 import { sightZoneLen } from '../roads/Planting';
 import { uturnZoneHas } from '../roads/UTurns';
-import { hkGardenZone, hkGardens, hkLawnStripe } from '../roads/ring/HkInfieldData';
+import { hkGardenZone, hkGardens, hkLawnAt, hkLawnStripe } from '../roads/ring/HkInfieldData';
 import { PARK, Z_BED, Z_BORDER, Z_LAWN, inPark, parkZone, zoneFlower, zoneKind } from '../park/CentralPark';
 
 
@@ -300,7 +300,7 @@ export class GrassPlacer {
         const dry = Math.min(1, Math.max(0, smooth(G.dryFrom, G.dryTo, h) + (rDry - 0.5) * 0.2)) * (1 - lawn);
         // flag 2 = city lawn tuft (short, mown; may carry a small flower), 0 = normal tuft
         const stripe = lawn >= 0.5 ? hkLawnStripe(x, z) : 0; // STEP HK-10b: 6th float = 0.85..1.15 (unused) or 2.15 / 1.85 = light / dark ring of an infield lawn (GrassManager shades the tuft)
-        out.push(x - ox, h - (lawn >= 0.5 ? 0.005 : 0.03), z - oz, (0.55 + 0.95 * rScale ** 1.5) * (P.edgeScale + (1 - P.edgeScale) * rim), rYaw * Math.PI * 2, stripe > 0 ? 2.15 : stripe < 0 ? 1.85 : 0.85 + rTint * 0.3, dry, lawn >= 0.5 ? (inPark(x, z) ? 8 : 2) : jd > 0.3 ? 6 : 0);
+        out.push(x - ox, h - (lawn >= 0.5 ? 0.005 : 0.03), z - oz, (0.55 + 0.95 * rScale ** 1.5) * (P.edgeScale + (1 - P.edgeScale) * rim), rYaw * Math.PI * 2, stripe > 0 ? 2.15 : stripe < 0 ? 1.85 : 0.85 + rTint * 0.3, dry, lawn >= 0.5 ? (inPark(x, z) ? 8 : hkLawnAt(x, z) >= 0.5 ? 2.4 : 2) : jd > 0.3 ? 6 : 0); // flag 2.4 = Hatikamrul infield lawn (HK-FIX7: GrassManager makes it x hkLawnTall taller)
 
         // DENSE single grass: extra tufts in the same cell (flag 4 = never a flower). Their random numbers come after the first seven, one fixed set of
         // five per extra, so extra k is always the same tuft and a far ring (fewer extras) is a subset of the near ring. Not on the mown city lawn.
