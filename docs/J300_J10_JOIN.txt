@@ -10,8 +10,11 @@ AFTER  (switch ON): R6-7 end -> arm end:        gap 0.00 m, heading difference -
 INFO  direction R6-7 end -> arm end 0.00 deg (R6-7 travel heading 21.03, arm heading 20.93): the two ends do not even point at each other (21.03 deg off the R6-7 axis)
 PASS  R6: R6-7 and the arm are ONE continuous road (gap <= 0.1 m, heading <= 0.5 deg, level <= 0.02 m)  a pre-existing gap of the shipped game, NOT created by J300; the fix is bigger than a small change, see section 30
 PASS  R6 section: arm ribbon half width = game R6-7 half width + shoulder  arm 16.6 m vs R6-7 16 + 0.6 = 16.6 m; lanes 6, median half 2, lane 3.5 m, outer shy 2.5 m
-INFO  R4-4 starts 10.3 m off the R6 arm axis at (-1915.1, -2920.8); its start level OFF 18.97 -> ON 19.20 m (arm level there 20.98 m)
-FAIL  R4-4 start level unchanged OFF vs ON (the side road must not move when the switch turns ON)  0.23 m
+INFO  R4-4 starts 17.6 m off the R6 arm axis at (-1919.1, -2914.1); its start level OFF 18.97 -> ON 19.20 m (arm level there 21.06 m)
+PASS  R4-4 (T junction): start on the R6 arm ribbon edge (half width 16.6 m, +-1.5 m)  17.6 m off the arm axis
+FAIL  R4-4 (T junction): start level = arm level at the foot point (<= 0.05 m)  19.20 vs 21.06 m
+PASS  R4-4 (T junction): grade of the first 70 m <= 6 % (road limit)  max 0.00 %
+PASS  R4-4: far part unchanged OFF vs ON (last point identical)  end (-2120.8, -2823.5)
 
 == R4 join (arm end = J4-R4 join on the old R4-9 line) against the trimmed real R4-9 ==
 INFO  R4-9 (ON) end (-1406.96, -2127.41) level 46.48 heading -143.61 deg | arm end (-1406.96, -2127.41) level 46.48 heading to the ring-side reversed: arm travel towards the far end 36.47 deg

@@ -65,3 +65,38 @@ export function j300R4JoinHeading(): number {
   while (j > 0 && Math.hypot(r[n - 1].x - r[j].x, r[n - 1].z - r[j].z) < 10) j--;
   return (Math.atan2(r[n - 1].z - r[j].z, r[n - 1].x - r[j].x) * 180) / Math.PI + 180;
 }
+
+/** J10 (R4-4 T junction, switch ON only): side roads whose FIRST point lay on the removed old R6-9. They now start at the edge of the R6 arm ribbon. */
+export const J300_SIDE_ROADS: readonly { name: string; arm: 'R6'; halfWidth: number; blend: number }[] = [{ name: 'R4-4', arm: 'R6', halfWidth: 16.6 + 1.0, blend: 70 }];
+
+/**
+ * Cut the leading points of a side road that lie inside the arm ribbon (distance to the arm centre line < halfWidth) and end the road ON the ribbon edge (interpolated point, level = arm level at the foot point).
+ * From there the level blends to the original levels over `blend` m (smoothstep), so the side road climbs onto the arm without a step. Returns null when the road does not start inside / at the ribbon.
+ */
+export function joinSideRoadToArm(pts: number[][], ys: number[], armId: 'R6' | 'R4', halfWidth: number, blend: number): { pts: number[][]; ys: number[]; edgeLevel: number; cut: number } | null {
+  const rows = J300_ARMS[armId].rows as unknown as readonly { x: number; z: number; y: number }[];
+  const foot = (x: number, z: number): { d: number; y: number } => {
+    let b = { d: 1e9, y: 0 };
+    for (let i = 0; i + 1 < rows.length; i++) {
+      const ax = rows[i].x, az = rows[i].z, dx = rows[i + 1].x - ax, dz = rows[i + 1].z - az, L2 = dx * dx + dz * dz || 1;
+      const t = Math.min(1, Math.max(0, ((x - ax) * dx + (z - az) * dz) / L2));
+      const d = Math.hypot(ax + dx * t - x, az + dz * t - z);
+      if (d < b.d) b = { d, y: rows[i].y + (rows[i + 1].y - rows[i].y) * t };
+    }
+    return b;
+  };
+  if (foot(pts[0][0], pts[0][1]).d >= halfWidth) return null;
+  let k = 0; while (k < pts.length - 1 && foot(pts[k + 1][0], pts[k + 1][1]).d < halfWidth) k++;
+  if (k >= pts.length - 2) return null;
+  const a = foot(pts[k][0], pts[k][1]), b = foot(pts[k + 1][0], pts[k + 1][1]); // a inside, b outside
+  const t = (halfWidth - a.d) / ((b.d - a.d) || 1);
+  const sx = pts[k][0] + (pts[k + 1][0] - pts[k][0]) * t, sz = pts[k][1] + (pts[k + 1][1] - pts[k][1]) * t;
+  const edgeLevel = foot(sx, sz).y;
+  const np: number[][] = [[sx, sz]], ny: number[] = [edgeLevel]; let s = 0;
+  for (let i = k + 1; i < pts.length; i++) {
+    s += Math.hypot(pts[i][0] - (i === k + 1 ? sx : pts[i - 1][0]), pts[i][1] - (i === k + 1 ? sz : pts[i - 1][1]));
+    const u = Math.min(1, s / blend), w = u * u * (3 - 2 * u);
+    np.push([pts[i][0], pts[i][1]]); ny.push(edgeLevel + (ys[i] - edgeLevel) * w);
+  }
+  return { pts: np, ys: ny, edgeLevel, cut: k + 1 };
+}

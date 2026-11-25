@@ -27,7 +27,7 @@ const J = J300_ARMS.R4.end; const dEnd = r4 ? Math.hypot(r4.x1 - J.x, r4.z1 - J.
 CHK('R4-9 now ends within 6 m of the R4 arm end (the join)', dEnd <= 6, `${dEnd.toFixed(2)} m`);
 CHK('R4-9 level at the join within 0.1 m of the R4 arm end level (no step at the join)', !!r4 && Math.abs(r4.y1 - (J300_ARMS.R4 as any).yEnd) <= 0.1, `road ${r4?.y1?.toFixed(2)} vs arm ${(J300_ARMS.R4 as any).yEnd}`);
 CHK('R4-9 far end unchanged', !!r4 && !!r4o && Math.hypot(r4.x0 - r4o.x0, r4.z0 - r4o.z0) < 0.01);
-const others = off.filter((r) => r.name !== 'R6-9' && r.name !== 'R4-9'); const same = others.every((r) => { const q = byOn.get(r.name); return q && q.n === r.n && Math.hypot(q.x0 - r.x0, q.z0 - r.z0) < 0.01; });
+const others = off.filter((r) => r.name !== 'R6-9' && r.name !== 'R4-9' && r.name !== 'R4-4'/* J10: R4-4 is cut at the R6 arm edge on purpose */); const same = others.every((r) => { const q = byOn.get(r.name); return q && q.n === r.n && Math.hypot(q.x0 - r.x0, q.z0 - r.z0) < 0.01; });
 CHK('every other road is identical (same name, samples, start)', same && on.length === off.length - 1, `${others.length} roads compared`);
 // charge / fuel sites and signs that sat on the removed stretch
 const gone = (s: any): boolean => (s.road === 'R6-9') || (s.road === 'R4-9' && s.x < -1396 && s.z > -2124);

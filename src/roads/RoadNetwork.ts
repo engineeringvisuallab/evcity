@@ -28,7 +28,7 @@ import { RTE_M3_DATA } from './junction/RteM3Data';
 import { RTE_M4_DATA } from './junction/RteM4Data';
 import { RTE_VIADUCT_WIDENING, RTE_STEM_OUTBOUND, RTE_STEM_INBOUND } from './junction/RteWidthData';
 import { R4_NEW_LINE_DATA } from './r4/R4NewLineData';
-import { j300Active, J300_DROP_ROADS, J300_TRIM_ROADS, trimLineAtPoint, bendTailToHeading, j300R4JoinHeading } from './junction/J300Switch'; // J9-a, J10 step 0
+import { j300Active, J300_DROP_ROADS, J300_TRIM_ROADS, trimLineAtPoint, bendTailToHeading, j300R4JoinHeading, J300_SIDE_ROADS, joinSideRoadToArm } from './junction/J300Switch'; // J9-a, J10 step 0
 import { J300Carve, J300C } from './junction/J300Carve'; // J9-b
 import { j300InFootprint } from './junction/J300Footprint'; // J9-d
 import { CLASS_R4_OPEN, CLASS_R2_OPEN, CLASS_C_ZONE, CLASS_L_ZONE } from './standards/ClassSections';
@@ -1296,6 +1296,8 @@ export class RoadNetwork {
       let d = d0;
       const trim = j300Active() ? J300_TRIM_ROADS.find((q) => q.name === d0.name) : undefined; // J9-a: drop the old stub between the J4-R4 join and the ring (the R4 arm replaces it)
       if (trim) { const tl = trimLineAtPoint(d0.pts, d0.ys, trim.x, trim.z); if (tl) { bendTailToHeading(tl.pts, j300R4JoinHeading()); /* J10 step 0: last 90 m turn into the arm heading (switch ON only) */ const structs = d0.structs?.filter((q) => q[1] <= tl.keptLength + 0.5); d = { ...d0, pts: tl.pts, ys: tl.ys, s: d0.s.slice(0, tl.pts.length), structs: structs && structs.length ? structs : undefined }; } }
+      const side = j300Active() ? J300_SIDE_ROADS.find((q) => q.name === d.name) : undefined; // J10: R4-4 starts on the R6 arm ribbon edge (old R6-9 is gone)
+      if (side) { const sj = joinSideRoadToArm(d.pts, d.ys, side.arm, side.halfWidth, side.blend); if (sj) d = { ...d, pts: sj.pts, ys: sj.ys, structs: undefined }; }
       const m = d.pts.length;
       const cum = [0];
       for (let i = 1; i < m; i++) cum.push(cum[i - 1] + Math.hypot(d.pts[i][0] - d.pts[i - 1][0], d.pts[i][1] - d.pts[i - 1][1]));

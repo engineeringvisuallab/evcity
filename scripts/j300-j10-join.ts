@@ -54,7 +54,12 @@ CHK('R6 section: arm ribbon half width = game R6-7 half width + shoulder', Math.
 // R4-4 side road that started on the old R6-9
 const r44 = on.get('R4-4'), r44o = off.get('R4-4'); const fo = foot(a6.xs, a6.zs, a6.ys, r44.xs[0], r44.zs[0]);
 P(`INFO  R4-4 starts ${f2(fo.d, 1)} m off the R6 arm axis at (${f2(r44.xs[0], 1)}, ${f2(r44.zs[0], 1)}); its start level OFF ${f2(r44o.ys[0])} -> ON ${f2(r44.ys[0])} m (arm level there ${f2(fo.y)} m)`);
-CHK('R4-4 start level unchanged OFF vs ON (the side road must not move when the switch turns ON)', Math.abs(r44.ys[0] - r44o.ys[0]) <= 0.02, `${f2(r44.ys[0] - r44o.ys[0])} m`);
+// J10 (T junction): with the switch ON the old R6-9 is gone, so R4-4 must START on the edge of the R6 arm ribbon (half width 16.6 m) at the arm level and climb smoothly (<= 6 %), not inside the ribbon.
+{ const gs: number[] = []; for (let i = 1; i < r44.xs.length; i++) { const dd = Math.hypot(r44.xs[i] - r44.xs[i - 1], r44.zs[i] - r44.zs[i - 1]); if (dd > 0.5) gs.push(Math.abs(r44.ys[i] - r44.ys[i - 1]) / dd); } const first70 = gs.slice(0, 14); const gmax = Math.max(...first70);
+  CHK('R4-4 (T junction): start on the R6 arm ribbon edge (half width 16.6 m, +-1.5 m)', Math.abs(fo.d - 17.6) <= 1.5 && fo.d >= 16.6, `${f2(fo.d, 1)} m off the arm axis`);
+  CHK('R4-4 (T junction): start level = arm level at the foot point (<= 0.05 m)', Math.abs(r44.ys[0] - fo.y) <= 0.05, `${f2(r44.ys[0])} vs ${f2(fo.y)} m`);
+  CHK('R4-4 (T junction): grade of the first 70 m <= 6 % (road limit)', gmax <= 0.06, `max ${f2(gmax * 100)} %`);
+  CHK('R4-4: far part unchanged OFF vs ON (last point identical)', Math.abs(r44.xs[r44.xs.length - 1] - r44o.xs[r44o.xs.length - 1]) < 0.01 && Math.abs(r44.ys[r44.ys.length - 1] - r44o.ys[r44o.ys.length - 1]) < 0.01, 'end (-2120.8, -2823.5)'); }
 
 // ---------------- R4 join ----------------
 P(''); P('== R4 join (arm end = J4-R4 join on the old R4-9 line) against the trimmed real R4-9 ==');
