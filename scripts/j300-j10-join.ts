@@ -32,7 +32,7 @@ const off = run('OFF'), on = run('ON');
 const A6: any = J300_ARMS.R6, A4: any = J300_ARMS.R4;
 const arm = (A: any) => { const r = A.rows as any[]; return { xs: r.map((q) => q.x), zs: r.map((q) => q.z), ys: r.map((q) => q.y) }; };
 const a6 = arm(A6), a4 = arm(A4);
-const sa: any[] = (J300_STRUCT_C as any).surfArms; const top6 = sa.find((q) => q.id === 'R6').top, top4 = sa.find((q) => q.id === 'R4').top;
+const sa: any[] = (J300_STRUCT_C as any).surfArms; const top6 = sa.find((q) => q.id === 'R6').top, top4 = ((): number => { const a: any = sa.find((q) => q.id === 'R4'); const e = a.pts[a.pts.length - 1]; return e[3] ?? a.top; })(); /* J10: R4 taper, the value AT the join */
 
 // ---------------- R6 far end ----------------
 P(''); P('== R6 far end (arm end = old R6-9 start, free end) against R6-7 (the 6 lane road that comes from the south) ==');
@@ -69,7 +69,7 @@ CHK('R4: level gap <= 0.02 m', Math.abs(e4.y - ae4.y) <= 0.02, `${f2(e4.y - ae4.
 const rb = r4.hw + r4.shoulder;
 P(`INFO  R4 section: game R4-9 half width ${r4.hw} m (pavement edge), outer shy ${r4.shyOuter} m, ditch / shoulder ${r4.shoulder} m, median half ${r4.med} m, lane ${r4.laneW} m, lanes ${r4.lanes}; arm ribbon half width ${top4} m (asphalt ${f2(top4 - 0.6, 1)} m + 0.6 m shoulder), M4 lane 3.65 m`);
 CHK('R4 section: arm asphalt half width = R4-9 pavement half width (no change of width)', Math.abs(top4 - 0.6 - r4.hw) <= 0.05, `arm asphalt ${f2(top4 - 0.6, 1)} m vs R4-9 ${r4.hw} m: step ${f2(top4 - 0.6 - r4.hw, 1)} m on each side (${f2(2 * (top4 - 0.6 - r4.hw), 1)} m in total)`);
-CHK('R4 section: same lane width', Math.abs(r4.laneW - 3.65) <= 0.01, `R4-9 lane ${r4.laneW} m vs arm M4 lane 3.65 m (J8 paint)`);
+{ const a: any = sa.find((q) => q.id === 'R4'); const e = a.pts[a.pts.length - 1]; const laneJoin = (e[4] ?? 7.15) / 2; CHK('R4 section: same lane width at the join', Math.abs(r4.laneW - laneJoin) <= 0.01, `R4-9 lane ${r4.laneW} m vs arm paint lane at the join ${f2(laneJoin, 2)} m (J8 paint, tapers from 3.575 m 70 m before the join)`); }
 P(`BEFORE the J10 step 0 fix (R4-9 trimmed at the join, no bend): heading difference ${f2(Math.abs(wrap(hd4a - hd4off)))} deg  ->  AFTER (last 70 m of R4-9 turned about the join): ${f2(dh4)} deg`);
 { let maxD = 0, maxFar = 0; for (let i = 0; i < r4.xs.length; i++) { const f = foot(r4o.xs, r4o.zs, r4o.ys, r4.xs[i], r4.zs[i]); const sBack = Math.hypot(r4.xs[i] - e4.x, r4.zs[i] - e4.z); if (sBack <= 72) maxD = Math.max(maxD, f.d); else maxFar = Math.max(maxFar, f.d); }
   CHK('R4-9 bend: the road is unchanged further than 72 m from the join (switch ON vs OFF)', maxFar <= 0.05, `max ${f2(maxFar)} m`);

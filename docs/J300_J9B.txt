@@ -1,20 +1,20 @@
 J9-b CHECK (headless, real terrain + road network, switch ON, carve ON vs carve disabled on the same network)
 PASS  carve object built when the switch is ON  
-PASS  R6: terrain never above the road surface on the whole ribbon (|offset| <= 16.6 m)  worst +-0.26 m at s 605.69 (123 rows)
-INFO  R6: 18 rows needed a cut (natural ground above the road on the ribbon), deepest 2.85 m (J6 data: 2.32)
-PASS  R6: where cut, the ground sits about 0.3 m under the road surface (deviation <= 0.6 m, so never more than 0.9 m under it)  max deviation from the trench depth 0.49 m
-PASS  R4: terrain never above the road surface on the whole ribbon (|offset| <= 14.4 m)  worst +-0.3 m at s 302.92 (71 rows)
-INFO  R4: 11 rows needed a cut (natural ground above the road on the ribbon), deepest 12.25 m (J6 data: R4 cut up to 18.5 m at the join incl. EXISTING hill cut)
-PASS  R4: where cut, the ground sits about 0.3 m under the road surface (deviation <= 0.6 m, so never more than 0.9 m under it)  max deviation from the trench depth 0.53 m
-PASS  CUT ONLY: no sample is higher with the carve than without it  14000 random samples, 240 lowered (max 21.47 m), 0 raised (max 0.0e+0)
+PASS  R6: terrain never above the road surface on the whole ribbon (|offset| <= 16.6 m)  worst +-0.28 m at s 601.22 (126 rows)
+INFO  R6: 5 rows needed a cut (natural ground above the road on the ribbon), deepest 0.61 m (J6 data: 2.32)
+PASS  R6: where cut, the ground sits about 0.3 m under the road surface (deviation <= 0.6 m, so never more than 0.9 m under it)  max deviation from the trench depth 0.39 m
+PASS  R4: terrain never above the road surface on the whole ribbon (|offset| <= 14.4 m)  worst +-0.29 m at s 342.1 (71 rows)
+INFO  R4: 10 rows needed a cut (natural ground above the road on the ribbon), deepest 11.78 m (J6 data: R4 cut up to 18.5 m at the join incl. EXISTING hill cut)
+PASS  R4: where cut, the ground sits about 0.3 m under the road surface (deviation <= 0.6 m, so never more than 0.9 m under it)  max deviation from the trench depth 0.4 m
+PASS  CUT ONLY: no sample is higher with the carve than without it  14000 random samples, 200 lowered (max 21.73 m), 0 raised (max 0.0e+0)
 PASS  nothing changes where no arm is in reach (cap = none)  0 samples
 PASS  old R4-9 beyond the join: pavement centre line not dented (>= 8 m from the join)  8 points, max change 0 m
-INFO  old R4-9 within 8 m of the join: max change 0.83 m (the soft end of the arm strip, under the arm road)
-PASS  cut face across the arms: gradient <= 0.75 (1:2 = 0.5 plus the natural slope) where the carve made it  7474 transect steps, 0 steeper than 0.75 and than natural + 0.1; steepest overall 0.66 (R6 s 605.69 off 17.400000000000006, natural there 0)
+INFO  old R4-9 within 8 m of the join: max change 0.36 m (the soft end of the arm strip, under the arm road)
+PASS  cut face across the arms: gradient <= 0.75 (1:2 = 0.5 plus the natural slope) where the carve made it  7551 transect steps, 0 steeper than 0.75 and than natural + 0.1; steepest overall 0.5 (R4 s 322.51 off -24.400000000000006, natural there 0.23)
 INFO  steepest cross gradient within 60 m of the R4 join: 0.5 (the old road's own trench there is a smoothstep cutting, steeper than 1:2)
-PASS  R4 join plane: the carve makes no cliff along the road (steepest gradient not above the area WITHOUT the carve, and <= 2.0)  steepest 1.74 at s 40 off -27; same area WITHOUT the carve 3.56 (the old road trench is steeper than 1:2)
+PASS  R4 join plane: the carve makes no cliff along the road (steepest gradient not above the area WITHOUT the carve, and <= 2.0)  steepest 1.94 at s 40 off -24; same area WITHOUT the carve 3.56 (the old road trench is steeper than 1:2)
 INFO  ramps: highest ground above a ramp level 0.08 m at W-in row 53 (the last rows touch the ring's own platform at the nose: ring / aux lane, J9-c; arms need no ramp carve)
-INFO  cap() cost: 0.052 us per far sample (bbox reject), 0.88 us per sample in the corridor area
+INFO  cap() cost: 0.051 us per far sample (bbox reject), 0.96 us per sample in the corridor area
 PASS  switch OFF: no carve object is built (null) = no cost, no change  j300Carve === null
 PASS  chunk worker gets the switch from the main thread (generate + grass messages), set before the generator is built (SOURCE check)  loader true, worker true, messages true
 NOT RUN  real browser worker (needs the game in a browser): ?j300=1 in the page URL is NOT visible to a worker, the flag now travels in the message.

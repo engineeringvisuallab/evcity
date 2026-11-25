@@ -1,6 +1,6 @@
 J7-C WATER CHECK (sc.water > sc.h, real natural terrain, nothing changed)
 PASS  platform disc r 0..66  1656 points, 0 wet
-PASS  arm R6 centre + both toes  369 points, 0 wet
+PASS  arm R6 centre + both toes  378 points, 0 wet
 PASS  arm R4 centre + both toes  213 points, 0 wet
 PASS  ramp E-out both edges  248 points, 0 wet
 PASS  ramp E-in both edges  212 points, 0 wet

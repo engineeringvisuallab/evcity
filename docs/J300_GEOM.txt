@@ -56,22 +56,22 @@ INFO  W-in ramp crossing: single stage 7 m, no refuge (ramp is 2 lanes, 7.0 m), 
 
 4) ARMS (R6 climbs, R4 re-route)
 PASS  R6 end meets the old road: gap <= 0.5 m, heading gap <= 0.1 deg  gap 0 m, heading 0 deg
-PASS  R6 radius >= min radius at 60 km/h (113.4 m)  R 220 m, spiral 40 m
+PASS  R6 radius >= min radius at 60 km/h (113.4 m)  R 160 m, spiral 40 m
 PASS  R6 deck level at the circle edge = 35.3 m  35.3
-PASS  R6 end level = old road level  16.35 vs 16.35
-PASS  R6 max grade <= 4 % (limit)  max 3.63 %
-PASS  R6 crest curve L >= K x A (K 10.4)  L 40 m, A 3.24 %, needs 33.5 m
-PASS  R6 cut <= 12 m (H7)  max NEW cut 2.3 m at s 605.69
+PASS  R6 end level = old road level  18.17 vs 18.17
+PASS  R6 max grade <= 4 % (limit)  max 3.21 %
+PASS  R6 crest curve L >= K x A (K 10.4)  L 40 m, A 3.18 %, needs 32.9 m
+PASS  R6 cut <= 12 m (H7)  max NEW cut 0.5 m at s 621.19
 INFO  R6 fill up to 16.2 m (> 7 m): needs MSE walls (J2 decided walls above 4 m; wall design NOT RUN)
 PASS  R4 end meets the old road: gap <= 0.5 m, heading gap <= 0.1 deg  gap 0 m, heading 0 deg
 PASS  R4 radius >= min radius at 50 km/h (72.9 m) [J4-R4 engineer exception: approach to a roundabout, J11 puts a 50 km/h sign before the curve]  R 85 m, spiral 30 m
 PASS  R4 deck level at the circle edge = 35.3 m  35.3
 PASS  R4 end level = old road level  46.48 vs 46.48
-PASS  R4 max grade <= 6 % (limit)  max 3.68 %
-PASS  R4 crest curve L >= K x A (K 10.4)  L 59.70897569921315 m, A 3.58 %, needs 37.1 m
-PASS  R4 cut <= 12 m (H7)  max NEW cut 1.9 m at s 283.33; rows within 15 m of the old R4-9 line are EXISTING cut (up to 15.8 m, already in the game)
+PASS  R4 max grade <= 6 % (limit)  max 4.37 %
+PASS  R4 crest curve L >= K x A (K 10.4)  L 69.77129947787697 m, A 4.18 %, needs 43.4 m
+PASS  R4 cut <= 12 m (H7)  max NEW cut 0.8 m at s 283.33; rows within 15 m of the old R4-9 line are EXISTING cut (up to 15.8 m, already in the game)
 INFO  R4 fill up to 16.4 m (> 7 m): needs MSE walls (J2 decided walls above 4 m; wall design NOT RUN)
-PASS  R6 no surface water on the axis  0 of 123 samples wet
+PASS  R6 no surface water on the axis  0 of 126 samples wet
 PASS  R4 no surface water on the axis  0 of 71 samples wet
 
 NOT RUN: rail clearance of the new R4 / R6 line, buildings and trees on the arms, crossing with other roads (R1 list), MSE wall design, superelevation (J5), traffic simulation, game look.

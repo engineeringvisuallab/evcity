@@ -35,7 +35,9 @@ const natAt = (a: number): number => { const t = ((a % 360) + 360) % 360 / 5; co
 // ---- 2) arms: walls where fill > 4 m, slopes where 0 < fill <= 4 m; surface ribbon
 const surfArms: any[] = [];
 for (const id of ['R6', 'R4']) { const A = T.arms[id]; const rows: number[][] = A.rows; const top: number = A.top;
-  surfArms.push({ id, top: r2(top), pts: rows.map((r) => [r2(r[1]), r2(r[2]), r2(r[3])]) });
+  // J10 Option A: R4 ribbon TAPER at the join (real R4-9: pavement half width 11.5 m, lane 3.5 m). Over the last TAPER m before the join the half width goes top -> 11.5 + 0.6 and the paint lane line 7.15 -> 7.0.
+  const TAPER = 70, HW_JOIN = 11.5 + 0.6, sEnd = rows[rows.length - 1][0];
+  surfArms.push({ id, top: r2(top), pts: rows.map((r) => { if (id !== 'R4') return [r2(r[1]), r2(r[2]), r2(r[3])]; const k = Math.max(0, Math.min(1, (sEnd - r[0]) / TAPER)); return [r2(r[1]), r2(r[2]), r2(r[3]), r2(HW_JOIN + (top - HW_JOIN) * k), r2(7.0 + 0.15 * k)]; }) });
   for (const [side, sd, hi] of [['L', 1, 5], ['R', -1, 9]] as [string, number, number][]) {
     let wrun: Pt[] = [], srun: Pt[] = [], nw = 0, ns = 0;
     const fw = (): void => { if (wrun.length > 1) walls.push({ id: `${id}-${side}-W${++nw}`, kind: 'arm', thick: 0.8, pts: wrun }); wrun = []; };

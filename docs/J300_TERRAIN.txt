@@ -5,17 +5,17 @@ PLATFORM (roundabout deck, r 62)
 INFO  max fill at the circle edge 16.64 m (J2 assumed MSE walls up to 16.0 m: higher by 0.6 m, wall design in J7); new fill about 106226 m3 (underpass strip and the existing ring embankment excluded; J2 rough 198 334 m3 counted everything above natural)
 INFO  wall toe radius up to 65.8 m (J2: 66 m at H 16)
 
-ARM R6 (M6 top half width 16.6 m, length 488.76 m, ROW half 33.900000000000006 m)
-PASS  fill toe inside half ROW 33.900000000000006 m  fill toe at 24.5 m from the centre line, max fill 16.34 m
-PASS  cut <= 12 m (H7)  max cut 2.32 m at the 5 m rows
-INFO  cut slope tops stay inside the ROW (21.2 m)
-INFO  fill about 153126 m3, cut about 3221 m3 (rough end-area, 5 m stations)
+ARM R6 (M6 top half width 16.6 m, length 504.26 m, ROW half 33.900000000000006 m)
+PASS  fill toe inside half ROW 33.900000000000006 m  fill toe at 24.6 m from the centre line, max fill 16.34 m
+PASS  cut <= 12 m (H7)  max cut 0.6 m at the 5 m rows
+INFO  cut slope tops stay inside the ROW (17.8 m)
+INFO  fill about 163357 m3, cut about 256 m3 (rough end-area, 5 m stations)
 
 ARM R4 (M4 top half width 14.4 m, length 225.27 m, ROW half 31.7 m)
-PASS  fill toe inside half ROW 31.7 m  fill toe at 21.8 m from the centre line, max fill 16.48 m
-PASS  cut <= 12 m (H7)  max cut 3.12 m at the 5 m rows
+PASS  fill toe inside half ROW 31.7 m  fill toe at 22.4 m from the centre line, max fill 16.48 m
+PASS  cut <= 12 m (H7)  max cut 2.35 m at the 5 m rows
 INFO  cut slope tops reach 51.4 m from the centre line, ROW half is 31.7 m: land outside the ROW is needed (user decision), benches / flatter slopes would take even more
-INFO  fill about 95380 m3, cut about 465 m3 (rough end-area, 5 m stations)
+INFO  fill about 97938 m3, cut about 236 m3 (rough end-area, 5 m stations)
 
 RAMPS (outer toe from the J5 rows)
 PASS  E-out toe inside half ROW 45.72 m  toe at |v| 37.67 m, max fill 18.72 m, volume 27736 m3
@@ -25,18 +25,18 @@ PASS  W-in toe inside half ROW 45.72 m  toe at |v| 37.72 m, max fill 19.61 m, vo
 
 SITE (all toe lines)
 PASS  platform: rail clearance of the toe >= 30 m (H6)  closest rail point 283.3 m
-FAIL  R6: rail clearance of the toe >= 30 m (H6)  closest rail point 1.2 m
+FAIL  R6: rail clearance of the toe >= 30 m (H6)  closest rail point 1.1 m
 PASS  R4: rail clearance of the toe >= 30 m (H6)  closest rail point 402.8 m
 PASS  E-out: rail clearance of the toe >= 30 m (H6)  closest rail point 182.3 m
 PASS  E-in: rail clearance of the toe >= 30 m (H6)  closest rail point 260.9 m
 PASS  W-out: rail clearance of the toe >= 30 m (H6)  closest rail point 53.7 m
 PASS  W-in: rail clearance of the toe >= 30 m (H6)  closest rail point 31.7 m
-PASS  no toe point in water  1408 toe points dry
-FAIL  R6 arm CROSSES / touches the railway: centre line only 2.4 m from the rail at arm station 296.5 m (arm level 26.4 m, rail design level 35.3 m): the rail is 8.9 m ABOVE the arm (arm would pass under it); the 30 m rule is not met and a structure decision is needed (J4 NOT RUN item)
+PASS  no toe point in water  1414 toe points dry
+FAIL  R6 arm CROSSES / touches the railway: centre line only 2.3 m from the rail at arm station 291.7 m (arm level 26.8 m, rail design level 35.3 m): the rail is 8.5 m ABOVE the arm (arm would pass under it); the 30 m rule is not met and a structure decision is needed (J4 NOT RUN item)
 INFO  R4 arm centre line stays 409.7 m from the rail
 PASS  arm toes do not touch the ramp toes (>= 3 m apart)  R6 to ramps 27.5 m, R4 to ramps 29.4 m (toe points only)
 
-INFO  TOTAL new fill about 460153 m3 (platform 106226, R6 153126, R4 95380, ramps 105421); J2 rough 441 475 m3, J1-B 855 000 m3. R4 CUT about 465 m3 (not in the fill total; spoil could feed the fill if it is hauled, NOT planned)
+INFO  TOTAL new fill about 472942 m3 (platform 106226, R6 163357, R4 97938, ramps 105421); J2 rough 441 475 m3, J1-B 855 000 m3. R4 CUT about 236 m3 (not in the fill total; spoil could feed the fill if it is hauled, NOT planned)
 NOT RUN: drainage, MSE wall type and design, slope stability / benches of the R4 cut, other roads and buildings in the footprint (R1 list), trees, groundwater, game carve (J9).
 
 2 FAIL

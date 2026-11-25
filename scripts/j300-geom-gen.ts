@@ -3,7 +3,7 @@
 // FRAME (project convention, Geometry2D.ts): local u = along the ring (towards PI4), v = LEFT of u (the game drives on the left), origin = roundabout centre O.
 //   world = O + u (cos yaw, sin yaw) + v (sin yaw, -cos yaw);  world heading = yaw - local heading;  local heading 0 = +u, +PI/2 = +v.
 // J3 LEG ANGLES (local, circulation CLOCKWISE seen from above = decreasing angle): R6 90, E-out 29, E-in -29, R4 -90, W-out -151, W-in 151.
-import { writeFileSync } from 'fs';
+import { writeFileSync, readFileSync } from 'fs';
 import { Config } from '../src/core/Config';
 import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
 import { RING_PIS } from '../src/roads/alignment/RingAlignment';
@@ -147,10 +147,10 @@ const armOut: any = {};
 
 // ---- R6: axis from O along +v, one PI where it meets the straight far part of old R6-9, ends at the old R6-9 start (free end)
 { const D6 = D0('R6'); const dA = dirW(Math.PI / 2); const start = { x: O.x + dA.x * D6, z: O.z + dA.z * D6 };
-  const oldFar = { x: -2004, z: -2962 }, oldNext = { x: -1797, z: -2867 }; const dOld = { x: oldNext.x - oldFar.x, z: oldNext.z - oldFar.z }; const lo = Math.hypot(dOld.x, dOld.z); dOld.x /= lo; dOld.z /= lo;
+  const oldFar = { x: -2000, z: -2983 }, oldNext = { x: -2000 + (-2000 - -2007.43), z: -2983 + (-2983 - -2985.84) }; /* Option A (J10 section 30): end = R6-7 END, heading of R6-7 at its end (20.9 deg) */ const dOld = { x: oldNext.x - oldFar.x, z: oldNext.z - oldFar.z }; const lo = Math.hypot(dOld.x, dOld.z); dOld.x /= lo; dOld.z /= lo;
   const it = lineInt({ x: O.x, z: O.z }, dA, oldFar, dOld); const PI = { x: O.x + dA.x * it.s, z: O.z + dA.z * it.s };
-  const R = 220, Ls = 40; const al = buildOpenAlignment(start, [{ x: PI.x, z: PI.z, R, Ls }], oldFar);
-  armOut.R6 = { al, D0: D6, piDist: it.s, R, Ls, join: 'old R6-9 start (free end)', oldName: 'R6-9' }; }
+  let R = 220, Ls = 40; let al: any = null; for (const Rt of [220, 200, 180, 160, 150, 140, 130, 120]) { try { const a = buildOpenAlignment(start, [{ x: PI.x, z: PI.z, R: Rt, Ls }], oldFar); const sg = a.straights as number[]; if (sg[sg.length - 1] >= 10 && a.endGap <= 0.5 && a.endHeadingGapDeg <= 0.1) { al = a; R = Rt; break; } } catch { /* next R */ } } if (!al) throw new Error('no R6 radius fits the R6-7 end (Option A)');
+  armOut.R6 = { al, D0: D6, piDist: it.s, R, Ls, join: 'R6-7 end (Option A, J10 section 30)', oldName: 'R6-7' }; }
 
 // profile: crest at the deck edge, grade down, (R4: sag, grade up 4 %) , end level = old road level at the join
 // J9-a: env J300_R4_YEND = level the built old R4-9 has at the join when the switch is ON (measured by j300-j9a-check); the R4 arm must meet THAT level.
@@ -160,16 +160,23 @@ function profileOf(id: string, R: any): void {
   const sig0 = D - RO; // station of the alignment start measured from the circle edge
   const endPose = poseAt(al, sTot); const yEnd = (id === 'R4' && process.env.J300_R4_YEND) ? Number(process.env.J300_R4_YEND) : oldY(R.oldName, endPose.x, endPose.z); const sigE = sig0 + sTot;
   const Lc = 40; const vp: { s: number; y: number; L: number }[] = [{ s: Lc / 2, y: PT, L: Lc }];
-  if (id === 'R6') { const g = (PT - yEnd) / (sigE - Lc / 2); vp.push({ s: sigE, y: yEnd, L: 0 }); R.grade = g; }
+  if (id === 'R6') { const g = (PT - yEnd) / (sigE - Lc / 2);
+    // J10 Option A1 (user: a1): dip under the rail viaduct so that the clearance is >= 5.5 m. Crossing station from J7-B (docs/J300_STRUCT_B.json, crossing.sArm), dip below the straight grade line, sag curve L 120 m.
+    let sX = 291.7; try { sX = JSON.parse(readFileSync('docs/J300_STRUCT_B.json', 'utf8')).crossing.sArm; } catch { /* default */ }
+    const dip = Number(process.env.J300_R6_DIP ?? 0.9); const yLin = PT - g * (sX - Lc / 2);
+    vp.push({ s: sX, y: yLin - dip, L: 120 }); vp.push({ s: sigE, y: yEnd, L: 0 }); R.grade = g; R.dip = { sX, dip, L: 120 }; }
   else { // J4-R4 (decision R4 = (c)): sag at the deck edge (K_SAG), ONE grade up to the old road level at the join
     let g = (yEnd - PT) / (sigE - 20); let L0 = Math.max(40, K_SAG * g * 100); for (let it = 0; it < 6; it++) { g = (yEnd - PT) / (sigE - L0 / 2); L0 = Math.max(40, K_SAG * g * 100); }
-    vp.length = 0; vp.push({ s: L0 / 2, y: PT, L: L0 }); vp.push({ s: sigE, y: yEnd, L: 0 }); R.grade = g; R.gradeUp = null; R.sag = null; R.sagDeck = { L: L0, K: K_SAG, A: g * 100 }; }
+    // J10 Option A (user: Suru koro): END CREST on the arm side only. The last Lc m before the join are a half parabola that ends with the grade of the real R4-9 (0 %), so there is no grade break at the join (the road side is not touched).
+    const Lc = Number(process.env.J300_R4_ENDCREST ?? 80); g = (yEnd - PT) / (sigE - L0 / 2 - Lc / 2); L0 = Math.max(40, K_SAG * g * 100); for (let it = 0; it < 6; it++) { g = (yEnd - PT) / (sigE - L0 / 2 - Lc / 2); L0 = Math.max(40, K_SAG * g * 100); }
+    const yV = PT + g * (sigE - L0 / 2); vp.length = 0; vp.push({ s: L0 / 2, y: PT, L: L0 }); vp.push({ s: sigE, y: r2(yV), L: 0 }); R.grade = g; R.gradeUp = null; R.sag = null; R.sagDeck = { L: L0, K: K_SAG, A: g * 100 }; R.endCrest = { Lc, A: g * 100, K: Lc / (g * 100), endGrade: 0 }; }
   const yAt = (s: number): number => { // piecewise tangent lines with parabolic blends at each VPI that has L > 0
     const slope = (i: number): number => (vp[i + 1].y - vp[i].y) / (vp[i + 1].s - vp[i].s); let y: number | null = null;
     if (s <= 0) return PT;
     for (let i = 1; i < vp.length - 1 && y === null; i++) { const L = vp[i].L; if (L > 0 && s >= vp[i].s - L / 2 && s <= vp[i].s + L / 2) { const g0 = slope(i - 1), g1 = slope(i); const x = s - (vp[i].s - L / 2); const yb = vp[i].y - g0 * L / 2; y = yb + g0 * x + (g1 - g0) * x * x / (2 * L); } }
     if (y === null) { const first = vp[0]; if (s <= first.s + first.L / 2) { const g1 = slope(0); const x = s - (first.s - first.L / 2); y = first.y + 0 * x + (g1 - 0) * x * x / (2 * first.L); } }
     if (y === null) { let i = 0; while (i < vp.length - 2 && s > vp[i + 1].s) i++; y = vp[i].y + slope(i) * (s - vp[i].s); }
+    if (R.endCrest && s > sigE - R.endCrest.Lc) { const Lc2 = R.endCrest.Lc, sa = sigE - Lc2, x = s - sa; const ya = vp[0].y + slope(0) * (sa - vp[0].s); y = ya + slope(0) * (x - x * x / (2 * Lc2)); }
     return y; };
   const rows: any[] = []; const nat0 = (x: number, z: number): number => nat(x, z);
   // zone (straight along the axis from the circle edge to D) first
@@ -183,7 +190,7 @@ function searchR4(): void { const D4 = D0('R4'); const dA = dirW(-Math.PI / 2); 
   // J4-R4 (user delegated, section 20): the arm leaves the circle along -v, turns in an S and JOINS the OLD R4-9 line (own hill cut, already in the game) before the saddle. Old line = the real game road R4-9.
   const old = oldRoad('R4-9'); const nOld = old.xs.length;
   let best: any = null; const tried: any[] = []; const oldDist = (x: number, z: number): number => { let b = 1e9; for (let i = 0; i < nOld; i++) { const d = Math.hypot(old.xs[i] - x, old.zs[i] - z); if (d < b) b = d; } return b; };
-  for (let k = 3; k < nOld - 3; k++) { const dO = Math.hypot(old.xs[k] - O.x, old.zs[k] - O.z); if (dO < 250 || dO > 700) continue; if ((k % 2) !== 0) continue;
+  for (let k = 3; k < nOld - 3; k++) { const dO = Math.hypot(old.xs[k] - O.x, old.zs[k] - O.z); if (dO < 250 || dO > 700) continue; if ((k % 2) !== 0) continue; if (k !== Number(process.env.J300_R4_JOIN ?? 322)) continue; /* J9-a: the built join is old R4-9 index 322, keep it */
     const end = { x: old.xs[k], z: old.zs[k] }; const dir0 = { x: old.xs[k - 3] - old.xs[k + 3], z: old.zs[k - 3] - old.zs[k + 3] }; const ld = Math.hypot(dir0.x, dir0.z); const dir = { x: dir0.x / ld, z: dir0.z / ld }; // travel direction: from the circle outwards = towards the end index of the old road list? sign fixed below
     for (const sgn of [1, -1]) for (let t2 = 20; t2 <= 220; t2 += 10) for (let a1 = D4 + 20; a1 <= 520; a1 += 10) for (const R of [85, 100, 120, 150, 200]) {
       const Ls = 30; const PI1 = { x: O.x + dA.x * a1, z: O.z + dA.z * a1 }; const PI2 = { x: end.x - sgn * dir.x * t2, z: end.z - sgn * dir.z * t2 };
@@ -200,7 +207,7 @@ function searchR4(): void { const D4 = D0('R4'); const dA = dirW(-Math.PI / 2); 
 profileOf('R6', armOut.R6); searchR4(); profileOf('R4', armOut.R4);
 
 // ------------------------------------------------------------------ output
-const alOut = (id: string): any => { const R = armOut[id]; const al = R.al; return { id, d0: R.D0, join: R.join, oldName: R.oldName, radius: R.R, spiralLs: R.Ls, pis: al.pis.map((p: any) => ({ x: r2(p.x), z: r2(p.z), R: p.R, Ls: p.Ls })), length: r2(al.length), start: al.start, end: { x: r2(al.end.x), z: r2(al.end.z), h: r2(al.end.h / D) }, endGap: r2(al.endGap), endHeadingGapDeg: r2(al.endHeadingGapDeg), straights: al.straights.map(r2), grade: R.grade, gradeUp: R.gradeUp ?? null, sag: R.sag ?? null, vpi: R.profile.vpi, rows: R.profile.rows, sigE: r2(R.profile.sigE), yEnd: r2(R.profile.yEnd) }; };
+const alOut = (id: string): any => { const R = armOut[id]; const al = R.al; return { id, d0: R.D0, join: R.join, oldName: R.oldName, radius: R.R, spiralLs: R.Ls, pis: al.pis.map((p: any) => ({ x: r2(p.x), z: r2(p.z), R: p.R, Ls: p.Ls })), length: r2(al.length), start: al.start, end: { x: r2(al.end.x), z: r2(al.end.z), h: r2(al.end.h / D) }, endGap: r2(al.endGap), endHeadingGapDeg: r2(al.endHeadingGapDeg), straights: al.straights.map(r2), grade: R.grade, gradeUp: R.gradeUp ?? null, sag: R.sag ?? null, vpi: R.profile.vpi, endCrest: R.endCrest ?? null, dip: R.dip ?? null, rows: R.profile.rows, sigE: r2(R.profile.sigE), yEnd: r2(R.profile.yEnd) }; };
 const DATA = { generated: '2026-11-24', frame: { ox: r2(O.x), oz: r2(O.z), yaw: Math.round(YAW * 1e6) / 1e6, yawDeg: r2(YAW / D), u0: U0, deckY: PT, ringC: C0 }, circle: CIRC, legs: legsOut, crossings, islands, arms: { R6: alOut('R6'), R4: alOut('R4') }, constants: { K_CREST: r2(K_CREST), K_SAG: r2(K_SAG), rampV: RAMP_V, theta: 30, minRadius50: r2(minRadius(50)), minRadius60: r2(minRadius(60)) } };
 writeFileSync('docs/J300_GEOM.json', JSON.stringify(DATA));
 const ts = `// GENERATED by scripts/j300-geom-gen.ts (STEP J4). Do not edit: rerun the script. Sources: J1-B (docs/J300_TYPEB.json), J2, J3 (docs/J300_CALC.json), the game terrain and old road levels.
