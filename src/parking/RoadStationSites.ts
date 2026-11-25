@@ -66,7 +66,7 @@ export const ROAD_STATION_SITES: ReadonlyArray<RoadStationSite> = [
   { id: 'cp-22', kind: 'charge', nameBn: 'চার্জ পয়েন্ট ২২', x: -1491.9, z: -233.8, y: 54.75, slope: 0.001, yaw: -0.8704, hw: 4, hd: 2, gap: 4.5, road: 'R6-15' },
   { id: 'station-23', kind: 'fuel', nameBn: 'স্টেশন ২৩', x: -3138.4, z: -3681.6, y: 36.3, slope: -0.0086, yaw: -1.5783, hw: 16, hd: 13, gap: 4.5, road: 'R6-10' },
   { id: 'cp-23', kind: 'charge', nameBn: 'চার্জ পয়েন্ট ২৩', x: -3060.9, z: -3545.6, y: 31.26, slope: -0.0117, yaw: -0.3954, hw: 4, hd: 2, gap: 4.5, road: 'R6-10' },
-  { id: 'station-24', kind: 'fuel', nameBn: 'স্টেশন ২৪', x: -2412.2, z: -3592.8, y: 48.09, slope: 0.0274, yaw: 2.9643, hw: 16, hd: 13, gap: 4.5, road: 'R6-10' },
+  { id: 'station-24', kind: 'fuel', nameBn: 'স্টেশন ২৪', x: -2412.2, z: -3592.8, y: 36.91, slope: 0.0274, yaw: 2.9643, hw: 16, hd: 13, gap: 4.5, road: 'R6-10' },
   { id: 'cp-24', kind: 'charge', nameBn: 'চার্জ পয়েন্ট ২৪', x: -3118, z: -3525.6, y: 31.99, slope: 0.0254, yaw: 2.5064, hw: 6, hd: 1.75, gap: 4.5, road: 'R6-10' },
   { id: 'station-25', kind: 'fuel', nameBn: 'স্টেশন ২৫', x: 2066.9, z: -1503, y: 26.68, slope: -0.0101, yaw: 0.4072, hw: 16, hd: 13, gap: 4.5, road: 'R6-11' },
   { id: 'cp-25', kind: 'charge', nameBn: 'চার্জ পয়েন্ট ২৫', x: 2147.6, z: -1523.2, y: 26.69, slope: 0.0136, yaw: 0.3031, hw: 4, hd: 2, gap: 4.5, road: 'R6-11' },

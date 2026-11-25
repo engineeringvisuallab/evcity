@@ -21,6 +21,7 @@ import { J1_ARM_DATA, type J1ArmData } from './junction/J1ArmData';
 import { ISLAND_LINK_DATA } from './island/IslandLinkData';
 import { R6_LINE_DATA } from './r6/R6LineData';
 import { R6_NEW_LINE_DATA } from './r6/R6NewLineData';
+import { r6TenWithLink } from './r6/R6TenLink';
 import { R6_SLIP_DATA } from './r6/R6SlipData';
 import { RTE_SLIP_DATA } from './junction/RteGeometry';
 import { RTE_STRUCT_FRAME, RTE_RAMP_STRUCTS } from './junction/RteStructData';
@@ -1260,7 +1261,9 @@ export class RoadNetwork {
   private layoutR6Roads(): void {
     if (!Config.roads.r6Roads.enabled) return;
     const sec = sectionFields(SECTION_M6);
-    for (const d of Config.roads.r6New.enabled ? [...R6_LINE_DATA, ...R6_NEW_LINE_DATA] : R6_LINE_DATA) { // STEP B7a-2: the new lines only when the switch is on (default off)
+    const r7Data = R6_LINE_DATA.find((q) => q.name === 'R6-7');
+    for (const d0 of Config.roads.r6New.enabled ? [...R6_LINE_DATA, ...R6_NEW_LINE_DATA] : R6_LINE_DATA) { // STEP B7a-2: the new lines only when the switch is on (default off)
+      const d = d0.name === 'R6-10' && r7Data ? r6TenWithLink(r7Data, d0) : d0; // STEP R6-10-JOIN: R6-10 now starts on R6-7 (link curve + new levels, r6/R6TenLink.ts)
       if (j300Active() && J300_DROP_ROADS.includes(d.name)) continue; // J9-a: the 300 ft junction arm replaces the old R6-9
       const m = d.pts.length;
       const cum = [0];
@@ -1277,7 +1280,7 @@ export class RoadNetwork {
         pts.push([d.pts[j][0] + (d.pts[j + 1][0] - d.pts[j][0]) * t, d.pts[j][1] + (d.pts[j + 1][1] - d.pts[j][1]) * t]);
         ys.push(d.ys[j] + (d.ys[j + 1] - d.ys[j]) * t);
       }
-      this.addRoad({ tier: 1, kind: 'highway', name: d.name, closed: false, pts, fixedY: ys, halfWidth: sec.halfWidth, shoulder: sec.shoulder, lanes: sec.lanesPerDir * 2, speedKmh: d.name === 'R6-7' ? 60 : 80, maxGrade: 0.04, section: sec, daylight: true }); // R6-7 (L48): min radius 142 m < 229 m (V80), kept as a V60 curve with a lower posted speed (G7f)
+      this.addRoad({ tier: 1, kind: 'highway', name: d.name, closed: false, pts, fixedY: ys, halfWidth: sec.halfWidth, shoulder: sec.shoulder, lanes: sec.lanesPerDir * 2, speedKmh: d.name === 'R6-7' || d.name === 'R6-10' ? 60 : 80, maxGrade: 0.04, section: sec, daylight: true }); // R6-7 (L48): min radius 142 m < 229 m (V80), kept as a V60 curve with a lower posted speed (G7f)
       if (d.structs) this.bridgeArm(this.roads[this.roads.length - 1], { name: d.name, s: d.s, pts: d.pts, ys: d.ys, structs: d.structs }); // STEP G7f: short river bridge (R6-7)
       this.bridgeWetGaps(this.roads[this.roads.length - 1]); // STEP BRIDGE-ALL
     }

@@ -29,7 +29,7 @@ export const ROAD_SIGN_SPOTS: ReadonlyArray<RoadSignSpot> = [
   {id:'sign-8',road:'J1-W',s:951,x:-960.8,y:34.25,z:85,yaw:2.1171,edge:24.7,feetL:-0.67,feetR:-0.67,boardW:48.4,sections:4},
   {id:'sign-9',road:'J1-S',s:1503,x:-903.5,y:18.87,z:1329.5,yaw:2.7706,edge:24.7,feetL:-0.67,feetR:-0.67,boardW:48.4,sections:4},
   {id:'sign-10',road:'R6-15',s:1478,x:-2146.6,y:22.75,z:-847.9,yaw:1.052,edge:18.6,feetL:-0.67,feetR:3.39,boardW:36.2,sections:3},
-  {id:'sign-11',road:'R6-10',s:1238,x:-3154,y:36.64,z:-3775.6,yaw:-0.3091,edge:18.6,feetL:0.68,feetR:0.19,boardW:36.2,sections:3},
+  {id:'sign-11',road:'R6-10',s:1364,x:-3154,y:36.64,z:-3775.6,yaw:-0.3091,edge:18.6,feetL:0.68,feetR:0.19,boardW:36.2,sections:3},
   {id:'sign-12',road:'M6-1',s:231,x:-1143.1,y:17.39,z:2557.6,yaw:3.1035,edge:18.6,feetL:2.28,feetR:2.28,boardW:36.2,sections:3},
   {id:'sign-13',road:'R6-11',s:574,x:1941.3,y:27.98,z:-1411.7,yaw:-1.1649,edge:18.6,feetL:1.54,feetR:1.54,boardW:36.2,sections:3},
   {id:'sign-14',road:'R6-3',s:831,x:250.3,y:25.54,z:2641.7,yaw:-1.3394,edge:18.6,feetL:3.77,feetR:3.77,boardW:36.2,sections:3},
