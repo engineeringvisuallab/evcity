@@ -40,6 +40,16 @@ function wall(s: Soup, pts: readonly W[], thick: number, parapet: boolean, faceC
   strip(s, f, fu, PARAPET); strip(s, gu, g, PARAPET); strip(s, fu, gu, PARAPET);
 }
 
+/** J300-FIX-1: cut the start of a wall polyline that lies inside the deck circle (r < face): the first kept point is interpolated exactly on r = face. */
+function clipToDeckFace(pts: readonly W[], cx: number, cz: number, face: number): readonly W[] {
+  const r = pts.map((p) => Math.hypot(p[0] - cx, p[1] - cz));
+  const i = r.findIndex((v) => v >= face);
+  if (i <= 0) return pts; // nothing inside the circle (or all inside: leave it, the data is not what the fix expects)
+  const t = (face - r[i - 1]) / (r[i] - r[i - 1] || 1), a = pts[i - 1], c = pts[i];
+  const q = a.map((v, k) => v + (c[k] - v) * t); const nl = Math.hypot(q[4], q[5]) || 1; q[4] /= nl; q[5] /= nl;
+  return [q, ...pts.slice(i)];
+}
+
 function slope(s: Soup, pts: readonly W[]): void { const E = pts.map((p) => [p[0], p[2], p[1]]), T = pts.map((p) => [p[3], p[5], p[4]]); strip(s, E, T, EARTH); }
 
 export function buildJ300Mesh(): J300MeshData {
@@ -55,10 +65,10 @@ export function buildJ300Mesh(): J300MeshData {
     for (let i = 0; i < P.length; i++) { const a = P[Math.max(0, i - 1)], b = P[Math.min(P.length - 1, i + 1)]; const dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1; const nx = -dz / l, nz = dx / l; const y = P[i][2] + 0.015; const x = P[i][0], z = P[i][1]; const hw = (P[i] as readonly number[])[3] as number | undefined; const tp = hw ?? A.top, e = hw !== undefined ? hw - 0.6 : e0; /* J10: R4 taper at the join */
       L.push([x + nx * tp, y, z + nz * tp]); L2.push([x + nx * e, y, z + nz * e]); R2.push([x - nx * e, y, z - nz * e]); R.push([x - nx * tp, y, z - nz * tp]); }
     strip(s, R, R2, SHOULDER); strip(s, R2, L2, ASPHALT); strip(s, L2, L, SHOULDER); }
-  for (const Rp of C.surfRamps) { const q = Rp.rows; const a = q.map((r) => [r[0], r[8] + 0.015, r[1]]), b = q.map((r) => [r[2], r[8] + 0.015, r[3]]), c = q.map((r) => [r[4], r[8] + 0.015, r[5]]), d = q.map((r) => [r[6], r[8] + 0.015, r[7]]); strip(s, a, b, SHOULDER); strip(s, b, c, ASPHALT); strip(s, c, d, SHOULDER); }
+  for (const Rp of C.surfRamps) { const q = Rp.rows; const a = q.map((r) => [r[0], r[8] + 0.015, r[1]]), b = q.map((r) => [r[2], r[8] + 0.015, r[3]]), c = q.map((r) => [r[4], r[8] + 0.015, r[5]]), d = q.map((r) => [r[6], r[8] + 0.015, r[7]]); strip(s, b, c, ASPHALT); const inRing = (r: number[]): boolean => Math.hypot(r[0] - D.cx, r[1] - D.cz) < D.ro; for (let i = 0; i < q.length - 1; i++) { if (inRing(q[i]) && inRing(q[i + 1])) continue; /* J300-FIX-1: no lighter shoulder strip across the ring lanes */ s.quad([a[i], b[i], b[i + 1], a[i + 1]], SHOULDER); s.quad([c[i], d[i], d[i + 1], c[i + 1]], SHOULDER); } }
   mark('surface');
   // ---- concrete: walls + parapets, box roof slab (top 1 cm under the deck so it does not fight it)
-  for (const w of C.walls) { const par = w.kind === 'platform' || w.kind === 'arm' || w.kind === 'ramp-out' || w.kind === 'ramp-in'; wall(s, w.pts, w.thick, par, w.kind === 'box' ? CONCRETE : FACE); }
+  for (const w of C.walls) { const par = w.kind === 'platform' || w.kind === 'arm' || w.kind === 'ramp-out' || w.kind === 'ramp-in'; wall(s, w.kind === 'ramp-in' ? clipToDeckFace(w.pts, D.cx, D.cz, D.face) : w.pts, w.thick, par, w.kind === 'box' ? CONCRETE : FACE); } // J300-FIX-1: the ramp inner walls started at r 57.9 m, INSIDE the circulating carriageway (48..62): wall + parapet stood in the lanes
   { const B = C.box, y1 = B.roofTop - 0.01, y0 = B.soffit; const c = [W(B.u0, -B.vHalf), W(B.u1, -B.vHalf), W(B.u1, B.vHalf), W(B.u0, B.vHalf)];
     s.quad(c.map((p) => [p[0], y1, p[1]]), CONCRETE); s.quad([c[3], c[2], c[1], c[0]].map((p) => [p[0], y0, p[1]]), CONCRETE);
     for (let i = 0; i < 4; i++) { const j = (i + 1) % 4; s.quad([[c[i][0], y0, c[i][1]], [c[j][0], y0, c[j][1]], [c[j][0], y1, c[j][1]], [c[i][0], y1, c[i][1]]], CONCRETE); } }
