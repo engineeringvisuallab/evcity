@@ -765,6 +765,9 @@ export class RoadNetwork {
         if (r.bridgeOf[i] < 0) continue;
         for (let k = -STRUCT_IDX; k <= STRUCT_IDX; k++) if (i + k >= 0 && i + k < n) pin[i + k] = 1;
       }
+      // J10 (switch ON only): a side road that starts on a J300 arm ribbon (R4-4 on the R6 arm) keeps its designed levels over the blend length + 10 m: the arm is not a game road, so nothing else pins that start and the ground-following pass pulled it to the flat 19.20 m (1.86 m step at the T)
+      const j300Side = j300Active() ? J300_SIDE_ROADS.find((q) => q.name === r.name) : undefined;
+      if (j300Side) for (let i = 0; i < n; i++) if (r.cum[i] <= j300Side.blend + 10) pin[i] = 1;
       // arc distance to the nearest pinned point (two passes)
       const dist = new Float64Array(n).fill(Infinity);
       for (let i = 0; i < n; i++) if (pin[i]) dist[i] = 0;

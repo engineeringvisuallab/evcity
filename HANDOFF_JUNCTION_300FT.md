@@ -382,3 +382,10 @@ Starter prompt for the NEXT chat: "Read HANDOFF_JUNCTION_300FT.md completely (ba
 - src/core/Config.ts: `roads.junctionJ300.enabled` is now TRUE by default (one line). Kill switch: open the game with `?j300=0` to see the OLD roads (R6-9, R4-9 stub) again. Workers get the flag from the main thread (J9-b), the minimap too, so everything follows this one value.
 - Headless checks unchanged (J9-a 0 FAIL, J9-b 0 FAIL, J7-C 19 PASS, join check 1 FAIL = R4-4 level step, section 34).
 - The user must push this file and wait for the GitHub Pages deploy; the old browser cache may need Ctrl+F5.
+
+## 37. R4-4 T JUNCTION LEVEL FIXED (2026-11-25; user chose "you decide" -> option A; switch OFF = nothing changes)
+- CAUSE FOUND: `RoadNetwork.reprofileResidential` (called in TerrainGenerator after the rail). `isRes` matches `^(C|L|R2|R4)-`, so R4-4 is a "residential" road. Its start is pinned only when a NON-residential game road is within 18 m, but the J300 R6 arm is not a game road, so the start was free and was pulled to the smoothed flat ground (19.20 m). That is why addRoad showed 21.06 -> 19.6 m but the finished road was flat 19.20 m.
+- FIX (RoadNetwork.ts, reprofileResidential, 3 lines after the bridge-pin loop): with the switch ON, the points of R4-4 within `blend + 10` m (= 80 m, from J300_SIDE_ROADS) from its start are pinned, so they keep the designed levels. The rest is moved as before (grade repair walks away from the pinned part).
+- RESULT (headless): JOIN CHECK 0 FAIL: R4-4 start level 21.06 vs arm 21.06 m (was 19.20), grade first 70 m max 5.03 % (limit 6 %), far end identical OFF vs ON. J9-a 0 FAIL (216 roads identical), J9-b 0 FAIL.
+- NOT RUN: real `npm run build` (tsc + vite) on the PC, J9-c check (needs the `three` stub), in-game look at the T, J10 traffic graph.
+- NEXT: J9-c re-run (stub), then J10 traffic graph + AI (R4-4 now has a link onto the arm at the ribbon edge).
