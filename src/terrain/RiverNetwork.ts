@@ -78,6 +78,9 @@ const NB: [number, number][] = [
 /** STEP HK-9c-2 3d: metres the river east of the Hatikamrul interchange is moved EAST (see moveHkRiver). */
 const HK_RIVER_SHIFT = 220;
 
+/** STP reach: the river north-east of the new STP follows the user's two bank lines (see moveStpReach). */
+const STP_REACH_ENABLED = true;
+
 const waterDepthOf = (acc: number): number => 0.8 + 0.06 * Math.sqrt(acc);
 const halfWidthOf = (acc: number): number => (4 + 0.7 * Math.sqrt(acc)) / 2;
 
@@ -356,6 +359,11 @@ export class RiverNetwork {
     if (Config.roads.hatikamrul.enabled) this.moveHkRiver();
 
     // 5. spatial index
+    this.buildIndex();
+  }
+
+  /** Spatial index of the segments (built once; rebuilt after moveStpReach). */
+  private buildIndex(): void {
     this.cells = Array.from({ length: this.GN * this.GN }, () => [] as number[]);
     this.segments.forEach((s, idx) => {
       const infl = Math.max(s.hwA, s.hwB) * 3.2 + 70;
@@ -367,6 +375,32 @@ export class RiverNetwork {
         for (let i = Math.max(0, i0); i <= Math.min(this.GN - 1, i1); i++) this.cells[j * this.GN + i].push(idx);
       }
     });
+  }
+
+  /**
+   * STP reach (user, 2026-11-25, screenshot with the two new banks drawn): the river just north-east of the new STP is moved EAST and widened so its banks follow the user's two lines:
+   * west bank = the straight line x = -400 (z 1840..2070), east bank = the diagonal (-315, 2071) -> (-238, 1837).
+   * Only the river nodes inside a small box are shifted (weight by z, 0 at both ends), so the segments stay connected. Call it AFTER the lakes are made (the lake RNG must not change).
+   */
+  moveStpReach(): void {
+    if (!STP_REACH_ENABLED) return;
+    const ZS = [1790, 1850, 1880, 1910, 1940, 1970, 2000, 2030, 2060];
+    const SH = [0, 40, 56, 70, 74, 56, 32, 8, 0];
+    const WF = [1, 1.5, 1.5, 1.4, 1.3, 1.15, 1.1, 1, 1];
+    const lerp = (tab: number[], z: number): number => {
+      if (z <= ZS[0] || z >= ZS[ZS.length - 1]) return tab[z <= ZS[0] ? 0 : tab.length - 1];
+      let k = 0;
+      while (z > ZS[k + 1]) k++;
+      const t = (z - ZS[k]) / (ZS[k + 1] - ZS[k]);
+      return tab[k] + (tab[k + 1] - tab[k]) * (t * t * (3 - 2 * t));
+    };
+    const inBox = (x: number, z: number): boolean => x > -560 && x < -230 && z > ZS[0] && z < ZS[ZS.length - 1];
+    for (const s of this.segments) {
+      if (inBox(s.ax, s.az)) { s.ax += lerp(SH, s.az); s.hwA *= lerp(WF, s.az); }
+      if (inBox(s.bx, s.bz)) { s.bx += lerp(SH, s.bz); s.hwB *= lerp(WF, s.bz); }
+      s.len = Math.hypot(s.bx - s.ax, s.bz - s.az);
+    }
+    this.buildIndex();
   }
 
   /** Water surface height along a segment at t in [0,1] (with waterfall steps). */

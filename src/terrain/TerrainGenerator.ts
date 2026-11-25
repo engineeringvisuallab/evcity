@@ -110,6 +110,7 @@ export class TerrainGenerator {
     const base = (x: number, z: number) => this.baseHeightAt(x, z);
     this.rivers = new RiverNetwork(base);
     this.lakes = new LakeSet(seed, base, this.sites, this.rivers);
+    this.rivers.moveStpReach(); // STP reach: after the lakes (their RNG sees the old river), before roads / rail / pads
     // STEP HK-10a: the ponds inside the Hatikamrul loops (only with the switch ON; they are added AFTER every older lake)
     if (Config.roads.hatikamrul.enabled) for (const p of HK_INFIELD_PONDS) this.lakes.addFixedPond(p.x, p.z, p.R, p.level, p.depth, HK_POND_WOBBLE);
     // roads are planned on the natural ground INCLUDING the island (the island roads and the long bridge to the island need it)
