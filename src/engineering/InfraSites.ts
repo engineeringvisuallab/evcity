@@ -36,7 +36,7 @@ export interface InfraPlacement {
 const d2r = Math.PI / 180;
 export const INFRA_PLACEMENTS: InfraPlacement[] = [
   { id: 'swtp', nameBn: 'Water Treatment Plant (SWTP)', x: -180, z: 1260, yaw: 161.2 * d2r, rect: { x0: -168, x1: 158, z0: -113, z1: 113 }, riverSide: 'W', color: '#0ea5e9', mark: 'W', deep: 10, blend: 30, riverBlend: 22, lift: 2.5 },
-  { id: 'stp', nameBn: 'Sewage Treatment Plant (STP)', x: -240, z: 2040, yaw: 142.2 * d2r, rect: { x0: -153, x1: 153, z0: -103, z1: 103 }, riverSide: 'E', color: '#92400e', mark: 'S', deep: 7.5, blend: 30, riverBlend: 10, lift: 0 },
+  { id: 'stp', nameBn: 'Sewage Treatment Plant (STP)', x: -590, z: 2080, yaw: 45 * d2r, rect: { x0: -153, x1: 153, z0: -103, z1: 103 }, riverSide: 'E', color: '#92400e', mark: 'S', deep: 7.5, blend: 30, riverBlend: 10, lift: 0 },
   // Thermal power plant: stands inside the engineering area 'eng-thermal-power' (x 700..1150, z -3150..-2850), no river needed.
   // Pad 348 x 224 m: clear of the pond in the area's south-west corner and of the public road just east of it; entrance on the south side (local +z).
   { id: 'thermal', nameBn: 'Thermal Power Plant', x: 925, z: -3010, yaw: 0, rect: { x0: -165, x1: 183, z0: -112, z1: 112 }, riverSide: 'none', color: '#f59e0b', mark: 'T', deep: 3, blend: 28, riverBlend: 28, lift: 0 },
