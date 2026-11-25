@@ -10,7 +10,8 @@ import type { Field } from '../farm/FarmPlan';
 import { TreePlacer } from '../vegetation/TreePlacement';
 import { mulberry32 } from '../world/Seed';
 import { Q } from '../core/Quality';
-import { buildAnimal, buildFishGeometry, buildFishMaterial, variantCount, type Rig } from './AnimalModel';
+import { buildAnimal, variantCount, type Rig } from './AnimalModel';
+import { PAT, attachPattern, buildReefFishGeometry, buildReefFishMaterial } from '../water/ReefFish';
 import { sm } from './AnimalRig';
 import { HABITAT, HABITATS_OF, JUNGLE_HABITAT, PREDATOR_ZONES, SPECIES, type HabitatKey, type Species, type SpeciesDef } from './Species';
 
@@ -72,6 +73,20 @@ const MAX_PREDATORS = Q.predators; // 4
 const MAX_DOLPHINS = Q.dolphins; // 8
 const FISH_SCHOOLS = Q.fishSchools; // 10
 const FISH_PER = 12;
+/**
+ * FISH-REAL: the pond / river / sea fish use the SAME lofted body + procedural patterns as the reef fish (src/water/ReefFish.ts)
+ * instead of the old sphere + cone. One school = one species: pattern, colours (70 / 30 %) and body aspect (width, height, length).
+ */
+interface PondFish { w: number; theme: [number, number, number][]; pat: number; asp: [number, number, number] }
+const POND_FISH: PondFish[] = [
+  { w: 3, theme: [[1.2, 1.25, 1.3], [1.0, 1.08, 1.15]], pat: PAT.SILVER, asp: [0.8, 0.85, 1.25] }, // silver carp / rui / hilsa
+  { w: 2, theme: [[1.5, 0.8, 0.25], [1.6, 0.55, 0.2]], pat: PAT.SILVER, asp: [1, 1.1, 1] }, // goldfish / koi
+  { w: 2, theme: [[0.75, 0.85, 0.55], [0.6, 0.75, 0.45]], pat: PAT.SPOTS, asp: [1, 1.15, 1.05] }, // tilapia
+  { w: 1, theme: [[1.5, 1.4, 0.4], [1.3, 1.25, 0.45]], pat: PAT.BARS, asp: [0.9, 1.2, 0.95] }, // barred perch
+  { w: 1, theme: [[0.5, 0.85, 1.5], [0.9, 1.0, 1.3]], pat: PAT.STRIPE, asp: [0.8, 0.75, 1.3] }, // striped minnow
+  { w: 1, theme: [[0.6, 0.52, 0.4], [0.5, 0.45, 0.38]], pat: PAT.SPOTS, asp: [0.85, 0.7, 1.5] }, // catfish
+];
+const POND_FISH_W = POND_FISH.reduce((a, f) => a + f.w, 0);
 const WORLD_LIMIT = 4700;
 const SAFARI = { x: 3000, z: 1900, r: 800 };
 /** Real village houses (Placements.ts): the village animals live around them. */
@@ -99,10 +114,11 @@ export class AnimalManager {
   private predators: Animal[] = [];
 
   // fish
-  private fishGeo = buildFishGeometry();
+  private fishGeo = buildReefFishGeometry(1);
   private uTime = { value: 0 };
-  private fishMat = buildFishMaterial(this.uTime);
+  private fishMat = buildReefFishMaterial(this.uTime);
   private fishMesh: THREE.InstancedMesh;
+  private fishPat: THREE.InstancedBufferAttribute;
   private schools: School[] = [];
   private dummy = new THREE.Object3D();
   private fishTimer = 0;
@@ -123,8 +139,9 @@ export class AnimalManager {
     this.fishMesh.frustumCulled = false;
     this.fishMesh.castShadow = false;
     this.fishMesh.count = 0;
-    const palette = [0xb9c4cc, 0xc9a24a, 0x8aa07a, 0xd9602c, 0x7f8f9c, 0xe0d8c0];
-    for (let i = 0; i < nFish; i++) this.fishMesh.setColorAt(i, new THREE.Color(palette[i % palette.length]).multiplyScalar(0.85 + this.rnd() * 0.3));
+    this.fishPat = attachPattern(this.fishGeo, nFish);
+    const white = new THREE.Color(1, 1, 1);
+    for (let i = 0; i < nFish; i++) this.fishMesh.setColorAt(i, white); // creates instanceColor; the real colour is written every frame per school
     root.add(this.fishMesh);
   }
 
@@ -821,6 +838,9 @@ export class AnimalManager {
       sc.depthFrac = this.r(0.18, 0.6);
       sc.size = this.r(0.28, 0.6) * (depth > 6 ? 1.5 : 1);
       sc.y = s.water - Math.min(depth * sc.depthFrac, 3.2) - 0.25;
+      let pick = this.rnd() * POND_FISH_W, sp = POND_FISH[0];
+      for (const f of POND_FISH) { pick -= f.w; if (pick <= 0) { sp = f; break; } }
+      sc.pat = sp.pat; sc.theme = sp.theme; sc.asp = sp.asp;
       sc.alive = true;
       sc.timer = 0;
       return true;
@@ -831,6 +851,7 @@ export class AnimalManager {
   private updateFish(dt: number, px: number, pz: number): void {
     this.fishTimer -= dt;
     const dummy = this.dummy;
+    const ic = this.fishMesh.instanceColor;
     let idx = 0;
     for (const sc of this.schools) {
       if (!sc.alive) {
@@ -861,15 +882,19 @@ export class AnimalManager {
         const c = Math.cos(sc.heading), sn = Math.sin(sc.heading);
         dummy.position.set(sc.x + lx * c + lz * sn, sc.y + o.y + Math.sin(t * 0.9 + o.p) * 0.12, sc.z - lx * sn + lz * c);
         dummy.rotation.set(0, sc.heading + Math.sin(t * 1.3 + o.p) * 0.18, 0);
-        dummy.scale.setScalar(sc.size * o.k);
+        dummy.scale.set(sc.size * o.k * sc.asp[0], sc.size * o.k * sc.asp[1], sc.size * o.k * sc.asp[2]);
         dummy.updateMatrix();
+        const th = sc.theme[i % sc.theme.length], m = 0.9 + (o.k - 0.8) * 0.5;
+        if (ic) ic.setXYZ(idx, th[0] * m, th[1] * m, th[2] * m);
+        this.fishPat.setX(idx, sc.pat);
         this.fishMesh.setMatrixAt(idx++, dummy.matrix);
       }
     }
     if (this.fishTimer <= 0) this.fishTimer = 0.7;
     this.fishMesh.count = idx;
     this.fishMesh.instanceMatrix.needsUpdate = true;
-    if (this.fishMesh.instanceColor) this.fishMesh.instanceColor.needsUpdate = true;
+    this.fishPat.needsUpdate = true;
+    if (ic) ic.needsUpdate = true;
   }
 
   // ------------------------------------------------------------------ main update
@@ -945,6 +970,8 @@ interface School {
   x: number; y: number; z: number;
   heading: number; speed: number; turn: number; timer: number;
   size: number; depthFrac: number;
+  /** FISH-REAL: species of the school (see POND_FISH). */
+  pat: number; theme: [number, number, number][]; asp: [number, number, number];
   n: number;
   off: { x: number; y: number; z: number; p: number; k: number }[];
 }
@@ -952,5 +979,5 @@ interface School {
 function newSchool(rnd: () => number, n: number): School {
   const off: School['off'] = [];
   for (let i = 0; i < n; i++) off.push({ x: (rnd() - 0.5) * 3.2, y: (rnd() - 0.5) * 0.8, z: (rnd() - 0.5) * 4, p: rnd() * 6.28, k: 0.8 + rnd() * 0.4 });
-  return { alive: false, x: 0, y: 0, z: 0, heading: 0, speed: 1, turn: 0, timer: 0, size: 0.4, depthFrac: 0.3, n, off };
+  return { alive: false, x: 0, y: 0, z: 0, heading: 0, speed: 1, turn: 0, timer: 0, size: 0.4, depthFrac: 0.3, pat: PAT.SILVER, theme: POND_FISH[0].theme, asp: POND_FISH[0].asp, n, off };
 }

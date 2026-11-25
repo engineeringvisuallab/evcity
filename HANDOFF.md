@@ -259,3 +259,5 @@ User drew a new river course: the river east of the node is moved 220 m east (sr
 See HANDOFF_JUNCTION_300FT.md section 26. Switch: Config.roads.junctionJ300.enabled or ?j300=1 (J300Switch.ts). With it ON the old R6-9 is not built and the old R4-9 stops at the R4 arm join. J4-R4 was rebuilt (the uploaded zip lacked it). Next: J9-b terrain carve.
 
 - 2026-11-25: build fix 2 (J300SolidMesh.ts `inRing` takes `readonly number[]`), see HANDOFF_JUNCTION_300FT.md section 39.
+
+- 2026-11-25: FISH-REAL + ROCK-REAL: pond fish now use ReefFish model + patterns (AnimalManager.ts `POND_FISH`), land + seabed rocks use `buildRockGeometry` + `applyRockTexture` (RockAssets.ts). Details + what was not touched: CHANGES_FISH_ROCKS_BN.md. Real `npm run build` passes.

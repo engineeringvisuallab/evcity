@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { TerrainGenerator } from '../terrain';
 import type { TerrainSample } from '../terrain/Lakes';
 import { hash2, mergeParts, part, vnoise } from './GeoUtil';
+import { applyRockTexture, buildRockGeometry } from '../vegetation/RockAssets';
 
 /**
  * The sea floor comes alive: swaying seaweed and kelp, branching and brain corals, rocks. Placed on a 5 m grid around the
@@ -140,20 +141,8 @@ function domeCoralGeometry(): THREE.BufferGeometry {
 }
 
 function rockGeometry(): THREE.BufferGeometry {
-  const g = new THREE.IcosahedronGeometry(0.5, 1);
-  const p = g.getAttribute('position');
-  for (let i = 0; i < p.count; i++) {
-    const x = p.getX(i);
-    const y = p.getY(i);
-    const z = p.getZ(i);
-    const j = 0.78 + 0.45 * hash2(Math.round(x * 100), Math.round(y * 100), Math.round(z * 100));
-    p.setXYZ(i, x * j * 1.1, (y > 0 ? y * 0.75 : y * 0.35) * j, z * j);
-  }
-  g.computeVertexNormals();
-  return part(g, (x, y, z) => {
-    const k = 0.6 + 0.4 * hash2(Math.round(x * 20), Math.round(y * 20), Math.round(z * 20) + 4);
-    return [k, k, k];
-  });
+  // ROCK-REAL: the same smooth noisy stone as the land rocks (radius 0.5, centred; the instance scale sets the size)
+  return buildRockGeometry({ detail: 2, sx: 0.55, sy: 0.375, sz: 0.5, lumpy: 0.2, chip: 0.45, bottom: 0.47, base: 0xdcdcdc, seed: 31, grounded: false });
 }
 
 export class SeabedDecor {
@@ -200,6 +189,7 @@ export class SeabedDecor {
     seaweedMat.customProgramCacheKey = () => 'evc-seaweed-v1';
     const coralMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7 });
     const rockMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 });
+    applyRockTexture(rockMat, 'evc-searock-v1', 0.2); // procedural stone surface (little moss under water)
     this.mats.push(seaweedMat, coralMat, rockMat);
     const geos = [bladeGeometry(), branchCoralGeometry(), domeCoralGeometry(), rockGeometry()];
     const mats = [seaweedMat, coralMat, coralMat, rockMat];
