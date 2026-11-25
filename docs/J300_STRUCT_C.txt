@@ -1,0 +1,40 @@
+J7-C CHECK + J7 TOTAL (headless, numbers only, nothing in the game changed by the check)
+
+0) WATER (sc.water > sc.h, runs first)
+PASS  water check on platform, arms, ramps, box area  docs/J300_STRUCT_C_WATER.txt
+
+1) WALLS
+PASS  every wall point finite, height >= 0.5 m  25 walls, 0 bad
+PASS  arm walls <= J2 wall height 16.0 m (+0.6 INFO band)  R6 / R4 max 16.48 m
+INFO  platform edge wall  max 16.64 m = 0.64 m over the J2 height 16.0 m (known from J6, needs the real wall design)
+INFO  ramp walls  outer max 16.57 m, inner max 16.57 m
+PASS  R6 wall toe inside the half ROW 33.9 m  toe max 20.4 m from the centre line
+PASS  R4 wall toe inside the half ROW 31.7 m  toe max 18.2 m from the centre line
+
+2) PARAPETS
+PASS  parapet block (0.5 x 0.9 m, ASSUMED) on every road wall top  2626 m (built from the wall lines, none missing by construction; crash class NOT RUN)
+
+3) WING WALLS (J7-A ASSUMED tops replaced by the real J5 ramp rows)
+PASS  wing WWL real top from ramp W-in  portal end 35.05 -> 35.11 m (height 7.37 m), far end 34.45 -> 34.73 m
+PASS  wing WWR real top from ramp W-out  portal end 35.05 -> 34.71 m (height 6.97 m), far end 34.45 -> 34.25 m
+PASS  wing WEL real top from ramp E-out  portal end 35.05 -> 34.71 m (height 6.98 m), far end 34.45 -> 34.25 m
+PASS  wing WER real top from ramp E-in  portal end 35.05 -> 35.11 m (height 7.38 m), far end 34.45 -> 34.73 m
+
+4) J7-A / J7-B RE-CHECK
+PASS  ring underpass clearance >= 5.5 m  5.56 m (spare 0.06 m only)
+PASS  R6 under the rail clearance >= 5.5 m  5.85 m
+PASS  rail spans <= game spanMax  max 45 m, limit 46 m
+PASS  box outside width inside the ROW  47.400000000000006 m of 91.44 m
+
+5) LIGHTS AND SIGNS
+PASS  arm poles: no gap > 85 m (40 m spacing, alternate sides; a pole is left out only within 3 m of the rail deck)  max gap 52 m (lighting under the deck = J8)
+PASS  ring gantry beam bottom >= 5.5 m over the ring  clear 6.5 m
+
+6) GAME MESH (solid, headless build of src/roads/junction/J300SolidMesh.ts)
+PASS  no NaN vertex, no bad index  29906 vertices, 14988 triangles
+PASS  triangle count fits the budget (< 60 000, ASSUMED)  14988
+PASS  heights in a sane range  y 16.4 .. 71.8 m
+INFO  mesh parts (triangles)  {"surface":[0,4032],"concrete":[4032,12834],"slope":[12834,12978],"furniture":[12978,14988]}
+INFO  NOT RUN  typecheck of the game project (npm deps not in this container), in-game look and drive test, terrain carve (J9), removal of old R6-9 / R4-9 ribbons, old ring signs and trees inside the footprint, structural design, MSE wall type, drainage, crash class, lighting photometry (J8), sign legends (J8 / J11)
+
+SUMMARY  19 PASS / 0 FAIL

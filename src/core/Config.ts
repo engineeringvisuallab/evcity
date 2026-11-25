@@ -82,6 +82,8 @@ export const Config = {
     autoJunction: { enabled: true as boolean, /** A-5c: with the flag ON, cut the old road ribbon inside the pads (segments with both points inside a pad outline get no ribbon). false = keep the ribbon under the pad (A-5b look). */ trimRibbon: true as boolean, /** A-6 step 2: the AI traffic / route planner treats the auto T pads as junctions (cars turn there; pad numbers = net.pads.length + auto pad index). Roundabouts are NOT included yet (A-6 step 3). Only works when enabled is true. false = cars ignore the auto pads as before. */ traffic: true as boolean, ids: ['JN163', 'JN033', 'JN028', 'JN037', 'JN043', 'JN056', 'JN059', 'JN060', 'JN064', 'JN073', 'JN076', 'JN083', 'JN124', 'JN147', 'JN165'] as string[] },
     /** RT-E ramp bridges M3 / M4 + arm viaduct widening (RE-9). ON (RE-9): set false to hide it. */
     junctionRte: { enabled: true as boolean },
+    /** J7-C: the 300 ft junction (Purbachal style) solid preview mesh (J300Layer). Default OFF. Look without editing: open the game with ?j300=1. Junction centre world (-1659.9, -2410.4), deck 35.3 m. */
+    junctionJ300: { enabled: false as boolean },
     /** RE-9 ground-level slip lanes RTE-A2S / RTE-S2A as one-way ramp roads (outside the arm viaduct window). */
     junctionRteLanes: { enabled: true as boolean },
     /** RE-9 (user 2026-11-22: 'bridge remove, ground e road'): the J1-E arm viaduct at stem d 160..271 (2 .. 5 m above a shallow dip) becomes a normal road on an embankment; the road profile is NOT changed. false = old viaduct. */

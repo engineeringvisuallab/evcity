@@ -80,6 +80,7 @@ import { HkGardenLayer } from '../roads/ring/HkGardenLayer';
 import { GroundJ1Layer } from '../roads/junction/GroundJ1Layer';
 import { AutoPadLayer } from '../roads/junction/AutoPadLayer';
 import { RteLayer } from '../roads/junction/RteLayer';
+import { J300Layer } from '../roads/junction/J300Layer';
 import { RingStructurePhysics } from '../roads/ring/RingStructurePhysics';
 import { SignPhysics } from '../signs/SignPhysics';
 import { RoadSignLayer } from '../signs/RoadSignLayer';
@@ -181,6 +182,7 @@ export class Engine {
   private groundJ1: GroundJ1Layer;
   private autoPads: AutoPadLayer;
   private rteLayer: RteLayer;
+  private j300Layer: J300Layer;
   /** STEP 5.3c-6: colliders of the ring structures (bodies only near the player). */
   private ringStructurePhysics: RingStructurePhysics;
   /** STEP 3: colliders of the fuel stations / charge points (same class as the road signs' physics: bodies only near the player). */
@@ -424,6 +426,7 @@ export class Engine {
     this.groundJ1 = new GroundJ1Layer(this.world.root, this.world.terrain.roads.j1);
     this.autoPads = new AutoPadLayer(this.world.root, this.world.terrain.roads.autoPads); // A-5: empty while Config.roads.autoJunction.enabled is false
     this.rteLayer = new RteLayer(this.world.root, Config.roads.junctionRte.enabled, roads);
+    this.j300Layer = new J300Layer(this.world.root, Config.roads.junctionJ300.enabled); // J7-C: empty unless the Config flag or ?j300=1
     this.stackJ1 = new StackInterchangeLayer(this.world.root, Config.roads.interchangeJ1, (x, z) => this.world.terrain.heightAt(x, z));
     this.hkInterchange = new HkInterchangeLayer(this.world.root, roads, (x, z) => this.world.terrain.heightAt(x, z)); // STEP HK-9b: empty unless Config.roads.hatikamrul.enabled
     this.rail = this.world.terrain.rail;
@@ -499,7 +502,7 @@ export class Engine {
     // ROAD SIGN BOARDS: overhead gantries with Bangla + English boards (both faces); posts and bases are solid
     this.roadSigns = new RoadSignLayer(this.world.root);
     this.roadSignPhysics = new SignPhysics(physics, this.world.origin, this.roadSigns.solidGroups);
-    this.ringStructurePhysics = new RingStructurePhysics(physics, this.world.origin, [...this.ringStructures.solids, ...this.stackJ1.solids, ...this.rteLayer.solids, ...this.hkInterchange.solids, ...this.hkInterchange.safetySolids, ...this.hkInterchange.pavingSolids]);
+    this.ringStructurePhysics = new RingStructurePhysics(physics, this.world.origin, [...this.ringStructures.solids, ...this.stackJ1.solids, ...this.rteLayer.solids, ...this.j300Layer.solids, ...this.hkInterchange.solids, ...this.hkInterchange.safetySolids, ...this.hkInterchange.pavingSolids]);
 
     bootMark('parking lots');
     // --- City Mall (always standing there when the game starts) ---
@@ -1907,6 +1910,7 @@ export class Engine {
     this.groundJ1.dispose();
     this.autoPads.dispose();
     this.rteLayer.dispose();
+    this.j300Layer.dispose();
     this.stationPhysics.dispose();
     this.roadSignPhysics.dispose();
     this.ringStructurePhysics.dispose();
