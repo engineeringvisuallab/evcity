@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import type { TerrainGenerator } from '../terrain';
 import type { TerrainSample } from '../terrain/Lakes';
 import { hash2, mergeParts, part, vnoise } from './GeoUtil';
-import { applyRockTexture, buildRockGeometry } from '../vegetation/RockAssets';
+import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { applyCoralTexture, applyRockTexture, buildRockGeometry } from '../vegetation/RockAssets';
 
 /**
  * The sea floor comes alive: swaying seaweed and kelp, branching and brain corals, rocks. Placed on a 5 m grid around the
@@ -60,84 +61,108 @@ const ROCK_TINTS: [number, number, number][] = [
   [0.95, 0.85, 0.7],
 ];
 
-function bladeGeometry(): THREE.BufferGeometry {
+/**
+ * PLANT-REAL: kelp / seaweed clump. Before: 5 thin straight strips. Now 7 ribbon blades of different height and width: widest in the
+ * middle, pointed tip, a raised midrib (3 vertices per row), ruffled edges, a gentle S bend, dark olive base -> yellow-green tip, a few
+ * brown blades. The sway is the vertex shader of the material; the veins are drawn in its fragment shader.
+ */
+export function bladeGeometry(): THREE.BufferGeometry {
   const parts: THREE.BufferGeometry[] = [];
-  const blades = 5;
+  const blades = 7;
+  const segs = 5;
   for (let b = 0; b < blades; b++) {
-    const segs = 5;
-    const pos: number[] = [];
-    const idx: number[] = [];
-    const lean = 0.18 + hash2(b, 3, 1) * 0.3;
+    const r1 = hash2(b, 3, 1), r2 = hash2(b, 5, 2), r3 = hash2(b, 7, 3), r4 = hash2(b, 11, 4);
+    const H = 0.6 + 0.4 * r1; // height (the instance scale does the rest)
+    const hw0 = 0.055 + 0.05 * r2; // half width at the widest
+    const lean = 0.1 + 0.28 * r3;
+    const ph = r4 * 6.28, fr = 7 + 5 * r2; // ruffle phase and frequency
+    const brown = r4 > 0.72;
+    const pos: number[] = [], col: number[] = [], idx: number[] = [];
     for (let s = 0; s <= segs; s++) {
       const y = s / segs;
-      const hw = 0.065 * (1 - 0.7 * y);
-      const cx = lean * y * y;
-      pos.push(cx - hw, y, 0, cx + hw, y, 0);
+      const prof = (0.45 + 0.55 * Math.sin(Math.PI * Math.min(1, 0.12 + 0.88 * y))) * (1 - 0.85 * y * y * y);
+      const w = hw0 * prof;
+      const cx = lean * y * y + 0.035 * y * Math.sin(y * fr * 0.6 + ph);
+      const ruf = 0.022 * Math.min(1, y * 2) * Math.sin(y * fr + ph * 1.7);
+      pos.push(cx - w, y * H, ruf, cx, y * H, 0.014 * prof, cx + w, y * H, -ruf);
+      const c0 = brown ? [0.2, 0.14, 0.05] : [0.08, 0.15, 0.05], c1 = brown ? [0.5, 0.38, 0.15] : [0.42, 0.55, 0.18];
+      const k = Math.pow(y, 0.8);
+      const base = [c0[0] + (c1[0] - c0[0]) * k, c0[1] + (c1[1] - c0[1]) * k, c0[2] + (c1[2] - c0[2]) * k];
+      col.push(base[0] * 0.9, base[1] * 0.92, base[2] * 0.9, base[0] * 1.25 + 0.03, base[1] * 1.22 + 0.03, base[2] * 1.15, base[0] * 0.9, base[1] * 0.92, base[2] * 0.9);
       if (s < segs) {
-        const k = s * 2;
-        idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2);
+        const k0 = s * 3;
+        idx.push(k0, k0 + 1, k0 + 3, k0 + 1, k0 + 4, k0 + 3, k0 + 1, k0 + 2, k0 + 4, k0 + 2, k0 + 5, k0 + 4);
       }
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
     g.setIndex(idx);
     g.computeVertexNormals();
-    g.rotateY((b / blades) * Math.PI * 2 + hash2(b, 9, 2));
-    g.translate(Math.cos(b * 2.4) * 0.09, 0, Math.sin(b * 2.4) * 0.09);
-    parts.push(
-      part(g, (_x, y) => {
-        const k = Math.min(1, Math.max(0, y));
-        return [0.1 + 0.28 * k, 0.26 + 0.38 * k, 0.1 + 0.15 * k];
-      }),
-    );
+    g.rotateY((b / blades) * Math.PI * 2 + r1);
+    g.translate(Math.cos(b * 2.4) * 0.1, 0, Math.sin(b * 2.4) * 0.1);
+    parts.push(g);
   }
   return mergeParts(parts);
 }
 
-function branchCoralGeometry(): THREE.BufferGeometry {
+/**
+ * PLANT-REAL: staghorn coral. Before: a bare Y-shaped twig (2 levels, grey). Now a bushy colony: 3 levels (22 tapered branches), each
+ * child leans outward-up, dark base -> pale tips. The polyp pits and the mottling come from applyCoralTexture('polyp').
+ */
+export function branchCoralGeometry(): THREE.BufferGeometry {
   const parts: THREE.BufferGeometry[] = [];
   let seed = 1;
   const rnd = (): number => hash2(seed++, 77, 5);
   const grow = (base: THREE.Matrix4, len: number, rad: number, depth: number): void => {
-    const cyl = new THREE.CylinderGeometry(rad * 0.55, rad, len, 5, 1);
+    const leaf = depth <= 0;
+    const cyl = new THREE.CylinderGeometry(rad * (leaf ? 0.3 : 0.64), rad, len, 5, 1, true);
     cyl.translate(0, len / 2, 0);
     cyl.applyMatrix4(base);
     parts.push(
       part(cyl, (_x, y) => {
-        const k = 0.5 + 0.55 * Math.min(1, Math.max(0, y / 0.9));
-        return [k, k, k];
+        const k = 0.42 + 0.62 * Math.min(1, Math.max(0, y / 0.6));
+        return [k, k * 0.97, k * 0.92];
       }),
     );
-    if (depth <= 0) return;
+    if (leaf) return;
     const tip = base.clone().multiply(new THREE.Matrix4().makeTranslation(0, len * 0.92, 0));
-    const n = depth === 2 ? 3 : 2;
+    const n = depth === 3 ? 3 : 2;
+    const az0 = rnd() * 6.28;
     for (let i = 0; i < n; i++) {
-      const rot = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(0.45 + rnd() * 0.5, (i / n) * Math.PI * 2 + rnd(), 0, 'YXZ'));
-      grow(tip.clone().multiply(rot), len * (0.6 + rnd() * 0.15), rad * 0.62, depth - 1);
+      const rot = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(0.3 + rnd() * 0.45, az0 + (i / n) * Math.PI * 2 + (rnd() - 0.5) * 0.7, 0, 'YXZ'));
+      grow(tip.clone().multiply(rot), len * (0.7 + rnd() * 0.08), rad * (0.64 + rnd() * 0.06), depth - 1);
     }
   };
-  grow(new THREE.Matrix4(), 0.32, 0.075, 2);
+  grow(new THREE.Matrix4(), 0.3, 0.07, 3);
   return mergeParts(parts);
 }
 
-function domeCoralGeometry(): THREE.BufferGeometry {
-  const g = new THREE.IcosahedronGeometry(0.5, 2);
+/** PLANT-REAL: brain / dome coral. A smooth hemisphere (before: flat-faceted); the meandering grooves are drawn by applyCoralTexture('brain'). */
+export function domeCoralGeometry(): THREE.BufferGeometry {
+  let g: THREE.BufferGeometry = new THREE.IcosahedronGeometry(0.5, 3);
+  g.deleteAttribute('uv');
+  g.deleteAttribute('normal');
+  g = mergeVertices(g, 1e-4);
   const p = g.getAttribute('position');
   for (let i = 0; i < p.count; i++) {
     let x = p.getX(i);
     let y = p.getY(i);
     let z = p.getZ(i);
-    const ridge = 1 + 0.07 * Math.sin(x * 22 + y * 5) * Math.sin(z * 22 - y * 4);
-    x *= ridge;
-    z *= ridge;
-    y = y > 0 ? y * 0.7 * ridge : y * 0.15;
+    const lobe = 1 + 0.05 * Math.sin(x * 11 + y * 3) * Math.sin(z * 11 - y * 2);
+    x *= lobe;
+    z *= lobe;
+    y = y > 0 ? y * 0.7 * lobe : y * 0.15;
     p.setXYZ(i, x, y, z);
   }
   g.computeVertexNormals();
-  return part(g, (x, y, z) => {
-    const k = 0.72 + 0.28 * Math.sin(x * 24) * Math.sin(z * 24 + y * 6);
-    return [k, k, k];
-  });
+  const col = new Float32Array(p.count * 3);
+  for (let i = 0; i < p.count; i++) {
+    const k = 0.78 + 0.22 * Math.min(1, Math.max(0, p.getY(i) / 0.35));
+    col[i * 3] = k; col[i * 3 + 1] = k; col[i * 3 + 2] = k;
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  return g;
 }
 
 function rockGeometry(): THREE.BufferGeometry {
@@ -183,16 +208,37 @@ export class SeabedDecor {
           float ph = instanceMatrix[3].x * 0.6 + instanceMatrix[3].z * 0.8;
           float sw = position.y * position.y;
           transformed.x += sin(uTime * 1.4 + ph + position.y * 3.0) * 0.2 * sw;
-          transformed.z += cos(uTime * 1.1 + ph * 1.3 + position.y * 2.5) * 0.15 * sw;`,
+          transformed.z += cos(uTime * 1.1 + ph * 1.3 + position.y * 2.5) * 0.15 * sw;
+          vWP = position;`,
+        )
+        .replace('#include <common>', '#include <common>\nvarying vec3 vWP;');
+      // PLANT-REAL: fine veins running along the blade + a slow light / dark mottling (object-space value noise)
+      sh.fragmentShader = sh.fragmentShader
+        .replace(
+          '#include <common>',
+          `#include <common>
+varying vec3 vWP;
+float swH(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+float swN(vec3 x){ vec3 i = floor(x); vec3 f = fract(x); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(swH(i), swH(i + vec3(1.0, 0.0, 0.0)), f.x), mix(swH(i + vec3(0.0, 1.0, 0.0)), swH(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
+             mix(mix(swH(i + vec3(0.0, 0.0, 1.0)), swH(i + vec3(1.0, 0.0, 1.0)), f.x), mix(swH(i + vec3(0.0, 1.0, 1.0)), swH(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z); }`,
+        )
+        .replace(
+          '#include <color_fragment>',
+          `#include <color_fragment>
+          diffuseColor.rgb *= (0.8 + 0.4 * swN(vec3(vWP.x * 70.0, vWP.y * 4.0, vWP.z * 70.0))) * (0.85 + 0.3 * swN(vec3(vWP.x * 6.0, vWP.y * 5.0, vWP.z * 6.0)));`,
         );
     };
-    seaweedMat.customProgramCacheKey = () => 'evc-seaweed-v1';
-    const coralMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7 });
+    seaweedMat.customProgramCacheKey = () => 'evc-seaweed-v2';
+    const branchMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7 });
+    applyCoralTexture(branchMat, 'evc-coral-polyp-v1', 'polyp');
+    const domeMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.62 });
+    applyCoralTexture(domeMat, 'evc-coral-brain-v1', 'brain');
     const rockMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 });
-    applyRockTexture(rockMat, 'evc-searock-v1', 0.2); // procedural stone surface (little moss under water)
-    this.mats.push(seaweedMat, coralMat, rockMat);
+    applyRockTexture(rockMat, 'evc-searock-v2', 0.2); // procedural stone surface (little moss under water)
+    this.mats.push(seaweedMat, branchMat, domeMat, rockMat);
     const geos = [bladeGeometry(), branchCoralGeometry(), domeCoralGeometry(), rockGeometry()];
-    const mats = [seaweedMat, coralMat, coralMat, rockMat];
+    const mats = [seaweedMat, branchMat, domeMat, rockMat];
     const maxCaps = QUALITY[2].caps;
     for (let i = 0; i < 4; i++) {
       const m = new THREE.InstancedMesh(geos[i], mats[i], maxCaps[i]);

@@ -261,3 +261,5 @@ See HANDOFF_JUNCTION_300FT.md section 26. Switch: Config.roads.junctionJ300.enab
 - 2026-11-25: build fix 2 (J300SolidMesh.ts `inRing` takes `readonly number[]`), see HANDOFF_JUNCTION_300FT.md section 39.
 
 - 2026-11-25: FISH-REAL + ROCK-REAL: pond fish now use ReefFish model + patterns (AnimalManager.ts `POND_FISH`), land + seabed rocks use `buildRockGeometry` + `applyRockTexture` (RockAssets.ts). Details + what was not touched: CHANGES_FISH_ROCKS_BN.md. Real `npm run build` passes.
+
+- 2026-11-25 (round 2): ROCK-REAL 2 (new `applyRockTexture`, no cartoon cracks) + PLANT-REAL (seaweed ribbons, staghorn + brain coral with procedural skins, SeabedDecor.ts). See CHANGES_FISH_ROCKS_BN.md "ROUND 2". `npm run build` passes; shaders compile in glslang; not seen in the game yet.

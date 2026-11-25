@@ -83,19 +83,8 @@ export function buildRockGeometry(o: RockShape): THREE.BufferGeometry {
   return g;
 }
 
-/**
- * Procedural stone surface for a material with vertexColors (Lambert or Standard): object-space 3D noise in the fragment shader.
- * Needs the `position` / `normal` attributes only. Shared by the land rocks and the seabed rocks.
- */
-export function applyRockTexture(m: THREE.Material, key: string, moss = 1): void {
-  m.onBeforeCompile = (sh) => {
-    sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vRockP;\nvarying vec3 vRockN;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvRockP = position;\nvRockN = normal;');
-    sh.fragmentShader = sh.fragmentShader
-      .replace(
-        '#include <common>',
-        `#include <common>
+/** GLSL shared by every procedural surface (rocks, corals): value noise, fbm, and a screen-derivative bump (like three's bumpmap). */
+const GLSL_COMMON = `
 varying vec3 vRockP;
 varying vec3 vRockN;
 float rkH(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
@@ -103,32 +92,96 @@ float rkN(vec3 x){
   vec3 i = floor(x); vec3 f = fract(x); f = f * f * (3.0 - 2.0 * f);
   return mix(mix(mix(rkH(i), rkH(i + vec3(1.0, 0.0, 0.0)), f.x), mix(rkH(i + vec3(0.0, 1.0, 0.0)), rkH(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
              mix(mix(rkH(i + vec3(0.0, 0.0, 1.0)), rkH(i + vec3(1.0, 0.0, 1.0)), f.x), mix(rkH(i + vec3(0.0, 1.0, 1.0)), rkH(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z);
-}`,
-      )
-      .replace(
-        '#include <color_fragment>',
-        `#include <color_fragment>
-        {
-          vec3 q = vRockP;
-          float n1 = rkN(q * 3.0), n2 = rkN(q * 9.0 + 7.0), n3 = rkN(q * 27.0 + 3.0);
-          float tex = 0.72 + 0.3 * n1 + 0.16 * n2 + 0.12 * (n3 - 0.5);
-          // strata: soft wobbly bands
-          float band = sin((q.y * 6.0 + n1 * 2.5) * 3.14159);
-          tex *= 1.0 - 0.09 * smoothstep(0.5, 1.0, band);
-          // mineral grains: light and dark specks
-          tex *= 1.0 + 0.16 * step(0.87, n3) - 0.12 * step(n3, 0.09);
-          // cracks: thin dark lines where a ridged noise peaks
-          float cr = 1.0 - abs(rkN(q * 5.5 + 13.0) * 2.0 - 1.0);
-          tex *= 1.0 - 0.34 * smoothstep(0.92, 0.985, cr);
-          diffuseColor.rgb *= tex;
-          // a little moss / lichen on the faces that look up
-          float up = smoothstep(0.55, 0.95, vRockN.y);
-          float mo = up * smoothstep(0.5, 0.72, n1 * 0.6 + n2 * 0.4) * ${moss.toFixed(2)};
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.2, 0.28, 0.1), mo * 0.5);
-        }`,
-      );
+}
+float rkF(vec3 p){
+  float a = 0.5; float s = 0.0;
+  for (int i = 0; i < 4; i++) { s += a * rkN(p); p = p * 2.03 + vec3(11.7, 3.1, 7.3); a *= 0.5; }
+  return s / 0.9375;
+}
+vec3 rkBump(vec3 sp, vec3 sn, vec2 dh, float fd){
+  dh *= 1.0 / (1.0 + 8.0 * length(dh)); // far away the derivative explodes (aliasing): soft limit
+  vec3 sx = normalize(dFdx(sp)); vec3 sy = normalize(dFdy(sp));
+  vec3 r1 = cross(sy, sn); vec3 r2 = cross(sn, sx);
+  float det = dot(sx, r1) * fd;
+  vec3 g = sign(det) * (dh.x * r1 + dh.y * r2);
+  return normalize(abs(det) * sn - g);
+}
+`;
+
+/** Same position -> same pattern: everything is computed from the OBJECT-space position (no uv, no image file). */
+function injectProc(m: THREE.Material, key: string, fragCommon: string, colorBlock: string, bumpBlock: string): void {
+  m.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vRockP;\nvarying vec3 vRockN;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvRockP = position;\nvRockN = normal;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', `#include <common>${GLSL_COMMON}${fragCommon}`)
+      .replace('#include <color_fragment>', `#include <color_fragment>\n{\n${colorBlock}\n}`)
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>\n{\n${bumpBlock}\n}`);
   };
   m.customProgramCacheKey = () => key;
+}
+
+/**
+ * Procedural stone surface for a material with vertexColors (Lambert or Standard). ROCK-REAL 2: no cartoon crack lines any more.
+ *   - three stone tones (grey / warm sandstone / cool dark) in large soft patches, a domain-warped fbm for the mottling,
+ *   - fine grain (2 scales) + light / dark mineral specks, faint strata, hairline cracks only in some patches,
+ *   - rust stains running down the sides, lichen dots and a little moss on the faces that look up,
+ *   - a screen-derivative bump from fine noise, so the light catches the grain.
+ * `moss` 0..1 scales the moss (seabed rocks use less).
+ */
+export function applyRockTexture(m: THREE.Material, key: string, moss = 1): void {
+  const color = `
+  vec3 q = vRockP;
+  vec3 w = q + 0.22 * vec3(rkN(q * 2.0), rkN(q * 2.0 + 5.0), rkN(q * 2.0 + 9.0));
+  float big = rkF(w * 2.0);
+  float mid = rkF(w * 6.5 + 3.0);
+  float g1 = rkN(q * 48.0);
+  float g2 = rkN(q * 130.0 + 4.0);
+  float up = smoothstep(0.45, 0.95, vRockN.y);
+  vec3 tone = mix(vec3(0.95, 0.95, 0.96), vec3(1.12, 1.0, 0.8), smoothstep(0.38, 0.7, big));
+  tone = mix(tone, vec3(0.66, 0.67, 0.72), smoothstep(0.55, 0.85, mid) * 0.55);
+  float lum = 0.86 + 0.28 * mid + 0.16 * (g1 - 0.5) + 0.12 * (g2 - 0.5);
+  float band = sin((w.y * 4.5 + big * 3.5) * 3.14159);
+  lum *= 1.0 - 0.07 * smoothstep(0.3, 1.0, band) * smoothstep(0.3, 0.6, big);
+  lum *= 1.0 + 0.18 * step(0.9, g2) - 0.16 * step(g2, 0.07);
+  float cr = 1.0 - abs(rkN(w * 11.0 + 21.0) * 2.0 - 1.0);
+  lum *= 1.0 - 0.22 * smoothstep(0.965, 0.995, cr) * smoothstep(0.35, 0.65, big);
+  float st = rkN(vec3(q.x * 5.0, q.y * 1.1, q.z * 5.0) + 17.0);
+  tone = mix(tone, vec3(1.15, 0.82, 0.58), smoothstep(0.62, 0.8, st) * 0.4 * (1.0 - up));
+  diffuseColor.rgb *= tone * lum;
+  float lc = smoothstep(0.74, 0.82, rkN(q * 16.0 + 2.0)) * up;
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.4, 0.2), lc * 0.45);
+  float mo = up * smoothstep(0.52, 0.74, big * 0.55 + mid * 0.45) * ${moss.toFixed(2)};
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.06, 0.11, 0.025) * (0.8 + 0.5 * g1), mo * 0.7);`;
+  const bump = `
+  float h = rkN(vRockP * 26.0) * 0.55 + rkN(vRockP * 70.0 + 4.0) * 0.3 + rkN(vRockP * 9.0) * 0.35;
+  normal = rkBump(-vViewPosition, normal, vec2(dFdx(h), dFdy(h)) * 0.45, faceDirection);`;
+  injectProc(m, key, '', color, bump);
+}
+
+/**
+ * Procedural coral skin. 'polyp' = branching coral: small round polyp pits all over + mottling. 'brain' = dome coral: the
+ * meandering grooves of a brain coral, made from the iso-lines of a noise (dark valleys, light ridges, bump from the same height).
+ */
+export function applyCoralTexture(m: THREE.Material, key: string, mode: 'polyp' | 'brain'): void {
+  const color = mode === 'brain' ? `
+  vec3 q = vRockP;
+  float bh = rkBrainH(q);
+  float mot = rkF(q * 5.0);
+  diffuseColor.rgb *= (0.5 + 0.6 * smoothstep(0.05, 0.95, bh)) * (0.85 + 0.3 * mot);` : `
+  vec3 q = vRockP;
+  float pd = rkN(q * 60.0);
+  float pit = smoothstep(0.58, 0.82, pd);
+  float mot = rkF(q * 7.0);
+  diffuseColor.rgb *= (1.0 - 0.38 * pit) * (0.78 + 0.4 * mot);`;
+  const bump = mode === 'brain' ? `
+  float h = rkBrainH(vRockP);
+  normal = rkBump(-vViewPosition, normal, vec2(dFdx(h), dFdy(h)) * 0.05, faceDirection);` : `
+  float h = rkN(vRockP * 60.0);
+  normal = rkBump(-vViewPosition, normal, vec2(dFdx(h), dFdy(h)) * 0.12, faceDirection);`;
+  const common = mode === 'brain' ? 'float rkBrainH(vec3 q){ float f = rkN(q * 13.0) * 0.6 + rkN(q * 27.0 + 3.0) * 0.4; return abs(fract(f * 7.0) - 0.5) * 2.0; }' : '';
+  injectProc(m, key, common, color, bump);
 }
 
 /** Geometries (shared by all chunks, never disposed per chunk) + one material. */
@@ -138,16 +191,16 @@ export class RockAssets {
   readonly material = new THREE.MeshLambertMaterial({ vertexColors: true });
 
   constructor() {
-    applyRockTexture(this.material, 'evc-rock-v1');
+    applyRockTexture(this.material, 'evc-rock-v2');
     for (let k = 0; k < ROCK_KIND_COUNT; k++) this.geometries.push([]);
-    const round = { sx: 1.0, sy: 0.74, sz: 0.92, bottom: 0.5, base: 0x7b766d, grounded: true };
-    const slab = { sx: 1.5, sy: 0.32, sz: 1.15, bottom: 0.5, base: 0x86806f, grounded: true };
+    const round = { sx: 1.0, sy: 0.74, sz: 0.92, bottom: 0.5, base: 0x8f897e, grounded: true };
+    const slab = { sx: 1.5, sy: 0.32, sz: 1.15, bottom: 0.5, base: 0x9a9484, grounded: true };
     this.geometries[RockKind.round] = [
-      buildRockGeometry({ ...round, detail: 2, lumpy: 0.2, chip: 0.5, seed: 11 }),
+      buildRockGeometry({ ...round, detail: 3, lumpy: 0.2, chip: 0.5, seed: 11 }),
       buildRockGeometry({ ...round, detail: 1, lumpy: 0.16, chip: 0.3, seed: 11 }),
     ];
     this.geometries[RockKind.slab] = [
-      buildRockGeometry({ ...slab, detail: 2, lumpy: 0.15, chip: 0.5, seed: 23 }),
+      buildRockGeometry({ ...slab, detail: 3, lumpy: 0.15, chip: 0.5, seed: 23 }),
       buildRockGeometry({ ...slab, detail: 1, lumpy: 0.12, chip: 0.3, seed: 23 }),
     ];
   }
