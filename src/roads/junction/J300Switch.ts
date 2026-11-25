@@ -35,3 +35,33 @@ export function trimLineAtPoint(pts: number[][], ys: number[], x: number, z: num
   let len = 0; for (let k = 1; k < outP.length; k++) len += Math.hypot(outP[k][0] - outP[k - 1][0], outP[k][1] - outP[k - 1][1]);
   return { pts: outP, ys: outY, keptLength: len, cutIndex: i };
 }
+
+/**
+ * J10 step 0: the trimmed R4-9 meets the R4 arm with a heading kink (4.05 deg measured, target <= 0.5). The arm is generated data (J4-R4), so the END of the real road is bent instead:
+ * the last `len` m (70) of the polyline are rotated about the join point by an angle that is 100 % over the last `hold` m and fades to 0 (smoothstep) at `len`. Positions only, levels (ys) are not touched,
+ * the end point itself does not move (gap stays 0). Switch ON only (the caller checks j300Active()). Returns the angle used (deg).
+ */
+export function chordHeadingAtEnd(pts: number[][], ch: number): number {
+  const n = pts.length; const E = pts[n - 1]; let acc = 0; let a = pts[0];
+  for (let i = n - 1; i > 0; i--) { const seg = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); if (acc + seg >= ch) { const t = (ch - acc) / (seg || 1); a = [pts[i][0] + (pts[i - 1][0] - pts[i][0]) * t, pts[i][1] + (pts[i - 1][1] - pts[i][1]) * t]; return (Math.atan2(E[1] - a[1], E[0] - a[0]) * 180) / Math.PI; } acc += seg; a = pts[i - 1]; }
+  return (Math.atan2(E[1] - a[1], E[0] - a[0]) * 180) / Math.PI;
+}
+export function bendTailToHeading(pts: number[][], targetHeadingDeg: number, ch = 16, hold = 16, len = 70): number {
+  const n = pts.length; if (n < 3) return 0;
+  let dl = targetHeadingDeg - chordHeadingAtEnd(pts, ch); while (dl > 180) dl -= 360; while (dl < -180) dl += 360;
+  const E = [pts[n - 1][0], pts[n - 1][1]]; let t = 0;
+  for (let i = n - 2; i >= 0; i--) {
+    t += Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]);
+    // t is measured on the ORIGINAL positions (the rotation keeps the lengths of the pieces close enough; the fade is smooth anyway)
+    if (t >= len) break;
+    const x = t <= hold ? 1 : (len - t) / (len - hold); const w = x * x * (3 - 2 * x); const a = (dl * w * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a);
+    const dx = pts[i][0] - E[0], dz = pts[i][1] - E[1]; pts[i] = [E[0] + dx * c - dz * s, E[1] + dx * s + dz * c];
+  }
+  return dl;
+}
+/** World heading (deg, atan2(dz, dx)) a road must have at the join to run straight into the R4 arm (the arm runs from the ring to the join: reversed). Chord over the last 10 m of the arm rows. */
+export function j300R4JoinHeading(): number {
+  const r = (J300_ARMS.R4 as unknown as { rows: { x: number; z: number }[] }).rows; const n = r.length; let j = n - 2;
+  while (j > 0 && Math.hypot(r[n - 1].x - r[j].x, r[n - 1].z - r[j].z) < 10) j--;
+  return (Math.atan2(r[n - 1].z - r[j].z, r[n - 1].x - r[j].x) * 180) / Math.PI + 180;
+}

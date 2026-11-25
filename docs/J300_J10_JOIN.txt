@@ -1,0 +1,42 @@
+J10 STEP 0 JOIN CHECK (headless, real road network OFF vs ON, J300_ARMS / J300_STRUCT_C data)
+Targets: gap <= 0.1 m, heading <= 0.5 deg, level gap <= 0.02 m, same lane count and width (half width, median, shoulder).
+
+== R6 far end (arm end = old R6-9 start, free end) against R6-7 (the 6 lane road that comes from the south) ==
+PASS  switch OFF and ON: R6-7 identical (positions, levels)  
+INFO  R6-7 end (-2000.0, -2983.0) level 18.17 heading 21.03 deg | arm end (-2004.0, -2962.0) level 16.35 heading to ring 24.65 deg | old R6-9 start (-2004.2, -2962.4) level 16.35 heading 24.54 deg
+INFO  arm end vs the old R6-9 start (R6-9 is gone with the switch ON): gap 0.45 m (rounded J4 coordinates), heading 0.11 deg, level 0.00 m
+BEFORE (switch OFF, shipped game): R6-7 end -> R6-9 start: gap 21.02 m, heading difference 3.51 deg, level gap -1.82 m   (docs/STEP_21_3_OUTPUT.txt: join "NOT applied: shallow angle 3 deg")
+AFTER  (switch ON): R6-7 end -> arm end:        gap 21.38 m, heading difference 3.62 deg, level gap -1.82 m
+INFO  direction R6-7 end -> arm end 100.78 deg (R6-7 travel heading 21.03, arm heading 24.65): the two ends do not even point at each other (79.75 deg off the R6-7 axis)
+FAIL  R6: R6-7 and the arm are ONE continuous road (gap <= 0.1 m, heading <= 0.5 deg, level <= 0.02 m)  a pre-existing gap of the shipped game, NOT created by J300; the fix is bigger than a small change, see section 30
+PASS  R6 section: arm ribbon half width = game R6-7 half width + shoulder  arm 16.6 m vs R6-7 16 + 0.6 = 16.6 m; lanes 6, median half 2, lane 3.5 m, outer shy 2.5 m
+INFO  R4-4 starts 6.9 m off the R6 arm axis at (-1915.1, -2920.8); its start level OFF 18.97 -> ON 19.20 m (arm level there 19.49 m)
+FAIL  R4-4 start level unchanged OFF vs ON (the side road must not move when the switch turns ON)  0.23 m
+
+== R4 join (arm end = J4-R4 join on the old R4-9 line) against the trimmed real R4-9 ==
+INFO  R4-9 (ON) end (-1406.96, -2127.41) level 46.48 heading -143.61 deg | arm end (-1406.96, -2127.41) level 46.48 heading to the ring-side reversed: arm travel towards the far end 36.47 deg
+PASS  R4: gap <= 0.1 m  0.00 m
+PASS  R4: heading difference <= 0.5 deg  0.08 deg (R4-9 last 10 m -143.61, arm first 10 m -143.53; the same line OFF, chord up to the join: -147.58)
+PASS  R4: level gap <= 0.02 m  -0.00 m
+INFO  R4 section: game R4-9 half width 11.5 m (pavement edge), outer shy 2 m, ditch / shoulder 1.5 m, median half 2 m, lane 3.5 m, lanes 4; arm ribbon half width 14.4 m (asphalt 13.8 m + 0.6 m shoulder), M4 lane 3.65 m
+FAIL  R4 section: arm asphalt half width = R4-9 pavement half width (no change of width)  arm asphalt 13.8 m vs R4-9 11.5 m: step 2.3 m on each side (4.6 m in total)
+FAIL  R4 section: same lane width  R4-9 lane 3.5 m vs arm M4 lane 3.65 m (J8 paint)
+BEFORE the J10 step 0 fix (R4-9 trimmed at the join, no bend): heading difference 4.05 deg  ->  AFTER (last 70 m of R4-9 turned about the join): 0.08 deg
+PASS  R4-9 bend: the road is unchanged further than 72 m from the join (switch ON vs OFF)  max 0.03 m
+PASS  R4-9 bend: the last 70 m move by <= 2.0 m sideways (small change)  max 1.72 m
+INFO  R4-9 bend: positions only, the finished levels (fixedY) are not touched; the ON / OFF level difference at the join (46.48 vs 45.46 m) is the known J9-a finding 2 and the arm meets the ON level (see the level gap line above).
+INFO  vertical grade at the R4 join (travel R4-9 -> ring): R4-9 last 20 m 0.08 %, arm first 20 m -3.59 % -> break 3.67 %, a crest curve would need L >= K 10.37 x A = 38 m (none is built: level is equal, the grade is not smooth)
+FAIL  R4: no vertical grade break > 1 % at the join without a vertical curve  3.67 %
+INFO  wedge at the join from the heading difference: 0.02 m at the arm edge (hole on one side, overlap on the other)
+INFO  J7-C ribbon and game ribbon at the join: the arm ribbon starts at the join point (first row), the R4-9 ribbon ends at the same point (J9-a trimmed it there). No overlap along the road, no hole along the road; the end caps meet with the wedge above and the width step above. R6: the arm has a free end, R6-7 has a free end 21 m away: a gap of bare terrain.
+
+== roundabout end: arm centre line against the J4 leg axis (local frame u along the ring, v = left, origin = roundabout centre) ==
+INFO  R6: leg axis u = 0 from the circle to v = 222.9 m; arm rows in the leg zone (21 rows): largest lateral offset 0.01 m, largest heading deviation 0.04 deg; at v 122.0: offset 0.00 m
+PASS  R6: arm centre line lies on the leg axis (offset <= 0.1 m, heading <= 0.5 deg) where the legs end  0.00 m, 0.02 deg
+INFO  R4: leg axis u = 0 from the circle to v = -222.8 m; arm rows in the leg zone (21 rows): largest lateral offset 0.99 m, largest heading deviation 7.02 deg; at v -122.0: offset -0.00 m
+PASS  R4: arm centre line lies on the leg axis (offset <= 0.1 m, heading <= 0.5 deg) where the legs end  -0.00 m, 0.02 deg
+INFO  J8 finding 2 (known): inside the junction reach the arm ribbon keeps the full M6 / M4 width (33.2 / 28.8 m) while the J4 carriageways (2 x 7 m / 2 x 7.3 m + median 4 m) are narrower; the extra asphalt stays (decision of the user pending).
+
+NOT RUN: in-game look / drive over the joins (browser), the shader ribbon end cap of the real R6-7 / R4-9 meshes (numbers come from the road data, not from pixels), traffic graph (the second half of this step), terrain under the 21 m R6 gap.
+
+5 FAIL
