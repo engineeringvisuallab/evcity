@@ -83,7 +83,7 @@ export const Config = {
     /** RT-E ramp bridges M3 / M4 + arm viaduct widening (RE-9). ON (RE-9): set false to hide it. */
     junctionRte: { enabled: true as boolean },
     /** J7-C: the 300 ft junction (Purbachal style) solid preview mesh (J300Layer). Default OFF. Look without editing: open the game with ?j300=1. Junction centre world (-1659.9, -2410.4), deck 35.3 m. */
-    junctionJ300: { enabled: false as boolean },
+    junctionJ300: { enabled: ((): boolean => { try { return !(typeof location !== 'undefined' && new URLSearchParams(location.search).get('j300') === '0'); } catch { return true; } })() as boolean }, // 2026-11-25 (user): ON by default on the main link; add ?j300=0 to see the old roads (kill switch)
     /** RE-9 ground-level slip lanes RTE-A2S / RTE-S2A as one-way ramp roads (outside the arm viaduct window). */
     junctionRteLanes: { enabled: true as boolean },
     /** RE-9 (user 2026-11-22: 'bridge remove, ground e road'): the J1-E arm viaduct at stem d 160..271 (2 .. 5 m above a shallow dip) becomes a normal road on an embankment; the road profile is NOT changed. false = old viaduct. */

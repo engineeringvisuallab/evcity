@@ -14,7 +14,7 @@ PASS  cut face across the arms: gradient <= 0.75 (1:2 = 0.5 plus the natural slo
 INFO  steepest cross gradient within 60 m of the R4 join: 0.5 (the old road's own trench there is a smoothstep cutting, steeper than 1:2)
 PASS  R4 join plane: the carve makes no cliff along the road (steepest gradient not above the area WITHOUT the carve, and <= 2.0)  steepest 1.94 at s 40 off -24; same area WITHOUT the carve 3.56 (the old road trench is steeper than 1:2)
 INFO  ramps: highest ground above a ramp level 0.08 m at W-in row 53 (the last rows touch the ring's own platform at the nose: ring / aux lane, J9-c; arms need no ramp carve)
-INFO  cap() cost: 0.049 us per far sample (bbox reject), 0.85 us per sample in the corridor area
+INFO  cap() cost: 0.051 us per far sample (bbox reject), 0.76 us per sample in the corridor area
 PASS  switch OFF: no carve object is built (null) = no cost, no change  j300Carve === null
 PASS  chunk worker gets the switch from the main thread (generate + grass messages), set before the generator is built (SOURCE check)  loader true, worker true, messages true
 NOT RUN  real browser worker (needs the game in a browser): ?j300=1 in the page URL is NOT visible to a worker, the flag now travels in the message.

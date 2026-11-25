@@ -377,3 +377,8 @@ Starter prompt for the NEXT chat: "Read HANDOFF_JUNCTION_300FT.md completely (ba
 - FIX: J300SolidMesh.ts reads `(P[i] as readonly number[])[3] as number | undefined` once (`hw`) and uses `hw ?? A.top` / `hw - 0.6` only after the undefined test; J300Paint.ts does the same for the lane offset (`lo`, 5th value). Same logic, only typed safely. Switch OFF still changes nothing.
 - RULE for the next chats: any new field in the generated `as const` data must be read through a cast; run the real `npm run build` (tsc --noEmit && vite build) on the PC before the OK.
 - NOT RUN here: the real `npm run build` (no real `three` / vite types in this chat).
+
+## 36. J300 ON BY DEFAULT (2026-11-25, user: the main link must show J300 without ?j300=1)
+- src/core/Config.ts: `roads.junctionJ300.enabled` is now TRUE by default (one line). Kill switch: open the game with `?j300=0` to see the OLD roads (R6-9, R4-9 stub) again. Workers get the flag from the main thread (J9-b), the minimap too, so everything follows this one value.
+- Headless checks unchanged (J9-a 0 FAIL, J9-b 0 FAIL, J7-C 19 PASS, join check 1 FAIL = R4-4 level step, section 34).
+- The user must push this file and wait for the GitHub Pages deploy; the old browser cache may need Ctrl+F5.
