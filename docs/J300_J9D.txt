@@ -1,0 +1,31 @@
+J9-d CHECK (headless, real game: road station sites, signs, vegetation mask, ring floor, minimap shapes, switch OFF vs ON)
+
+1) OLD FURNITURE OF THE REMOVED R6-9 (J9-a finding: cp-37, cp-38, sign-17)
+PASS  switch OFF: all 94 station sites and 95 sign gantries exist (shipped state)  94 sites, 95 signs
+PASS  switch ON: cp-37 and cp-38 are gone, every other site is kept  92 sites
+PASS  switch ON: sign-17 is gone, every other gantry is kept  94 gantries
+PASS  switch ON: the lot keep-out (trees / grass / rocks) of cp-37 / cp-38 is gone, all other sites keep theirs  cp keep-out OFF true/true, ON false/false; other sites 92 of 92
+PASS  switch ON: two terrain pads less (no flat pad is dug on the removed road)  OFF 94, ON 92
+
+2) JUNCTION GROUND = VEGETATION MASK (grass, trees, rocks keep off the platform, arms, ramps, walls, slopes)
+PASS  every vertex of the J7-C surface / concrete / slope / furniture mesh stands inside the footprint (the footprint is the mesh seen from above + 3 m, so 100 %)  42918 of 42918 (100.00 %)
+PASS  every arm centre-line point and the roundabout centre are in the footprint  194 of 194 arm points
+PASS  far from the junction (600 m south-east of the roundabout, and 1 km west of the R6 free end) nothing is masked
+PASS  switch OFF: vegMaskAt equals maskAt on every sampled cell (shipped state)  19200 cells, 0 differ
+PASS  switch ON: vegMaskAt differs from maskAt only inside the footprint, and does differ there (ground not yet masked by roads)  19200 cells (6 m), footprint 1889, extra masked 1535, outside 0
+INFO  masked by the old road mask before J9-d: 1521 of 19200 cells; footprint area about 68004 m2 (1889 cells of 6 m), bbox [-2064,-3022,-1346.96,-2067.41]
+PASS  switch ON: no real tree (the ones the chunk worker places) stands inside the junction ground  ON 0 of 690 trees in the area; OFF 68 of 729
+INFO  rocks and grass use the same vegMaskAt (rocks: all 5 probes, grass: blocked()); only the tree placement is run here with real data.
+
+3) RING FLOOR UNDER THE BOX (collision ground of the underpass; the box walls / roof / ramps are J7-C solids, wired in Engine since J7-C)
+PASS  J7-C collision parts are not empty (surface / concrete / slope triangles)  3324 / 9306 / 116
+PASS  switch ON: the ground under the box (u -60..60, 4 lines) is within 0.35 m of the ring table level (cars and the player drive on it)  worst 0.02 m at u -40 v -14: ground 27.56 ring 27.54; OFF worst 0.02 m
+
+4) MINIMAP SHAPES (the vector roads of the map come from the road list, the junction is added from the J7-C data)
+PASS  6 lines (2 arms + 4 ramps) and the roundabout circle of radius 62 m  6 lines, half widths 16.6 / 14.4 / 4.1 / 4.1 / 4.1 / 4.1
+PASS  every shape point lies within 1.2 km of the roundabout centre (nothing wild)
+PASS  the circle centre is the roundabout centre of the J300 frame (u 0, v 0)  u 0, v 0
+
+NOT RUN: npm run build (vite) and tsc (no npm network in this chat, the check runs with a test stub for three), the in-game look, the real minimap worker (the flag is passed in code only: Minimap.ts -> MinimapRequest.j300 -> Config before the generator), the baked minimap picture, a driving / walking collision test in the box, rock and grass placement with real data (same mask, not run), buildings / homesteads inside the footprint, traffic (J10), signs and lights of J11.
+
+0 FAIL

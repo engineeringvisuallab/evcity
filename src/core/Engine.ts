@@ -47,7 +47,7 @@ import { bn } from '../i18n';
 import { MALL_DOORS, mallToWorld } from '../mall/MallSite';
 import { ParkingLots } from '../parking/ParkingLots';
 import { FLEET_PARK, MAIN_STATION_LOT, lotToWorld } from '../parking/ParkingSite';
-import { ROAD_STATION_SITES } from '../parking/RoadStationSites';
+import { roadStationSites } from '../parking/ActiveStationSites'; // J9-d
 import { StationStructures } from '../parking/StationStructures';
 import { MallManager, loadCatalog, type Catalog } from '../mall';
 import { EngineeringBoundary } from '../zones';
@@ -271,7 +271,7 @@ export class Engine {
   private mapStations: { x: number; z: number; kind: 'fuel' | 'charge' | 'both' }[] = [
     // STEP 4: the main station (static) + every road-side station (fuel + charge) and charge point along the main roads
     { ...lotToWorld((MAIN_STATION_LOT.s0 + MAIN_STATION_LOT.s1) / 2, (MAIN_STATION_LOT.n0 + MAIN_STATION_LOT.n1) / 2), kind: 'fuel' as const },
-    ...ROAD_STATION_SITES.map((x) => ({ x: x.x, z: x.z, kind: (x.kind === 'fuel' ? 'both' : 'charge') as 'both' | 'charge' })),
+    ...roadStationSites().map((x) => ({ x: x.x, z: x.z, kind: (x.kind === 'fuel' ? 'both' : 'charge') as 'both' | 'charge' })),
   ];
   private minimap: Minimap;
   /** N key: pick any vehicle and it is brought next to the player. */

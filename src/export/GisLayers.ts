@@ -6,7 +6,7 @@ import { BUILDING_PLACEMENTS } from '../buildings/Placements';
 import { DRAWN_FILL_PLACEMENTS } from '../buildings/PlacementsResidential';
 import { FACILITIES, WORLD_ZONES, WORLD_ZONE_IDS, rasterizeWorldZones } from '../city/WorldZones';
 import { ENGINEERING_AREAS } from '../city/EngineeringZones';
-import { ROAD_STATION_SITES } from '../parking/RoadStationSites';
+import { roadStationSites } from '../parking/ActiveStationSites'; // J9-d
 import { PLATFORMS } from '../port/PortPlan';
 import { medianHalfAt, planMedians } from '../roads/MedianPlan';
 import { planFootpaths } from '../roads/FootpathPlan';
@@ -342,7 +342,7 @@ const portPlatforms = (): GisLayer => ({
 
 const stationSites = (): GisLayer => ({
   id: 'station_sites', label: 'Fuel stations and charge points', geom: 'polygon', hasZ: false,
-  features: ROAD_STATION_SITES.map((p) => {
+  features: roadStationSites().map((p) => {
     const c = Math.cos(p.yaw);
     const sn = Math.sin(p.yaw);
     const ring = ([[-1, -1], [1, -1], [1, 1], [-1, 1]] as const).map(([a, b]) => {

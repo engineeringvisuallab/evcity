@@ -2,6 +2,7 @@ import { Config } from '../core/Config';
 import { Q } from '../core/Quality';
 import type { ChunkRequest, ChunkResult, GrassRequest, GrassResult, WorldDensity } from '../workers/messages';
 import { chunkKey } from './WorldGrid';
+import { j300Active } from '../roads/junction/J300Switch';
 
 export interface IChunkLoader {
   request(cx: number, cz: number, lod: number): Promise<ChunkResult>;
@@ -62,6 +63,7 @@ export class ChunkLoader implements IChunkLoader {
         vertsPerSide: Config.lod.vertsPerSide[lod],
         skirtDepth: Config.terrain.skirtDepth[lod],
         dens: density(),
+        j300: j300Active(),
       };
       this.workers[this.next++ % this.workers.length].postMessage(msg);
     });
@@ -72,7 +74,7 @@ export class ChunkLoader implements IChunkLoader {
     const id = `${tx},${tz},${stride}`;
     return new Promise<GrassResult>((resolve, reject) => {
       this.grassPending.set(id, { resolve, reject });
-      const msg: GrassRequest = { type: 'grass', tx, tz, seed: this.seed, stride, dens: density() };
+      const msg: GrassRequest = { type: 'grass', tx, tz, seed: this.seed, stride, dens: density(), j300: j300Active() };
       this.workers[this.next++ % this.workers.length].postMessage(msg);
     });
   }

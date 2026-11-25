@@ -5,7 +5,7 @@ import type { TerrainGenerator } from '../terrain/TerrainGenerator';
 import type { RoadNetwork } from './RoadNetwork';
 import type { RoadSpec } from './RoadTypes';
 import { medianSoilTop } from './RoadSection';
-import { padIndex, medianPadIndex } from './PadIndex';
+import { padIndex, medianPadIndex, roadsidePadIndex } from './PadIndex';
 import { footpathHas, footpathNear } from './FootpathPlan';
 import { crossingZoneHas, planMedians } from './MedianPlan';
 import { uturnZoneHas } from './UTurns';
@@ -124,7 +124,7 @@ export function planCityTrees(roads: RoadNetwork): { pits: number[]; trees: numb
   const pits: number[] = [];
   const trees: number[] = [];
   const byChunk = new Map<string, number[]>();
-  const nearPad = padIndex(roads);
+  const nearPad = roadsidePadIndex(roads); // J9-c: same as padIndex while the 300 ft junction switch is OFF
   const nearMedPad = medianPadIndex(roads); // the median and its planting stop earlier at 6 x 6 lane junctions
   const [lo, hi] = C.treeSpacing;
   const seed = Config.world.seed;
@@ -265,7 +265,7 @@ export function planRoadside(gen: TerrainGenerator): RoadsidePlan & { stats: Roa
   const shrubs: number[] = [];
   const posts: number[] = [];
   const beams: number[] = [];
-  const nearPad = padIndex(roads);
+  const nearPad = roadsidePadIndex(roads); // J9-c: same as padIndex while the 300 ft junction switch is OFF
   const nearMedPad = medianPadIndex(roads); // the median and its planting stop earlier at 6 x 6 lane junctions
   const sA = gen.makeSample();
   const sB = gen.makeSample();

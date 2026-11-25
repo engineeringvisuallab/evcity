@@ -9,7 +9,8 @@ import { Q } from '../core/Quality';
 import { Config } from '../core/Config';
 import { BOARD_H, BOARD_TOP, EMPTY_BOARD, GANTRY, POST_TOP, SIGN_FIELD, type BoardContent } from './RoadSignSpec';
 import { paintBoard, paintSections, paintSize, SIGN_COLORS } from './RoadSignPaint';
-import { ROAD_SIGN_SPOTS, type RoadSignSpot } from './RoadSignData';
+import { type RoadSignSpot } from './RoadSignData';
+import { roadSignSpots } from './ActiveSigns'; // J9-d: sign-17 (over the removed R6-9) is not built with the 300 ft junction switch ON
 import { gantrySolids, solidsRadius, type SignSolid, type SignSolidGroup } from './SignSolids';
 import { bridgeParts, BRIDGE_ZB } from './RoadSignBridgeGeo';
 import { bridgeDesign } from './RoadSignBridgeSpec';
@@ -39,7 +40,7 @@ export class RoadSignLayer {
     this.group.name = 'road-signs';
     if (!Config.roads.signs.enabled) return;
     const parts: THREE.BufferGeometry[] = [];
-    for (const s of ROAD_SIGN_SPOTS) this.build(s, parts);
+    for (const s of roadSignSpots()) this.build(s, parts);
     if (parts.length) {
       const merged = mergeGeometries(parts);
       for (const p of parts) p.dispose();

@@ -2,6 +2,8 @@ import { Config } from '../core/Config';
 import { RAIL_BOX_COVER } from '../roads/RoadCorrections';
 import type { RoadSpec } from '../roads/RoadTypes';
 import { RailContext, type RailTerrain } from './RailContext';
+import { j300Active } from '../roads/junction/J300Switch';
+import { j300PierOk, j300SnapSupports, J300_RAIL_PIN } from '../roads/junction/J300RailPiers';
 import { bandOk, movingAverage, solveProfile } from './RailProfile';
 import { LINES, RAIL_DESIGN as D, RAIL_OVER_ROAD_FLOOR, RAIL_OVER_ROAD_RISE, RAIL_UNDER_BRIDGE_DROP, RAIL_UNDER_BRIDGE_FORCE, STATIONS, STATION_LEVELS, type StationKind } from './RailPlan';
 import { buildDiamonds, buildSwitches, type RailDiamond, type RailSwitch } from './RailSwitches';
@@ -951,7 +953,8 @@ export class RailNetwork {
         }
       }
       const mean = cnt ? sum / cnt : st.y;
-      const fixedLevel = STATION_LEVELS[st.id];
+      // J9-c: with the 300 ft junction switch ON the old R6-9 is not a road any more, so nw-town would lose its viaduct (the railway cannot change): its OFF level is pinned (J300RailPiers.ts, checked by scripts/j300-j9c-check.ts)
+      const fixedLevel = STATION_LEVELS[st.id] ?? (j300Active() ? J300_RAIL_PIN[st.id] : undefined);
       if (fixedLevel !== undefined) {
         st.elevated = true;
         st.level = fixedLevel;
@@ -1348,6 +1351,8 @@ export class RailNetwork {
     const free = (e: RailEdge, s: number): boolean => {
       const p = this.pointAt(e, s);
       const t = Math.max(0, Math.min(1, (s - e.cum[p.i]) / (e.cum[p.i + 1] - e.cum[p.i] || 1)));
+      // J9-c: with the 300 ft junction switch ON the R6 arm passes under the station viaduct: a pier must keep the walled R6 corridor free (OFF: unchanged)
+      if (j300Active() && !j300PierOk(p.x, p.z, p.dx, p.dz)) return false;
       return this.ctx.pierFree(p.x, p.z, D.pierSize / 2, D.pierRoadGap, e.design[p.i] + (e.design[p.i + 1] - e.design[p.i]) * t);
     };
     for (const e of this.edges) {
@@ -1372,6 +1377,7 @@ export class RailNetwork {
           if (found >= 0) supports.push(found);
         }
         supports.push(seg.s1);
+        if (j300Active()) j300SnapSupports(e.id, supports); // J9-c: the two piers beside the R6 corridor stand where J7-B put them (s 51.77 / 96.77), not on the 1.5 m search grid
         // too long a span: split it at the free ground that makes the two halves most equal; if none, it becomes a steel span
         for (let q = 0; q < supports.length - 1; ) {
           const gap = supports[q + 1] - supports[q];

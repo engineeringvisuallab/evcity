@@ -28,6 +28,8 @@ export interface ChunkRequest {
   vertsPerSide: number;
   skirtDepth: number;
   dens?: WorldDensity;
+  /** J9-b: the 300 ft junction switch of the main thread (Config flag or ?j300=1). The worker cannot see the page URL, so it gets the flag here. */
+  j300?: boolean;
 }
 
 export interface ChunkResult {
@@ -73,6 +75,7 @@ export interface GrassRequest {
   /** only every `stride`-th cell of the tile's cell grid gets a tuft (1 = all; far LOD rings use 2 and 5); the clump grid is thinned by that ring's `clumpStride`. */
   stride: number;
   dens?: WorldDensity;
+  j300?: boolean;
 }
 
 export interface GrassResult {

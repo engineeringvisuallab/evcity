@@ -11,7 +11,7 @@
 //                        mall (north of it, along F4) with its own driveway.
 // Nothing here carries a signboard any more.
 
-import { ROAD_STATION_SITES } from './RoadStationSites';
+import { roadStationSites } from './ActiveStationSites'; // J9-d: the sites that really exist (300 ft junction switch hides cp-37 / cp-38)
 
 const UX = 0.33303786, UZ = -0.94291345; // along F4
 const NX = -0.94291345, NZ = -0.33303786; // away from the mall, across F4
@@ -59,9 +59,12 @@ export function fleetToWorld(lat: number, back: number): { x: number; z: number 
 export interface FuelLot { id: string; nameBn: string; s0: number; s1: number; n0: number; n1: number }
 
 /** The road-side sites as rotated boxes (site frame: local +z at the road), for parkingContains (trees / rocks / grass keep out). */
-const SITE_BOXES = ROAD_STATION_SITES.map((s) => ({
-  x: s.x, z: s.z, rx: Math.sin(s.yaw), rz: Math.cos(s.yaw), hw: s.hw, hd: s.hd, gap: s.gap, reach: Math.hypot(s.hw, s.hd + s.gap + 0.5) + 1,
-}));
+let boxCache: { src: unknown; boxes: { x: number; z: number; rx: number; rz: number; hw: number; hd: number; gap: number; reach: number }[] } | null = null;
+function siteBoxes(): { x: number; z: number; rx: number; rz: number; hw: number; hd: number; gap: number; reach: number }[] {
+  const list = roadStationSites();
+  if (!boxCache || boxCache.src !== list) boxCache = { src: list, boxes: list.map((s) => ({ x: s.x, z: s.z, rx: Math.sin(s.yaw), rz: Math.cos(s.yaw), hw: s.hw, hd: s.hd, gap: s.gap, reach: Math.hypot(s.hw, s.hd + s.gap + 0.5) + 1 })) };
+  return boxCache.boxes;
+}
 
 
 /**
@@ -84,7 +87,7 @@ export function parkingContains(x: number, z: number, margin = 0): boolean {
     if (s >= l.s0 - margin && s <= l.s1 + margin && n >= l.n0 - margin && n <= l.n1 + margin) return true;
   }
   // STEP 4: the road-side stations / charge points (the lot + the driveway to the road shoulder), in their own rotated frame
-  for (const p of SITE_BOXES) {
+  for (const p of siteBoxes()) {
     if (Math.abs(x - p.x) > p.reach + margin || Math.abs(z - p.z) > p.reach + margin) continue;
     const ex = x - p.x, ez = z - p.z;
     const lx = ex * p.rz - ez * p.rx, lz = ex * p.rx + ez * p.rz;

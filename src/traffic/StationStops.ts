@@ -1,4 +1,5 @@
-import { ROAD_STATION_SITES, type RoadStationSite } from '../parking/RoadStationSites';
+import { type RoadStationSite } from '../parking/RoadStationSites';
+import { roadStationSites } from '../parking/ActiveStationSites'; // J9-d
 import { detourPlan, type DetourPlan } from './StationDetour';
 import type { RoadPoint } from './RoadGraph';
 
@@ -62,7 +63,7 @@ export class StationStops {
   readonly entries: StationEntry[] = [];
   private clock = 0;
 
-  constructor(private g: StopsGraph, sites: ReadonlyArray<RoadStationSite> = ROAD_STATION_SITES) {
+  constructor(private g: StopsGraph, sites: ReadonlyArray<RoadStationSite> = roadStationSites()) {
     for (const s of sites) this.add(s);
   }
 

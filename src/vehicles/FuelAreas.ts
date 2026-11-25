@@ -1,5 +1,6 @@
 import { MAIN_STATION_LOT, worldToLot, type FuelLot } from '../parking/ParkingSite';
-import { ROAD_STATION_SITES, type RoadStationSite } from '../parking/RoadStationSites';
+import { type RoadStationSite } from '../parking/RoadStationSites';
+import { roadStationSites } from '../parking/ActiveStationSites'; // J9-d
 import type { VehicleId } from './VehicleSpec';
 
 /** Seconds to fill an empty fuel tank / charge an empty battery (the vehicle must stand still inside a station). */
@@ -15,7 +16,7 @@ export interface Station { id: string; nameBn: string }
 
 /** The road-side site (RoadStationSites.ts) whose lot rectangle (hw x hd, centred on the site, turned by its yaw) contains this world position, of the given kind, or null. */
 function siteAt(x: number, z: number, kind: RoadStationSite['kind']): RoadStationSite | null {
-  for (const s of ROAD_STATION_SITES) {
+  for (const s of roadStationSites()) {
     if (s.kind !== kind) continue;
     const dx = x - s.x, dz = z - s.z;
     if (Math.abs(dx) > 40 || Math.abs(dz) > 40) continue;

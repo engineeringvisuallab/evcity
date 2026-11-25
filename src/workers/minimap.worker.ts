@@ -1,4 +1,5 @@
 import { TerrainGenerator } from '../terrain/TerrainGenerator';
+import { Config } from '../core/Config';
 
 /**
  * Paints the map picture of the whole world (incl. the margin) once, off the main thread.
@@ -10,6 +11,8 @@ export interface MinimapRequest {
   size: number;
   /** Map covers x,z in [-half, +half] metres. */
   half: number;
+  /** J9-d: the 300 ft junction switch of the main thread (the worker cannot see the page URL). */
+  j300?: boolean;
 }
 export interface MinimapResult {
   rgba: Uint8ClampedArray;
@@ -19,7 +22,8 @@ export interface MinimapResult {
 const ctx = self as unknown as Worker;
 
 ctx.onmessage = (e: MessageEvent<MinimapRequest>) => {
-  const { seed, size, half } = e.data;
+  const { seed, size, half, j300 } = e.data;
+  if (j300 && !Config.roads.junctionJ300.enabled) Config.roads.junctionJ300.enabled = true; // before the generator (road network) is built
   const gen = new TerrainGenerator(seed);
   const mpp = (2 * half) / size;
   const sc = gen.makeSample();

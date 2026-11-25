@@ -10,7 +10,8 @@
 // Children use ABSOLUTE world coordinates (like ParkingLots), added to world.root.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { ROAD_STATION_SITES, type RoadStationSite } from './RoadStationSites';
+import { type RoadStationSite } from './RoadStationSites';
+import { roadStationSites } from './ActiveStationSites'; // J9-d
 import { chargeLayout, fuelLayout, sitePaint, solidsOf, type LRect, type LSeg, type Layout, type MatKey, type SitePaint, type TexKey } from './StationLayout';
 import type { SignSolidGroup } from '../signs/SignSolids';
 
@@ -170,7 +171,7 @@ export class StationStructures {
 
   constructor(private d: StationDeps) {
     this.group.name = 'StationStructures';
-    const sites = d.sites ?? ROAD_STATION_SITES;
+    const sites = d.sites ?? roadStationSites();
     const ownShared = <T extends { dispose(): void }>(o: T): T => {
       this.shared.push(o);
       return o;

@@ -1,6 +1,8 @@
 import type { RoadNetwork } from './RoadNetwork';
 import { Config } from '../core/Config';
 import { dividedSectionOf } from './RoadSection';
+import { j300Active } from './junction/J300Switch';
+import { j300InBox, j300RampSide } from './junction/J300Zone';
 
 /** Is (x, z) inside a junction pad (+ margin)? Coarse grid, built once per call of a planner. */
 export function padIndex(roads: RoadNetwork): (x: number, z: number, margin: number) => boolean {
@@ -17,12 +19,21 @@ export function padIndex(roads: RoadNetwork): (x: number, z: number, margin: num
         else grid.set(k, [i]);
       }
   });
+  const j300 = j300Active(); // J9-c: the underpass box of the 300 ft junction counts as a junction (median, crossings, footpaths, roadside planting stop before it); OFF: nothing changes
   return (x, z, margin) => {
+    if (j300 && j300InBox(x, z, margin)) return true;
     const l = grid.get(key(Math.floor(x / cell), Math.floor(z / cell)));
     if (!l) return false;
     for (const i of l) if (Math.hypot(x - roads.pads[i].x, z - roads.pads[i].z) < roads.pads[i].rCore + margin) return true;
     return false;
   };
+}
+
+/** J9-c: padIndex plus the ramp side of the ring in the 300 ft junction reach (roadside trees and props only, the median keeps running there). Same as padIndex while the switch is OFF. */
+export function roadsidePadIndex(roads: RoadNetwork): (x: number, z: number, margin: number) => boolean {
+  const base = padIndex(roads);
+  if (!j300Active()) return base;
+  return (x, z, margin) => base(x, z, margin) || j300RampSide(x, z, margin);
 }
 
 /**

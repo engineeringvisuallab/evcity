@@ -211,15 +211,15 @@ export class TreePlacer {
     const r = this.gen.roads;
     const m = this.mask;
     const c = V.roadClear;
-    r.maskAt(x, z, 1, m);
+    r.vegMaskAt(x, z, 1, m);
     if (m[1] > 0.01) return true;
-    r.maskAt(x + c, z, 1, m);
+    r.vegMaskAt(x + c, z, 1, m);
     if (m[1] > 0.01) return true;
-    r.maskAt(x - c, z, 1, m);
+    r.vegMaskAt(x - c, z, 1, m);
     if (m[1] > 0.01) return true;
-    r.maskAt(x, z + c, 1, m);
+    r.vegMaskAt(x, z + c, 1, m);
     if (m[1] > 0.01) return true;
-    r.maskAt(x, z - c, 1, m);
+    r.vegMaskAt(x, z - c, 1, m);
     return m[1] > 0.01;
   }
 
@@ -228,15 +228,15 @@ export class TreePlacer {
     const r = this.gen.roads;
     const m = this.mask;
     const c = V.roadClear;
-    r.maskAt(x, z, 1, m);
+    r.vegMaskAt(x, z, 1, m);
     if (m[1] > 0.01) return true;
-    r.maskAt(x + c, z, 1, m);
+    r.vegMaskAt(x + c, z, 1, m);
     if (m[1] > 0.01) return true;
-    r.maskAt(x - c, z, 1, m);
+    r.vegMaskAt(x - c, z, 1, m);
     if (m[1] > 0.01) return true;
-    r.maskAt(x, z + c, 1, m);
+    r.vegMaskAt(x, z + c, 1, m);
     if (m[1] > 0.01) return true;
-    r.maskAt(x, z - c, 1, m);
+    r.vegMaskAt(x, z - c, 1, m);
     return m[1] > 0.01;
   }
 

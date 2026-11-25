@@ -6,6 +6,8 @@ import { ENGINEERING_AREAS, ENGINEERING_GROUP_COLOR } from '../city/EngineeringZ
 import type { RailNetwork } from '../rail';
 import type { RoadNetwork } from '../roads/RoadNetwork';
 import { J1_S_END } from '../roads/junction/GroundJ1Terrain';
+import { j300Active } from '../roads/junction/J300Switch';
+import { j300MapShapes } from '../roads/junction/J300Footprint';
 import { bn, bnDigits, bnSigned } from '../i18n';
 import type { MinimapRequest, MinimapResult } from '../workers/minimap.worker';
 import { UI_FONT } from './theme';
@@ -151,7 +153,7 @@ export class Minimap {
       this.worker.terminate();
     };
     const half = Config.world.size / 2 + Config.world.chunkMargin * Config.world.chunkSize;
-    this.worker.postMessage({ seed, size: BASE_SIZE, half } satisfies MinimapRequest);
+    this.worker.postMessage({ seed, size: BASE_SIZE, half, j300: j300Active() } satisfies MinimapRequest);
   }
 
   private static makeZoneLayer(): HTMLCanvasElement {
@@ -296,6 +298,23 @@ export class Minimap {
           c.lineTo(X(x1), Z(z1));
           c.stroke();
         }
+        c.lineCap = 'round';
+      }
+      // J9-d: the 300 ft junction (switch ON) is not in the road list: roundabout circle, the two arms and the four ramps from the J7-C data
+      if (j300Active()) {
+        const sh = j300MapShapes();
+        c.lineCap = 'butt';
+        c.strokeStyle = pass === 0 ? 'rgb(45,32,22)' : '#ffb347';
+        for (const ln of sh.lines) {
+          c.lineWidth = Math.max(minPx, 2 * ln.half * ppm) + (pass === 0 ? rim * 2 : 0);
+          c.beginPath();
+          ln.pts.forEach((p, i) => (i === 0 ? c.moveTo(X(p[0]), Z(p[1])) : c.lineTo(X(p[0]), Z(p[1]))));
+          c.stroke();
+        }
+        c.beginPath();
+        c.arc(X(sh.circle.x), Z(sh.circle.z), Math.max(minPx, sh.circle.r * ppm), 0, Math.PI * 2);
+        c.fillStyle = pass === 0 ? 'rgb(45,32,22)' : '#ffb347';
+        c.fill();
         c.lineCap = 'round';
       }
     }

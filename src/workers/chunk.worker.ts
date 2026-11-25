@@ -23,8 +23,12 @@ let treePlacer: TreePlacer | null = null;
 let rockPlacer: RockPlacer | null = null;
 let grassPlacer: GrassPlacer | null = null;
 
-function ensureGenerator(seed: number): TerrainGenerator {
-  if (!generator || generatorSeed !== seed) {
+/** J9-b: the 300 ft junction switch comes from the main thread (a worker has no ?j300=1 in its own URL). It must be set before the generator (road network) is built. */
+let generatorJ300 = false;
+function ensureGenerator(seed: number, j300 = false): TerrainGenerator {
+  if (j300 && !Config.roads.junctionJ300.enabled) Config.roads.junctionJ300.enabled = true;
+  if (!generator || generatorSeed !== seed || generatorJ300 !== j300) {
+    generatorJ300 = j300;
     generator = new TerrainGenerator(seed);
     generatorSeed = seed;
     const plan = new CityPlan(generator.sites);
@@ -50,7 +54,7 @@ ctx.onmessage = (e: MessageEvent<ChunkRequest | GrassRequest>) => {
   const req = e.data;
 
   if (req.type === 'grass') {
-    ensureGenerator(req.seed);
+    ensureGenerator(req.seed, req.j300 === true);
     applyDensity(req.dens);
     const data = grassPlacer!.place(req.tx, req.tz, req.stride);
     const out: GrassResult = { type: 'grass', tx: req.tx, tz: req.tz, stride: req.stride, data };
@@ -59,7 +63,7 @@ ctx.onmessage = (e: MessageEvent<ChunkRequest | GrassRequest>) => {
   }
   if (req.type !== 'generate') return;
 
-  const gen = ensureGenerator(req.seed);
+  const gen = ensureGenerator(req.seed, req.j300 === true);
   applyDensity(req.dens);
   const m = buildChunkMeshData(gen, req.cx, req.cz, req.vertsPerSide, req.skirtDepth, req.lod);
 

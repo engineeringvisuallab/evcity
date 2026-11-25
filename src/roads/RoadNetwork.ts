@@ -29,6 +29,8 @@ import { RTE_M4_DATA } from './junction/RteM4Data';
 import { RTE_VIADUCT_WIDENING, RTE_STEM_OUTBOUND, RTE_STEM_INBOUND } from './junction/RteWidthData';
 import { R4_NEW_LINE_DATA } from './r4/R4NewLineData';
 import { j300Active, J300_DROP_ROADS, J300_TRIM_ROADS, trimLineAtPoint } from './junction/J300Switch'; // J9-a
+import { J300Carve, J300C } from './junction/J300Carve'; // J9-b
+import { j300InFootprint } from './junction/J300Footprint'; // J9-d
 import { CLASS_R4_OPEN, CLASS_R2_OPEN, CLASS_C_ZONE, CLASS_L_ZONE } from './standards/ClassSections';
 import { R2_NEW_LINE_DATA } from './r2/R2NewLineData';
 import { C_NEW_LINE_DATA } from './c/CNewLineData';
@@ -3891,6 +3893,8 @@ export class RoadNetwork {
   private islandLinkId = -1;
   /** STEP HK-9b2: ground cut along the Hatikamrul loop ramps, built on the first apply() with the switch ON. */
   private hkTerrain: HkTerrain | null = null;
+  /** J9-b: ground cut along the R6 / R4 arms of the 300 ft junction. undefined = not decided yet, null = switch OFF (nothing happens, no cost). */
+  private j300Carve: J300Carve | null | undefined = undefined;
   private hkReady = false;
   /** STEP 17.1g-b: true when (x, z) lies behind the first point of the island link (projection on its first segment < 0). */
   private behindLinkStart(x: number, z: number): boolean {
@@ -3912,7 +3916,28 @@ export class RoadNetwork {
         out.h -= (out.h - hc) * w;
       }
     }
+    // J9-b: the new 300 ft junction arms replace the old R6-9 / R4-9 stub (J9-a), so their road cuttings are gone: cut the hillside along the arms (cut only, never fills). Same fade rule as HK.
+    if (this.j300Carve === undefined) this.j300Carve = j300Active() ? new J300Carve() : null;
+    if (this.j300Carve !== null && (Number.isNaN(out.water) || out.h >= out.water + 0.3)) {
+      const jr = this.j300Run;
+      const jc = this.j300Carve.cap(x, z, jr);
+      if (jc < out.h) {
+        const nr = this.nearest(x, z, HK_ROAD_FADE);
+        const g = nr ? nr.d - this.score[nr.s] : HK_ROAD_FADE;
+        const wf = g <= 0 ? 0 : g >= HK_ROAD_FADE ? 1 : smoothstep(0, HK_ROAD_FADE, g);
+        // on the arm's own strip the arm wins (the old road stub end cap lies under its last metres); a deep cut (ground > 2.5 m over the cutting line) is never faded, only the last 0.3 .. 2 m next to an old pavement are protected
+        const dw = smoothstep(0.6, 2.5, out.h - jc);
+        const w = Math.max(wf, jr[1], dw);
+        out.h -= (out.h - jc) * w;
+      } else if (jc < Infinity && jr[0] > 0) {
+        // rounded cut rim (like DAY_SOFT): ground just under the cutting line is lowered a little, the slope never gets steeper
+        const k = J300C.soft * smoothstep(0, J300C.softRun, jr[0]);
+        const gh = jc - out.h;
+        if (k > 1e-3 && gh < k) { const f = 1 - gh / k; out.h -= 0.25 * k * f * f; }
+      }
+    }
   }
+  private j300Run: number[] = [0, 0];
 
   private applyRoads(x: number, z: number, out: TerrainSample): void {
     const segs = this.cellOf(x, z);
@@ -4171,6 +4196,18 @@ export class RoadNetwork {
       if (a > out[0] && !this.searth[s]) out[0] = a; // an earthen track is not painted as asphalt in the far terrain
       if (b > out[1]) out[1] = b;
     }
+  }
+
+  private j300Veg: boolean | undefined = undefined;
+
+  /**
+   * J9-d: maskAt for GRASS, TREES and ROCKS: the same road ground, plus the ground of the 300 ft junction (platform, arm ribbons, ramps, walls, slopes) while the switch is ON,
+   * so nothing grows through the junction mesh. The terrain colouring keeps using maskAt (the junction mesh covers its own ground). Switch OFF: identical to maskAt.
+   */
+  vegMaskAt(x: number, z: number, step: number, out: Float32Array): void {
+    this.maskAt(x, z, step, out);
+    if (this.j300Veg === undefined) this.j300Veg = j300Active();
+    if (this.j300Veg && out[1] < 1 && j300InFootprint(x, z)) out[1] = 1;
   }
 
   /** True if any road (or its embankment) can touch the chunk area. Cheap pre-check for the worker. */

@@ -77,7 +77,7 @@ export class GrassPlacer {
 
   /** True on roads, rail, ports, airports and every plot / pad / field where no grass may grow (the same list for tufts and clumps). */
   private blocked(x: number, z: number): boolean {
-    this.gen.roads.maskAt(x, z, 1, this.mask);
+    this.gen.roads.vegMaskAt(x, z, 1, this.mask); // J9-d: + the 300 ft junction ground (switch ON)
     if (this.mask[1] > 0.01) return true;
     if (this.gen.railForm.inCorridor(x, z, 0)) return true;
     if (this.gen.portForm.inFootprint(x, z, 0)) return true; // STAGE 14: sea port

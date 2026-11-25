@@ -20,6 +20,8 @@ import { planMedianLamps } from '../roads/Planting';
 import { planMedians, crossingZoneHas } from '../roads/MedianPlan';
 import { hkFrame, hkRamps, hkRingOffset, hkCdDistance } from '../roads/ring/HkRamps';
 import { HM } from '../roads/ring/HkRampMesh';
+import { j300Active } from '../roads/junction/J300Switch';
+import { j300RampSide } from '../roads/junction/J300Zone';
 
 export interface LampSpot {
   /** Foot of the pole (world metres). */
@@ -90,6 +92,7 @@ export function planStreetLights(roads: RoadNetwork): LampSpot[] {
     return false;
   };
   const mplan = planMedians(roads);
+  const j300 = j300Active();
   const bridgeHalf = new Map<number, number>();
   for (const b of roads.bridges) bridgeHalf.set(b.id, b.deckHalfWidth);
 
@@ -130,6 +133,7 @@ export function planStreetLights(roads: RoadNetwork): LampSpot[] {
       const pz = z + nz * edge * side;
       // another road's asphalt (a crossing that is not a pad): no pole here
       if (bid < 0 && roads.surfaceAt(px, pz) === 1) continue;
+      if (j300 && j300RampSide(px, pz, 0)) continue; // J9-c: this ring lamp would stand on a ramp / wall / aux lane of the 300 ft junction (its own poles are in J300StructC)
       let tx = r.xs[i + 1] - r.xs[i];
       let tz = r.zs[i + 1] - r.zs[i];
       const ty = r.ys[i + 1] - r.ys[i];

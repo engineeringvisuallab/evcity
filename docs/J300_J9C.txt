@@ -1,0 +1,36 @@
+J9-c CHECK (headless, real game: rail + roads + street lights + median + roadside, switch OFF vs ON)
+
+1) RAIL PIERS BESIDE THE R6 CORRIDOR (J7-B table, section 23)
+PASS  switch OFF: the 2 old piers at rail s 60 and 90 stand inside the corridor (finding of J7-B reproduced)  s 60: 12.28 / 10.6   s 90: 13.7 / 12.02
+PASS  switch ON: no pier of any rail edge inside the R6 corridor (column gap >= 19.58 m, cap gap >= 18.2 m)  12 piers within 150 m checked
+PASS  switch ON: piers at rail s 30 / 51.77 / 96.77 / 120 = the J7-B table  game: 30 / 51.77 / 96.77 / 120
+PASS  switch ON: every span <= 46 m (concrete limit) and no steel span between s 30 and 120  spans 21.77 / 45 / 23.23 m (table 21.77 / 45 / 23.23)
+PASS  switch ON: gaps of the two moved piers equal the table (column 20.34, cap 18.65 m, within 0.02)  s 51.77: 20.35 / 18.66   s 96.77: 20.34 / 18.65
+
+2) THE REST OF THE RAILWAY (user rule: the railway cannot change)
+PASS  stations: same ids, same elevated flag, same level (to 1e-9)  nw-town is pinned (J300_RAIL_PIN), without the pin it dropped from 35.26 m (viaduct) to 19.40 m (ground)
+PASS  rail edges: same ids and lengths  12 edges
+PASS  bridge / ground / cutting / tunnel runs of every edge identical (ignoring the label inside a run)
+PASS  piers of every other edge identical (positions to 0.01 m)  edges that differ: ring-north
+PASS  ring-north: piers beyond rail s 500 identical  OFF only: 60 90 270 328.57 357.14 385.71 414.29 442.86 471.43   ON only: 51.77 96.77 210 268.89 297.78 326.67 355.56 384.44 413.33 442.22 471.11
+INFO  ring-north before s 500 differs: besides the 2 moved piers the OFF rail has a STEEL through-girder at s [[180,240]] and 7 piers at s 270 .. 471 over the OLD R6-9 crossing (conflict run 240 .. 300); the old R6-9 is gone with the switch ON, so the game puts normal 30 m piers there (ON piers beyond s 150: 180 210 268.89 297.78 326.67 355.56 384.44 413.33 442.22 471.11). A decision for the user (see section 28).
+PASS  rail issues count not higher than OFF  OFF 1, ON 1
+PASS  switch OFF = shipped state: 422 piers and 10 steel spans (counted before the J9-c patch)  422 piers, 10 steel spans
+
+3) RING FURNITURE IN THE 300 FT REACH (box u -67 .. 67; ramp side u -435 .. +645, minus 25 m taper tail)
+PASS  switch OFF: ring lamps stand in the reach (so the rule has something to do)  28 lamps (u, v): -407.17,-24.2  -371.17,24.2  -335.17,-24.2  -299.17,24.2 ...
+PASS  switch ON: no street lamp left in the reach  0 left
+PASS  switch ON: only lamps of the reach were taken away (total = total without the rule - lamps in the reach)  3395 - 27 = 3368
+PASS  switch ON: no median-plan sample inside the box  OFF 0, ON 0
+INFO  the ring has NO median run in the median plan (0 samples in the whole plan, none within 40 m of the box): the ring median is part of the ring surface, so nothing is removed there. The median hedges / trees of the roadside plan are counted below.
+PASS  switch ON: no roadside pits in the reach  OFF 2 of 1214, without the rule 0 of 1188, ON 0 of 1188
+PASS  switch ON: no roadside trees in the reach  OFF 4 of 1726, without the rule 0 of 1704, ON 0 of 1704
+PASS  switch ON: no roadside hedges in the reach  OFF 67 of 21868, without the rule 52 of 21572, ON 0 of 21514
+PASS  switch ON: no roadside shrubs in the reach  OFF 0 of 19505, without the rule 0 of 19473, ON 0 of 19473
+PASS  switch ON: no roadside posts in the reach  OFF 0 of 24192, without the rule 0 of 24192, ON 0 of 24192
+PASS  switch ON: no roadside beams in the reach  OFF 0 of 23402, without the rule 0 of 23402, ON 0 of 23402
+PASS  switch ON: nothing is taken away outside the reach + 30 m (removed items between the reach and reach + 30 m, the median stops before the box like before a pad)  pits -0 (reach 0, +30 m 0)  trees -0 (reach 0, +30 m 12)  hedges -58 (reach 52, +30 m 419)  shrubs -0 (reach 0, +30 m 0)  posts -0 (reach 0, +30 m 0)  beams -0 (reach 0, +30 m 0)
+
+NOT RUN: npm run build (vite) and the in-game look (browser), the real browser chunk workers, ring through the box visually (lamps, median, trees only checked as data), ring asphalt / barriers inside the box, ground and grass vegetation inside the footprint (J9-d), minimap, collision, old ring signs, cp-37 / cp-38 / sign-17 (J9-d), traffic (J10), steel-span variant of the 45 m middle span (not chosen).
+
+0 FAIL

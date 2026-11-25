@@ -1,7 +1,7 @@
 // STEP 4: LEVEL PADS under the road-side fuel stations and charge points (RoadStationSites.ts), applied inside TerrainGenerator.sample() like the mall / library pads
 // (so the main thread, the chunk workers and the colliders all see the same ground). The pad is level at the site's floor height (`y` = the host road's surface height there),
 // covers the lot AND the driveway strip up to the road shoulder, and grades back to the natural ground over BLEND metres. It gives way where a road / junction pad is.
-import { ROAD_STATION_SITES } from './RoadStationSites';
+import { roadStationSites } from './ActiveStationSites'; // J9-d
 
 /** Soft blend (m) from the level pad back to the natural ground. */
 const BLEND = 14;
@@ -19,7 +19,7 @@ export class StationPads {
   /** The site generator (scripts/gen-road-stations.ts) switches the pads off to look at the ground the way it was before the pads. */
   enabled = true;
   private lx = [0];
-  private pads: Pad[] = ROAD_STATION_SITES.map((s) => ({
+  private pads: Pad[] = roadStationSites().map((s) => ({
     x: s.x, z: s.z, rx: Math.sin(s.yaw), rz: Math.cos(s.yaw),
     hw: s.hw + 1, z0: -s.hd - 1, z1: s.hd + s.gap + 1,
     reach: Math.hypot(s.hw + 1, s.hd + s.gap + 1) + BLEND + 2,
