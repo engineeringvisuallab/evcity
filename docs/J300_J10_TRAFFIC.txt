@@ -1,0 +1,123 @@
+J10 TRAFFIC CHECK (headless, real road network switch ON, J300Link from J300 legs / arms / ramps data)
+roads 218, moves 10 of 10, R6-7 id 12, R4-9 id 42, M8 id 0
+PASS  all 10 movements built (complete)  10 / 10
+PASS  game roads R6-7, R4-9 and M8 exist  
+
+== R6>R4  length 1125.6 m, circle sweep 129.9 deg, 226 points, from R6-7 s 771.5 dir 1 (tip 5.5 m off the centre line) -> to R4-9 s 2571.8 dir -1 (5.6 m off)
+PASS  R6>R4: no jump (every step <= 6.5 m, >= 1 m)  4.99 .. 5.00 m
+PASS  R6>R4: heading change per step <= 18 deg  max 8.7 deg
+PASS  R6>R4: level step per step <= 0.4 m (8 % on 5 m)  max 0.23 m
+PASS  R6>R4: first point level = level of R6-7 at the foot point (<= 0.5 m)  18.17 vs 18.17 m, 5.5 m off the centre line
+PASS  R6>R4: last point level = level of R4-9 at the foot point (<= 0.5 m)  46.48 vs 46.48 m, 5.6 m off the centre line
+PASS  R6>R4: first / last point within 25 m of the game road centre line (lead-in / merge can reach it)  5.5 / 5.6 m
+PASS  R6>R4: speed profile 8.0 .. 22.0 m/s: circle = 8 m/s, never above the leg design speed  iYield 126, iLeave 153
+PASS  R6>R4: circle part on the deck level 35.30 m (flat)  
+
+== R6>Eo  length 1266.2 m, circle sweep 25.0 deg, 254 points, from R6-7 s 771.5 dir 1 (tip 5.5 m off the centre line) -> to M8 s 8111.8 dir 1 (19.1 m off)
+PASS  R6>Eo: no jump (every step <= 6.5 m, >= 1 m)  4.99 .. 5.01 m
+PASS  R6>Eo: heading change per step <= 18 deg  max 11.6 deg
+PASS  R6>Eo: level step per step <= 0.4 m (8 % on 5 m)  max 0.20 m
+PASS  R6>Eo: first point level = level of R6-7 at the foot point (<= 0.5 m)  18.17 vs 18.17 m, 5.5 m off the centre line
+PASS  R6>Eo: last point level = level of M8 at the foot point (<= 0.5 m)  47.12 vs 47.03 m, 19.1 m off the centre line
+PASS  R6>Eo: first / last point within 25 m of the game road centre line (lead-in / merge can reach it)  5.5 / 19.1 m
+PASS  R6>Eo: speed profile 8.0 .. 22.0 m/s: circle = 8 m/s, never above the leg design speed  iYield 126, iLeave 132
+PASS  R6>Eo: circle part on the deck level 35.30 m (flat)  
+
+== R6>Wo  length 1242.1 m, circle sweep 205.0 deg, 249 points, from R6-7 s 771.5 dir 1 (tip 5.5 m off the centre line) -> to M8 s 7031.8 dir -1 (19.1 m off)
+PASS  R6>Wo: no jump (every step <= 6.5 m, >= 1 m)  5.00 .. 5.01 m
+PASS  R6>Wo: heading change per step <= 18 deg  max 9.0 deg
+PASS  R6>Wo: level step per step <= 0.4 m (8 % on 5 m)  max 0.20 m
+PASS  R6>Wo: first point level = level of R6-7 at the foot point (<= 0.5 m)  18.17 vs 18.17 m, 5.5 m off the centre line
+PASS  R6>Wo: last point level = level of M8 at the foot point (<= 0.5 m)  38.79 vs 38.89 m, 19.1 m off the centre line
+PASS  R6>Wo: first / last point within 25 m of the game road centre line (lead-in / merge can reach it)  5.5 / 19.1 m
+PASS  R6>Wo: speed profile 8.0 .. 22.0 m/s: circle = 8 m/s, never above the leg design speed  iYield 126, iLeave 169
+PASS  R6>Wo: circle part on the deck level 35.30 m (flat)  
+
+== R4>R6  length 1122.7 m, circle sweep 129.9 deg, 226 points, from R4-9 s 2571.7 dir 1 (tip 5.6 m off the centre line) -> to R6-7 s 771.5 dir -1 (5.5 m off)
+PASS  R4>R6: no jump (every step <= 6.5 m, >= 1 m)  4.98 .. 4.99 m
+PASS  R4>R6: heading change per step <= 18 deg  max 9.2 deg
+PASS  R4>R6: level step per step <= 0.4 m (8 % on 5 m)  max 0.21 m
+PASS  R4>R6: first point level = level of R4-9 at the foot point (<= 0.5 m)  46.48 vs 46.48 m, 5.6 m off the centre line
+PASS  R4>R6: last point level = level of R6-7 at the foot point (<= 0.5 m)  18.17 vs 18.17 m, 5.5 m off the centre line
+PASS  R4>R6: first / last point within 25 m of the game road centre line (lead-in / merge can reach it)  5.6 / 5.5 m
+PASS  R4>R6: speed profile 8.0 .. 22.0 m/s: circle = 8 m/s, never above the leg design speed  iYield 70, iLeave 98
+PASS  R4>R6: circle part on the deck level 35.30 m (flat)  
+
+== R4>Eo  length 1171.5 m, circle sweep 204.9 deg, 235 points, from R4-9 s 2571.7 dir 1 (tip 5.6 m off the centre line) -> to M8 s 8111.8 dir 1 (19.1 m off)
+PASS  R4>Eo: no jump (every step <= 6.5 m, >= 1 m)  5.00 .. 5.01 m
+PASS  R4>Eo: heading change per step <= 18 deg  max 9.2 deg
+PASS  R4>Eo: level step per step <= 0.4 m (8 % on 5 m)  max 0.21 m
+PASS  R4>Eo: first point level = level of R4-9 at the foot point (<= 0.5 m)  46.48 vs 46.48 m, 5.6 m off the centre line
+PASS  R4>Eo: last point level = level of M8 at the foot point (<= 0.5 m)  47.12 vs 47.03 m, 19.1 m off the centre line
+PASS  R4>Eo: first / last point within 25 m of the game road centre line (lead-in / merge can reach it)  5.6 / 19.1 m
+PASS  R4>Eo: speed profile 8.0 .. 22.0 m/s: circle = 8 m/s, never above the leg design speed  iYield 70, iLeave 113
+PASS  R4>Eo: circle part on the deck level 35.30 m (flat)  
+
+== R4>Wo  length 775.6 m, circle sweep 24.9 deg, 156 points, from R4-9 s 2571.7 dir 1 (tip 5.6 m off the centre line) -> to M8 s 7031.8 dir -1 (19.1 m off)
+PASS  R4>Wo: no jump (every step <= 6.5 m, >= 1 m)  4.99 .. 5.00 m
+PASS  R4>Wo: heading change per step <= 18 deg  max 11.4 deg
+PASS  R4>Wo: level step per step <= 0.4 m (8 % on 5 m)  max 0.21 m
+PASS  R4>Wo: first point level = level of R4-9 at the foot point (<= 0.5 m)  46.48 vs 46.48 m, 5.6 m off the centre line
+PASS  R4>Wo: last point level = level of M8 at the foot point (<= 0.5 m)  38.79 vs 38.89 m, 19.1 m off the centre line
+PASS  R4>Wo: first / last point within 25 m of the game road centre line (lead-in / merge can reach it)  5.6 / 19.1 m
+PASS  R4>Wo: speed profile 8.0 .. 22.0 m/s: circle = 8 m/s, never above the leg design speed  iYield 70, iLeave 76
+PASS  R4>Wo: circle part on the deck level 35.30 m (flat)  
+
+== Ei>R6  length 1244.5 m, circle sweep 203.6 deg, 250 points, from M8 s 7913.8 dir -1 (tip 19.1 m off the centre line) -> to R6-7 s 771.5 dir -1 (5.5 m off)
+PASS  Ei>R6: no jump (every step <= 6.5 m, >= 1 m)  4.99 .. 5.00 m
+PASS  Ei>R6: heading change per step <= 18 deg  max 9.6 deg
+PASS  Ei>R6: level step per step <= 0.4 m (8 % on 5 m)  max 0.23 m
+PASS  Ei>R6: first point level = level of M8 at the foot point (<= 0.5 m)  39.20 vs 39.11 m, 19.1 m off the centre line
+PASS  Ei>R6: last point level = level of R6-7 at the foot point (<= 0.5 m)  18.17 vs 18.17 m, 5.5 m off the centre line
+PASS  Ei>R6: first / last point within 25 m of the game road centre line (lead-in / merge can reach it)  19.1 / 5.5 m
+PASS  Ei>R6: speed profile 8.0 .. 22.0 m/s: circle = 8 m/s, never above the leg design speed  iYield 79, iLeave 122
+PASS  Ei>R6: circle part on the deck level 35.30 m (flat)  
+
+== Ei>R4  length 780.8 m, circle sweep 23.5 deg, 157 points, from M8 s 7913.8 dir -1 (tip 19.1 m off the centre line) -> to R4-9 s 2571.8 dir -1 (5.6 m off)
+PASS  Ei>R4: no jump (every step <= 6.5 m, >= 1 m)  4.99 .. 5.01 m
+PASS  Ei>R4: heading change per step <= 18 deg  max 13.3 deg
+PASS  Ei>R4: level step per step <= 0.4 m (8 % on 5 m)  max 0.24 m
+PASS  Ei>R4: first point level = level of M8 at the foot point (<= 0.5 m)  39.20 vs 39.11 m, 19.1 m off the centre line
+PASS  Ei>R4: last point level = level of R4-9 at the foot point (<= 0.5 m)  46.48 vs 46.48 m, 5.6 m off the centre line
+PASS  Ei>R4: first / last point within 25 m of the game road centre line (lead-in / merge can reach it)  19.1 / 5.6 m
+PASS  Ei>R4: speed profile 8.0 .. 22.0 m/s: circle = 8 m/s, never above the leg design speed  iYield 79, iLeave 84
+PASS  Ei>R4: circle part on the deck level 35.30 m (flat)  
+
+== Wi>R6  length 1046.6 m, circle sweep 23.6 deg, 210 points, from M8 s 7031.8 dir 1 (tip 19.1 m off the centre line) -> to R6-7 s 771.5 dir -1 (5.5 m off)
+PASS  Wi>R6: no jump (every step <= 6.5 m, >= 1 m)  4.99 .. 5.01 m
+PASS  Wi>R6: heading change per step <= 18 deg  max 11.8 deg
+PASS  Wi>R6: level step per step <= 0.4 m (8 % on 5 m)  max 0.23 m
+PASS  Wi>R6: first point level = level of M8 at the foot point (<= 0.5 m)  38.79 vs 38.89 m, 19.1 m off the centre line
+PASS  Wi>R6: last point level = level of R6-7 at the foot point (<= 0.5 m)  18.17 vs 18.17 m, 5.5 m off the centre line
+PASS  Wi>R6: first / last point within 25 m of the game road centre line (lead-in / merge can reach it)  19.1 / 5.5 m
+PASS  Wi>R6: speed profile 8.0 .. 22.0 m/s: circle = 8 m/s, never above the leg design speed  iYield 77, iLeave 82
+PASS  Wi>R6: circle part on the deck level 35.30 m (flat)  
+
+== Wi>R4  length 954.8 m, circle sweep 203.5 deg, 192 points, from M8 s 7031.8 dir 1 (tip 19.1 m off the centre line) -> to R4-9 s 2571.8 dir -1 (5.6 m off)
+PASS  Wi>R4: no jump (every step <= 6.5 m, >= 1 m)  4.99 .. 5.00 m
+PASS  Wi>R4: heading change per step <= 18 deg  max 9.1 deg
+PASS  Wi>R4: level step per step <= 0.4 m (8 % on 5 m)  max 0.23 m
+PASS  Wi>R4: first point level = level of M8 at the foot point (<= 0.5 m)  38.79 vs 38.89 m, 19.1 m off the centre line
+PASS  Wi>R4: last point level = level of R4-9 at the foot point (<= 0.5 m)  46.48 vs 46.48 m, 5.6 m off the centre line
+PASS  Wi>R4: first / last point within 25 m of the game road centre line (lead-in / merge can reach it)  19.1 / 5.6 m
+PASS  Wi>R4: speed profile 8.0 .. 22.0 m/s: circle = 8 m/s, never above the leg design speed  iYield 77, iLeave 119
+PASS  Wi>R4: circle part on the deck level 35.30 m (flat)  
+
+== reachability and groups
+PASS  exit R6 reachable from >= 2 entries  R4>R6, Ei>R6, Wi>R6
+PASS  exit R4 reachable from >= 2 entries  R6>R4, Ei>R4, Wi>R4
+PASS  exit Eo reachable from >= 2 entries  R6>Eo, R4>Eo
+PASS  exit Wo reachable from >= 2 entries  R6>Wo, R4>Wo
+PASS  entry R6 has >= 2 movements  R6>R4, R6>Eo, R6>Wo
+PASS  entry R4 has >= 2 movements  R4>R6, R4>Eo, R4>Wo
+PASS  entry Ei has >= 2 movements  Ei>R6, Ei>R4
+PASS  entry Wi has >= 2 movements  Wi>R6, Wi>R4
+PASS  R6>* movements leave R6-7 at ONE tip (same road, dir, s within 3 m)  771.5 / 771.5 / 771.5
+PASS  R4>* movements leave R4-9 at ONE tip  2571.7 / 2571.7 / 2571.7
+PASS  R6>* tip lies at the END of R6-7 (s within 3 m of its length) and R4>* at the end of R4-9  R6-7 771.5 of 771.5, R4-9 2571.7 of 2571.8
+PASS  Ei / Wi tips and Eo / Wo ends all lie on M8  
+PASS  moves into R6 / R4 end on R6-7 / R4-9 (travelling away from the arm end)  
+
+SUMMARY worst step 5.01 m, worst heading change 13.3 deg, worst level step 0.24 m
+0 FAIL
+NOT RUN: vehicle height under 5.5 m on the ring under the deck (J7 clearance PASS earlier), roundabout give-way (circulating flow has priority), R4-4 T junction movements, signals (none: roundabout), in-game drive, Route / RoadGraph hook in a browser, microsimulation.

@@ -7,6 +7,7 @@ import type { UTurnOpening } from '../roads/UTurns';
 import { J1Link } from './J1Link';
 import { RteLink } from './RteLink';
 import { HkLink } from './HkLink';
+import { J300Link } from './J300Link';
 import { hkFrame, hkRamps } from '../roads/ring/HkRamps';
 
 export interface RoadPoint {
@@ -67,6 +68,8 @@ export class RoadGraph {
   readonly rte: RteLink | null = null;
   /** HK-11b: the AI paths of the Hatikamrul interchange (ring M8 over the arm J1-S / island link M6-1); null = off / not complete. When set, the T stand-in of the J1-S arm is removed from tLinks. */
   readonly hk: HkLink | null = null;
+  /** J10: the AI paths of the 300 ft junction (R6-7 / R4-9 arm ends, roundabout deck, 4 ramps to M8); null = switch OFF / not complete. */
+  readonly j300: J300Link | null = null;
   /** H2: junctions WITHOUT a pad: the end of road `a` (s = sA, `endDir` = travel direction towards that end) lies on / beside road `q` (foot point sQ). See Config.roads... aiEndLinks. */
   readonly endLinks: Array<{ a: number; endDir: 1 | -1; sA: number; q: number; sQ: number; gap: number }> = [];
   /** H2: the same links grouped by road + direction towards the end (key = a * 2 + (endDir > 0 ? 1 : 0)). */
@@ -123,6 +126,10 @@ export class RoadGraph {
           for (let k = this.tLinks.length - 1; k >= 0; k--) if (this.tLinks[k].arm === l.armRoad) this.tLinks.splice(k, 1);
         }
       }
+    }
+    if (Config.roads.junctionJ300Traffic.enabled) {
+      const l = new J300Link(net.roads);
+      if (l.complete) this.j300 = l; // empty while the J300 switch is OFF (buildJ300Moves)
     }
     for (let p = 0; p < net.pads.length; p++) {
       const pad = net.pads[p];

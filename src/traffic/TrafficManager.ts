@@ -159,6 +159,7 @@ export class TrafficManager {
       if (spot.s < 20 || spot.s > road.length - 60) continue;
       if (g.rte?.deadZone(spot.roadId, spot.s, dir)) continue; // RT-E: the arm ends at the ring, a car must not appear after the last exit
       if (g.hk?.deadZone(spot.roadId, spot.s, dir)) continue; // HK-11b: the arm / link end at the node, a car must not appear after the C-D tip
+      if (g.j300?.deadZone(spot.roadId, spot.s, dir)) continue; // J10: R6-7 / R4-9 end at the arm far end, a car must not appear right before it
       g.at(spot.roadId, spot.s, dir, g.laneOffset(spot.roadId), tmpPt);
       const dist = Math.hypot(tmpPt.x - focus.x, tmpPt.z - focus.z);
       if (dist < T.spawnMin || dist > Math.min(T.spawnMax, PhysicsConfig.activeRadius * 0.9)) continue;

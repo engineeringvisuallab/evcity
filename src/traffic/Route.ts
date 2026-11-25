@@ -7,6 +7,7 @@ import type { VisitState } from './StationStops';
 import { J1_ROAD_START, type J1Link, type J1Move } from './J1Link';
 import type { RteMove } from './RteLink';
 import type { HkMove } from './HkLink';
+import type { J300Move } from './J300Link';
 import { crossMode, makeMark, type GwMark } from './GiveWay';
 
 /** Where a driver may go: the route never uses a road kind / place (city area or world zone) this refuses (see vehicles/VehicleUse). */
@@ -242,6 +243,7 @@ export class RouteBuilder {
     // RT-E interchange (ring M8 x arm J1-E): the four movements (flyovers M3 / M4, slips A2S / S2A) are real AI paths
     if (!this.plan && this.rteLink()) return;
     if (!this.plan && this.hkLink()) return;
+    if (!this.plan && this.j300Link()) return;
     // H2: a road end that lies on another road (no pad): T / continuation
     if (!this.plan && this.endLink()) return;
     // H3: a crossing of two roads at the same level: sometimes turn onto the other road
@@ -550,6 +552,70 @@ export class RouteBuilder {
     return false;
   }
 
+  /** J10: movements of the 300 ft junction already decided for (cleared like skipHk). */
+  private skipJ300 = new Set<string>();
+  /**
+   * J10 (Config.roads.junctionJ300Traffic): the arm ends of R6-7 / R4-9 are the far ends of the J300 arms, so EVERY car that comes to such an end takes one of the 3 movements
+   * (through = the other arm, or down a ramp to the ring), tour / target cars the through one. A ring car takes the ramp Ei / Wi with exitChance (target cars never).
+   * The path (arm -> roundabout deck -> arm / ramp) comes from J300Link, the same lead-in / merge as the RT-E movements (takeJ300).
+   */
+  private j300Link(): boolean {
+    const jl = this.g.j300;
+    if (!jl) return false;
+    const C = Config.roads.junctionJ300Traffic;
+    for (const m of jl.moves) {
+      const f = m.from;
+      if (this.roadId !== f.roadId || this.dir !== f.dir) { this.skipJ300.delete(m.id); continue; }
+      const ahead = (f.s - this.s) * this.dir;
+      if (this.skipJ300.has(m.id)) { if (ahead < -100) this.skipJ300.delete(m.id); continue; }
+      if (ahead <= 0 || ahead > RouteBuilder.RTE_LEAD) continue;
+      const grp = jl.group(m);
+      for (const q of grp) this.skipJ300.add(q.id);
+      const legal = grp.filter((q) => !this.rule || this.rule.roadOk(this.g.roads[q.to.roadId].kind));
+      if (legal.length === 0) return false;
+      const thr = jl.through(m);
+      let pick: J300Move | null = null;
+      if (thr) {
+        if (this.target && legal.includes(thr)) pick = thr;
+        else { let r = this.rnd(), sum = 0; for (const q of legal) sum += C.weights[q.id] ?? 0; r *= sum || 1; pick = legal[0]; for (const q of legal) { r -= C.weights[q.id] ?? 0; if (r <= 0) { pick = q; break; } } }
+      } else if (!this.target && this.rnd() < C.exitChance) {
+        let r = this.rnd(), sum = 0; for (const q of legal) sum += C.weights[q.id] ?? 0; r *= sum || 1; pick = legal[0]; for (const q of legal) { r -= C.weights[q.id] ?? 0; if (r <= 0) { pick = q; break; } }
+      }
+      if (!pick) return false;
+      this.takeJ300(pick);
+      return true;
+    }
+    return false;
+  }
+
+  /** J10: like takeRte, but the design speed varies along the path (arm 22 m/s, braking to 8 m/s at the yield line, roundabout 8, ramp 13), capped by the car's own cruise speed. */
+  private takeJ300(m: J300Move): void {
+    const last = this.pts[this.pts.length - 1];
+    const a = m.pts[0], b = m.pts[1];
+    const hl = Math.hypot(b.x - a.x, b.z - a.z) || 1, hx = (b.x - a.x) / hl, hz = (b.z - a.z) / hl;
+    const den = this.lastHx * hz - this.lastHz * hx;
+    let cx = (last.x + a.x) / 2, cz = (last.z + a.z) / 2;
+    if (Math.abs(den) > 0.05) {
+      const t0 = ((a.x - last.x) * hz - (a.z - last.z) * hx) / den;
+      if (t0 > 0 && t0 < 120) { cx = last.x + this.lastHx * t0; cz = last.z + this.lastHz * t0; }
+    }
+    const N = 12;
+    for (let i = 1; i < N; i++) {
+      const u = i / N, w0 = (1 - u) * (1 - u), w1 = 2 * (1 - u) * u, w2 = u * u;
+      this.push(w0 * last.x + w1 * cx + w2 * a.x, w0 * last.z + w1 * cz + w2 * a.z, last.y + (a.y - last.y) * u, Math.min(this.cruise(), a.v), true);
+    }
+    for (let i = 0; i < m.pts.length; i++) this.push(m.pts[i].x, m.pts[i].z, m.pts[i].y, Math.min(this.cruise(), m.pts[i].v), true);
+    const e = m.pts[m.pts.length - 1], e0 = m.pts[m.pts.length - 2];
+    const el = Math.hypot(e.x - e0.x, e.z - e0.z) || 1;
+    this.lastHx = (e.x - e0.x) / el;
+    this.lastHz = (e.z - e0.z) / el;
+    const tr = this.g.roads[m.to.roadId];
+    this.lane = 0;
+    this.curveOnto(m.to.roadId, m.to.dir, Math.max(5, Math.min(tr.length - 5, m.to.s + m.to.dir * 40)));
+    this.skipJ300.clear();
+    this.skipRte.clear();
+  }
+
   private takeRte(m: Pick<RteMove, 'pts' | 'to'>, v0: number): void {
     const vmax = Math.min(this.cruise(), v0);
     const last = this.pts[this.pts.length - 1];
@@ -671,7 +737,7 @@ export class RouteBuilder {
     this.laneCur = null;
     this.visit = null;
     this.skipPad = -1; this.skipOp = -1; this.skipT = -1;
-    this.skipEnd.clear(); this.skipCross.clear(); this.skipRte.clear(); this.skipHk.clear(); this.gwDone.clear();
+    this.skipEnd.clear(); this.skipCross.clear(); this.skipRte.clear(); this.skipHk.clear(); this.skipJ300.clear(); this.gwDone.clear();
     this.start();
     return true;
   }
