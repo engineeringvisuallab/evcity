@@ -257,3 +257,5 @@ User drew a new river course: the river east of the node is moved 220 m east (sr
 
 ## 300 ft junction (J300): J9-a done 2026-11-25
 See HANDOFF_JUNCTION_300FT.md section 26. Switch: Config.roads.junctionJ300.enabled or ?j300=1 (J300Switch.ts). With it ON the old R6-9 is not built and the old R4-9 stops at the R4 arm join. J4-R4 was rebuilt (the uploaded zip lacked it). Next: J9-b terrain carve.
+
+- 2026-11-25: build fix 2 (J300SolidMesh.ts `inRing` takes `readonly number[]`), see HANDOFF_JUNCTION_300FT.md section 39.
