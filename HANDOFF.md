@@ -253,3 +253,7 @@ R2-8.2 (old small road, src/roads/r2/R2NewLineData.ts) is cut back by 4 data poi
 
 ## Hatikamrul interchange: HK-9c-2 step 3d (2026-11-23)
 User drew a new river course: the river east of the node is moved 220 m east (src/terrain/RiverNetwork.ts moveHkRiver, only when Config.roads.hatikamrul.enabled); the ring river bridge follows by the wet rule (ring structure S1 now stations 552-680). East slips SLIP-NE / SLIP-SE are full dry pieces (no twin bridge needed). Generator: slips take the ring level inside the ring footprint. Build check 0 FAIL; old checks same counts; old roads M8, R6-3, R2-40.1, R2-33 changed slightly (near the new river); lakes identical. NOT RUN: tsc, npm run build, game look (river, valley walls, ring dip at the old bridge place). Details: HANDOFF_HATIKAMRUL.md section 27. Switch off: Config.roads.hatikamrul.enabled = false.
+
+
+## 300 ft junction (J300): J9-a done 2026-11-25
+See HANDOFF_JUNCTION_300FT.md section 26. Switch: Config.roads.junctionJ300.enabled or ?j300=1 (J300Switch.ts). With it ON the old R6-9 is not built and the old R4-9 stops at the R4 arm join. J4-R4 was rebuilt (the uploaded zip lacked it). Next: J9-b terrain carve.

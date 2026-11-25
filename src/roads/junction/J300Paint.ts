@@ -29,7 +29,7 @@ const segDist = (x: number, z: number, a: number[], b: number[]): number => { co
 /** true where a J7-C road surface exists under (x, z): deck disc, arm ribbon (half width = top), ramp ribbon (half width ~4.1 m + shoulder) */
 function onSurface(x: number, z: number): boolean {
   if (Math.hypot(x - F.ox, z - F.oz) <= 62.7) return true;
-  for (const A of C.surfArms) for (let i = 0; i < A.pts.length - 1; i++) if (segDist(x, z, A.pts[i], A.pts[i + 1]) <= A.top) return true;
+  for (const A of C.surfArms) for (let i = 0; i < A.pts.length - 1; i++) if (segDist(x, z, A.pts[i] as unknown as number[], A.pts[i + 1] as unknown as number[]) <= A.top) return true;
   for (const R of C.surfRamps) for (let i = 0; i < R.rows.length - 1; i++) { const a = R.rows[i], b = R.rows[i + 1]; if (segDist(x, z, [(a[2] + a[4]) / 2, (a[3] + a[5]) / 2], [(b[2] + b[4]) / 2, (b[3] + b[5]) / 2]) <= 4.3) return true; }
   return false;
 }
@@ -67,10 +67,10 @@ export function buildJ300Paint(): J300PaintData {
   solid(s, circ(50.1), 0.15, WHITE, 'circle edge lines'); solid(s, circ(60.85), 0.15, WHITE, 'circle edge lines');
   dashed(s, circ(53.65), 0.12, WHITE, 1.5, 3, 'circle lane lines'); dashed(s, circ(57.3), 0.12, WHITE, 1.5, 3, 'circle lane lines');
   // 2) arm legs (R6 / R4): edge lines, lane lines, entry arrows, yield line
-  for (const leg of J300_LEGS as any[]) { if (leg.kind !== 'arm') continue;
+  for (const leg of J300_LEGS as unknown as any[]) { if (leg.kind !== 'arm') continue;
     for (const side of ['entry', 'exit'] as const) { const q = leg[side]; const Lf: number[][] = q.left, Rt: number[][] = q.right, Wd: number[] | null = Array.isArray(q.width) ? q.width : null; if (!Lf || !Rt) continue; const n = Lf.length;
       const at = (i: number, t: number): number[] => wp(lerp2(Lf[i], Rt[i], t)); const wi = (i: number): number => Wd ? Wd[i] : Math.hypot(Lf[i][0] - Rt[i][0], Lf[i][1] - Rt[i][1]);
-      solid(s, Lf.map((p, i) => at(i, 0.2 / wi(i))), 0.15, WHITE, 'leg edge lines'); solid(s, Rt.map((p, i) => at(i, 1 - 0.2 / wi(i))), 0.15, WHITE, 'leg edge lines');
+      solid(s, Lf.map((_p, i) => at(i, 0.2 / wi(i))), 0.15, WHITE, 'leg edge lines'); solid(s, Rt.map((_p, i) => at(i, 1 - 0.2 / wi(i))), 0.15, WHITE, 'leg edge lines');
       let run: number[] = []; const flush = (div: number, k: number): void => { if (run.length > 1) dashed(s, run.map((i) => at(i, k / div)), 0.12, WHITE, 3, 6, 'leg lane lines'); run = []; };
       for (const [lo, hi, div] of [[0, 8.75, 2], [8.75, 99, 3]] as number[][]) for (let k = 1; k < div; k++) { for (let i = 0; i < n; i++) { const w = wi(i); if (w >= lo && w < hi) run.push(i); else flush(div, k); } flush(div, k); }
       if (side === 'entry') { const cen: number[][] = q.centre; let j = 0; for (let i = 0; i < cen.length; i++) if (cen[i][3] <= cen[cen.length - 1][3] - 35) j = i;
@@ -82,16 +82,16 @@ export function buildJ300Paint(): J300PaintData {
     const off = (o: number): number[][] => P.map((p, i) => { const a = P[Math.max(0, i - 1)], b = P[Math.min(P.length - 1, i + 1)]; const dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1; return [p[0] - dz / l * o, p[1] + dx / l * o]; });
     for (const sg of [1, -1]) { solid(s, off(sg * offs.med), 0.15, YELLOW, 'arm median lines'); solid(s, off(sg * offs.inE), 0.15, WHITE, 'arm edge lines'); solid(s, off(sg * offs.out), 0.15, WHITE, 'arm edge lines'); for (const o of offs.lane) dashed(s, off(sg * o), 0.12, WHITE, 3, 6, 'arm lane lines'); } }
   // 4) zebra crossings (6): bars 0.5 m wide, 3 m long (travel direction), 1 m pitch, gap for the refuge
-  for (const c of J300_CROSSINGS as any[]) { const h = c.headingDeg * Math.PI / 180; const d = [Math.cos(h), Math.sin(h)], n = [-Math.sin(h), Math.cos(h)]; const half = c.length / 2; const zones: number[][] = c.stages >= 2 && c.refuge > 0 ? [[-half, -c.refuge / 2], [c.refuge / 2, half]] : [[-half, half]];
+  for (const c of J300_CROSSINGS as unknown as any[]) { const h = c.headingDeg * Math.PI / 180; const d = [Math.cos(h), Math.sin(h)], n = [-Math.sin(h), Math.cos(h)]; const half = c.length / 2; const zones: number[][] = c.stages >= 2 && c.refuge > 0 ? [[-half, -c.refuge / 2], [c.refuge / 2, half]] : [[-half, half]];
     for (const [a, b] of zones) for (let t = a + 0.5; t <= b - 0.4; t += 1) { const p0 = [c.centre[0] + d[0] * t - n[0] * 1.5, c.centre[1] + d[1] * t - n[1] * 1.5], p1 = [c.centre[0] + d[0] * t + n[0] * 1.5, c.centre[1] + d[1] * t + n[1] * 1.5]; ribbon(s, [W(p0[0], p0[1]), W(p1[0], p1[1])], 0.5, WHITE); s.count('zebra bars'); } }
   // 5) raised splitter islands (0.15 m) with grass cap and yellow-black kerb paint
-  for (const I of J300_ISLANDS as any[]) { const P: number[][] = (I.polygon as number[][]).map((q) => W(q[0], q[1])); const cx = P.reduce((a, p) => a + p[0], 0) / P.length, cz = P.reduce((a, p) => a + p[1], 0) / P.length; const H = 0.15;
+  for (const I of J300_ISLANDS as unknown as any[]) { const P: number[][] = (I.polygon as number[][]).map((q) => W(q[0], q[1])); const cx = P.reduce((a, p) => a + p[0], 0) / P.length, cz = P.reduce((a, p) => a + p[1], 0) / P.length; const H = 0.15;
     const okP = P.map((p) => onSurface(p[0], p[1])); const ctr = s.vert(cx, levelAt(cx, cz) + LIFT + H, cz, CAP); const ring = P.map((p) => s.vert(p[0], levelAt(p[0], p[1]) + LIFT + H, p[1], CAP));
     for (let i = 0; i < P.length; i++) { const j = (i + 1) % P.length; if (!okP[i] || !okP[j]) { clipped++; continue; } s.indices.push(ctr, ring[j], ring[i]); const y0a = levelAt(P[i][0], P[i][1]) + LIFT * 0.5, y0b = levelAt(P[j][0], P[j][1]) + LIFT * 0.5; s.quad([[P[i][0], y0a, P[i][1]], [P[j][0], y0b, P[j][1]], [P[j][0], y0b + H + LIFT * 0.5, P[j][1]], [P[i][0], y0a + H + LIFT * 0.5, P[i][1]]], CAPWALL); }
     let acc = 0, k = 0; for (let i = 0; i < P.length; i++) { const j = (i + 1) % P.length; const l = Math.hypot(P[j][0] - P[i][0], P[j][1] - P[i][1]); if (!okP[i] || !okP[j]) { acc += l; clipped++; continue; } const col = Math.floor(acc / 1.0) % 2 === 0 ? YELLOW : BLACK; acc += l; const y = (levelAt(P[i][0], P[i][1]) + levelAt(P[j][0], P[j][1])) / 2 + LIFT + H + 0.01; void y; k++; ribbon(s, [P[i], P[j]], 0.35, col, H + 0.01); }
     s.count('island kerb segments', k); s.count('islands'); }
   // 6) ramps: edge lines, gore wedge (asphalt + white chevrons) between the ring edge and the ramp inner edge near the nose
-  for (const r of J300_RAMPS as any[]) { const rows: number[][] = (r.rows as number[][]).filter((x) => Math.abs(x[0]) <= r.noseX);
+  for (const r of J300_RAMPS as unknown as any[]) { const rows: number[][] = (r.rows as number[][]).filter((x) => Math.abs(x[0]) <= r.noseX);
     const inn = (x: number[]): number[] => Math.abs(x[8]) <= Math.abs(x[10]) ? [x[7], x[8]] : [x[9], x[10]], out = (x: number[]): number[] => Math.abs(x[8]) <= Math.abs(x[10]) ? [x[9], x[10]] : [x[7], x[8]];
     const inset = (x: number[], o: boolean): number[] => { const a = inn(x), b = out(x); const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; const t = 0.2 / l; return wp(o ? lerp2(b, a, t) : lerp2(a, b, t)); };
     solid(s, rows.map((x) => inset(x, false)), 0.15, WHITE, 'ramp edge lines'); solid(s, rows.map((x) => inset(x, true)), 0.15, WHITE, 'ramp edge lines');

@@ -50,7 +50,7 @@ export function buildJ300Mesh(): J300MeshData {
     strip(s, ring(48, y), ring(62, y), ASPHALT); strip(s, ring(62, y), ring(D.face, y), SHOULDER);
     const c0 = ring(0, y + 0.12); const rIn = ring(47.7, y + 0.12); strip(s, c0, rIn, GRASS); strip(s, ring(48, y), ring(48, y + 0.12), KERB); strip(s, ring(47.7, y + 0.12), ring(48, y + 0.12), KERB);
     // island disc as a fan from the centre
-    const ctr = s.vert(...(W(0, 0).length ? [W(0, 0)[0], y + 0.12, W(0, 0)[1]] as [number, number, number] : [0, 0, 0]), GRASS); const ri = rIn.map((q) => s.vert(q[0], q[1], q[2], GRASS)); for (let i = 0; i < N; i++) s.tri(ctr, ri[i + 1], ri[i]); }
+    const wc = W(0, 0); const ctr = s.vert(wc[0], y + 0.12, wc[1], GRASS); const ri = rIn.map((q) => s.vert(q[0], q[1], q[2], GRASS)); for (let i = 0; i < N; i++) s.tri(ctr, ri[i + 1], ri[i]); }
   for (const A of C.surfArms) { const P = A.pts; const L: number[][] = [], L2: number[][] = [], R2: number[][] = [], R: number[][] = []; const e = A.top - 0.6;
     for (let i = 0; i < P.length; i++) { const a = P[Math.max(0, i - 1)], b = P[Math.min(P.length - 1, i + 1)]; const dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1; const nx = -dz / l, nz = dx / l; const y = P[i][2] + 0.015; const x = P[i][0], z = P[i][1];
       L.push([x + nx * A.top, y, z + nz * A.top]); L2.push([x + nx * e, y, z + nz * e]); R2.push([x - nx * e, y, z - nz * e]); R.push([x - nx * A.top, y, z - nz * A.top]); }
@@ -67,7 +67,7 @@ export function buildJ300Mesh(): J300MeshData {
   mark('slope');
   // ---- furniture (no collision): light poles 10 m + 3 m arm, island lamps 8 m, box lamps, gantries, roadside boards
   for (const l of C.lights) { const h = l.kind === 'island' ? 8 : 10; obox(s, l.x, l.y, l.z, 1, 0, 0.3, h, 0.3, POLE);
-    if (l.kind === 'island' || (l.dx === 0 && l.dz === 0)) obox(s, l.x, l.y + h, l.z, 1, 0, 0.9, 0.25, 0.5, LAMP);
+    if (l.kind === 'island' || ((l as any).dx === 0 && (l as any).dz === 0)) obox(s, l.x, l.y + h, l.z, 1, 0, 0.9, 0.25, 0.5, LAMP);
     else { const L = Math.hypot(l.dx, l.dz) || 1; const ax = l.dx / L, az = l.dz / L; obox(s, l.x + ax * 1.5, l.y + h - 0.2, l.z + az * 1.5, ax, az, 3.2, 0.2, 0.2, POLE); obox(s, l.x + ax * 3, l.y + h - 0.45, l.z + az * 3, ax, az, 1.2, 0.25, 0.5, LAMP); } }
   for (const l of C.boxLamps) obox(s, l.x, l.y, l.z, cs, sn, 1.4, 0.2, 0.35, LAMP);
   for (const g of C.signs) { if (g.kind === 'gantry') { const vx = sn, vz = -cs; const cx = g.x, cz = g.z; for (const sd of [-1, 1]) obox(s, cx + vx * sd * g.span, g.y, cz + vz * sd * g.span, cs, sn, 0.9, g.clear + 1.4, 0.9, POLE);

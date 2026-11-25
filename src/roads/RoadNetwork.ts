@@ -28,6 +28,7 @@ import { RTE_M3_DATA } from './junction/RteM3Data';
 import { RTE_M4_DATA } from './junction/RteM4Data';
 import { RTE_VIADUCT_WIDENING, RTE_STEM_OUTBOUND, RTE_STEM_INBOUND } from './junction/RteWidthData';
 import { R4_NEW_LINE_DATA } from './r4/R4NewLineData';
+import { j300Active, J300_DROP_ROADS, J300_TRIM_ROADS, trimLineAtPoint } from './junction/J300Switch'; // J9-a
 import { CLASS_R4_OPEN, CLASS_R2_OPEN, CLASS_C_ZONE, CLASS_L_ZONE } from './standards/ClassSections';
 import { R2_NEW_LINE_DATA } from './r2/R2NewLineData';
 import { C_NEW_LINE_DATA } from './c/CNewLineData';
@@ -1255,6 +1256,7 @@ export class RoadNetwork {
     if (!Config.roads.r6Roads.enabled) return;
     const sec = sectionFields(SECTION_M6);
     for (const d of Config.roads.r6New.enabled ? [...R6_LINE_DATA, ...R6_NEW_LINE_DATA] : R6_LINE_DATA) { // STEP B7a-2: the new lines only when the switch is on (default off)
+      if (j300Active() && J300_DROP_ROADS.includes(d.name)) continue; // J9-a: the 300 ft junction arm replaces the old R6-9
       const m = d.pts.length;
       const cum = [0];
       for (let i = 1; i < m; i++) cum.push(cum[i - 1] + Math.hypot(d.pts[i][0] - d.pts[i - 1][0], d.pts[i][1] - d.pts[i - 1][1]));
@@ -1288,7 +1290,10 @@ export class RoadNetwork {
     const c = CLASS_R4_OPEN;
     const el = (kind: string): number => c.elements.find((e) => e.kind === kind)?.width ?? 0;
     const sec = { halfWidth: c.pavementEdge, medianHalf: el('median'), shyMedian: el('shoulder-in'), laneW: c.laneW, lanesPerDir: c.lanesPerDir, shyOuter: el('shoulder-out'), shoulder: el('ditch') };
-    for (const d of R4_NEW_LINE_DATA) {
+    for (const d0 of R4_NEW_LINE_DATA) {
+      let d = d0;
+      const trim = j300Active() ? J300_TRIM_ROADS.find((q) => q.name === d0.name) : undefined; // J9-a: drop the old stub between the J4-R4 join and the ring (the R4 arm replaces it)
+      if (trim) { const tl = trimLineAtPoint(d0.pts, d0.ys, trim.x, trim.z); if (tl) { const structs = d0.structs?.filter((q) => q[1] <= tl.keptLength + 0.5); d = { ...d0, pts: tl.pts, ys: tl.ys, s: d0.s.slice(0, tl.pts.length), structs: structs && structs.length ? structs : undefined }; } }
       const m = d.pts.length;
       const cum = [0];
       for (let i = 1; i < m; i++) cum.push(cum[i - 1] + Math.hypot(d.pts[i][0] - d.pts[i - 1][0], d.pts[i][1] - d.pts[i - 1][1]));

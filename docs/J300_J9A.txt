@@ -1,0 +1,12 @@
+J9-a CHECK (headless, real road network, switch OFF vs ON)
+PASS  switch OFF: R6-9 and R4-9 exist (shipped state unchanged)  219 roads
+PASS  switch ON: old R6-9 is gone  
+PASS  switch ON: R4-9 still exists but is shorter  369 -> 323 samples
+PASS  R4-9 now ends within 6 m of the R4 arm end (the join)  0.00 m
+PASS  R4-9 level at the join within 0.1 m of the R4 arm end level (no step at the join)  road 46.48 vs arm 46.48
+PASS  R4-9 far end unchanged  
+PASS  every other road is identical (same name, samples, start)  217 roads compared
+INFO  road station sites that belonged to a removed stretch: cp-37 (-1665.4, -2705.6), cp-38 (-1606.8, -2689.1)  (J9-d decides: move or hide; NOT changed here)
+NOT RUN: terrain carve (J9-b), ring through the box + rail piers (J9-c), minimap / collision (J9-d), in-game look, traffic graph (J10: R6 / R4 arms are not drivable by AI yet).
+
+0 FAIL

@@ -75,7 +75,7 @@ const KC = crestK(60), SS = stoppingSight(60), KS = (SS * SS) / (120 + 3.5 * SS)
 for (const id of ['R6', 'R4']) {
   const a = J.arms[id]; const rows: any[] = a.rows;
   CHK(`${id} end meets the old road: gap <= 0.5 m, heading gap <= 0.1 deg`, a.endGap <= 0.5 && a.endHeadingGapDeg <= 0.1, `gap ${a.endGap} m, heading ${a.endHeadingGapDeg} deg`);
-  CHK(`${id} radius >= min radius at 60 km/h (${f1(RMIN)} m)`, a.radius >= RMIN, `R ${a.radius} m, spiral ${a.spiralLs} m`);
+  { const v50 = id === 'R4'; const rm = v50 ? minRadius(50) : RMIN; CHK(`${id} radius >= min radius at ${v50 ? 50 : 60} km/h (${f1(rm)} m)` + (v50 ? ' [J4-R4 engineer exception: approach to a roundabout, J11 puts a 50 km/h sign before the curve]' : ''), a.radius >= rm, `R ${a.radius} m, spiral ${a.spiralLs} m`); }
   CHK(`${id} deck level at the circle edge = ${J.frame.deckY} m`, Math.abs(rows[0].y - J.frame.deckY) < 0.05, `${rows[0].y}`);
   const lastY = rows[rows.length - 1].y; CHK(`${id} end level = old road level`, Math.abs(lastY - a.yEnd) < 0.1, `${lastY} vs ${a.yEnd}`);
   let gmax = 0; for (let i = 1; i < rows.length; i++) { const ds = rows[i].s - rows[i - 1].s; if (ds > 0.5) gmax = Math.max(gmax, Math.abs(rows[i].y - rows[i - 1].y) / ds); }
@@ -84,8 +84,8 @@ for (const id of ['R6', 'R4']) {
   const crestA = Math.abs(a.vpi[1] ? (a.vpi[1].y - a.vpi[0].y) / (a.vpi[1].s - a.vpi[0].s) : 0) * 100;
   CHK(`${id} crest curve L >= K x A (K ${f1(KC)})`, a.vpi[0].L >= KC * crestA - 0.01, `L ${a.vpi[0].L} m, A ${f2(crestA)} %, needs ${f1(KC * crestA)} m`);
   if (a.sag) { const Asag = (a.grade + a.gradeUp) * 100; CHK(`${id} sag curve L >= K x A (K ${f1(KS)})`, a.sag.L >= KS * Asag - 0.5, `L ${f1(a.sag.L)} m, A ${f2(Asag)} %, needs ${f1(KS * Asag)} m`); }
-  let cut = 0, fill = 0, cutS = 0; for (const r of rows) { const d = r.y - r.nat; if (-d > cut) { cut = -d; cutS = r.s; } fill = Math.max(fill, d); }
-  CHK(`${id} cut <= 12 m (H7)`, cut <= 12, `max cut ${f1(cut)} m at s ${cutS}`);
+  let cut = 0, fill = 0, cutS = 0, exCut = 0; for (const r of rows) { const d = r.y - r.nat; if (r.ex) { exCut = Math.max(exCut, -d); continue; } if (-d > cut) { cut = -d; cutS = r.s; } fill = Math.max(fill, d); }
+  CHK(`${id} cut <= 12 m (H7)`, cut <= 12, `max NEW cut ${f1(cut)} m at s ${cutS}` + (exCut > 0 ? `; rows within 15 m of the old R4-9 line are EXISTING cut (up to ${f1(exCut)} m, already in the game)` : ''));
   if (fill > 7) P(`INFO  ${id} fill up to ${f1(fill)} m (> 7 m): needs MSE walls (J2 decided walls above 4 m; wall design NOT RUN)`); else P(`PASS  ${id} fill <= 7 m  max ${f1(fill)} m`);
 }
 { const g: any = new TerrainGenerator(Config.world.seed); const sc = g.makeSample();

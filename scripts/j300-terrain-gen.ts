@@ -44,9 +44,9 @@ function arm(id: string, top: number): any {
     const ds = i === 0 ? 0 : r.s - rows[i - 1].s; const rec: number[] = [r.s, r.x, r.z, r.y, r.nat];
     let aSum = 0, cSum = 0;
     for (const sd of [1, -1]) {
-      let area = 0; for (let o = 1; o <= top; o += 2) { const g = natXZ(r.x + sd * nx * o, r.z + sd * nz * o); area += 2 * Math.max(0, r.y - g); cSum += 2 * Math.max(0, g - r.y); }
+      let area = 0; for (let o = 1; o <= top; o += 2) { const g = natXZ(r.x + sd * nx * o, r.z + sd * nz * o); area += 2 * Math.max(0, r.y - g); if (!r.ex) cSum += 2 * Math.max(0, g - r.y); }
       const ex = r.x + sd * nx * top, ez = r.z + sd * nz * top; const gE = natXZ(ex, ez); const h = r.y - gE; let toe = top;
-      if (h > 0) { toe = top + wallOff(h); area += h * (toe - top) / 2; fillMax = Math.max(fillMax, h); } else if (h < 0) { const c = -h; toe = top + 2 * c; cutMax = Math.max(cutMax, c); cSum += c * c; }
+      if (h > 0) { toe = top + wallOff(h); area += h * (toe - top) / 2; fillMax = Math.max(fillMax, h); } else if (h < 0) { const c = -h; toe = top + 2 * c; if (!r.ex) { cutMax = Math.max(cutMax, c); cSum += c * c; } }
       aSum += area; const tp = { x: r.x + sd * nx * toe, z: r.z + sd * nz * toe }; rec.push(r2(h), r2(toe), r2(tp.x), r2(tp.z));
     }
         fill += ds * aSum; cut += ds * cSum; out.push(rec);

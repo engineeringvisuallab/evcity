@@ -12,7 +12,7 @@ PASS  R6 wall toe inside the half ROW 33.9 m  toe max 20.4 m from the centre lin
 PASS  R4 wall toe inside the half ROW 31.7 m  toe max 18.2 m from the centre line
 
 2) PARAPETS
-PASS  parapet block (0.5 x 0.9 m, ASSUMED) on every road wall top  2626 m (built from the wall lines, none missing by construction; crash class NOT RUN)
+PASS  parapet block (0.5 x 0.9 m, ASSUMED) on every road wall top  2830 m (built from the wall lines, none missing by construction; crash class NOT RUN)
 
 3) WING WALLS (J7-A ASSUMED tops replaced by the real J5 ramp rows)
 PASS  wing WWL real top from ramp W-in  portal end 35.05 -> 35.11 m (height 7.37 m), far end 34.45 -> 34.73 m
@@ -31,10 +31,10 @@ PASS  arm poles: no gap > 85 m (40 m spacing, alternate sides; a pole is left ou
 PASS  ring gantry beam bottom >= 5.5 m over the ring  clear 6.5 m
 
 6) GAME MESH (solid, headless build of src/roads/junction/J300SolidMesh.ts)
-PASS  no NaN vertex, no bad index  29906 vertices, 14988 triangles
-PASS  triangle count fits the budget (< 60 000, ASSUMED)  14988
-PASS  heights in a sane range  y 16.4 .. 71.8 m
-INFO  mesh parts (triangles)  {"surface":[0,4032],"concrete":[4032,12834],"slope":[12834,12978],"furniture":[12978,14988]}
+PASS  no NaN vertex, no bad index  28542 vertices, 14306 triangles
+PASS  triangle count fits the budget (< 60 000, ASSUMED)  14306
+PASS  heights in a sane range  y 16.4 .. 51.4 m
+INFO  mesh parts (triangles)  {"surface":[0,3324],"concrete":[3324,12630],"slope":[12630,12746],"furniture":[12746,14306]}
 INFO  NOT RUN  typecheck of the game project (npm deps not in this container), in-game look and drive test, terrain carve (J9), removal of old R6-9 / R4-9 ribbons, old ring signs and trees inside the footprint, structural design, MSE wall type, drainage, crash class, lighting photometry (J8), sign legends (J8 / J11)
 
 SUMMARY  19 PASS / 0 FAIL

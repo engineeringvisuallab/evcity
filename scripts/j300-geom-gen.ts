@@ -141,6 +141,7 @@ const D0 = (id: string): number => { const rec = legsOut.find((l) => l.id === id
 function sampleAl(al: any, ds: number): any[] { const n = Math.ceil(al.length / ds); const out: any[] = []; for (let i = 0; i <= n; i++) { const s = Math.min(al.length, i * al.length / n); out.push(poseAt(al, s)); } return out; }
 const oldRoad = (name: string): { xs: number[]; zs: number[]; ys: number[] } => (gen.roads.roads as any[]).filter((r: any) => r.name === name)[0];
 function oldY(name: string, x: number, z: number): number { const r = oldRoad(name); let b = 1e9, y = 0; for (let i = 0; i < r.xs.length; i++) { const d = Math.hypot(r.xs[i] - x, r.zs[i] - z); if (d < b) { b = d; y = r.ys[i]; } } return y; }
+const nearOld = (name: string, x: number, z: number): boolean => { const r = oldRoad(name); for (let i = 0; i < r.xs.length; i++) if (Math.hypot(r.xs[i] - x, r.zs[i] - z) <= 15) return true; return false; };
 function lineInt(p: { x: number; z: number }, d: { x: number; z: number }, q: { x: number; z: number }, e: { x: number; z: number }): { s: number; t: number } { const det = d.x * -e.z - d.z * -e.x; const rx = q.x - p.x, rz = q.z - p.z; return { s: (rx * -e.z - rz * -e.x) / det, t: (d.x * rz - d.z * rx) / det }; }
 const armOut: any = {};
 
@@ -152,15 +153,17 @@ const armOut: any = {};
   armOut.R6 = { al, D0: D6, piDist: it.s, R, Ls, join: 'old R6-9 start (free end)', oldName: 'R6-9' }; }
 
 // profile: crest at the deck edge, grade down, (R4: sag, grade up 4 %) , end level = old road level at the join
+// J9-a: env J300_R4_YEND = level the built old R4-9 has at the join when the switch is ON (measured by j300-j9a-check); the R4 arm must meet THAT level.
 function profileOf(id: string, R: any): void {
   const al = R.al; const D = R.D0; const sTot = al.length; const samples = sampleAl(al, 5);
   // distance from circle edge: zone (RO .. D0 straight) + alignment
   const sig0 = D - RO; // station of the alignment start measured from the circle edge
-  const endPose = poseAt(al, sTot); const yEnd = oldY(R.oldName, endPose.x, endPose.z); const sigE = sig0 + sTot;
+  const endPose = poseAt(al, sTot); const yEnd = (id === 'R4' && process.env.J300_R4_YEND) ? Number(process.env.J300_R4_YEND) : oldY(R.oldName, endPose.x, endPose.z); const sigE = sig0 + sTot;
   const Lc = 40; const vp: { s: number; y: number; L: number }[] = [{ s: Lc / 2, y: PT, L: Lc }];
   if (id === 'R6') { const g = (PT - yEnd) / (sigE - Lc / 2); vp.push({ s: sigE, y: yEnd, L: 0 }); R.grade = g; }
-  else { const g1 = 0.03, g2 = 0.05; const s1 = Lc / 2; // intersection of the down line and the 4 % up line that ends at (sigE, yEnd)
-    const sm = (PT + g1 * s1 - (yEnd - g2 * sigE)) / (g1 + g2); const ym = PT - g1 * (sm - s1); const Ls2 = Math.max(60, K_SAG * (g1 + g2) * 100); vp.push({ s: sm, y: ym, L: Ls2 }); vp.push({ s: sigE, y: yEnd, L: 0 }); R.grade = g1; R.gradeUp = g2; R.sag = { s: sm, y: ym, L: Ls2 }; }
+  else { // J4-R4 (decision R4 = (c)): sag at the deck edge (K_SAG), ONE grade up to the old road level at the join
+    let g = (yEnd - PT) / (sigE - 20); let L0 = Math.max(40, K_SAG * g * 100); for (let it = 0; it < 6; it++) { g = (yEnd - PT) / (sigE - L0 / 2); L0 = Math.max(40, K_SAG * g * 100); }
+    vp.length = 0; vp.push({ s: L0 / 2, y: PT, L: L0 }); vp.push({ s: sigE, y: yEnd, L: 0 }); R.grade = g; R.gradeUp = null; R.sag = null; R.sagDeck = { L: L0, K: K_SAG, A: g * 100 }; }
   const yAt = (s: number): number => { // piecewise tangent lines with parabolic blends at each VPI that has L > 0
     const slope = (i: number): number => (vp[i + 1].y - vp[i].y) / (vp[i + 1].s - vp[i].s); let y: number | null = null;
     if (s <= 0) return PT;
@@ -172,26 +175,27 @@ function profileOf(id: string, R: any): void {
   // zone (straight along the axis from the circle edge to D) first
   const dA = dirW(id === 'R6' ? Math.PI / 2 : -Math.PI / 2);
   for (let r = RO; r < D; r += 5) { const x = O.x + dA.x * r, z = O.z + dA.z * r; rows.push({ s: r2(r - RO), x: r2(x), z: r2(z), h: r2(Math.atan2(dA.z, dA.x) / D), k: 0, y: r2(yAt(r - RO)), nat: r2(nat0(x, z)) }); }
-  for (const p of samples) rows.push({ s: r2(sig0 + p.s), x: r2(p.x), z: r2(p.z), h: r2(p.h / D), k: Math.round(p.k * 1e6) / 1e6, y: r2(yAt(sig0 + p.s)), nat: r2(nat0(p.x, p.z)) });
+  for (const p of samples) rows.push({ s: r2(sig0 + p.s), x: r2(p.x), z: r2(p.z), h: r2(p.h / D), k: Math.round(p.k * 1e6) / 1e6, y: r2(yAt(sig0 + p.s)), nat: r2(nat0(p.x, p.z)), ...(R.oldName === 'R4-9' && nearOld('R4-9', p.x, p.z) ? { ex: 1 } : {}) });
   R.profile = { vpi: vp, rows, sigE, yEnd, sig0 };
 }
 // ---- R4: axis from O along -v, two PIs onto the third straight of old R4-9 (past the hill: old cut there is below 12 m), searched for the least earthwork.
 function searchR4(): void { const D4 = D0('R4'); const dA = dirW(-Math.PI / 2); const start = { x: O.x + dA.x * D4, z: O.z + dA.z * D4 };
-  const Q1 = { x: -925, z: -2273 }, Q2 = { x: -417, z: -2314 }; const dOld = { x: Q2.x - Q1.x, z: Q2.z - Q1.z }; const lo = Math.hypot(dOld.x, dOld.z); dOld.x /= lo; dOld.z /= lo;
-  let best: any = null; const tried: any[] = [];
-  for (let a1 = D4 + 40; a1 <= 700; a1 += 20) for (let t2 = -700; t2 <= 60; t2 += 20) for (const R of [300, 200]) {
-    const Ls = 40; const PI1 = { x: O.x + dA.x * a1, z: O.z + dA.z * a1 }; const PI2 = { x: Q1.x + dOld.x * t2, z: Q1.z + dOld.z * t2 };
-    for (let tE = Math.max(0, t2) + 30; tE <= 300; tE += 30) { const end = { x: Q1.x + dOld.x * tE, z: Q1.z + dOld.z * tE };
+  // J4-R4 (user delegated, section 20): the arm leaves the circle along -v, turns in an S and JOINS the OLD R4-9 line (own hill cut, already in the game) before the saddle. Old line = the real game road R4-9.
+  const old = oldRoad('R4-9'); const nOld = old.xs.length;
+  let best: any = null; const tried: any[] = []; const oldDist = (x: number, z: number): number => { let b = 1e9; for (let i = 0; i < nOld; i++) { const d = Math.hypot(old.xs[i] - x, old.zs[i] - z); if (d < b) b = d; } return b; };
+  for (let k = 3; k < nOld - 3; k++) { const dO = Math.hypot(old.xs[k] - O.x, old.zs[k] - O.z); if (dO < 250 || dO > 700) continue; if ((k % 2) !== 0) continue;
+    const end = { x: old.xs[k], z: old.zs[k] }; const dir0 = { x: old.xs[k - 3] - old.xs[k + 3], z: old.zs[k - 3] - old.zs[k + 3] }; const ld = Math.hypot(dir0.x, dir0.z); const dir = { x: dir0.x / ld, z: dir0.z / ld }; // travel direction: from the circle outwards = towards the end index of the old road list? sign fixed below
+    for (const sgn of [1, -1]) for (let t2 = 20; t2 <= 220; t2 += 10) for (let a1 = D4 + 20; a1 <= 520; a1 += 10) for (const R of [85, 100, 120, 150, 200]) {
+      const Ls = 30; const PI1 = { x: O.x + dA.x * a1, z: O.z + dA.z * a1 }; const PI2 = { x: end.x - sgn * dir.x * t2, z: end.z - sgn * dir.z * t2 };
       let al: any; try { al = buildOpenAlignment(start, [{ ...PI1, R, Ls }, { ...PI2, R, Ls }], end); } catch { continue; }
-      const sg = al.straights as number[]; if (!(sg[0] >= 30 && sg[1] >= 40 && sg[2] >= 20)) continue; if (al.endGap > 0.5 || al.endHeadingGapDeg > 0.1) continue;
-      const rows0 = al.rows as any[]; if (rows0.some((q: any) => Math.abs(q.delta) > 120 * D)) continue;
-      const tmp: any = { al, D0: D4, oldName: 'R4-9' }; profileOf('R4', tmp); const rows = tmp.profile.rows as any[];
-      let maxCut = 0, maxFill = 0, vol = 0; for (const q of rows) { const d = q.y - q.nat; if (d < 0) { maxCut = Math.max(maxCut, -d); vol += -d * 3; } else { maxFill = Math.max(maxFill, d); vol += d * 2; } }
-      const score = 1000 * Math.max(0, maxCut - 12) + vol + al.length * 0.5 + (R === 300 ? 0 : 200); tried.push({ a1, t2, R, tE, len: al.length, maxCut, maxFill, score });
-      if (!best || score < best.score) best = { score, al, a1, t2, R, Ls, end, tE, maxCut, maxFill }; break; } }
-  if (!best) throw new Error('no R4 re-route found');
-  tried.sort((p, q) => p.score - q.score); console.log('R4 search best 5:', JSON.stringify(tried.slice(0, 5)));
-  armOut.R4 = { al: best.al, D0: D4, R: best.R, Ls: best.Ls, a1: best.a1, t2: best.t2, tE: best.tE, join: 'old R4-9 third straight (-925,-2273 -> -417,-2314)', oldName: 'R4-9', end: best.end }; }
+      const sg = al.straights as number[]; if (!(sg[0] >= 14 && sg[1] >= 14 && sg[2] >= 10)) continue; if (al.endGap > 0.5 || al.endHeadingGapDeg > 0.1) continue;
+      const tmp: any = { al, D0: D4, oldName: 'R4-9' }; try { profileOf('R4', tmp); } catch { continue; } if (!(tmp.grade > 0 && tmp.grade <= 0.06)) continue; const rows = tmp.profile.rows as any[];
+      let maxCut = 0, vol = 0; for (const q of rows) { const d = q.y - q.nat; if (d < 0) { if (oldDist(q.x, q.z) > 15) { maxCut = Math.max(maxCut, -d); vol += -d * 3; } } else vol += d * 2; }
+      const score = 1000 * Math.max(0, maxCut - 12) + vol + al.length * 0.5 + (200 - R) * 2; tried.push({ k, sgn, a1, t2, R, len: al.length, maxCut, score });
+      if (!best || score < best.score) best = { score, al, a1, t2, R, Ls, end, k, maxCut }; break; } }
+  if (!best) throw new Error('no R4 join found');
+  tried.sort((p, q) => p.score - q.score); console.log('R4 search best 5:', JSON.stringify(tried.slice(0, 5)), 'of', tried.length);
+  armOut.R4 = { al: best.al, D0: D4, R: best.R, Ls: best.Ls, a1: best.a1, t2: best.t2, tE: 0, join: `old R4-9 at (${r2(best.end.x)}, ${r2(best.end.z)}) (index ${best.k}), J4-R4`, oldName: 'R4-9', end: best.end }; }
 
 profileOf('R6', armOut.R6); searchR4(); profileOf('R4', armOut.R4);
 

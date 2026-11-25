@@ -1,8 +1,8 @@
 J8 CHECK: markings, islands, gore (headless, numbers only, nothing in the game changed by the check)
 
 PASS  water check first (sc.water > sc.h)  docs/J300_STRUCT_C_WATER.txt
-PASS  no NaN vertex, no bad index  20787 vertices, 10443 triangles
-PASS  triangle count fits the budget (< 40 000, ASSUMED)  10443
+PASS  no NaN vertex, no bad index  17135 vertices, 8617 triangles
+PASS  triangle count fits the budget (< 40 000, ASSUMED)  8617
 
 ITEMS (counts of drawn elements)
 PASS  circle edge lines >= 2  2
@@ -21,8 +21,8 @@ PASS  arm edge lines >= 4  8
 PASS  arm median lines >= 4  4
 
 LEVEL (paint sits on the road surface, nearest surface row level + 0.04 m, island + 0.15 m)
-PASS  paint heights in a sane range  y 16.4 .. 68.5 m
-PASS  every paint point lies on the deck, an arm ribbon or within 12 m of a ramp centre line (gore wedge = the only new paving)  0 of 5185 sampled drawn vertices off the surface
+PASS  paint heights in a sane range  y 16.4 .. 46.5 m
+PASS  every paint point lies on the deck, an arm ribbon or within 12 m of a ramp centre line (gore wedge = the only new paving)  0 of 4272 sampled drawn vertices off the surface
 INFO  CLIPPED PAINT  238 paint quads were not drawn because no J7-C road surface is under them: the J4 entry / exit flares near the circle (r 62 .. 70 m, up to 22 m from the arm axis) are WIDER than the M6 / M4 arm ribbon and have no retaining wall in J7-C. FINDING for J7-C / J9, NOT fixed here
 INFO  gore wedge  new asphalt strip between the ring edge and the ramp inner edge (width 6 m at 60 m before the nose, 0 at the nose); NO collision (paint mesh), terrain / ring embankment under it not checked
 INFO  NOT RUN  in-game look, typecheck of the game project (npm deps not in this container), zebra / arrow legal layout review, sight cones with signs and walls (J8 note from J3), lighting photometry, box lane marking (the existing ring markings are assumed to run through the box, NOT checked), removal of the J7-C arm ribbon width inside the junction reach (arm ribbon is M6 / M4 wide there, J4 carriageways are narrower: decision for the user)
