@@ -13,7 +13,7 @@ import { applyCoralTexture, applyRockTexture, buildRockGeometry } from '../veget
 
 const CELL = 5;
 
-type Kind = 0 | 1 | 2 | 3; // seaweed, branch coral, dome coral, rock
+type Kind = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7; // seaweed, branch coral, dome coral, rock, sea grass, flower, lily pad, lotus bloom
 interface Inst {
   kind: Kind;
   x: number;
@@ -26,12 +26,13 @@ interface Inst {
   tint: number;
 }
 
-/** [radius m, seaweed, branch coral, dome coral, rock] per quality. */
+/** [radius m, seaweed, branch coral, dome coral, rock, sea grass, flower, lily pad, lotus bloom] per quality. */
 const QUALITY = [
-  { reach: 42, caps: [450, 140, 100, 90] },
-  { reach: 70, caps: [1000, 300, 220, 180] },
-  { reach: 100, caps: [1900, 500, 360, 280] },
+  { reach: 42, caps: [450, 140, 100, 90, 500, 60, 120, 40] },
+  { reach: 70, caps: [1000, 300, 220, 180, 1300, 150, 300, 90] },
+  { reach: 100, caps: [1900, 500, 360, 280, 2400, 300, 600, 180] },
 ] as const;
+const KINDS = 8;
 
 const SEAWEED_TINTS: [number, number, number][] = [
   [1.0, 1.0, 1.0],
@@ -53,6 +54,30 @@ const DOME_TINTS: [number, number, number][] = [
   [0.75, 1.1, 0.8],
   [1.3, 0.75, 0.7],
   [0.9, 0.85, 1.15],
+];
+const SEAGRASS_TINTS: [number, number, number][] = [
+  [1.0, 1.0, 1.0],
+  [0.8, 1.1, 0.75],
+  [1.1, 1.05, 0.7],
+  [0.7, 0.95, 0.9],
+  [1.2, 1.0, 0.6],
+];
+/** Petal colours (the petals are white-ish; the stem, leaves and the yellow centre keep their own colour). */
+const FLOWER_TINTS: [number, number, number][] = [
+  [1.5, 0.55, 0.8], // pink
+  [1.3, 1.3, 1.3], // white
+  [1.6, 1.35, 0.3], // yellow
+  [0.95, 0.5, 1.5], // purple
+  [1.5, 0.3, 0.3], // red
+  [1.6, 0.75, 0.25], // orange
+  [0.5, 0.7, 1.6], // blue
+  [1.4, 0.35, 1.1], // magenta
+];
+const LOTUS_TINTS: [number, number, number][] = [
+  [1.5, 0.65, 0.85],
+  [1.3, 1.25, 1.3],
+  [1.45, 0.5, 0.95],
+  [1.6, 1.4, 0.45],
 ];
 const ROCK_TINTS: [number, number, number][] = [
   [0.85, 0.82, 0.78],
@@ -165,6 +190,152 @@ export function domeCoralGeometry(): THREE.BufferGeometry {
   return g;
 }
 
+/** Adds `color` (from a function of the position) and `aPet` (1 = petal: takes the instance colour; 0 = everything else) to an indexed geometry. */
+function paint(g: THREE.BufferGeometry, fn: (x: number, y: number, z: number) => [number, number, number], pet: number): THREE.BufferGeometry {
+  if (g.getAttribute('uv')) g.deleteAttribute('uv');
+  if (!g.getAttribute('normal')) g.computeVertexNormals();
+  const p = g.getAttribute('position');
+  const col = new Float32Array(p.count * 3);
+  for (let i = 0; i < p.count; i++) {
+    const c = fn(p.getX(i), p.getY(i), p.getZ(i));
+    col[i * 3] = c[0]; col[i * 3 + 1] = c[1]; col[i * 3 + 2] = c[2];
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  g.setAttribute('aPet', new THREE.BufferAttribute(new Float32Array(p.count).fill(pet), 1));
+  return g;
+}
+
+type RGB3 = [number, number, number];
+/** One ribbon blade (2 or 3 vertices per row), height H, half width hw, leaning by `lean`; c0 -> c1 base to tip. */
+function ribbon(H: number, hw: number, lean: number, segs: number, c0: RGB3, c1: RGB3, az: number, rad: number, pet = 0, mid = false): THREE.BufferGeometry {
+  const pos: number[] = [], col: number[] = [], idx: number[] = [];
+  const cols = mid ? 3 : 2;
+  for (let s = 0; s <= segs; s++) {
+    const y = s / segs;
+    const w = hw * (1 - 0.8 * y * y);
+    const cx = lean * y * y;
+    const yy = y * H * (1 - 0.08 * y * y);
+    const k = Math.pow(y, 0.85);
+    const c = [c0[0] + (c1[0] - c0[0]) * k, c0[1] + (c1[1] - c0[1]) * k, c0[2] + (c1[2] - c0[2]) * k];
+    if (mid) { pos.push(cx - w, yy, 0, cx, yy, 0.01, cx + w, yy, 0); col.push(...c, c[0] * 1.2, c[1] * 1.2, c[2] * 1.1, ...c); }
+    else { pos.push(cx - w, yy, 0, cx + w, yy, 0); col.push(...c, ...c); }
+    if (s < segs) {
+      const b = s * cols;
+      if (mid) idx.push(b, b + 1, b + 3, b + 1, b + 4, b + 3, b + 1, b + 2, b + 4, b + 2, b + 5, b + 4);
+      else idx.push(b, b + 1, b + 2, b + 1, b + 3, b + 2);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.setAttribute('aPet', new THREE.BufferAttribute(new Float32Array(pos.length / 3).fill(pet), 1));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  g.rotateY(az);
+  g.translate(Math.cos(az + 1.3) * rad, 0, Math.sin(az + 1.3) * rad);
+  return g;
+}
+
+/**
+ * PLANT-REAL 2: SEA GRASS (eelgrass). A tuft of 12 long thin ribbons (half width 1.4 - 2.6 cm), each leaning its own way, dark green
+ * base -> light green tip, some yellowish. Many tufts per cell make a meadow. Sways in the current (grassMat).
+ */
+export function seaGrassGeometry(): THREE.BufferGeometry {
+  const parts: THREE.BufferGeometry[] = [];
+  for (let b = 0; b < 12; b++) {
+    const r1 = hash2(b, 13, 31), r2 = hash2(b, 17, 32), r3 = hash2(b, 19, 33), r4 = hash2(b, 23, 34);
+    const yel = r4 > 0.8;
+    parts.push(
+      ribbon(0.55 + 0.45 * r1, 0.014 + 0.012 * r2, 0.08 + 0.3 * r3, 3, yel ? [0.16, 0.2, 0.06] : [0.05, 0.13, 0.04], yel ? [0.55, 0.62, 0.2] : [0.3, 0.55, 0.16], r3 * 6.28, 0.1 * r2),
+    );
+  }
+  return mergeParts(parts);
+}
+
+/** A flat petal along +Z (length len, width wid, cupped up), tilted `tilt` rad up from flat, turned `az`, base at (0, y0, 0). 12 triangles. */
+function petal(len: number, wid: number, tilt: number, az: number, y0: number, c0: RGB3, c1: RGB3): THREE.BufferGeometry {
+  const rows = [0, 0.35, 0.7, 1], wp = [0.35, 1.0, 0.8, 0.1];
+  const pos: number[] = [], col: number[] = [], idx: number[] = [];
+  rows.forEach((t, r) => {
+    const w = wid * wp[r], cup = 0.18 * wid * Math.sin(Math.PI * Math.min(1, t * 0.9 + 0.1));
+    pos.push(-w, 0, t * len, 0, cup, t * len, w, 0, t * len);
+    const k = t;
+    const c = [c0[0] + (c1[0] - c0[0]) * k, c0[1] + (c1[1] - c0[1]) * k, c0[2] + (c1[2] - c0[2]) * k];
+    col.push(...c, c[0] * 1.06, c[1] * 1.06, c[2] * 1.06, ...c);
+    if (r < 3) { const b = r * 3; idx.push(b, b + 1, b + 3, b + 1, b + 4, b + 3, b + 1, b + 2, b + 4, b + 2, b + 5, b + 4); }
+  });
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.setAttribute('aPet', new THREE.BufferAttribute(new Float32Array(pos.length / 3).fill(1), 1));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  g.rotateX(-tilt);
+  g.rotateY(az);
+  g.translate(0, y0, 0);
+  return g;
+}
+
+/** A bloom: rings of petals (n, length, width, tilt) + a yellow centre. Petal colour white-ish, tinted per instance (aPet = 1). */
+function bloomParts(y0: number, rings: [number, number, number, number][]): THREE.BufferGeometry[] {
+  const out: THREE.BufferGeometry[] = [];
+  rings.forEach(([n, len, wid, tilt], ri) => {
+    for (let i = 0; i < n; i++) out.push(petal(len, wid, tilt, (i / n) * Math.PI * 2 + ri * 0.5 + hash2(i, ri, 41) * 0.25, y0, [0.78, 0.74, 0.74], [1.1, 1.08, 1.08]));
+  });
+  const c0 = new THREE.IcosahedronGeometry(0.035, 0);
+  c0.deleteAttribute('uv');
+  c0.deleteAttribute('normal');
+  const c = mergeVertices(c0, 1e-4); // indexed, like every other part of the bloom
+  c.scale(1, 0.7, 1);
+  c.translate(0, y0 + 0.012, 0);
+  out.push(paint(c, () => [1.5, 1.15, 0.15], 0));
+  return out;
+}
+
+/** PLANT-REAL 2: an underwater FLOWER: curved-free stem (1 unit), 3 leaves at the base, a 12-petal bloom on top (petals take the instance colour). */
+export function flowerGeometry(): THREE.BufferGeometry {
+  const parts: THREE.BufferGeometry[] = [];
+  const stem = new THREE.CylinderGeometry(0.009, 0.017, 0.9, 5, 2, true);
+  stem.translate(0, 0.45, 0);
+  parts.push(paint(stem, (_x, y) => [0.1 + 0.12 * y, 0.28 + 0.2 * y, 0.08], 0));
+  for (let i = 0; i < 3; i++) parts.push(ribbon(0.38 + 0.12 * i, 0.03, 0.18 + 0.08 * i, 2, [0.08, 0.22, 0.06], [0.28, 0.5, 0.15], (i / 3) * Math.PI * 2 + 0.5, 0.012, 0, true));
+  parts.push(...bloomParts(0.9, [[7, 0.2, 0.055, 0.55], [5, 0.15, 0.045, 1.0]]));
+  return mergeParts(parts);
+}
+
+/** PLANT-REAL 2: a LILY PAD on the water surface (fresh water): a round leaf with a notch, cupped rim, radius 0.5. y = 0 is the water. */
+export function lilyPadGeometry(): THREE.BufferGeometry {
+  const N = 13, gap = 0.45, a0 = 1.2;
+  const pos: number[] = [0, 0.004, 0, ], col: number[] = [0.1, 0.28, 0.07], idx: number[] = [];
+  const rings = [[0.3, 0.0], [0.5, 0.035]];
+  for (let r = 0; r < rings.length; r++) {
+    for (let i = 0; i <= N; i++) {
+      const a = a0 + gap / 2 + (i / N) * (Math.PI * 2 - gap);
+      const wob = 1 + 0.03 * Math.sin(i * 2.7);
+      pos.push(Math.cos(a) * rings[r][0] * wob, rings[r][1], Math.sin(a) * rings[r][0] * wob);
+      col.push(r === 0 ? 0.14 : 0.24, r === 0 ? 0.34 : 0.46, r === 0 ? 0.09 : 0.12);
+    }
+  }
+  for (let i = 0; i < N; i++) {
+    idx.push(0, 1 + i + 1, 1 + i); // centre -> ring 1
+    const a = 1 + i, b = 1 + i + 1, c = 1 + (N + 1) + i, d = 1 + (N + 1) + i + 1;
+    idx.push(a, b, c, b, d, c);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.setAttribute('aPet', new THREE.BufferAttribute(new Float32Array(pos.length / 3), 1));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
+
+/** PLANT-REAL 2: a LOTUS / water-lily BLOOM that sits on a pad: 3 rings of petals opening outward, yellow centre (18 petals). */
+export function lotusBloomGeometry(): THREE.BufferGeometry {
+  return mergeParts(bloomParts(0.02, [[7, 0.26, 0.075, 0.28], [6, 0.21, 0.065, 0.7], [5, 0.15, 0.05, 1.1]]));
+}
+
+
 function rockGeometry(): THREE.BufferGeometry {
   // ROCK-REAL: the same smooth noisy stone as the land rocks (radius 0.5, centred; the instance scale sets the size)
   return buildRockGeometry({ detail: 2, sx: 0.55, sy: 0.375, sz: 0.5, lumpy: 0.2, chip: 0.45, bottom: 0.47, base: 0xdcdcdc, seed: 31, grounded: false });
@@ -236,17 +407,69 @@ float swN(vec3 x){ vec3 i = floor(x); vec3 f = fract(x); f = f * f * (3.0 - 2.0 
     applyCoralTexture(domeMat, 'evc-coral-brain-v1', 'brain');
     const rockMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 });
     applyRockTexture(rockMat, 'evc-searock-v2', 0.2); // procedural stone surface (little moss under water)
-    this.mats.push(seaweedMat, branchMat, domeMat, rockMat);
-    const geos = [bladeGeometry(), branchCoralGeometry(), domeCoralGeometry(), rockGeometry()];
-    const mats = [seaweedMat, branchMat, domeMat, rockMat];
+    // sea grass: same sway idea, faster and smaller (thin ribbons), no veins
+    const grassMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, side: THREE.DoubleSide });
+    grassMat.onBeforeCompile = (sh) => {
+      sh.uniforms.uTime = this.uTime;
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', '#include <common>\nuniform float uTime;')
+        .replace(
+          '#include <begin_vertex>',
+          `#include <begin_vertex>
+          float ph = instanceMatrix[3].x * 0.9 + instanceMatrix[3].z * 1.1 + position.x * 7.0;
+          float sw = position.y * position.y;
+          transformed.x += sin(uTime * 1.9 + ph + position.y * 4.0) * 0.16 * sw;
+          transformed.z += cos(uTime * 1.5 + ph * 1.3 + position.y * 3.0) * 0.12 * sw;`,
+        );
+    };
+    grassMat.customProgramCacheKey = () => 'evc-seagrass-v1';
+    // flowers + lotus blooms: `aPet` (1 = petal) decides whether the per-instance colour is applied; the stem sways a little
+    const petalMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, side: THREE.DoubleSide });
+    petalMat.onBeforeCompile = (sh) => {
+      sh.uniforms.uTime = this.uTime;
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', '#include <common>\nuniform float uTime;\nattribute float aPet;')
+        .replace(
+          '#include <begin_vertex>',
+          `#include <begin_vertex>
+          float ph = instanceMatrix[3].x * 0.7 + instanceMatrix[3].z * 0.9;
+          float sw = position.y * position.y;
+          transformed.x += sin(uTime * 1.2 + ph) * 0.07 * sw;
+          transformed.z += cos(uTime * 1.0 + ph * 1.3) * 0.05 * sw;`,
+        )
+        .replace('#include <color_vertex>', '#include <color_vertex>\n#ifdef USE_INSTANCING_COLOR\nvColor.xyz = mix(color.xyz, vColor.xyz, aPet);\n#endif');
+    };
+    petalMat.customProgramCacheKey = () => 'evc-petal-v1';
+    // lily pad: radial veins + mottling in the fragment shader
+    const padMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, side: THREE.DoubleSide });
+    padMat.onBeforeCompile = (sh) => {
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWP;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvWP = position;');
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vWP;')
+        .replace(
+          '#include <color_fragment>',
+          `#include <color_fragment>
+          {
+            float pa = atan(vWP.z, vWP.x);
+            float pr = length(vWP.xz);
+            float vein = smoothstep(0.75, 1.0, abs(sin(pa * 11.0)));
+            diffuseColor.rgb *= 1.0 - 0.24 * vein * smoothstep(0.03, 0.2, pr);
+            diffuseColor.rgb *= 0.88 + 0.24 * fract(sin(dot(floor(vWP.xz * 16.0), vec2(12.9898, 78.233))) * 43758.5453);
+          }`,
+        );
+    };
+    padMat.customProgramCacheKey = () => 'evc-lilypad-v1';
+    this.mats.push(seaweedMat, branchMat, domeMat, rockMat, grassMat, petalMat, padMat);
+    const geos = [bladeGeometry(), branchCoralGeometry(), domeCoralGeometry(), rockGeometry(), seaGrassGeometry(), flowerGeometry(), lilyPadGeometry(), lotusBloomGeometry()];
+    const mats = [seaweedMat, branchMat, domeMat, rockMat, grassMat, petalMat, padMat, petalMat];
     const maxCaps = QUALITY[2].caps;
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < KINDS; i++) {
       const m = new THREE.InstancedMesh(geos[i], mats[i], maxCaps[i]);
       m.count = 0;
       m.frustumCulled = false;
       m.castShadow = false;
       m.receiveShadow = false;
-      m.name = ['seaweed', 'branchCoral', 'domeCoral', 'seaRock'][i];
+      m.name = ['seaweed', 'branchCoral', 'domeCoral', 'seaRock', 'seaGrass', 'seaFlower', 'lilyPad', 'lotusBloom'][i];
       m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       root.add(m);
       this.meshes.push(m);
@@ -289,7 +512,7 @@ float swN(vec3 x){ vec3 i = floor(x); vec3 f = fract(x); f = f * f * (3.0 - 2.0 
     const s = this.sc;
     if (Number.isNaN(s.water)) return out;
     const depth = s.water - s.h;
-    if (depth < 1.0) return out;
+    if (depth < 0.5) return out;
     const reef = vnoise(x * 0.013 + 10, z * 0.013, 3); // > 0.55: coral reef zone, otherwise sea-grass meadow
     const rocky = vnoise(x * 0.035, z * 0.035 + 40, 4);
     const r1 = hash2(gx, gz, 21);
@@ -297,8 +520,48 @@ float swN(vec3 x){ vec3 i = floor(x); vec3 f = fract(x); f = f * f * (3.0 - 2.0 
     const r3 = hash2(gx, gz, 23);
     const r4 = hash2(gx, gz, 24);
 
+    // PLANT-REAL 2: lily pads + lotus blooms on FRESH water (the sea is at level 0; lakes, ponds and rivers lie above it)
+    if (s.water > 0.5 && depth <= 4.5) {
+      const pond = vnoise(x * 0.05 + 20, z * 0.05, 9);
+      if (pond > 0.35 && hash2(gx, gz, 140) < 0.7) {
+        const nP = 2 + Math.floor(hash2(gx, gz, 141) * 4);
+        for (let c = 0; c < nP; c++) {
+          const px = x + (hash2(gx, gz, 150 + c) - 0.5) * CELL * 0.95, pz = z + (hash2(gx, gz, 160 + c) - 0.5) * CELL * 0.95;
+          const sc = 0.6 + hash2(gx, gz, 170 + c) * 0.9, yaw = hash2(gx, gz, 180 + c) * 6.28;
+          out.push({ kind: 6, x: px, y: s.water + 0.03, z: pz, yaw, sx: sc, sy: sc, sz: sc, tint: 0 });
+          if (hash2(gx, gz, 190 + c) < 0.38) out.push({ kind: 7, x: px, y: s.water + 0.03, z: pz, yaw, sx: sc * 0.9, sy: sc * 0.9, sz: sc * 0.9, tint: Math.floor(hash2(gx, gz, 200 + c) * LOTUS_TINTS.length) });
+        }
+      }
+    }
+    if (depth < 1.0) return out;
+
+    // sea grass meadows (eelgrass): many tufts per cell where the meadow noise is high
+    if (depth <= 14 && reef < 0.62) {
+      const mead = vnoise(x * 0.02 + 3, z * 0.02, 7);
+      if (mead > 0.38) {
+        const nT = 3 + Math.floor(hash2(gx, gz, 100) * 4);
+        for (let c = 0; c < nT; c++) {
+          const jx = (hash2(gx, gz, 110 + c) - 0.5) * CELL * 1.1, jz = (hash2(gx, gz, 120 + c) - 0.5) * CELL * 1.1;
+          const hgt = Math.min(0.55 + hash2(gx, gz, 125 + c) * 0.9 + (mead - 0.38) * 0.8, depth * 0.85);
+          const w = 0.8 + hash2(gx, gz, 128 + c) * 0.6;
+          out.push({ kind: 4, x: x + jx, y: s.h - 0.03, z: z + jz, yaw: hash2(gx, gz, 130 + c) * 6.28, sx: w, sy: hgt, sz: w, tint: Math.floor(hash2(gx, gz, 133 + c) * SEAGRASS_TINTS.length) });
+        }
+      }
+    }
+    // underwater flowers: small patches of one colour
+    if (depth <= 10 && reef < 0.62 && hash2(gx, gz, 136) < 0.2) {
+      const nF = 1 + Math.floor(hash2(gx, gz, 137) * 3);
+      const patch = Math.floor(vnoise(x * 0.05 + 40, z * 0.05, 15) * FLOWER_TINTS.length * 0.999);
+      for (let c = 0; c < nF; c++) {
+        const sc = Math.min(0.55 + hash2(gx, gz, 138 + c) * 0.7, (depth * 0.9) / 0.95);
+        out.push({
+          kind: 5, x: x + (hash2(gx, gz, 142 + c) - 0.5) * 3.5, y: s.h - 0.03, z: z + (hash2(gx, gz, 146 + c) - 0.5) * 3.5, yaw: hash2(gx, gz, 148 + c) * 6.28,
+          sx: sc, sy: sc, sz: sc, tint: hash2(gx, gz, 149 + c) < 0.25 ? Math.floor(hash2(gx, gz, 151 + c) * FLOWER_TINTS.length) : patch,
+        });
+      }
+    }
     // seaweed meadows and kelp forests
-    if (depth <= 30 && reef < 0.6 && r1 < 0.62) {
+    if (depth <= 30 && reef < 0.6 && r1 < 0.42) {
       const clumps = 1 + (r2 > 0.55 ? 1 : 0) + (r2 > 0.85 ? 1 : 0);
       for (let c = 0; c < clumps; c++) {
         const jx = (hash2(gx, gz, 30 + c) - 0.5) * CELL * 0.9;
@@ -384,7 +647,7 @@ float swN(vec3 x){ vec3 i = floor(x); vec3 f = fract(x); f = f * f * (3.0 - 2.0 
 
   private rebuild(gx0: number, gz0: number): void {
     const caps = QUALITY[this.quality].caps;
-    const n = [0, 0, 0, 0];
+    const n = [0, 0, 0, 0, 0, 0, 0, 0];
     for (let i = 0; i < this.offsets.length; i++) {
       const o = this.offsets[i];
       const list = this.cells.get(this.key(gx0 + o.dx, gz0 + o.dz));
@@ -398,13 +661,13 @@ float swN(vec3 x){ vec3 i = floor(x); vec3 f = fract(x); f = f * f * (3.0 - 2.0 
         this.scl.set(it.sx, it.sy, it.sz);
         this.mtx.compose(this.pos, this.quat, this.scl);
         mesh.setMatrixAt(n[k], this.mtx);
-        const t = k === 0 ? SEAWEED_TINTS[it.tint] : k === 1 ? CORAL_TINTS[it.tint] : k === 2 ? DOME_TINTS[it.tint] : ROCK_TINTS[it.tint];
+        const t = k === 0 ? SEAWEED_TINTS[it.tint] : k === 1 ? CORAL_TINTS[it.tint] : k === 2 ? DOME_TINTS[it.tint] : k === 3 ? ROCK_TINTS[it.tint] : k === 4 ? SEAGRASS_TINTS[it.tint] : k === 5 ? FLOWER_TINTS[it.tint] : k === 6 ? SEAGRASS_TINTS[0] : LOTUS_TINTS[it.tint];
         this.col.setRGB(t[0], t[1], t[2]);
         mesh.setColorAt(n[k], this.col);
         n[k]++;
       }
     }
-    for (let k = 0; k < 4; k++) {
+    for (let k = 0; k < KINDS; k++) {
       const m = this.meshes[k];
       m.count = n[k];
       m.instanceMatrix.needsUpdate = true;

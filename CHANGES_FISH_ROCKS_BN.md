@@ -38,3 +38,25 @@ User: "game er onek old fish ase, real shape na, texture o na. stone gulao."
 - `npm run build` (tsc + vite) exit 0. All 4 new fragment-shader pieces compile with glslang (glslangValidator, GLSL 450 stub of the three chunks). Headless geometry: 0 NaN.
 - Look checked on a CPU preview of the same shader maths (rock sphere, brain coral sphere), NOT in the game. Seaweed / staghorn look not seen at all yet.
 - NOT touched: port breakwater armour stones, park / garden / EVLab stones, the old fish in AnimalExtra (unused).
+
+---
+
+# ROUND 3: FISH-MORE + FISH-COLOR + sea grass + flowers + lily (2026-11-25)
+
+User: "water er fish er poriman aro barate hobe, onek color rong berong er fish add korte hobe. sea grass gula real and flower add koro water a."
+
+## Fish
+- Pond / river / lake fish (AnimalManager.ts): `FISH_PER` 12 -> 18, `fishSchools` (Quality.ts) 4/7/10 -> 8/14/20: high quality 360 fish (before 120). `POND_FISH` table now 16 species, mostly bright: orange-white koi, blue betta, red platy, yellow cichlid, green barb, purple tetra, orange clown loach, neon tetra, pink molly, goldfish + the older silver / olive tilapia / barred / striped / catfish.
+- Sea / reef fish (MarineLife.ts): `MAX_SCHOOLS` 22 -> 36, QUALITY schools 7/14/22 -> 11/22/36, Quality.ts marineSchools 8/14/22 -> 12/22/36 and drawn caps (Hi/Mid/Far) 160/240/528 -> 200/360/864 (high), 64/110/200 -> 90/180/330 (medium), 32/64/120 -> 40/90/180 (low). Min water depth for a school 2.6 / 3.5 -> 1.7 / 2.4, so fish also swim in the shallows near the shore.
+- `FISH_SPECIES`: +15 bright species (neon tetra, red snapper, purple anthias, green chromis, yellowtail fusilier, pink wrasse, orange-white banded; lionfish, yellow tang, mandarin, boxfish, queen angelfish, pink-blue parrotfish; napoleon wrasse, golden trevally).
+- Cost: fish triangles roughly x1.5 on high quality. If FPS drops: lower the three caps in Quality.ts first.
+
+## Water plants (SeabedDecor.ts, kinds 4-7; caps per quality in `QUALITY`)
+- 4 SEA GRASS `seaGrassGeometry`: tuft of 12 long thin ribbons (72 tris), dark -> light green, some yellowish, sways (`grassMat`). Meadows: `vnoise` meadow > 0.38 -> 3-6 tufts per 5 m cell, depth 1-14 m. Seaweed (kelp) is less frequent now (0.62 -> 0.42) so the meadow reads as grass.
+- 5 FLOWER `flowerGeometry`: stem + 3 leaves + 12-petal bloom (208 tris). 8 petal colours (pink, white, yellow, purple, red, orange, blue, magenta) in patches of one colour. Only the petals take the instance colour (attribute `aPet`, `petalMat`); stem, leaves and the yellow centre keep their own colour.
+- 6 LILY PAD `lilyPadGeometry` + 7 LOTUS BLOOM `lotusBloomGeometry` (236 tris, 4 colours), only on FRESH water (`s.water > 0.5`; the sea is at 0), depth <= 4.5 m, floating at water + 0.03 m. 2-5 pads per cell, 38 % of them with a bloom. Pad shader: radial veins + mottling (`padMat`).
+- `Kind` = 0..7, `KINDS = 8`, caps array has 8 entries (seaweed, branch, dome, rock, grass, flower, pad, bloom).
+
+## Checks
+- `npm run build` exit 0. Headless: 0 NaN, all parts of a merged geometry indexed. Pad fragment shader + petal vertex logic compile in glslang. Shapes checked on a software render of the dumped geometry (flower, lotus, pad, grass tuft).
+- NOT seen in the game: lily pad height vs the wave surface (if the pads sink / flicker, raise `s.water + 0.03`), flower size, meadow density.

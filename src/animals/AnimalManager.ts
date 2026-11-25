@@ -71,16 +71,26 @@ const SHOW = 260; // animals farther than this are hidden and not posed
 const MAX_LAND = Q.landAnimals; // 64 on the high preset
 const MAX_PREDATORS = Q.predators; // 4
 const MAX_DOLPHINS = Q.dolphins; // 8
-const FISH_SCHOOLS = Q.fishSchools; // 10
-const FISH_PER = 12;
+const FISH_SCHOOLS = Q.fishSchools; // 20 (FISH-MORE: was 10)
+const FISH_PER = 18; // FISH-MORE: was 12
 /**
  * FISH-REAL: the pond / river / sea fish use the SAME lofted body + procedural patterns as the reef fish (src/water/ReefFish.ts)
  * instead of the old sphere + cone. One school = one species: pattern, colours (70 / 30 %) and body aspect (width, height, length).
  */
 interface PondFish { w: number; theme: [number, number, number][]; pat: number; asp: [number, number, number] }
 const POND_FISH: PondFish[] = [
+  // FISH-COLOR: bright species first (colour values > 1 = glowing), the plain ones after
+  { w: 2, theme: [[1.7, 0.7, 0.15], [1.7, 1.6, 1.5]], pat: PAT.SPOTS, asp: [1, 1.1, 1], }, // orange-white koi
+  { w: 2, theme: [[0.3, 0.5, 1.7], [0.5, 0.8, 1.6]], pat: PAT.STRIPE, asp: [0.8, 0.9, 1.15] }, // blue betta
+  { w: 2, theme: [[1.7, 0.3, 0.25], [1.6, 0.5, 0.3]], pat: PAT.SILVER, asp: [1, 1.1, 1] }, // red platy
+  { w: 2, theme: [[1.7, 1.55, 0.25], [1.5, 1.4, 0.3]], pat: PAT.BARS, asp: [0.9, 1.15, 1] }, // yellow cichlid
+  { w: 2, theme: [[0.4, 1.5, 0.55], [0.7, 1.4, 0.4]], pat: PAT.SPOTS, asp: [0.95, 1.05, 1.05] }, // green barb
+  { w: 2, theme: [[1.1, 0.4, 1.6], [0.6, 0.5, 1.7]], pat: PAT.STRIPE, asp: [0.8, 0.85, 1.2] }, // purple tetra
+  { w: 2, theme: [[1.7, 0.6, 0.15], [1.6, 0.7, 0.2]], pat: PAT.CLOWN, asp: [1, 1.05, 0.9] }, // orange clown loach
+  { w: 2, theme: [[0.3, 1.2, 1.6], [1.7, 0.35, 0.3]], pat: PAT.STRIPE, asp: [0.7, 0.7, 1.2] }, // neon tetra
+  { w: 2, theme: [[1.7, 0.6, 1.0], [1.5, 0.45, 0.8]], pat: PAT.SILVER, asp: [0.9, 1, 1.05] }, // pink molly
+  { w: 2, theme: [[1.6, 1.3, 0.3], [1.7, 0.9, 0.2]], pat: PAT.SILVER, asp: [1.0, 1.1, 1] }, // goldfish
   { w: 3, theme: [[1.2, 1.25, 1.3], [1.0, 1.08, 1.15]], pat: PAT.SILVER, asp: [0.8, 0.85, 1.25] }, // silver carp / rui / hilsa
-  { w: 2, theme: [[1.5, 0.8, 0.25], [1.6, 0.55, 0.2]], pat: PAT.SILVER, asp: [1, 1.1, 1] }, // goldfish / koi
   { w: 2, theme: [[0.75, 0.85, 0.55], [0.6, 0.75, 0.45]], pat: PAT.SPOTS, asp: [1, 1.15, 1.05] }, // tilapia
   { w: 1, theme: [[1.5, 1.4, 0.4], [1.3, 1.25, 0.45]], pat: PAT.BARS, asp: [0.9, 1.2, 0.95] }, // barred perch
   { w: 1, theme: [[0.5, 0.85, 1.5], [0.9, 1.0, 1.3]], pat: PAT.STRIPE, asp: [0.8, 0.75, 1.3] }, // striped minnow

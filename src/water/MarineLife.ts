@@ -15,13 +15,13 @@ import { Q } from '../core/Quality';
  */
 
 const SLOT = 24; // fish slots per school
-const MAX_SCHOOLS = 22;
+const MAX_SCHOOLS = 36; // FISH-MORE: was 22
 
 /** [schools, jellyfish, turtles, spawn radius m] per quality. */
 const QUALITY = [
-  { schools: 7, jelly: 5, turtles: 0, reach: 55 },
-  { schools: 14, jelly: 10, turtles: 2, reach: 85 },
-  { schools: 22, jelly: 18, turtles: 4, reach: 115 },
+  { schools: 11, jelly: 5, turtles: 0, reach: 55 },
+  { schools: 22, jelly: 10, turtles: 2, reach: 85 },
+  { schools: 36, jelly: 18, turtles: 4, reach: 115 },
 ] as const;
 
 /**
@@ -44,6 +44,22 @@ const FISH_SPECIES: FishSp[] = [
   { kind: 0, w: 2, theme: [[0.5, 0.85, 1.5], [0.9, 1.0, 1.3]], pat: PAT.STRIPE, asp: [0.8, 0.75, 1.3], size: [0.26, 0.4] }, // fusilier
   { kind: 0, w: 2, theme: [[1.2, 1.25, 1.3], [1.0, 1.05, 1.15]], pat: PAT.SILVER, asp: [0.75, 0.7, 1.3], size: [0.22, 0.34] }, // sardines
   { kind: 0, w: 1, theme: [[1.5, 1.4, 0.3], [1.3, 1.25, 0.45]], pat: PAT.BARS, asp: [1, 1.2, 1], size: [0.22, 0.32] }, // sergeant major
+  // FISH-COLOR: many bright species (colour values > 1 = glowing)
+  { kind: 0, w: 2, theme: [[0.3, 1.0, 1.6], [1.6, 0.3, 0.3]], pat: PAT.STRIPE, asp: [0.7, 0.7, 1.2], size: [0.14, 0.22] }, // neon tetra: cyan + red
+  { kind: 0, w: 2, theme: [[1.6, 0.3, 0.2], [1.7, 0.5, 0.25]], pat: PAT.SILVER, asp: [0.9, 1.0, 1.1], size: [0.22, 0.34] }, // red snapper
+  { kind: 0, w: 2, theme: [[1.2, 0.35, 1.6], [1.5, 0.5, 1.2]], pat: PAT.SILVER, asp: [0.85, 0.9, 1], size: [0.18, 0.26] }, // purple anthias
+  { kind: 0, w: 2, theme: [[0.4, 1.6, 0.7], [0.8, 1.5, 0.4]], pat: PAT.SILVER, asp: [0.9, 0.9, 1], size: [0.18, 0.28] }, // green chromis
+  { kind: 0, w: 2, theme: [[1.7, 1.55, 0.25], [1.5, 1.4, 0.35]], pat: PAT.STRIPE, asp: [0.8, 0.8, 1.25], size: [0.24, 0.36] }, // yellowtail fusilier
+  { kind: 0, w: 2, theme: [[1.7, 0.6, 1.0], [1.5, 0.45, 0.8]], pat: PAT.STRIPE, asp: [0.8, 0.8, 1.2], size: [0.2, 0.3] }, // pink wrasse
+  { kind: 0, w: 1, theme: [[1.7, 0.7, 0.15], [1.7, 1.6, 1.5]], pat: PAT.BARS, asp: [0.9, 1.1, 1], size: [0.2, 0.3] }, // orange-white banded
+  { kind: 1, w: 2, theme: [[1.7, 0.3, 0.2], [1.6, 1.5, 1.4]], pat: PAT.BARS, asp: [0.9, 1.5, 1.0], size: [0.3, 0.5] }, // lionfish: red + white bars
+  { kind: 1, w: 2, theme: [[1.7, 1.55, 0.2], [1.6, 1.4, 0.25]], pat: PAT.TANG, asp: [0.7, 1.7, 0.95], size: [0.3, 0.45] }, // yellow tang
+  { kind: 1, w: 2, theme: [[0.25, 1.4, 1.6], [1.7, 0.55, 0.2]], pat: PAT.SPOTS, asp: [1, 1.1, 1.1], size: [0.2, 0.3] }, // mandarin fish
+  { kind: 1, w: 2, theme: [[1.7, 1.5, 0.2], [0.5, 0.5, 0.45]], pat: PAT.SPOTS, asp: [1.1, 1.1, 0.95], size: [0.25, 0.4] }, // boxfish: yellow with spots
+  { kind: 1, w: 2, theme: [[0.3, 0.8, 1.7], [1.7, 1.5, 0.3]], pat: PAT.BARS, asp: [0.8, 1.7, 0.95], size: [0.4, 0.6] }, // queen angelfish
+  { kind: 1, w: 1, theme: [[1.7, 0.45, 1.3], [0.4, 1.0, 1.7]], pat: PAT.SPOTS, asp: [1, 1.1, 1.2], size: [0.5, 0.8] }, // pink-blue parrotfish
+  { kind: 2, w: 1, theme: [[0.25, 1.1, 1.2], [0.3, 0.8, 1.5]], pat: PAT.SPOTS, asp: [1.1, 1.2, 1.2], size: [1.2, 2.0] }, // napoleon wrasse
+  { kind: 2, w: 1, theme: [[1.6, 1.3, 0.35], [1.4, 1.2, 0.3]], pat: PAT.SILVER, asp: [0.85, 1.1, 1.1], size: [1.0, 1.6] }, // golden trevally
   { kind: 1, w: 2, theme: [[1.3, 1.0, 0.3], [0.5, 0.7, 1.5]], pat: PAT.BARS, asp: [0.8, 1.9, 0.95], size: [0.5, 0.75] }, // angelfish
   { kind: 1, w: 2, theme: [[1.6, 1.5, 0.5], [1.5, 1.4, 0.4]], pat: PAT.BARS, asp: [0.75, 1.8, 0.9], size: [0.4, 0.6] }, // butterflyfish
   { kind: 1, w: 3, theme: [[1.7, 0.6, 0.15], [1.6, 0.7, 0.2]], pat: PAT.CLOWN, asp: [1, 1.05, 0.85], size: [0.25, 0.4] }, // clownfish
@@ -347,7 +363,7 @@ export class MarineLife {
   private spawnSchool(i: number, cx: number, cz: number, reach: number): void {
     const kindRoll = this.rnd();
     const kind: 0 | 1 | 2 = kindRoll < 0.58 ? 0 : kindRoll < 0.9 ? 1 : 2;
-    const minDepth = kind === 2 ? 6 : kind === 1 ? 3.5 : 2.6;
+    const minDepth = kind === 2 ? 6 : kind === 1 ? 2.4 : 1.7; // FISH-MORE: fish now also live in the shallows (was 3.5 / 2.6)
     if (!this.findWater(cx, cz, reach, minDepth, this.spot)) return;
     // pick a species of this kind (weighted)
     const pool = FISH_SPECIES.filter((f) => f.kind === kind);

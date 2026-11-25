@@ -263,3 +263,5 @@ See HANDOFF_JUNCTION_300FT.md section 26. Switch: Config.roads.junctionJ300.enab
 - 2026-11-25: FISH-REAL + ROCK-REAL: pond fish now use ReefFish model + patterns (AnimalManager.ts `POND_FISH`), land + seabed rocks use `buildRockGeometry` + `applyRockTexture` (RockAssets.ts). Details + what was not touched: CHANGES_FISH_ROCKS_BN.md. Real `npm run build` passes.
 
 - 2026-11-25 (round 2): ROCK-REAL 2 (new `applyRockTexture`, no cartoon cracks) + PLANT-REAL (seaweed ribbons, staghorn + brain coral with procedural skins, SeabedDecor.ts). See CHANGES_FISH_ROCKS_BN.md "ROUND 2". `npm run build` passes; shaders compile in glslang; not seen in the game yet.
+
+- 2026-11-25 (round 3): FISH-MORE / FISH-COLOR (more schools, ~30 bright species, shallow-water fish) + SEA GRASS meadows, underwater FLOWERS, LILY PADS + LOTUS on fresh water (SeabedDecor.ts kinds 4-7). See CHANGES_FISH_ROCKS_BN.md "ROUND 3". Build passes; not seen in the game yet.
