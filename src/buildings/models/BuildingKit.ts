@@ -41,6 +41,17 @@ const SLAB_T = 0.3;
 const STEP_RISE = 0.2;
 const STEP_RUN = 0.34;
 
+/** WALK-UP STOREYS (Kit.storeys): width and tread depth of a straight flight, the highest riser (the real riser is FLOOR_H / steps), floor slab and handrail. */
+const STAIR_W = 1.0;
+const STAIR_RUN = 0.27;
+const STAIR_RISE_MAX = 0.19;
+const FLOOR_SLAB_T = 0.2;
+const RAIL_H = 0.95;
+const RAIL_T = 0.08;
+const STAIR_COLOR = 0xbdb5a4;
+const FLOOR_COLOR = 0xd8cfbd;
+const RAIL_COLOR = 0x6b4a2f;
+
 /** Options for the door(s) of the next walk-in boxes (Kit.doorStyle). */
 export interface DoorOpts {
   /** Opening width / height (m); default by the width of the building. */
@@ -67,6 +78,9 @@ interface Mass {
   opts: DoorOpts;
   doors: { x: number; w: number; h: number }[];
 }
+
+/** Request from a model: the room whose floor is at y0 is `floors` storeys tall and gets real floors + stairs (see Kit.storeys). */
+interface StoreyReq { y0: number; floors: number; floorH: number; side: 'left' | 'right' }
 
 /** A finished piece of geometry: kept until finish() so that parts standing in a doorway can still be dropped. */
 interface Part {
@@ -116,6 +130,7 @@ export class Kit {
   private noSolid = 0;
   private noHollow = 0;
   private doorOpt: DoorOpts = {};
+  private storeyReqs: StoreyReq[] = [];
 
   /** @param overrides colour -> surface for this model (e.g. clay colours -> 'mud'). */
   constructor(private overrides?: SurfaceOverrides) {}
@@ -153,6 +168,16 @@ export class Kit {
     this.noHollow++;
     fn();
     this.noHollow--;
+  }
+
+  /**
+   * WALK-UP STOREYS: the tall room (one big box) whose floor is at `y0` and whose height is `floors` x `floorH` gets a real floor slab at every storey
+   * and a straight stair (solid steps, handrail round the hole) between every two storeys. The flights alternate between the left and the right wall,
+   * the first one on `side`. Call it once per model before finish(). If the room is too small for the stairs nothing is added.
+   */
+  storeys(y0: number, floors: number, opts: { floorH?: number; side?: 'left' | 'right' } = {}): void {
+    if (floors < 2) return;
+    this.storeyReqs.push({ y0, floors, floorH: opts.floorH ?? FLOOR_H, side: opts.side ?? 'left' });
   }
 
   /** Parts drawn inside `fn` are looks only: nobody collides with them (a hanging sign, a flag, a pond sheet ...). */
@@ -219,6 +244,48 @@ export class Kit {
     this.info.solids.push({ x: (x0 + x1) / 2, y: (y0 + y1) / 2, z: (z0 + z1) / 2, hx: (x1 - x0) / 2, hy: (y1 - y0) / 2, hz: (z1 - z0) / 2, yaw: 0 });
   }
 
+  /**
+   * Floors + stairs inside one room (model frame). Flight f climbs from storey f to f+1: it starts at the FRONT end (low) and rises towards the BACK wall
+   * where a 1 m landing is part of the upper floor. The upper floor has a hole over the flight (handrail on the two open sides). Flights alternate
+   * left / right wall, so the next flight stands on solid floor.
+   */
+  private buildStoreys(m: Mass, r: StoreyReq): void {
+    const T = WALL_T, FH = r.floorH;
+    const x0 = m.x0 + T, x1 = m.x1 - T, z0 = m.z0 + T, z1 = m.z1 - T;
+    const steps = Math.ceil(FH / STAIR_RISE_MAX - 1e-6);
+    const rise = FH / steps;
+    const flightLen = (steps - 1) * STAIR_RUN;
+    // too small a room: no floors at all (a floor nobody can reach is worse than none)
+    if (x1 - x0 < 2 * STAIR_W + 1.6 || z1 - z0 < STAIR_W + flightLen + 1.8) return;
+    const flight = (f: number): { xa: number; xb: number; zf0: number; zf1: number; left: boolean } => {
+      const left = (f % 2 === 0) === (r.side === 'left');
+      const xa = left ? x0 : x1 - STAIR_W;
+      return { xa, xb: xa + STAIR_W, zf0: z0 + STAIR_W, zf1: z0 + STAIR_W + flightLen, left };
+    };
+    // steps: solid blocks from the floor of the storey up to the tread (step `steps` is the landing = the floor above)
+    for (let f = 0; f < r.floors - 1; f++) {
+      const fl = flight(f);
+      const base = r.y0 + f * FH;
+      for (let k = 1; k < steps; k++) {
+        const top = base + k * rise;
+        this.slab(fl.xa, fl.xb, base, top, fl.zf1 - k * STAIR_RUN, fl.zf1 - (k - 1) * STAIR_RUN, STAIR_COLOR, [STAIR_W, top - base, STAIR_RUN]);
+      }
+    }
+    // floor slabs at every storey above the ground floor, with the stair hole of the flight that arrives there
+    for (let j = 1; j < r.floors; j++) {
+      const lvl = r.y0 + j * FH;
+      const hole = flight(j - 1);
+      const cuts: Rect2[] = [{ a0: hole.xa, a1: hole.xb, b0: hole.zf0, b1: hole.zf1 }];
+      for (const q of carveRect({ a0: x0, a1: x1, b0: z0, b1: z1 }, cuts)) {
+        this.slab(q.a0, q.a1, lvl - FLOOR_SLAB_T, lvl, q.b0, q.b1, FLOOR_COLOR, [q.a1 - q.a0, FLOOR_SLAB_T, q.b1 - q.b0]);
+      }
+      // handrail on the two open sides of the hole (the room side and the front end), standing on the slab
+      const rx0 = hole.left ? hole.xb : hole.xa - RAIL_T;
+      this.slab(rx0, rx0 + RAIL_T, lvl, lvl + RAIL_H, hole.zf0, hole.zf1 + RAIL_T, RAIL_COLOR, [RAIL_T, RAIL_H, hole.zf1 - hole.zf0]);
+      this.slab(hole.xa, hole.xb, lvl, lvl + RAIL_H, hole.zf1, hole.zf1 + RAIL_T, RAIL_COLOR, [STAIR_W, RAIL_H, RAIL_T]);
+    }
+  }
+
   /** finish(): turn the Masses into rooms. */
   private buildRooms(): void {
     const T = WALL_T;
@@ -278,6 +345,8 @@ export class Kit {
         for (const n of others) if (n.y0 <= sl.y + 0.05 && n.y0 + n.ceil >= upper - 0.05) cuts.push({ a0: n.x0 + T, a1: n.x1 - T, b0: n.z0 + T, b1: n.z1 - T });
         for (const r of carveRect(plan(sl.inset), cuts)) this.slab(r.a0, r.a1, sl.y, upper, r.b0, r.b1, m.color, m.dims);
       }
+      const sreq = this.storeyReqs.find((q) => Math.abs(q.y0 - m.y0) < 0.1 && Math.abs(m.h - q.floors * q.floorH) < 0.3);
+      if (sreq) this.buildStoreys(m, sreq);
       // the doors: record them + a stoop of steps when the floor is higher than the ground
       for (const d of doors) {
         this.info.doors.push({ x: d.x, y: m.y0, z: m.z1, w: d.w, h: d.h, t: T, leaf: m.opts.leaf ?? (d.w >= 2 ? 0x39505e : 0x6b4a2f), hall: !!m.opts.hall });
@@ -574,6 +643,7 @@ export class Kit {
     }
     this.parts = [];
     this.masses = [];
+    this.storeyReqs = [];
     return {
       root,
       width,
