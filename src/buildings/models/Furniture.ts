@@ -153,3 +153,31 @@ export function plant(k: Kit, x: number, y: number, z: number): void {
     [0, 0.35, 0, 0.5, 0.6, 0.5, 0x3f7a3a, false],
   ]);
 }
+
+/** Shop shelf of length w (along x when facing is 0 or 180), 0.4 m deep, 1.9 m high, goods on three levels on the front. */
+export function shelf(k: Kit, x: number, y: number, z: number, facing: Facing, w: number): void {
+  put(k, x, y, z, facing, [
+    [0, 0, 0, w, 1.9, 0.4, WOOD],
+    [0, 0.35, 0.2, w - 0.1, 0.25, 0.06, 0xd94f4f, false],
+    [0, 0.85, 0.2, w - 0.1, 0.25, 0.06, 0x3f7fbf, false],
+    [0, 1.35, 0.2, w - 0.1, 0.25, 0.06, 0xe8c547, false],
+  ]);
+}
+
+/** Sales counter of length w, 0.7 m deep, 1.0 m high, with a cash register. */
+export function shopCounter(k: Kit, x: number, y: number, z: number, facing: Facing, w: number): void {
+  put(k, x, y, z, facing, [
+    [0, 0, 0, w, 1.0, 0.7, 0xb98a5c],
+    [0, 1.0, 0, w + 0.06, 0.06, 0.76, 0x3a3f45, false],
+    [w / 3, 1.06, 0, 0.35, 0.25, 0.3, 0x2b3037, false],
+  ]);
+}
+
+/** A small stack of crates (about 1.25 x 0.6 m, 0.8 m high). */
+export function crates(k: Kit, x: number, y: number, z: number): void {
+  put(k, x, y, z, 0, [
+    [0, 0, 0, 0.6, 0.4, 0.6, 0xb98a5c],
+    [0.65, 0, 0, 0.6, 0.4, 0.6, 0xb98a5c],
+    [0.3, 0.4, 0, 0.6, 0.4, 0.6, 0xc8a77d],
+  ]);
+}

@@ -1,4 +1,7 @@
 import { FLOOR_H, Kit, pick, type BuiltBuilding, type Side } from './BuildingKit';
+import { furnishApartment, furnishApartmentShops } from './ApartmentInterior';
+import { furnishBrickHouse } from './HouseInterior';
+import { furnishShopHouse } from './ShopInterior';
 
 /**
  * COMPACT CITY BUILDINGS (Step A): small footprints (9 - 20 m) with 3 - 30 floors, so that they fit between the streets of the city fill
@@ -183,18 +186,16 @@ export function buildBankCompact(seed = 0): BuiltBuilding {
 
 // ---------------------------------------------------------------- residential
 
-/** Slim 9-floor apartment block (14 x 12 m): pilotis, lift core, balconies on the front and back. */
+/** Slim 9-floor apartment block (14 x 12 m): walk-in lobby on the ground, one flat per floor above, balconies on the front and back. */
 export function buildAptSlim9(seed = 0): BuiltBuilding {
   const k = new Kit();
   const W = 14, D = 12, floors = 9, GF = 3.4;
   const body = pick(seed, [0xe3d7c2, 0xdfe3d3, 0xe6d1c4, 0xd9d4cc]);
   const accent = pick(seed, [0xb85c38, 0x4f7a8a, 0x8a6aa0]);
   k.box(0, 0, 0, W + 0.4, 0.2, D + 0.4, 0x8d8b86);
-  for (const x of [-5.5, 0, 5.5]) for (const z of [-4.5, 4.5]) k.box(x, 0.2, z, 0.55, GF - 0.2, 0.55, 0xb9b6ae);
-  k.box(0, 0.2, -3.6, 4.4, GF - 0.2, 3.4, accent);
-  k.box(-4.5, 0.2, 3.2, 2.2, 2.4, 2.2, 0xcfc7b6);
+  lobby(k, W, D, GF - 0.4, 0.2, 0xf4efe4); // entrance lobby on the ground floor (was pilotis: the body now starts on the ground so it can be walked into)
   const y0 = GF;
-  k.box(0, y0, 0, W, floors * FLOOR_H, D, body);
+  k.box(0, 0.2, 0, W, GF - 0.2 + floors * FLOOR_H, D, body); // ground lobby floor + the flats
   for (let f = 0; f <= floors; f++) k.box(0, y0 + f * FLOOR_H - 0.12, 0, W + 0.18, 0.24, D + 0.18, 0xf4efe4);
   k.box(0, y0, D / 2 + 0.05, 2.8, floors * FLOOR_H, 0.12, accent);
   const g = { y0, floors, ww: 1.3, wh: 1.4, sill: 0.95, glass: GLASS, frame: 0xf4efe4 };
@@ -211,6 +212,7 @@ export function buildAptSlim9(seed = 0): BuiltBuilding {
   const top = y0 + floors * FLOOR_H;
   const r = roof(k, top, W, D, body, accent);
   k.waterTank(W * 0.3, r, -D * 0.2, 1.0);
+  k.storeys(0.2, floors + 1, { heights: [GF - 0.2, ...Array.from({ length: floors }, () => FLOOR_H)], side: 'left', furnish: furnishApartment }); // lobby + one flat per floor
   return k.finish(W + 0.4, D + 1.2, top + 3);
 }
 
@@ -221,7 +223,7 @@ export function buildAptSlim14(seed = 0): BuiltBuilding {
   const body = pick(seed, [0xd8d4cc, 0xd4d9de, 0xdcd2c0, 0xe0dccf]);
   const accent = pick(seed, [0x2f5f8a, 0x8a3f3a, 0x3b6b52]);
   k.box(0, 0, 0, W + 0.6, 0.25, D + 0.6, 0x8d8b86);
-  k.box(0, 0.25, 0, W, GF - 0.25, D, 0xcfc9bb);
+  // the shop floor and the flats are ONE box standing on the ground, so the building can be walked into (lobby / shops below, flats above)
   k.onSide('front', 0, 0, W, D, (len, half) => {
     for (let i = 0; i < 3; i++) {
       const t = -len / 2 + 2.5 + i * ((len - 5) / 2);
@@ -231,7 +233,7 @@ export function buildAptSlim14(seed = 0): BuiltBuilding {
   });
   const y0 = GF;
   const low = floors - 2;
-  k.box(0, y0, 0, W, low * FLOOR_H, D, body);
+  k.box(0, 0.25, 0, W, GF - 0.25 + low * FLOOR_H, D, body); // ground shops + the 12 flat floors
   for (let f = 0; f <= low; f++) k.box(0, y0 + f * FLOOR_H - 0.12, 0, W + 0.18, 0.24, D + 0.18, 0xf4efe4);
   k.box(0, y0, D / 2 + 0.05, 2.6, low * FLOOR_H, 0.12, accent);
   const g = { y0, floors: low, ww: 1.3, wh: 1.4, sill: 0.95, glass: GLASS, frame: 0xf4efe4 };
@@ -247,6 +249,7 @@ export function buildAptSlim14(seed = 0): BuiltBuilding {
   const top = y1 + 2 * FLOOR_H;
   const r = roof(k, top, W - 3, D - 3, body, accent);
   k.waterTank(-2.5, r, 0, 1.0);
+  k.storeys(0.25, low + 1, { heights: [GF - 0.25, ...Array.from({ length: low }, () => FLOOR_H)], side: 'left', furnish: furnishApartmentShops }); // shops + one flat per floor (the 2 set-back floors on top stay a solid block)
   return k.finish(W + 0.6, D + 1.2, top + 3);
 }
 
@@ -286,6 +289,7 @@ export function buildTownhouse3(seed = 0): BuiltBuilding {
   k.cyl(-W / 2 - 0.08, 0.25, -D / 2 + 0.3, 0.05, 0.05, floors * GF, 0x6a6a68, 6); // drain pipe
   k.cyl(-2.5, top + 0.1, 1.5, 0.04, 0.04, 1.2, 0x555a60, 5); // dish
   k.sphere(-2.5, top + 1.35, 1.5, 0.4, 0xdddddd, 0.25);
+  k.storeys(0.25, floors, { floorH: GF, side: 'left', furnish: furnishBrickHouse }); // real floors + stairs + rooms inside
   return k.finish(W + 0.4, D + 1.2, top + 2.6);
 }
 
@@ -310,6 +314,7 @@ function shopHouse(seed: number, floors: number, W: number, D: number): BuiltBui
   k.box(0, top, 0, W + 0.3, 0.2, D + 0.3, 0xa7a49c);
   k.parapet(0, top + 0.2, 0, W + 0.3, D + 0.3, 0.9, 0.2, wall);
   k.waterTank(W * 0.22, top + 0.2, -D * 0.2, 0.8);
+  k.storeys(0.3, floors, { heights: [GF, ...Array.from({ length: floors - 1 }, () => FLOOR_H)], side: 'left', furnish: furnishShopHouse }); // shop + flats inside
   return k.finish(W + 0.4, D + 1.2, top + 2.5);
 }
 /** Narrow 3-floor shop house (12 x 10 m). */

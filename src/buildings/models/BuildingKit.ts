@@ -88,6 +88,8 @@ export interface StoreyCtx {
   /** The inside of the room (walls not included). Front (street side) = +z. */
   x0: number; x1: number; z0: number; z1: number;
   floors: number;
+  /** Height (m) of every storey (floor to floor). */
+  heights: number[];
   /** Walking surface (y) of every storey, 0 = ground floor. */
   levelY: number[];
   /** Clear height (m) between the floor of a storey and the ceiling above it. */
@@ -98,7 +100,8 @@ export interface StoreyCtx {
   doorX: number[];
 }
 
-interface StoreyReq { y0: number; floors: number; floorH: number; side: 'left' | 'right'; furnish?: (c: StoreyCtx) => void }
+/** `heights` = height (m) of every storey from the ground floor up (they may differ: a tall shop floor under flats). */
+interface StoreyReq { y0: number; heights: number[]; side: 'left' | 'right'; furnish?: (c: StoreyCtx) => void }
 
 /** A finished piece of geometry: kept until finish() so that parts standing in a doorway can still be dropped. */
 interface Part {
@@ -193,9 +196,10 @@ export class Kit {
    * and a straight stair (solid steps, handrail round the hole) between every two storeys. The flights alternate between the left and the right wall,
    * the first one on `side`. Call it once per model before finish(). If the room is too small for the stairs nothing is added.
    */
-  storeys(y0: number, floors: number, opts: { floorH?: number; side?: 'left' | 'right'; furnish?: (c: StoreyCtx) => void } = {}): void {
-    if (floors < 2) return;
-    this.storeyReqs.push({ y0, floors, floorH: opts.floorH ?? FLOOR_H, side: opts.side ?? 'left', furnish: opts.furnish });
+  storeys(y0: number, floors: number, opts: { floorH?: number; heights?: number[]; side?: 'left' | 'right'; furnish?: (c: StoreyCtx) => void } = {}): void {
+    const heights = opts.heights ?? Array.from({ length: floors }, () => opts.floorH ?? FLOOR_H);
+    if (heights.length < 2) return;
+    this.storeyReqs.push({ y0, heights, side: opts.side ?? 'left', furnish: opts.furnish });
   }
 
   /**
@@ -284,55 +288,60 @@ export class Kit {
     this.info.solids.push({ x: (x0 + x1) / 2, y: (y0 + y1) / 2, z: (z0 + z1) / 2, hx: (x1 - x0) / 2, hy: (y1 - y0) / 2, hz: (z1 - z0) / 2, yaw: 0 });
   }
 
+  private stepsOf(h: number): number {
+    return Math.ceil(h / STAIR_RISE_MAX - 1e-6);
+  }
+
+  /** Does the room have space for the flights of this request? (else it stays as it was: no floors at all, a floor nobody can reach is worse than none) */
+  private storeysFit(m: Mass, r: StoreyReq): boolean {
+    const T = WALL_T;
+    let longest = 0;
+    for (let i = 0; i < r.heights.length - 1; i++) longest = Math.max(longest, (this.stepsOf(r.heights[i]!) - 1) * STAIR_RUN);
+    return m.x1 - m.x0 - 2 * T >= 2 * STAIR_W + 1.6 && m.z1 - m.z0 - 2 * T >= STAIR_W + longest + 1.8;
+  }
+
   /**
    * Floors + stairs inside one room (model frame). Flight f climbs from storey f to f+1: it starts at the FRONT end (low) and rises towards the BACK wall
    * where a 1 m landing is part of the upper floor. The upper floor has a hole over the flight (handrail on the two open sides). Flights alternate
    * left / right wall, so the next flight stands on solid floor.
    */
   private buildStoreys(m: Mass, r: StoreyReq): void {
-    const T = WALL_T, FH = r.floorH;
+    const T = WALL_T;
+    const hs = r.heights, n = hs.length;
     const x0 = m.x0 + T, x1 = m.x1 - T, z0 = m.z0 + T, z1 = m.z1 - T;
-    const steps = Math.ceil(FH / STAIR_RISE_MAX - 1e-6);
-    const rise = FH / steps;
-    const flightLen = (steps - 1) * STAIR_RUN;
-    // too small a room: no floors at all (a floor nobody can reach is worse than none)
-    if (x1 - x0 < 2 * STAIR_W + 1.6 || z1 - z0 < STAIR_W + flightLen + 1.8) return;
+    const levelY: number[] = [];
+    let yy = r.y0;
+    for (const h of hs) { levelY.push(yy); yy += h; }
     const flight = (f: number): { xa: number; xb: number; zf0: number; zf1: number; left: boolean } => {
       const left = (f % 2 === 0) === (r.side === 'left');
       const xa = left ? x0 : x1 - STAIR_W;
-      return { xa, xb: xa + STAIR_W, zf0: z0 + STAIR_W, zf1: z0 + STAIR_W + flightLen, left };
+      return { xa, xb: xa + STAIR_W, zf0: z0 + STAIR_W, zf1: z0 + STAIR_W + (this.stepsOf(hs[f]!) - 1) * STAIR_RUN, left };
     };
-    // steps: solid blocks from the floor of the storey up to the tread (step `steps` is the landing = the floor above)
-    for (let f = 0; f < r.floors - 1; f++) {
+    for (let f = 0; f < n - 1; f++) {
       const fl = flight(f);
-      const base = r.y0 + f * FH;
+      const steps = this.stepsOf(hs[f]!), rise = hs[f]! / steps;
+      const base = levelY[f]!;
       for (let k = 1; k < steps; k++) {
         const top = base + k * rise;
         this.slab(fl.xa, fl.xb, base, top, fl.zf1 - k * STAIR_RUN, fl.zf1 - (k - 1) * STAIR_RUN, STAIR_COLOR, [STAIR_W, top - base, STAIR_RUN]);
       }
     }
-    // floor slabs at every storey above the ground floor, with the stair hole of the flight that arrives there
-    for (let j = 1; j < r.floors; j++) {
-      const lvl = r.y0 + j * FH;
+    for (let j = 1; j < n; j++) {
+      const lvl = levelY[j]!;
       const hole = flight(j - 1);
       const cuts: Rect2[] = [{ a0: hole.xa, a1: hole.xb, b0: hole.zf0, b1: hole.zf1 }];
       for (const q of carveRect({ a0: x0, a1: x1, b0: z0, b1: z1 }, cuts)) {
         this.slab(q.a0, q.a1, lvl - FLOOR_SLAB_T, lvl, q.b0, q.b1, FLOOR_COLOR, [q.a1 - q.a0, FLOOR_SLAB_T, q.b1 - q.b0]);
       }
-      // handrail on the two open sides of the hole (the room side and the front end), standing on the slab
       const rx0 = hole.left ? hole.xb : hole.xa - RAIL_T;
       this.slab(rx0, rx0 + RAIL_T, lvl, lvl + RAIL_H, hole.zf0, hole.zf1 + RAIL_T, RAIL_COLOR, [RAIL_T, RAIL_H, hole.zf1 - hole.zf0]);
       this.slab(hole.xa, hole.xb, lvl, lvl + RAIL_H, hole.zf1, hole.zf1 + RAIL_T, RAIL_COLOR, [STAIR_W, RAIL_H, RAIL_T]);
     }
-    // furniture + partition walls of the model (its own layout)
     if (r.furnish) {
-      const levelY: number[] = [], clearH: number[] = [], flights: StoreyCtx['flights'] = [];
-      for (let i = 0; i < r.floors; i++) {
-        levelY.push(r.y0 + i * FH);
-        clearH.push(i < r.floors - 1 ? FH - FLOOR_SLAB_T : r.y0 + m.h - m.slabT - (r.y0 + i * FH));
-      }
-      for (let f = 0; f < r.floors - 1; f++) flights.push(flight(f));
-      r.furnish({ k: this, x0, x1, z0, z1, floors: r.floors, levelY, clearH, flights, doorX: m.doors.map((d) => d.x) });
+      const clearH: number[] = [], flights: StoreyCtx['flights'] = [];
+      for (let i = 0; i < n; i++) clearH.push(i < n - 1 ? hs[i]! - FLOOR_SLAB_T : r.y0 + m.h - m.slabT - levelY[i]!);
+      for (let f = 0; f < n - 1; f++) flights.push(flight(f));
+      r.furnish({ k: this, x0, x1, z0, z1, floors: n, heights: hs, levelY, clearH, flights, doorX: m.doors.map((d) => d.x) });
     }
   }
 
@@ -385,18 +394,19 @@ export class Kit {
           else this.slab(xc - T / 2, xc + T / 2, r.b0, r.b1, r.a0, r.a1, m.color, m.dims);
         }
       }
+      const sreq = this.storeyReqs.find((q) => Math.abs(q.y0 - m.y0) < 0.1 && Math.abs(m.h - q.heights.reduce((u, v) => u + v, 0)) < 0.3);
+      const storeysOk = !!sreq && this.storeysFit(m, sreq);
       // roof (and a lower ceiling when the building is taller than one room)
       const plan = (inset: number): Rect2 => ({ a0: m.x0 + inset, a1: m.x1 - inset, b0: m.z0 + inset, b1: m.z1 - inset });
       const slabs: { inset: number; y: number }[] = [{ inset: 0, y: top - m.slabT }];
-      if (m.ceil < m.h - 0.05) slabs.push({ inset: T, y: m.y0 + m.ceil - 0.2 });
+      if (!storeysOk && m.ceil < m.h - 0.05) slabs.push({ inset: T, y: m.y0 + m.ceil - 0.2 });
       for (const sl of slabs) {
         const upper = sl.y + (sl.inset ? 0.2 : m.slabT);
         const cuts: Rect2[] = [];
         for (const n of others) if (n.y0 <= sl.y + 0.05 && n.y0 + n.ceil >= upper - 0.05) cuts.push({ a0: n.x0 + T, a1: n.x1 - T, b0: n.z0 + T, b1: n.z1 - T });
         for (const r of carveRect(plan(sl.inset), cuts)) this.slab(r.a0, r.a1, sl.y, upper, r.b0, r.b1, m.color, m.dims);
       }
-      const sreq = this.storeyReqs.find((q) => Math.abs(q.y0 - m.y0) < 0.1 && Math.abs(m.h - q.floors * q.floorH) < 0.3);
-      if (sreq) this.buildStoreys(m, sreq);
+      if (sreq && storeysOk) this.buildStoreys(m, sreq);
       // the doors: record them + a stoop of steps when the floor is higher than the ground
       for (const d of doors) {
         this.info.doors.push({ x: d.x, y: m.y0, z: m.z1, w: d.w, h: d.h, t: T, leaf: m.opts.leaf ?? (d.w >= 2 ? 0x39505e : 0x6b4a2f), hall: !!m.opts.hall });
