@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { FLOOR_H, Kit, pick, type BuiltBuilding } from './BuildingKit';
 import { furnishClinic } from './ClinicInterior';
+import { furnishHospitalTower, furnishHospitalWing } from './HospitalInterior';
 
 /** HEALTH: হাসপাতাল, ক্লিনিক, ডায়াগনস্টিক সেন্টার. */
 
@@ -43,7 +44,7 @@ export function buildHospital(seed = 0): BuiltBuilding {
   // central tower
   const tw = 24, td = 18, tf = 8, tz = -6;
   k.box(0, 0, tz, tw + 1, 0.4, td + 1, 0x9b968c);
-  k.box(0, 0.4, tz, tw, tf * fh, td, wall);
+  k.doorStyle({ none: true }, () => k.box(0, 0.4, tz, tw, tf * fh, td, wall)); // the entrance is the glass lobby in front (it overlaps the tower, so the two rooms are one)
   for (let f = 1; f <= tf; f++) k.box(0, 0.4 + f * fh - 0.12, tz, tw + 0.2, 0.24, td + 0.2, 0xdfe3e6);
   for (const s of ['front', 'back', 'left', 'right'] as const) {
     k.onSide(s, 0, tz, tw, td, (len, half) => {
@@ -91,7 +92,7 @@ export function buildHospital(seed = 0): BuiltBuilding {
   ambulance(k, 29, 14, -0.05);
   // main entrance: glass lobby + canopy
   k.glass(0, 0.6, tz + td / 2 + 5.04, 12, 4.6, 0.08, 0x4c7f9f);
-  k.box(0, 0.4, tz + td / 2 + 2.6, 13, 5.6, 5.2, 0xf1ede4);
+  k.box(0, 0.4, tz + td / 2 + 2.2, 13, 5.6, 6.0, 0xf1ede4); // lobby: reaches 0.8 m into the tower so the walls between them open
   k.box(0, 5.9, tz + td / 2 + 3.0, 15, 0.4, 6.0, acc);
   for (const x of [-6.4, 6.4]) k.cyl(x, 0.06, tz + td / 2 + 5.6, 0.3, 0.3, 5.8, 0xf4efe4, 8);
   // car park, trees, generator house
@@ -99,6 +100,8 @@ export function buildHospital(seed = 0): BuiltBuilding {
   k.box(-34, 0.06, 22, 8, 3.2, 6, 0xb7bcc2);
   for (const x of [-36, -18, 12, 38]) k.tree(x, 15, 5, 0x3f7a35);
   k.boundaryWall(0, 0, W - 0.6, D - 0.6, 0xd9ceb8, 0x8d8b86, 9.0, 1.8);
+  k.storeys(0.4, tf, { floorH: fh, side: 'left', furnish: furnishHospitalTower }); // tower: hall + OPD, operating floor, ICU, wards
+  k.storeys(0.4, 5, { floorH: fh, side: 'left', furnish: furnishHospitalWing }); // wings: emergency / lab + pharmacy, wards
   return k.finish(W, D, top + 4.5);
 }
 

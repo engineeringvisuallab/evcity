@@ -21,6 +21,7 @@ const BLUE = 0x3f78b0;
 
 function put(k: Kit, x: number, y: number, z: number, facing: Facing, parts: readonly Part[]): void {
   for (const [dx, py, dz, w, h, d, color, solid] of parts) {
+    if (!(solid ?? false) && w * h * d < 0.0004) continue; // micro details (labels, screws) cost vertices and are not seen: skipped
     let rx = dx, rz = dz, rw = w, rd = d;
     if (facing === 90) { rx = dz; rz = -dx; rw = d; rd = w; }
     else if (facing === 180) { rx = -dx; rz = -dz; }
@@ -188,7 +189,7 @@ export function wallCross(k: Kit, x: number, y: number, z: number, facing: Facin
 /** Privacy curtain on a ceiling rail: rail + blue folds. Runs along x for facing 0 / 180, length w, height h. */
 export function curtain(k: Kit, x: number, y: number, z: number, facing: Facing, w: number, h: number): void {
   const parts: Part[] = [[0, h, 0, w, 0.03, 0.03, STEEL]];
-  const n = Math.max(2, Math.round(w / 0.25));
+  const n = Math.max(2, Math.round(w / 0.45));
   for (let i = 0; i < n; i++) parts.push([(i - (n - 1) / 2) * (w / n), 0.55, (i % 2) * 0.03, w / n * 0.9, h - 0.55, 0.02, i % 2 ? 0x8fb8d8 : 0xa9c9e2]);
   put(k, x, y, z, facing, parts);
 }
@@ -204,5 +205,77 @@ export function noticeBoard(k: Kit, x: number, y: number, z: number, facing: Fac
     [0, 0, 0, 1.2, 0.8, 0.04, 0x7a5a3a],
     [0, 0.04, 0.03, 1.1, 0.7, 0.02, 0xcdb48a],
     [-0.3, 0.3, 0.05, 0.3, 0.38, 0.01, WHITE], [0.1, 0.4, 0.05, 0.28, 0.28, 0.01, 0xe8c547], [0.38, 0.2, 0.05, 0.3, 0.4, 0.01, 0xd9eef7],
+  ]);
+}
+
+/** Operating table 0.6 x 2.0 m on a steel column with a base plate, padded top, head rest and two arm boards. Head at the back. */
+export function operatingTable(k: Kit, x: number, y: number, z: number, facing: Facing): void {
+  put(k, x, y, z, facing, [
+    [0, 0.0, 0, 0.9, 0.08, 1.0, DARK_STEEL, true], // base plate
+    [0, 0.08, 0, 0.18, 0.7, 0.18, STEEL], // column
+    [0, 0.78, 0, 0.62, 0.1, 2.0, 0x3b6e63, true], // top
+    [0, 0.88, -0.95, 0.3, 0.06, 0.25, 0x2f5a52], // head rest
+    [-0.5, 0.82, -0.3, 0.3, 0.03, 0.8, STEEL], [0.5, 0.82, -0.3, 0.3, 0.03, 0.8, STEEL], // arm boards
+    [0, 0.88, 0.1, 0.5, 0.01, 1.4, SHEET], // drape
+  ]);
+}
+
+/** Surgical lamp over a table: ceiling mount, two arm segments and a big pale disc light. `ceilY` = height of the ceiling above the floor y. */
+export function surgicalLamp(k: Kit, x: number, y: number, z: number, ceilY: number): void {
+  const h = Math.min(ceilY, 3.4);
+  put(k, x, y, z, 0, [
+    [0, h - 0.1, 0, 0.3, 0.1, 0.3, STEEL],
+    [0, h - 0.7, 0, 0.06, 0.6, 0.06, STEEL],
+    [0.25, h - 0.7, 0, 0.5, 0.05, 0.05, STEEL],
+    [0.5, h - 1.15, 0, 0.05, 0.5, 0.05, STEEL],
+    [0.5, h - 1.25, 0, 0.8, 0.1, 0.8, 0xfdfdf2],
+    [0.5, h - 1.3, 0, 0.3, 0.05, 0.3, 0xffffff],
+  ]);
+}
+
+/** Patient monitor on a pole stand: screen with a green trace, a base. */
+export function patientMonitor(k: Kit, x: number, y: number, z: number, facing: Facing): void {
+  put(k, x, y, z, facing, [
+    [0, 0, 0, 0.4, 0.05, 0.4, DARK_STEEL],
+    [0, 0.05, 0, 0.04, 1.2, 0.04, STEEL],
+    [0, 1.25, 0, 0.42, 0.3, 0.06, BLACK],
+    [0, 1.27, 0.04, 0.36, 0.24, 0.01, SCREEN],
+    [0, 1.36, 0.045, 0.3, 0.015, 0.01, 0x42d392],
+    [0, 1.3, 0.045, 0.3, 0.015, 0.01, 0xe8c547],
+  ]);
+}
+
+/** Wheelchair (frame, seat, back, two big wheels, two small, footrest). */
+export function wheelchair(k: Kit, x: number, y: number, z: number, facing: Facing): void {
+  put(k, x, y, z, facing, [
+    [0, 0.45, 0, 0.48, 0.05, 0.45, 0x2c3a4a, true],
+    [0, 0.5, -0.2, 0.48, 0.45, 0.05, 0x2c3a4a],
+    [-0.3, 0.12, -0.05, 0.05, 0.5, 0.5, BLACK], [0.3, 0.12, -0.05, 0.05, 0.5, 0.5, BLACK],
+    [-0.22, 0.05, 0.3, 0.04, 0.2, 0.2, BLACK], [0.22, 0.05, 0.3, 0.04, 0.2, 0.2, BLACK],
+    [0, 0.12, 0.32, 0.3, 0.03, 0.18, STEEL],
+    [-0.26, 0.9, -0.22, 0.03, 0.03, 0.2, STEEL], [0.26, 0.9, -0.22, 0.03, 0.03, 0.2, STEEL],
+  ]);
+}
+
+/** Laboratory bench of length w (0.7 m deep): worktop, cupboards, a microscope, a rack of test tubes and a sink. */
+export function labBench(k: Kit, x: number, y: number, z: number, facing: Facing, w: number): void {
+  put(k, x, y, z, facing, [
+    [0, 0, 0, w, 0.9, 0.7, 0xe8e4d8, true],
+    [0, 0.9, 0, w + 0.04, 0.05, 0.74, 0x3a3f45],
+    [-w / 3, 0.95, 0, 0.18, 0.32, 0.2, BLACK], [-w / 3, 1.25, -0.05, 0.05, 0.12, 0.08, STEEL], // microscope
+    [0, 0.95, 0.1, 0.5, 0.12, 0.12, 0x9fc6d8], [-0.15, 1.07, 0.1, 0.04, 0.12, 0.04, 0xd94f4f], [0.0, 1.07, 0.1, 0.04, 0.12, 0.04, 0xe8c547], [0.15, 1.07, 0.1, 0.04, 0.12, 0.04, 0x3b8a55], // tubes
+    [w / 3, 0.95, 0, 0.5, 0.04, 0.4, 0x9aa3a8], [w / 3, 1.0, -0.2, 0.04, 0.25, 0.04, STEEL], // sink + tap
+    [0, 1.7, -0.3, w, 0.5, 0.15, WHITE], // wall cupboard
+  ]);
+}
+
+/** Resuscitation / medicine cart (red drawers, defibrillator on top). */
+export function crashCart(k: Kit, x: number, y: number, z: number, facing: Facing): void {
+  put(k, x, y, z, facing, [
+    [0, 0.08, 0, 0.6, 0.8, 0.5, 0xc62828, true],
+    [0, 0.2, 0.26, 0.5, 0.02, 0.01, WHITE], [0, 0.45, 0.26, 0.5, 0.02, 0.01, WHITE], [0, 0.7, 0.26, 0.5, 0.02, 0.01, WHITE],
+    [0, 0.88, 0, 0.62, 0.04, 0.52, STEEL],
+    [0, 0.92, 0, 0.3, 0.18, 0.25, 0x2b3037], [0, 1.0, 0.13, 0.2, 0.08, 0.01, 0x42d392],
+    [-0.26, 0.0, -0.2, 0.06, 0.08, 0.06, BLACK], [0.26, 0.0, 0.2, 0.06, 0.08, 0.06, BLACK],
   ]);
 }

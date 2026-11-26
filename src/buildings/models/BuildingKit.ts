@@ -27,6 +27,8 @@ export interface BuiltBuilding {
   width: number;
   depth: number;
   height: number;
+  /** Floors, stairs, partitions and furniture of the walk-in rooms (a child of `root`); the owner may hide it when the player is far away. Undefined if the model has none. */
+  interior?: THREE.Group;
   /** Solid parts, doors and wudu taps of the model (model frame), see ModelInfo.ts. */
   info: ModelInfo;
   /** Frees the geometry (materials are shared). */
@@ -108,6 +110,8 @@ interface Part {
   surf: Surface;
   geo: THREE.BufferGeometry;
   decor: boolean;
+  /** Made inside Kit.storeys (floors, stairs, partitions, furniture): drawn in the `interior` group that is only shown near the building. */
+  interior: boolean;
   mn: [number, number, number];
   mx: [number, number, number];
 }
@@ -151,6 +155,7 @@ export class Kit {
   private noSolid = 0;
   private noHollow = 0;
   private doorOpt: DoorOpts = {};
+  private inInterior = 0;
   private storeyReqs: StoreyReq[] = [];
 
   /** @param overrides colour -> surface for this model (e.g. clay colours -> 'mud'). */
@@ -406,7 +411,7 @@ export class Kit {
         for (const n of others) if (n.y0 <= sl.y + 0.05 && n.y0 + n.ceil >= upper - 0.05) cuts.push({ a0: n.x0 + T, a1: n.x1 - T, b0: n.z0 + T, b1: n.z1 - T });
         for (const r of carveRect(plan(sl.inset), cuts)) this.slab(r.a0, r.a1, sl.y, upper, r.b0, r.b1, m.color, m.dims);
       }
-      if (sreq && storeysOk) this.buildStoreys(m, sreq);
+      if (sreq && storeysOk) { this.inInterior++; this.buildStoreys(m, sreq); this.inInterior--; }
       // the doors: record them + a stoop of steps when the floor is higher than the ground
       for (const d of doors) {
         this.info.doors.push({ x: d.x, y: m.y0, z: m.z1, w: d.w, h: d.h, t: T, leaf: m.opts.leaf ?? (d.w >= 2 ? 0x39505e : 0x6b4a2f), hall: !!m.opts.hall });
@@ -462,7 +467,7 @@ export class Kit {
     geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
     if (surf !== 'plain') geo.setAttribute('uv', new THREE.BufferAttribute(planarUVs(pos, SURFACE_SPEC[surf].size), 2));
     // thin boxes and glass are paint (windows, frames, painted doors): they are dropped where a real door opening is cut
-    this.parts.push({ surf, geo, decor: kind === 'box' && (surf === 'glass' || Math.min(dims[0], dims[1], dims[2]) < 0.3), mn, mx });
+    this.parts.push({ surf, geo, decor: kind === 'box' && (surf === 'glass' || Math.min(dims[0], dims[1], dims[2]) < 0.3), interior: this.inInterior > 0, mn, mx });
   }
 
   // ---------- transforms ----------
@@ -687,27 +692,39 @@ export class Kit {
     this.buildRooms();
     const root = new THREE.Group();
     const geos: THREE.BufferGeometry[] = [];
-    const buckets = new Map<Surface, THREE.BufferGeometry[]>();
-    for (const pt of this.parts) {
-      let list = buckets.get(pt.surf);
-      if (!list) buckets.set(pt.surf, (list = []));
-      list.push(pt.geo);
-    }
-    for (const [surf, list] of buckets) {
-      const g = mergeGeometries(list, false)!;
-      geos.push(g);
-      const m = new THREE.Mesh(g, getSurfaceMaterial(surf));
-      m.name = surf;
-      m.castShadow = surf !== 'glass';
-      m.receiveShadow = true;
-      root.add(m);
-      for (const x of list) x.dispose();
+    let interior: THREE.Group | undefined;
+    for (const inside of [false, true]) {
+      const buckets = new Map<Surface, THREE.BufferGeometry[]>();
+      for (const pt of this.parts) {
+        if (pt.interior !== inside) continue;
+        let list = buckets.get(pt.surf);
+        if (!list) buckets.set(pt.surf, (list = []));
+        list.push(pt.geo);
+      }
+      let target: THREE.Group = root;
+      if (inside && buckets.size > 0) {
+        interior = new THREE.Group();
+        interior.name = 'interior';
+        root.add(interior);
+        target = interior;
+      }
+      for (const [surf, list] of buckets) {
+        const g = mergeGeometries(list, false)!;
+        geos.push(g);
+        const m = new THREE.Mesh(g, getSurfaceMaterial(surf));
+        m.name = surf;
+        m.castShadow = surf !== 'glass' && !inside; // nothing inside a building casts a shadow
+        m.receiveShadow = true;
+        target.add(m);
+        for (const x of list) x.dispose();
+      }
     }
     this.parts = [];
     this.masses = [];
     this.storeyReqs = [];
     return {
       root,
+      interior,
       width,
       depth,
       height,

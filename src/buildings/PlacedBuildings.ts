@@ -20,6 +20,9 @@ export interface PlacedBuildingsDeps {
 // the fog thins them out but the shape stays visible from far away.
 const BUILD_DIST = 2000;
 const HIDE_DIST = 2300;
+/** The inside of a building (floors, stairs, rooms, furniture) is drawn only this close; hidden again beyond INTERIOR_HIDE (no flicker). */
+const INTERIOR_SHOW = 260;
+const INTERIOR_HIDE = 320;
 /** Big models are heavy to build: at most this many are built per frame (nearest first), so the game never stalls. */
 const MAX_BUILDS_PER_FRAME = 1;
 /** Minimap dot colour per model group. */
@@ -35,6 +38,7 @@ interface Slot {
   built: BuiltBuilding | null;
   plinth: THREE.Mesh | null;
   shown: boolean;
+  interiorOn: boolean;
 }
 
 export class PlacedBuildings {
@@ -53,7 +57,7 @@ export class PlacedBuildings {
         const h = d.terrain.heightAt(p.x + lx * c + lz * s, p.z - lx * s + lz * c);
         mn = Math.min(mn, h); mx = Math.max(mx, h);
       }
-      this.slots.push({ p, floorY: mx + 0.02, minY: mn, built: null, plinth: null, shown: false });
+      this.slots.push({ p, floorY: mx + 0.02, minY: mn, built: null, plinth: null, shown: false, interiorOn: true });
     }
   }
 
@@ -78,6 +82,7 @@ export class PlacedBuildings {
       b.root.rotation.y = p.yaw;
       this.d.root.add(b.root);
       sl.built = b;
+      if (b.interior) { sl.interiorOn = true; b.interior.visible = true; }
       // plinth: from the lowest ground point up to just under the model's own ground slab (6 cm thick)
       const h = sl.floorY - sl.minY + 0.5;
       const m = new THREE.Mesh(new THREE.BoxGeometry(p.W, h, p.D), this.plinthMat);
@@ -105,6 +110,11 @@ export class PlacedBuildings {
     const pending: { sl: Slot; dist: number }[] = [];
     for (const sl of this.slots) {
       const dist = Math.hypot(this.p.x - sl.p.x, this.p.z - sl.p.z);
+      const inner = sl.built?.interior;
+      if (inner) {
+        const near = dist < (sl.interiorOn ? INTERIOR_HIDE : INTERIOR_SHOW);
+        if (near !== sl.interiorOn) { sl.interiorOn = near; inner.visible = near; }
+      }
       if (dist < BUILD_DIST) {
         if (sl.built) {
           if (!sl.shown) this.show(sl); // already built once: showing it again is cheap
