@@ -13,6 +13,9 @@ import { ROADSIDE_ALL } from '../src/buildings/PlacementsRoadside';
 import { MAIN_STATION_LOT, PARKING_LOTS, worldToLot } from '../src/parking/ParkingSite';
 import { ROAD_STATION_SITES } from '../src/parking/RoadStationSites';
 import { GANTRY, gantryLayout } from '../src/signs/RoadSignSpec';
+import { buildJunctionRegistry } from '../src/roads/JunctionRegistry';
+import { RTE_M3_DATA } from '../src/roads/junction/RteM3Data';
+import { RTE_M4_DATA } from '../src/roads/junction/RteM4Data';
 
 const BAD_ZONES = new Set(['sea', 'airport', 'army', 'seaport', 'engineering', 'wetland', 'mountain', 'coast']);
 const MIN_LEN = 300; // shortest road that gets a gantry (m)
@@ -29,6 +32,13 @@ const g = new TerrainGenerator(Config.world.seed);
 const sc = g.makeSample();
 const roads = g.roads.roads;
 const log: string[] = [];
+
+// STEP SIGN-FIX-1 (2026-11-26): the gantry must not stand on / near ANY junction of the CURRENT network (junction registry nodes) or on the RT-E ramps, ring N and J1 (not in the registry as ramps).
+const hubs: { x: number; z: number; id: string }[] = buildJunctionRegistry(roads).nodes.map((nd: any) => ({ x: nd.x, z: nd.z, id: nd.id }));
+hubs.push({ x: 2335, z: 1438, id: 'RTE' }, { x: 2106, z: -2761, id: 'ring-N' }, { x: -87, z: -277, id: 'J1' });
+for (const rr of [RTE_M3_DATA, RTE_M4_DATA]) for (const p of rr.pts) hubs.push({ x: p[0], z: p[1], id: rr.name });
+const HUB_BIG = 190; // 6 / 8 lane gantry (board 36-48 m wide)
+const HUB_SMALL = 80; // 2 / 4 lane
 
 /** Grid of all road points (other roads) and rail points, so the neighbour checks do not scan everything. */
 const roadGrid = new Map<string, { x: number; z: number; id: number; name: string }[]>();
@@ -94,6 +104,8 @@ function valid(r: (typeof roads)[number], i: number, out: { feetL: number; feetR
   // other roads: none within 120 m of the gantry (no junction, no side road under the beam), railway none within 30 m of the beam line
   const clear = big ? 120 : 50;
   if (near(roadGrid, px, pz, clear, (p) => p.id !== r.id && Math.hypot(p.x - px, p.z - pz) < clear)) return 'other road';
+  const hubR = big ? HUB_BIG : HUB_SMALL;
+  for (const h of hubs) if (Math.hypot(h.x - px, h.z - pz) < hubR) return 'junction ' + h.id;
   const ax = px - rx * (lay.edge + 3), az = pz - rz * (lay.edge + 3), bx = px + rx * (lay.edge + 3), bz = pz + rz * (lay.edge + 3);
   if (near(railGrid, px, pz, lay.edge + 40, (p) => distToSegment(p.x, p.z, ax, az, bx, bz) < 30)) return 'rail';
   for (const st of ROAD_STATION_SITES) if (Math.hypot(st.x - px, st.z - pz) < 70) return 'station ' + st.id;
