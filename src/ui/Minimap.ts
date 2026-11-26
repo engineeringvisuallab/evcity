@@ -87,6 +87,21 @@ export class Minimap {
   private ctx: CanvasRenderingContext2D;
   private base: HTMLCanvasElement | null = null;
   private zoom = 0;
+  /** Zoom level used for marker sizes: = zoom, or derived from the span while the full map (U) is open. */
+  private zl = 0;
+  // ---- Full-screen map (U key) ----
+  private parentEl: HTMLElement;
+  private full = false;
+  private fullCx = 0;
+  private fullCz = 0;
+  private fullSpan = 10600;
+  private lastMe = { x: 0, z: 0 };
+  private backdrop: HTMLDivElement | null = null;
+  private bar: HTMLDivElement | null = null;
+  private pointers = new Map<number, { x: number; y: number }>();
+  /** Called when the full map opens (true) or closes (false): the Engine frees / takes back the mouse. */
+  onFullChange: ((open: boolean) => void) | null = null;
+
   private px = 220;
   private dpr = Math.min(window.devicePixelRatio || 1, 2);
   private worker: Worker;
@@ -110,6 +125,7 @@ export class Minimap {
     private roads: RoadNetwork,
   ) {
     this.zoneLayer = Minimap.makeZoneLayer();
+    this.parentEl = parent;
     const c = this.canvas;
     this.setSize();
     Object.assign(c.style, {
@@ -142,7 +158,7 @@ export class Minimap {
     autoHide(this.coords);
     parent.append(this.coords, this.clock);
     this.layoutInfo();
-    window.addEventListener('resize', () => this.setSize());
+    window.addEventListener('resize', () => (this.full ? this.layoutFull() : this.setSize()));
 
     this.worker = new Worker(new URL('../workers/minimap.worker.ts', import.meta.url), { type: 'module' });
     this.worker.onmessage = (e: MessageEvent<MinimapResult>) => {
@@ -185,6 +201,168 @@ export class Minimap {
 
   setZoom(z: number): void {
     this.zoom = Math.max(0, Math.min(ZOOM_SPANS.length - 1, Math.round(z)));
+  }
+
+  // ------------------------------------------------------------------
+  // Full-screen map (U key): the whole world, wheel = zoom, wheel-click / drag = move, pinch on a phone.
+  // It reuses this canvas (made big and square in the middle of the screen), so it draws exactly what the minimap draws.
+  // ------------------------------------------------------------------
+  get isFull(): boolean {
+    return this.full;
+  }
+
+  toggleFull(): boolean {
+    if (this.full) this.closeFull();
+    else this.openFull();
+    return this.full;
+  }
+
+  openFull(): void {
+    if (this.full) return;
+    this.full = true;
+    this.fullCx = 0;
+    this.fullCz = 0;
+    this.fullSpan = 10600;
+    this.ensureFullUi();
+    this.backdrop!.style.display = 'block';
+    this.bar!.style.display = 'flex';
+    this.layoutFull();
+    this.onFullChange?.(true);
+  }
+
+  closeFull(): void {
+    if (!this.full) return;
+    this.full = false;
+    this.pointers.clear();
+    this.backdrop!.style.display = 'none';
+    this.bar!.style.display = 'none';
+    Object.assign(this.canvas.style, { left: '', top: '', right: '14px', zIndex: '11', pointerEvents: 'none', touchAction: '', borderRadius: '14px' });
+    this.setSize();
+    this.onFullChange?.(false);
+  }
+
+  /** Big square map in the middle of the screen (re-done on resize). */
+  private layoutFull(): void {
+    const size = Math.max(200, Math.floor(Math.min(window.innerWidth, window.innerHeight) * 0.94));
+    this.canvas.width = size * this.dpr;
+    this.canvas.height = size * this.dpr;
+    Object.assign(this.canvas.style, {
+      width: `${size}px`, height: `${size}px`,
+      left: `${Math.round((window.innerWidth - size) / 2)}px`, top: `${Math.round((window.innerHeight - size) / 2)}px`, right: 'auto',
+      zIndex: '91', pointerEvents: 'auto', touchAction: 'none', borderRadius: '10px',
+    });
+  }
+
+  private clampView(): void {
+    const lim = Config.world.size / 2 + 600;
+    this.fullCx = Math.max(-lim, Math.min(lim, this.fullCx));
+    this.fullCz = Math.max(-lim, Math.min(lim, this.fullCz));
+  }
+
+  /** Zoom by `factor` (> 1 = zoom out) and keep the world point under (clientX, clientY) where it is. */
+  private zoomAt(clientX: number, clientY: number, factor: number): void {
+    const r = this.canvas.getBoundingClientRect();
+    if (r.width <= 0) return;
+    const ox = clientX - r.left - r.width / 2;
+    const oy = clientY - r.top - r.height / 2;
+    const k = this.fullSpan / r.width;
+    const wx = this.fullCx + ox * k;
+    const wz = this.fullCz + oy * k;
+    this.fullSpan = Math.max(300, Math.min(12000, this.fullSpan * factor));
+    const k2 = this.fullSpan / r.width;
+    this.fullCx = wx - ox * k2;
+    this.fullCz = wz - oy * k2;
+    this.clampView();
+  }
+
+  private panBy(dxPx: number, dyPx: number): void {
+    const r = this.canvas.getBoundingClientRect();
+    if (r.width <= 0) return;
+    const k = this.fullSpan / r.width;
+    this.fullCx -= dxPx * k;
+    this.fullCz -= dyPx * k;
+    this.clampView();
+  }
+
+  private ensureFullUi(): void {
+    if (this.backdrop) return;
+    const c = this.canvas;
+    const bd = document.createElement('div');
+    Object.assign(bd.style, {
+      position: 'fixed', inset: '0', zIndex: '90', display: 'none', background: 'rgba(4,10,18,0.82)', touchAction: 'none',
+    } satisfies Partial<CSSStyleDeclaration>);
+    bd.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
+    bd.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    const bar = document.createElement('div');
+    Object.assign(bar.style, {
+      position: 'fixed', left: '0', right: '0', top: '0', zIndex: '92', display: 'none', justifyContent: 'space-between', alignItems: 'flex-start',
+      padding: '10px 12px', pointerEvents: 'none', fontFamily: UI_FONT,
+    } satisfies Partial<CSSStyleDeclaration>);
+    const hint = document.createElement('div');
+    hint.textContent = '🖱 চাকা = জুম · চাকা চেপে টানা = সরানো · ফোনে: দুই আঙুলে জুম, এক আঙুলে টানা · U / Esc = বন্ধ';
+    Object.assign(hint.style, {
+      color: '#d8ecff', font: `600 12px/1.4 ${UI_FONT}`, background: 'rgba(14,22,34,0.72)', border: '1px solid rgba(255,255,255,0.25)',
+      borderRadius: '9px', padding: '5px 9px', maxWidth: '70%',
+    } satisfies Partial<CSSStyleDeclaration>);
+    const btns = document.createElement('div');
+    Object.assign(btns.style, { display: 'flex', gap: '8px', pointerEvents: 'auto' } satisfies Partial<CSSStyleDeclaration>);
+    const mk = (label: string, title: string, fn: () => void): HTMLButtonElement => {
+      const b = document.createElement('button');
+      b.textContent = label;
+      b.title = title;
+      Object.assign(b.style, {
+        font: `700 16px/1 ${UI_FONT}`, color: '#fff', background: 'rgba(14,22,34,0.85)', border: '1px solid rgba(255,255,255,0.45)',
+        borderRadius: '10px', padding: '9px 13px', cursor: 'pointer', touchAction: 'manipulation',
+      } satisfies Partial<CSSStyleDeclaration>);
+      b.addEventListener('click', (e) => { e.stopPropagation(); fn(); });
+      return b;
+    };
+    btns.append(
+      mk('📍', 'আমার জায়গা', () => { this.fullCx = this.lastMe.x; this.fullCz = this.lastMe.z; this.fullSpan = 1500; this.clampView(); }),
+      mk('✕', 'বন্ধ', () => this.closeFull()),
+    );
+    bar.append(hint, btns);
+    this.parentEl.append(bd, bar);
+    this.backdrop = bd;
+    this.bar = bar;
+
+    // ---- mouse wheel zoom, wheel-click / drag move, touch pinch ----
+    c.addEventListener('wheel', (e) => {
+      if (!this.full) return;
+      e.preventDefault();
+      this.zoomAt(e.clientX, e.clientY, Math.exp(Math.max(-300, Math.min(300, e.deltaY)) * 0.0015));
+    }, { passive: false });
+    c.addEventListener('contextmenu', (e) => { if (this.full) e.preventDefault(); });
+    c.addEventListener('auxclick', (e) => { if (this.full) e.preventDefault(); });
+    c.addEventListener('pointerdown', (e) => {
+      if (!this.full) return;
+      if (e.pointerType === 'mouse' && e.button !== 0 && e.button !== 1) return;
+      if (e.button === 1) e.preventDefault(); // no browser auto-scroll on wheel-click
+      try { c.setPointerCapture(e.pointerId); } catch { /* ignore */ }
+      this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    });
+    c.addEventListener('pointermove', (e) => {
+      if (!this.full) return;
+      const prev = this.pointers.get(e.pointerId);
+      if (!prev) return;
+      if (this.pointers.size === 1) {
+        this.panBy(e.clientX - prev.x, e.clientY - prev.y);
+      } else if (this.pointers.size === 2) {
+        const other = [...this.pointers.entries()].find(([id]) => id !== e.pointerId)![1];
+        const d0 = Math.hypot(prev.x - other.x, prev.y - other.y);
+        const d1 = Math.hypot(e.clientX - other.x, e.clientY - other.y);
+        const mx0 = (prev.x + other.x) / 2, my0 = (prev.y + other.y) / 2;
+        const mx1 = (e.clientX + other.x) / 2, my1 = (e.clientY + other.y) / 2;
+        if (d0 > 8 && d1 > 8) this.zoomAt(mx1, my1, d0 / d1);
+        this.panBy(mx1 - mx0, my1 - my0);
+      }
+      this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    });
+    const up = (e: PointerEvent): void => { this.pointers.delete(e.pointerId); };
+    c.addEventListener('pointerup', up);
+    c.addEventListener('pointercancel', up);
+    window.addEventListener('keydown', (e) => { if (this.full && e.code === 'Escape') this.closeFull(); }, true);
   }
 
   /** Put the coordinate chip under the map and the clock beside it (the map size depends on the window). */
@@ -338,11 +516,14 @@ export class Minimap {
     }
     const c = this.ctx;
     const S = this.canvas.width;
-    const span = ZOOM_SPANS[this.zoom];
+    const span = this.full ? this.fullSpan : ZOOM_SPANS[this.zoom];
+    this.zl = this.full ? (span < 800 ? 0 : span < 2500 ? 1 : span < 9000 ? 2 : 3) : this.zoom;
+    this.lastMe.x = s.me.x;
+    this.lastMe.z = s.me.z;
     const half = Config.world.size / 2 + Config.world.chunkMargin * Config.world.chunkSize;
     const ppm = S / span; // canvas pixels per metre
-    const cx = s.me.x;
-    const cz = s.me.z;
+    const cx = this.full ? this.fullCx : s.me.x;
+    const cz = this.full ? this.fullCz : s.me.z;
     const X = (x: number) => (x - cx) * ppm + S / 2;
     const Z = (z: number) => (z - cz) * ppm + S / 2;
 
@@ -423,7 +604,7 @@ export class Minimap {
         }
       }
       // real roads as sharp vector lines (the baked picture is ~10 m per pixel: too blurry when zoomed in)
-      if (this.zoom < 3) this.drawRoads(c, X, Z, ppm, cx, cz, span);
+      if (this.zl < 3) this.drawRoads(c, X, Z, ppm, cx, cz, span);
       // railway network (Stage 11B): dark line + white dashes, station areas as rings
       {
         const line = (): void => {
@@ -453,7 +634,7 @@ export class Minimap {
           c.strokeStyle = '#fff';
           c.lineWidth = 1.1 * this.dpr;
           c.stroke();
-          if (MAP_CLUTTER && this.zoom >= 1) {
+          if (MAP_CLUTTER && this.zl >= 1) {
             const name = bn.rail.station[st.id] ?? st.id;
             c.strokeStyle = 'rgba(0,0,0,0.75)';
             c.lineWidth = 3 * this.dpr;
@@ -474,9 +655,9 @@ export class Minimap {
     }
 
     // bus stops: blue square with a white bus window (only on the close / medium maps)
-    if (MAP_CLUTTER && s.stops && this.zoom < 3) {
+    if (MAP_CLUTTER && s.stops && this.zl < 3) {
       const d = this.dpr;
-      const r = (this.zoom === 0 ? 4.6 : 3.4) * d;
+      const r = (this.zl === 0 ? 4.6 : 3.4) * d;
       for (const b of s.stops) {
         const bx = X(b.x);
         const bz = Z(b.z);
@@ -496,7 +677,7 @@ export class Minimap {
     // City Mall: cyan shopping-bag marker (always visible, every zoom level)
     if (s.mall) {
       const d = this.dpr;
-      const r = (this.zoom === 0 ? 7.5 : this.zoom === 1 ? 6 : 5) * d;
+      const r = (this.zl === 0 ? 7.5 : this.zl === 1 ? 6 : 5) * d;
       const mx = X(s.mall.x);
       const mz = Z(s.mall.z);
       if (mx > -r && mz > -r && mx < S + r && mz < S + r) {
@@ -520,7 +701,7 @@ export class Minimap {
     // SWTP (blue drop) / STP (brown): always visible, every zoom level
     for (const pl of s.infra ?? []) {
       const d = this.dpr;
-      const r = (this.zoom === 0 ? 7.5 : this.zoom === 1 ? 6 : 5) * d;
+      const r = (this.zl === 0 ? 7.5 : this.zl === 1 ? 6 : 5) * d;
       const ix = X(pl.x);
       const iz = Z(pl.z);
       if (ix > -r && iz > -r && ix < S + r && iz < S + r) {
@@ -542,9 +723,9 @@ export class Minimap {
     }
 
     // FUEL STATIONS (orange-red square, white pump) and CHARGING POINTS (green square, white lightning bolt): close and medium maps
-    if (s.stations && this.zoom < 3) {
+    if (s.stations && this.zl < 3) {
       const d = this.dpr;
-      const r = (this.zoom === 0 ? 5.8 : 4.6) * d;
+      const r = (this.zl === 0 ? 5.8 : 4.6) * d;
       const badge = (bx: number, bz: number, color: string, glyph: 'pump' | 'bolt'): void => {
         c.fillStyle = color;
         c.strokeStyle = '#fff';
@@ -592,7 +773,7 @@ export class Minimap {
     // City Library: amber open-book marker (always visible, every zoom level)
     if (s.library) {
       const d = this.dpr;
-      const r = (this.zoom === 0 ? 7.5 : this.zoom === 1 ? 6 : 5) * d;
+      const r = (this.zl === 0 ? 7.5 : this.zl === 1 ? 6 : 5) * d;
       const lx = X(s.library.x);
       const lz = Z(s.library.z);
       if (lx > -r && lz > -r && lx < S + r && lz < S + r) {
@@ -612,7 +793,7 @@ export class Minimap {
     // placed building models: small coloured dots (always visible, every zoom level)
     if (s.buildings) {
       const d = this.dpr;
-      const r = (this.zoom === 0 ? 3.2 : 2.6) * d;
+      const r = (this.zl === 0 ? 3.2 : 2.6) * d;
       c.lineWidth = 1 * d;
       c.strokeStyle = '#0f172a';
       for (const b of s.buildings) {
@@ -630,7 +811,7 @@ export class Minimap {
     // Prototype building (police station): blue square with a white star (always visible, every zoom level)
     if (s.building) {
       const d = this.dpr;
-      const r = (this.zoom === 0 ? 7.5 : this.zoom === 1 ? 6 : 5) * d;
+      const r = (this.zl === 0 ? 7.5 : this.zl === 1 ? 6 : 5) * d;
       const bx = X(s.building.x);
       const bz = Z(s.building.z);
       if (bx > -r && bz > -r && bx < S + r && bz < S + r) {
@@ -657,7 +838,7 @@ export class Minimap {
     // EVC Agro Research Institute: green leaf marker (always visible, every zoom level)
     if (s.agro) {
       const d = this.dpr;
-      const r = (this.zoom === 0 ? 7.5 : this.zoom === 1 ? 6 : 5) * d;
+      const r = (this.zl === 0 ? 7.5 : this.zl === 1 ? 6 : 5) * d;
       const ax = X(s.agro.x);
       const az = Z(s.agro.z);
       if (ax > -r && az > -r && ax < S + r && az < S + r) {
@@ -722,7 +903,7 @@ export class Minimap {
     const d = this.dpr;
     const COLOR = { field: '#f97316', meeting: '#8b5cf6', presentation: '#ec4899', hall: '#14b8a6' } as const;
     const MARK = { field: '!', meeting: 'M', presentation: 'P', hall: 'H' } as const;
-    const r0 = (this.zoom === 0 ? 7.5 : this.zoom === 1 ? 6.5 : 5.5) * d;
+    const r0 = (this.zl === 0 ? 7.5 : this.zl === 1 ? 6.5 : 5.5) * d;
     const inset = 12 * d;
     const sorted = [...pins].sort((a, b) => Number(a.active) - Number(b.active)); // the tracked one is drawn last = on top
     for (const p of sorted) {

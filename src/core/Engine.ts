@@ -872,6 +872,19 @@ export class Engine {
     // --- the always-on site map (top-right) ---
     this.cityPlan = new CityPlan(this.world.terrain.sites);
     this.minimap = new Minimap(container, this.world.seed.value, this.world.terrain.sites, this.cityPlan, this.rail, this.world.terrain.roads);
+    this.minimap.onFullChange = (open) => {
+      // the full map needs the free mouse (wheel zoom, wheel-click move); give it back to the game when it closes
+      if (open) {
+        if (document.pointerLockElement) document.exitPointerLock();
+      } else if (!window.matchMedia?.('(pointer: coarse)').matches) {
+        try {
+          const p = (this.renderer.domElement as HTMLElement & { requestPointerLock(): Promise<void> | void }).requestPointerLock();
+          if (p && typeof (p as Promise<void>).catch === 'function') (p as Promise<void>).catch(() => undefined);
+        } catch {
+          /* refused: the first click on the game locks it again */
+        }
+      }
+    };
     this.missions = new MissionManager({ parent: container, lockTarget: this.renderer.domElement, chipTop: () => this.minimap.infoBottom, toast: (t, ms) => this.toast.show(t, ms ?? 3400),
       stage: { enter: () => this.evlab.enterStage(), end: () => this.evlab.endPresentation(), mood: (m) => this.evlab.setMood(m) } });
     this.missionMarkers = new MissionMarkers(this.world.root, (x, z) => this.world.terrain.heightAt(x, z));
@@ -1260,7 +1273,11 @@ export class Engine {
     this.world.update(dt, this.time.elapsed, this.camera, this.cameraController.isFreeFly);
     this.birds.update(dt, this.time.elapsed, this.world.playerWorld);
     this.animals.update(dt, this.time.elapsed, this.world.playerWorld);
-    if (this.input.wasPressed('KeyU')) this.setMapZoom((this.minimap.zoomLevel + 1) % 4); // (N = the vehicle menu)
+    if (this.input.wasPressed('KeyU')) {
+      // U = full-screen map (wheel zoom, wheel-click move); Shift+U = the old minimap zoom cycle (N = the vehicle menu)
+      if (this.input.isDown('ShiftLeft') || this.input.isDown('ShiftRight')) this.setMapZoom((this.minimap.zoomLevel + 1) % 4);
+      else this.minimap.toggleFull();
+    }
     if (this.input.wasPressed('Backslash')) this.missions.toggle(); // \ opens the mission list (the Missions button does the same)
     {
       const ms = this.mapState(); // `me` = what you control (on foot, car, helicopter, boat): missions use the same position as the map
