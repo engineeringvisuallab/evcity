@@ -4,8 +4,8 @@
 // (they are hidden with their floor). No lights, no shadows, no per-frame allocation.
 import * as THREE from 'three';
 import {
-  CEIL, FH, LIFT, LIFTS, LIFT_FRONT_Z, NF, SHAFT_TOP, SIDES, STAIR, cabinParts, floorNameBn, floorNameEn, levelNear, liftShaftSolids, stairModel,
-  type Box, type LiftSpec, type MeshSpec, type PickAction, type RailSpec, type RampSpec, type Vis,
+  CEIL, FH, LIFT, LIFTS, LIFT_FRONT_Z, NF, SHAFT_TOP, SIDES, STAIR, floorNameBn, floorNameEn, levelNear, liftShaftSolids, stairModel,
+  type Box, type MeshSpec, type PickAction, type RailSpec, type RampSpec, type Vis,
 } from './MallCores';
 import type { LiftCar } from './MallLift';
 

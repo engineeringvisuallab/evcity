@@ -1,6 +1,6 @@
-// City Mall (10 floors, 50 m glass tower with a 20 m atrium, standing on a glass podium that follows the roads) inside the open world.
+// City Mall (10 floors, 50 m glass building that fills the whole outline, 100 m round atrium in the middle, glass dome on top) inside the open world.
 //  - the building (MallBuilder) stands at MALL_POS on a flat pad (terrain.mall), always there when the game starts
-//  - Rapier colliders for walls / shelves / pedestals / roof (the player, cars and helicopters cannot go through)
+//  - Rapier colliders: the always-on ones (glass wall, floors, roof, stair / lift cores) + the per-floor ones (columns, atrium rail) which only exist for the floor(s) the player is on (STEP R1)
 //  - shopping: walk in, look at a product (crosshair) -> left click or O opens its page on the live shop in a NEW TAB
 import * as THREE from 'three';
 import type { Camera } from 'three';
@@ -16,6 +16,7 @@ import { MALL_POLY } from './MallSite';
 import type { Catalog } from './MallCatalog';
 import { MallInteraction } from './MallInteraction';
 import { MallLiftControl } from './MallLiftControl';
+import { createStaticColliders, FloorColliders, floorsAround } from './MallColliders';
 
 export interface MallDeps {
   root: THREE.Object3D;          // world.root: children use ABSOLUTE world coordinates
@@ -68,6 +69,8 @@ export class MallManager {
   private plaza: THREE.Mesh;
   private apron: THREE.Group;
   private lifts: MallLiftControl;
+  private floorCols: FloorColliders;
+  private lastWant: readonly number[] | null = null;
 
   constructor(private d: MallDeps) {
     const site = d.terrain.mall;
@@ -90,6 +93,7 @@ export class MallManager {
     d.root.add(this.apron);
 
     this.body = this.createColliders();
+    this.floorCols = new FloorColliders(d.physics.RAPIER, d.physics.world, this.body, this.build);
     this.lifts = new MallLiftControl({
       RAPIER: d.physics.RAPIER, world: d.physics.world, body: this.body, frame: { x: site.x, z: site.z, floorY: site.floorY, yaw: site.yaw },
       origin: d.origin, lockTarget: d.dom, teleport: d.teleport, views: this.build.cores.lifts,
@@ -119,7 +123,7 @@ export class MallManager {
     // start-of-game hint (the mall is right there, in front of the spawn point)
     const b = this.banner!;
     b.className = 'evmall-banner';
-    b.innerHTML = '<span style="font-size:22px">🛍️</span><span><b>City Mall</b> সামনেই — ১০ তলা কাচের মল, মাঝখানে ২০ মি. আট্রিয়াম! দুই পাশে লিফট ও সিঁড়ি আছে</span>';
+    b.innerHTML = '<span style="font-size:22px">🛍️</span><span><b>City Mall</b> সামনেই — ১০ তলা কাচের মল, মাঝখানে ১০০ মি. আট্রিয়াম! পূর্ব ও পশ্চিম দুই পাশে লিফট ও সিঁড়ি, রাস্তার দিকে দুটো দরজা</span>';
     d.container.appendChild(b);
     this.bannerTimer = 14;
   }
@@ -162,42 +166,8 @@ export class MallManager {
         .setTranslation(site.x - o.x, site.floorY, site.z - o.z)
         .setRotation({ x: 0, y: Math.sin(site.yaw / 2), z: 0, w: Math.cos(site.yaw / 2) }),
     );
-    // roof, billboards (the hall is empty inside), shelves, pedestals, railings (each has its own height range)
-    for (const s of this.build.solids) {
-      world.createCollider(
-        R.ColliderDesc.cuboid((s.maxX - s.minX) / 2, (s.maxY - s.minY) / 2, (s.maxZ - s.minZ) / 2)
-          .setTranslation((s.minX + s.maxX) / 2, (s.minY + s.maxY) / 2, (s.minZ + s.maxZ) / 2).setFriction(0.4),
-        body,
-      );
-    }
-    // ramps between the floors (walkable slopes) + their side railings
-    for (const r of this.build.ramps) {
-      const dx = r.x1 - r.x0, dy = r.y1 - r.y0, len = Math.hypot(dx, dy), ang = Math.atan(dy / dx); // in (-90, 90) deg: the box never turns upside down
-      const cx = (r.x0 + r.x1) / 2 + Math.sin(ang) * (r.thick / 2), cy = (r.y0 + r.y1) / 2 - Math.cos(ang) * (r.thick / 2);
-      world.createCollider(
-        R.ColliderDesc.cuboid(len / 2, r.thick / 2, r.width / 2).setTranslation(cx, cy, r.zc)
-          .setRotation({ x: 0, y: 0, z: Math.sin(ang / 2), w: Math.cos(ang / 2) }).setFriction(1),
-        body,
-      );
-    }
-    for (const r of this.build.rampRails) {
-      world.createCollider(
-        R.ColliderDesc.cuboid(r.hx, r.hy, r.hz).setTranslation(r.cx, r.cy, r.cz).setRotation({ x: 0, y: 0, z: Math.sin(r.rotZ / 2), w: Math.cos(r.rotZ / 2) }),
-        body,
-      );
-    }
-    // the glass curtain wall that follows the roads (turned boxes)
-    for (const o of this.build.obbs) {
-      world.createCollider(
-        R.ColliderDesc.cuboid(o.hx, (o.y1 - o.y0) / 2, o.hz).setTranslation(o.cx, (o.y0 + o.y1) / 2, o.cz)
-          .setRotation({ x: 0, y: Math.sin(o.rot / 2), z: 0, w: Math.cos(o.rot / 2) }).setFriction(0.2),
-        body,
-      );
-    }
-    // floors + roofs of the glass concourse around the shopping block (not rectangles: triangle meshes)
-    for (const m of this.build.meshSolids) world.createCollider(R.ColliderDesc.trimesh(m.vertices, m.indices).setFriction(1), body);
-    // floor slab (top face = the floor tiles): the terrain under the mall is 3 cm lower, this makes walking perfectly smooth
-    world.createCollider(R.ColliderDesc.cuboid(MALL.W / 2 + 0.5, 0.5, MALL.D / 2 + 0.5).setTranslation(0, -0.5, 0).setFriction(1), body);
+    // glass wall, ground floor, 9 floor slabs, closed roof, stair / lift cores, billboards (the per-floor columns + atrium rail come with FloorColliders, see update())
+    createStaticColliders(R, world, body, this.build);
     return body;
   }
 
@@ -232,10 +202,18 @@ export class MallManager {
 
     // the whole building is cheap to keep, but its animation only runs when it can be seen
     this.group.visible = this.plaza.visible = this.apron.visible = dist < 900;
-    this.near = dist < 180;
-    // 40 shops are a lot of meshes: show only the floor the player is on (+- 1) when inside, the ground floor (seen through the doors) when close, nothing when far
-    const pf = Math.max(0, Math.min(MALL.floors - 1, Math.floor((this.p.y - site.floorY) / MALL.FH)));
-    this.build.floors.forEach((fg, i) => { fg.visible = this.inside ? Math.abs(i - pf) <= 1 : i === 0 && dist < 200; });
+    const nearOutside = !this.inside && site.inside(this.p.x, this.p.z, 40); // within 40 m of the glass wall (the doorways, the walkway)
+    this.near = this.inside || nearOutside || dist < 200;
+    // ~680 columns + lights on every floor: show only the floor the player is on (+- 1) when inside, the ground floor (seen through the glass) when close, nothing when far.
+    // A floor is built the first time it is shown (ensureFloor), its colliders exist only while the player is on it (FloorColliders)
+    const feet = this.p.y - site.floorY;
+    const pf = Math.max(0, Math.min(MALL.floors - 1, Math.floor(feet / MALL.FH)));
+    this.build.floors.forEach((fg, i) => {
+      fg.visible = this.inside ? Math.abs(i - pf) <= 1 : i === 0 && nearOutside;
+      if (fg.visible) this.build.ensureFloor(i);
+    });
+    const want = floorsAround(feet, MALL.FH, MALL.floors, this.inside, nearOutside);
+    if (want !== this.lastWant) { this.lastWant = want; this.floorCols.set(want); }
     if (this.near) this.build.update(dt);
     this.lifts.update(dt, this.near, walking, this.p, this.d.input.wasPressed('KeyG'));
     this.build.roof.visible = true;
@@ -265,6 +243,7 @@ export class MallManager {
   dispose(): void {
     const world = this.d.physics.world;
     this.lifts.dispose();
+    this.floorCols.dispose();
     world.removeRigidBody(this.body);
     this.d.root.remove(this.group);
     this.d.root.remove(this.plaza);

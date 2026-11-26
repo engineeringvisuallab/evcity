@@ -1,14 +1,17 @@
 // CITY MALL, STEP C2: the stair cores and lift cores (pure numbers + lists, NO three.js, so the headless test and the builder share ONE truth).
 // Local frame of the mall block: x along the corridor (west -, east +), z across, y up. Floor f = f * 5 m, slab of floor f = y (f*5 - 0.4) .. (f*5).
-// Decisions of the user (26 Nov): stair + lift stand in the middle, one pair on each side of the atrium (west, east); stair 2.4 m wide; lift 8 m/s.
+// Decisions of the user (26 Nov): ONE stair + ONE lift on each of two sides (west, east) of the atrium; stair 2.4 m wide; lift 8 m/s.
+// STEP R1 (26 Nov): the atrium is now 100 m across, so the cores moved out with it: they stand just OUTSIDE the atrium edge (every x is measured from the atrium centre,
+// STAIR.x0 = atrium radius + 3 m, LIFT.xc = atrium radius + 6.5 m); the shapes and the z positions (aisle |z| < 8 free) are exactly as in C2.
 //
 // EACH SIDE (side = -1 west, +1 east; the east one is described, the west one is its mirror in x):
+//   (numbers below are the C2 ones for an atrium of radius 10; add (atrium radius - 10) to every x for the R1 positions)
 //   STAIR (switchback, z 9.5 .. 14.5, south of the aisle): flight A (lane z 9.5..11.9, next to the aisle) climbs from floor f at x = 13 outwards to a mid landing
 //     (+2.5 m), flight B (lane z 12.1..14.5) comes back to floor f+1 at x = 13. 15 steps of 0.3 m per flight (rise 0.1667 m). Walking surface = a smooth ramp.
 //     Slab f+1 has a hole over flight B (x 13..17.7, z 12..14.6); flight A runs UNDER the slab (head room >= 2.06 m).
 //   LIFT (z -13.2 .. -10.4, north of the aisle): a glass shaft 2.8 x 2.8 m, the cabin door faces the aisle (+z). 10 stops (floor 0..9).
 // The aisle |z| < 8 stays free (the lift lobby is z -10.4 .. -8).
-import { MALL_FH, MALL_FLOORS, MALL_SLAB } from './MallSite';
+import { MALL_ATRIUM_R, MALL_FH, MALL_FLOORS, MALL_SLAB } from './MallSite';
 
 /** What a click on a lift button does (carried in PickInfo.action by MallBuilder). */
 export type PickAction = { kind: 'call'; lift: number; level: number } | { kind: 'panel'; lift: number };
@@ -36,7 +39,7 @@ export const SHAFT_TOP = FH * NF - SLAB;
 
 // ---------------------------------------------------------------- STAIR numbers
 export const STAIR = {
-  x0: 13,            // near end (the foot of flight A / the top of flight B), distance from the block centre
+  x0: MALL_ATRIUM_R + 3, // near end (the foot of flight A / the top of flight B), distance from the atrium centre (R1: 3 m outside the atrium rail)
   run: 4.5,          // length of one flight (15 treads of 0.3 m)
   landing: 2.6,      // depth of the mid landing (>= the 2.4 m width)
   zc: 12,            // centre line between the two lanes
@@ -63,7 +66,7 @@ export const stairX = (side: Side, u: number): number => side * (STAIR.x0 + u);
 
 // ---------------------------------------------------------------- LIFT numbers
 export const LIFT = {
-  xc: 16.5,          // shaft centre x (distance from the block centre)
+  xc: MALL_ATRIUM_R + 6.5, // shaft centre x (distance from the atrium centre)
   zc: -11.8,         // cabin centre z
   innerX: 2.4, innerZ: 2.4, wall: 0.2,
   cabX: 2.0, cabZ: 2.2, cabH: 2.5, floorT: 0.2,
@@ -155,7 +158,7 @@ export interface StairModel {
 export function stairModel(side: Side): StairModel {
   const m: StairModel = { side, solids: [], ramps: [], rails: [], meshSolids: [], vis: [], skirts: [] };
   const X = (u: number) => stairX(side, u);
-  const { run, landing, rise, steps, bias, rail } = STAIR;
+  const { run, rise, steps, bias, rail } = STAIR;
   const th = run / steps, rh = rise / steps;
   const vis = (k: Vis['k'], b: Box) => m.vis.push({ k, cx: (b.minX + b.maxX) / 2, cy: (b.minY + b.maxY) / 2, cz: (b.minZ + b.maxZ) / 2, sx: b.maxX - b.minX, sy: b.maxY - b.minY, sz: b.maxZ - b.minZ, rz: 0 });
   const solid = (b: Box, draw: Vis['k'] | null) => { m.solids.push(b); if (draw) vis(draw, b); };

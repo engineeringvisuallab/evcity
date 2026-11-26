@@ -1,12 +1,10 @@
-// Headless City Mall test (STEP C1: 10-floor glass tower + 20 m atrium + glass dome, on a one-storey glass podium that follows the roads). Older text: (ONE open 14 m glass hall that follows the roads): flat pad on the bent plot, no trees / roads on it, the outline is NOT a
-// rectangle and hugs the roads, glass curtain wall all round (solid, 2 doorways), no walls / upper floor / ramp inside, the products stand openly in
-// 12 category ZONES (8 food in the west, 4 fashion in the east) either side of a free aisle, walkers get through the doors, cross the hall along
-// the aisle and can reach every product's viewing spot.
-// npx tsx scripts/mall-test.ts
+// Headless City Mall test (STEP R1: ONE 10-floor glass building over the WHOLE outline (~109,500 m2 per floor), 100 m round atrium in the middle with a glass dome, 2 entrances on the road sides
+// (east + north), one stair + one lift on each of two sides (west, east) of the atrium, a 12 m column grid on every floor with per-floor colliders, empty floors (the shops come in C3)).
+// Needs the packages installed (three, @dimforge/rapier3d-compat): npm run test:mall   (= npx tsx scripts/mall-test.ts)
 import * as THREE from 'three';
 import { Config } from '../src/core/Config';
 import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
-import { MALL_SIZE, MALL_PLOT, MALL_POLY, MALL_BUILDING, MALL_BUILDING_LOCAL, MALL_DOORS, MALL_POS, mallToWorld } from '../src/mall/MallSite';
+import { MALL_ATRIUM_R, MALL_PLOT, MALL_POLY, MALL_BUILDING, MALL_BUILDING_LOCAL, MALL_DOORS, MALL_POS, mallToLocal } from '../src/mall/MallSite';
 import { TreePlacer } from '../src/vegetation/TreePlacement';
 import { CityPlan } from '../src/city/CityPlan';
 import { EventBus, type EngineEvents } from '../src/core/EventBus';
@@ -14,6 +12,8 @@ import { PhysicsWorld } from '../src/physics/PhysicsWorld';
 import { LiftSystem } from '../src/mall/MallLift';
 import { createLiftBodies, liftHost } from '../src/mall/MallLiftPhysics';
 import { FH, LANE_A_C, LANE_B_C, LIFTS, coreFootprints, inCabin, inDoorway, levelY } from '../src/mall/MallCores';
+import { createStaticColliders, FloorColliders, floorsAround } from '../src/mall/MallColliders';
+import { floorLayout } from '../src/mall/MallLayout';
 
 // tiny canvas stub so MallBuilder can run without a browser
 const ctxStub: any = new Proxy({ canvas: { width: 1024, height: 256 } }, { get: (t: any, k) => (k in t ? t[k] : () => ({ width: 10 })), set: () => true });
@@ -62,14 +62,22 @@ let hug = 0, tot = 0, minRoad = 1e9;
 for (let i = 0; i < MALL_BUILDING.length; i++) { const A = MALL_BUILDING[i], B = MALL_BUILDING[(i + 1) % MALL_BUILDING.length]; const L = Math.hypot(B[0] - A[0], B[1] - A[1]); for (let d = 0; d < L; d += 2) { const x = A[0] + ((B[0] - A[0]) * d) / L, z = A[1] + ((B[1] - A[1]) * d) / L; const c = roadClear(x, z); tot++; minRoad = Math.min(minRoad, c); if (c < 14) hug++; } }
 pending(`outline hugs the roads (${(100 * hug / tot).toFixed(0)}%): obsolete, the plot now keeps 15 m from the roads and the wall is inset 12 m more`);
 ok(minRoad >= 15, `the glass wall keeps >= 15 m from every road edge and from the rail (closest ${minRoad.toFixed(1)} m)`);
-// the block (96 x 64) fits inside the outline with room to spare
-let blockOut = 0, blockMin = 1e9;
-for (let i = 0; i <= 24; i++) for (const [u, v] of [[-1, -1 + i / 12], [1, -1 + i / 12], [-1 + i / 12, -1], [-1 + i / 12, 1]]) {
-  const w = mallToWorld((u * MALL_SIZE.W) / 2, (v * MALL_SIZE.D) / 2);
-  if (!polyHas(MALL_BUILDING, w.x, w.z)) blockOut++;
-  else { let d = 1e9; for (let a = 0, b = MALL_BUILDING.length - 1; a < MALL_BUILDING.length; b = a++) d = Math.min(d, dseg(w.x, w.z, MALL_BUILDING[a][0], MALL_BUILDING[a][1], MALL_BUILDING[b][0], MALL_BUILDING[b][1])); blockMin = Math.min(blockMin, d); }
+// the 100 m atrium lies inside the outline with room to spare; both doors face a road
+{
+  let atrOut = 0, atrMin = 1e9;
+  for (let i = 0; i < 96; i++) {
+    const t = (i / 96) * Math.PI * 2, lx = Math.cos(t) * MALL_ATRIUM_R, lz = Math.sin(t) * MALL_ATRIUM_R;
+    const c = Math.cos(MALL_POS.yaw), sn = Math.sin(MALL_POS.yaw), wx = MALL_POS.x + lx * c + lz * sn, wz = MALL_POS.z - lx * sn + lz * c;
+    if (!polyHas(MALL_BUILDING, wx, wz)) atrOut++;
+    else { let d = 1e9; for (let a = 0, b = MALL_BUILDING.length - 1; a < MALL_BUILDING.length; b = a++) d = Math.min(d, dseg(wx, wz, MALL_BUILDING[a][0], MALL_BUILDING[a][1], MALL_BUILDING[b][0], MALL_BUILDING[b][1])); atrMin = Math.min(atrMin, d); }
+  }
+  ok(atrOut === 0 && atrMin > 50, `the 100 m atrium (r = ${MALL_ATRIUM_R}) lies inside the glass outline with ${atrMin.toFixed(0)} m to spare`);
+  ok(polyArea(MALL_BUILDING) > 100000 && polyArea(MALL_BUILDING) - Math.PI * MALL_ATRIUM_R ** 2 > 99000, `floor area ${polyArea(MALL_BUILDING).toFixed(0)} m2 per floor, ${(polyArea(MALL_BUILDING) - Math.PI * MALL_ATRIUM_R ** 2).toFixed(0)} m2 without the atrium`);
+  const J = mallToLocal(-87, -277), E = MALL_DOORS.find((d) => d.id === 'E')!, N = MALL_DOORS.find((d) => d.id === 'N')!; // J1: the W arm runs along local z = J.z, the S arm along local x = J.x
+  ok(MALL_DOORS.length === 2 && E.side === 1 && N.side === -1, 'exactly 2 entrances: east (side +1) and north (side -1)');
+  ok(J.x - E.lx > 40 && J.x - E.lx < 110 && N.lz - J.z > 40 && N.lz - J.z < 110, `both doors face a road: the east door is ${(J.x - E.lx).toFixed(0)} m from the J1 S arm axis, the north door ${(N.lz - J.z).toFixed(0)} m from the J1 W arm axis`);
+  ok(Math.abs(E.lz) < 1e-6 && Math.abs(N.lx) < 1e-6, 'both doors stand on an axis through the atrium centre (z = 0 east, x = 0 north)');
 }
-ok(blockOut === 0 && blockMin > 1.5, `the shopping block lies inside the glass outline with ${blockMin.toFixed(1)} m to spare`);
 ok(m.inside(MALL_POS.x, MALL_POS.z) && !m.inside(0, 0) && !m.inside(MALL_BUILDING[0][0] - 8, MALL_BUILDING[0][1]), 'MallSite.inside follows the bent outline (centre in, spawn out)');
 
 // 3. blend to natural ground is gentle and does not touch the roads
@@ -90,8 +98,6 @@ for (const r of gen.roads.roads) for (let i = 0; i < r.xs.length; i++) if (m.nea
 ok(roadPts === 0, 'roads keep their own height where they meet the pad skirt');
 pending('mall is close to the spawn point (' + Math.hypot(m.x, m.z).toFixed(0) + ' m): M3 moves spawn / start lot');
 { const J = { x: -87, z: -277 }; const ang = (Math.atan2(m.z - J.z, m.x - J.x) * 180) / Math.PI; ok(m.x < J.x && m.onPlot(m.x, m.z) && MALL_POLY.every(([x, z]) => Math.hypot(x - J.x, z - J.z) >= 150), `the mall stands WEST of J1 (centre ${Math.hypot(m.x - J.x, m.z - J.z).toFixed(0)} m from J1, no plot corner within 150 m of J1)`); }
-const near = MALL_DOORS.reduce((a, b) => (Math.hypot(a.x, a.z) <= Math.hypot(b.x, b.z) ? a : b));
-pending('the doorway nearest to the spawn is the west one (' + near.side + '): M2/M3 doors');
 
 // 4. no trees on the plot
 const plan = new CityPlan(gen.sites);
@@ -108,39 +114,35 @@ for (let cx = Math.floor(MALL_PLOT.x0 / CSZ) - 1; cx <= Math.floor(MALL_PLOT.x1 
 console.log('trees checked:', total);
 ok(onPlot === 0, 'no tree stands on the mall plot');
 
-// 5. mall build: one empty hall
+// 5. mall build: ONE building, empty floors (C3 brings the shops)
 const cat = await loadCatalog();
 const mall = buildMall(cat);
-ok(mall.shops.length === 12 && mall.items.length === 36, `12 zones, 36 products (${mall.shops.length} zones, ${mall.items.length} products)`);
+const LAY = floorLayout();
 ok(mall.floors.length === 10, '10 floors (floor groups 0..9)');
-ok(mall.pickables.length >= 36, 'products are pickable');
-ok(mall.shops.filter((z) => z.floor === 0).length === 8 && mall.shops.filter((z) => z.floor === 1).length === 4, 'zones: 8 food + 4 fashion');
-{ const fz = mall.shops.filter((z) => z.floor === 0).every((z) => z.viewPos.x < 0) && mall.shops.filter((z) => z.floor === 1).every((z) => z.viewPos.x > 0); if (!fz) pending('food zones in the west, fashion zones in the east: the zone layout follows the (new, huge) outline, M2 redoes the building'); else ok(true, 'food zones in the west, fashion zones in the east'); }
+pending(`no shops yet (${mall.shops.length} zones, ${mall.items.length} products): R1 cleared the old 12 zones / 36 products, step C3 lays the real shops out`);
 ok(mall.ramps.length === 36 && mall.rampRails.length === 72, `stairs: 2 sides x 9 flights x 2 lanes = 36 walking ramps, 72 sloped rails (${mall.ramps.length} / ${mall.rampRails.length})`);
-{ const FOOTS = coreFootprints(); const inCore = (q: { minX: number; maxX: number; minZ: number; maxZ: number }) => FOOTS.some(([a, b, c, d]) => q.maxX > a - 2 && q.minX < b + 2 && q.maxZ > c - 2 && q.minZ < d + 2);
-  ok(mall.solids.every((q) => inCore(q) || q.minY >= 49.6 - 1e-6 || q.maxY <= 4.6 + 1e-6), 'no walls inside: every solid outside the stair / lift cores is the roof (y >= 49.6) or a low pedestal / counter / post / ground column (<= 4.6 m)'); }
-ok(mall.items.every((it) => Math.abs(it.viewPos.z) > 8), 'the aisle |z| < 8 is free: every viewing spot lies beside it');
+{ const FOOTS = coreFootprints(); const inCore = (q: { minX: number; maxX: number; minZ: number; maxZ: number }) => FOOTS.some(([a, b, c, d]) => q.maxX > a - 3 && q.minX < b + 3 && q.maxZ > c - 3 && q.minZ < d + 3);
+  ok(mall.solids.every(inCore), `always-on solids (${mall.solids.length}) are only the stair / lift cores (no walls inside the building)`); }
+ok(mall.floorSolids.every((l) => l.length === LAY.cols.length) && LAY.cols.length > 600, `every floor has ${LAY.cols.length} column colliders (12 m grid), listed per floor (floorSolids)`);
+ok(mall.floorSolids[0].every((q) => q.minY === 0 && Math.abs(q.maxY - 4.6) < 1e-6) && mall.floorSolids[7].every((q) => q.minY === 35 && Math.abs(q.maxY - 39.6) < 1e-6), 'columns of floor f stand from the floor (f x 5 m) to the underside of the slab above (4.6 m high)');
+ok(mall.floorSolids[0].every((q) => Math.abs((q.minX + q.maxX) / 2) > 5.4 && Math.abs((q.minZ + q.maxZ) / 2) > 5.4), 'no column on the two entrance aisles (|x| < 5.4 north door, |z| < 5.4 east door)');
+ok(mall.floorSolids[0].every((q) => Math.hypot((q.minX + q.maxX) / 2, (q.minZ + q.maxZ) / 2) >= MALL_ATRIUM_R + 3), 'no column inside the atrium (+ 3 m walkway)');
 ok(mall.obbs.length >= MALL_BUILDING.length, `glass curtain wall: ${mall.obbs.length} wall pieces round ${MALL_BUILDING.length} corners`);
-ok(mall.obbs.filter((o) => o.y0 === 0 && Math.abs(o.y1 - 4.6) < 1e-6).length >= MALL_BUILDING.length && mall.obbs.filter((o) => o.y0 === 3.6).length === 2, 'podium walls are 4.6 m high, with a doorway lintel (3.6 m) at each of the 2 entrances');
-ok(mall.obbs.filter((o) => Math.abs(o.y0 - 4.6) < 1e-6 && o.y1 === 50).length === 4, 'tower: 4 glass walls from 4.6 m up to the roof (50 m)');
-ok(mall.obbs.filter((o) => o.y1 - o.y0 < 1.31 && o.y0 >= 5 - 1e-6).length === 24 * 9, 'atrium balustrade: 24 collider pieces on each of floors 1..9');
-ok(mall.meshSolids.length >= 8 + 9, `${mall.meshSolids.length} floor / roof pieces (wings + 9 upper floor slabs)`);
+ok(mall.obbs.filter((o) => o.y0 === 0 && Math.abs(o.y1 - 50) < 1e-6).length >= MALL_BUILDING.length && mall.obbs.filter((o) => Math.abs(o.y0 - 3.6) < 1e-6 && Math.abs(o.y1 - 50) < 1e-6).length === 2, 'the wall is 50 m high all round (no podium), with a doorway lintel (3.6 m up) at each of the 2 entrances');
+ok(mall.obbs.every((o) => Math.abs(o.y1 - o.y0) > 40), 'all always-on turned colliders are wall pieces (the atrium rails are per floor)');
+ok(mall.floorObbs[0].length === 0 && [1, 2, 3, 4, 5, 6, 7, 8, 9].every((f) => mall.floorObbs[f].length === 64 && mall.floorObbs[f].every((o) => Math.abs(Math.hypot(o.cx, o.cz) - (MALL_ATRIUM_R + 0.3)) < 1e-6 && Math.abs(o.y0 - f * 5) < 1e-6)), 'atrium balustrade: 64 collider pieces (r = 50.3 m) on each of floors 1..9, none on the ground floor');
+ok(mall.meshSolids.length >= 11, `${mall.meshSolids.length} floor / roof pieces (ground floor + 9 upper slabs + roof + stair skirts)`);
+mall.ensureFloor(3); mall.ensureFloor(3);
+ok(mall.floors[3].children.length >= 4 && mall.floors[2].children.every((c) => !(c as any).isInstancedMesh), 'ensureFloor builds a floor once, only that floor (columns, ceiling lights, atrium rail)');
+ok(floorsAround(12, 5, 10, true, true).join() === '2' && floorsAround(4.5, 5, 10, true, true).join() === '0,1' && floorsAround(0, 5, 10, false, true).join() === '0' && floorsAround(0, 5, 10, false, false).length === 0, 'floorsAround: the floor the feet are on (+ the next one within 1 m of it), ground floor when just outside, nothing when far');
 
 const bus = new EventBus<EngineEvents>();
 const physics = await PhysicsWorld.create(bus);
 const R = physics.RAPIER, W = physics.world;
 const body = W.createRigidBody(R.RigidBodyDesc.fixed().setTranslation(0, 0, 0));
-const HX = MALL_SIZE.W / 2;
-for (const s of mall.solids) W.createCollider(R.ColliderDesc.cuboid((s.maxX - s.minX) / 2, (s.maxY - s.minY) / 2, (s.maxZ - s.minZ) / 2).setTranslation((s.minX + s.maxX) / 2, (s.minY + s.maxY) / 2, (s.minZ + s.maxZ) / 2), body);
-for (const r of mall.ramps) {
-  const dx = r.x1 - r.x0, dy = r.y1 - r.y0, len = Math.hypot(dx, dy), ang = Math.atan(dy / dx);
-  W.createCollider(R.ColliderDesc.cuboid(len / 2, r.thick / 2, r.width / 2).setTranslation((r.x0 + r.x1) / 2 + Math.sin(ang) * r.thick / 2, (r.y0 + r.y1) / 2 - Math.cos(ang) * r.thick / 2, r.zc).setRotation({ x: 0, y: 0, z: Math.sin(ang / 2), w: Math.cos(ang / 2) }), body);
-}
-for (const r of mall.rampRails) W.createCollider(R.ColliderDesc.cuboid(r.hx, r.hy, r.hz).setTranslation(r.cx, r.cy, r.cz).setRotation({ x: 0, y: 0, z: Math.sin(r.rotZ / 2), w: Math.cos(r.rotZ / 2) }), body);
-for (const o of mall.obbs) W.createCollider(R.ColliderDesc.cuboid(o.hx, (o.y1 - o.y0) / 2, o.hz).setTranslation(o.cx, (o.y0 + o.y1) / 2, o.cz).setRotation({ x: 0, y: Math.sin(o.rot / 2), z: 0, w: Math.cos(o.rot / 2) }), body);
-for (const t of mall.meshSolids) W.createCollider(R.ColliderDesc.trimesh(t.vertices, t.indices), body);
-W.createCollider(R.ColliderDesc.cuboid(MALL_SIZE.W / 2 + 0.5, 0.5, MALL_SIZE.D / 2 + 0.5).setTranslation(0, -0.5, 0), body);
-W.createCollider(R.ColliderDesc.cuboid(200, 0.5, 200).setTranslation(0, -0.5, 0).setFriction(1), body); // the paved plaza / ground around the mall
+createStaticColliders(R, W, body, mall); // the SAME function the game uses (MallManager)
+const fc = new FloorColliders(R, W, body, mall); // the per-floor columns / atrium rail: only the floors a test needs
+W.createCollider(R.ColliderDesc.cuboid(260, 0.5, 260).setTranslation(0, -0.5, 0).setFriction(1), body); // the paved plaza / ground around the mall
 W.step();
 
 // a real walker: same character controller settings as Player.ts
@@ -165,6 +167,7 @@ const walk = (tx: number, tz: number, steps = 4000, speed = 0.07) => {
 };
 const feet = () => pos.y - HALFH;
 
+const DE = MALL_DOORS.find((d) => d.id === 'E')!, DN = MALL_DOORS.find((d) => d.id === 'N')!;
 // 6. the glass wall is solid all the way round (except the 2 doorways): from 3 m outside, a ray at eye height hits it within ~3 m
 let leaks = 0, tested = 0;
 for (let i = 0; i < MALL_BUILDING_LOCAL.length; i++) {
@@ -173,74 +176,70 @@ for (let i = 0; i < MALL_BUILDING_LOCAL.length; i++) {
   let nx = -uz, nz = ux; if (nx * (A[0] + B[0]) + nz * (A[1] + B[1]) < 0) { nx = -nx; nz = -nz; }
   for (const f of [0.15, 0.5, 0.85]) {
     const px = A[0] + (B[0] - A[0]) * f, pz = A[1] + (B[1] - A[1]) * f;
-    if (MALL_DOORS.some((d) => Math.hypot(px - d.lx, pz) < 7)) continue;
+    if (MALL_DOORS.some((d) => Math.hypot(px - d.lx, pz - d.lz) < 7)) continue;
     tested++;
     const hit = W.castRay(new R.Ray({ x: px + nx * 3, y: 1.5, z: pz + nz * 3 }, { x: -nx, y: 0, z: -nz }), 10, true);
     if (!hit || hit.timeOfImpact > 3.5) leaks++;
   }
 }
 ok(leaks === 0 && tested > 30, `no gap in the glass wall (${tested} rays from outside, ${leaks} got through)`);
-const roofHit = W.castRay(new R.Ray({ x: -50, y: 60, z: 0 }, { x: 0, y: -1, z: 0 }), 70, true);
-ok(!!roofHit && Math.abs(60 - roofHit.timeOfImpact - 5.0) < 0.15, 'the podium roof covers the concourse round the block (y = 5.0)');
-const roofHit2 = W.castRay(new R.Ray({ x: 30, y: 60, z: 0 }, { x: 0, y: -1, z: 0 }), 70, true);
-ok(!!roofHit2 && Math.abs(60 - roofHit2.timeOfImpact - 50) < 0.15, 'the tower roof is at y = 50');
-const roofAtr = W.castRay(new R.Ray({ x: 0, y: 60, z: 0 }, { x: 0, y: -1, z: 0 }), 70, true);
-ok(!!roofAtr && Math.abs(60 - roofAtr.timeOfImpact - 50) < 0.15, 'the roof is SOLID over the atrium too (glass dome closes it: no rain, nothing falls in)');
+for (const [x, z] of [[-100, 0], [100, 0], [0, 0], [0, 100]] as [number, number][]) {
+  const hh = W.castRay(new R.Ray({ x, y: 60, z }, { x: 0, y: -1, z: 0 }), 70, true);
+  ok(!!hh && Math.abs(60 - hh.timeOfImpact - 50) < 0.15, `the roof is at y = 50 above (${x}, ${z})${x === 0 && z === 0 ? ' = SOLID over the atrium too (glass dome closes it: no rain, nothing falls in)' : ''}`);
+}
 for (let f = 1; f <= 9; f++) {
-  const h = W.castRay(new R.Ray({ x: 30, y: f * 5 + 2, z: 0 }, { x: 0, y: -1, z: 0 }), 10, true);
+  const h = W.castRay(new R.Ray({ x: 80, y: f * 5 + 2, z: -30 }, { x: 0, y: -1, z: 0 }), 10, true);
   ok(!!h && Math.abs(f * 5 + 2 - h.timeOfImpact - f * 5) < 0.15, `floor ${f}: walkable slab top at y = ${f * 5}`);
 }
-const atr = W.castRay(new R.Ray({ x: 3, y: 49, z: 0 }, { x: 0, y: -1, z: 0 }), 60, true);
-ok(!!atr && Math.abs(49 - atr.timeOfImpact) < 0.15, 'the atrium is open from the top floor down to the ground (a ray falls to y = 0)');
+{ const atr = W.castRay(new R.Ray({ x: 3, y: 49, z: 0 }, { x: 0, y: -1, z: 0 }), 60, true);
+  ok(!!atr && Math.abs(49 - atr.timeOfImpact) < 0.15, 'the atrium is open from the top floor down to the ground (a ray falls to y = 0)'); }
 
-// 7. doors: from the plaza through the east glass doorway, the east end doorway, across the whole ground floor, out through the west doors
-const east = MALL_DOORS[1], west = MALL_DOORS[0];
-put(east.lx + 6, 0, 0);
-walk(HX - 4, 0);
-ok(Math.abs(pos.x - (HX - 4)) < 0.3, 'a walker gets in through the east glass doorway and the 10 m east door');
-walk(-HX + 4, -5);
-ok(pos.x < -HX + 6, 'a walker can cross the whole ground floor');
-walk(west.lx - 3, 0);
-ok(pos.x < west.lx - 2, `and leave through the west doors out to the plaza (x = ${pos.x.toFixed(1)})`);
-// glass wall beside the east doorway: find where z = 20 meets the outline (east side)
+// 7. doors: in through the east doorway (z = 0) and the north doorway (x = 0), the wall beside the door stops a walker
+fc.set([0]);
+put(DE.lx + 6, 0, 0); walk(DE.lx - 20, 0, 1000);
+ok(pos.x < DE.lx - 19 && Math.abs(feet()) < 0.2, 'a walker gets in through the east doorway (10 m)');
+put(0, 0, DN.lz - 6); walk(0, DN.lz + 20, 1000);
+ok(pos.z > DN.lz + 19 && Math.abs(feet()) < 0.2, 'a walker gets in through the north doorway (10 m)');
 let xe20 = 1e9;
-for (let i = 0; i < MALL_BUILDING_LOCAL.length; i++) { const A = MALL_BUILDING_LOCAL[i], B = MALL_BUILDING_LOCAL[(i + 1) % MALL_BUILDING_LOCAL.length]; if ((A[1] > 20) === (B[1] > 20)) continue; const x = A[0] + ((20 - A[1]) / (B[1] - A[1])) * (B[0] - A[0]); if (x > HX && x < xe20) xe20 = x; }
-put(HX + 2, 0, 20); walk(HX + 12, 20, 400);
-ok(pos.x < xe20 - 0.1 && pos.x > HX + 1, `the glass wall stops a walker (wall at x = ${xe20.toFixed(1)}, stopped at ${pos.x.toFixed(2)})`);
-
-// 8. open hall: a walker crosses it from the west end to the east end along the aisle (z = 0) on the flat floor
-put(-HX + 4, 0, 0); walk(HX - 4, 0);
-ok(Math.abs(pos.x - (HX - 4)) < 0.3 && Math.abs(feet()) < 0.2, 'a walker crosses the whole hall along the aisle');
-// 9. every product has a reachable viewing spot (walk in from the aisle edge)
-let noView = 0, inCoreView = 0; const FOOT = coreFootprints();
-for (const it of mall.items) {
-  if (FOOT.some(([a, b, c, d]) => it.viewPos.x > a - 0.4 && it.viewPos.x < b + 0.4 && it.viewPos.z > c - 0.4 && it.viewPos.z < d + 0.4)) { inCoreView++; continue; }
-  const sg = it.yaw > 1 ? 1 : -1;
-  put(it.viewPos.x, 0, sg * 6);
-  walk(it.viewPos.x, it.viewPos.z, 800);
-  if (Math.hypot(pos.x - it.viewPos.x, pos.z - it.viewPos.z) > 0.6) noView++;
+for (let i = 0; i < MALL_BUILDING_LOCAL.length; i++) { const A = MALL_BUILDING_LOCAL[i], B = MALL_BUILDING_LOCAL[(i + 1) % MALL_BUILDING_LOCAL.length]; if ((A[1] > 20) === (B[1] > 20)) continue; const x = A[0] + ((20 - A[1]) / (B[1] - A[1])) * (B[0] - A[0]); if (x > 0 && x < xe20) xe20 = x; }
+put(xe20 - 3, 0, 20); walk(xe20 + 10, 20, 400);
+ok(pos.x < xe20 - 0.1 && pos.x > xe20 - 4, `the glass wall beside the east doorway stops a walker (wall at x = ${xe20.toFixed(1)}, stopped at ${pos.x.toFixed(2)})`);
+// west wall (no door there): walk to it from inside
+{ let xw = -1e9;
+  for (let i = 0; i < MALL_BUILDING_LOCAL.length; i++) { const A = MALL_BUILDING_LOCAL[i], B = MALL_BUILDING_LOCAL[(i + 1) % MALL_BUILDING_LOCAL.length]; if ((A[1] > 0) === (B[1] > 0)) continue; const x = A[0] + ((0 - A[1]) / (B[1] - A[1])) * (B[0] - A[0]); if (x < 0 && x > xw) xw = x; }
+  put(xw + 8, 0, 0); walk(xw - 10, 0, 600);
+  ok(pos.x > xw && pos.x < xw + 3, `the west wall has no door: the glass stops a walker (wall at x = ${xw.toFixed(1)}, stopped at ${pos.x.toFixed(2)})`);
 }
-ok(noView === 0, `all ${mall.items.length - inCoreView} products outside the cores have a reachable viewing spot (${noView} unreachable)`);
-if (inCoreView) pending(`${inCoreView} ground-floor viewing spot(s) lie inside a stair core: C3 re-plans the shop layout round the cores`);
+
+// 8. a walker crosses the whole building along z = 0 (over the ground floor under the atrium, between the stair and the lift)
+put(DE.lx - 10, 0, 0); walk(-140, 0, 6000);
+ok(Math.abs(pos.x + 140) < 0.3 && Math.abs(feet()) < 0.2, `a walker crosses the whole ground floor along the aisle (x = ${pos.x.toFixed(1)})`);
+// 9. columns are solid (floor 0 colliders are on)
+{ const c = LAY.cols[Math.floor(LAY.cols.length / 2)];
+  put(c[0] - 3, 0, c[1]); walk(c[0] + 3, c[1], 400);
+  ok(pos.x < c[0] - 0.5, `a column of the ground floor stops a walker (column at ${c[0]}, ${c[1]}; stopped at x = ${pos.x.toFixed(2)})`); }
+fc.set([]);
 ok(mall.surfaceAt(-20, 10, 1) === 0 && mall.surfaceAt(20, -10, 1) === 0, 'viewer surfaceAt: ground floor is flat');
-ok(mall.surfaceAt(30, 0, 12) === 10 && mall.surfaceAt(3, 0, 12) === 0, 'viewer surfaceAt: floor 2 = 10 m, the atrium hole = 0');
+ok(mall.surfaceAt(80, -30, 12) === 10 && mall.surfaceAt(3, 0, 12) === 0, 'viewer surfaceAt: floor 2 = 10 m, the atrium hole = 0');
 // 10. upper floors: a walker on floor 3 cannot walk into the atrium (balustrade), a walker on floor 9 crosses its floor
-put(30, 15, 0); walk(0, 0, 1500);
-ok(Math.hypot(pos.x, pos.z) > 9.9 && Math.abs(feet() - 15) < 0.3, `balustrade stops a walker at the atrium edge (r = ${Math.hypot(pos.x, pos.z).toFixed(2)}, feet y = ${feet().toFixed(2)})`);
-put(30, 45, 0); walk(-30, -25, 2500);
-ok(Math.hypot(pos.x + 30, pos.z + 25) < 0.6 && Math.abs(feet() - 45) < 0.3, 'a walker crosses floor 9 (top floor) beside the atrium');
-// 11. STEP C2: stairs. A walker climbs both stairs (west + east) from the ground floor to floor 9, flight by flight (character controller like the Player)
+fc.set([3]); put(80, 15, 0); walk(0, 0, 3000);
+ok(Math.hypot(pos.x, pos.z) > MALL_ATRIUM_R - 0.1 && Math.abs(feet() - 15) < 0.3, `balustrade stops a walker at the atrium edge (r = ${Math.hypot(pos.x, pos.z).toFixed(2)}, feet y = ${feet().toFixed(2)})`);
+fc.set([9]); put(80, 45, -24); walk(130, -24, 2500);
+ok(Math.hypot(pos.x - 130, pos.z + 24) < 0.6 && Math.abs(feet() - 45) < 0.3, 'a walker crosses floor 9 (top floor) between the columns');
+fc.set([]);
+// 11. STEP C2 / R1: stairs. A walker climbs both stairs (west + east) from the ground floor to floor 9, flight by flight (character controller like the Player). R1: the stairs stand D m further out
+const D = MALL_ATRIUM_R - 10;
 for (const side of [1, -1]) {
-  put(side * 11, 0, LANE_A_C);
+  put(side * (11 + D), 0, LANE_A_C);
   let top = 0;
   for (let f = 0; f < 9; f++) {
-    walk(side * 17.2, LANE_A_C); walk(side * 19.4, LANE_A_C); walk(side * 19.4, LANE_B_C); walk(side * 13.4, LANE_B_C); walk(side * 11, LANE_A_C);
+    walk(side * (17.2 + D), LANE_A_C); walk(side * (19.4 + D), LANE_A_C); walk(side * (19.4 + D), LANE_B_C); walk(side * (13.4 + D), LANE_B_C); walk(side * (11 + D), LANE_A_C);
     if (Math.abs(feet() - (f + 1) * FH) < 0.35) top = f + 1; else break;
   }
   ok(top === 9, `${side > 0 ? 'east' : 'west'} stair: a walker climbs from the ground floor to floor ${top} of 9 (feet y = ${feet().toFixed(2)})`);
 }
 // the rail round the stair well on floor 3 keeps a walker out of the hole
-put(11.5, 15, 13.3); walk(16, 13.3, 600);
+put(11.5 + D, 15, 13.3); walk(16 + D, 13.3, 600);
 ok(Math.abs(feet() - 15) < 0.5, `the rail stops a walker at the stair well on floor 3 (feet y = ${feet().toFixed(2)})`);
 
 // 12. STEP C2: lifts. Pure logic first: 0 -> 9 at 8 m/s

@@ -1,9 +1,10 @@
-// Standalone walkthrough of City Mall - 2 floors, glass (mall.html). The mall itself is just buildMall() - no dependency on the city.
+// Standalone walkthrough of City Mall - 10 floors, glass, 100 m atrium (mall.html). The mall itself is just buildMall() - no dependency on the city.
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { loadCatalog, FLOORS } from './MallCatalog';
 import { buildMall } from './MallBuilder';
 import { MallInteraction } from './MallInteraction';
+import { MALL_ATRIUM_R, MALL_BUILDING_LOCAL, MALL_EXTENT } from './MallSite';
 
 const CSS = `
 .mall-ui{position:fixed;inset:0;pointer-events:none;font-family:'Noto Sans Bengali',system-ui,sans-serif;color:#fff}
@@ -28,22 +29,23 @@ export async function startMallViewer(container: HTMLElement): Promise<void> {
   container.appendChild(renderer.domElement);
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xbfe3f5);
-  scene.fog = new THREE.Fog(0xbfe3f5, 200, 600);
+  scene.fog = new THREE.Fog(0xbfe3f5, 500, 1600);
   scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture; // makes metals look right
   scene.environmentIntensity = 0.35;
   scene.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 0.8));
   const sun = new THREE.DirectionalLight(0xffffff, 1.0); sun.position.set(30, 60, 25); scene.add(sun);
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), new THREE.MeshStandardMaterial({ color: 0x9aa7b4, roughness: 1 }));
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(1400, 1400), new THREE.MeshStandardMaterial({ color: 0x9aa7b4, roughness: 1 }));
   ground.rotation.x = -Math.PI / 2; ground.position.y = -0.02; scene.add(ground);
   scene.add(mall.group);
+  for (let f = 0; f < mall.floors.length; f++) mall.ensureFloor(f); // the viewer shows every floor (the game builds a floor when the player comes near)
 
-  const cam = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.1, 800);
+  const cam = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.1, 1800);
   const pos = mall.spawn.clone(); let yaw = mall.spawnYaw, pitch = 0, overview = false;
   const EYE = 1.65, R = 0.45;
 
   // ---- UI ----
   const ui = document.createElement('div'); ui.className = 'mall-ui';
-  ui.innerHTML = `<div class="panel"><h1>City Mall · ২ তলা</h1><input id="q" placeholder="পণ্য খুঁজুন…"><div id="res"></div><div id="shops"></div></div><canvas id="mini" width="180" height="108"></canvas><div class="cross"></div>
+  ui.innerHTML = `<div class="panel"><h1>City Mall · ১০ তলা</h1><input id="q" placeholder="পণ্য খুঁজুন…"><div id="res"></div><div id="shops"></div></div><canvas id="mini" width="180" height="180"></canvas><div class="cross"></div>
     <div class="tip" id="tip"></div>
     <div class="help">W A S D চলুন · Shift দৌড় · মাউস ঘোরান · <b>পণ্যে ক্লিক = অর্ডার পেজ (নতুন ট্যাব)</b> · O = ওপর থেকে দেখুন · Esc = মাউস ছাড়ুন</div>`;
   document.body.appendChild(ui);
@@ -72,13 +74,16 @@ export async function startMallViewer(container: HTMLElement): Promise<void> {
     });
   });
   const mini = (ui.querySelector('#mini') as HTMLCanvasElement).getContext('2d')!;
-  const curFloor = () => Math.max(0, Math.min(4, Math.floor((pos.y + 0.3) / 7)));
+  const curFloor = () => Math.max(0, Math.min(mall.floors.length - 1, Math.floor((pos.y + 0.3) / 5)));
+  const MK = 170 / Math.max(MALL_EXTENT.x1 - MALL_EXTENT.x0, MALL_EXTENT.z1 - MALL_EXTENT.z0);
   const drawMini = () => {
-    const X = (x: number) => (x + 50) * 1.8, Z = (z: number) => (z + 33) * 1.6;
-    mini.clearRect(0, 0, 180, 108); mini.fillStyle = '#e5e7eb'; mini.fillRect(X(-48), Z(-7), 96 * 1.8, 14 * 1.6);
-    for (const s of mall.shops) { const south = s.yaw > 1; mini.fillStyle = '#' + s.category.color.toString(16).padStart(6, '0'); if (s.floor === curFloor()) mini.fillRect(X(s.viewPos.x - 9) + 1, south ? Z(7) : Z(-32), 16, 25 * 1.6); }
-    mini.fillStyle = '#fff'; mini.beginPath(); mini.arc(X(pos.x), Z(pos.z), 4, 0, 7); mini.fill();
-    mini.strokeStyle = '#fff'; mini.lineWidth = 2; mini.beginPath(); mini.moveTo(X(pos.x), Z(pos.z)); mini.lineTo(X(pos.x - Math.sin(yaw) * 5), Z(pos.z - Math.cos(yaw) * 5)); mini.stroke();
+    const X = (x: number) => 5 + (x - MALL_EXTENT.x0) * MK, Z = (z: number) => 5 + (z - MALL_EXTENT.z0) * MK;
+    mini.clearRect(0, 0, 180, 180); mini.fillStyle = '#e5e7eb'; mini.beginPath();
+    MALL_BUILDING_LOCAL.forEach(([x, z], i) => (i ? mini.lineTo(X(x), Z(z)) : mini.moveTo(X(x), Z(z)))); mini.closePath(); mini.fill();
+    mini.fillStyle = 'rgba(15,23,42,0.85)'; mini.beginPath(); mini.arc(X(0), Z(0), MALL_ATRIUM_R * MK, 0, 7); mini.fill(); // the atrium
+    mini.fillStyle = '#f97316'; mini.font = '12px sans-serif'; mini.fillText(String(curFloor()), 8, 16);
+    mini.fillStyle = '#ef4444'; mini.beginPath(); mini.arc(X(pos.x), Z(pos.z), 4, 0, 7); mini.fill();
+    mini.strokeStyle = '#ef4444'; mini.lineWidth = 2; mini.beginPath(); mini.moveTo(X(pos.x), Z(pos.z)); mini.lineTo(X(pos.x - Math.sin(yaw) * 12), Z(pos.z - Math.cos(yaw) * 12)); mini.stroke();
   };
 
   // ---- input ----
@@ -103,6 +108,7 @@ export async function startMallViewer(container: HTMLElement): Promise<void> {
 
   const blocked = (x: number, z: number) =>
     mall.solids.some((r) => x > r.minX - R && x < r.maxX + R && z > r.minZ - R && z < r.maxZ + R && pos.y + 1.7 > r.minY + 0.05 && pos.y + 0.6 < r.maxY) ||
+    mall.floorSolids[curFloor()].some((r) => x > r.minX - R && x < r.maxX + R && z > r.minZ - R && z < r.maxZ + R) || // the columns of the floor you are on
     mall.rampRails.some((r) => Math.abs(x - r.cx) < r.hx * Math.cos(r.rotZ) && Math.abs(z - r.cz) < r.hz + R && Math.abs(pos.y + 1 - (r.cy + (x - r.cx) * Math.tan(r.rotZ))) < 1.1);
 
   let last = performance.now();
@@ -119,7 +125,7 @@ export async function startMallViewer(container: HTMLElement): Promise<void> {
       cam.position.set(pos.x, pos.y + EYE, pos.z);
       cam.rotation.set(pitch, yaw, 0, 'YXZ');
     } else {
-      cam.position.set(0, 120, 110); cam.lookAt(0, 12, 0);
+      cam.position.set(0, 420, 380); cam.lookAt(0, 10, 0);
     }
     mall.update(dt);
     drawMini();

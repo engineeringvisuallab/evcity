@@ -6,13 +6,11 @@ const smoothstep = (a: number, b: number, x: number): number => {
   return t * t * (3 - 2 * t);
 };
 
-/** The shopping block inside the hall (metres): corridor, shops, atrium. MallBuilder's MALL.W / MALL.D come from here, so they can never disagree. */
-export const MALL_SIZE = { W: 96, D: 64 };
-/** CITY MALL 10 FLOORS (Step C1, 26 Nov): 10 storeys of 5 m (50 m tower). Floor 0 = ground concourse, floors 1..9 above it. */
+/** CITY MALL 10 FLOORS (Step C1, 26 Nov; Step R1, 26 Nov: the WHOLE outline is the building): 10 storeys of 5 m (50 m). Floor 0 = ground concourse, floors 1..9 above it. */
 export const MALL_FLOORS = 10;
 export const MALL_FH = 5;
-/** The round atrium in the middle of the tower (diameter 20 m), open from floor 1 up to the glass roof. */
-export const MALL_ATRIUM_R = 10;
+/** The round atrium in the middle of the building (STEP R1: diameter 100 m, centre = MALL_POS), open from the ground up to the glass roof (dome). */
+export const MALL_ATRIUM_R = 50;
 /** Thickness (m) of every floor slab / the roof. The slab of floor f occupies y = f * FH - MALL_SLAB .. f * FH (its top face is the floor you walk on). */
 export const MALL_SLAB = 0.4;
 
@@ -85,22 +83,39 @@ export const MALL_BUILDING_LOCAL: ReadonlyArray<readonly [number, number]> = MAL
   return [l.x, l.z] as const;
 });
 
+/** Overall size of the building outline in the block's local frame (handy for the viewer + tests). */
+export const MALL_EXTENT = (() => {
+  let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+  for (const [x, z] of MALL_BUILDING_LOCAL) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+  return { x0, x1, z0, z1 };
+})();
+
 /**
- * The two entrances: the corridor's axis (local z = 0) meets the glass wall at the west (side -1) and the east (side +1). `lx` is where
- * (local), `x`/`z` the same point in world metres.
+ * STEP R1 (26 Nov, user): TWO entrances only, both on the sides that face the roads (the J1 W arm runs along the NORTH wall, the J1 S arm along the EAST wall):
+ *   'E' = where the line z = 0 (through the atrium centre) meets the east wall (side +1; the start / spawn point and the crossing in front of it stay as before),
+ *   'N' = where the line x = 0 meets the north wall (side -1).
+ * lx / lz = the door point in the block's local frame, nx / nz = the outward unit normal there (local), x / z = the same point in world metres.
  */
-export const MALL_DOORS: ReadonlyArray<{ side: -1 | 1; lx: number; x: number; z: number }> = ([-1, 1] as const).map((side) => {
-  let best = side * 1e9;
+export interface MallDoor { id: 'E' | 'N'; side: -1 | 1; lx: number; lz: number; nx: number; nz: number; x: number; z: number }
+function doorOn(id: 'E' | 'N', side: -1 | 1): MallDoor {
   const P = MALL_BUILDING_LOCAL;
+  let best = -1e9, bx = 0, bz = 0, bnx = 1, bnz = 0;
   for (let i = 0, j = P.length - 1; i < P.length; j = i++) {
     const [x1, z1] = P[j], [x2, z2] = P[i];
-    if ((z1 > 0) === (z2 > 0)) continue;
-    const x = x1 + ((0 - z1) / (z2 - z1)) * (x2 - x1);
-    if (side * x > MALL_SIZE.W / 2 && (side * best > 1e8 || side * x < side * best)) best = x;
+    let x: number, z: number;
+    if (id === 'E') { if ((z1 > 0) === (z2 > 0)) continue; z = 0; x = x1 + ((0 - z1) / (z2 - z1)) * (x2 - x1); } else { if ((x1 > 0) === (x2 > 0)) continue; x = 0; z = z1 + ((0 - x1) / (x2 - x1)) * (z2 - z1); }
+    const score = id === 'E' ? x : -z; // the east-most / north-most crossing
+    if (score <= best) continue;
+    best = score; bx = x; bz = z;
+    const L = Math.hypot(x2 - x1, z2 - z1);
+    let nx = -(z2 - z1) / L, nz = (x2 - x1) / L;
+    if (nx * x + nz * z < 0) { nx = -nx; nz = -nz; }
+    bnx = nx; bnz = nz;
   }
-  const w = mallToWorld(best, 0);
-  return { side, lx: best, x: w.x, z: w.z };
-});
+  const w = mallToWorld(bx, bz);
+  return { id, side, lx: bx, lz: bz, nx: bnx, nz: bnz, x: w.x, z: w.z };
+}
+export const MALL_DOORS: ReadonlyArray<MallDoor> = [doorOn('E', 1), doorOn('N', -1)];
 
 /** Soft blend (m) from the level plot back to natural terrain, and the zone local streets keep out of. */
 const BLEND = 40; // M1: 16 -> 40 m: the new plot is cut up to ~13 m into the hill on its NW side, a 16 m skirt would be a cliff
