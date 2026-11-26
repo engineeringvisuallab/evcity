@@ -674,6 +674,8 @@ export class Kit {
   }
 
   tree(x: number, z: number, h = 4.5, crown = 0x4b8a42): void {
+  void [x, z, h, crown]; // no fake trees in buildings: the game's real trees (plot trees / street trees) stand there
+  return;
     this.cyl(x, 0, z, 0.2, 0.14, h * 0.55, 0x6b4a2f, 7);
     this.sphere(x, h * 0.75, z, h * 0.32, crown, 0.9);
     this.sphere(x + h * 0.14, h * 0.62, z + h * 0.06, h * 0.22, crown);

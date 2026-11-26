@@ -12,7 +12,7 @@ export interface EngineSpec {
   launchRpm?: number;
 }
 
-export type VehicleId = 'sedan' | 'jeep' | 'hypercar' | 'evhypar' | 'evbike' | 'rickshaw' | 'auto' | 'bus' | 'tank' | 'tractor' | 'combine' | 'pickup' | 'suprim' | 'truck' | 'tanker';
+export type VehicleId = 'sedan' | 'jeep' | 'hypercar' | 'evhypar' | 'evbike' | 'rickshaw' | 'auto' | 'bus' | 'tank' | 'tractor' | 'combine' | 'pickup' | 'suprim' | 'truck' | 'tanker' | 'ambulance';
 
 /** One wheel of the raycast vehicle. `drive` = share of the drive force, `side` = track side for skid steering (+1 left, -1 right). */
 export interface WheelDef {
@@ -873,8 +873,27 @@ export const TANKER: VehicleSpec = {
   fragile: 0.6,
 };
 
+/**
+ * AMBULANCE: the real emergency van that stands in front of the hospitals / clinics (src/buildings/EmergencyParking.ts) and can be driven like any other vehicle.
+ * Pickup chassis + a white box body with a red stripe, red crosses and a roof light bar (VehicleModel.pickup draws it when spec.id is 'ambulance').
+ */
+export const AMBULANCE: VehicleSpec = {
+  ...JEEP,
+  id: 'ambulance',
+  nameBn: 'অ্যাম্বুলেন্স',
+  mass: 2600,
+  half: { x: 1.0, y: 0.55, z: 2.65 },
+  wheelbaseHalf: 1.7,
+  use: USE.none(),
+  look: { kind: 'pickup', body: 0xf6f6f2, accent: 0xc62828 },
+  seat: { ...JEEP.seat, z: -0.05 },
+  seats: [{ x: 0.45, y: 0.02, z: -0.05, scale: 0.95 }],
+  pax: [0, 1],
+  fragile: 0.5,
+};
+
 // the farm vehicles come LAST: scripts/vehicle-test.ts places every vehicle by its index in this object, so the older ones must keep their index
-export const SPECS: Record<VehicleId, VehicleSpec> = { sedan: SEDAN, jeep: JEEP, hypercar: HYPERCAR, evhypar: EVHYPAR, evbike: EVBIKE, rickshaw: RICKSHAW, auto: AUTO, bus: BUS, tank: TANK, tractor: TRACTOR, combine: COMBINE, pickup: PICKUP, suprim: SUPRIM, truck: TRUCK, tanker: TANKER };
+export const SPECS: Record<VehicleId, VehicleSpec> = { sedan: SEDAN, jeep: JEEP, hypercar: HYPERCAR, evhypar: EVHYPAR, evbike: EVBIKE, rickshaw: RICKSHAW, auto: AUTO, bus: BUS, tank: TANK, tractor: TRACTOR, combine: COMBINE, pickup: PICKUP, suprim: SUPRIM, truck: TRUCK, tanker: TANKER, ambulance: AMBULANCE };
 
 
 /**
@@ -898,6 +917,7 @@ export const SPEED_BOOST: Record<VehicleId, number> = {
   /** Cargo truck: BUS gearing x 1.7 = about 180 km/h (the job needs 150-200 km/h). */
   truck: 1.7,
   tanker: 1.72, // jeep base x 1.72 -> ~200 km/h (checked by scripts/tanker-test.ts)
+  ambulance: 1.5,
 };
 
 /**

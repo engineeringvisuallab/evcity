@@ -2218,6 +2218,23 @@ export class VehicleModel {
       this.boxG(0.45, 0.14, 0.45, dark, 0, 2.68, -1.5);
       this.boxG(0.3, 0.3, 0.2, dark, 0, 1.25, -2.85);
     }
+    if (spec.id === 'ambulance') {
+      // the box body on the bed: white shell, red stripe, a red cross on both sides and at the back, rear door line, roof light bar
+      const blue = this.pbr(0x1a6bff, { emissive: 0x0a3fb8, emissiveIntensity: 1.2, roughness: 0.2, metalness: 0 });
+      const redLamp = this.pbr(0xff2a2a, { emissive: 0xc00000, emissiveIntensity: 1.2, roughness: 0.2, metalness: 0 });
+      this.boxG(1.86, 1.5, 2.3, paint, 0, 1.79, -1.55); // box body
+      this.boxG(1.9, 0.2, 2.34, trim, 0, 1.45, -1.55); // red stripe round the body
+      for (const sx of [-1, 1]) {
+        this.boxG(0.02, 0.5, 0.14, trim, sx * 0.935, 2.0, -1.45);
+        this.boxG(0.02, 0.14, 0.5, trim, sx * 0.935, 2.0, -1.45);
+      }
+      this.boxG(0.02, 0.9, 0.02, dark, 0, 1.8, -2.71); // rear door line
+      this.boxG(0.5, 0.14, 0.02, trim, 0, 2.0, -2.72);
+      this.boxG(0.14, 0.5, 0.02, trim, 0, 2.0, -2.72);
+      this.boxG(0.9, 0.08, 0.3, dark, 0, 2.58, -0.75); // light bar
+      this.boxG(0.38, 0.1, 0.26, redLamp, 0.24, 2.65, -0.75);
+      this.boxG(0.38, 0.1, 0.26, blue, -0.24, 2.65, -0.75);
+    }
     this.boxG(1.9, 0.25, 0.2, dark, 0, 0.55, 2.55, 1); // front bumper
     this.boxG(1.9, 0.25, 0.2, dark, 0, 0.55, -2.55, 2);
     for (const sx of [-1, 1]) {

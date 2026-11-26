@@ -11,6 +11,8 @@ const GLASS_LIGHT = 0x4c7f9f;
 const SIGN = [0xc0392b, 0x2f6f9f, 0x3b8a55, 0xd49a2a, 0x7a4a9a, 0x2a8a8a];
 
 function car(k: Kit, x: number, z: number, ry: number, color: number): void {
+  void [k, x, z, ry, color]; // no fake cars
+  return;
   k.local(x, 0, z, ry, () => {
     k.box(0, 0.3, 0, 1.8, 0.65, 4.2, color);
     k.box(0, 0.95, -0.1, 1.6, 0.55, 2.2, GLASS);

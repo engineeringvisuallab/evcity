@@ -24,6 +24,8 @@ function wheel(k: Kit, x: number, y: number, z: number, r: number): void {
 
 /** Vehicle facing +Z. kind: jeep / van / truck */
 function vehicle(k: Kit, x: number, z: number, ry: number, kind: 'jeep' | 'van' | 'truck' | 'ladder', body: number, stripe = 0xf4efe4): void {
+  void [k, x, z, ry, kind, body, stripe]; // no fake cars: real parked vehicles come from buildings/EmergencyParking.ts
+  return;
   k.local(x, 0, z, ry, () => {
     const L = kind === 'truck' || kind === 'ladder' ? 8 : kind === 'van' ? 5.2 : 4.4;
     const Wd = kind === 'truck' || kind === 'ladder' ? 2.5 : 2.0;

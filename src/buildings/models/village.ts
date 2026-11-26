@@ -56,6 +56,8 @@ function sackPile(k: Kit, x: number, z: number, n: number, color: number): void 
 }
 
 export function palm(k: Kit, x: number, z: number, h: number): void {
+  void [k, x, z, h]; // no fake palms in buildings: only the game's real trees
+  return;
   k.cyl(x, 0, z, 0.2, 0.12, h, 0x7a6a50, 7);
   k.sphere(x, h, z, 0.3, 0x6b8a3a);
   for (let i = 0; i < 7; i++) {

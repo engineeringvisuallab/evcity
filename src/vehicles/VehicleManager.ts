@@ -64,7 +64,7 @@ export class VehicleManager {
   private tankHome: { x: number; z: number; yaw: number } | null = null;
   private tankRespawn = 0;
   /** The parked fleet at the start (one of every kind): a driverless copy stands at each home; a new one comes back when it was wrecked or driven far away. */
-  private parked: { spec: VehicleSpec; x: number; z: number; yaw: number; body?: number; v: Vehicle | null; respawn: number }[] = [];
+  private parked: { spec: VehicleSpec; x: number; z: number; yaw: number; body?: number; v: Vehicle | null; respawn: number; near?: number; decorate?: (v: Vehicle) => void }[] = [];
   private tmp3 = new THREE.Vector3();
   private tmp4 = new THREE.Vector3();
 
@@ -110,7 +110,15 @@ export class VehicleManager {
 
   /** One parked, driverless copy of each given vehicle (the start area). The player gets in with F like in the tank. */
   setParked(list: { spec: VehicleSpec; x: number; z: number; yaw: number; body?: number }[]): void {
-    this.parked = list.map((p) => ({ ...p, v: null, respawn: 0.5 }));
+    this.parked = this.parked.filter((p) => p.near !== undefined).concat(list.map((p) => ({ ...p, v: null, respawn: 0.5 })));
+  }
+
+  /**
+   * Parked, driverless vehicles that exist ONLY while the player is within `near` metres (hospital ambulances, thana police cars ...): a copy is built when he comes
+   * close and removed again when he is far, so a hundred of them cost nothing. `decorate` runs once after a copy is built (police light bar ...).
+   */
+  addParkedNear(list: { spec: VehicleSpec; x: number; z: number; yaw: number; body?: number; decorate?: (v: Vehicle) => void }[], near: number): void {
+    for (const p of list) this.parked.push({ ...p, v: null, respawn: 0.5, near });
   }
 
   private keepParked(dt: number, focus: THREE.Vector3): void {
@@ -125,6 +133,15 @@ export class VehicleManager {
           w.dispose();
           p.v = null;
           p.respawn = 12;
+        } else if (p.near !== undefined && w !== this.driver && !w.occupied && Math.hypot(focus.x - p.x, focus.z - p.z) > p.near * 1.3) {
+          // a near-only vehicle (hospital / thana): the player went far away, take it out of the world (it comes back when he returns)
+          const i = this.vehicles.indexOf(w);
+          this.vehicles.splice(i, 1);
+          this.byHandle.delete(w.collider.handle);
+          w.dispose();
+          p.v = null;
+          p.respawn = 0.5;
+          continue;
         } else if (w !== this.driver && Math.hypot(w.getWorldPosition(this.tmp4).x - p.x, this.tmp4.z - p.z) > 150) {
           w.persistent = false; // someone drove it away: it becomes an ordinary car (traffic clears it) and a fresh copy waits at home
           p.v = null;
@@ -133,6 +150,7 @@ export class VehicleManager {
       }
       p.respawn -= dt;
       if (p.respawn > 0 || Math.hypot(focus.x - p.x, focus.z - p.z) < 6) continue;
+      if (p.near !== undefined && Math.hypot(focus.x - p.x, focus.z - p.z) > p.near) continue;
       const y = this.d.vehicle.terrain.heightAt(p.x, p.z) + 1.4;
       const spec = p.body === undefined ? p.spec : { ...p.spec, look: { ...p.spec.look, body: p.body } };
       const v = new Vehicle(this.d.vehicle, spec, this.tmp3.set(p.x, y, p.z), p.yaw);
@@ -140,6 +158,7 @@ export class VehicleManager {
       this.vehicles.push(v);
       this.byHandle.set(v.collider.handle, v);
       p.v = v;
+      p.decorate?.(v);
     }
   }
 

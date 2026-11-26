@@ -13,6 +13,8 @@ function crossSignFront(k: Kit, x: number, y: number, z: number, size: number, c
 }
 
 function ambulance(k: Kit, x: number, z: number, ry: number): void {
+  void [k, x, z, ry]; // the real ambulance is spawned by buildings/EmergencyParking.ts
+  return;
   k.local(x, 0, z, ry, () => {
     k.box(0, 0.4, 0, 2.1, 1.6, 5.2, 0xf4efe4);
     k.box(0, 1.2, 1.6, 1.9, 0.9, 1.8, 0x2f4f66);
@@ -27,11 +29,7 @@ function parking(k: Kit, cx: number, cz: number, w: number, d: number): void {
   k.box(cx, 0, cz, w, 0.08, d, 0x4a4d52);
   const n = Math.floor(w / 3);
   for (let i = 0; i <= n; i++) k.box(cx - (n * 3) / 2 + i * 3, 0.08, cz, 0.12, 0.01, d - 1, 0xe9e6de);
-  const cols = [0xb02a2a, 0xd9d9d6, 0x2f3b4a, 0x6a7a8a, 0xe9c23a];
-  for (let i = 0; i < n; i++) if (i % 3 !== 2) k.local(cx - (n * 3) / 2 + 1.5 + i * 3, 0, cz, 0, () => {
-    k.box(0, 0.3, 0, 1.8, 0.65, 4.2, cols[i % cols.length]!);
-    k.box(0, 0.95, -0.1, 1.6, 0.55, 2.2, GLASS);
-  });
+  // no fake parked cars here
 }
 
 /** হাসপাতাল: central 8-storey tower + two 5-storey wings, emergency bay with ambulances, rooftop helipad. */

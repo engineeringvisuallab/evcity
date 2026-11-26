@@ -36,6 +36,7 @@ export const GoldConfig = {
     tractor: 1.3,
     pickup: 1.2,
     tanker: 1.8,
+    ambulance: 1.4,
     combine: 2.0,
     truck: 1.8,
   } as Record<VehicleId, number>,

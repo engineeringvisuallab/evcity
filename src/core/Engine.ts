@@ -53,6 +53,8 @@ import { MallManager, loadCatalog, type Catalog } from '../mall';
 import { EngineeringBoundary } from '../zones';
 import { LibraryManager } from '../library';
 import { BuildingManager, FillBuildings, PlacedBuildings, PlotYards, setBuildingTextureQuality } from '../buildings';
+import { emergencySpots } from '../buildings/EmergencyParking';
+import { addPoliceLivery } from '../vehicles/PoliceLivery';
 import { BuildingPhysics } from '../buildings/BuildingPhysics';
 import { BuildingInteract } from '../buildings/BuildingInteract';
 import { LazyInfra } from '../engineering/LazyInfra';
@@ -960,6 +962,8 @@ export class Engine {
       park(SEDAN, -11, 0, 0), park(JEEP, -6.5, 0, 0), park(HYPERCAR, -2, 0, 0), park(EVHYPAR, 2.5, 0, 0),
       park(BUS, 8, 0, 0),
     ]);
+    // REAL ambulances (hospital, clinic) and police cars (thana) parked in front of the original buildings; built only while the player is within 160 m
+    this.vehicles.addParkedNear(emergencySpots().map((e) => ({ spec: e.spec, x: e.x, z: e.z, yaw: e.yaw, body: e.body, decorate: e.police ? addPoliceLivery : undefined })), 160);
     this.tour = new TourManager({ container, infra: this.infra });
     bus.on('camera:locked', ({ locked }) => this.hud.setLocked(locked));
 
