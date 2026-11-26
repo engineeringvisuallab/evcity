@@ -1,4 +1,4 @@
-// City Mall (2 floors, glass building that follows the roads) inside the open world.
+// City Mall (10 floors, 50 m glass tower with a 20 m atrium, standing on a glass podium that follows the roads) inside the open world.
 //  - the building (MallBuilder) stands at MALL_POS on a flat pad (terrain.mall), always there when the game starts
 //  - Rapier colliders for walls / shelves / pedestals / roof (the player, cars and helicopters cannot go through)
 //  - shopping: walk in, look at a product (crosshair) -> left click or O opens its page on the live shop in a NEW TAB
@@ -111,7 +111,7 @@ export class MallManager {
     // start-of-game hint (the mall is right there, in front of the spawn point)
     const b = this.banner!;
     b.className = 'evmall-banner';
-    b.innerHTML = '<span style="font-size:22px">🛍️</span><span><b>City Mall</b> সামনেই — একটা বিশাল খোলা গ্লাস হল, পণ্যগুলো জোন অনুযায়ী সাজানো: পশ্চিমে খাবার, পূর্বে ফ্যাশন!</span>';
+    b.innerHTML = '<span style="font-size:22px">🛍️</span><span><b>City Mall</b> সামনেই — ১০ তলা কাচের মল, মাঝখানে ২০ মি. আট্রিয়াম! (লিফট ও সিঁড়ি পরের ধাপে আসছে)</span>';
     d.container.appendChild(b);
     this.bannerTimer = 14;
   }

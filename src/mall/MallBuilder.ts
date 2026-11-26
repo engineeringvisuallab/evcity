@@ -1,4 +1,6 @@
-// City Mall - ONE big glass hall built as ONE THREE.Group (local origin = centre of the hall's floor, y = 0 is the floor level).
+// CITY MALL, 10 FLOORS (Step C1): a 50 m glass tower (96 x 64 m block, 10 x 5 m storeys) standing on a one-storey glass podium (the ground concourse + wings that follow the roads).
+// The tower has a 20 m round ATRIUM in the middle (open from floor 1 up), closed on top by a glass dome. Floors 1..9 are slabs with the atrium hole (Step C2 cuts stair / lift holes too).
+// (older text:) City Mall - ONE big glass hall built as ONE THREE.Group (local origin = centre of the hall's floor, y = 0 is the floor level).
 // Place it in the city with: mall.group.position.set(x, groundY, z); mall.group.rotation.y = yaw;
 //
 // The BUILDING is not a box: its outline follows the roads around it (MALL_BUILDING_LOCAL) and the whole outline is a glass curtain wall,
@@ -10,9 +12,9 @@
 import * as THREE from 'three';
 import { Catalog, Category, FLOORS, Product, categoryUrl, productUrl } from './MallCatalog';
 import { makePerson, makeProductModel, stdMat } from './ProductModels';
-import { MALL_SIZE, MALL_FLOORS, MALL_FH, MALL_BUILDING_LOCAL, MALL_DOORS } from './MallSite';
+import { MALL_SIZE, MALL_FLOORS, MALL_FH, MALL_ATRIUM_R, MALL_SLAB, MALL_BUILDING_LOCAL, MALL_DOORS } from './MallSite';
 
-export const MALL = { W: MALL_SIZE.W, D: MALL_SIZE.D, FH: MALL_FH, floors: MALL_FLOORS, H: MALL_FH * MALL_FLOORS, corridor: 7, shopW: 18, doorW: 10, perShop: 3 };
+export const MALL = { W: MALL_SIZE.W, D: MALL_SIZE.D, FH: MALL_FH, floors: MALL_FLOORS, H: MALL_FH * MALL_FLOORS, atriumR: MALL_ATRIUM_R, slabT: MALL_SLAB, corridor: 7, shopW: 18, doorW: 10, perShop: 3 };
 
 export interface PickInfo { title: string; sub: string; url: string }
 /** An axis-aligned solid in the group's LOCAL space. */
@@ -109,7 +111,9 @@ export function rectMinus(r: R2, holes: R2[]): R2[] {
 }
 
 export function buildMall(catalog: Catalog): MallBuild {
-  const { W, D, FH, floors: NF, H, doorW } = MALL;
+  const { W, D, FH, floors: NF, H, doorW, atriumR, slabT } = MALL;
+  const CEIL = FH - slabT; // underside of the floor-1 slab = ceiling of the ground concourse = height of the podium (the glass wall round the whole outline)
+  const DOOR_H = 3.6; // the two 10 m doorways
   const g = new THREE.Group(); g.name = 'CityMall';
   const roof = new THREE.Group(); roof.name = 'MallRoof'; g.add(roof);
   const solids: Solid[] = [], pickables: THREE.Object3D[] = [], blockers: THREE.Object3D[] = [], spinners: THREE.Object3D[] = [], shops: ShopInfo[] = [], allItems: MallItem[] = [];
@@ -169,14 +173,39 @@ export function buildMall(catalog: Catalog): MallBuild {
     mesh.rotation.x = rx; mesh.position.set(x, y, z); parent.add(mesh); return mesh;
   };
 
-  // ---- concrete podium under the whole building + ONE flat roof (the block is a rectangle, the wings around it follow the outline) ----
+  // ---- a polygon slab WITH HOLES (atrium, later stair / lift shafts): mesh + (optional) triangle collider on its top face ----
+  const circle = (r: number, n = 48): Pt[] => Array.from({ length: n }, (_, i) => { const t = (i / n) * Math.PI * 2; return [Math.cos(t) * r, Math.sin(t) * r] as Pt; });
+  const rectPoly: Pt[] = [[-hx, -hz], [hx, -hz], [hx, hz], [-hx, hz]];
+  const atriumHole = circle(atriumR);
+  /** The holes cut in the slab of floor f (f >= 1). STEP C2 adds the stair + lift openings here. */
+  const holesFor = (_f: number): Pt[][] => [atriumHole];
+  const slabHoles = (outer: Pt[], holes: Pt[][], y0: number, thick: number, m: THREE.Material, parent: THREE.Object3D, col: boolean): THREE.Mesh => {
+    const flip = (q: Pt[]) => q.map(([x, z]) => new THREE.Vector2(x, -z));
+    const shape = new THREE.Shape(flip(outer));
+    for (const h of holes) shape.holes.push(new THREE.Path(flip(h)));
+    const mesh = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: thick, bevelEnabled: false }), m);
+    mesh.rotation.x = -Math.PI / 2; mesh.position.y = y0; parent.add(mesh);
+    if (col) {
+      const tris = THREE.ShapeUtils.triangulateShape(flip(outer), holes.map(flip)); // indices into outer + hole1 + hole2 ...
+      const all: Pt[] = [...outer, ...holes.flat()];
+      const v = new Float32Array(all.length * 3);
+      all.forEach(([x, z], i) => { v[i * 3] = x; v[i * 3 + 1] = y0 + thick; v[i * 3 + 2] = z; });
+      meshSolids.push({ vertices: v, indices: Uint32Array.from(tris.flat()) });
+      blockers.push(mesh);
+    }
+    return mesh;
+  };
+
+  // ---- concrete podium under the whole building; the ROOF (collider = the whole rectangle, solid over the atrium too; the visible roof has the atrium hole, the glass dome closes it) ----
   prism(BP, -1.62, 1.6, stdMat(0x94a3b8, 0, 0.95), g, false);
-  slab(-hx, hx, -hz, hz, H, H + 0.4, roofM, true, roof);
-  for (const q of wingPieces(false)) prism(q, H, 0.4, roofM, roof, true);
+  slab(-hx, hx, -hz, hz, H - slabT, H, roofM, true, roof).visible = false; // collider + pick blocker only
+  slabHoles(rectPoly, [atriumHole], H - slabT, slabT, roofM, roof, false);
+  for (const q of wingPieces(false)) prism(q, CEIL, slabT, roofM, roof, true); // roof of the podium wings: same level as the floor-1 slab
 
   // ---- THE GLASS BUILDING: a curtain wall all the way round the outline (it follows the roads), 14 m high, with a 10 m doorway at each end of the corridor ----
   {
     const glassWallM = new THREE.MeshStandardMaterial({ color: 0xa5d8f0, transparent: true, opacity: 0.22, metalness: 0.7, roughness: 0.05, side: THREE.DoubleSide, depthWrite: false });
+    const WH = CEIL; // the outline wall is the PODIUM: it stops under the floor-1 slab level
     const frameM = stdMat(0x1e293b, 0.6, 0.4);
     const n = BP.length;
     const posts: { x: number; z: number; rot: number }[] = [];
@@ -205,42 +234,42 @@ export function buildMall(catalog: Catalog): MallBuild {
       for (const [a, b] of gaps.sort((p, q) => p[0] - q[0])) { if (a > from) open.push([from, a]); from = b; }
       if (from < L) open.push([from, L]);
       for (const [a, b] of open) {
-        span(a, b, 0, H, true);
+        span(a, b, 0, WH, true);
         const cnt = Math.max(1, Math.ceil((b - a) / 3.6));
         for (let k = 0; k <= cnt; k++) { const t = a + ((b - a) * k) / cnt; posts.push({ x: A[0] + ux * t, z: A[1] + uz * t, rot }); }
-        for (const [yy, hh] of [[0.45, 0.9], [H - 0.15, 0.3]] as [number, number][]) { // kick plate, top cap
+        for (const [yy, hh] of [[0.45, 0.9], [WH - 0.15, 0.3]] as [number, number][]) { // kick plate, top cap
           const bar = new THREE.Mesh(new THREE.BoxGeometry(b - a, hh, 0.3), frameM);
           bar.position.set(A[0] + ux * (a + b) / 2, yy, A[1] + uz * (a + b) / 2); bar.rotation.y = rot; g.add(bar);
         }
       }
       for (const [a, b] of gaps) { // above the doorway: a glass lintel from 5 m up, a sign facing outwards
-        span(a, b, 5, H, false);
-        obbs.push({ cx: A[0] + ux * (a + b) / 2, cz: A[1] + uz * (a + b) / 2, hx: (b - a) / 2, hz: 0.25, rot, y0: 5, y1: H });
-        const sg = signMesh(doorW - 0.4, 2.2, 'CITY MALL', 'সিটি মল — স্বাগতম', ACCENT);
+        span(a, b, DOOR_H, WH, false);
+        obbs.push({ cx: A[0] + ux * (a + b) / 2, cz: A[1] + uz * (a + b) / 2, hx: (b - a) / 2, hz: 0.25, rot, y0: DOOR_H, y1: WH });
+        const sg = signMesh(doorW - 0.4, 0.95, 'CITY MALL', 'সিটি মল — স্বাগতম', ACCENT);
         const mx = A[0] + ux * (a + b) / 2 + nx * 0.4, mz = A[1] + uz * (a + b) / 2 + nz * 0.4;
-        sg.position.set(mx, 6.4, mz); sg.rotation.y = Math.atan2(nx, nz); g.add(sg);
+        sg.position.set(mx, (DOOR_H + WH) / 2, mz); sg.rotation.y = Math.atan2(nx, nz); g.add(sg);
         const canopy = new THREE.Mesh(new THREE.BoxGeometry(b - a + 1, 0.25, 4), accM); // short canopy over the door
-        canopy.position.set(A[0] + ux * (a + b) / 2 + nx * 2.2, 4.9, A[1] + uz * (a + b) / 2 + nz * 2.2); canopy.rotation.y = rot; g.add(canopy);
+        canopy.position.set(A[0] + ux * (a + b) / 2 + nx * 2.2, DOOR_H - 0.15, A[1] + uz * (a + b) / 2 + nz * 2.2); canopy.rotation.y = rot; g.add(canopy);
         for (const t of [a, b]) posts.push({ x: A[0] + ux * t, z: A[1] + uz * t, rot });
       }
     }
     // all vertical frame posts in ONE InstancedMesh
-    const postMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(0.22, H, 0.32), frameM, posts.length);
+    const postMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(0.22, WH, 0.32), frameM, posts.length);
     const dummy = new THREE.Object3D();
-    posts.forEach((q, i) => { dummy.position.set(q.x, H / 2, q.z); dummy.rotation.set(0, q.rot, 0); dummy.updateMatrix(); postMesh.setMatrixAt(i, dummy.matrix); });
+    posts.forEach((q, i) => { dummy.position.set(q.x, WH / 2, q.z); dummy.rotation.set(0, q.rot, 0); dummy.updateMatrix(); postMesh.setMatrixAt(i, dummy.matrix); });
     g.add(postMesh);
   }
 
   // rooftop billboards, one at each end, so the mall is easy to spot from the road on either side
   for (const sx of [-1, 1]) {
-    slab(sx * (hx + 0.9) - 0.25, sx * (hx + 0.9) + 0.25, -15, 15, H + 0.4, H + 5.4, darkM, false, roof);
+    slab(sx * (hx + 0.9) - 0.25, sx * (hx + 0.9) + 0.25, -15, 15, H, H + 5, darkM, false, roof);
     const bb = signMesh(29.6, 4.6, 'CITY MALL', 'Shop · Eat · Play', ACCENT);
-    bb.position.set(sx * (hx + 1.17), H + 2.9, 0); bb.rotation.y = sx < 0 ? -Math.PI / 2 : Math.PI / 2; roof.add(bb);
+    bb.position.set(sx * (hx + 1.17), H + 2.5, 0); bb.rotation.y = sx < 0 ? -Math.PI / 2 : Math.PI / 2; roof.add(bb);
   }
   // front + back roof signs facing the long sides
   for (const sz of [-1, 1]) {
     const bb = signMesh(40, 4.6, 'CITY MALL', 'সিটি মল — গ্লাস শপিং সেন্টার', ACCENT);
-    bb.position.set(0, H + 2.6, sz * (hz + 0.1)); bb.rotation.y = sz < 0 ? Math.PI : 0; roof.add(bb);
+    bb.position.set(0, H + 2.2, sz * (hz + 0.1)); bb.rotation.y = sz < 0 ? Math.PI : 0; roof.add(bb);
   }
 
   // ---- the floor: tiles (3 m squares) over the whole block, the same tiles in the wings around it, and a flat collider so walking is smooth ----
@@ -262,13 +291,108 @@ export function buildMall(catalog: Catalog): MallBuild {
     meshSolids.push({ vertices: v, indices: Uint32Array.from(tris.flat()) });
   }
 
+  // ---- FLOORS 1..9: a slab over the whole block with the atrium hole (tile top = the floor, white ceiling underneath). Walkable: triangle collider on the top face ----
+  for (let f = 1; f < NF; f++) slabHoles(rectPoly, holesFor(f), f * FH - slabT, slabT, tileWingM, g, true);
+
+  // ---- ATRIUM EDGE: on every floor 1..9 a glass balustrade + handrail round the hole (and an invisible-to-the-eye collider ring of 24 turned boxes) ----
+  {
+    const railM = new THREE.MeshStandardMaterial({ color: 0xbfe6f5, transparent: true, opacity: 0.25, metalness: 0.6, roughness: 0.05, side: THREE.DoubleSide, depthWrite: false });
+    const handM = stdMat(0xcbd5e1, 0.8, 0.3);
+    const rr = atriumR + 0.3, RH = 1.1, SEG = 24;
+    for (let f = 1; f < NF; f++) {
+      const y = f * FH;
+      const gl = new THREE.Mesh(new THREE.CylinderGeometry(rr, rr, RH, 48, 1, true), railM); gl.position.y = y + RH / 2; g.add(gl);
+      const hand = new THREE.Mesh(new THREE.TorusGeometry(rr, 0.045, 6, 48), handM); hand.rotation.x = Math.PI / 2; hand.position.y = y + RH; g.add(hand);
+      for (let k = 0; k < SEG; k++) {
+        const t = ((k + 0.5) / SEG) * Math.PI * 2; // tangent of the ring there: (-sin t, cos t)
+        obbs.push({ cx: Math.cos(t) * rr, cz: Math.sin(t) * rr, hx: (Math.PI * rr) / SEG + 0.05, hz: 0.1, rot: Math.atan2(-Math.cos(t), -Math.sin(t)), y0: y, y1: y + 1.3 });
+      }
+    }
+  }
+
+  // ---- GROUND FLOOR: the tower stands on columns round its edge (none on the entrance aisle z = 0) ----
+  {
+    const colPts: Pt[] = [];
+    for (let x = -hx; x <= hx + 0.01; x += 8) colPts.push([x, -hz], [x, hz]);
+    for (let z = -hz + 8; z < hz - 0.01; z += 8) { if (Math.abs(z) < 5) continue; colPts.push([-hx, z], [hx, z]); }
+    const cm = new THREE.InstancedMesh(new THREE.BoxGeometry(0.8, CEIL, 0.8), stdMat(0xcbd5e1, 0.1, 0.6), colPts.length);
+    const dm = new THREE.Object3D();
+    colPts.forEach(([x, z], i) => {
+      dm.position.set(x, CEIL / 2, z); dm.updateMatrix(); cm.setMatrixAt(i, dm.matrix);
+      solids.push({ minX: x - 0.4, maxX: x + 0.4, minY: 0, maxY: CEIL, minZ: z - 0.4, maxZ: z + 0.4 });
+    });
+    g.add(cm);
+  }
+
+  // ---- THE TOWER: glass walls round the block from the podium roof level up to the roof, steel mullions, a dark band at every floor level ----
+  {
+    const tH = H - CEIL;
+    const towerGlassM = new THREE.MeshStandardMaterial({ color: 0xa5d8f0, transparent: true, opacity: 0.22, metalness: 0.7, roughness: 0.05, side: THREE.DoubleSide, depthWrite: false });
+    const edges = [
+      { cx: 0, cz: -hz, len: W, rot: 0 }, { cx: 0, cz: hz, len: W, rot: 0 },
+      { cx: -hx, cz: 0, len: D, rot: Math.PI / 2 }, { cx: hx, cz: 0, len: D, rot: Math.PI / 2 },
+    ];
+    const mulls: { x: number; z: number; rot: number }[] = [];
+    const dm = new THREE.Object3D();
+    const bands = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), stdMat(0x334155, 0.5, 0.4), edges.length * NF);
+    let bi = 0;
+    for (const e of edges) {
+      const gl = new THREE.Mesh(new THREE.PlaneGeometry(e.len, tH), towerGlassM);
+      gl.position.set(e.cx, CEIL + tH / 2, e.cz); gl.rotation.y = e.rot; g.add(gl);
+      obbs.push({ cx: e.cx, cz: e.cz, hx: e.len / 2, hz: 0.25, rot: e.rot, y0: CEIL, y1: H });
+      const ux = Math.cos(e.rot), uz = -Math.sin(e.rot), cnt = Math.ceil(e.len / 3.6);
+      for (let k = 0; k <= cnt; k++) { const t = -e.len / 2 + (e.len * k) / cnt; mulls.push({ x: e.cx + ux * t, z: e.cz + uz * t, rot: e.rot }); }
+      for (let f = 1; f <= NF; f++) { // a band at every slab level (floor 1..9) + the parapet band at the roof
+        dm.position.set(e.cx, f * FH - 0.2, e.cz); dm.rotation.set(0, e.rot, 0); dm.scale.set(e.len + 0.4, 0.9, 0.36); dm.updateMatrix(); bands.setMatrixAt(bi++, dm.matrix);
+      }
+    }
+    g.add(bands);
+    const mm = new THREE.InstancedMesh(new THREE.BoxGeometry(0.22, tH, 0.32), stdMat(0x1e293b, 0.6, 0.4), mulls.length);
+    dm.scale.set(1, 1, 1);
+    mulls.forEach((q, i) => { dm.position.set(q.x, CEIL + tH / 2, q.z); dm.rotation.set(0, q.rot, 0); dm.updateMatrix(); mm.setMatrixAt(i, dm.matrix); });
+    g.add(mm);
+  }
+
+  // ---- THE GLASS DOME closing the atrium (the roof below it is solid, so no rain comes in): a shallow spherical cap + 12 steel ribs + 3 rings ----
+  {
+    const rb = atriumR + 0.4, hc = 3.2; // base radius, rise
+    const Rs = (rb * rb + hc * hc) / (2 * hc), th = Math.asin(rb / Rs), cy = H + hc - Rs; // sphere centre height: the cap's base circle is at y = H
+    const domeM = new THREE.MeshStandardMaterial({ color: 0xb8e4f7, transparent: true, opacity: 0.28, metalness: 0.6, roughness: 0.05, side: THREE.DoubleSide, depthWrite: false });
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(Rs, 64, 16, 0, Math.PI * 2, 0, th), domeM);
+    dome.position.y = cy; roof.add(dome);
+    const ribM = stdMat(0x1e293b, 0.6, 0.4);
+    for (let k = 0; k < 12; k++) {
+      const ph = (k / 12) * Math.PI * 2, pts: THREE.Vector3[] = [];
+      for (let i = 0; i <= 12; i++) { const a = (i / 12) * th; pts.push(new THREE.Vector3(Rs * Math.sin(a) * Math.cos(ph), cy + Rs * Math.cos(a), Rs * Math.sin(a) * Math.sin(ph))); }
+      roof.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 16, 0.1, 6), ribM));
+    }
+    for (const t of [0.33, 0.66, 1]) {
+      const a = t * th, pts: THREE.Vector3[] = [];
+      for (let i = 0; i < 48; i++) { const ph = (i / 48) * Math.PI * 2; pts.push(new THREE.Vector3(Rs * Math.sin(a) * Math.cos(ph), cy + Rs * Math.cos(a), Rs * Math.sin(a) * Math.sin(ph))); }
+      roof.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), 48, t === 1 ? 0.2 : 0.08, 6, true), ribM));
+    }
+  }
+
+  // ---- ceiling lights of floors 1..9 (one InstancedMesh; the ground floor's own are in its floor group) ----
+  {
+    const spots: [number, number][] = [];
+    for (const x of [-40, -24, -8, 8, 24, 40]) for (const z of [-14, 14]) spots.push([x, z]);
+    for (const x of [-36, -24, 24, 36]) spots.push([x, 0]);
+    const lg = new THREE.PlaneGeometry(12, 0.5); lg.rotateX(Math.PI / 2);
+    const lm = new THREE.InstancedMesh(lg, new THREE.MeshBasicMaterial({ color: 0xffffff }), spots.length * (NF - 1));
+    const m4 = new THREE.Matrix4();
+    let li = 0;
+    for (let f = 1; f < NF; f++) for (const [x, z] of spots) { m4.makeTranslation(x, (f + 1) * FH - slabT - 0.02, z); lm.setMatrixAt(li++, m4); }
+    g.add(lm);
+  }
+
   // ---- ZONES: one per category, openly on the floor (no walls). Row s = -1 (north, z < 0) and s = +1 (south, z > 0); the aisle |z| < 8 stays free ----
   const fg = floorGroups[0];
   const lightM = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const poleM = stdMat(0x334155, 0.5, 0.5), deskM = stdMat(0x92400e, 0, 0.8);
   const COLS = [-40, -24, -8, 8, 24, 40];
-  for (const x of COLS) for (const z of [-14, 14]) plane(12, 0.5, x, H - 0.03, z, lightM, Math.PI / 2, fg); // ceiling light strips
-  const hang = (px: number, pz: number, yBottom: number) => slab(px - 0.04, px + 0.04, pz - 0.04, pz + 0.04, yBottom, H, poleM, false, fg); // a thin pole from the roof
+  for (const x of COLS) for (const z of [-14, 14]) plane(12, 0.5, x, CEIL - 0.03, z, lightM, Math.PI / 2, fg); // ceiling light strips
+  const hang = (px: number, pz: number, yBottom: number) => slab(px - 0.04, px + 0.04, pz - 0.04, pz + 0.04, yBottom, CEIL, poleM, false, fg); // a thin pole from the roof
   const food = catalog.categories.filter((c) => c.floor === 0).slice(0, 8), fashion = catalog.categories.filter((c) => c.floor === 1).slice(0, 4);
   const slots: { cat: Category; cx: number; s: number; floor: number }[] = [];
   food.forEach((c, i) => slots.push({ cat: c, cx: COLS[i % 4], s: i < 4 ? -1 : 1, floor: 0 }));
@@ -277,10 +401,10 @@ export function buildMall(catalog: Catalog): MallBuild {
   for (const [x, f] of [[-16, 0], [32, 1]] as [number, number][]) {
     const info = FLOORS[f];
     for (const r of [Math.PI / 2, -Math.PI / 2]) {
-      const sg = signMesh(14, 3.2, info.dept, info.deptEn, ACCENT);
-      sg.position.set(x + (r > 0 ? 0.06 : -0.06), 10.6, 0); sg.rotation.y = r; fg.add(sg);
+      const sg = signMesh(14, 1.5, info.dept, info.deptEn, ACCENT);
+      sg.position.set(x + (r > 0 ? 0.06 : -0.06), 3.7, 0); sg.rotation.y = r; fg.add(sg);
     }
-    for (const dz of [-6, 6]) hang(x, dz, 9);
+    for (const dz of [-6, 6]) hang(x, dz, 4.4);
   }
   for (const { cat, cx, s, floor } of slots) {
     const zr = (a: number, b: number): [number, number] => [Math.min(s * a, s * b), Math.max(s * a, s * b)];
@@ -289,9 +413,9 @@ export function buildMall(catalog: Catalog): MallBuild {
     plane(14, 20, cx, 0.012, s * 18, new THREE.MeshStandardMaterial({ color: accent.clone().lerp(new THREE.Color(0xffffff), 0.72), roughness: 0.5 }), -Math.PI / 2, fg);
     plane(14, 0.35, cx, 0.02, s * 8.2, new THREE.MeshBasicMaterial({ color: cat.color }), -Math.PI / 2, fg);
     // the zone's name, hanging from the roof above its aisle edge
-    const sign = signMesh(10, 2.4, cat.bn, cat.en, cat.color);
-    sign.position.set(cx, 8.8, s * 9); faceCorridor(sign, s); fg.add(sign);
-    hang(cx - 4.5, s * 9, 9.9); hang(cx + 4.5, s * 9, 9.9);
+    const sign = signMesh(10, 1.3, cat.bn, cat.en, cat.color);
+    sign.position.set(cx, 3.8, s * 9); faceCorridor(sign, s); fg.add(sign);
+    hang(cx - 4.5, s * 9, 4.4); hang(cx + 4.5, s * 9, 4.4);
     // "view all" board on a post at the back of the zone
     const post = slab(cx - 0.1, cx + 0.1, s * 25.4 - 0.1, s * 25.4 + 0.1, 0, 2.4, poleM, false, fg); post.castShadow = false;
     solids.push({ minX: cx - 0.1, maxX: cx + 0.1, minY: 0, maxY: 2.4, minZ: s * 25.4 - 0.1, maxZ: s * 25.4 + 0.1 });
@@ -330,7 +454,10 @@ export function buildMall(catalog: Catalog): MallBuild {
   return {
     group: g, roof, floors: floorGroups, solids, obbs, meshSolids, ramps: [], rampRails: [], pickables, blockers, shops, items: allItems,
     spawn: new THREE.Vector3(-hx - 3, 0, 0), spawnYaw: -Math.PI / 2,
-    surfaceAt: () => 0,
+    surfaceAt: (x, z, y) => { // the floor level under (x, z) for something at height y (floors 1..9 only inside the block and outside the atrium hole)
+      for (let f = Math.min(NF - 1, Math.floor((y + 0.3) / FH)); f >= 1; f--) if (Math.abs(x) <= hx && Math.abs(z) <= hz && Math.hypot(x, z) > atriumR) return f * FH;
+      return 0;
+    },
     update(dt) { for (const sp of spinners) sp.rotation.y += dt * 0.6; },
     dispose() {
       g.traverse((o) => {

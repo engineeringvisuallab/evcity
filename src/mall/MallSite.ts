@@ -8,9 +8,13 @@ const smoothstep = (a: number, b: number, x: number): number => {
 
 /** The shopping block inside the hall (metres): corridor, shops, atrium. MallBuilder's MALL.W / MALL.D come from here, so they can never disagree. */
 export const MALL_SIZE = { W: 96, D: 64 };
-/** ONE floor, 14 m high (= the old two 7 m storeys put together): an empty glass hall. */
-export const MALL_FLOORS = 1;
-export const MALL_FH = 14;
+/** CITY MALL 10 FLOORS (Step C1, 26 Nov): 10 storeys of 5 m (50 m tower). Floor 0 = ground concourse, floors 1..9 above it. */
+export const MALL_FLOORS = 10;
+export const MALL_FH = 5;
+/** The round atrium in the middle of the tower (diameter 20 m), open from floor 1 up to the glass roof. */
+export const MALL_ATRIUM_R = 10;
+/** Thickness (m) of every floor slab / the roof. The slab of floor f occupies y = f * FH - MALL_SLAB .. f * FH (its top face is the floor you walk on). */
+export const MALL_SLAB = 0.4;
 
 /**
  * The mall plot (Step M1, 14 Nov: RELOCATED). It is the user's whole RED area WEST of J1, in the bend between the J1 W arm and the J1 S arm (the old EVLab

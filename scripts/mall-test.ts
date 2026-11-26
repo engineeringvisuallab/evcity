@@ -1,4 +1,4 @@
-// Headless City Mall test (ONE open 14 m glass hall that follows the roads): flat pad on the bent plot, no trees / roads on it, the outline is NOT a
+// Headless City Mall test (STEP C1: 10-floor glass tower + 20 m atrium + glass dome, on a one-storey glass podium that follows the roads). Older text: (ONE open 14 m glass hall that follows the roads): flat pad on the bent plot, no trees / roads on it, the outline is NOT a
 // rectangle and hugs the roads, glass curtain wall all round (solid, 2 doorways), no walls / upper floor / ramp inside, the products stand openly in
 // 12 category ZONES (8 food in the west, 4 fashion in the east) either side of a free aisle, walkers get through the doors, cross the hall along
 // the aisle and can reach every product's viewing spot.
@@ -109,16 +109,18 @@ ok(onPlot === 0, 'no tree stands on the mall plot');
 const cat = await loadCatalog();
 const mall = buildMall(cat);
 ok(mall.shops.length === 12 && mall.items.length === 36, `12 zones, 36 products (${mall.shops.length} zones, ${mall.items.length} products)`);
-ok(mall.floors.length === 1, 'one floor (the old two storeys are one 14 m hall)');
+ok(mall.floors.length === 10, '10 floors (floor groups 0..9)');
 ok(mall.pickables.length >= 36, 'products are pickable');
 ok(mall.shops.filter((z) => z.floor === 0).length === 8 && mall.shops.filter((z) => z.floor === 1).length === 4, 'zones: 8 food + 4 fashion');
 { const fz = mall.shops.filter((z) => z.floor === 0).every((z) => z.viewPos.x < 0) && mall.shops.filter((z) => z.floor === 1).every((z) => z.viewPos.x > 0); if (!fz) pending('food zones in the west, fashion zones in the east: the zone layout follows the (new, huge) outline, M2 redoes the building'); else ok(true, 'food zones in the west, fashion zones in the east'); }
 ok(mall.ramps.length === 0 && mall.rampRails.length === 0, 'no ramp');
-ok(mall.solids.every((q) => q.minY >= 14 - 1e-6 || q.maxY <= 2.5), 'no walls inside: every solid is the roof or a low pedestal / counter / post (<= 2.5 m)');
+ok(mall.solids.every((q) => q.minY >= 49.6 - 1e-6 || q.maxY <= 4.6 + 1e-6), 'no walls inside: every solid is the roof (y >= 49.6) or a low pedestal / counter / post / ground column (<= 4.6 m)');
 ok(mall.items.every((it) => Math.abs(it.viewPos.z) > 8), 'the aisle |z| < 8 is free: every viewing spot lies beside it');
 ok(mall.obbs.length >= MALL_BUILDING.length, `glass curtain wall: ${mall.obbs.length} wall pieces round ${MALL_BUILDING.length} corners`);
-ok(mall.obbs.filter((o) => o.y0 === 0 && o.y1 === 14).length >= MALL_BUILDING.length && mall.obbs.filter((o) => o.y0 === 5).length === 2, 'walls are 14 m high, with a doorway lintel at each of the 2 entrances');
-ok(mall.meshSolids.length >= 8, `${mall.meshSolids.length} floor / roof pieces around the block`);
+ok(mall.obbs.filter((o) => o.y0 === 0 && Math.abs(o.y1 - 4.6) < 1e-6).length >= MALL_BUILDING.length && mall.obbs.filter((o) => o.y0 === 3.6).length === 2, 'podium walls are 4.6 m high, with a doorway lintel (3.6 m) at each of the 2 entrances');
+ok(mall.obbs.filter((o) => Math.abs(o.y0 - 4.6) < 1e-6 && o.y1 === 50).length === 4, 'tower: 4 glass walls from 4.6 m up to the roof (50 m)');
+ok(mall.obbs.filter((o) => o.y1 - o.y0 < 1.31 && o.y0 >= 5 - 1e-6).length === 24 * 9, 'atrium balustrade: 24 collider pieces on each of floors 1..9');
+ok(mall.meshSolids.length >= 8 + 9, `${mall.meshSolids.length} floor / roof pieces (wings + 9 upper floor slabs)`);
 
 const bus = new EventBus<EngineEvents>();
 const physics = await PhysicsWorld.create(bus);
@@ -174,10 +176,18 @@ for (let i = 0; i < MALL_BUILDING_LOCAL.length; i++) {
   }
 }
 ok(leaks === 0 && tested > 30, `no gap in the glass wall (${tested} rays from outside, ${leaks} got through)`);
-const roofHit = W.castRay(new R.Ray({ x: -50, y: 40, z: 0 }, { x: 0, y: -1, z: 0 }), 60, true);
-ok(!!roofHit && Math.abs(40 - roofHit.timeOfImpact - 14.4) < 0.15, 'the roof also covers the concourse round the block (y = 14.4)');
-const roofHit2 = W.castRay(new R.Ray({ x: 30, y: 40, z: 0 }, { x: 0, y: -1, z: 0 }), 60, true);
-ok(!!roofHit2 && Math.abs(40 - roofHit2.timeOfImpact - 14.4) < 0.15, 'the roof covers the east half too');
+const roofHit = W.castRay(new R.Ray({ x: -50, y: 60, z: 0 }, { x: 0, y: -1, z: 0 }), 70, true);
+ok(!!roofHit && Math.abs(60 - roofHit.timeOfImpact - 5.0) < 0.15, 'the podium roof covers the concourse round the block (y = 5.0)');
+const roofHit2 = W.castRay(new R.Ray({ x: 30, y: 60, z: 0 }, { x: 0, y: -1, z: 0 }), 70, true);
+ok(!!roofHit2 && Math.abs(60 - roofHit2.timeOfImpact - 50) < 0.15, 'the tower roof is at y = 50');
+const roofAtr = W.castRay(new R.Ray({ x: 0, y: 60, z: 0 }, { x: 0, y: -1, z: 0 }), 70, true);
+ok(!!roofAtr && Math.abs(60 - roofAtr.timeOfImpact - 50) < 0.15, 'the roof is SOLID over the atrium too (glass dome closes it: no rain, nothing falls in)');
+for (let f = 1; f <= 9; f++) {
+  const h = W.castRay(new R.Ray({ x: 30, y: f * 5 + 2, z: 0 }, { x: 0, y: -1, z: 0 }), 10, true);
+  ok(!!h && Math.abs(f * 5 + 2 - h.timeOfImpact - f * 5) < 0.15, `floor ${f}: walkable slab top at y = ${f * 5}`);
+}
+const atr = W.castRay(new R.Ray({ x: 3, y: 49, z: 0 }, { x: 0, y: -1, z: 0 }), 60, true);
+ok(!!atr && Math.abs(49 - atr.timeOfImpact) < 0.15, 'the atrium is open from the top floor down to the ground (a ray falls to y = 0)');
 
 // 7. doors: from the plaza through the east glass doorway, the east end doorway, across the whole ground floor, out through the west doors
 const east = MALL_DOORS[1], west = MALL_DOORS[0];
@@ -206,6 +216,12 @@ for (const it of mall.items) {
   if (Math.hypot(pos.x - it.viewPos.x, pos.z - it.viewPos.z) > 0.6) noView++;
 }
 ok(noView === 0, `all ${mall.items.length} products have a reachable viewing spot (${noView} unreachable)`);
-ok(mall.surfaceAt(-20, 10, 1) === 0 && mall.surfaceAt(20, -10, 1) === 0, 'viewer surfaceAt: flat floor everywhere');
+ok(mall.surfaceAt(-20, 10, 1) === 0 && mall.surfaceAt(20, -10, 1) === 0, 'viewer surfaceAt: ground floor is flat');
+ok(mall.surfaceAt(30, 0, 12) === 10 && mall.surfaceAt(3, 0, 12) === 0, 'viewer surfaceAt: floor 2 = 10 m, the atrium hole = 0');
+// 10. upper floors: a walker on floor 3 cannot walk into the atrium (balustrade), a walker on floor 9 crosses its floor
+put(30, 15, 0); walk(0, 0, 1500);
+ok(Math.hypot(pos.x, pos.z) > 9.9 && Math.abs(feet() - 15) < 0.3, `balustrade stops a walker at the atrium edge (r = ${Math.hypot(pos.x, pos.z).toFixed(2)}, feet y = ${feet().toFixed(2)})`);
+put(30, 45, 0); walk(-30, -25, 2500);
+ok(Math.hypot(pos.x + 30, pos.z + 25) < 0.6 && Math.abs(feet() - 45) < 0.3, 'a walker crosses floor 9 (top floor) beside the atrium');
 console.log(fails === 0 ? '\nALL OK' : `\n${fails} FAILED`);
 process.exit(fails ? 1 : 0);
