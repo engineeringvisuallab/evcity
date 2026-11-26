@@ -8,7 +8,7 @@
 - `Shift+U` = ager minimap zoom cycle (Settings-er button-o ache). `M` = mute, kichu bodlay ni.
 
 ## File
-- `src/ui/Minimap.ts`: full-map mode (ei canvas-i boro hoy, tai ekoi drawing). Marker size ekhon span theke ber hoy (`zl`).
+- `src/ui/Minimap.ts`: full map ALADA canvas-e (`fullCanvas`). Chhoto minimap ager moto shob somoy thake, U chaple bondho hoy na. Ekoi drawing code duibar chole (`paint`). Marker size span theke ber hoy (`zl`).
 - `src/core/Engine.ts`: U = toggle, Shift+U = zoom cycle, mouse lock handoff.
 - `src/ui/SettingsMenu.ts`, `src/input/TouchControls.ts`: shudhu label.
 - Chhuini: Config.ts, RoadNetwork.ts, rail, ring, J1.

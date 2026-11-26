@@ -92,6 +92,10 @@ export class Minimap {
   // ---- Full-screen map (U key) ----
   private parentEl: HTMLElement;
   private full = false;
+  /** true only while the full map is being painted (the same drawing code paints the small minimap and the full map). */
+  private big = false;
+  private fullCanvas = document.createElement('canvas');
+  private fullCtx: CanvasRenderingContext2D;
   private fullCx = 0;
   private fullCz = 0;
   private fullSpan = 10600;
@@ -126,6 +130,7 @@ export class Minimap {
   ) {
     this.zoneLayer = Minimap.makeZoneLayer();
     this.parentEl = parent;
+    this.fullCtx = this.fullCanvas.getContext('2d')!;
     const c = this.canvas;
     this.setSize();
     Object.assign(c.style, {
@@ -158,7 +163,7 @@ export class Minimap {
     autoHide(this.coords);
     parent.append(this.coords, this.clock);
     this.layoutInfo();
-    window.addEventListener('resize', () => (this.full ? this.layoutFull() : this.setSize()));
+    window.addEventListener('resize', () => { this.setSize(); if (this.full) this.layoutFull(); });
 
     this.worker = new Worker(new URL('../workers/minimap.worker.ts', import.meta.url), { type: 'module' });
     this.worker.onmessage = (e: MessageEvent<MinimapResult>) => {
@@ -205,7 +210,7 @@ export class Minimap {
 
   // ------------------------------------------------------------------
   // Full-screen map (U key): the whole world, wheel = zoom, wheel-click / drag = move, pinch on a phone.
-  // It reuses this canvas (made big and square in the middle of the screen), so it draws exactly what the minimap draws.
+  // It has its own canvas (the small minimap stays on screen), painted by the same code, so it shows exactly what the minimap shows.
   // ------------------------------------------------------------------
   get isFull(): boolean {
     return this.full;
@@ -226,6 +231,7 @@ export class Minimap {
     this.ensureFullUi();
     this.backdrop!.style.display = 'block';
     this.bar!.style.display = 'flex';
+    this.fullCanvas.style.display = 'block';
     this.layoutFull();
     this.onFullChange?.(true);
   }
@@ -236,20 +242,20 @@ export class Minimap {
     this.pointers.clear();
     this.backdrop!.style.display = 'none';
     this.bar!.style.display = 'none';
-    Object.assign(this.canvas.style, { left: '', top: '', right: '14px', zIndex: '11', pointerEvents: 'none', touchAction: '', borderRadius: '14px' });
-    this.setSize();
+    this.fullCanvas.style.display = 'none';
     this.onFullChange?.(false);
   }
 
   /** Big square map in the middle of the screen (re-done on resize). */
   private layoutFull(): void {
     const size = Math.max(200, Math.floor(Math.min(window.innerWidth, window.innerHeight) * 0.94));
-    this.canvas.width = size * this.dpr;
-    this.canvas.height = size * this.dpr;
-    Object.assign(this.canvas.style, {
+    this.fullCanvas.width = size * this.dpr;
+    this.fullCanvas.height = size * this.dpr;
+    Object.assign(this.fullCanvas.style, {
+      position: 'fixed', background: '#0c1a2a', border: '2px solid rgba(255,255,255,0.55)', boxShadow: '0 4px 24px rgba(0,0,0,0.6)',
       width: `${size}px`, height: `${size}px`,
       left: `${Math.round((window.innerWidth - size) / 2)}px`, top: `${Math.round((window.innerHeight - size) / 2)}px`, right: 'auto',
-      zIndex: '91', pointerEvents: 'auto', touchAction: 'none', borderRadius: '10px',
+      zIndex: '91', pointerEvents: 'auto', touchAction: 'none', borderRadius: '10px', display: 'block',
     });
   }
 
@@ -261,7 +267,7 @@ export class Minimap {
 
   /** Zoom by `factor` (> 1 = zoom out) and keep the world point under (clientX, clientY) where it is. */
   private zoomAt(clientX: number, clientY: number, factor: number): void {
-    const r = this.canvas.getBoundingClientRect();
+    const r = this.fullCanvas.getBoundingClientRect();
     if (r.width <= 0) return;
     const ox = clientX - r.left - r.width / 2;
     const oy = clientY - r.top - r.height / 2;
@@ -276,7 +282,7 @@ export class Minimap {
   }
 
   private panBy(dxPx: number, dyPx: number): void {
-    const r = this.canvas.getBoundingClientRect();
+    const r = this.fullCanvas.getBoundingClientRect();
     if (r.width <= 0) return;
     const k = this.fullSpan / r.width;
     this.fullCx -= dxPx * k;
@@ -286,7 +292,7 @@ export class Minimap {
 
   private ensureFullUi(): void {
     if (this.backdrop) return;
-    const c = this.canvas;
+    const c = this.fullCanvas;
     const bd = document.createElement('div');
     Object.assign(bd.style, {
       position: 'fixed', inset: '0', zIndex: '90', display: 'none', background: 'rgba(4,10,18,0.82)', touchAction: 'none',
@@ -323,7 +329,7 @@ export class Minimap {
       mk('✕', 'বন্ধ', () => this.closeFull()),
     );
     bar.append(hint, btns);
-    this.parentEl.append(bd, bar);
+    this.parentEl.append(bd, c, bar);
     this.backdrop = bd;
     this.bar = bar;
 
@@ -514,16 +520,35 @@ export class Minimap {
         this.clockPeriod.textContent = `${s.hours >= 6 && s.hours < 18 ? '☀️' : '🌙'} ${c.period}`;
       }
     }
-    const c = this.ctx;
-    const S = this.canvas.width;
-    const span = this.full ? this.fullSpan : ZOOM_SPANS[this.zoom];
-    this.zl = this.full ? (span < 800 ? 0 : span < 2500 ? 1 : span < 9000 ? 2 : 3) : this.zoom;
     this.lastMe.x = s.me.x;
     this.lastMe.z = s.me.z;
+    this.paint(s, false); // the small minimap is ALWAYS drawn, exactly as before
+    if (this.full) this.paint(s, true); // the full map (U) is a second picture on its own canvas
+  }
+
+  /** Paint the map picture onto the small canvas (big = false) or the full-map canvas (big = true). */
+  private paint(s: MapState, big: boolean): void {
+    const sc = this.canvas, sx = this.ctx;
+    if (big) { this.canvas = this.fullCanvas; this.ctx = this.fullCtx; }
+    this.big = big;
+    try {
+      this.drawMap(s);
+    } finally {
+      this.canvas = sc;
+      this.ctx = sx;
+      this.big = false;
+    }
+  }
+
+  private drawMap(s: MapState): void {
+    const c = this.ctx;
+    const S = this.canvas.width;
+    const span = this.big ? this.fullSpan : ZOOM_SPANS[this.zoom];
+    this.zl = this.big ? (span < 800 ? 0 : span < 2500 ? 1 : span < 9000 ? 2 : 3) : this.zoom;
     const half = Config.world.size / 2 + Config.world.chunkMargin * Config.world.chunkSize;
     const ppm = S / span; // canvas pixels per metre
-    const cx = this.full ? this.fullCx : s.me.x;
-    const cz = this.full ? this.fullCz : s.me.z;
+    const cx = this.big ? this.fullCx : s.me.x;
+    const cz = this.big ? this.fullCz : s.me.z;
     const X = (x: number) => (x - cx) * ppm + S / 2;
     const Z = (z: number) => (z - cz) * ppm + S / 2;
 
