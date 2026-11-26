@@ -13,10 +13,12 @@ import * as THREE from 'three';
 import { Catalog, Category, FLOORS, Product, categoryUrl, productUrl } from './MallCatalog';
 import { makePerson, makeProductModel, stdMat } from './ProductModels';
 import { MALL_SIZE, MALL_FLOORS, MALL_FH, MALL_ATRIUM_R, MALL_SLAB, MALL_BUILDING_LOCAL, MALL_DOORS } from './MallSite';
+import { buildCores, type CoresBuild } from './MallCoreBuilder';
+import { coreFootprints, coreHoles, type PickAction } from './MallCores';
 
 export const MALL = { W: MALL_SIZE.W, D: MALL_SIZE.D, FH: MALL_FH, floors: MALL_FLOORS, H: MALL_FH * MALL_FLOORS, atriumR: MALL_ATRIUM_R, slabT: MALL_SLAB, corridor: 7, shopW: 18, doorW: 10, perShop: 3 };
 
-export interface PickInfo { title: string; sub: string; url: string }
+export interface PickInfo { title: string; sub: string; url: string; /** STEP C2: a lift button (call / panel); MallManager runs it instead of opening a link. */ action?: PickAction }
 /** An axis-aligned solid in the group's LOCAL space. */
 export interface Solid { minX: number; maxX: number; minY: number; maxY: number; minZ: number; maxZ: number }
 /** A ramp: a slab rising along x from (x0, y0) to (x1, y1), `width` wide, centred on z = zc. */
@@ -43,6 +45,8 @@ export interface MallBuild {
   shops: ShopInfo[]; items: MallItem[]; spawn: THREE.Vector3; spawnYaw: number;
   /** Walkable height at (x, z) for something standing at height y (viewer / tests). */
   surfaceAt(x: number, z: number, y: number): number;
+  /** STEP C2: the stair + lift cores (MallLiftControl drives the lift views). */
+  cores: CoresBuild;
   update(dt: number): void; dispose(): void;
 }
 
@@ -177,8 +181,8 @@ export function buildMall(catalog: Catalog): MallBuild {
   const circle = (r: number, n = 48): Pt[] => Array.from({ length: n }, (_, i) => { const t = (i / n) * Math.PI * 2; return [Math.cos(t) * r, Math.sin(t) * r] as Pt; });
   const rectPoly: Pt[] = [[-hx, -hz], [hx, -hz], [hx, hz], [-hx, hz]];
   const atriumHole = circle(atriumR);
-  /** The holes cut in the slab of floor f (f >= 1). STEP C2 adds the stair + lift openings here. */
-  const holesFor = (_f: number): Pt[][] => [atriumHole];
+  /** The holes cut in the slab of floor f (f >= 1): the atrium + (STEP C2) the stair well over flight B and the two lift shafts, on both sides. */
+  const holesFor = (f: number): Pt[][] => [atriumHole, ...coreHoles(f)];
   const slabHoles = (outer: Pt[], holes: Pt[][], y0: number, thick: number, m: THREE.Material, parent: THREE.Object3D, col: boolean): THREE.Mesh => {
     const flip = (q: Pt[]) => q.map(([x, z]) => new THREE.Vector2(x, -z));
     const shape = new THREE.Shape(flip(outer));
@@ -373,11 +377,20 @@ export function buildMall(catalog: Catalog): MallBuild {
     }
   }
 
+  // ---- STEP C2: the stair cores + the glass lifts (numbers in MallCores.ts, drawing + colliders in MallCoreBuilder.ts) ----
+  const FOOT = coreFootprints();
+  const hitsCore = (x: number, z: number, hw: number, hd: number): boolean => FOOT.some(([a, b, c, d]) => x + hw > a && x - hw < b && z + hd > c && z - hd < d);
+  const holeRects = coreHoles(1).map((h) => [Math.min(...h.map((p) => p[0])), Math.max(...h.map((p) => p[0])), Math.min(...h.map((p) => p[1])), Math.max(...h.map((p) => p[1]))]);
+  const inCoreHole = (x: number, z: number): boolean => holeRects.some(([a, b, c, d]) => x > a && x < b && z > c && z < d);
+  const cores = buildCores(g, floorGroups, { canvasTex, fitText, stdMat });
+  solids.push(...cores.solids); meshSolids.push(...cores.meshSolids); pickables.push(...cores.pickables);
+
   // ---- ceiling lights of floors 1..9 (one InstancedMesh; the ground floor's own are in its floor group) ----
   {
     const spots: [number, number][] = [];
     for (const x of [-40, -24, -8, 8, 24, 40]) for (const z of [-14, 14]) spots.push([x, z]);
     for (const x of [-36, -24, 24, 36]) spots.push([x, 0]);
+    for (let i = spots.length - 1; i >= 0; i--) if (hitsCore(spots[i][0], spots[i][1], 6, 0.25)) spots.splice(i, 1); // none over the stair / lift cores
     const lg = new THREE.PlaneGeometry(12, 0.5); lg.rotateX(Math.PI / 2);
     const lm = new THREE.InstancedMesh(lg, new THREE.MeshBasicMaterial({ color: 0xffffff }), spots.length * (NF - 1));
     const m4 = new THREE.Matrix4();
@@ -391,7 +404,7 @@ export function buildMall(catalog: Catalog): MallBuild {
   const lightM = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const poleM = stdMat(0x334155, 0.5, 0.5), deskM = stdMat(0x92400e, 0, 0.8);
   const COLS = [-40, -24, -8, 8, 24, 40];
-  for (const x of COLS) for (const z of [-14, 14]) plane(12, 0.5, x, CEIL - 0.03, z, lightM, Math.PI / 2, fg); // ceiling light strips
+  for (const x of COLS) for (const z of [-14, 14]) if (!hitsCore(x, z, 6, 0.25)) plane(12, 0.5, x, CEIL - 0.03, z, lightM, Math.PI / 2, fg); // ceiling light strips (not over the cores)
   const hang = (px: number, pz: number, yBottom: number) => slab(px - 0.04, px + 0.04, pz - 0.04, pz + 0.04, yBottom, CEIL, poleM, false, fg); // a thin pole from the roof
   const food = catalog.categories.filter((c) => c.floor === 0).slice(0, 8), fashion = catalog.categories.filter((c) => c.floor === 1).slice(0, 4);
   const slots: { cat: Category; cx: number; s: number; floor: number }[] = [];
@@ -452,10 +465,10 @@ export function buildMall(catalog: Catalog): MallBuild {
   }
 
   return {
-    group: g, roof, floors: floorGroups, solids, obbs, meshSolids, ramps: [], rampRails: [], pickables, blockers, shops, items: allItems,
+    group: g, roof, floors: floorGroups, solids, obbs, meshSolids, ramps: cores.ramps, rampRails: cores.rampRails, cores, pickables, blockers, shops, items: allItems,
     spawn: new THREE.Vector3(-hx - 3, 0, 0), spawnYaw: -Math.PI / 2,
     surfaceAt: (x, z, y) => { // the floor level under (x, z) for something at height y (floors 1..9 only inside the block and outside the atrium hole)
-      for (let f = Math.min(NF - 1, Math.floor((y + 0.3) / FH)); f >= 1; f--) if (Math.abs(x) <= hx && Math.abs(z) <= hz && Math.hypot(x, z) > atriumR) return f * FH;
+      for (let f = Math.min(NF - 1, Math.floor((y + 0.3) / FH)); f >= 1; f--) if (Math.abs(x) <= hx && Math.abs(z) <= hz && Math.hypot(x, z) > atriumR && !inCoreHole(x, z)) return f * FH;
       return 0;
     },
     update(dt) { for (const sp of spinners) sp.rotation.y += dt * 0.6; },

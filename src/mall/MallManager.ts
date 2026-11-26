@@ -15,6 +15,7 @@ import { mallBands } from './MallBands';
 import { MALL_POLY } from './MallSite';
 import type { Catalog } from './MallCatalog';
 import { MallInteraction } from './MallInteraction';
+import { MallLiftControl } from './MallLiftControl';
 
 export interface MallDeps {
   root: THREE.Object3D;          // world.root: children use ABSOLUTE world coordinates
@@ -30,6 +31,8 @@ export interface MallDeps {
   playerWorld: (out: THREE.Vector3) => THREE.Vector3;
   /** Is the player walking (not driving / flying / sailing)? Shopping is only for walkers. */
   onFoot: () => boolean;
+  /** Put the player at a world position (the lift carries him: Player.teleportTo). */
+  teleport: (world: THREE.Vector3) => void;
 }
 
 const CSS = `
@@ -64,6 +67,7 @@ export class MallManager {
   private q = new THREE.Vector3();
   private plaza: THREE.Mesh;
   private apron: THREE.Group;
+  private lifts: MallLiftControl;
 
   constructor(private d: MallDeps) {
     const site = d.terrain.mall;
@@ -86,6 +90,10 @@ export class MallManager {
     d.root.add(this.apron);
 
     this.body = this.createColliders();
+    this.lifts = new MallLiftControl({
+      RAPIER: d.physics.RAPIER, world: d.physics.world, body: this.body, frame: { x: site.x, z: site.z, floorY: site.floorY, yaw: site.yaw },
+      origin: d.origin, lockTarget: d.dom, teleport: d.teleport, views: this.build.cores.lifts,
+    });
 
     const style = document.createElement('style');
     style.textContent = CSS;
@@ -95,10 +103,10 @@ export class MallManager {
     this.tip.addEventListener('click', (e) => { e.stopPropagation(); this.inter.click(); });
     d.container.appendChild(this.tip);
     this.help.className = 'evmall-help';
-    this.help.innerHTML = 'পণ্যের দিকে ক্রসহেয়ার রাখুন · <b>বাম ক্লিক / O</b> = অর্ডার পেজ (নতুন ট্যাবে) · জোনের নাম ওপরে ঝুলছে · বন্দুক এখানে বন্ধ';
+    this.help.innerHTML = 'পণ্যের দিকে ক্রসহেয়ার রাখুন · <b>বাম ক্লিক / O</b> = অর্ডার পেজ (নতুন ট্যাবে) · জোনের নাম ওপরে ঝুলছে · বন্দুক এখানে বন্ধ · <b>G</b> = লিফট ডাকুন / ফ্লোর বাছুন';
     d.container.appendChild(this.help);
 
-    this.inter = new MallInteraction(d.camera, d.dom, this.build.pickables, (p) => this.onHover(p));
+    this.inter = new MallInteraction(d.camera, d.dom, this.build.pickables, (p) => this.onHover(p), (p) => this.onPick(p));
     this.inter.blockers = this.build.blockers;
     this.inter.maxDist = 20; // the camera is ~6 m behind the player; `accept` below keeps picks within reach of the player
     this.inter.accept = (hit) => {
@@ -111,7 +119,7 @@ export class MallManager {
     // start-of-game hint (the mall is right there, in front of the spawn point)
     const b = this.banner!;
     b.className = 'evmall-banner';
-    b.innerHTML = '<span style="font-size:22px">🛍️</span><span><b>City Mall</b> সামনেই — ১০ তলা কাচের মল, মাঝখানে ২০ মি. আট্রিয়াম! (লিফট ও সিঁড়ি পরের ধাপে আসছে)</span>';
+    b.innerHTML = '<span style="font-size:22px">🛍️</span><span><b>City Mall</b> সামনেই — ১০ তলা কাচের মল, মাঝখানে ২০ মি. আট্রিয়াম! দুই পাশে লিফট ও সিঁড়ি আছে</span>';
     d.container.appendChild(b);
     this.bannerTimer = 14;
   }
@@ -193,6 +201,12 @@ export class MallManager {
     return body;
   }
 
+  /** A click on a pickable: a lift button runs its action, everything else opens its page in a new tab. */
+  private onPick(p: PickInfo): void {
+    if (p.action) this.lifts.act(p.action);
+    else MallInteraction.openInNewTab(p);
+  }
+
   private onHover(p: PickInfo | null): void {
     if (!p) { this.tip.style.display = 'none'; return; }
     this.tip.style.display = 'block';
@@ -223,6 +237,7 @@ export class MallManager {
     const pf = Math.max(0, Math.min(MALL.floors - 1, Math.floor((this.p.y - site.floorY) / MALL.FH)));
     this.build.floors.forEach((fg, i) => { fg.visible = this.inside ? Math.abs(i - pf) <= 1 : i === 0 && dist < 200; });
     if (this.near) this.build.update(dt);
+    this.lifts.update(dt, this.near, walking, this.p, this.d.input.wasPressed('KeyG'));
     this.build.roof.visible = true;
 
     if (this.inside !== was) this.help.style.display = this.inside ? 'block' : 'none';
@@ -241,7 +256,7 @@ export class MallManager {
     // shopping: only inside the building and only on foot
     if (this.inside) {
       this.inter.update();
-      if (this.inter.hovered && (this.d.input.wasPressed('Mouse0') || this.d.input.wasPressed('KeyO'))) this.inter.click();
+      if (this.inter.hovered && !this.lifts.uiOpen && (this.d.input.wasPressed('Mouse0') || this.d.input.wasPressed('KeyO'))) this.inter.click();
     } else if (this.inter.hovered) {
       this.inter.clear();
     }
@@ -249,6 +264,7 @@ export class MallManager {
 
   dispose(): void {
     const world = this.d.physics.world;
+    this.lifts.dispose();
     world.removeRigidBody(this.body);
     this.d.root.remove(this.group);
     this.d.root.remove(this.plaza);

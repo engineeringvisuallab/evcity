@@ -2,6 +2,9 @@ import { FLOORS, levelLabel } from './EVLabTowerLayout';
 
 // EVLab Tower v1.3: the lift floor panel (all floors listed by name) and the little prompt pill. Plain DOM, created on demand.
 
+/** One row of the floor panel (the City Mall passes its own list; the EVLab tower uses its FLOORS). */
+export interface LiftUIItem { level: number; text: string }
+
 const FONT = 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
 
 export class LiftUI {
@@ -11,12 +14,13 @@ export class LiftUI {
   private title: HTMLDivElement;
   private rows: HTMLDivElement[] = [];
   private sel = 0;
+  private maxLevel = 0;
   private pillText = '';
   private relock = false;
   open = false;
   private onPick: ((level: number) => void) | null = null;
 
-  constructor(private lockTarget?: HTMLElement) {
+  constructor(private lockTarget?: HTMLElement, items?: LiftUIItem[], footText?: string) {
     this.pill = document.createElement('div');
     Object.assign(this.pill.style, {
       position: 'fixed', bottom: '112px', left: '50%', transform: 'translateX(-50%)', padding: '9px 20px', borderRadius: '999px',
@@ -34,13 +38,15 @@ export class LiftUI {
     this.list = document.createElement('div');
     Object.assign(this.list.style, { overflowY: 'auto', padding: '6px' } satisfies Partial<CSSStyleDeclaration>);
     const foot = document.createElement('div');
-    foot.textContent = 'Up / Down + Enter, or click.  Esc = close';
+    foot.textContent = footText ?? 'Up / Down + Enter, or click.  Esc = close';
     Object.assign(foot.style, { padding: '8px 16px', font: `12px ${FONT}`, color: '#b9a878', borderTop: '1px solid rgba(212,175,55,0.25)' } satisfies Partial<CSSStyleDeclaration>);
     // top floor first, like a real panel
-    for (let i = FLOORS.length - 1; i >= 0; i--) {
-      const f = FLOORS[i];
+    const list: LiftUIItem[] = items ?? FLOORS.map((q) => ({ level: q.level, text: `${levelLabel(q.level).padStart(2, ' ')}   ${q.name}` }));
+    this.maxLevel = Math.max(...list.map((q) => q.level));
+    for (let i = list.length - 1; i >= 0; i--) {
+      const f = list[i];
       const row = document.createElement('div');
-      row.textContent = `${levelLabel(f.level).padStart(2, ' ')}   ${f.name}`;
+      row.textContent = f.text;
       row.dataset.level = String(f.level);
       Object.assign(row.style, { padding: '7px 12px', borderRadius: '8px', cursor: 'pointer', whiteSpace: 'pre' } satisfies Partial<CSSStyleDeclaration>);
       row.addEventListener('click', () => this.pick(f.level));
@@ -100,7 +106,7 @@ export class LiftUI {
     if (!this.open) return;
     e.stopPropagation();
     if (e.code === 'Escape' || e.code === 'KeyG') { e.preventDefault(); this.close(); return; }
-    if (e.code === 'ArrowUp') { e.preventDefault(); this.select(Math.min(FLOORS.length - 1, this.sel + 1), true); }
+    if (e.code === 'ArrowUp') { e.preventDefault(); this.select(Math.min(this.maxLevel, this.sel + 1), true); }
     else if (e.code === 'ArrowDown') { e.preventDefault(); this.select(Math.max(0, this.sel - 1), true); }
     else if (e.code === 'Enter' || e.code === 'NumpadEnter') { e.preventDefault(); this.pick(this.sel); }
   };

@@ -521,6 +521,7 @@ export class Engine {
       catalog,
       playerWorld: (out) => this.focusWorld(out),
       onFoot: () => this.player.active && !this.player.inVehicle && !this.cameraController.isFreeFly && !this.helis.pilot && !this.boats.skipper,
+      teleport: (w) => this.player.teleportTo(w), // the mall lifts carry the player
     });
 
     bootMark('City Mall');

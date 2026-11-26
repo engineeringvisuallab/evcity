@@ -2,7 +2,7 @@
 
 Notun chat-e evcity zip (full repo) attach kore "Part A" paste koro. Tarpor ek chat-e ek step, "Part C" theke.
 
-**Ekhon porjonto: Step C1 done (26 Nov). NEXT: Step C2 (lift + stair).**
+**Ekhon porjonto: Step C2 done (26 Nov). NEXT: Step C3 (10 tolar floor plan + shop layout).**
 Note: C1 sandbox-e network chhilo na, tai `npm run test:mall` ar game-e chalano hoy ni. Sudhu tsc-er syntax check ar geometry-r hisab kora hoyeche. Age tumi `npm run test:mall` chalao, fail hole ami thik korbo.
 
 ---
@@ -49,7 +49,8 @@ Ami je design nilam (C1, tumi apotti korle bolo):
 ### Step C1: Building shell, atrium, glass roof, floor + collision. DONE (26 Nov)
 Dekho "Done log".
 
-### Step C2: Lift + stair (2 pashe)
+### Step C2: Lift + stair (2 pashe). DONE (26 Nov)
+Dekho "Done log".
 ```
 Step C2: HANDOFF_CITYMALL_10FLOOR_BN.md-er Part B ar C2 dekho. Age open proshno gulo ek message-e jiggesh koro (tappable hole bhalo), uttor pele code shuru koro. Tarpor:
 1. West ar east, dui pashe (local x ~ -hx+8 ar +hx-8, aisle z=0 theke dure, entrance blocking korbe na) 1 ta stair core + 1 ta lift core. Stair: switchback, prottek tola theke tola, dekhte shiri-r dhap, collider smooth (ramp collider, MallManager.createColliders ramp support ache) + side railing.
@@ -115,3 +116,21 @@ Step C7: draw call / triangle ginti, floor visibility (inside: +-1 floor, outsid
 - Upper floor ekhon khali (C3-C5 te bhorbe).
 - `MallManager.group.visible` 900 m-e dure gele lukay (C7-e dekhbo tower-er jonno beshi koraa lagbe kina).
 - Podium (wings) puro outline-er upor 1 tola; upor-er tola sudhu tower block-er upor.
+
+### Step C2 (26 Nov): lift + stair, 2 pashe
+**Tomar decision (C2 shuru-te):** stair + lift atrium-er duipashe (west ar east), stair 2.4 m choura, lift 8 m/s. Stair/lift core-er jaygay ami thik korechi (nicher "Layout").
+**Layout (block local, east-er; west = x-e mirror):** stair z 9.5..14.5 (aisle-er dokkhin), x 13..20.1 (switchback, 2 flight, 15 dhap each, ramp 29 deg). Lift z -13.2..-10.4 (aisle-er uttor), x 15.3..17.7, door aisle-er dike, lobby z -10.4..-8. Aisle |z| < 8 khali.
+**Notun file (src/mall/):**
+- `MallCores.ts`: shob number (STAIR, LIFT, hole, footprint, stairModel, cabin parts, lobby/doorway helper). Pure, three.js nai.
+- `MallCoreBuilder.ts`: stair (instanced step/slab/glass rail/handrail, skirt merge), lift shaft + cabin + door leaf + call button + floor plate + directory board (floor group-e, floor-er sathe lukay).
+- `MallLift.ts`: lift car logic (door, queue, 8 m/s, braking). EVLabLifts.ts-er moto, mall-er number diye.
+- `MallLiftPhysics.ts`: Rapier body (landing door blocker + kinematic cabin), game ar test duitar jonno ek-i code.
+- `MallLiftControl.ts`: G (lobby-te lift dak, cabin-e floor bachho), button click, floor panel, player cabin-er sathe uthe (Player.teleportTo), shaft-e atke gele lobby-te phire.
+**Changed file:** `MallBuilder.ts` (holesFor + buildCores + ceiling light core-er upor na + surfaceAt hole), `MallManager.ts` (MallLiftControl, click action, G, text), `core/Engine.ts` (1 line: mall-e `teleport`), `evlab/EVLabLiftUI.ts` (optional floor list parameter, EVLab-er jonno kono poriborton nai; mall-er lift-e eta REUSE kora hoyeche), `scripts/mall-test.ts`.
+**Test:** `npm run test:mall` chalano hoy ni (sandbox-e network nai, three + rapier install hoy ni). Chalano hoyeche: nijer file gulor tsc type check (three bad diye) clean; pure logic (lift queue, 8 m/s, door doorway-e bondho hoy na, shob door shut thake moving-e) ar geometry (hole overlap nai, ramp continuous, head room 2.1 m) PASS. mall-test.ts-e notun assert likha ache (36 ramp / 72 rail, stair west+east ground theke floor 9, rail well-er pashe, lift 0->9 speed, lift-e uthe floor 5, lift away thakle door shut) kintu Rapier chhara chole ni. **Age tumi `npm run test:mall` chalao, fail hole ami thik korbo.**
+**Janar jinis:**
+- Lift 0 -> 9 prai 15 s (accel 2.5 m/s2 dhorechi, top 8 m/s). Aro druto chaile `LIFT.accel` (MallCores.ts) baro.
+- Ground floor-er 3 ta product-er viewing spot (cx -24 ar 24 zone-er ek ta kore) stair core-er bhitore porche; mall-test-e ota "pending". C3-te shop layout core-er bahire jabe.
+- Directory board ekhon "Floor N" noam; C3-te department name (MallCoreBuilder.ts dirTex + MallCores.ts floorNameBn).
+- Browser-e ekbar dekhte hobe: stair uthar feel, lift-e player carry smooth kina, stair-er pashe jaygay.
+- MallViewer.ts (alada viewer) lift animate kore na (shudhu game-e).
