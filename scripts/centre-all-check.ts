@@ -1,0 +1,24 @@
+// STEP CENTRE-ALL check: key-3 set = every built game road; planned / housing only when unbuilt. Run: npx tsx scripts/centre-all-check.ts
+import { TerrainGenerator } from '../src/terrain/TerrainGenerator';
+import { Config } from '../src/core/Config';
+import { collectCentreSet } from '../src/roads/debug/RoadCentreSet';
+import { GIS_LAYERS } from '../src/export/GisLayers';
+const g: any = new TerrainGenerator(Config.world.seed);
+const set = collectCentreSet(g);
+const roads = (g.roads.roads as any[]).filter((r) => !String(r.name).includes(':') && r.xs.length >= 2);
+const by: Record<string, number> = {};
+for (const l of set.lines) by[l.source + '/' + l.cls] = (by[l.source + '/' + l.cls] ?? 0) + 1;
+console.log('game roads', g.roads.roads.length, 'usable', roads.length, 'built lines', set.lines.filter((l) => l.source === 'built').length);
+console.log('by source/class', JSON.stringify(by));
+let fail = 0;
+const T = (n: string, ok: boolean, d = ''): void => { console.log((ok ? 'PASS ' : 'FAIL ') + n + (d ? ' ' + d : '')); if (!ok) fail++; };
+T('every game road is a built line', set.lines.filter((l) => l.source === 'built').length === roads.length);
+T('built line = the game road points (same count, same first point)', roads.every((r) => { const l = set.lines.find((q) => q.source === 'built' && q.id === String(r.name) && q.pts.length === r.xs.length); return !!l && l.pts[0][0] === r.xs[0] && l.pts[0][1] === r.zs[0]; }));
+const parents = new Set(set.lines.filter((l) => l.source === 'built').map((l) => l.id.replace(/\.\d+[a-z]?$/, '')));
+T('no planned / housing line over a built road', set.lines.filter((l) => l.source !== 'built').every((l) => !parents.has(l.id.replace(/\.\d+[a-z]?$/, ''))));
+console.log('still only planned (not built):', set.lines.filter((l) => l.source !== 'built').map((l) => l.id).join(' ') || 'none');
+const view = GIS_LAYERS.find((l) => l.id === 'road_centre_view')!.build(g, {}) as any;
+T('GIS key-3 layer = same lines', view.features.length === set.lines.length, view.features.length + ' features');
+const cl = GIS_LAYERS.find((l) => l.id === 'roads_centerline')!.build(g, {}) as any;
+T('GIS roads_centerline = all game roads', cl.features.length === g.roads.roads.length, cl.features.length + ' features');
+console.log(fail ? 'FAILED ' + fail : 'ALL PASS');

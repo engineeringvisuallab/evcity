@@ -432,6 +432,7 @@ export class Engine {
     this.rail = this.world.terrain.rail;
     this.railDebug = new RailDebug(this.rail);
     this.roadCentre = new RoadCentreLayer(this.world.root, roads, (x, z) => this.world.terrain.heightAt(x, z));
+    this.roadCentre.setNames(this.hudSettings.values.roadNumbers);
     this.plotLayer = new PlotLayer(this.world.root, (x, z) => this.world.terrain.heightAt(x, z));
     this.railPhysics = new RailPhysics(physics, this.world.origin, this.rail, (x, z) => this.world.terrain.heightAt(x, z));
     this.portPhysics = new PortPhysics(physics, this.world.origin);
@@ -1783,6 +1784,7 @@ export class Engine {
     this.hud.setOptions({ crosshair: v.crosshair, weapon: v.weapon, areaAlways: v.areaAlways });
     this.economy.setBalanceVisible(v.gold);
     this.evlab?.setClockCountry(v.clockCountry);
+    this.roadCentre?.setNames(v.roadNumbers); // Settings > road names: pole + name of every road on the key-3 view
   }
 
   /** Parked start fleet: origin FLEET_POS, nose (yaw FLEET_YAW) to the road; lat = metres to the right of the nose, back = metres away from the road, turn = extra yaw. */

@@ -3,15 +3,9 @@
 // NOT a road: no physics, no AI, no traffic. Hidden by default; key 3 toggles it. fog: false on every material (like RailDebug), else the game's fog hides far lines. Parent = world.root, absolute world coordinates.
 import * as THREE from 'three';
 import type { RoadNetwork } from '../RoadNetwork';
-import { CENTRE_ROADS } from './RoadCentreData';
-import { HOUSING_STREETS, HOUSING_JUNCTIONS } from './HousingStreetData';
+import { HOUSING_JUNCTIONS } from './HousingStreetData';
+import { CENTRE_COLOUR, CENTRE_LIFT, CENTRE_WIDTH, collectCentreSetFrom } from './RoadCentreSet';
 
-const COLOUR: Record<string, number> = { '8': 0x111111, '6': 0x2a6bff, '4': 0xff2a3c, '2': 0x12c24a };
-const HCOL: Record<string, number> = { A: 0xe000c0, C: 0x00c8e0, L: 0xffd400 }; // housing streets: arterial magenta, collector cyan, local yellow (R4 red / R2 green / R6 blue stay)
-const HWIDTH: Record<string, number> = { A: 4, C: 3, L: 2.5 };
-const HPOLE: Record<string, number> = { A: 26, C: 20, L: 14 };
-const WIDTH = 6; // m
-const CRR_HEX = 0x9b30ff; // rail-corridor roads CRR-* and RR-HUB: purple (R4 red, R2 green, R6 blue, 8-lane black stay)
 const LIFT = 1.5; // m above the ground / road surface
 
 function label(text: string, hex: number, small = false): THREE.Sprite {
@@ -39,6 +33,8 @@ function label(text: string, hex: number, small = false): THREE.Sprite {
 
 export class RoadCentreLayer {
   readonly group = new THREE.Group();
+  /** Poles + name labels (+ junction labels): shown only when the setting 'road names' is ON. */
+  private readonly names = new THREE.Group();
   private built = false;
   private readonly geos: THREE.BufferGeometry[] = [];
   private readonly mats: THREE.Material[] = [];
@@ -46,11 +42,17 @@ export class RoadCentreLayer {
   constructor(private readonly parent: THREE.Object3D, private readonly roads: RoadNetwork, private readonly heightAt: (x: number, z: number) => number) {
     this.group.name = 'RoadCentreLayer';
     this.group.visible = false;
+    this.group.add(this.names);
     parent.add(this.group);
   }
 
   get visible(): boolean {
     return this.group.visible;
+  }
+
+  /** Settings > road names (HudSettings.roadNumbers): the pole + name of every road and the junction labels. */
+  setNames(on: boolean): void {
+    this.names.visible = on;
   }
 
   /** Built lazily on the first toggle, so a game that never uses it pays nothing. */
@@ -93,61 +95,36 @@ export class RoadCentreLayer {
     const m = new THREE.LineBasicMaterial({ color: hex, fog: false });
     this.geos.push(g);
     this.mats.push(m);
-    this.group.add(new THREE.Line(g, m));
+    this.names.add(new THREE.Line(g, m));
     const s = label(text, hex, small);
     s.position.set(x, y + h + (small ? 5 : 10), z);
-    this.group.add(s);
+    this.names.add(s);
   }
 
   private build(): void {
     this.built = true;
-    // 1. roads that are already in the game: drawn on their real finished surface (8-lane black, R6 blue)
-    for (const r of this.roads.roads as any[]) {
-      if (String(r.name).includes(':') || !(r.lanes === 8 || r.lanes === 6)) continue;
-      const hex = COLOUR[String(r.lanes)];
-      const ys = Array.from(r.ys as ArrayLike<number>, (v) => v + LIFT);
-      this.ribbon(r.xs, ys, r.zs, hex, r.name, WIDTH);
-      const m = r.xs.length >> 1;
-      this.pole(r.xs[m], ys[m], r.zs[m], hex, r.name, 40);
-    }
-    // 1b. the rail-corridor roads CRR-* and the hub ring RR-HUB (4 lanes, so section 1 skips them): purple ribbon on the real finished surface + name label (user 2026-11-20: key 3 did not show them)
-    let kc = 0;
-    for (const r of this.roads.roads as any[]) {
-      const nm = String(r.name);
-      if (!(nm.startsWith('CRR-') || nm === 'RR-HUB')) continue;
-      const ys = Array.from(r.ys as ArrayLike<number>, (v) => v + LIFT + 0.4);
-      this.ribbon(r.xs, ys, r.zs, CRR_HEX, nm, 4);
-      const m = r.xs.length >> 1;
-      this.pole(r.xs[m], ys[m], r.zs[m], CRR_HEX, nm, 30 + (kc++ % 3) * 8);
-    }
-    // 2. planned lines (proposals): draped on the natural ground
-    CENTRE_ROADS.forEach((r, k) => {
-      const hex = COLOUR[String(r.cls)];
-      const xs = r.pts.map((p) => p[0]);
-      const zs = r.pts.map((p) => p[1]);
-      const ys = r.pts.map((p) => this.heightAt(p[0], p[1]) + LIFT);
-      this.ribbon(xs, ys, zs, hex, 'centre-' + r.id, r.cls === 2 ? 3 : r.cls === 4 ? 5 : WIDTH);
-      const m = r.pts.length >> 1;
-      this.pole(xs[m], ys[m], zs[m], hex, r.flag ? r.id + ' ' + r.flag : r.id, 35 + (k % 3) * 8); // flag: ! = no bigger road within 100 m, ~ = stops short of it (class-sequence rule)
+    // ONE source with the GIS export (RoadCentreSet): every finished game road, all classes; a planned / housing line only where no built road of that name exists
+    const set = collectCentreSetFrom(this.roads.roads as any[], this.heightAt);
+    set.lines.forEach((l, k) => {
+      const hex = CENTRE_COLOUR[l.cls] ?? 0xff7a00;
+      const lift = LIFT + (CENTRE_LIFT[l.cls] ?? 0.5) + (l.source === 'built' ? 0 : 0.3);
+      const xs = l.pts.map((p) => p[0]);
+      const zs = l.pts.map((p) => p[1]);
+      const ys = l.pts.map((p) => p[2] + lift);
+      this.ribbon(xs, ys, zs, hex, (l.source === 'built' ? 'road-' : l.source + '-') + l.id, CENTRE_WIDTH[l.cls] ?? 3);
+      const m = l.pts.length >> 1;
+      const km = (Math.round(l.lengthM / 100) / 10).toFixed(1);
+      const text = l.source === 'built' ? l.id + ' · ' + km + ' km' : l.id + ' (plan)' + (l.flag ? ' ' + l.flag : '');
+      const big = l.cls === '8' || l.cls === '6' || l.cls === '4';
+      this.pole(xs[m], ys[m], zs[m], hex, text, (big ? 40 : 28) + (k % 3) * 8, !big);
     });
-    // 3. REAL junctions JNxxx (user 2026-11-22: the old J-xx poles came from the old fitted lines and were used as junctions): found from the finished roads in the game
-    // (RoadNetwork.junctionRegistry), standing at the real road height. Colour: ring-T red, interchange tap orange, arterial yellow, roundabout blue, priority T green.
+    // REAL junctions JNxxx (from the finished roads, RoadNetwork.junctionRegistry). Colour: ring-T red, interchange tap orange, arterial yellow, roundabout blue, priority T green.
     const JCOL: Record<string, number> = { 'ring-T': 0xff1030, tap: 0xff7a00, arterial: 0xffd000, roundabout: 0x00b8ff, T: 0x3ddc54, continuation: 0xaaaaaa };
     for (const j of this.roads.junctionRegistry().nodes) {
       if (j.type === 'continuation') continue;
       const names = [...new Set(j.legs.map((l) => l.name))].join('+');
       this.pole(j.x, j.y + LIFT, j.z, JCOL[j.type] ?? 0xffb000, `${j.id} ${j.type} ${names}${j.flags.length ? ' [' + j.flags.join(' ') + ']' : ''}`, 20);
     }
-    // 4. housing streets (STEP C, plan view only): arterial / collector / local in their own colours, small name label, white J-xx poles
-    HOUSING_STREETS.forEach((r, k) => {
-      const hex = HCOL[r.cls];
-      const xs = r.pts.map((p) => p[0]);
-      const zs = r.pts.map((p) => p[1]);
-      const ys = r.pts.map((p) => this.heightAt(p[0], p[1]) + LIFT + 0.3);
-      this.ribbon(xs, ys, zs, hex, 'housing-' + r.id, HWIDTH[r.cls]);
-      const m = r.pts.length >> 1;
-      this.pole(xs[m], ys[m], zs[m], hex, r.id, HPOLE[r.cls] + (k % 3) * 4, true);
-    });
     for (const j of HOUSING_JUNCTIONS) this.pole(j.x, this.heightAt(j.x, j.z) + LIFT, j.z, 0xffffff, j.id, 9, true);
   }
 

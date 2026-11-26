@@ -59,11 +59,11 @@ const roadCentreView = (t: TerrainGenerator): GisLayer => {
   const set = collectCentreSet(t);
   const features: GisFeature[] = set.lines.map((l) => ({
     parts: [l.pts.map((p) => toGrid(p[0], p[1], p[2]))],
-    attrs: [l.source, l.id, l.cls, l.flag],
+    attrs: [l.source, l.id, l.cls, l.flag, r2(l.lengthM)],
   }));
   return {
     id: 'road_centre_view', label: 'Road Central Line (key 3 view)', geom: 'polyline', hasZ: true, features,
-    fields: [C('SOURCE', 8), C('ROAD_ID', 16), C('CLASS', 4), C('FLAG', 2)],
+    fields: [C('SOURCE', 8), C('ROAD_ID', 16), C('CLASS', 4), C('FLAG', 2), N('LENGTH_M', 10, 1)],
   };
 };
 
@@ -424,7 +424,7 @@ const buildings3d = (t: TerrainGenerator, ctx: GisContext): GisLayer => {
 
 export const GIS_LAYERS: readonly GisLayerDef[] = [
   { id: 'roads_centerline', label: 'রাস্তার সেন্টারলাইন', hint: 'সব রাস্তা, উচ্চতা (Z) সহ', build: roadsCenterline },
-  { id: 'road_centre_view', label: 'রোড সেন্টার লাইন (৩ চাপলে যা দেখায়)', hint: 'বানানো ৮/৬ লেন + প্ল্যান করা ৬/৪/২ লেন + হাউজিং স্ট্রিট, রঙ ও ক্লাস সহ', build: roadCentreView },
+  { id: 'road_centre_view', label: 'রোড সেন্টার লাইন (৩ চাপলে যা দেখায়)', hint: 'গেমের সব বানানো রাস্তা (৮/৬/৪/২ লেন, C, L, SH, CRR) আপডেট করা সেন্টারলাইন; শুধু যেটা এখনো বানানো হয়নি সেটা প্ল্যান হিসেবে। রঙ, ক্লাস ও দৈর্ঘ্য সহ', build: roadCentreView },
   { id: 'junctions', label: 'জংশন (আসল, গেমের রাস্তা থেকে)', hint: 'গেমের শেষ রাস্তা থেকে পাওয়া সব জংশন: ধরন, পা (leg), লেভেল ধাপ, ফ্ল্যাগ (পয়েন্ট)', build: junctionsReal },
   { id: 'road_free_ends', label: 'যে রাস্তার মুখ কোথাও মেলেনি', hint: '১২ মিটারের মধ্যে অন্য রাস্তা নেই (পয়েন্ট)', build: roadFreeEnds },
   { id: 'road_centre_junctions', label: 'পুরোনো পরিকল্পিত জংশন মার্ক (J-xx)', hint: 'পুরোনো তালিকা: আসল জংশন নয়, শুধু তুলনার জন্য (পয়েন্ট)', build: roadCentreJunctions },

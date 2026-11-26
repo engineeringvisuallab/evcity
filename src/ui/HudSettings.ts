@@ -26,7 +26,7 @@ export interface HudOptions {
   rainQuality: number;
   /** The player holds an umbrella in the rain. */
   rainUmbrella: boolean;
-  /** ROAD NUMBERS: the road code (H1, P3 ...) painted on the road near the camera. */
+  /** ROAD NAMES: the pole + name (code + length) of every road on the key-3 centre-line view. */
   roadNumbers: boolean;
   /** EVLab tower clock: the country (code, e.g. 'BD') whose real time the clock shows. Not the game's day / night. */
   clockCountry: string;
@@ -45,7 +45,7 @@ export const HUD_DEFAULTS: Readonly<HudOptions> = {
   rainLevel: 1,
   rainQuality: 0,
   rainUmbrella: true,
-  roadNumbers: false, // default OFF (the player switches it on in Settings)
+  roadNumbers: true, // road names on the key-3 centre-line view: default ON (switch off in Settings)
   clockCountry: DEFAULT_COUNTRY,
 };
 
