@@ -7,8 +7,9 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { Q } from '../core/Quality';
 import { Config } from '../core/Config';
-import { BOARD_H, BOARD_TOP, EMPTY_BOARD, GANTRY, POST_TOP, SIGN_FIELD, type BoardContent } from './RoadSignSpec';
-import { paintBoard, paintSections, paintSize, SIGN_COLORS } from './RoadSignPaint';
+import { BOARD_H, BOARD_TOP, EMPTY_BOARD, GANTRY, POST_TOP, SIGN_FIELD, type BoardContent, type SignRow } from './RoadSignSpec';
+import { paintBoard, paintSectionText, paintSections, paintSize, roadStrip, SIGN_COLORS } from './RoadSignPaint';
+import { ROAD_SIGN_TEXT } from './RoadSignText';
 import { type RoadSignSpot } from './RoadSignData';
 import { roadSignSpots } from './ActiveSigns'; // J9-d: sign-17 (over the removed R6-9) is not built with the 300 ft junction switch ON
 import { gantrySolids, solidsRadius, type SignSolid, type SignSolidGroup } from './SignSolids';
@@ -22,6 +23,8 @@ interface Face {
   w: number;
   sections: number;
   content: BoardContent;
+  /** STEP SIGN-FIX-2: the lettering of this face (destinations + strip); null = a plain coloured face. */
+  text: { rows: ReadonlyArray<SignRow>; stripBn: string; stripEn: string; n: number } | null;
   painted: THREE.MeshBasicMaterial | null;
 }
 
@@ -108,7 +111,7 @@ export class RoadSignLayer {
       mesh.name = 'road-sign-face';
       geo.computeBoundingSphere();
       this.group.add(mesh);
-      this.faces.push({ mesh, cx: s.x, cz: s.z, w: s.boardW, sections: s.sections, content: EMPTY_BOARD, painted: null });
+      this.faces.push({ mesh, cx: s.x, cz: s.z, w: s.boardW, sections: s.sections, content: EMPTY_BOARD, text: this.textFor(s, face), painted: null });
     }
     const solids = gantrySolids(s.edge, [s.feetL, s.feetR], POST_TOP, GANTRY.postR + 0.1, GANTRY.postBelow, GANTRY.baseSize, GANTRY.baseHeight, 0);
     this.solidGroups.push({ x: s.x, y: s.y, z: s.z, yaw: s.yaw, radius: solidsRadius(solids), solids });
@@ -142,9 +145,18 @@ export class RoadSignLayer {
       mesh.name = 'road-sign-face';
       geo.computeBoundingSphere();
       this.group.add(mesh);
-      this.faces.push({ mesh, cx: s.x, cz: s.z, w: s.boardW, sections: s.sections, content: EMPTY_BOARD, painted: null });
+      this.faces.push({ mesh, cx: s.x, cz: s.z, w: s.boardW, sections: s.sections, content: EMPTY_BOARD, text: this.textFor(s, sz), painted: null });
     }
     this.solidGroups.push({ x: s.x, y: s.y, z: s.z, yaw: s.yaw, radius: solidsRadius(solids), solids });
+  }
+
+  /** Lettering of the face on side `side` (+1 = A, traffic of growing s; -1 = B) of a gantry / overbridge, or null when the sign has none. */
+  private textFor(s: RoadSignSpot, side: 1 | -1): Face['text'] {
+    const t = ROAD_SIGN_TEXT[s.id];
+    if (!t) return null;
+    const rows = side > 0 ? t.a : t.b;
+    const st = roadStrip(t.road, t.len);
+    return { rows, stripBn: st.bn, stripEn: st.en, n: s.sections };
   }
 
   /** The shared blank face for a panel width (plain green when there is no canvas, e.g. a headless run). */
@@ -177,7 +189,8 @@ export class RoadSignLayer {
     c.height = H;
     const g = c.getContext('2d');
     if (!g) return;
-    paintBoard(g, W, H, f.content);
+    if (f.text) paintSectionText(g, W, H, f.text.n, f.text.rows, f.text.stripBn, f.text.stripEn);
+    else paintBoard(g, W, H, f.content);
     const t = new THREE.CanvasTexture(c);
     t.colorSpace = THREE.SRGBColorSpace;
     t.anisotropy = Q.maxAniso;
@@ -199,7 +212,7 @@ export class RoadSignLayer {
     let budget = Q.signPaintPerFrame;
     const pr = SIGN_FIELD.paint * Q.signRadiusMul, ur = SIGN_FIELD.unpaint * Q.signRadiusMul;
     for (const f of this.faces) {
-      if (f.content.rows.length === 0 && !f.content.maximBn) continue; // blank faces share one texture, nothing to paint
+      if (!f.text && f.content.rows.length === 0 && !f.content.maximBn) continue; // blank faces share one texture, nothing to paint
       const d = Math.hypot(camX - f.cx, camZ - f.cz);
       if (f.painted) {
         if (d > ur) this.unpaint(f);

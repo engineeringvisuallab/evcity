@@ -1,6 +1,6 @@
 // ROAD SIGN BOARDS - Step 1: draws the face of ONE board on a 2D canvas (green destination part + dark maxim strip). No three.js: it only needs a CanvasRenderingContext2D,
 // so the same code runs in the game (RoadSignLayer makes a CanvasTexture of it) and in a plain browser page for a preview.
-import { BOARD_H, GANTRY, SECTION_COLORS, bnDigits, kmText, type BoardContent, type SignArrow } from './RoadSignSpec';
+import { BOARD_H, GANTRY, SECTION_COLORS, bnDigits, kmText, type BoardContent, type SignArrow, type SignRow } from './RoadSignSpec';
 
 export const SIGN_COLORS = {
   green: '#0b6b3b',
@@ -128,4 +128,51 @@ export function paintSections(g: CanvasRenderingContext2D, W: number, H: number,
   g.fillStyle = SIGN_COLORS.strip;
   roundRect(g, pad, mainH + pad * 0.4, W - 2 * pad, H - mainH - pad * 1.4, pad);
   g.fill();
+}
+
+/** STEP SIGN-FIX-2: the LETTERED long board. Section k = one destination (arrow, Bangla name, English name, road km in Bangla and Latin digits) on its own colour; the strip under it = the road
+ *  the sign stands on and its total length (stripBn / stripEn). A section without a destination stays plain colour. */
+export function paintSectionText(g: CanvasRenderingContext2D, W: number, H: number, n: number, rows: ReadonlyArray<SignRow>, stripBn: string, stripEn: string): void {
+  paintSections(g, W, H, n);
+  const mainH = Math.round((H * GANTRY.mainH) / BOARD_H);
+  const pad = Math.round(H * 0.035);
+  const x0 = pad, x1 = W - pad, sw = (x1 - x0) / n;
+  g.textBaseline = 'middle';
+  for (let k = 0; k < n; k++) {
+    const r = rows[k];
+    if (!r) continue;
+    const a = x0 + k * sw + (k > 0 ? pad * 0.5 : 0);
+    const b = x0 + (k + 1) * sw - (k < n - 1 ? pad * 0.5 : 0);
+    const w = b - a, cx = (a + b) / 2;
+    const top = pad, h = mainH - pad;
+    g.textAlign = 'center';
+    g.fillStyle = SIGN_COLORS.white;
+    fitText(g, r.bn, w - pad * 3, h * 0.2, BANGLA_FONT, '700');
+    g.fillText(r.bn, cx, top + h * 0.17);
+    fitText(g, r.en, w - pad * 3, h * 0.14, LATIN_FONT, '600');
+    g.fillText(r.en, cx, top + h * 0.39);
+    g.fillStyle = 'rgba(255,255,255,.35)';
+    g.fillRect(a + pad * 1.5, top + h * 0.5, w - pad * 3, 2);
+    arrow(g, r.arrow, a + w * 0.28, top + h * 0.76, Math.min(h * 0.34, w * 0.3));
+    const t = kmText(r.km);
+    g.fillStyle = SIGN_COLORS.white;
+    fitText(g, bnDigits(t) + ' কিমি', w * 0.42, h * 0.17, BANGLA_FONT, '700');
+    g.fillText(bnDigits(t) + ' কিমি', a + w * 0.7, top + h * 0.68);
+    fitText(g, t + ' km', w * 0.42, h * 0.14, LATIN_FONT, '600');
+    g.fillText(t + ' km', a + w * 0.7, top + h * 0.86);
+  }
+  const sy = mainH + pad * 0.4, sh = H - mainH - pad * 1.4;
+  g.textAlign = 'center';
+  g.fillStyle = SIGN_COLORS.maxim;
+  fitText(g, stripBn, W * 0.9, sh * 0.5, BANGLA_FONT, '600');
+  g.fillText(stripBn, W / 2, sy + sh * 0.3);
+  fitText(g, stripEn, W * 0.9, sh * 0.36, LATIN_FONT, '500');
+  g.fillText(stripEn, W / 2, sy + sh * 0.72);
+}
+
+/** Strip text of a road: Bangla / English, total length in km. */
+export function roadStrip(road: string, lenM: number): { bn: string; en: string } {
+  const km = kmText(lenM / 1000);
+  const ring = road === 'M8';
+  return { bn: (ring ? 'রিং রোড M8' : 'সড়ক ' + road) + ' · মোট ' + bnDigits(km) + ' কিমি', en: (ring ? 'Ring Road M8' : 'Road ' + road) + ' · Total ' + km + ' km' };
 }
