@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { FLOOR_H, Kit, pick, type BuiltBuilding } from './BuildingKit';
+import { furnishClinic } from './ClinicInterior';
 
 /** HEALTH: হাসপাতাল, ক্লিনিক, ডায়াগনস্টিক সেন্টার. */
 
@@ -131,6 +132,7 @@ export function buildClinic(seed = 0): BuiltBuilding {
   for (const x of [-2, 2]) k.box(x, 0, d / 2 + 4.6, 1.8, 0.5, 0.5, 0x7a5a3a);
   ambulance(k, 11, 10, 0.3);
   k.tree(-11, 8, 5);
+  k.storeys(0.46, 2, { floorH: FLOOR_H, side: 'left', furnish: furnishClinic }); // real floors + stairs + rooms and furniture inside
   return k.finish(w + 6, d + 14, 9);
 }
 
