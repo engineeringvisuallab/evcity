@@ -51,6 +51,8 @@ const RAIL_T = 0.08;
 const STAIR_COLOR = 0xbdb5a4;
 const FLOOR_COLOR = 0xd8cfbd;
 const RAIL_COLOR = 0x6b4a2f;
+/** Thickness (m) of the partition walls inside a walk-in building (Kit.interiorWall). */
+const INNER_WALL_T = 0.12;
 
 /** Options for the door(s) of the next walk-in boxes (Kit.doorStyle). */
 export interface DoorOpts {
@@ -80,7 +82,23 @@ interface Mass {
 }
 
 /** Request from a model: the room whose floor is at y0 is `floors` storeys tall and gets real floors + stairs (see Kit.storeys). */
-interface StoreyReq { y0: number; floors: number; floorH: number; side: 'left' | 'right' }
+/** What a `furnish` callback of Kit.storeys gets: the inside of the room, the walking level of every storey and the stair flights (all in the model frame, metres). */
+export interface StoreyCtx {
+  k: Kit;
+  /** The inside of the room (walls not included). Front (street side) = +z. */
+  x0: number; x1: number; z0: number; z1: number;
+  floors: number;
+  /** Walking surface (y) of every storey, 0 = ground floor. */
+  levelY: number[];
+  /** Clear height (m) between the floor of a storey and the ceiling above it. */
+  clearH: number[];
+  /** Flight f joins storey f and f + 1: x range, z range (back end .. front end of the steps) and the wall it stands on. The upper floor has its hole over it. */
+  flights: { xa: number; xb: number; zf0: number; zf1: number; left: boolean }[];
+  /** x of the front door(s) of the ground floor. */
+  doorX: number[];
+}
+
+interface StoreyReq { y0: number; floors: number; floorH: number; side: 'left' | 'right'; furnish?: (c: StoreyCtx) => void }
 
 /** A finished piece of geometry: kept until finish() so that parts standing in a doorway can still be dropped. */
 interface Part {
@@ -175,9 +193,31 @@ export class Kit {
    * and a straight stair (solid steps, handrail round the hole) between every two storeys. The flights alternate between the left and the right wall,
    * the first one on `side`. Call it once per model before finish(). If the room is too small for the stairs nothing is added.
    */
-  storeys(y0: number, floors: number, opts: { floorH?: number; side?: 'left' | 'right' } = {}): void {
+  storeys(y0: number, floors: number, opts: { floorH?: number; side?: 'left' | 'right'; furnish?: (c: StoreyCtx) => void } = {}): void {
     if (floors < 2) return;
-    this.storeyReqs.push({ y0, floors, floorH: opts.floorH ?? FLOOR_H, side: opts.side ?? 'left' });
+    this.storeyReqs.push({ y0, floors, floorH: opts.floorH ?? FLOOR_H, side: opts.side ?? 'left', furnish: opts.furnish });
+  }
+
+  /**
+   * FURNITURE for walk-in rooms (the `furnish` callback of storeys): one box in MODEL coordinates (y0 = bottom), drawn and, when `solid`, a collider.
+   * It never turns a box into a room (unlike Kit.box), so it is safe inside the callback. Boxes thinner than 0.2 m are looks only.
+   */
+  furn(cx: number, y0: number, cz: number, w: number, h: number, d: number, color: number, solid = true): void {
+    this.boxVisual(cx, y0, cz, w, h, d, color, [w, h, d], IDENT);
+    if (solid && Math.min(w, d) >= 0.2 && h >= 0.08) this.info.solids.push({ x: cx, y: y0 + h / 2, z: cz, hx: w / 2, hy: h / 2, hz: d / 2, yaw: 0 });
+  }
+
+  /**
+   * A partition wall inside a walk-in room, from y0 up `h`. axis 'x' = the wall runs along x at z = `fixed`; axis 'z' = it runs along z at x = `fixed`;
+   * a0..a1 = the extent along the wall. `gaps` = doorways (centre along the wall, width), open to `doorH`. Solid.
+   */
+  interiorWall(axis: 'x' | 'z', fixed: number, a0: number, a1: number, y0: number, h: number, gaps: readonly { c: number; w: number }[], color: number, doorH = 2.05): void {
+    const cuts: Rect2[] = gaps.map((g) => ({ a0: g.c - g.w / 2, a1: g.c + g.w / 2, b0: y0 - 1, b1: y0 + doorH }));
+    const t = INNER_WALL_T;
+    for (const r of carveRect({ a0, a1, b0: y0, b1: y0 + h }, cuts)) {
+      if (axis === 'x') this.slab(r.a0, r.a1, r.b0, r.b1, fixed - t / 2, fixed + t / 2, color, [r.a1 - r.a0, r.b1 - r.b0, t]);
+      else this.slab(fixed - t / 2, fixed + t / 2, r.b0, r.b1, r.a0, r.a1, color, [t, r.b1 - r.b0, r.a1 - r.a0]);
+    }
   }
 
   /** Parts drawn inside `fn` are looks only: nobody collides with them (a hanging sign, a flag, a pond sheet ...). */
@@ -283,6 +323,16 @@ export class Kit {
       const rx0 = hole.left ? hole.xb : hole.xa - RAIL_T;
       this.slab(rx0, rx0 + RAIL_T, lvl, lvl + RAIL_H, hole.zf0, hole.zf1 + RAIL_T, RAIL_COLOR, [RAIL_T, RAIL_H, hole.zf1 - hole.zf0]);
       this.slab(hole.xa, hole.xb, lvl, lvl + RAIL_H, hole.zf1, hole.zf1 + RAIL_T, RAIL_COLOR, [STAIR_W, RAIL_H, RAIL_T]);
+    }
+    // furniture + partition walls of the model (its own layout)
+    if (r.furnish) {
+      const levelY: number[] = [], clearH: number[] = [], flights: StoreyCtx['flights'] = [];
+      for (let i = 0; i < r.floors; i++) {
+        levelY.push(r.y0 + i * FH);
+        clearH.push(i < r.floors - 1 ? FH - FLOOR_SLAB_T : r.y0 + m.h - m.slabT - (r.y0 + i * FH));
+      }
+      for (let f = 0; f < r.floors - 1; f++) flights.push(flight(f));
+      r.furnish({ k: this, x0, x1, z0, z1, floors: r.floors, levelY, clearH, flights, doorX: m.doors.map((d) => d.x) });
     }
   }
 

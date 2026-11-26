@@ -1,4 +1,5 @@
 import { FLOOR_H, Kit, pick, rng, type BuiltBuilding } from './BuildingKit';
+import { furnishBrickHouse } from './HouseInterior';
 
 /** URBAN RESIDENTIAL: brick house (ইটের বাড়ি 2/3 তলা), row house, villa, flats (6 / 12 floors), tower (28 floors), hostel, labour quarters. */
 
@@ -84,7 +85,7 @@ export function buildBrickHouse(floors: 2 | 3, seed = 0, outer = false): BuiltBu
     k.cyl(bw / 2 - 1.0, top + 0.18, zc + 0.2, 0.04, 0.04, 1.3, 0x555a60, 5); // dish
     k.sphere(bw / 2 - 1.0, top + 1.55, zc + 0.2, 0.45, 0xdddddd, 0.25);
   }
-  k.storeys(0.45, floors, { side: 'left' }); // real floors + stairs inside (BuildingKit)
+  k.storeys(0.45, floors, { side: 'left', furnish: furnishBrickHouse }); // real floors + stairs + rooms + furniture inside (BuildingKit, HouseInterior)
   return k.finish(bw + 4.4, bd + 5.4, top + 3);
 }
 
