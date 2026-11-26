@@ -2,7 +2,7 @@
 
 Notun chat-e evcity zip (full repo) attach kore "Part A" paste koro. Tarpor ek chat-e ek step, "Part C" theke.
 
-**Ekhon porjonto: Step R1 done (26 Nov, code likha + tsc/layout check; `npm run test:mall` ar browser NOT RUN). NEXT: Step C3 (10 tolar floor plan + shop layout).**
+**Ekhon porjonto: Step R1 done (26 Nov, door 4 ta, code likha + tsc/layout check; `npm run test:mall` ar browser NOT RUN). NEXT: Step C3 (10 tolar floor plan + shop layout).**
 Note: C1 sandbox-e network chhilo na, tai `npm run test:mall` ar game-e chalano hoy ni. Sudhu tsc-er syntax check ar geometry-r hisab kora hoyeche. Age tumi `npm run test:mall` chalao, fail hole ami thik korbo.
 
 ---
@@ -49,7 +49,7 @@ Ami je design nilam (C1, tumi apotti korle bolo):
 - Prottek tolay puro area jure category onujayi onek example jinis. Bahire shudhu choto khola jayga (ager 12 m plaza + walkway).
 - Ager C1 (podium + tower 96 x 64) ar C2 (stair/lift x +-13..20 m) ei design-e ar mele na: 100 m atrium-er bhitore porbe. R1-e shoranor kaj.
 - Hisab: tola-prothi ~101,650 m2 (outline minus atrium 7,850 m2), 10 tola mile ~1 million m2. Tai floor +-1 visibility, floor-by-floor lazy build, instanced (PERFORMANCE_RULES) bhishon joruri.
-- R1 shuru-te tumi bolechho: door 2 ta (shudhu road-er dike: east + north), stair + lift 2 jora (east + west, atrium-er dhar-e), bahire shudhu walkway.
+- R1 shuru-te tumi bolechho: door 2 ta (road-er dike: east + north), pore tumi bolechho door 4 ta (east, north, west, south), stair + lift 2 jora (east + west, atrium-er dhar-e), bahire shudhu walkway.
 
 ---
 
@@ -159,12 +159,12 @@ Step C7: draw call / triangle ginti, floor visibility (inside: +-1 floor, outsid
 - MallViewer.ts (alada viewer) lift animate kore na (shudhu game-e).
 
 ### Step R1 (26 Nov): notun shell, puro outline, 10 tola, 100 m atrium
-**Tomar decision (R1 shuru-te):** door 2 ta (east + north, road-er dike), stair + lift 2 jora (east + west), bahire shudhu walkway.
+**Tomar decision (R1 shuru-te):** door 2 ta (east + north, road-er dike), pore bolle 4 ta (+ west z=0 line, + south x=0 line), stair + lift 2 jora (east + west), bahire shudhu walkway.
 **Changed files:**
-- `src/mall/MallSite.ts`: `MALL_SIZE` bad, `MALL_ATRIUM_R` = 50, notun `MALL_EXTENT`, `MALL_DOORS` = 2 ta (`id` E / N, `lx lz nx nz`; E = z=0 line east wall-e, N = x=0 line north wall-e; spawn / crossing E door-er sathe ager moto).
+- `src/mall/MallSite.ts`: `MALL_SIZE` bad, `MALL_ATRIUM_R` = 50, notun `MALL_EXTENT`, `MALL_DOORS` = 4 ta (`id` E / N / W / S, `lx lz nx nz`; E = z=0 line east wall, N = x=0 line north wall, W = z=0 line west wall, S = x=0 line south wall; E prothom, spawn / crossing E door-er sathe ager moto).
 - `src/mall/MallCores.ts`: `STAIR.x0 = atrium R + 3`, `LIFT.xc = atrium R + 6.5` (shape ar z ager moto). 1 unused variable shoranor jonno edit.
 - `src/mall/MallCoreBuilder.ts`: 2 ta unused import bad (kono kaj-er poriborton nai).
-- `src/mall/MallBuilder.ts`: puro notun. Podium / tower / block nai. Puro outline-e 10 tola, 50 m glass wall (1 merged mesh), door gap + lintel + sign + canopy (2 ta), slab = outline minus atrium minus stair/lift hole (floor 1..9), roof collider = closed solid (atrium-er upor-o), dome 100 m (rise 10 m, 32 rib + 4 ring, 1 merged mesh), column grid 12 m + ceiling light + atrium rail (64 piece) floor-by-floor lazy (`ensureFloor(f)`), 12 zone / 36 product shoriye dewa (`shops` / `items` khali, C3-te ashbe).
+- `src/mall/MallBuilder.ts`: puro notun. Podium / tower / block nai. Puro outline-e 10 tola, 50 m glass wall (1 merged mesh), door gap + lintel + sign + canopy + roof billboard (4 ta), slab = outline minus atrium minus stair/lift hole (floor 1..9), roof collider = closed solid (atrium-er upor-o), dome 100 m (rise 10 m, 32 rib + 4 ring, 1 merged mesh), column grid 12 m + ceiling light + atrium rail (64 piece) floor-by-floor lazy (`ensureFloor(f)`), 12 zone / 36 product shoriye dewa (`shops` / `items` khali, C3-te ashbe).
 - `src/mall/MallLayout.ts` (NOTUN): column + light position (pure, three.js nai).
 - `src/mall/MallColliders.ts` (NOTUN): `createStaticColliders`, `FloorColliders` (floor-er column / rail collider shudhu player jei floor-e), `floorsAround`. Game ar test duitar ek-i code.
 - `src/mall/MallManager.ts`: static collider notun function-e, per-floor collider, floor visibility (+-1) + `ensureFloor`, near = 40 m-er moto bahire / bhitore, banner text.
@@ -183,7 +183,7 @@ Step C7: draw call / triangle ginti, floor visibility (inside: +-1 floor, outsid
 - Shadow: kono castShadow nai, notun light nai. Low tier-e alada kichu kombano hoy ni (column 1 x 1 m, light strip, instanced).
 **Janar jinis:**
 - Spawn ar E door ager jaygay (E door = z=0 line-er east wall). MedianPlan / Engine / start-test MALL_DOORS-er `side`, `x`, `z` ager moto pay.
-- N door-er samne zebra crossing / road gap ekhono nai (MedianPlan-e E door-er jonno ache, N door add korte hole Config.ts / MedianPlan bodlano lagbe, tumi bolle korbo).
+- `MedianPlan` MALL_DOORS-er prottek door-er samne zebra crossing khuje (jodi nearest divided road `maxDist`-er moddhe thake). N / W / S door-er jonno kono crossing ashche kina game-e dekhte hobe, na hole Config.ts / MedianPlan bodlano lagbe (tumi bolle korbo).
 - Atrium 100 m, tai ground floor-e atrium-er niche floor flat ache (ground tile puro outline-e), upor theke tarano jay.
 - Upor-er floor khali (column + light chhara). C3-te shop boshbe, core-er bahire.
 - Stair / lift atrium-er rail theke ~3 m / 6.5 m bahire, atrium-er east + west-e. Floor 3 stair-well rail test ager C2 test-er shift kora (Rapier chhara chole ni).

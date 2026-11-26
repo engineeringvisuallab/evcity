@@ -1,5 +1,5 @@
 // Headless City Mall test (STEP R1: ONE 10-floor glass building over the WHOLE outline (~109,500 m2 per floor), 100 m round atrium in the middle with a glass dome, 2 entrances on the road sides
-// (east + north), one stair + one lift on each of two sides (west, east) of the atrium, a 12 m column grid on every floor with per-floor colliders, empty floors (the shops come in C3)).
+// (east, north, west, south), one stair + one lift on each of two sides (west, east) of the atrium, a 12 m column grid on every floor with per-floor colliders, empty floors (the shops come in C3)).
 // Needs the packages installed (three, @dimforge/rapier3d-compat): npm run test:mall   (= npx tsx scripts/mall-test.ts)
 import * as THREE from 'three';
 import { Config } from '../src/core/Config';
@@ -74,9 +74,9 @@ ok(minRoad >= 15, `the glass wall keeps >= 15 m from every road edge and from th
   ok(atrOut === 0 && atrMin > 50, `the 100 m atrium (r = ${MALL_ATRIUM_R}) lies inside the glass outline with ${atrMin.toFixed(0)} m to spare`);
   ok(polyArea(MALL_BUILDING) > 100000 && polyArea(MALL_BUILDING) - Math.PI * MALL_ATRIUM_R ** 2 > 99000, `floor area ${polyArea(MALL_BUILDING).toFixed(0)} m2 per floor, ${(polyArea(MALL_BUILDING) - Math.PI * MALL_ATRIUM_R ** 2).toFixed(0)} m2 without the atrium`);
   const J = mallToLocal(-87, -277), E = MALL_DOORS.find((d) => d.id === 'E')!, N = MALL_DOORS.find((d) => d.id === 'N')!; // J1: the W arm runs along local z = J.z, the S arm along local x = J.x
-  ok(MALL_DOORS.length === 2 && E.side === 1 && N.side === -1, 'exactly 2 entrances: east (side +1) and north (side -1)');
+  ok(MALL_DOORS.length === 4 && MALL_DOORS.map((d) => d.id).join('') === 'ENWS' && E.side === 1 && N.side === -1, 'exactly 4 entrances: east, north, west, south (east first)');
   ok(J.x - E.lx > 40 && J.x - E.lx < 110 && N.lz - J.z > 40 && N.lz - J.z < 110, `both doors face a road: the east door is ${(J.x - E.lx).toFixed(0)} m from the J1 S arm axis, the north door ${(N.lz - J.z).toFixed(0)} m from the J1 W arm axis`);
-  ok(Math.abs(E.lz) < 1e-6 && Math.abs(N.lx) < 1e-6, 'both doors stand on an axis through the atrium centre (z = 0 east, x = 0 north)');
+  ok(Math.abs(E.lz) < 1e-6 && Math.abs(N.lx) < 1e-6 && MALL_DOORS.every((d) => Math.abs(d.lz) < 1e-6 || Math.abs(d.lx) < 1e-6), 'all 4 doors stand on an axis through the atrium centre (z = 0 east / west, x = 0 north / south)');
 }
 ok(m.inside(MALL_POS.x, MALL_POS.z) && !m.inside(0, 0) && !m.inside(MALL_BUILDING[0][0] - 8, MALL_BUILDING[0][1]), 'MallSite.inside follows the bent outline (centre in, spawn out)');
 
@@ -128,7 +128,7 @@ ok(mall.floorSolids[0].every((q) => q.minY === 0 && Math.abs(q.maxY - 4.6) < 1e-
 ok(mall.floorSolids[0].every((q) => Math.abs((q.minX + q.maxX) / 2) > 5.4 && Math.abs((q.minZ + q.maxZ) / 2) > 5.4), 'no column on the two entrance aisles (|x| < 5.4 north door, |z| < 5.4 east door)');
 ok(mall.floorSolids[0].every((q) => Math.hypot((q.minX + q.maxX) / 2, (q.minZ + q.maxZ) / 2) >= MALL_ATRIUM_R + 3), 'no column inside the atrium (+ 3 m walkway)');
 ok(mall.obbs.length >= MALL_BUILDING.length, `glass curtain wall: ${mall.obbs.length} wall pieces round ${MALL_BUILDING.length} corners`);
-ok(mall.obbs.filter((o) => o.y0 === 0 && Math.abs(o.y1 - 50) < 1e-6).length >= MALL_BUILDING.length && mall.obbs.filter((o) => Math.abs(o.y0 - 3.6) < 1e-6 && Math.abs(o.y1 - 50) < 1e-6).length === 2, 'the wall is 50 m high all round (no podium), with a doorway lintel (3.6 m up) at each of the 2 entrances');
+ok(mall.obbs.filter((o) => o.y0 === 0 && Math.abs(o.y1 - 50) < 1e-6).length >= MALL_BUILDING.length && mall.obbs.filter((o) => Math.abs(o.y0 - 3.6) < 1e-6 && Math.abs(o.y1 - 50) < 1e-6).length === 4, 'the wall is 50 m high all round (no podium), with a doorway lintel (3.6 m up) at each of the 4 entrances');
 ok(mall.obbs.every((o) => Math.abs(o.y1 - o.y0) > 40), 'all always-on turned colliders are wall pieces (the atrium rails are per floor)');
 ok(mall.floorObbs[0].length === 0 && [1, 2, 3, 4, 5, 6, 7, 8, 9].every((f) => mall.floorObbs[f].length === 64 && mall.floorObbs[f].every((o) => Math.abs(Math.hypot(o.cx, o.cz) - (MALL_ATRIUM_R + 0.3)) < 1e-6 && Math.abs(o.y0 - f * 5) < 1e-6)), 'atrium balustrade: 64 collider pieces (r = 50.3 m) on each of floors 1..9, none on the ground floor');
 ok(mall.meshSolids.length >= 11, `${mall.meshSolids.length} floor / roof pieces (ground floor + 9 upper slabs + roof + stair skirts)`);
@@ -167,8 +167,8 @@ const walk = (tx: number, tz: number, steps = 4000, speed = 0.07) => {
 };
 const feet = () => pos.y - HALFH;
 
-const DE = MALL_DOORS.find((d) => d.id === 'E')!, DN = MALL_DOORS.find((d) => d.id === 'N')!;
-// 6. the glass wall is solid all the way round (except the 2 doorways): from 3 m outside, a ray at eye height hits it within ~3 m
+const DE = MALL_DOORS.find((d) => d.id === 'E')!, DN = MALL_DOORS.find((d) => d.id === 'N')!, DW = MALL_DOORS.find((d) => d.id === 'W')!, DS = MALL_DOORS.find((d) => d.id === 'S')!;
+// 6. the glass wall is solid all the way round (except the 4 doorways): from 3 m outside, a ray at eye height hits it within ~3 m
 let leaks = 0, tested = 0;
 for (let i = 0; i < MALL_BUILDING_LOCAL.length; i++) {
   const A = MALL_BUILDING_LOCAL[i], B = MALL_BUILDING_LOCAL[(i + 1) % MALL_BUILDING_LOCAL.length];
@@ -204,16 +204,14 @@ let xe20 = 1e9;
 for (let i = 0; i < MALL_BUILDING_LOCAL.length; i++) { const A = MALL_BUILDING_LOCAL[i], B = MALL_BUILDING_LOCAL[(i + 1) % MALL_BUILDING_LOCAL.length]; if ((A[1] > 20) === (B[1] > 20)) continue; const x = A[0] + ((20 - A[1]) / (B[1] - A[1])) * (B[0] - A[0]); if (x > 0 && x < xe20) xe20 = x; }
 put(xe20 - 3, 0, 20); walk(xe20 + 10, 20, 400);
 ok(pos.x < xe20 - 0.1 && pos.x > xe20 - 4, `the glass wall beside the east doorway stops a walker (wall at x = ${xe20.toFixed(1)}, stopped at ${pos.x.toFixed(2)})`);
-// west wall (no door there): walk to it from inside
-{ let xw = -1e9;
-  for (let i = 0; i < MALL_BUILDING_LOCAL.length; i++) { const A = MALL_BUILDING_LOCAL[i], B = MALL_BUILDING_LOCAL[(i + 1) % MALL_BUILDING_LOCAL.length]; if ((A[1] > 0) === (B[1] > 0)) continue; const x = A[0] + ((0 - A[1]) / (B[1] - A[1])) * (B[0] - A[0]); if (x < 0 && x > xw) xw = x; }
-  put(xw + 8, 0, 0); walk(xw - 10, 0, 600);
-  ok(pos.x > xw && pos.x < xw + 3, `the west wall has no door: the glass stops a walker (wall at x = ${xw.toFixed(1)}, stopped at ${pos.x.toFixed(2)})`);
-}
+put(DW.lx - 6, 0, 0); walk(DW.lx + 20, 0, 1000);
+ok(pos.x > DW.lx + 19 && Math.abs(feet()) < 0.2, 'a walker gets in through the west doorway (10 m)');
+put(0, 0, DS.lz + 6); walk(0, DS.lz - 20, 1000);
+ok(pos.z < DS.lz - 19 && Math.abs(feet()) < 0.2, 'a walker gets in through the south doorway (10 m)');
 
 // 8. a walker crosses the whole building along z = 0 (over the ground floor under the atrium, between the stair and the lift)
-put(DE.lx - 10, 0, 0); walk(-140, 0, 6000);
-ok(Math.abs(pos.x + 140) < 0.3 && Math.abs(feet()) < 0.2, `a walker crosses the whole ground floor along the aisle (x = ${pos.x.toFixed(1)})`);
+put(DE.lx - 10, 0, 0); walk(DW.lx - 8, 0, 8000);
+ok(pos.x < DW.lx - 7 && Math.abs(feet()) < 0.2, `a walker crosses the whole ground floor from the east door out through the west door (x = ${pos.x.toFixed(1)})`);
 // 9. columns are solid (floor 0 colliders are on)
 { const c = LAY.cols[Math.floor(LAY.cols.length / 2)];
   put(c[0] - 3, 0, c[1]); walk(c[0] + 3, c[1], 400);

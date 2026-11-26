@@ -91,20 +91,22 @@ export const MALL_EXTENT = (() => {
 })();
 
 /**
- * STEP R1 (26 Nov, user): TWO entrances only, both on the sides that face the roads (the J1 W arm runs along the NORTH wall, the J1 S arm along the EAST wall):
- *   'E' = where the line z = 0 (through the atrium centre) meets the east wall (side +1; the start / spawn point and the crossing in front of it stay as before),
- *   'N' = where the line x = 0 meets the north wall (side -1).
+ * STEP R1 (26 Nov, user; 4 doors since 26 Nov, later message): FOUR entrances, one on each wall where an axis through the atrium centre meets the outline:
+ *   'E' = line z = 0 meets the east wall (side +1; the start / spawn point and the crossing in front of it stay as before; this one stays FIRST in the list),
+ *   'N' = line x = 0 meets the north wall (side -1), 'W' = line z = 0 meets the west wall (side -1), 'S' = line x = 0 meets the south wall (side +1).
+ * (The J1 W arm runs along the NORTH wall, the J1 S arm along the EAST wall.)
  * lx / lz = the door point in the block's local frame, nx / nz = the outward unit normal there (local), x / z = the same point in world metres.
  */
-export interface MallDoor { id: 'E' | 'N'; side: -1 | 1; lx: number; lz: number; nx: number; nz: number; x: number; z: number }
-function doorOn(id: 'E' | 'N', side: -1 | 1): MallDoor {
-  const P = MALL_BUILDING_LOCAL;
+export type MallDoorId = 'E' | 'N' | 'W' | 'S';
+export interface MallDoor { id: MallDoorId; side: -1 | 1; lx: number; lz: number; nx: number; nz: number; x: number; z: number }
+function doorOn(id: MallDoorId, side: -1 | 1): MallDoor {
+  const P = MALL_BUILDING_LOCAL, alongX = id === 'E' || id === 'W'; // E / W: the line z = 0, N / S: the line x = 0
   let best = -1e9, bx = 0, bz = 0, bnx = 1, bnz = 0;
   for (let i = 0, j = P.length - 1; i < P.length; j = i++) {
     const [x1, z1] = P[j], [x2, z2] = P[i];
     let x: number, z: number;
-    if (id === 'E') { if ((z1 > 0) === (z2 > 0)) continue; z = 0; x = x1 + ((0 - z1) / (z2 - z1)) * (x2 - x1); } else { if ((x1 > 0) === (x2 > 0)) continue; x = 0; z = z1 + ((0 - x1) / (x2 - x1)) * (z2 - z1); }
-    const score = id === 'E' ? x : -z; // the east-most / north-most crossing
+    if (alongX) { if ((z1 > 0) === (z2 > 0)) continue; z = 0; x = x1 + ((0 - z1) / (z2 - z1)) * (x2 - x1); } else { if ((x1 > 0) === (x2 > 0)) continue; x = 0; z = z1 + ((0 - x1) / (x2 - x1)) * (z2 - z1); }
+    const score = id === 'E' ? x : id === 'W' ? -x : id === 'S' ? z : -z; // the east-most / west-most / south-most / north-most crossing
     if (score <= best) continue;
     best = score; bx = x; bz = z;
     const L = Math.hypot(x2 - x1, z2 - z1);
@@ -115,7 +117,7 @@ function doorOn(id: 'E' | 'N', side: -1 | 1): MallDoor {
   const w = mallToWorld(bx, bz);
   return { id, side, lx: bx, lz: bz, nx: bnx, nz: bnz, x: w.x, z: w.z };
 }
-export const MALL_DOORS: ReadonlyArray<MallDoor> = [doorOn('E', 1), doorOn('N', -1)];
+export const MALL_DOORS: ReadonlyArray<MallDoor> = [doorOn('E', 1), doorOn('N', -1), doorOn('W', -1), doorOn('S', 1)];
 
 /** Soft blend (m) from the level plot back to natural terrain, and the zone local streets keep out of. */
 const BLEND = 40; // M1: 16 -> 40 m: the new plot is cut up to ~13 m into the hill on its NW side, a 16 m skirt would be a cliff
