@@ -8,6 +8,7 @@ import {
   type Box, type MeshSpec, type PickAction, type RailSpec, type RampSpec, type Vis,
 } from './MallCores';
 import type { LiftCar } from './MallLift';
+import { FLOORS } from './MallCatalog';
 
 export interface CoreHelpers {
   canvasTex(w: number, h: number, draw: (c: CanvasRenderingContext2D) => void): THREE.CanvasTexture;
@@ -98,7 +99,7 @@ export function buildCores(parent: THREE.Group, floorGroups: THREE.Group[], h: C
     plateMat[f] = new THREE.MeshBasicMaterial({ map: tex });
     return plateMat[f];
   };
-  const dirTex = h.canvasTex(512, 640, (c) => { // the floor directory (department names come in step C3)
+  const dirTex = h.canvasTex(512, 640, (c) => { // the floor directory (STEP C3: the department of every floor)
     c.fillStyle = '#0f172a'; c.fillRect(0, 0, 512, 640);
     c.fillStyle = ACCENT; c.fillRect(0, 0, 512, 10); c.fillRect(0, 630, 512, 10);
     c.textBaseline = 'middle'; c.textAlign = 'center'; c.fillStyle = '#fff';
@@ -108,8 +109,9 @@ export function buildCores(parent: THREE.Group, floorGroups: THREE.Group[], h: C
       const y = 124 + (NF - 1 - f) * 50;
       c.fillStyle = f % 2 ? '#1e293b' : '#162033'; c.fillRect(20, y - 22, 472, 46);
       c.fillStyle = ACCENT; c.textAlign = 'center'; c.font = `700 32px ${FONT}`; c.fillText(String(f), 54, y + 1);
-      c.fillStyle = '#fff'; c.textAlign = 'left'; c.font = `600 28px ${FONT}`; c.fillText(floorNameBn(f), 98, y + 1);
-      c.fillStyle = '#94a3b8'; c.textAlign = 'right'; c.font = `500 22px ${FONT}`; c.fillText(floorNameEn(f), 480, y + 1);
+      c.textAlign = 'left';
+      c.fillStyle = '#fff'; h.fitText(c, FLOORS[f].dept, 24, 700, 380); c.fillText(FLOORS[f].dept, 98, y - 6);
+      c.fillStyle = '#94a3b8'; h.fitText(c, FLOORS[f].deptEn, 16, 500, 380); c.fillText(FLOORS[f].deptEn, 98, y + 14);
     }
   });
   const dirMat = new THREE.MeshBasicMaterial({ map: dirTex });

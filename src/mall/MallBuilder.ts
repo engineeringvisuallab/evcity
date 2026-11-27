@@ -3,7 +3,8 @@
 // Floors 1..9 are slabs = outline minus the atrium minus the stair / lift holes. The roof is solid over the atrium too (no rain comes in), the dome above it is glass only.
 //
 // STEP R1 (26 Nov, user decisions): 2 entrances only, on the road sides (MALL_DOORS: east + north); ONE stair + ONE lift on each of two sides (west, east) of the atrium (MallCores.ts);
-// outside the glass only a very small open area (a walkway). The old 12 zones / 36 products are gone for now (empty floors); step C3 lays the real shops out.
+// outside the glass only a very small open area (a walkway). STEP C3: 8 shops (categories) on every floor, in two rings round the atrium (MallShops.ts): a coloured floor patch, a hanging name sign,
+// a 'view all' board (click = the category page on the shop) and the department sign over the 4 axis aisles. Products + fixtures come in C4 / C5.
 //
 // Local origin = the atrium centre at floor level (y = 0 is the ground floor). Place it in the city with: mall.group.position.set(x, groundY, z); mall.group.rotation.y = yaw;
 //
@@ -12,12 +13,13 @@
 // the colliders of the floor the player is on (MallColliders.ts). No lights, no shadows, no per-frame allocation.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import type { Catalog, Category, Product } from './MallCatalog';
+import { FLOORS, categoryUrl, type Catalog, type Category, type Product } from './MallCatalog';
 import { stdMat } from './ProductModels';
 import { MALL_FLOORS, MALL_FH, MALL_ATRIUM_R, MALL_SLAB, MALL_BUILDING_LOCAL, MALL_DOORS } from './MallSite';
 import { buildCores, type CoresBuild } from './MallCoreBuilder';
 import { coreHoles, type PickAction } from './MallCores';
 import { floorLayout, insidePoly, GRID } from './MallLayout';
+import { shopSlots, deptPoses } from './MallShops';
 
 export const MALL = { FH: MALL_FH, floors: MALL_FLOORS, H: MALL_FH * MALL_FLOORS, atriumR: MALL_ATRIUM_R, slabT: MALL_SLAB, doorW: 10, doorH: 3.6, grid: GRID };
 
@@ -46,8 +48,10 @@ export interface MallBuild {
   meshSolids: MeshSolid[];
   /** STEP R1: colliders that belong to ONE floor (columns, atrium balustrade, later shelves): the game keeps only the floor(s) the player is on. Index = floor. */
   floorSolids: Solid[][]; floorObbs: Obb[][];
-  /** STEP R1: build what stands on floor f (columns, ceiling lights, atrium rail) the first time it is needed. */
+  /** STEP R1: build what stands on floor f (columns, ceiling lights, atrium rail; C3: the 8 shops with their signs) the first time it is needed. */
   ensureFloor(f: number): void;
+  /** STEP C3: throw away what ensureFloor built for floor f (meshes, canvas textures, pickables): the game does this for floors far from the player. Colliders are not touched (FloorColliders). */
+  releaseFloor(f: number): void;
   ramps: Ramp[];                  // sloped walking surfaces (+ their own railing solids in `rampRails`)
   rampRails: { cx: number; cy: number; cz: number; hx: number; hy: number; hz: number; rotZ: number }[];
   pickables: THREE.Object3D[];    // objects with userData.pick (PickInfo)
@@ -108,7 +112,7 @@ export function rectMinus(r: R2, holes: R2[]): R2[] {
   return out;
 }
 
-export function buildMall(_catalog: Catalog): MallBuild {
+export function buildMall(catalog: Catalog): MallBuild {
   const { FH, floors: NF, H, atriumR, slabT, doorW, doorH: DOOR_H } = MALL;
   const CEIL = FH - slabT; // underside of the slab above = ceiling height of every storey
   const g = new THREE.Group(); g.name = 'CityMall';
@@ -296,6 +300,15 @@ export function buildMall(_catalog: Catalog): MallBuild {
   // ---- THE COLUMN GRID + CEILING LIGHTS of every storey (positions: MallLayout.ts; here the colliders; the meshes come with ensureFloor) ----
   const { cols: COLS, lights: LIGHTS } = floorLayout(MALL_BUILDING_LOCAL, atriumR, GRID);
   const floorSolids: Solid[][] = Array.from({ length: NF }, (_, f) => COLS.map(([x, z]) => ({ minX: x - 0.5, maxX: x + 0.5, minY: f * FH, maxY: f * FH + CEIL, minZ: z - 0.5, maxZ: z + 0.5 })));
+  // STEP C3: the 8 shops of every floor (slot i <-> the i-th category of that floor). The "view all" post of each shop is a per-floor collider; ShopInfo lists them for the viewer / later steps.
+  const SLOTS = shopSlots();
+  const catsByFloor: Category[][] = Array.from({ length: NF }, (_, f) => catalog.categories.filter((cat) => cat.floor === f).slice(0, SLOTS.length));
+  const shops: ShopInfo[] = [];
+  catsByFloor.forEach((cats, f) => cats.forEach((cat, i) => {
+    const S = SLOTS[i];
+    shops.push({ category: cat, floor: f, viewPos: new THREE.Vector3(S.view.x, f * FH, S.view.z), yaw: S.view.yaw });
+    floorSolids[f].push({ minX: S.board.x - 0.1, maxX: S.board.x + 0.1, minY: f * FH, maxY: f * FH + 2.4, minZ: S.board.z - 0.1, maxZ: S.board.z + 0.1 });
+  }));
   const floorObbs: Obb[][] = Array.from({ length: NF }, () => []);
   const RAIL_R = atriumR + 0.3, RAIL_H = 1.1, RAIL_SEG = 64;
   for (let f = 1; f < NF; f++) {
@@ -311,26 +324,79 @@ export function buildMall(_catalog: Catalog): MallBuild {
   const railGeo = new THREE.CylinderGeometry(RAIL_R, RAIL_R, RAIL_H, 96, 1, true), handGeo = new THREE.TorusGeometry(RAIL_R, 0.045, 6, 192);
   const railM = new THREE.MeshStandardMaterial({ color: 0xbfe6f5, transparent: true, opacity: 0.25, metalness: 0.6, roughness: 0.05, side: THREE.DoubleSide, depthWrite: false });
   const handM = stdMat(0xcbd5e1, 0.8, 0.3);
+  const patchM = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5 }), postM = stdMat(0x334155, 0.5, 0.5), postGeo = new THREE.BoxGeometry(0.2, 2.4, 0.2);
+  const SIGN_Y = 3.75, BOARD_Y = 2.7; // sign: 1.6 m high, top touches the 4.6 m ceiling
   const built = new Set<number>();
+  const added: THREE.Object3D[][] = Array.from({ length: NF }, () => []);      // what ensureFloor put in floor f (releaseFloor removes exactly this)
+  const pickAdded: THREE.Object3D[][] = Array.from({ length: NF }, () => []);
+  const owned: (() => void)[][] = Array.from({ length: NF }, () => []);        // dispose functions of the per-floor geometry / textures
+  const freeMesh = (m: THREE.Mesh) => () => { m.geometry.dispose(); const mat = m.material as THREE.MeshBasicMaterial; mat.map?.dispose(); mat.dispose(); };
   const ensureFloor = (f: number): void => {
     if (f < 0 || f >= NF || built.has(f)) return;
     built.add(f);
     const fg = floorGroups[f], m4 = new THREE.Matrix4();
+    const put = (o: THREE.Object3D, free?: () => void): void => { fg.add(o); added[f].push(o); if (free) owned[f].push(free); };
     const cm = new THREE.InstancedMesh(colGeo, colM, COLS.length); cm.name = `Columns${f}`;
     COLS.forEach(([x, z], i) => { m4.makeTranslation(x, CEIL / 2, z); cm.setMatrixAt(i, m4); });
-    fg.add(cm);
+    put(cm, () => cm.dispose());
     const lm = new THREE.InstancedMesh(lightGeo, lightM, LIGHTS.length); lm.name = `CeilingLights${f}`;
     LIGHTS.forEach(([x, z], i) => { m4.makeTranslation(x, CEIL - 0.02, z); lm.setMatrixAt(i, m4); });
-    fg.add(lm);
+    put(lm, () => lm.dispose());
     if (f >= 1) { // the glass balustrade + handrail round the atrium hole
-      const gl = new THREE.Mesh(railGeo, railM); gl.position.y = RAIL_H / 2; fg.add(gl);
-      const hand = new THREE.Mesh(handGeo, handM); hand.rotation.x = Math.PI / 2; hand.position.y = RAIL_H; fg.add(hand);
+      const gl = new THREE.Mesh(railGeo, railM); gl.position.y = RAIL_H / 2; put(gl);
+      const hand = new THREE.Mesh(handGeo, handM); hand.rotation.x = Math.PI / 2; hand.position.y = RAIL_H; put(hand);
     }
+    // ---- STEP C3: the shops of this floor ----
+    const cats = catsByFloor[f];
+    if (!cats.length) return;
+    { // all 8 coloured floor patches in ONE mesh (vertex colours)
+      const geos = cats.map((cat, i) => {
+        const geo = new THREE.ShapeGeometry(shapeOf(SLOTS[i].poly)); geo.rotateX(-Math.PI / 2); geo.translate(0, 0.03, 0);
+        const col = new THREE.Color(cat.color).lerp(new THREE.Color(0xffffff), 0.72), n = geo.attributes.position.count, arr = new Float32Array(n * 3);
+        for (let k = 0; k < n; k++) { arr[k * 3] = col.r; arr[k * 3 + 1] = col.g; arr[k * 3 + 2] = col.b; }
+        geo.setAttribute('color', new THREE.BufferAttribute(arr, 3));
+        return geo;
+      });
+      const merged = mergeGeometries(geos, false);
+      for (const q of geos) q.dispose();
+      if (merged) { const pm = new THREE.Mesh(merged, patchM); pm.name = `ShopPatches${f}`; put(pm, () => merged.dispose()); }
+    }
+    const posts = new THREE.InstancedMesh(postGeo, postM, cats.length); posts.name = `ShopPosts${f}`;
+    cats.forEach((cat, i) => {
+      const S = SLOTS[i];
+      const sg = signMesh(14, 1.6, cat.bn, cat.en, cat.color); // the shop name, hanging at the inner edge of the shop, facing the centre
+      sg.position.set(S.sign.x, SIGN_Y, S.sign.z); sg.rotation.y = S.sign.yaw; put(sg, freeMesh(sg));
+      const all = signMesh(6, 1.4, 'সব পণ্য দেখুন', 'View all on website →', cat.color); // "view all" board on a post, 8 m inside the shop
+      all.position.set(S.board.x, BOARD_Y, S.board.z); all.rotation.y = S.board.yaw;
+      all.userData.pick = { title: `${cat.bn} — সব পণ্য`, sub: 'ওয়েবসাইটে সব দেখুন', url: categoryUrl(cat) } satisfies PickInfo;
+      put(all, freeMesh(all)); pickables.push(all); pickAdded[f].push(all);
+      m4.makeTranslation(S.board.x, 1.2, S.board.z); posts.setMatrixAt(i, m4);
+    });
+    put(posts, () => posts.dispose());
+    { // the department sign (the name of the floor) over the 4 axis aisles, two-sided, merged into ONE mesh
+      const info = FLOORS[f];
+      const d = signMesh(10, 1.5, info.dept, `${info.en} · ${info.deptEn}`, ACCENT);
+      const parts: THREE.BufferGeometry[] = [];
+      for (const P of deptPoses()) for (const sd of [1, -1]) {
+        const q = d.geometry.clone(); q.rotateY(Math.atan2(P.ax * sd, P.az * sd)); q.translate(P.x + P.ax * sd * 0.03, SIGN_Y, P.z + P.az * sd * 0.03); parts.push(q);
+      }
+      const dg = mergeGeometries(parts, false);
+      d.geometry.dispose(); for (const q of parts) q.dispose();
+      if (dg) { d.geometry = dg; d.name = `DeptSign${f}`; put(d, freeMesh(d)); } else freeMesh(d)();
+    }
+  };
+  const releaseFloor = (f: number): void => {
+    if (f < 0 || f >= NF || !built.has(f)) return;
+    for (const o of added[f]) o.parent?.remove(o);
+    for (const free of owned[f]) free();
+    for (const p of pickAdded[f]) { const k = pickables.indexOf(p); if (k >= 0) pickables.splice(k, 1); }
+    added[f] = []; owned[f] = []; pickAdded[f] = [];
+    built.delete(f);
   };
 
   const E = MALL_DOORS.find((d) => d.id === 'E') ?? MALL_DOORS[0];
   return {
-    group: g, roof, floors: floorGroups, solids, obbs, meshSolids, floorSolids, floorObbs, ensureFloor, ramps: cores.ramps, rampRails: cores.rampRails, cores, pickables, blockers, shops: [], items: [],
+    group: g, roof, floors: floorGroups, solids, obbs, meshSolids, floorSolids, floorObbs, ensureFloor, releaseFloor, ramps: cores.ramps, rampRails: cores.rampRails, cores, pickables, blockers, shops, items: [],
     spawn: new THREE.Vector3(E.lx + 8, 0, E.lz), spawnYaw: Math.PI / 2,
     surfaceAt: (x, z, y) => { // the floor level under (x, z) for something at height y (floors 1..9 only inside the outline and outside the atrium hole / the core holes)
       for (let f = Math.min(NF - 1, Math.floor((y + 0.3) / FH)); f >= 1; f--) if (Math.hypot(x, z) > atriumR && insideBP(x, z) && !inCoreHole(x, z)) return f * FH;

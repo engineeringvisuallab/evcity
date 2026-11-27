@@ -212,6 +212,10 @@ export class MallManager {
       fg.visible = this.inside ? Math.abs(i - pf) <= 1 : i === 0 && nearOutside;
       if (fg.visible) this.build.ensureFloor(i);
     });
+    for (let i = 0; i < MALL.floors; i++) { // a floor stays built within 2 floors of the player (less hiccup on the stairs); further away its meshes + canvas textures are thrown away
+      const keep = this.inside ? Math.abs(i - pf) <= 2 : nearOutside && i === 0;
+      if (!keep) this.build.releaseFloor(i);
+    }
     const want = floorsAround(feet, MALL.FH, MALL.floors, this.inside, nearOutside);
     if (want !== this.lastWant) { this.lastWant = want; this.floorCols.set(want); }
     if (this.near) this.build.update(dt);

@@ -2,7 +2,7 @@
 
 Notun chat-e evcity zip (full repo) attach kore "Part A" paste koro. Tarpor ek chat-e ek step, "Part C" theke.
 
-**Ekhon porjonto: Step R1 done (26 Nov, door 4 ta, code likha + tsc/layout check; `npm run test:mall` ar browser NOT RUN). NEXT: Step C3 (10 tolar floor plan + shop layout).**
+**Ekhon porjonto: Step C3 done (26 Nov, code likha + tsc + `npm run test:mall-shops` PASS; `npm run test:mall` ar browser NOT RUN). NEXT: Step C4 (shop-er shajano). Rooftop hotel + cafe: alada step H1, C3-er pore (Part C dekho).**
 Note: C1 sandbox-e network chhilo na, tai `npm run test:mall` ar game-e chalano hoy ni. Sudhu tsc-er syntax check ar geometry-r hisab kora hoyeche. Age tumi `npm run test:mall` chalao, fail hole ami thik korbo.
 
 ---
@@ -84,7 +84,8 @@ Step R1: HANDOFF_CITYMALL_10FLOOR_BN.md-er Part B "Notun decision" dekho. Age op
 ```
 Janar jinis: C1 (podium + tower) ar C2 (core position) ei step-e bodlay. C3 theke ager mototai, kintu floor area ekhon ~101,650 m2.
 
-### Step C3: 10 tolar floor plan + shop layout + catalog (R1-er por; puro outline, ~101,650 m2 per floor)
+### Step C3: 10 tolar floor plan + shop layout + catalog (R1-er por; puro outline, ~101,650 m2 per floor). DONE (26 Nov)
+Dekho "Done log". Nicher prompt purono record.
 ```
 Step C3: MallCatalog.ts FLOORS ar CATEGORIES 10 tolar jonno bhag koro (nicher proposal), MallBuilder-e 12 zone-er jaygay prottek tolay ~8 ta shop (category zone) boshao: floor patch, shop-er nam sign (4 m ceiling-e thik size), "সব পণ্য দেখুন" board, dept sign (tola-er nam), tola-r shuru-te directory. Aisle ar atrium edge ar stair/lift core khali rakho. MallManager floor visibility (+-1) thik rakho.
 ```
@@ -101,6 +102,12 @@ Tola bhag (proposal, tumi onumodon koro):
 | 7 | Furniture ar bichana |
 | 8 | Rannaghor, decor, light, bagan |
 | 9 | Khelna, boi, sports, gift (+ food court option) |
+
+### Step H1: Rooftop hotel + cafe (tumi bolechho, C3-er pore, alada step; NOT STARTED)
+```
+Step H1: roof (y = 50, solid collider, dome atrium-er upor) er upor hotel + cafe. Age open proshno jiggesh koro: hotel koto boro (tola), roof-e jabe kibhabe (lift 9 theke roof porjonto barbe, stair, alada lift), cafe kothay.
+```
+Open: hotel-er size ar roof-e jaowar rasta tumi ekhono bolo ni ("pore thik korbo").
 
 ### Step C4: Shop-er shajano (fixture), category onujayi
 ```
@@ -189,3 +196,32 @@ Step C7: draw call / triangle ginti, floor visibility (inside: +-1 floor, outsid
 - Stair / lift atrium-er rail theke ~3 m / 6.5 m bahire, atrium-er east + west-e. Floor 3 stair-well rail test ager C2 test-er shift kora (Rapier chhara chole ni).
 - Browser-e ekbar dekhte hobe: atrium dome, door, floor lazy build hiccup, stair / lift atrium-er dhar-e.
 
+### Step C3 (26 Nov): 10 tolar floor plan + 8 shop per tola + sign / board / directory
+**Tomar decision (C3 shuru-te):** tola bhag handoff proposal-i (hotel alada, pore), prottek tolay ~8 shop, atrium-er chardike gol ring + bahir dike aro ring, rooftop hotel + cafe alada step-e (pore).
+**Tola bhag:** 0 supermarket ar khabar, 1 nari fashion, 2 purush ar shishu fashion, 3 jutha / bag / ghori / goyna, 4 mobile ar laptop, 5 TV / audio / camera / gaming, 6 home appliance ar smart home, 7 furniture ar bichana, 8 rannaghor / decor / light / bagan, 9 khelna / boi / sports / gift. Prottek tolay 8 ta category = 80 category.
+**Shop layout (ASSUMED: tumi number dao ni, `MallShops.ts` SHOP-e bodlano jay):** inner ring r 66..105 m (4 shop, 4 quadrant), ring aisle 12 m, outer ring r 117 m theke glass wall-er 4 m age porjonto (4 shop). 4 ta door-aisle (11 m, axis-er opor) ar atrium-er dhar-er 16 m promenade (stair / lift core ekhane) khali. Shop-er size inner ~4,800 m2, outer ~12,700..17,100 m2. Shop-er bhetore ekhon shudhu floor patch, sign, board; shelf / product pore (C4 / C5).
+**Changed files:**
+- `src/mall/MallCatalog.ts`: `FLOORS` 10 tola (floor nam + department Bangla / English), `CATEGORIES` 40 theke 80 (8 per tola; purono id gulo rekhe floor bodlano, notun 48 ta category), demo product shudhu purono id-r (mens, womens, kidswear-er demo product bad, kintu notun category-r product C5-te).
+- `src/mall/MallShops.ts` (NOTUN): 8 ta shop slot (pure, three.js nai): polygon, sign / board / view pose, `deptPoses()`.
+- `src/mall/MallBuilder.ts`: prottek tolar 8 shop (`ensureFloor`): floor patch (8 ta ek mesh, vertex color), shop nam sign (14 x 1.6 m, ceiling-er 4.6 m-e thik, ceiling theke jhulche), "সব পণ্য দেখুন" board (pickable, `categoryUrl`) + post, tola-r nam sign (4 axis aisle-er opor, duidik, ek mesh). `releaseFloor(f)` (dur-e gele mesh + canvas texture + pickable fele deya). `shops` 80 ta (viewPos nijer tolay). Post collider `floorSolids[f]`-e.
+- `src/mall/MallCoreBuilder.ts`: lift-er pashe directory board-e prottek tolar department nam.
+- `src/mall/MallManager.ts`: player-er +-2 tolar baire floor `releaseFloor`.
+- `src/mall/MallViewer.ts`: shop list scroll (80 button).
+- `package.json`: notun script `test:mall-shops`.
+- `scripts/mall-shops-check.ts` (NOTUN, pure): outline star-shaped, 8 slot, shop outline-er bhetore, 4 door-aisle ar atrium khali, core promenade-e, overlap nai, board post column-e na, 80 category / 8 per tola.
+- `scripts/mall-test.ts`: 80 shop, floorSolids = column + 8 post, ensureFloor / releaseFloor assert.
+**Test (sotti obostha):**
+- `npm run test:mall-shops`: ALL OK (headless tsx chalano hoyeche).
+- tsc (three + rapier stub diye, mall file-er): clean, shudhu 3 ta stub noise (`implicit any` callback).
+- `npm run test:mall`: NOT RUN (Rapier install nai). Browser / headless render: NOT RUN.
+**Loder upor probhab: MEDIUM (browser-e mapa hoy ni, NOT RUN):**
+- Prottek floor (lazy, +-1 floor visible = ~3): ~23 draw call (column 1, light 1, rail 2, patch 1, shop sign 8, board 8, post 1, dept sign 1). 3 floor = ~70 + static ~25.
+- Canvas texture: floor-e 17 ta (~6 MB GPU), `releaseFloor` +-2 tolar baire fele dey. Floor shuru-te build hole ekbar ~17 canvas ankbe (hiccup hote pare, browser-e dekho).
+- Triangle: shop patch ~8 x 200, baki ager moto.
+- Shadow: kono castShadow nai, notun light nai.
+**Janar jinis:**
+- Shop gulo ekhon khali (patch + sign + board), shelf / product C4 / C5-te. Notun 48 category-r demo product nai (C5).
+- Sign 14 m choura, 12 m column grid-er column-er bhetor diye jete pare (kono kono sign-er majhe column dhukte pare). Dekhe bolo.
+- Sign shudhu ek dik theke dekha jay (centre-er dike), pichone dekha jay na.
+- Outer shop boro (~15,000 m2), bhetore dur-e board / sign: tumi bolle shop aro bhag korbo (8 theke 12 / 16, ekhon tumi 8 bolechho).
+- MedianPlan-er door crossing (N / W / S) ekhono dekha hoy ni (R1 note).

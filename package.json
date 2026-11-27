@@ -99,6 +99,7 @@
     "test:birds": "tsx scripts/bird-test.ts",
     "test:boats": "tsx scripts/boat-test.ts",
     "test:mall": "tsx scripts/mall-test.ts",
+    "test:mall-shops": "tsx scripts/mall-shops-check.ts",
     "test:library": "tsx scripts/library-test.ts",
     "test:army": "tsx scripts/army-site-test.ts",
     "test:taxi": "tsx scripts/taxi-test.ts",

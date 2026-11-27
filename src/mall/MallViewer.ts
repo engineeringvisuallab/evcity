@@ -8,7 +8,7 @@ import { MALL_ATRIUM_R, MALL_BUILDING_LOCAL, MALL_EXTENT } from './MallSite';
 
 const CSS = `
 .mall-ui{position:fixed;inset:0;pointer-events:none;font-family:'Noto Sans Bengali',system-ui,sans-serif;color:#fff}
-.mall-ui .panel{position:absolute;left:12px;top:12px;background:rgba(15,23,42,.82);border-radius:12px;padding:10px 12px;pointer-events:auto;max-width:230px}
+.mall-ui .panel{position:absolute;left:12px;top:12px;background:rgba(15,23,42,.82);border-radius:12px;padding:10px 12px;pointer-events:auto;max-width:230px;max-height:92vh;overflow:auto}
 .mall-ui h1{font-size:16px;margin:0 0 8px;color:#f97316}
 .mall-ui button{display:block;width:100%;margin:3px 0;padding:6px 8px;border:0;border-radius:8px;background:#1e293b;color:#fff;text-align:left;cursor:pointer;font:inherit;font-size:13px;border-left:5px solid var(--c)}
 .mall-ui button:hover{background:#334155}
