@@ -3,8 +3,9 @@ import { MALL_BUILDING_LOCAL as P, MALL_ATRIUM_R } from '../src/mall/MallSite';
 import { coreFootprints } from '../src/mall/MallCores';
 import { edgeDist, floorLayout, insidePoly } from '../src/mall/MallLayout';
 import { SHOP, OUTER_R, rayHit, shopSlots, deptPoses } from '../src/mall/MallShops';
-import { CATEGORIES, FLOORS } from '../src/mall/MallCatalog';
-import { BAYS, FAMILY_OF, layoutShop, type FamilyId } from '../src/mall/MallFixtures';
+import { CATEGORIES, FLOORS, loadCatalog } from '../src/mall/MallCatalog';
+import { BAYS, FAMILY_OF, layoutProducts, layoutShop, type FamilyId } from '../src/mall/MallFixtures';
+import { shelfGeometry } from '../src/mall/MallShelfModels';
 
 let fails = 0;
 const ok = (c: boolean, m: string) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++; };
@@ -73,6 +74,38 @@ ok(maxBays <= CAP * 1.5 && minBays >= 1, `bays per shop: max ${maxBays} (cap ${C
 let floorMax = 0, tot = 0, totRuns = 0, totBoxes = 0;
 for (let f = 0; f < 10; f++) { let n = 0, r = 0, b = 0; CATEGORIES.filter((c) => c.floor === f).forEach((c, i) => { const L = layoutShop(S[i], FAMILY_OF[c.id], CAP); n += L.bays.length; r += L.runs.length; b += L.bays.reduce((a, p) => a + p.bay.boxes.length, 0); }); console.log(`floor ${f}: ${n} bays, ${r} colliders, ${b} boxes (~${b * 12} triangles)`); floorMax = Math.max(floorMax, b); tot += n; totRuns += r; totBoxes += b; }
 ok(tot > 0 && floorMax < 40000, `the busiest floor has ${floorMax} fixture boxes (<= 40,000 = ~480k triangles, only the floor the player is on is drawn)`);
+// ---- STEP C5: products ----
+const cat = await loadCatalog();
+const byCat = new Map<string, typeof cat.products>();
+for (const pr of cat.products) { const l = byCat.get(pr.categoryId); if (l) l.push(pr); else byCat.set(pr.categoryId, [pr]); }
+ok(CATEGORIES.every((c) => byCat.get(c.id)?.length === 10), `every one of the 80 categories has exactly 10 products (${cat.products.length} in all)`);
+ok(new Set(cat.products.map((q) => q.id)).size === cat.products.length && cat.products.every((q) => q.name && q.price > 0 && q.slug && q.kind), 'product ids are unique; every product has a name, a price > 0, a slug and a kind');
+ok(CATEGORIES.every((c) => new Set(byCat.get(c.id)!.map((q) => q.name)).size === 10), 'the 10 product names of a category are all different');
+const KINDS = [...new Set(CATEGORIES.map((c) => c.kind))];
+let triMax = 0, kindBad = '';
+for (const k of KINDS) { const g = shelfGeometry(k); g.computeBoundingBox(); const b = g.boundingBox!, longest = Math.max(b.max.x - b.min.x, b.max.y - b.min.y, b.max.z - b.min.z); triMax = Math.max(triMax, (g.index?.count ?? 0) / 3); if (Math.abs(longest - 1) > 1e-3 || Math.abs(b.min.y) > 1e-3 || !g.attributes.color) kindBad = k; }
+ok(!kindBad && triMax <= 300, `a shelf model for each of the ${KINDS.length} product kinds in use: normalised (longest side 1 m, standing on y = 0, vertex colours), at most ${triMax} triangles${kindBad ? ' - BAD: ' + kindBad : ''}`);
+ok(FAMS.every((f) => BAYS[f].some((b) => b.slots.length > 0) && BAYS[f].every((b) => b.slots.every((s) => s.size >= 0.2 && s.size <= 1.4 && s.y >= 0 && s.y + s.size <= 2.6 && Math.abs(s.x) <= b.len / 2 + 0.01 && Math.abs(s.z) <= b.depth / 2 + 0.4))), 'every fixture family has product slots; each slot is 0.2..1.4 m big, below 2.6 m, over its bay (+0.4 m into the aisle at most)');
+const PCAPS = [50, 100, 160];
+let pBad = 0, pWorst = '', pMin = 1e9, pMax = 0, pTri = 0, pFloorMax = 0;
+for (const pc of PCAPS) {
+  pFloorMax = 0;
+  for (let f = 0; f < 10; f++) {
+    let fl = 0;
+    CATEGORIES.filter((c) => c.floor === f).forEach((c, i) => {
+      const L = layoutShop(S[i], FAMILY_OF[c.id], CAP), pl = layoutProducts(L, 10, pc);
+      if (pl.length === 0) { pBad++; pWorst = `${c.id}: no product placed`; }
+      if (pl.length > pc) { pBad++; pWorst = `${c.id}: ${pl.length} > cap ${pc}`; }
+      if (pc >= 50 && pl.length >= 10 && new Set(pl.map((q) => q.product)).size !== 10) { pBad++; pWorst = `${c.id}: not all 10 products are on show`; }
+      for (const q of pl) if (!inPoly(S[i].poly, q.x, q.z) || cols.some(([cx, cz]) => Math.abs(cx - q.x) < 0.5 + q.size / 2 && Math.abs(cz - q.z) < 0.5 + q.size / 2) || Math.abs(q.x) < SHOP.aisle || Math.abs(q.z) < SHOP.aisle) { pBad++; pWorst = `${c.id}: a product is outside the shop / on a column / on a door aisle at ${q.x.toFixed(1)}, ${q.z.toFixed(1)}`; }
+      pMin = Math.min(pMin, pl.length); pMax = Math.max(pMax, pl.length); fl += pl.length;
+    });
+    pFloorMax = Math.max(pFloorMax, fl);
+  }
+  pTri = Math.max(pTri, pFloorMax);
+}
+ok(pBad === 0, `products on the shelves (cap 50 / 100 / 160 per shop): every shop shows all 10 products, inside its shop, off the columns and the door aisles (${pBad} problems${pWorst ? ': ' + pWorst : ''})`);
+ok(pMax <= 160 && pMin >= 10, `products per shop: min ${pMin}, max ${pMax} (cap 160 at the high setting); busiest floor ${pFloorMax} products at cap 160 (instances, ~${(pFloorMax * 120 / 1000).toFixed(0)}k triangles)`);
 console.log(`all 10 floors: ${tot} bays (${(tot / 80).toFixed(0)} per shop), ${totRuns} colliders, ${totBoxes} boxes`);
 console.log('shop areas (m2):', S.map((s) => s.area.toFixed(0)).join(', '));
 console.log(fails === 0 ? '\nALL OK' : `\n${fails} FAILED`);

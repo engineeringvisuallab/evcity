@@ -10,6 +10,7 @@ export class MallInteraction {
   blockers: THREE.Object3D[] = [];
   /** Optional extra rule, e.g. "the product must be close to the player" (the third-person camera sits behind the player). */
   accept: ((hit: THREE.Intersection) => boolean) | null = null;
+  private live: THREE.Object3D[] = [];
   private ray = new THREE.Raycaster();
   private mouse = new THREE.Vector2();
   private ring: THREE.Mesh | null = null;
@@ -40,13 +41,18 @@ export class MallInteraction {
     this.ray.setFromCamera(locked ? new THREE.Vector2(0, 0) : this.mouse, this.camera);
     this.ray.far = this.maxDist;
     let pick: PickInfo | null = null, ring: THREE.Mesh | null = null;
-    let hit: THREE.Intersection | undefined = this.ray.intersectObjects(this.targets, true)[0];
+    // STEP C5: only what is drawn can be picked (the products of the floors above / below are hidden, but still in the list)
+    const live = this.live; live.length = 0;
+    for (const t of this.targets) { let vis = true; for (let o: THREE.Object3D | null = t; o; o = o.parent) if (!o.visible) { vis = false; break; } if (vis) live.push(t); }
+    let hit: THREE.Intersection | undefined = this.ray.intersectObjects(live, true)[0];
     if (hit && this.blockers.length) {
       const wall = this.ray.intersectObjects(this.blockers, false)[0];
       if (wall && wall.distance < hit.distance) hit = undefined;
     }
     if (hit && this.accept && !this.accept(hit)) hit = undefined;
     for (let o: THREE.Object3D | null = hit?.object ?? null; o; o = o.parent) {
+      const list = o.userData.pickList as PickInfo[] | undefined; // STEP C5: an InstancedMesh of products: one PickInfo per instance
+      if (list && hit && hit.instanceId !== undefined && list[hit.instanceId]) { pick = list[hit.instanceId]; break; }
       if (o.userData.pick) { pick = o.userData.pick as PickInfo; ring = (o.userData.ring as THREE.Mesh) ?? null; break; }
     }
     if (ring !== this.ring) {

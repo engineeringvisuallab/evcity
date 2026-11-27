@@ -75,7 +75,7 @@ export class MallManager {
 
   constructor(private d: MallDeps) {
     const site = d.terrain.mall;
-    this.build = buildMall(d.catalog, { fixtureCap: Q.mallFixtures });
+    this.build = buildMall(d.catalog, { fixtureCap: Q.mallFixtures, productCap: Q.mallProducts });
     this.group = this.build.group;
     this.group.position.set(site.x, site.floorY, site.z);
     this.group.rotation.y = site.yaw;

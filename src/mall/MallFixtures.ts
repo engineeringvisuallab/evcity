@@ -8,7 +8,9 @@ export type Mat = 'o' | 'g'; // opaque / glass (the glass boxes are drawn in a t
 /** A fixed colour (0xRRGGBB) or the category colour: c1 = the colour, c2 = lighter, c3 = very pale. */
 export type Col = number | 'c1' | 'c2' | 'c3';
 export interface Box { x: number; y: number; z: number; sx: number; sy: number; sz: number; m: Mat; c: Col }
-export interface Bay { len: number; depth: number; h: number; boxes: Box[] }
+/** STEP C5: where a real product stands on a bay (the bay's own frame): bottom centre x / y / z, `size` = the longest side of the product (m), `yaw` = which way its front looks (0 = +z, PI = -z, PI/2 = +x). */
+export interface Slot { x: number; y: number; z: number; size: number; yaw: number }
+export interface Bay { len: number; depth: number; h: number; boxes: Box[]; slots: Slot[] }
 export type FamilyId =
   | 'gondola' | 'fridge' | 'crate' | 'counter' | 'rail' | 'tvwall' | 'electro' | 'bigbox'
   | 'room_sofa' | 'room_bed' | 'room_dining' | 'room_office' | 'bookshelf' | 'rack' | 'bikes' | 'plants';
@@ -82,26 +84,39 @@ const plants = (v: number): Box[] => {
   for (let j = 0; j < 4; j++) { const x = -0.55 + j * 0.37; o.push(bx(x, 0.7, 0, 0.28, 0.28, 0.28, v ? 'c2' : POT), bx(x, 0.98, 0, 0.36, 0.4, 0.36, v ? C3[j % 3] : (j % 2 ? 0x22c55e : 0x16a34a))); }
   return o;
 };
-const mk = (len: number, depth: number, h: number, variants: Box[][]): Bay[] => variants.map((boxes) => ({ len, depth, h, boxes }));
+// ---- STEP C5: product slots ("a shelf level of the bay faces the aisle"). Few slots per bay: the products stand on every k-th bay (Quality.mallProducts), see layoutProducts ----
+const PI = Math.PI;
+const sl = (x: number, y: number, z: number, size: number, yaw = 0): Slot => ({ x, y, z, size, yaw });
+const twoSided = (xs: number[], y: number, z: number, size: number): Slot[] => [1, -1].flatMap((sd) => xs.map((x) => sl(x, y, sd * z, size, sd > 0 ? 0 : PI)));
+const S_GONDOLA = twoSided([-0.4, 0.4], 1.14, 0.3, 0.34);
+const S_FRIDGE = [...[-0.4, 0.4].map((x) => sl(x, 1.3, -0.1, 0.34)), ...[-0.4, 0.4].map((x) => sl(x, 1.9, -0.1, 0.34))];
+const S_CRATE = twoSided([-0.6, 0.6], 0.75, 0.32, 0.26);
+const S_COUNTER = [-0.6, -0.2, 0.2, 0.6].map((x) => sl(x, 0.9, 0, 0.26));
+const S_RAIL = twoSided([-0.45, 0.45], 0.2, 0.09, 0.8);
+const S_FOLDED = [-0.2, 0.2].map((x) => sl(x, 1.0, 0, 0.4));
+const S_TV = [-0.45, 0.45].map((x) => sl(x, 0, 0.28, 0.5));
+const S_TABLE = [-0.6, 0, 0.6].map((x) => sl(x, 0.83, 0, 0.3));
+const S_BIGBOX = (top: number): Slot[] => (top > 1.6 ? [] : [-0.3, 0.3].map((x) => sl(x, top, 0, 0.4)));
+const mk = (len: number, depth: number, h: number, variants: Box[][], slots: (variant: number) => Slot[]): Bay[] => variants.map((boxes, i) => ({ len, depth, h, boxes, slots: slots(i) }));
 
 /** The bays of every family (variants are mixed along the rows). `h` = the height of the collider of a run. */
 export const BAYS: Record<FamilyId, Bay[]> = {
-  gondola: mk(1.8, 1.0, 1.9, [gondola(0), gondola(1)]),
-  fridge: mk(1.5, 0.9, 2.1, [fridge(0), fridge(1)]),
-  crate: mk(1.8, 0.9, 1.0, [crate(0), crate(1)]),
-  counter: mk(1.8, 0.7, 1.2, [counter(0), counter(1)]),
-  rail: mk(2.0, 0.9, 1.7, [railBay(0), railBay(1), railBay(2), railBay(0), mannequins(), folded()]),
-  tvwall: mk(1.6, 0.7, 1.6, [tv(0), tv(1)]),
-  electro: mk(1.8, 0.9, 1.6, [counter(0), counter(1), tv(0), table(), counter(0), tv(1)]),
-  bigbox: mk(1.4, 0.9, 1.9, [bigbox(0), bigbox(1), bigbox(2), bigbox(3)]),
-  room_sofa: mk(5, 3.5, 1.0, [roomSofa()]),
-  room_bed: mk(5, 3.5, 1.0, [roomBed()]),
-  room_dining: mk(5, 3.5, 1.0, [roomDining()]),
-  room_office: mk(5, 3.5, 1.0, [roomOffice()]),
-  bookshelf: mk(1.6, 0.5, 2.0, [bookshelf(0), bookshelf(1)]),
-  rack: mk(1.8, 0.7, 1.7, [rack(0), rack(1)]),
-  bikes: mk(1.8, 0.7, 1.0, [bike(0), bike(1), bike(2)]),
-  plants: mk(1.6, 0.8, 1.5, [plants(0), plants(1)]),
+  gondola: mk(1.8, 1.0, 1.9, [gondola(0), gondola(1)], () => S_GONDOLA),
+  fridge: mk(1.5, 0.9, 2.1, [fridge(0), fridge(1)], () => S_FRIDGE),
+  crate: mk(1.8, 0.9, 1.0, [crate(0), crate(1)], () => S_CRATE),
+  counter: mk(1.8, 0.7, 1.2, [counter(0), counter(1)], () => S_COUNTER),
+  rail: mk(2.0, 0.9, 1.7, [railBay(0), railBay(1), railBay(2), railBay(0), mannequins(), folded()], (i) => (i < 4 ? S_RAIL : i === 5 ? S_FOLDED : [])),
+  tvwall: mk(1.6, 0.7, 1.6, [tv(0), tv(1)], () => S_TV),
+  electro: mk(1.8, 0.9, 1.6, [counter(0), counter(1), tv(0), table(), counter(0), tv(1)], (i) => (i === 3 ? S_TABLE : i === 2 || i === 5 ? S_TV : S_COUNTER)),
+  bigbox: mk(1.4, 0.9, 1.9, [bigbox(0), bigbox(1), bigbox(2), bigbox(3)], (i) => S_BIGBOX([1.9, 1.0, 0.9, 1.5][i])),
+  room_sofa: mk(5, 3.5, 1.0, [roomSofa()], () => [sl(-1.5, 0.02, 0.85, 1.2, PI), sl(1.5, 0.02, 0.85, 1.2, PI)]),
+  room_bed: mk(5, 3.5, 1.0, [roomBed()], () => [sl(-1.35, 0.02, 1.0, 1.3, PI), sl(1.35, 0.02, 1.0, 1.3, PI)]),
+  room_dining: mk(5, 3.5, 1.0, [roomDining()], () => [sl(-1.8, 0, 0, 0.8, PI / 2), sl(1.8, 0, 0, 0.8, -PI / 2)]),
+  room_office: mk(5, 3.5, 1.0, [roomOffice()], () => [sl(-1.5, 0, 0.4, 0.9, PI), sl(1.5, 0, 0.4, 0.9, PI)]),
+  bookshelf: mk(1.6, 0.5, 2.0, [bookshelf(0), bookshelf(1)], () => [-0.4, 0.4].map((x) => sl(x, 2.0, 0, 0.35))),
+  rack: mk(1.8, 0.7, 1.7, [rack(0), rack(1)], () => [-0.4, 0.4].map((x) => sl(x, 1.42, 0, 0.3))),
+  bikes: mk(1.8, 0.7, 1.0, [bike(0), bike(1), bike(2)], () => [sl(0, 0, 0.3, 0.9)]),
+  plants: mk(1.6, 0.8, 1.5, [plants(0), plants(1)], () => [-0.4, 0.4].map((x) => sl(x, 1.38, 0, 0.3))),
 };
 
 /** Which fixture family a category uses. */
@@ -193,5 +208,33 @@ export function layoutShop(slot: ShopSlot, fam: FamilyId, cap: number): ShopLayo
   });
   const out: ShopLayout = { family: fam, bays, runs };
   cache.set(key, out);
+  return out;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// STEP C5: which products stand where. PURE data (the headless check uses the same numbers). A shop shows `cap` products at most: every k-th bay of the shop gets its slots filled,
+// the products of the category take the slots in turn (slot n -> product n mod count), so every product is on show about cap / count times.
+export interface ProductPlace { x: number; y: number; z: number; yaw: number; size: number; product: number }
+const pcache = new WeakMap<ShopLayout, Map<string, ProductPlace[]>>();
+export function layoutProducts(L: ShopLayout, count: number, cap: number): ProductPlace[] {
+  if (count <= 0 || cap <= 0) return [];
+  let m = pcache.get(L);
+  if (!m) pcache.set(L, (m = new Map()));
+  const key = `${count}:${cap}`, hit = m.get(key);
+  if (hit) return hit;
+  const cand = L.bays.filter((p) => p.bay.slots.length > 0);
+  const out: ProductPlace[] = [];
+  if (cand.length) {
+    const per = cand.reduce((n, p) => n + p.bay.slots.length, 0) / cand.length, want = Math.max(1, Math.ceil(cap / per)), stride = Math.max(1, Math.floor(cand.length / want));
+    let k = 0;
+    for (let i = Math.floor(stride / 2); i < cand.length && out.length < cap; i += stride) {
+      const P = cand[i], cy = Math.cos(P.yaw), sy = Math.sin(P.yaw);
+      for (const s of P.bay.slots) {
+        if (out.length >= cap) break;
+        out.push({ x: P.x + s.x * cy + s.z * sy, y: s.y, z: P.z - s.x * sy + s.z * cy, yaw: P.yaw + s.yaw, size: s.size, product: k++ % count });
+      }
+    }
+  }
+  m.set(key, out);
   return out;
 }

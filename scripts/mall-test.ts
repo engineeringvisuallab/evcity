@@ -116,12 +116,12 @@ ok(onPlot === 0, 'no tree stands on the mall plot');
 
 // 5. mall build: ONE building, empty floors (C3 brings the shops)
 const cat = await loadCatalog();
-const mall = buildMall(cat, { fixtureCap: 300 });
+const mall = buildMall(cat, { fixtureCap: 300, productCap: 160 });
 const LAY = floorLayout();
 ok(mall.floors.length === 10, '10 floors (floor groups 0..9)');
 ok(mall.shops.length === 80 && [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].every((f) => mall.shops.filter((z) => z.floor === f).length === 8), `10 floors x 8 shops = ${mall.shops.length} shops (viewPos on its own floor)`);
 ok(mall.shops.every((z) => Math.abs(z.viewPos.y - z.floor * 5) < 1e-6 && Math.hypot(z.viewPos.x, z.viewPos.z) > 66), 'every shop viewing spot stands on its own floor, outside the atrium promenade');
-pending(`no products yet (${mall.items.length}): C5 brings the products`);
+ok(mall.items.length === 800 && cat.products.length === 800 && mall.items.every((i) => i.viewPos.y === i.category.floor * 5), `C5: ${mall.items.length} products (10 in each of the 80 categories) are in the viewer's search list, each with the viewing spot of its shop`);
 ok(mall.ramps.length === 36 && mall.rampRails.length === 72, `stairs: 2 sides x 9 flights x 2 lanes = 36 walking ramps, 72 sloped rails (${mall.ramps.length} / ${mall.rampRails.length})`);
 { const FOOTS = coreFootprints(); const inCore = (q: { minX: number; maxX: number; minZ: number; maxZ: number }) => FOOTS.some(([a, b, c, d]) => q.maxX > a - 3 && q.minX < b + 3 && q.maxZ > c - 3 && q.minZ < d + 3);
   ok(mall.solids.every(inCore), `always-on solids (${mall.solids.length}) are only the stair / lift cores (no walls inside the building)`); }
@@ -139,10 +139,12 @@ mall.ensureFloor(3); mall.ensureFloor(3);
 { const pick0 = mall.pickables.length, kids = mall.floors[3].children.length;
   ok(mall.floors[3].children.length >= 4 && mall.floors[2].children.every((c) => !(c as any).isInstancedMesh), 'ensureFloor builds a floor once, only that floor (columns, ceiling lights, atrium rail, shops)');
   ok(mall.floors[3].children.filter((c) => (c as any).userData?.pick?.url).length === 8 && mall.floors[3].children.some((c) => c.name === 'ShopPatches3') && mall.floors[3].children.some((c) => c.name === 'DeptSign3'), 'floor 3 has 8 "view all" boards (pickable, with a link), 1 merged patch mesh, 1 department sign');
-  ok(mall.fixtureGroups[3].children.length >= 8 && mall.fixtureGroups[3].children.every((m) => (m as any).isInstancedMesh) && mall.fixtureGroups[3].children.length <= 16, `floor 3 fixtures: ${mall.fixtureGroups[3].children.length} instanced meshes (an opaque one + a glass one per shop), none on the other floors (${mall.fixtureGroups[2].children.length})`);
+  ok(mall.fixtureGroups[3].children.length >= 16 && mall.fixtureGroups[3].children.every((m) => (m as any).isInstancedMesh) && mall.fixtureGroups[3].children.length <= 24, `floor 3: ${mall.fixtureGroups[3].children.length} instanced meshes (fixtures: an opaque one + a glass one per shop; C5 products: one per shop), none on the other floors (${mall.fixtureGroups[2].children.length})`);
+  { const prod = mall.fixtureGroups[3].children.filter((m) => m.name.startsWith('Products') && (m as any).userData.pickList?.length === (m as any).count); const n = prod.reduce((s, m) => s + (m as any).count, 0);
+    ok(prod.length === 8 && n >= 8 * 10 && n <= 8 * 160 && prod.every((m) => (m as any).userData.pickList.every((q: any) => q.title && q.url.startsWith('https://') && q.sub.startsWith('৳'))), `C5: floor 3 has ${prod.length} product meshes (one per shop) with ${n} products; every instance has its own PickInfo (name, price, link to the shop)`); }
   mall.releaseFloor(3); mall.releaseFloor(3);
   ok(mall.fixtureGroups[3].children.length === 0, 'releaseFloor removes the fixture meshes too');
-  ok(mall.floors[3].children.length < kids && mall.floors[3].children.every((c) => !(c as any).isInstancedMesh) && mall.pickables.length === pick0 - 8, 'releaseFloor throws away what ensureFloor built (meshes, 8 boards from the pickables), once');
+  ok(mall.floors[3].children.length < kids && mall.floors[3].children.every((c) => !(c as any).isInstancedMesh) && mall.pickables.length === pick0 - 16, 'releaseFloor throws away what ensureFloor built (meshes, 8 boards + 8 product meshes from the pickables), once');
   mall.ensureFloor(3);
   ok(mall.floors[3].children.length === kids && mall.pickables.length === pick0, 'a released floor builds again the same'); }
 ok(floorsAround(12, 5, 10, true, true).join() === '2' && floorsAround(4.5, 5, 10, true, true).join() === '0,1' && floorsAround(0, 5, 10, false, true).join() === '0' && floorsAround(0, 5, 10, false, false).length === 0, 'floorsAround: the floor the feet are on (+ the next one within 1 m of it), ground floor when just outside, nothing when far');

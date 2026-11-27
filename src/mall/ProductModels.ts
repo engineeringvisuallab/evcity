@@ -229,6 +229,24 @@ const builders: Record<ProductKind, (g: THREE.Group, color: number) => void> = {
     }
     put(g, B(1.7, 0.08, 0.6), stdMat(0x334155, 0.3, 0.5), 0, 0.04, 0);
   },
+  bed(g, color) {
+    put(g, B(2.0, 0.35, 2.2), stdMat(0x78350f, 0, 0.8), 0, 0.3, 0);
+    put(g, B(1.9, 0.25, 2.0), stdMat(0xf1f5f9, 0, 0.9), 0, 0.6, 0.05);
+    put(g, B(1.9, 0.08, 1.0), stdMat(color, 0, 0.8), 0, 0.76, 0.5);
+    put(g, B(2.0, 1.0, 0.12), stdMat(0x78350f, 0, 0.8), 0, 0.85, -1.05);
+    for (const x of [-0.5, 0.5]) put(g, B(0.6, 0.12, 0.4), stdMat(color, 0, 0.7), x, 0.8, -0.7);
+  },
+  chair(g, color) {
+    put(g, B(0.6, 0.1, 0.6), stdMat(color, 0, 0.8), 0, 0.5, 0);
+    put(g, B(0.6, 0.7, 0.08), stdMat(color, 0, 0.8), 0, 0.95, -0.28);
+    for (const x of [-0.25, 0.25]) for (const z of [-0.25, 0.25]) put(g, B(0.06, 0.5, 0.06), dark, x, 0.25, z);
+  },
+  appliance(g, color) {
+    put(g, B(1.0, 1.7, 0.8), stdMat(color, 0.5, 0.4), 0, 0.85, 0);
+    put(g, B(0.04, 1.5, 0.02), stdMat(0xe2e8f0, 0.9, 0.3), 0.3, 0.9, 0.41);
+    put(g, B(0.8, 0.02, 0.02), dark, 0, 1.0, 0.41);
+    put(g, B(0.3, 0.12, 0.02), stdMat(0x22d3ee, 0, 0.3, 0x22d3ee), -0.2, 1.5, 0.41);
+  },
   cake(g, color) {
     put(g, C(0.7, 0.45, 32), stdMat(0xfde68a, 0, 0.8), 0, 0.3, 0);
     put(g, C(0.72, 0.18, 32), stdMat(color, 0, 0.6), 0, 0.62, 0);

@@ -2,7 +2,7 @@
 
 Notun chat-e evcity zip (full repo) attach kore "Part A" paste koro. Tarpor ek chat-e ek step, "Part C" theke.
 
-**Ekhon porjonto: Step C4 done (27 Nov, code likha + tsc + `npm run test:mall-shops` PASS; `npm run test:mall` ar browser NOT RUN). NEXT: Step C5 (product + example link). Rooftop hotel + cafe: alada step H1 (Part C dekho).**
+**Ekhon porjonto: Step C5 done (27 Nov, code likha + tsc + vite build + `npm run test:mall-shops` PASS + headless raycast pick test; `npm run test:mall`-er 8 ta fail C5-er age-o chhilo, browser NOT RUN). NEXT: Step C6 (atrium + ground floor decor) ba Step H1 (rooftop hotel + cafe, age open proshno: Part C dekho).**
 Note: C1 sandbox-e network chhilo na, tai `npm run test:mall` ar game-e chalano hoy ni. Sudhu tsc-er syntax check ar geometry-r hisab kora hoyeche. Age tumi `npm run test:mall` chalao, fail hole ami thik korbo.
 
 ---
@@ -115,7 +115,8 @@ Dekho "Done log". Nicher prompt purono record.
 Step C4: prottek category-r jonno shop fixture banao (Kit-er moto small helper functions, instanced/merged, PERFORMANCE_RULES.md): khabar-e shelf + fridge + fruit crate, fashion-e hanger rail + mannequin + folded table, electronics-e glass counter + wall TV, furniture-e room set, boi-te bookshelf, ityadi. Notun ProductKind model dorkar hole ProductModels.ts-e add (fridge, mannequin, shelf unit...).
 ```
 
-### Step C5: Product (onek) + example link
+### Step C5: Product (onek) + example link. DONE (27 Nov)
+Dekho "Done log". Nicher prompt purono record.
 ```
 Step C5: prottek category-te ~10 ta product (ekhon 3), shob-er example link (SHOP_LINK, your-shop.example.com/product/{slug}). Shelf/rack-e product shajano (turntable sudhu hero product-er jonno). Click = notun tab (MallInteraction.accept range: same floor y +-5). Instanced model dorkar (hajar mesh na). Real site-er link: sudhu SHOP_LINK.baseUrl ar apiUrl bodlabe.
 ```
@@ -258,3 +259,28 @@ Step C7: draw call / triangle ginti, floor visibility (inside: +-1 floor, outsid
 - Outer shop boro, row 12 m pitch, ~12 / 24 m tei rows: fika jayga beshi lagte pare. Browser-e dekho, ghono / fika bolo (pitch / cap bodlano jay).
 - Fixture row alternate yaw-e shob dik-e mukh kore, kintu rail / fridge-er shamne pechon bola jay na (symmetric) .
 - Sign (14 m) ar column ager moto kothao dhukte pare; fixture-er upor-e sign nai (sign 2.9 m-er upore, fixture <= 2.1 m).
+
+### Step C5 (27 Nov): 10 product per category + example link + shelf-e sajano + click
+**Tomar decision:** C5 age, H1 (rooftop hotel + cafe) pore. Baki (koyta product shelf-e, kon jayga) ami assume korechhi, nicher "Assumed" dekho.
+**Ki holo:**
+- `src/mall/MallCatalog.ts`: 80 category x 10 = 800 demo product (`PRODUCT_NAMES`: [typical price, 10 ta nam `|` diye], price = base x `PRICE_STEP`, rang = category rang + `COLOR_POOL`). Purono 3-ta `DEMO` shoriye dewa hoyeche (id ager moto `fruits-1..`). Example link: `SHOP_LINK` (`https://your-shop.example.com/product/{slug}`), real site-e jete sudhu `baseUrl` / `apiUrl` bodlao. Live API-te jototai product thak (10 na hole-o) shelf-e ghure ghure dekhabe. Notun `ProductKind`: `bed`, `chair`, `appliance`; kind bodlano: fridge, ac, washer, solar, wardrobe, printer -> appliance; beds -> bed; dining, officef -> chair (aage sob sofa / box chhilo).
+- `src/mall/ProductModels.ts`: `bed`, `chair`, `appliance` builder (showroom model, Agro-o eta ber korte pare).
+- `src/mall/MallShelfModels.ts` (NOTUN): shelf-er chhoto low-poly model, ek kind-e 1 ta merged geometry (vertex colour, longest side = 1 m, y = 0-te daraye), 36..220 triangle. `'p'` part = product-er rang (instance colour), baki part nijer rang x instance colour. Sob shop-er jonno shared, kind-e fallback = gift box.
+- `src/mall/MallFixtures.ts`: `Bay.slots` (prottek bay-te kothay product dandabe: gondola-r mid shelf duto dik, fridge-er bhitor, counter-er glass case, rail-e jhulano shirt, bigbox-er upor, room set-er kone, bookshelf / rack / plants-er upor, bike-er samne ...) + `layoutProducts(layout, count, cap)` (pure): prottek k-th bay-er slot bhore, product slot-e ghure ghure boshe (slot n -> product n mod count), tai sob 10 ta product dekha jay.
+- `src/mall/MallBuilder.ts`: `ensureFloor` e prottek shop-e 1 ta `InstancedMesh` (`Products{f}.{i}`, fixtureGroups[f]-e, shudhu player-er floor-e dekha jay), `userData.pickList[instance]` = oi instance-er PickInfo (nam, ৳ dam, productUrl). `pickables`-e jay, `releaseFloor` shoriye dey. `mall.items` ekhon 800 (viewer search + shop-er viewPos). `buildMall(catalog, { fixtureCap, productCap })`.
+- `src/mall/MallInteraction.ts`: instance pick (`hit.instanceId` -> `pickList`), ar je mesh dekha jachchhe na (opor-niche floor hidden) shegulo raycast-e dhore na.
+- `src/mall/MallManager.ts`: `productCap: Q.mallProducts`. `src/core/Quality.ts`: notun `mallProducts` (low 50, medium 100, high 160 per shop).
+- `scripts/mall-shops-check.ts`: C5 assert (80 x 10 product, id / nam unique, shelf model normalised + <= 300 tri, slot size / jayga, prottek shop 10 ta product-i dekhay, shop-er bhetore, column / door aisle-e na, cap).
+- `scripts/mall-test.ts`: items 800, floor 3-e 8 product mesh + pickList, releaseFloor 8 board + 8 product mesh.
+**Click:** Mall-er agei ache: crosshair product-er dike -> tip (nam + dam) -> bam click / O -> `productUrl` notun tab-e. `MallManager.accept`: player theke 9 m ar same floor (y +-5) chhara pick hoy na.
+**Test (sotti obostha):** `npm run test:mall-shops`: ALL OK. tsc + `vite build`: clean. Headless: 10 floor build 0.7 s, 12,704 product instance, floor-e ~115k triangle (high), 128 ta instance-e ray chhure prottek-ta nijei hit korlo (instanceId thik). `npm run test:mall`: 8 ta FAIL (pad skirt cliff, tree on plot, stair x2, rail, lift x3) = C5-er age-o (original zip-e) hubohu ei 8 ta-i FAIL chhilo, C5 notun fail ana nai. Browser / FPS: NOT RUN.
+**Assumed (tumi bolo ni, MallFixtures `S_*` / Quality-te bodlano jay):**
+- Shop-e product ~50 / 100 / 160 (low / medium / high), prottek bay-te 2..4 ta, prottek k-th bay-te. Boro shop-e dur dur-e dekhabe: beshi chaile `Quality.mallProducts` barao (triangle barbe).
+- Demo nam sob English, price BDT-te anumanik.
+- Hero turntable (ghurano product) ekhono nai: shelf-er product-i click kora jay. Chaile alada step.
+**Loder upor probhab (browser-e mapa hoy ni):** per floor ~8 ta notun draw call, ~115k triangle (high, ager fixture-er ~100..195k-er upor). Low tier ~36k. Shadow / light nai. Product geometry sob shop-e shared. Floor build-e +~60 ms (headless).
+**Janar jinis (browser-e dekhe bolo):**
+- Slot-er jayga andaze: kichu product fixture-er box-er sathe overlap kore thakte pare (rail-e jhulano shirt cloth box-er samne, tvwall-e samne dandano, plants-er opor, bookshelf-er upor 2 m-e). Dekhe bolo kon family thik kora lagbe.
+- Fridge-er bhitor product glass-er pechone (transparent glass-e dekha jay). Room set-e (sofa / bed / dining / office) 2 ta kore product kone-te.
+- Model gulo simple box-based; kichu kind (watch, headphone, bag) chhoto size-e ektu apashto dekhate pare.
+- Click kora jay shudhu product (shelf-er jinis) ar "সব পণ্য দেখুন" board; fixture-e na.

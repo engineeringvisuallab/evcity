@@ -6,7 +6,7 @@
 // outside the glass only a very small open area (a walkway). STEP C3: 8 shops (categories) on every floor, in two rings round the atrium (MallShops.ts): a coloured floor patch, a hanging name sign,
 // a 'view all' board (click = the category page on the shop) and the department sign over the 4 axis aisles. STEP C4: every shop is furnished with rows of fixtures (MallFixtures.ts: shelves,
 // fridges, crates, counters, hanger rails + mannequins, TV stands, appliances, room sets, bookshelves, racks ...): ONE opaque + ONE glass InstancedMesh per shop, one collider per run of bays.
-// The fixtures of a floor are drawn only while the player is on that floor (fixtureGroups). Products on the shelves come in C5.
+// The fixtures of a floor are drawn only while the player is on that floor (fixtureGroups). STEP C5: real products stand on the shelves (MallShelfModels.ts, one InstancedMesh per shop, one clickable PickInfo per instance).
 //
 // Local origin = the atrium centre at floor level (y = 0 is the ground floor). Place it in the city with: mall.group.position.set(x, groundY, z); mall.group.rotation.y = yaw;
 //
@@ -15,14 +15,15 @@
 // the colliders of the floor the player is on (MallColliders.ts). No lights, no shadows, no per-frame allocation.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { FLOORS, categoryUrl, type Catalog, type Category, type Product } from './MallCatalog';
+import { FLOORS, categoryUrl, productUrl, type Catalog, type Category, type Product } from './MallCatalog';
 import { stdMat } from './ProductModels';
 import { MALL_FLOORS, MALL_FH, MALL_ATRIUM_R, MALL_SLAB, MALL_BUILDING_LOCAL, MALL_DOORS } from './MallSite';
 import { buildCores, type CoresBuild } from './MallCoreBuilder';
 import { coreHoles, type PickAction } from './MallCores';
 import { floorLayout, insidePoly, GRID } from './MallLayout';
 import { shopSlots, deptPoses } from './MallShops';
-import { FAMILY_OF, layoutShop, type ShopLayout } from './MallFixtures';
+import { FAMILY_OF, layoutProducts, layoutShop, type ShopLayout } from './MallFixtures';
+import { shelfGeometry, shelfMaterial, disposeShelfGeometries } from './MallShelfModels';
 
 export const MALL = { FH: MALL_FH, floors: MALL_FLOORS, H: MALL_FH * MALL_FLOORS, atriumR: MALL_ATRIUM_R, slabT: MALL_SLAB, doorW: 10, doorH: 3.6, grid: GRID };
 
@@ -119,9 +120,9 @@ export function rectMinus(r: R2, holes: R2[]): R2[] {
   return out;
 }
 
-/** opts.fixtureCap = about how many fixture bays one shop gets (Quality.mallFixtures; 300 = the high setting). */
-export function buildMall(catalog: Catalog, opts: { fixtureCap?: number } = {}): MallBuild {
-  const CAP = opts.fixtureCap ?? 300;
+/** opts.fixtureCap = about how many fixture bays one shop gets (Quality.mallFixtures; 300 = the high setting); opts.productCap = how many real products stand in one shop (Quality.mallProducts, C5; 160 = the high setting). */
+export function buildMall(catalog: Catalog, opts: { fixtureCap?: number; productCap?: number } = {}): MallBuild {
+  const CAP = opts.fixtureCap ?? 300, PCAP = opts.productCap ?? 160;
   const { FH, floors: NF, H, atriumR, slabT, doorW, doorH: DOOR_H } = MALL;
   const CEIL = FH - slabT; // underside of the slab above = ceiling height of every storey
   const g = new THREE.Group(); g.name = 'CityMall';
@@ -311,12 +312,15 @@ export function buildMall(catalog: Catalog, opts: { fixtureCap?: number } = {}):
   const floorSolids: Solid[][] = Array.from({ length: NF }, (_, f) => COLS.map(([x, z]) => ({ minX: x - 0.5, maxX: x + 0.5, minY: f * FH, maxY: f * FH + CEIL, minZ: z - 0.5, maxZ: z + 0.5 })));
   // STEP C3: the 8 shops of every floor (slot i <-> the i-th category of that floor). The "view all" post of each shop is a per-floor collider; ShopInfo lists them for the viewer / later steps.
   const SLOTS = shopSlots();
+  const productsOf = new Map<string, Product[]>(); // STEP C5: the products of every category (the live catalog may hold any number per category)
+  for (const pr of catalog.products) { const l = productsOf.get(pr.categoryId); if (l) l.push(pr); else productsOf.set(pr.categoryId, [pr]); }
   const catsByFloor: Category[][] = Array.from({ length: NF }, (_, f) => catalog.categories.filter((cat) => cat.floor === f).slice(0, SLOTS.length));
-  const shops: ShopInfo[] = [];
+  const shops: ShopInfo[] = [], items: MallItem[] = [];
   const shopLayouts: ShopLayout[][] = catsByFloor.map((cats) => cats.map((cat, i) => layoutShop(SLOTS[i], FAMILY_OF[cat.id] ?? 'gondola', CAP)));
   catsByFloor.forEach((cats, f) => cats.forEach((cat, i) => {
     const S = SLOTS[i];
     shops.push({ category: cat, floor: f, viewPos: new THREE.Vector3(S.view.x, f * FH, S.view.z), yaw: S.view.yaw });
+    for (const pr of productsOf.get(cat.id) ?? []) items.push({ product: pr, category: cat, viewPos: new THREE.Vector3(S.view.x, f * FH, S.view.z), yaw: S.view.yaw }); // the viewer's search list: look at the shop that sells it
     floorSolids[f].push({ minX: S.board.x - 0.1, maxX: S.board.x + 0.1, minY: f * FH, maxY: f * FH + 2.4, minZ: S.board.z - 0.1, maxZ: S.board.z + 0.1 });
     for (const r of shopLayouts[f][i].runs) floorSolids[f].push({ minX: r.cx - r.hx, maxX: r.cx + r.hx, minY: f * FH, maxY: f * FH + r.h, minZ: r.cz - r.hz, maxZ: r.cz + r.hz }); // one collider per run of fixture bays
   }));
@@ -423,6 +427,26 @@ export function buildMall(catalog: Catalog, opts: { fixtureCap?: number } = {}):
         fixtureGroups[f].add(im); added[f].push(im); owned[f].push(() => im.dispose());
       }
     });
+    // STEP C5: the real products on the shelves: ONE InstancedMesh per shop (the shelf model of the category kind, shared geometry), instance = one product (userData.pickList[instance] = its PickInfo)
+    cats.forEach((cat, i) => {
+      const prods = productsOf.get(cat.id);
+      if (!prods?.length) return;
+      const places = layoutProducts(shopLayouts[f][i], prods.length, PCAP);
+      if (!places.length) return;
+      const im = new THREE.InstancedMesh(shelfGeometry(cat.kind), shelfMaterial, places.length); im.name = `Products${f}.${i}`;
+      const list: PickInfo[] = [], pc = new THREE.Color();
+      const info = prods.map((p) => ({ title: p.name, sub: `৳ ${Math.round(p.price).toLocaleString('en-US')}`, url: productUrl(p) }) satisfies PickInfo);
+      places.forEach((pl, k) => {
+        const p = prods[pl.product], sz = pl.size * (0.9 + 0.2 * ((pl.product * 7 + k) % 5) / 4); // a little size variety between the products
+        o3.position.set(pl.x, pl.y, pl.z); o3.rotation.set(0, pl.yaw, 0); o3.scale.setScalar(sz); o3.updateMatrix();
+        im.setMatrixAt(k, o3.matrix); im.setColorAt(k, pc.setHex(p.color));
+        list.push(info[pl.product]);
+      });
+      im.userData.pickList = list;
+      im.computeBoundingSphere();
+      fixtureGroups[f].add(im); added[f].push(im); owned[f].push(() => im.dispose());
+      pickables.push(im); pickAdded[f].push(im);
+    });
   };
   const releaseFloor = (f: number): void => {
     if (f < 0 || f >= NF || !built.has(f)) return;
@@ -435,7 +459,7 @@ export function buildMall(catalog: Catalog, opts: { fixtureCap?: number } = {}):
 
   const E = MALL_DOORS.find((d) => d.id === 'E') ?? MALL_DOORS[0];
   return {
-    group: g, roof, floors: floorGroups, solids, obbs, meshSolids, floorSolids, floorObbs, ensureFloor, releaseFloor, fixtureGroups, shopLayouts, ramps: cores.ramps, rampRails: cores.rampRails, cores, pickables, blockers, shops, items: [],
+    group: g, roof, floors: floorGroups, solids, obbs, meshSolids, floorSolids, floorObbs, ensureFloor, releaseFloor, fixtureGroups, shopLayouts, ramps: cores.ramps, rampRails: cores.rampRails, cores, pickables, blockers, shops, items,
     spawn: new THREE.Vector3(E.lx + 8, 0, E.lz), spawnYaw: Math.PI / 2,
     surfaceAt: (x, z, y) => { // the floor level under (x, z) for something at height y (floors 1..9 only inside the outline and outside the atrium hole / the core holes)
       for (let f = Math.min(NF - 1, Math.floor((y + 0.3) / FH)); f >= 1; f--) if (Math.hypot(x, z) > atriumR && insideBP(x, z) && !inCoreHole(x, z)) return f * FH;
@@ -450,6 +474,7 @@ export function buildMall(catalog: Catalog, opts: { fixtureCap?: number } = {}):
         mat?.map?.dispose?.();
         if ((o as THREE.InstancedMesh).isInstancedMesh) (o as THREE.InstancedMesh).dispose();
       });
+      disposeShelfGeometries(); // the shared shelf models (C5)
     },
   };
 }
