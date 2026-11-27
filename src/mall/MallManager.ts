@@ -17,6 +17,7 @@ import type { Catalog } from './MallCatalog';
 import { MallInteraction } from './MallInteraction';
 import { MallLiftControl } from './MallLiftControl';
 import { createStaticColliders, FloorColliders, floorsAround } from './MallColliders';
+import { Q } from '../core/Quality';
 
 export interface MallDeps {
   root: THREE.Object3D;          // world.root: children use ABSOLUTE world coordinates
@@ -74,7 +75,7 @@ export class MallManager {
 
   constructor(private d: MallDeps) {
     const site = d.terrain.mall;
-    this.build = buildMall(d.catalog);
+    this.build = buildMall(d.catalog, { fixtureCap: Q.mallFixtures });
     this.group = this.build.group;
     this.group.position.set(site.x, site.floorY, site.z);
     this.group.rotation.y = site.yaw;
@@ -211,6 +212,7 @@ export class MallManager {
     this.build.floors.forEach((fg, i) => {
       fg.visible = this.inside ? Math.abs(i - pf) <= 1 : i === 0 && nearOutside;
       if (fg.visible) this.build.ensureFloor(i);
+      this.build.fixtureGroups[i].visible = this.inside ? i === pf : nearOutside && i === 0; // the shop fixtures are drawn only on the floor the player stands on (seen through the glass: the ground floor)
     });
     for (let i = 0; i < MALL.floors; i++) { // a floor stays built within 2 floors of the player (less hiccup on the stairs); further away its meshes + canvas textures are thrown away
       const keep = this.inside ? Math.abs(i - pf) <= 2 : nearOutside && i === 0;

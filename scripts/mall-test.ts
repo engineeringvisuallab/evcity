@@ -1,5 +1,5 @@
 // Headless City Mall test (STEP R1: ONE 10-floor glass building over the WHOLE outline (~109,500 m2 per floor), 100 m round atrium in the middle with a glass dome, 2 entrances on the road sides
-// (east, north, west, south), 8 shops per floor in two rings (C3), one stair + one lift on each of two sides (west, east) of the atrium, a 12 m column grid on every floor with per-floor colliders, shops without products yet (C4 / C5)).
+// (east, north, west, south), 8 shops per floor in two rings (C3), one stair + one lift on each of two sides (west, east) of the atrium, a 12 m column grid on every floor with per-floor colliders, shops furnished with fixtures (C4), no products yet (C5)).
 // Needs the packages installed (three, @dimforge/rapier3d-compat): npm run test:mall   (= npx tsx scripts/mall-test.ts)
 import * as THREE from 'three';
 import { Config } from '../src/core/Config';
@@ -116,17 +116,18 @@ ok(onPlot === 0, 'no tree stands on the mall plot');
 
 // 5. mall build: ONE building, empty floors (C3 brings the shops)
 const cat = await loadCatalog();
-const mall = buildMall(cat);
+const mall = buildMall(cat, { fixtureCap: 300 });
 const LAY = floorLayout();
 ok(mall.floors.length === 10, '10 floors (floor groups 0..9)');
 ok(mall.shops.length === 80 && [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].every((f) => mall.shops.filter((z) => z.floor === f).length === 8), `10 floors x 8 shops = ${mall.shops.length} shops (viewPos on its own floor)`);
 ok(mall.shops.every((z) => Math.abs(z.viewPos.y - z.floor * 5) < 1e-6 && Math.hypot(z.viewPos.x, z.viewPos.z) > 66), 'every shop viewing spot stands on its own floor, outside the atrium promenade');
-pending(`no products yet (${mall.items.length}): C4 brings the fixtures, C5 the products`);
+pending(`no products yet (${mall.items.length}): C5 brings the products`);
 ok(mall.ramps.length === 36 && mall.rampRails.length === 72, `stairs: 2 sides x 9 flights x 2 lanes = 36 walking ramps, 72 sloped rails (${mall.ramps.length} / ${mall.rampRails.length})`);
 { const FOOTS = coreFootprints(); const inCore = (q: { minX: number; maxX: number; minZ: number; maxZ: number }) => FOOTS.some(([a, b, c, d]) => q.maxX > a - 3 && q.minX < b + 3 && q.maxZ > c - 3 && q.minZ < d + 3);
   ok(mall.solids.every(inCore), `always-on solids (${mall.solids.length}) are only the stair / lift cores (no walls inside the building)`); }
-ok(mall.floorSolids.every((l) => l.length === LAY.cols.length + 8) && LAY.cols.length > 600, `every floor has ${LAY.cols.length} column colliders (12 m grid) + 8 shop board posts, listed per floor (floorSolids)`);
-ok(mall.floorSolids[0].filter((q) => q.maxY - q.minY > 4).every((q) => q.minY === 0 && Math.abs(q.maxY - 4.6) < 1e-6) && mall.floorSolids[7].filter((q) => q.maxY - q.minY > 4).every((q) => q.minY === 35 && Math.abs(q.maxY - 39.6) < 1e-6) && mall.floorSolids[7].filter((q) => q.maxY - q.minY < 4).length === 8, 'columns of floor f stand from the floor (f x 5 m) to the underside of the slab above (4.6 m high); the 8 shop board posts are 2.4 m high');
+const runsOf = (f: number) => mall.shopLayouts[f].reduce((n, L) => n + L.runs.length, 0);
+ok(mall.floorSolids.every((l, f) => l.length === LAY.cols.length + 8 + runsOf(f)) && LAY.cols.length > 600, `every floor has ${LAY.cols.length} column colliders (12 m grid) + 8 shop board posts + ${runsOf(0)}..${runsOf(8)} fixture runs, listed per floor (floorSolids)`);
+ok(mall.floorSolids[0].filter((q) => q.maxY - q.minY > 4).every((q) => q.minY === 0 && Math.abs(q.maxY - 4.6) < 1e-6) && mall.floorSolids[7].filter((q) => q.maxY - q.minY > 4).every((q) => q.minY === 35 && Math.abs(q.maxY - 39.6) < 1e-6) && mall.floorSolids[7].filter((q) => q.maxY - q.minY < 4).length === 8 + runsOf(7), 'columns of floor f stand from the floor (f x 5 m) to the underside of the slab above (4.6 m high); the 8 shop board posts (2.4 m) and the fixture runs are lower');
 ok(mall.floorSolids[0].every((q) => Math.abs((q.minX + q.maxX) / 2) > 5.4 && Math.abs((q.minZ + q.maxZ) / 2) > 5.4), 'no column on the two entrance aisles (|x| < 5.4 north door, |z| < 5.4 east door)');
 ok(mall.floorSolids[0].every((q) => Math.hypot((q.minX + q.maxX) / 2, (q.minZ + q.maxZ) / 2) >= MALL_ATRIUM_R + 3), 'no column inside the atrium (+ 3 m walkway)');
 ok(mall.obbs.length >= MALL_BUILDING.length, `glass curtain wall: ${mall.obbs.length} wall pieces round ${MALL_BUILDING.length} corners`);
@@ -138,7 +139,9 @@ mall.ensureFloor(3); mall.ensureFloor(3);
 { const pick0 = mall.pickables.length, kids = mall.floors[3].children.length;
   ok(mall.floors[3].children.length >= 4 && mall.floors[2].children.every((c) => !(c as any).isInstancedMesh), 'ensureFloor builds a floor once, only that floor (columns, ceiling lights, atrium rail, shops)');
   ok(mall.floors[3].children.filter((c) => (c as any).userData?.pick?.url).length === 8 && mall.floors[3].children.some((c) => c.name === 'ShopPatches3') && mall.floors[3].children.some((c) => c.name === 'DeptSign3'), 'floor 3 has 8 "view all" boards (pickable, with a link), 1 merged patch mesh, 1 department sign');
+  ok(mall.fixtureGroups[3].children.length >= 8 && mall.fixtureGroups[3].children.every((m) => (m as any).isInstancedMesh) && mall.fixtureGroups[3].children.length <= 16, `floor 3 fixtures: ${mall.fixtureGroups[3].children.length} instanced meshes (an opaque one + a glass one per shop), none on the other floors (${mall.fixtureGroups[2].children.length})`);
   mall.releaseFloor(3); mall.releaseFloor(3);
+  ok(mall.fixtureGroups[3].children.length === 0, 'releaseFloor removes the fixture meshes too');
   ok(mall.floors[3].children.length < kids && mall.floors[3].children.every((c) => !(c as any).isInstancedMesh) && mall.pickables.length === pick0 - 8, 'releaseFloor throws away what ensureFloor built (meshes, 8 boards from the pickables), once');
   mall.ensureFloor(3);
   ok(mall.floors[3].children.length === kids && mall.pickables.length === pick0, 'a released floor builds again the same'); }
@@ -224,6 +227,9 @@ ok(pos.x < DW.lx - 7 && Math.abs(feet()) < 0.2, `a walker crosses the whole grou
 { const c = LAY.cols[Math.floor(LAY.cols.length / 2)];
   put(c[0] - 3, 0, c[1]); walk(c[0] + 3, c[1], 400);
   ok(pos.x < c[0] - 0.5, `a column of the ground floor stops a walker (column at ${c[0]}, ${c[1]}; stopped at x = ${pos.x.toFixed(2)})`); }
+{ const r = mall.shopLayouts[0][0].runs[0]; // a run of fixtures of the first ground-floor shop is solid: a walker coming from the aisle side stops at it
+  put(r.cx, 0, r.cz + r.hz + 3); walk(r.cx, r.cz, 500);
+  ok(pos.z > r.cz + r.hz - 0.01, `a fixture run is solid (run at ${r.cx.toFixed(1)}, ${r.cz}; the walker stopped at z = ${pos.z.toFixed(2)}, the run edge is ${(r.cz + r.hz).toFixed(2)})`); }
 fc.set([]);
 ok(mall.surfaceAt(-20, 10, 1) === 0 && mall.surfaceAt(20, -10, 1) === 0, 'viewer surfaceAt: ground floor is flat');
 ok(mall.surfaceAt(80, -30, 12) === 10 && mall.surfaceAt(3, 0, 12) === 0, 'viewer surfaceAt: floor 2 = 10 m, the atrium hole = 0');

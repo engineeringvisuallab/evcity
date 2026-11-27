@@ -127,6 +127,7 @@ export async function startMallViewer(container: HTMLElement): Promise<void> {
     } else {
       cam.position.set(0, 420, 380); cam.lookAt(0, 10, 0);
     }
+    mall.fixtureGroups.forEach((g, i) => { g.visible = i === curFloor(); });
     mall.update(dt);
     drawMini();
     inter.update();

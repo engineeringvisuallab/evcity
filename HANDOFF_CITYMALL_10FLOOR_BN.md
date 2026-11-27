@@ -2,7 +2,7 @@
 
 Notun chat-e evcity zip (full repo) attach kore "Part A" paste koro. Tarpor ek chat-e ek step, "Part C" theke.
 
-**Ekhon porjonto: Step C3 done (26 Nov, code likha + tsc + `npm run test:mall-shops` PASS; `npm run test:mall` ar browser NOT RUN). NEXT: Step C4 (shop-er shajano). Rooftop hotel + cafe: alada step H1, C3-er pore (Part C dekho).**
+**Ekhon porjonto: Step C4 done (27 Nov, code likha + tsc + `npm run test:mall-shops` PASS; `npm run test:mall` ar browser NOT RUN). NEXT: Step C5 (product + example link). Rooftop hotel + cafe: alada step H1 (Part C dekho).**
 Note: C1 sandbox-e network chhilo na, tai `npm run test:mall` ar game-e chalano hoy ni. Sudhu tsc-er syntax check ar geometry-r hisab kora hoyeche. Age tumi `npm run test:mall` chalao, fail hole ami thik korbo.
 
 ---
@@ -109,7 +109,8 @@ Step H1: roof (y = 50, solid collider, dome atrium-er upor) er upor hotel + cafe
 ```
 Open: hotel-er size ar roof-e jaowar rasta tumi ekhono bolo ni ("pore thik korbo").
 
-### Step C4: Shop-er shajano (fixture), category onujayi
+### Step C4: Shop-er shajano (fixture), category onujayi. DONE (27 Nov)
+Dekho "Done log". Nicher prompt purono record.
 ```
 Step C4: prottek category-r jonno shop fixture banao (Kit-er moto small helper functions, instanced/merged, PERFORMANCE_RULES.md): khabar-e shelf + fridge + fruit crate, fashion-e hanger rail + mannequin + folded table, electronics-e glass counter + wall TV, furniture-e room set, boi-te bookshelf, ityadi. Notun ProductKind model dorkar hole ProductModels.ts-e add (fridge, mannequin, shelf unit...).
 ```
@@ -225,3 +226,35 @@ Step C7: draw call / triangle ginti, floor visibility (inside: +-1 floor, outsid
 - Sign shudhu ek dik theke dekha jay (centre-er dike), pichone dekha jay na.
 - Outer shop boro (~15,000 m2), bhetore dur-e board / sign: tumi bolle shop aro bhag korbo (8 theke 12 / 16, ekhon tumi 8 bolechho).
 - MedianPlan-er door crossing (N / W / S) ekhono dekha hoy ni (R1 note).
+
+### Step C4 (27 Nov): shop-er shajano (fixture)
+**Tomar decision (C4 shuru-te):** khola plan (shelf / rack-er row, majhe aisle, deyal nai), ~300 fixture per shop (medium), shob solid (ghure jete hobe).
+**Fixture:** 16 dhoron (family): gondola shelf, fridge (glass door), crate table, glass counter, hanger rail + mannequin + folded table, TV stand, electronics mix, appliance box, room set (sofa / bed / dining / office), bookshelf, sports rack, cycle rack, plant / decor shelf. 80 category-r prottek-ta ek family-te (`FAMILY_OF`, `MallFixtures.ts`). Fixture = "bay" (1 ta shelf unit ityadi, 3..12 ta box), tai ~230 bay per shop (cap 300, row thin kore) = ~1,400 bay per tola, ~8,000..16,000 box per floor.
+**Layout:** row z = 12 m-er gunitok (column z = 6 + 12 m, tai row column-e legey na), bay-er length-er gune x-e boshe, bay shop polygon-er bhetore (0.4 m), board post theke 1 m dure, door aisle / atrium / core khali. Row alternate yaw (0 / pi). Cap-er beshi hole prottek k-tha row rakhe (shob floor-e ek-i row, tai ghonotto ek).
+**Changed files:**
+- `src/mall/MallFixtures.ts` (NOTUN): 16 family-r bay (box list, pure), `FAMILY_OF`, `layoutShop()` (scanline, cached) -> `bays` + `runs`.
+- `src/mall/MallBuilder.ts`: `buildMall(catalog, { fixtureCap })`; prottek shop-e 1 opaque + 1 glass InstancedMesh (instance colour = category colour / fixed), `fixtureGroups[f]`, `shopLayouts`. Collider = bay-er run-prothi 1 ta (`floorSolids`-e, floor-e ~55 ta, 560 ta 10 tolay), column / post-er moto shudhu player-er floor-e.
+- `src/mall/MallManager.ts`: `buildMall`-e `Q.mallFixtures`; fixture shudhu player-er floor-e (ar bahir theke ground floor) dekha jay.
+- `src/mall/MallViewer.ts`: fixture shudhu current floor-e.
+- `src/core/Quality.ts`: notun `mallFixtures` (low 100, medium 200, high 300), PERFORMANCE_RULES.
+- `scripts/mall-shops-check.ts`: fixture assert (16 family, 80 category family, bay shop-er bhetore, column / post / aisle-e na, run overlap nai, bay run-e ache, floor-e box ginti).
+- `scripts/mall-test.ts`: floorSolids = column + 8 post + run, fixture mesh ensureFloor / releaseFloor, fixture run-e walker atke.
+**Test (sotti obostha):**
+- `npm run test:mall-shops`: ALL OK (headless tsx chalano hoyeche), fixture assert shoho.
+- tsc (three + rapier stub diye, mall + Quality file-er): clean, shudhu 3 ta stub noise.
+- `scripts/quality-density-test.ts`: 6 ta FAIL, kintu amar change-er age-o (original Quality.ts diyeo) 6 ta-i FAIL chhilo (tree / rock grass share, high multiplier, Config people / traffic). Amar `mallFixtures` field-er jonno notun fail nai.
+- `npm run test:mall`: NOT RUN (Rapier install nai). Browser / headless render: NOT RUN.
+**Loder upor probhab: MEDIUM theke BESHI (browser-e mapa hoy ni, NOT RUN):**
+- Draw call: prottek shop 2 (opaque + glass) = ~16 per floor, shudhu player-er floor-e dekha jay (baki floor-er fixture hidden). Ager C3-er ~23 per floor-er upor.
+- Triangle: 100,000..195,000 per floor (high setting, sudhu current floor-e). medium (200) ~ 2/3, low (100) ~ 1/3. Instance data ~1 MB per floor.
+- Collider: ~55 fixture run per floor (column 678 shoho ~740).
+- Shadow: kono castShadow nai, notun light nai.
+- Low tier: `Q.mallFixtures` 100 (medium 200). Tier build-er shomoy porhe, game chalar shomoy bodle na.
+- Floor build (lazy): prottek shop-e ~2 mesh, instance matrix build ~8,000..16,000 box (kichu ms), first-time hiccup hote pare. Dur-e gele `releaseFloor` fele dey.
+**Janar jinis:**
+- Fixture-e kono product nai (shelf-e sudhu rongin block). Asol product C5-te shelf / rack-e boshbe (turntable shudhu hero product-er jonno).
+- Shelf rang = category colour (c1 / c2 / c3 haka). Mannequin box diye banano (simple), pore detail dewa jay.
+- Fixture-e click kora jay na (pick shudhu board / lift button).
+- Outer shop boro, row 12 m pitch, ~12 / 24 m tei rows: fika jayga beshi lagte pare. Browser-e dekho, ghono / fika bolo (pitch / cap bodlano jay).
+- Fixture row alternate yaw-e shob dik-e mukh kore, kintu rail / fridge-er shamne pechon bola jay na (symmetric) .
+- Sign (14 m) ar column ager moto kothao dhukte pare; fixture-er upor-e sign nai (sign 2.9 m-er upore, fixture <= 2.1 m).

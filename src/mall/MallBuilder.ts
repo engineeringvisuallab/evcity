@@ -4,7 +4,9 @@
 //
 // STEP R1 (26 Nov, user decisions): 2 entrances only, on the road sides (MALL_DOORS: east + north); ONE stair + ONE lift on each of two sides (west, east) of the atrium (MallCores.ts);
 // outside the glass only a very small open area (a walkway). STEP C3: 8 shops (categories) on every floor, in two rings round the atrium (MallShops.ts): a coloured floor patch, a hanging name sign,
-// a 'view all' board (click = the category page on the shop) and the department sign over the 4 axis aisles. Products + fixtures come in C4 / C5.
+// a 'view all' board (click = the category page on the shop) and the department sign over the 4 axis aisles. STEP C4: every shop is furnished with rows of fixtures (MallFixtures.ts: shelves,
+// fridges, crates, counters, hanger rails + mannequins, TV stands, appliances, room sets, bookshelves, racks ...): ONE opaque + ONE glass InstancedMesh per shop, one collider per run of bays.
+// The fixtures of a floor are drawn only while the player is on that floor (fixtureGroups). Products on the shelves come in C5.
 //
 // Local origin = the atrium centre at floor level (y = 0 is the ground floor). Place it in the city with: mall.group.position.set(x, groundY, z); mall.group.rotation.y = yaw;
 //
@@ -20,6 +22,7 @@ import { buildCores, type CoresBuild } from './MallCoreBuilder';
 import { coreHoles, type PickAction } from './MallCores';
 import { floorLayout, insidePoly, GRID } from './MallLayout';
 import { shopSlots, deptPoses } from './MallShops';
+import { FAMILY_OF, layoutShop, type ShopLayout } from './MallFixtures';
 
 export const MALL = { FH: MALL_FH, floors: MALL_FLOORS, H: MALL_FH * MALL_FLOORS, atriumR: MALL_ATRIUM_R, slabT: MALL_SLAB, doorW: 10, doorH: 3.6, grid: GRID };
 
@@ -50,6 +53,10 @@ export interface MallBuild {
   floorSolids: Solid[][]; floorObbs: Obb[][];
   /** STEP R1: build what stands on floor f (columns, ceiling lights, atrium rail; C3: the 8 shops with their signs) the first time it is needed. */
   ensureFloor(f: number): void;
+  /** STEP C4: the fixtures of floor f (a child group of Floor f): MallManager shows them only while the player is on that floor. */
+  fixtureGroups: THREE.Group[];
+  /** STEP C4: the fixture rows of every shop, [floor][slot]. */
+  shopLayouts: ShopLayout[][];
   /** STEP C3: throw away what ensureFloor built for floor f (meshes, canvas textures, pickables): the game does this for floors far from the player. Colliders are not touched (FloorColliders). */
   releaseFloor(f: number): void;
   ramps: Ramp[];                  // sloped walking surfaces (+ their own railing solids in `rampRails`)
@@ -112,7 +119,9 @@ export function rectMinus(r: R2, holes: R2[]): R2[] {
   return out;
 }
 
-export function buildMall(catalog: Catalog): MallBuild {
+/** opts.fixtureCap = about how many fixture bays one shop gets (Quality.mallFixtures; 300 = the high setting). */
+export function buildMall(catalog: Catalog, opts: { fixtureCap?: number } = {}): MallBuild {
+  const CAP = opts.fixtureCap ?? 300;
   const { FH, floors: NF, H, atriumR, slabT, doorW, doorH: DOOR_H } = MALL;
   const CEIL = FH - slabT; // underside of the slab above = ceiling height of every storey
   const g = new THREE.Group(); g.name = 'CityMall';
@@ -304,10 +313,12 @@ export function buildMall(catalog: Catalog): MallBuild {
   const SLOTS = shopSlots();
   const catsByFloor: Category[][] = Array.from({ length: NF }, (_, f) => catalog.categories.filter((cat) => cat.floor === f).slice(0, SLOTS.length));
   const shops: ShopInfo[] = [];
+  const shopLayouts: ShopLayout[][] = catsByFloor.map((cats) => cats.map((cat, i) => layoutShop(SLOTS[i], FAMILY_OF[cat.id] ?? 'gondola', CAP)));
   catsByFloor.forEach((cats, f) => cats.forEach((cat, i) => {
     const S = SLOTS[i];
     shops.push({ category: cat, floor: f, viewPos: new THREE.Vector3(S.view.x, f * FH, S.view.z), yaw: S.view.yaw });
     floorSolids[f].push({ minX: S.board.x - 0.1, maxX: S.board.x + 0.1, minY: f * FH, maxY: f * FH + 2.4, minZ: S.board.z - 0.1, maxZ: S.board.z + 0.1 });
+    for (const r of shopLayouts[f][i].runs) floorSolids[f].push({ minX: r.cx - r.hx, maxX: r.cx + r.hx, minY: f * FH, maxY: f * FH + r.h, minZ: r.cz - r.hz, maxZ: r.cz + r.hz }); // one collider per run of fixture bays
   }));
   const floorObbs: Obb[][] = Array.from({ length: NF }, () => []);
   const RAIL_R = atriumR + 0.3, RAIL_H = 1.1, RAIL_SEG = 64;
@@ -325,6 +336,11 @@ export function buildMall(catalog: Catalog): MallBuild {
   const railM = new THREE.MeshStandardMaterial({ color: 0xbfe6f5, transparent: true, opacity: 0.25, metalness: 0.6, roughness: 0.05, side: THREE.DoubleSide, depthWrite: false });
   const handM = stdMat(0xcbd5e1, 0.8, 0.3);
   const patchM = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5 }), postM = stdMat(0x334155, 0.5, 0.5), postGeo = new THREE.BoxGeometry(0.2, 2.4, 0.2);
+  const fixtureGroups = floorGroups.map((fg) => { const x = new THREE.Group(); x.name = 'Fixtures'; fg.add(x); return x; });
+  const unitGeo = new THREE.BoxGeometry(1, 1, 1);
+  const fixM = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6, metalness: 0.1 });
+  const fixGlassM = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, roughness: 0.05, metalness: 0.5, depthWrite: false });
+  const WHITE = new THREE.Color(0xffffff);
   const SIGN_Y = 3.75, BOARD_Y = 2.7; // sign: 1.6 m high, top touches the 4.6 m ceiling
   const built = new Set<number>();
   const added: THREE.Object3D[][] = Array.from({ length: NF }, () => []);      // what ensureFloor put in floor f (releaseFloor removes exactly this)
@@ -384,6 +400,29 @@ export function buildMall(catalog: Catalog): MallBuild {
       d.geometry.dispose(); for (const q of parts) q.dispose();
       if (dg) { d.geometry = dg; d.name = `DeptSign${f}`; put(d, freeMesh(d)); } else freeMesh(d)();
     }
+    // STEP C4: the fixtures of every shop: ONE opaque + ONE glass InstancedMesh per shop (instance colour = the category colour / a fixed colour)
+    const o3 = new THREE.Object3D(), tint = new THREE.Color();
+    cats.forEach((cat, i) => {
+      const L = shopLayouts[f][i], c1 = new THREE.Color(cat.color), c2 = c1.clone().lerp(WHITE, 0.45), c3 = c1.clone().lerp(WHITE, 0.8);
+      for (const mat of ['o', 'g'] as const) {
+        let n = 0;
+        for (const P of L.bays) for (const b of P.bay.boxes) if (b.m === mat) n++;
+        if (!n) continue;
+        const im = new THREE.InstancedMesh(unitGeo, mat === 'o' ? fixM : fixGlassM, n); im.name = `Fixtures${f}.${i}.${mat}`;
+        let k = 0;
+        for (const P of L.bays) {
+          const cy = Math.cos(P.yaw), sy = Math.sin(P.yaw);
+          for (const b of P.bay.boxes) {
+            if (b.m !== mat) continue;
+            o3.position.set(P.x + b.x * cy + b.z * sy, b.y, P.z - b.x * sy + b.z * cy); o3.rotation.set(0, P.yaw, 0); o3.scale.set(b.sx, b.sy, b.sz); o3.updateMatrix();
+            im.setMatrixAt(k, o3.matrix);
+            im.setColorAt(k, b.c === 'c1' ? c1 : b.c === 'c2' ? c2 : b.c === 'c3' ? c3 : tint.setHex(b.c));
+            k++;
+          }
+        }
+        fixtureGroups[f].add(im); added[f].push(im); owned[f].push(() => im.dispose());
+      }
+    });
   };
   const releaseFloor = (f: number): void => {
     if (f < 0 || f >= NF || !built.has(f)) return;
@@ -396,7 +435,7 @@ export function buildMall(catalog: Catalog): MallBuild {
 
   const E = MALL_DOORS.find((d) => d.id === 'E') ?? MALL_DOORS[0];
   return {
-    group: g, roof, floors: floorGroups, solids, obbs, meshSolids, floorSolids, floorObbs, ensureFloor, releaseFloor, ramps: cores.ramps, rampRails: cores.rampRails, cores, pickables, blockers, shops, items: [],
+    group: g, roof, floors: floorGroups, solids, obbs, meshSolids, floorSolids, floorObbs, ensureFloor, releaseFloor, fixtureGroups, shopLayouts, ramps: cores.ramps, rampRails: cores.rampRails, cores, pickables, blockers, shops, items: [],
     spawn: new THREE.Vector3(E.lx + 8, 0, E.lz), spawnYaw: Math.PI / 2,
     surfaceAt: (x, z, y) => { // the floor level under (x, z) for something at height y (floors 1..9 only inside the outline and outside the atrium hole / the core holes)
       for (let f = Math.min(NF - 1, Math.floor((y + 0.3) / FH)); f >= 1; f--) if (Math.hypot(x, z) > atriumR && insideBP(x, z) && !inCoreHole(x, z)) return f * FH;

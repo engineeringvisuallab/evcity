@@ -88,6 +88,8 @@ export interface QualitySettings {
   evlabWater: 0 | 1 | 2;
   /** EVLab Presentation Hall: share of the seats that get a person during a presentation (0.62 = about 1800 people; each one is 8 instanced parts). */
   hallFill: number;
+  /** City Mall: about how many fixture bays (shelf units, racks, counters ...) one shop gets; the rows of a shop are thinned to fit (they are instanced; only the floor the player is on is drawn). */
+  mallFixtures: number;
   /** Junction road mirrors: how many nearby mirrors show the real scene at once (0 = only the painted picture). */
   mirrorLive: number;
   /** Junction road mirrors: a mirror shows the real scene only within this distance (m) of the camera. */
@@ -119,6 +121,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
     lampStepMul: 1.6, roadsideMul: 0.55, grassWind: 0, lightFxDist: 45, farmMul: 0.65, siteDisposeMul: 2.5, siteMerge: true, siteShadowMinR: 1.2, maxAniso: 2, shadowInterval: 2,
     signRadiusMul: 0.6, signPaintPerFrame: 1, evlabArrivals: 2, evlabCyclists: 2, evlabBenchSitters: 6, evlabWater: 0,
     hallFill: 0.22,
+    mallFixtures: 100,
     mirrorLive: 0, mirrorLiveDist: 30, mirrorTex: 256, // low: no extra scene render for the road mirrors (the painted picture stays)
     marineSchools: 12, marineFishHi: 40, marineFishMid: 90, marineFishFar: 180, marineFishNear: 14, marineFishMidDist: 38, marineFishFarDist: 75,
   },
@@ -130,6 +133,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
     lampStepMul: 1.25, roadsideMul: 0.8, grassWind: 0, lightFxDist: 80, farmMul: 0.85, siteDisposeMul: 0, siteMerge: true, siteShadowMinR: 0.5, maxAniso: 4, shadowInterval: 1,
     signRadiusMul: 0.8, signPaintPerFrame: 2, evlabArrivals: 4, evlabCyclists: 3, evlabBenchSitters: 12, evlabWater: 1,
     hallFill: 0.4,
+    mallFixtures: 200,
     mirrorLive: 1, mirrorLiveDist: 40, mirrorTex: 384,
     marineSchools: 22, marineFishHi: 90, marineFishMid: 180, marineFishFar: 330, marineFishNear: 20, marineFishMidDist: 55, marineFishFarDist: 100,
   },
@@ -141,6 +145,7 @@ export const PRESETS: Readonly<Record<QualityTier, QualitySettings>> = {
     lampStepMul: 1, roadsideMul: 1, grassWind: 0, lightFxDist: 130, farmMul: 1, siteDisposeMul: 0, siteMerge: true, siteShadowMinR: 0, maxAniso: 16, shadowInterval: 1,
     signRadiusMul: 1, signPaintPerFrame: 3, evlabArrivals: 5, evlabCyclists: 4, evlabBenchSitters: 20, evlabWater: 2,
     hallFill: 0.62,
+    mallFixtures: 300,
     mirrorLive: 2, mirrorLiveDist: 50, mirrorTex: 512,
     marineSchools: 36, marineFishHi: 200, marineFishMid: 360, marineFishFar: 864, marineFishNear: 30, marineFishMidDist: 80, marineFishFarDist: 150,
   },
