@@ -16,6 +16,9 @@ Stack: TypeScript, Vite, three.js 0.186, Rapier physics. Entry: `src/main.ts`, m
 - Never overwrite `Engine.ts` from an old zip: merge hunks by hand (see merge notes).
 - Deliver the FULL project zip (with `.git`) at the end of each finished phase.
 
+## Build fix (27 Nov 2026, GitHub Actions `npm run build` failed)
+Mall step C2 added `PickInfo.action?: PickAction` (lift button object). `AgroPick` (`src/agro/AgroRooms.ts`) extended `PickInfo` with its own string `action` ('ask'|'lift'|'info'), so tsc gave TS2352/TS2430. Fix: `AgroPick extends Omit<PickInfo, 'action'>`, and the two casts in `AgroManager.ts` / `AgroViewer.ts` go through `unknown`. No behaviour change. `npx tsc --noEmit` and `npx vite build` pass. Lesson: always run `npm run build` (tsc + vite), not only `tsc` on touched files, after changing a shared type like `PickInfo`.
+
 ## State now (after merge of vehicles5 + step4 + Missions v1.1)
 See `CHANGES_MERGE_VEHICLES5_STEP4_MISSIONS11_BN.md`.
 - Vehicles: cockpit, live dials, lights (vehicles step 2-5) done. `src/vehicles/`.

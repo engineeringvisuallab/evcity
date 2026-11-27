@@ -94,7 +94,7 @@ export class AgroManager {
     this.fade.className = 'evagro-fade';
     d.container.appendChild(this.fade);
 
-    this.inter = new MallInteraction(d.camera, d.dom, this.build.pickables[0], (p) => this.onHover(p), (p) => this.onPick(p as AgroPick));
+    this.inter = new MallInteraction(d.camera, d.dom, this.build.pickables[0], (p) => this.onHover(p), (p) => this.onPick(p as unknown as AgroPick));
     this.inter.blockers = this.build.blockers;
     this.inter.maxDist = 20; // the camera is ~6 m behind the player; `accept` keeps picks within reach of the player
     this.inter.accept = (hit) => {

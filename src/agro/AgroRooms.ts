@@ -3,7 +3,8 @@
 // `topics` is for the later "ask the expert" feature (what the expert in this room can advise on).
 import type { PickInfo } from '../mall/MallBuilder';
 
-export interface AgroPick extends PickInfo { action: 'ask' | 'lift' | 'info'; roomId?: string }
+// Omit 'action': since mall step C2, PickInfo.action is the lift PickAction object; Agro uses its own string action.
+export interface AgroPick extends Omit<PickInfo, 'action'> { action: 'ask' | 'lift' | 'info'; roomId?: string }
 
 export type Theme =
   | 'soil' | 'seed' | 'protect' | 'water' | 'greenhouse' | 'workshop' | 'solar' | 'museum'

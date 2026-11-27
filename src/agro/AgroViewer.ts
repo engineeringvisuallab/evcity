@@ -99,7 +99,7 @@ export async function startAgroViewer(container: HTMLElement): Promise<void> {
     tip.style.display = p ? 'block' : 'none';
     if (p) tip.innerHTML = `<b>${p.title}</b><small>${p.sub || ''}</small>`;
   }, (p: PickInfo) => {
-    const k = p as AgroPick;
+    const k = p as unknown as AgroPick;
     if (k.action === 'lift') {
       fade.style.opacity = '1';
       setTimeout(() => { setLevel(level === 0 ? 1 : 0); fade.style.opacity = '0'; }, 280);
